@@ -61,7 +61,6 @@ async function reverseGeocode(
 
         const json = await res.json();
 
-        // ✅ FIX: correct API structure (your real issue)
         const data = json?.data ?? json;
 
         const addr = data?.address ?? {};
@@ -78,7 +77,6 @@ async function reverseGeocode(
 
         const country = addr.country || "";
 
-        // ✅ FULL FIXED LABEL (always works)
         const label =
             displayName ||
             [

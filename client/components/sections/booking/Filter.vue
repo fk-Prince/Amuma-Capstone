@@ -194,11 +194,18 @@ import Dropdown from "~/components/icons/dropdown.vue";
 
 const route = useRoute();
 
-const isHide = ref(true);
-const searchName = ref("");
-const searchLocation = ref("");
-const careType = ref("all");
+const isHide = ref(false);
 const activeSortOption = ref("recommended");
+
+const props = defineProps<{
+    searchName?: string;
+    searchLocation?: string;
+    careType?: string;
+}>();
+
+const searchName = computed(() => props.searchName ?? "");
+const searchLocation = computed(() => props.searchLocation ?? "");
+const careType = computed(() => props.careType ?? "all");
 
 const careTypeList = [
     { label: "All (Homecare & Inhouse Facility)", value: "all" },
@@ -226,14 +233,6 @@ const handleSearch = async () => {
         },
     });
 };
-
-onMounted(() => {
-    if (route.query.service) searchName.value = route.query.service as string;
-    if (route.query.location)
-        searchLocation.value = route.query.location as string;
-    if (route.query.type) careType.value = route.query.type as string;
-    if (route.query.sort) activeSortOption.value = route.query.sort as string;
-});
 </script>
 
 <style scoped>

@@ -1,66 +1,28 @@
-// ~/composables/useGeo.ts
+export const useGeo = () => {
+    const centerLat = ref<number | undefined>(undefined);
+    const centerLng = ref<number | undefined>(undefined);
 
-interface City {
-    id: number;
-    name: string;
-}
+    const geocodeLocation = async (locationQuery: string) => {
+        try {
+            const coordMatch = locationQuery.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+            if (coordMatch) {
+                centerLat.value = Number(coordMatch[1]);
+                centerLng.value = Number(coordMatch[2]);
+                return;
+            }
 
-interface State {
-    name: string;
-    iso2: string;
-    cities: City[];
-}
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationQuery)}&format=json&limit=1`,
+            );
+            const data = await res.json();
+            if (data.length > 0) {
+                centerLat.value = Number(data[0].lat);
+                centerLng.value = Number(data[0].lon);
+            }
+        } catch (err) {
+            console.error("Geocoding failed:", err);
+        }
+    };
 
-interface Country {
-    name: string;
-    iso2: string;
-    emoji: string;
-    states: State[];
-}
-
-let cache: Country[] | null = null;
-
-
-async function loadGeoData(): Promise<Country[]> {
-    if (cache) return cache;
-
-    const module = await import("~/data/countries+states+cities.json");
-    cache = module.default as Country[];
-
-    return cache;
-}
-
-export async function getCountries() {
-    const data = await loadGeoData();
-
-    return data.map((c) => ({
-        name: c.name,
-        iso2: c.iso2,
-        emoji: c.emoji,
-    }));
-}
-
-export async function getStatesOfCountry(countryIso2: string) {
-    const data = await loadGeoData();
-
-    const country = data.find((c) => c.iso2 === countryIso2);
-
-    return (
-        country?.states?.map((s) => ({
-            name: s.name,
-            iso2: s.iso2,
-        })) ?? []
-    );
-}
-
-export async function getCitiesOfState(
-    countryIso2: string,
-    stateIso2: string,
-) {
-    const data = await loadGeoData();
-
-    const country = data.find((c) => c.iso2 === countryIso2);
-    const state = country?.states?.find((s) => s.iso2 === stateIso2);
-
-    return state?.cities ?? [];
-}
+    return { centerLat, centerLng, geocodeLocation };
+};

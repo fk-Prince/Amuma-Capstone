@@ -4,6 +4,6 @@ export interface Location {
     city: string,
     province: string,
     country: string,
-    lat?: number,
-    lng?: number
+    latitude?: number,
+    longitude?: number
 }

@@ -124,8 +124,12 @@
 
             <template v-if="useGeolocation">
                 <LocationSelector
-                    :initial-lat="checkout.branch.location?.lat || undefined"
-                    :initial-lng="checkout.branch.location?.lng || undefined"
+                    :initial-lat="
+                        checkout.branch.location?.latitude || undefined
+                    "
+                    :initial-lng="
+                        checkout.branch.location?.longitude || undefined
+                    "
                     :initial-street="
                         checkout.branch.location?.street || undefined
                     "
@@ -249,8 +253,8 @@ const handleLocation = ({
         city: city ?? "",
         province: province ?? "",
         country: country ?? "",
-        lat: lat ?? 0,
-        lng: lng ?? 0,
+        latitude: lat ?? 0,
+        longitude: lng ?? 0,
     };
 
     if (checkout.errors) {
