@@ -4,8 +4,7 @@ import SubscriptionSummary from "~/components/sections/SubscriptionSummary.vue";
 
 definePageMeta({
     middleware: "auth-client",
-    navVariant: "full",
-    navHeaderClass: "w-full h-[90px] bg-white z-[9999] border-b border-muted",
+    navVariant: 1,
 });
 
 useHead({ title: "Subscription Details" });
@@ -16,13 +15,13 @@ useHead({ title: "Subscription Details" });
         <div class="min-h-screen mt-5">
             <div class="max-w-7xl mx-auto">
                 <h1
-                    class="mx-5 text-center text-2lg font-bold tracking-wider text-gray-900"
+                    class="mx-5 text-center text-[1.4rem] font-extrabold text-gray-900"
                 >
                     Subscription Details
                 </h1>
 
                 <div
-                    class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 mb-3"
+                    class="grid grid-cols-1 lg:grid-cols-[2fr_400px] gap-8 mb-3"
                 >
                     <div>
                         <Subscription />

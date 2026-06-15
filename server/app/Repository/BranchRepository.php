@@ -12,4 +12,25 @@ class BranchRepository
     {
         return Branch::create($payload);
     }
+
+    public function getBranches()
+    {
+        return Branch::all();
+    }
+
+    public function findByField(string $column, string $value)
+    {
+        return Branch::where($column, $value)->first();
+    }
+
+    public function paginate(int $perPage)
+    {
+        return Branch::with([
+            'subscriptions.plans',
+            'reviews',
+            'locations'
+        ])
+            ->latest()
+            ->paginate($perPage);
+    }
 }

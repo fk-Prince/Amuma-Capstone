@@ -1,6 +1,6 @@
 export const colors = {
     primary: '#3182ED',
-    secondary: '#111827',
+    secondary: '#0f1623',
     accent: '#22C55E',
     light: '#ebf2ff',
     muted: {
@@ -12,7 +12,7 @@ export const colors = {
 }
 
 export const fontFamily = {
-    sans: ['DM Sans', 'sans-serif'],
+    sans: ['Outfit'],
 }
 
 

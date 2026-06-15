@@ -3,11 +3,10 @@ useHead({
     title: "AMUMA",
 });
 definePageMeta({
-    navVariant: "full",
-    navHeaderClass: "w-full h-[90px] bg-white z-[9999]",
+    navVariant: 1,
 });
 </script>
 
 <template>
-    <div class="min-h-screen w-full bg-white">x</div>
+    <div class="min-h-screen w-full bg-primary/10 px-[10%]"></div>
 </template>

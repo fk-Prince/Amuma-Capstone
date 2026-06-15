@@ -164,6 +164,8 @@ class SubscriptionService
                     'city'     => $branch['city'] ?? null,
                     'province' => $branch['province'] ?? null,
                     'country'  => $branch['country'] ?? null,
+                    'latitude'  => $branch['latitude'] ?? null,
+                    'longitude' => $branch['longitude'] ?? null,
                 ]);
 
                 $branchData = $this->branchRepository->create([
@@ -174,8 +176,7 @@ class SubscriptionService
                     'name'           => $branch['name'] ?? null,
                     'contact_number' => $branch['contact_number'] ?? null,
                     'image'          => $branch['image'] ?? null,
-                    'latitude'       => $branch['latitude'] ?? null,
-                    'longitude'      => $branch['longitude'] ?? null,
+                    'settings'       => $branch['setting'] ?? null
                 ]);
 
                 if (empty($plan['plan_code'])) {

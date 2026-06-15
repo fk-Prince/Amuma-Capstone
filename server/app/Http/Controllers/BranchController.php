@@ -14,4 +14,14 @@ class BranchController extends Controller
     {
         $this->branchService = $branchService;
     }
+
+    public function index(Request $request)
+    {
+        return $this->branchService->getBranches($request->all());
+    }
+
+    public function retrieveBranches(Request $request)
+    {
+        return;
+    }
 }

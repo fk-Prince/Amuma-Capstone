@@ -52,11 +52,10 @@ import { planService } from "@/api/plan/PlanService";
 import ComparableTable from "~/components/ui/ComparableTable.vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 
-useHead({ title: "Pricing" });
+useHead({ title: "Product" });
 
 definePageMeta({
-    navVariant: "full",
-    navHeaderClass: "w-full h-[90px] bg-white z-[9999] border-b border-muted",
+    navVariant: 1,
 });
 
 const billingCycle = ref<"monthly" | "yearly">("monthly");

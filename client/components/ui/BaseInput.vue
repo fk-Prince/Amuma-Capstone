@@ -6,7 +6,7 @@
         </label>
 
         <div
-            class="flex items-center border-[1.5px] rounded-xl bg-white overflow-hidden transition"
+            class="flex items-center border-[1.5px] rounded-lg bg-white overflow-hidden transition"
             :class="[
                 error
                     ? 'border-red-400 focus-within:ring-red-500/15'
@@ -25,10 +25,15 @@
                 :type="inputType"
                 :placeholder="placeholder"
                 class="flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400"
-                :class="hasPrefix ? 'pl-2' : ''"
+                :class="[hasPrefix ? 'pl-2' : '', inputClass]"
             />
-            <span v-if="hasSuffix" class="flex items-center pr-1 flex-shrink-0">
-                <slot name="suffix" />
+            <span
+                v-if="hasSuffix || isSearch"
+                class="flex items-center flex-shrink-0 pr-3"
+            >
+                <!-- :class="hasSuffix ? 'pr-3' : isSearch ? 'pr-3' : ''" -->
+                <slot v-if="hasSuffix" name="suffix" />
+                <Search v-else-if="isSearch" />
             </span>
         </div>
 
@@ -38,18 +43,19 @@
 
 <script setup lang="ts">
 import { computed, useSlots } from "vue";
+import Search from "../icons/search.vue";
 
 defineOptions({ name: "BaseInput" });
 
 const props = defineProps({
     modelValue: { type: [String, Number], default: "" },
-    label: { type: String, required: true },
+    label: { type: String, default: "" },
     placeholder: String,
     error: String,
     required: { type: Boolean, default: false },
     mode: { type: String, default: "text" },
-    countryCode: { type: String, default: "" },
-    stateCode: { type: String, default: "" },
+    inputClass: { type: String, default: "" },
+    isSearch: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["update:modelValue"]);

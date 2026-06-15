@@ -1,18 +1,17 @@
-
 import { defineStore } from "pinia";
-import { type SubscriptionRequest } from "~/api/subscription/SubscriptionService";
+import { type Agency } from "~/types/agency";
+import { type Branch } from "~/types/branch";
+import { type Subscription } from "~/types/subscription";
 
-export interface Subscription {
-    plans: any[];
-    selectedPlan: any;
-    selectedInterval: "" | "monthly" | "yearly";
-    payment_method: string;
-    branch: Branch;
-    agency: Agency;
-    errors?: any;
-    subscriptionPayload?: SubscriptionRequest | null;
-    settings?: any;
-}
+const defaultLocation = () => ({
+    address: "",
+    street: "",
+    city: "",
+    province: "",
+    country: "",
+    lat: 0,
+    lng: 0,
+});
 
 export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
     state: (): Subscription => ({
@@ -24,29 +23,21 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             name: "",
             contact_number: "",
             image: null,
-            street: "",
             description: "",
-            city: "",
-            province: "",
-            country: "",
-            lat: 0,
-            lng: 0,
+            location: defaultLocation(),
         } as Branch,
         agency: {
-            id: null as number | null | undefined,
+            id: undefined,
             name: "",
             description: "",
-            street: "",
-            city: "",
-            province: "",
-            country: "",
-            lat: 0,
-            lng: 0
+            location: defaultLocation(),
         } as Agency,
         settings: {
-            opening: "12:00 AM",
-            closing: "12:00 AM",
+            opening: "00:00 AM",
+            closing: "09:00 PM",
             currency: "PHP",
+            online_additional_fee: 0,
+            time_zone: "Asia/Manila"
         },
         errors: {},
         subscriptionPayload: null,
@@ -55,7 +46,6 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
     getters: {
         selectedPrice: (state) => {
             if (!state.selectedPlan) return null;
-
             return state.selectedInterval === "yearly"
                 ? state.selectedPlan.yearly_price?.price
                 : state.selectedPlan.monthly_price?.price;
@@ -87,12 +77,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
                 id: undefined,
                 name: "",
                 description: "",
-                street: "",
-                city: "",
-                province: "",
-                country: "",
-                lat: 0,
-                lng: 0,
+                location: defaultLocation(),
             } as Agency;
         },
 
@@ -103,29 +88,20 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
         reset() {
             this.selectedPlan = null;
             this.selectedInterval = "";
+
             this.branch = {
                 name: "",
                 contact_number: "",
                 image: null,
-                street: "",
                 description: "",
-                city: "",
-                province: "",
-                country: "",
-                lat: 0,
-                lng: 0,
+                location: defaultLocation(),
             } as Branch;
 
             this.agency = {
                 id: undefined,
                 name: "",
                 description: "",
-                street: "",
-                city: "",
-                province: "",
-                country: "",
-                lat: 0,
-                lng: 0,
+                location: defaultLocation(),
             } as Agency;
 
             this.settings = {

@@ -86,39 +86,45 @@
 
                 <template v-if="useGeolocation">
                     <LocationSelector
-                        :initial-lat="checkout.agency.lat || undefined"
-                        :initial-lng="checkout.agency.lng || undefined"
-                        :initial-street="checkout.agency.street || undefined"
-                        :initial-city="checkout.agency.city || undefined"
-                        :initial-province="
-                            checkout.agency.province || undefined
+                        :initial-lat="checkout.agency.location.lat || undefined"
+                        :initial-lng="checkout.agency.location.lng || undefined"
+                        :initial-street="
+                            checkout.agency.location.street || undefined
                         "
-                        :initial-country="checkout.agency.country || undefined"
+                        :initial-city="
+                            checkout.agency.location.city || undefined
+                        "
+                        :initial-province="
+                            checkout.agency.location.province || undefined
+                        "
+                        :initial-country="
+                            checkout.agency.location.country || undefined
+                        "
                         @location-selected="handleLocation"
                     />
                 </template>
 
                 <div v-else class="grid grid-cols-1 gap-2">
                     <LabelInput
-                        v-model="checkout.agency.street"
+                        v-model="checkout.agency.location.street"
                         label="Street"
                         placeholder="e.g. 123 Roxas Avenue"
                         :error="streetError"
                     />
                     <LabelInput
-                        v-model="checkout.agency.city"
+                        v-model="checkout.agency.location.city"
                         label="City"
                         placeholder="e.g. Davao City"
                         :error="cityError"
                     />
                     <LabelInput
-                        v-model="checkout.agency.province"
+                        v-model="checkout.agency.location.province"
                         label="Province"
                         placeholder="e.g. Davao del sur"
                         :error="provinceError"
                     />
                     <LabelInput
-                        v-model="checkout.agency.country"
+                        v-model="checkout.agency.location.country"
                         label="Country"
                         placeholder="e.g. Philippines"
                         :error="countryError"
@@ -234,10 +240,10 @@ const hasName = computed(() => !!checkout.agency.name);
 
 const hasLocation = computed(
     () =>
-        checkout.agency.street &&
-        checkout.agency.city &&
-        checkout.agency.province &&
-        checkout.agency.country,
+        checkout.agency.location?.street &&
+        checkout.agency.location?.city &&
+        checkout.agency.location?.province &&
+        checkout.agency.location?.country,
 );
 
 const agencyNameError = computed(() => {
@@ -248,16 +254,22 @@ const agencyNameError = computed(() => {
 });
 
 const streetError = computed(() =>
-    hasName.value && !checkout.agency.street ? "Street is required." : "",
+    hasName.value && !checkout.agency.location?.street
+        ? "Street is required."
+        : "",
 );
 const cityError = computed(() =>
-    hasName.value && !checkout.agency.city ? "City is required." : "",
+    hasName.value && !checkout.agency.location?.city ? "City is required." : "",
 );
 const provinceError = computed(() =>
-    hasName.value && !checkout.agency.province ? "Province is required." : "",
+    hasName.value && !checkout.agency.location?.province
+        ? "Province is required."
+        : "",
 );
 const countryError = computed(() =>
-    hasName.value && !checkout.agency.country ? "Country is required." : "",
+    hasName.value && !checkout.agency.location?.country
+        ? "Country is required."
+        : "",
 );
 
 const locationError = computed(() => {
@@ -298,12 +310,15 @@ const selectAgency = (agency: any) => {
     checkout.agency.id = agency.agency_id;
     checkout.agency.name = agency.name;
     checkout.agency.description = agency.description;
-    checkout.agency.lat = agency.locations?.lat ?? 0;
-    checkout.agency.lng = agency.locations?.lng ?? 0;
-    checkout.agency.street = agency.locations?.street ?? "";
-    checkout.agency.city = agency.locations?.city ?? "";
-    checkout.agency.province = agency.locations?.province ?? "";
-    checkout.agency.country = agency.locations?.country ?? "";
+    checkout.agency.location = {
+        address: agency.locations?.address ?? "",
+        street: agency.locations?.street ?? "",
+        city: agency.locations?.city ?? "",
+        province: agency.locations?.province ?? "",
+        country: agency.locations?.country ?? "",
+        lat: agency.locations?.lat ?? 0,
+        lng: agency.locations?.lng ?? 0,
+    };
 };
 
 const clearAgency = () => {
@@ -365,16 +380,20 @@ const handleLocation = ({
     province: string;
     country: string;
 }) => {
-    checkout.agency.lat = lat;
-    checkout.agency.lng = lng;
-    checkout.agency.street = street;
-    checkout.agency.city = city;
-    checkout.agency.province = province;
-    checkout.agency.country = country;
+    checkout.agency.location = {
+        street: street ?? "",
+        city: city ?? "",
+        province: province ?? "",
+        country: country ?? "",
+        lat: lat ?? 0,
+        lng: lng ?? 0,
+    };
 
-    delete checkout.errors?.agency_street;
-    delete checkout.errors?.agency_city;
-    delete checkout.errors?.agency_province;
-    delete checkout.errors?.agency_country;
+    if (checkout.errors) {
+        delete checkout.errors.agency_street;
+        delete checkout.errors.agency_city;
+        delete checkout.errors.agency_province;
+        delete checkout.errors.agency_country;
+    }
 };
 </script>

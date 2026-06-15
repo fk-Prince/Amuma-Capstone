@@ -2,7 +2,9 @@
     <div class="w-[65%]">
         <div class="flex flex-col gap-3 sticky top-6 w-[65%]">
             <div class="flex items-center justify-between">
-                <p class="text-sm font-medium text-slate-700">Order summary</p>
+                <p class="text-sm font-bold text-slate-700">
+                    Subscription summary
+                </p>
                 <span
                     class="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-green-50 text-green-700"
                 >
@@ -101,19 +103,19 @@
                     <div class="pl-5">
                         <SummaryRow
                             label="Street"
-                            :value="checkout.branch.street"
+                            :value="checkout.branch.location.street"
                         />
                         <SummaryRow
                             label="City"
-                            :value="checkout.branch.city"
+                            :value="checkout.branch.location.city"
                         />
                         <SummaryRow
                             label="Province"
-                            :value="checkout.branch.province"
+                            :value="checkout.branch.location.province"
                         />
                         <SummaryRow
                             label="Country"
-                            :value="checkout.branch.country"
+                            :value="checkout.branch.location.country"
                         />
                     </div>
                 </div>
@@ -157,19 +159,19 @@
                     <div class="pl-5">
                         <SummaryRow
                             label="Street"
-                            :value="checkout.agency.street"
+                            :value="checkout.agency.location.street"
                         />
                         <SummaryRow
                             label="City"
-                            :value="checkout.agency.city"
+                            :value="checkout.agency.location.city"
                         />
                         <SummaryRow
                             label="Province"
-                            :value="checkout.agency.province"
+                            :value="checkout.agency.location.province"
                         />
                         <SummaryRow
                             label="Country"
-                            :value="checkout.agency.country"
+                            :value="checkout.agency.location.country"
                         />
                     </div>
                 </div>

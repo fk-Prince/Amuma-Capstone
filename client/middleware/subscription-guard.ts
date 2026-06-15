@@ -17,7 +17,7 @@ export default defineNuxtRouteMiddleware((to) => {
     const code = to.query.code as string | undefined;
     const interval = to.query.interval as string | undefined;
 
-    if (!checkout.selectedPlan && (!code || !interval)) {
-        return navigateTo("/pricing");
-    }
+    // if (!checkout.selectedPlan && (!code || !interval)) {
+    //     return navigateTo("/pricing");
+    // }
 });

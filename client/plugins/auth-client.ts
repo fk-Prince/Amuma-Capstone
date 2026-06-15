@@ -18,6 +18,9 @@ export default defineNuxtPlugin(async () => {
     }
 
     try {
+        if (user?.value) {
+            return;
+        }
         const res = await authService.me();
         user.value = res;
     } catch (err) {

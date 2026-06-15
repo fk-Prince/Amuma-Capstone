@@ -65,7 +65,7 @@
         </div>
 
         <NuxtLink
-            to="/pricing/subscription-details"
+            to="/product/subscription-details"
             @click.prevent="$emit('select', $props)"
             :class="[
                 'w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 mb-6',

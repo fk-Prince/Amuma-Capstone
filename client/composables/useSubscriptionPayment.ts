@@ -1,4 +1,5 @@
-import { subscriptionService, type SubscriptionRequest } from "~/api/subscription/SubscriptionService";
+import { subscriptionService } from "~/api/subscription/SubscriptionService";
+import { type SubscriptionRequest } from "~/types/subscription";
 import { use3DS } from "./use3DS";
 const { handle3DS } = use3DS();
 
@@ -10,6 +11,7 @@ export interface CardDetails {
     cvc: string,
     firstName: string,
     lastName: string,
+    email: string
 }
 
 
@@ -23,6 +25,7 @@ export async function cardPayment(
     window.Xendit.setPublishableKey(config.public.xenditPublicKey);
     const res = await subscriptionService.retrieveSubscriptionDetail(subData);
 
+
     if (!res.status) return;
 
     const cardData = {
@@ -33,9 +36,9 @@ export async function cardPayment(
             Math.floor(new Date().getFullYear() / 100) * 100 + Number(card.expYear)
         ),
         card_cvc: card.cvc,
-        card_holder_first_name: res.user.first_name,
-        card_holder_last_name: res.user.last_name,
-        card_holder_email: res.user.email,
+        card_holder_first_name: card.firstName,
+        card_holder_last_name: card.lastName,
+        card_holder_email: card.email,
     };
 
     return new Promise((resolve, reject) => {
@@ -63,7 +66,7 @@ export async function cardPayment(
                             popupClose?.();
                             closeModal.value?.();
                             await navigateTo({
-                                path: "/pricing/subscription-summary",
+                                path: "/product/subscription-summary",
                                 query: { status: result.status },
                             });
                             resolve(result);

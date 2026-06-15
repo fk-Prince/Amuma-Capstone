@@ -75,10 +75,10 @@
                             <template v-if="field.key === 'address'">
                                 {{
                                     [
-                                        checkout.branch.street,
-                                        checkout.branch.city,
-                                        checkout.branch.province,
-                                        checkout.branch.country,
+                                        checkout.branch.location.street,
+                                        checkout.branch.location.city,
+                                        checkout.branch.location.province,
+                                        checkout.branch.location.country,
                                     ]
                                         .filter(Boolean)
                                         .join(", ") || "—"
@@ -143,10 +143,10 @@
                         >
                             {{
                                 [
-                                    checkout.agency.street,
-                                    checkout.agency.city,
-                                    checkout.agency.province,
-                                    checkout.agency.country,
+                                    checkout.agency.location.street,
+                                    checkout.agency.location.city,
+                                    checkout.agency.location.province,
+                                    checkout.agency.location.country,
                                 ]
                                     .filter(Boolean)
                                     .join(", ") || "—"
@@ -189,12 +189,9 @@
 
 <script setup lang="ts">
 import { useSubscriptionCheckout } from "~/stores/subscription";
-import { branchFields } from "~/stores/branch";
-import { agencyFields } from "~/stores/agency";
-import {
-    subscriptionService,
-    type SubscriptionRequest,
-} from "~/api/subscription/SubscriptionService";
+import { branchFields, agencyFields } from "~/utils/fields";
+import { subscriptionService } from "~/api/subscription/SubscriptionService";
+import { type SubscriptionRequest } from "~/types/subscription";
 
 const checkout = useSubscriptionCheckout();
 const branchImagePreview = computed(() =>
@@ -212,33 +209,33 @@ const send = async () => {
 
             //BRANCH DATA
             branch_name: checkout.branch.name,
-            branch_street: checkout.branch.street,
-            branch_city: checkout.branch.city,
-            branch_province: checkout.branch.province,
-            branch_country: checkout.branch.country,
             branch_contact_number: checkout.branch.contact_number,
             branch_image: checkout.branch.image,
             branch_description: checkout.branch.description,
             branch_settings: checkout.settings,
-            branch_latitude: checkout.branch.lat,
-            branch_longitude: checkout.branch.lng,
+            branch_street: checkout.branch.location.street,
+            branch_city: checkout.branch.location.city,
+            branch_province: checkout.branch.location.province,
+            branch_country: checkout.branch.location.country,
+            branch_latitude: checkout.branch.location.lat,
+            branch_longitude: checkout.branch.location.lng,
 
             // AGENCY DATA
             agency_id: checkout.agency.id,
             agency_name: checkout.agency.name,
             agency_description: checkout.agency.description,
-            agency_street: checkout.agency.street,
-            agency_city: checkout.agency.city,
-            agency_province: checkout.agency.province,
-            agency_country: checkout.agency.country,
-            agency_latitude: checkout.agency.lat,
-            agency_longitude: checkout.agency.lng,
+            agency_street: checkout.agency.location.street ?? "",
+            agency_city: checkout.agency.location.city ?? "",
+            agency_province: checkout.agency.location.province ?? "",
+            agency_country: checkout.agency.location.country ?? "",
+            agency_latitude: checkout.agency.location.lat ?? undefined,
+            agency_longitude: checkout.agency.location.lng ?? undefined,
         };
 
         await subscriptionService.validateSubscription(payload);
         checkout.subscriptionPayload = payload;
         await navigateTo({
-            path: "/pricing/subscription-details/checkout",
+            path: "/product/subscription-details/checkout",
             query: {
                 code: checkout.selectedPlan?.plan_id,
                 interval: checkout.selectedInterval,

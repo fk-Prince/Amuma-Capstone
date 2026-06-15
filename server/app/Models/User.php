@@ -78,4 +78,33 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public function services()
+    {
+        return $this->belongsToMany(
+            Service::class,
+            'staff_services',
+            'user_id',
+            'service_id'
+        )->withPivot('is_active');
+    }
+
+    public function branches()
+    {
+        return $this->belongsToMany(
+            Branch::class,
+            'user_branches',
+            'user_id',
+            'branch_id'
+        )->withPivot('type');
+    }
+
+    public function recipient()
+    {
+        return $this->hasMany(Notifiable::class, 'user_id', 'to_user_id');
+    }
+
+    public function sender()
+    {
+        return $this->hasMany(Notifiable::class, 'user_id', 'from_user_id');
+    }
 }

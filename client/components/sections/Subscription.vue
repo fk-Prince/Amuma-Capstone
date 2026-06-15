@@ -196,8 +196,8 @@
                         <h2 class="font-semibold text-lg text-gray-900">
                             Agency Information
                             <p class="text-sm text-gray-500 font-normal">
-                                Update your agency profile, branding, and
-                                contact details.
+                                Configure your agency profile, branding, and
+                                agency details.
                             </p>
                         </h2>
                         <div class="flex items-center gap-2">
@@ -232,8 +232,8 @@ const loading = ref(true);
 
 const isPlanOpen = ref(true);
 const isBillingOpen = ref(true);
-const isBranchOpen = ref(false);
-const isBranchConfigureOpen = ref(false);
+const isBranchOpen = ref(true);
+const isBranchConfigureOpen = ref(true);
 const isAgencyOpen = ref(false);
 
 const errorSectionMap: Record<string, { open: typeof isPlanOpen; id: string }> =

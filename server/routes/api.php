@@ -2,9 +2,12 @@
 
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BranchController;
 use App\Http\Controllers\NominatimController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SubscriptionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -30,15 +33,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/subscription-validate', [SubscriptionController::class, 'validateSubscription']);
 
     Route::apiResources([
-        'agencies' => AgencyController::class
+        'agencies' => AgencyController::class,
+        'services' => ServiceController::class,
+        'reviews' => ReviewController::class,
     ]);
 });
 
-
-Route::apiResources([
-    'plans' => PlanController::class
-]);
-
+Route::get('/plans', [PlanController::class, 'index']);
+Route::get('/branches', [BranchController::class, 'index']);
 
 Route::get('/reverse-geocode', [NominatimController::class, 'reverse']);
 Route::get('/nereast-street', [NominatimController::class, 'nearest']);

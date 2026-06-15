@@ -13,7 +13,7 @@
             >
                 <div
                     v-if="open"
-                    class="absolute z-50 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden py-1"
+                    class="absolute z-50 mt-2 border border-gray-100 rounded-2xl shadow-xl overflow-hidden py-1"
                     :class="[alignClass, widthClass]"
                 >
                     <slot :close="close" />

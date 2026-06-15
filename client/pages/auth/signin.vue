@@ -8,9 +8,7 @@
 import SigninSection from "~/components/sections/SigninSection.vue";
 definePageMeta({
     middleware: "auth-client",
-    navVariant: "logo",
-    navHeaderClass:
-        "fixed top-0 left-0 w-full h-[90px] bg-transparent z-[9999]",
+    navVariant: 2,
     footer: false,
 });
 

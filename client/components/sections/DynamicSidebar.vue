@@ -11,7 +11,7 @@
             >
                 <div
                     v-if="open"
-                    class="fixed inset-0 z-[60] md:hidden bg-black/50 backdrop-blur-sm"
+                    class="fixed inset-0 z-[60] lg:hidden bg-black/50 backdrop-blur-sm"
                     @click="$emit('close')"
                 />
             </Transition>
@@ -26,7 +26,7 @@
             >
                 <div
                     v-if="open"
-                    class="fixed left-0 top-0 h-full w-72 bg-white shadow-2xl z-[70] flex flex-col md:hidden"
+                    class="fixed left-0 top-0 h-full w-72 bg-white shadow-2xl z-[70] flex flex-col lg:hidden"
                 >
                     <div
                         class="flex items-center justify-between px-5 h-[90px] border-b"
@@ -103,7 +103,7 @@
 
         <div
             v-if="variant === 2"
-            class="hidden md:flex h-full w-72 bg-white shadow-2xl flex-col shrink-0"
+            class="hidden lg:flex h-full w-72 bg-white shadow-2xl flex-col shrink-0"
         >
             <nav class="flex flex-col px-4 py-6 gap-1 flex-1 overflow-y-auto">
                 <NuxtLink

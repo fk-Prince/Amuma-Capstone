@@ -2,9 +2,57 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Service extends Model
 {
-    //
+    use HasFactory, HasUuids;
+
+    protected $primaryKey = 'service_id';
+
+    protected $fillable = [
+        'branch_id',
+        'price_id',
+        'service_name',
+        'maximum_duration',
+        'is_available',
+        'type',
+    ];
+    public function uniqueIds()
+    {
+        return ['service_uuid'];
+    }
+
+    protected $casts = [
+        'is_available' => 'boolean',
+        'maximum_duration' => 'datetime:H:i:s',
+    ];
+
+    /**
+     * Branch that owns the service.
+     */
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
+    }
+
+    /**
+     * Price assigned to the service.
+     */
+    public function price()
+    {
+        return $this->belongsTo(Price::class, 'price_id', 'price_id');
+    }
+
+    public function staff()
+    {
+        return $this->belongsToMany(
+            User::class,
+            'staff_services',
+            'service_id',
+            'user_id'
+        )->withPivot('is_active');
+    }
 }

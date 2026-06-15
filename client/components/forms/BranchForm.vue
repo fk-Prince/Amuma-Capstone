@@ -6,7 +6,7 @@
                     v-model="checkout.branch.name"
                     label="Branch Name"
                     required
-                    @update:modelValue="clearError('branch_name')"
+                    @update:modelValue="checkout.clearError('branch_name')"
                     :error="checkout.errors?.branch_name"
                 />
 
@@ -14,14 +14,18 @@
                     v-model="checkout.branch.description"
                     label="Description"
                     required
-                    @update:modelValue="clearError('branch_description')"
+                    @update:modelValue="
+                        checkout.clearError('branch_description')
+                    "
                     :error="checkout.errors?.branch_description"
                 />
 
                 <LabelInput
                     v-model="checkout.branch.contact_number"
                     label="Contact Number"
-                    @update:modelValue="clearError('branch_contact_number')"
+                    @update:modelValue="
+                        checkout.clearError('branch_contact_number')
+                    "
                     :error="checkout.errors?.branch_contact_number"
                 />
             </div>
@@ -29,7 +33,7 @@
             <div class="flex flex-col gap-1">
                 <div class="flex justify-between">
                     <label class="block text-sm font-semibold text-slate-700"
-                        >Branch Logo</label
+                        >Branch Display Image</label
                     >
                     <button
                         v-if="checkout.branch.image"
@@ -120,43 +124,49 @@
 
             <template v-if="useGeolocation">
                 <LocationSelector
-                    :initial-lat="checkout.branch.lat || undefined"
-                    :initial-lng="checkout.branch.lng || undefined"
-                    :initial-street="checkout.branch.street || undefined"
-                    :initial-city="checkout.branch.city || undefined"
-                    :initial-province="checkout.branch.province || undefined"
-                    :initial-country="checkout.branch.country || undefined"
+                    :initial-lat="checkout.branch.location?.lat || undefined"
+                    :initial-lng="checkout.branch.location?.lng || undefined"
+                    :initial-street="
+                        checkout.branch.location?.street || undefined
+                    "
+                    :initial-city="checkout.branch.location?.city || undefined"
+                    :initial-province="
+                        checkout.branch.location?.province || undefined
+                    "
+                    :initial-country="
+                        checkout.branch.location?.country || undefined
+                    "
                     @location-selected="handleLocation"
                 />
             </template>
 
             <div v-else class="grid grid-cols-1 gap-2">
                 <LabelInput
-                    v-model="checkout.branch.street"
+                    v-model="checkout.branch.location.street"
                     label="Street"
                     placeholder="e.g. 123 Roxas Avenue"
-                    @update:modelValue="clearError('branch_street')"
+                    @update:modelValue="checkout.clearError('branch_street')"
                     :error="checkout.errors?.branch_street"
                 />
                 <LabelInput
-                    v-model="checkout.branch.city"
+                    v-model="checkout.branch.location.city"
                     label="City"
                     placeholder="e.g. Davao City"
-                    @update:modelValue="clearError('branch_city')"
+                    @update:modelValue="checkout.clearError('branch_city')"
                     :error="checkout.errors?.branch_city"
                 />
                 <LabelInput
-                    v-model="checkout.branch.province"
+                    v-model="checkout.branch.location.province"
                     label="Province"
                     placeholder="e.g. Davao del sur"
-                    @update:modelValue="clearError('branch_province')"
+                    @update:modelValue="checkout.clearError('branch_province')"
                     :error="checkout.errors?.branch_province"
                 />
                 <LabelInput
-                    v-model="checkout.branch.country"
+                    v-model="checkout.branch.location.country"
                     label="Country"
                     placeholder="e.g. Philippines"
-                    @update:modelValue="clearError('branch_country')"
+                    @update:modelValue="checkout.clearError('branch_country')"
                     :error="checkout.errors?.branch_country"
                 />
             </div>
@@ -234,12 +244,14 @@ const handleLocation = ({
     province: string;
     country: string;
 }) => {
-    checkout.branch.lat = lat;
-    checkout.branch.lng = lng;
-    checkout.branch.street = street;
-    checkout.branch.city = city;
-    checkout.branch.province = province;
-    checkout.branch.country = country;
+    checkout.branch.location = {
+        street: street ?? "",
+        city: city ?? "",
+        province: province ?? "",
+        country: country ?? "",
+        lat: lat ?? 0,
+        lng: lng ?? 0,
+    };
 
     if (checkout.errors) {
         delete checkout.errors.branch_street;

@@ -10,9 +10,17 @@
                     >*</span
                 >
             </label>
-            <button
+            <!-- <button
                 type="button"
                 class="w-full border rounded-lg px-4 py-2 flex items-center gap-2 bg-white text-left"
+                @click="toggleOpen"
+            > -->
+            <button
+                type="button"
+                :class="[
+                    'w-full border rounded-lg flex items-center gap-2 bg-white text-left transition',
+                    props.inputClass ?? 'px-4 py-2',
+                ]"
                 @click="toggleOpen"
             >
                 <span v-if="selectedOption" class="flex items-center gap-2">
@@ -47,7 +55,7 @@
             v-if="isOpen"
             class="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg"
         >
-            <div class="p-2 border-b">
+            <div class="p-2 border-b" v-if="searchBar">
                 <input
                     ref="searchInput"
                     v-model="search"
@@ -106,6 +114,8 @@ const props = defineProps<{
     placeholder?: string;
     searchPlaceholder?: string;
     required?: boolean;
+    searchBar?: boolean;
+    inputClass?: string;
 }>();
 
 const emit = defineEmits(["update:modelValue"]);

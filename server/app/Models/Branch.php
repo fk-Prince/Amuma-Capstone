@@ -21,7 +21,12 @@ class Branch extends Model
         'location_id',
         'description',
         'contact_number',
+        'settings',
         'image',
+    ];
+
+    protected $casts = [
+        'settings' => 'array',
     ];
     public function uniqueIds()
     {
@@ -46,5 +51,26 @@ class Branch extends Model
     public function agencies()
     {
         return $this->belongsTo(Agency::class, 'agency_id', 'agency_id');
+    }
+
+    public function users()
+    {
+        return $this->belongsToMany(
+            User::class,
+            'user_branches',
+            'branch_id',
+            'user_id'
+        )->withPivot('type');
+    }
+
+    public function branch()
+    {
+        return $this->hasMany(Notification::class, 'branch_id', 'branch_id');
+    }
+
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class, 'branch_id', 'branch_id');
     }
 }

@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('location_id')->nullable()->constrained('locations', 'location_id');
             $table->string('name')->unique();
             $table->string('description');
+            $table->json('settings')->nullable();
             $table->string('contact_number')->nullable();
             $table->binary('image')->nullable(true);
             $table->timestamps();

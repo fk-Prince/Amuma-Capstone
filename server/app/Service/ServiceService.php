@@ -5,85 +5,79 @@ namespace App\Service;
 use App\Repository\ServiceRepository;
 use App\Http\Resources\ServiceResource;
 use App\Models\User;
+use App\Repository\BranchRepository;
+use App\Repository\CategoryRepository;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ServiceService
 {
     private ServiceRepository $serviceRepository;
+    private BranchRepository $branchRepository;
+    private CategoryRepository $categoryRepository;
+    private PriceService $priceService;
 
-    public function __construct(ServiceRepository $serviceRepository) 
+    public function __construct(ServiceRepository $serviceRepository, BranchRepository $branchRepository, CategoryRepository $categoryRepository, PriceService $priceService)
     {
         $this->serviceRepository = $serviceRepository;
+        $this->branchRepository = $branchRepository;
+        $this->categoryRepository = $categoryRepository;
+        $this->priceService = $priceService;
     }
 
-    public function createService(User $actor, array $payload)
+    public function createService(array $payload, User $user)
     {
-        if (! $actor->hasRole('superadmin')) {
-            $payload['company_id'] = $actor->company_id;
-        }
+        $user->load('roles');
 
-        $model = $this->serviceRepository->create($payload);
-        return new ServiceResource($model);
-    }
+        $hasRole = $user->roles->contains(
+            fn($role) => in_array($role->role_type, ['branch_owner', 'administrator'])
+        );
 
-    public function listService(User $actor, int $perPage = 15)
-    {
-        $companyId = $actor->hasRole('superadmin') ? null : $actor->company_id;
-
-        $collection = $this->serviceRepository->paginate($perPage, $companyId);
-        return ServiceResource::collection($collection);
-    }
-
-    /**
-     * Helper to ensure the actor owns the record
-     */
-    private function findScoped(User $actor, string $uuid)
-    {
-        $model = $this->serviceRepository->findByUuid($uuid);
-        
-        if (! $model) {
-            abort(404, 'Resource not found');
-        }
-
-        if (! $actor->hasRole('superadmin')) {
-            if ($model->company_id !== $actor->company_id) {
-                abort(403, 'Unauthorized access to this resource.');
-            }
-        }
-        return $model;
-    }
-
-    public function getService(User $actor, string $uuid)
-    {
-        $model = $this->findScoped($actor, $uuid);
-        return new ServiceResource($model);
-    }
-
-    public function updateService(User $actor, string $uuid, array $payload)
-    {
-        $this->findScoped($actor, $uuid);
-        
-        unset($payload['company_id']); 
-
-        $model = $this->serviceRepository->update($uuid, $payload);
-        return new ServiceResource($model);
-    }
-
-    public function deleteService(User $actor, string $uuid)
-    {
-        $this->findScoped($actor, $uuid);
-        $this->serviceRepository->delete($uuid);
-        return true;
-    }
-
-    public function restoreService(User $actor, string $uuid)
-    {
-        $model = $this->serviceRepository->restore($uuid);
-
-        if (! $actor->hasRole('superadmin') && $model->company_id !== $actor->company_id) {
-            $model->delete(); 
+        if (!$hasRole) {
             abort(403, 'Unauthorized');
         }
-        
-        return new ServiceResource($model);
+
+        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
+
+        if (!$branch) {
+            return response()->json([
+                'message' => 'Branch does not exist'
+            ], 404);
+        }
+
+        $existingService = $this->serviceRepository->existsInBranch($branch->branch_id, 'service_name', $payload['service_name']);
+        if ($existingService) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Service already exists in this branch',
+            ], 409);
+        }
+
+        return DB::transaction(function () use ($payload, $branch) {
+
+            $categoryData = !empty($payload['category_id'])
+                ? ['category_id' => $payload['category_id'], 'branch_id' => $branch->branch_id]
+                : ['category_name' => $payload['category_name'], 'branch_id' => $branch->branch_id];
+
+            $category = $this->categoryRepository->create($categoryData);
+
+            $price_id = $this->priceService->createPrice($payload['price']);
+
+            $service = $this->serviceRepository->create([
+                'category_id'      => $category->category_id,
+                'price_id'         => $price_id,
+                'branch_id'        => $branch->branch_id,
+                'service_name'     => $payload['service_name'],
+                'maximum_duration' => $payload['maximum_duration'],
+                'is_available'     => $payload['is_available'] ?? true,
+                'type'             => $payload['type'],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Service created successfully',
+                'data'    => $service
+            ], 201);
+        });
     }
 }
