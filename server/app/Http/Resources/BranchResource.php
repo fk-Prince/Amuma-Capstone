@@ -46,8 +46,8 @@ class BranchResource extends JsonResource
             'subscriptions' => $this->subscriptions->map(function ($subscription) {
                 return [
                     'status' => $subscription->status,
-                    'plan_code' => optional($subscription->plan)->plan_code,
-                    'plan_name' => optional($subscription->plan)->name,
+                    'plan_code' => optional($subscription->plans)->plan_code,
+                    'plan_name' => optional($subscription->plans)->name,
                 ];
             })->values()->all(),
         ];

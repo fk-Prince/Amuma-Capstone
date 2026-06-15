@@ -11,7 +11,6 @@ export interface Branch {
 
 
 
-
 export interface BranchRetrieve {
     branch_id: number;
     uuid: string;
@@ -35,8 +34,6 @@ interface BranchAvailability {
 }
 
 interface BranchSubscription {
-    subscription_id: number;
-    billing_interval: string;
     status: string;
     plan_code: string | null;
     plan_name: string | null;

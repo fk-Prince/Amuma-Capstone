@@ -15,13 +15,15 @@ class BranchController extends Controller
         $this->branchService = $branchService;
     }
 
-    public function index(Request $request)
+
+
+    public function retrieveFeaturedBranch(Request $request)
     {
         return $this->branchService->getBranches($request->all());
     }
 
-    public function retrieveBranches(Request $request)
+    public function retrieveFilteredBranch(Request $request)
     {
-        return;
+        return $this->branchService->getBranches($request->all());
     }
 }

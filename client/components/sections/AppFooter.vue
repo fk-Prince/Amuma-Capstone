@@ -133,14 +133,14 @@ import { computed } from "vue";
 const currentYear = computed(() => new Date().getFullYear());
 
 const productLinks = [
-    { label: "Pricing", to: "/pricing" },
-    { label: "Booking", to: "/bookings" },
-    { label: "Company", to: "/company" },
-    { label: "Docs", to: "/docs" },
+    { label: "Product", to: "/" },
+    { label: "Booking", to: "/" },
+    { label: "Company", to: "/" },
+    { label: "Docs", to: "/" },
 ];
 
 const companyLinks = [
-    { label: "About", to: "/company" },
-    { label: "Contact", to: "/contact" },
+    { label: "About", to: "/" },
+    { label: "Contact", to: "/" },
 ];
 </script>

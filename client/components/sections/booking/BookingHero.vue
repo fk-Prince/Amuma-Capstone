@@ -155,6 +155,7 @@
                     </div>
 
                     <BaseButton
+                        @click="searchClick"
                         class="mt-6 w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg transition-all"
                     >
                         Search Available Homecare
@@ -188,9 +189,11 @@ const searchLocation = ref("");
 
 const handleLocation = async (data: any) => {
     searchLocation.value = data.label;
+};
 
+const searchClick = async () => {
     await navigateTo({
-        path: "/booking/filter",
+        path: "/booking/search",
         query: {
             service: searchName.value,
             location: searchLocation.value,

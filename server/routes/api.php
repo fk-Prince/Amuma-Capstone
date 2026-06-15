@@ -39,8 +39,12 @@ Route::middleware('auth:sanctum')->group(function () {
     ]);
 });
 
+Route::prefix('branches')->group(function () {
+    Route::get('/featured', [BranchController::class, 'retrieveFeaturedBranch']);
+    Route::get('/filtered', [BranchController::class, 'retrieveFilteredBranch']);
+});
+
 Route::get('/plans', [PlanController::class, 'index']);
-Route::get('/branches', [BranchController::class, 'index']);
 
 Route::get('/reverse-geocode', [NominatimController::class, 'reverse']);
 Route::get('/nereast-street', [NominatimController::class, 'nearest']);
