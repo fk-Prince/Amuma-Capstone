@@ -12,6 +12,7 @@ use App\Repository\AgencyRepository;
 use App\Repository\LocationRepository;
 use App\Repository\RoleRepository;
 use App\Repository\UserRepository;
+use App\Service\Utils\NominatimService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -27,6 +28,7 @@ class SubscriptionService
     private RoleRepository $roleRepository;
     private UserRepository $userRepository;
     private LocationRepository $locationRepository;
+    private NominatimService $nominatimService;
     private string $secretKey;
 
     public function __construct(
@@ -36,7 +38,8 @@ class SubscriptionService
         AgencyRepository $agencyRepository,
         RoleRepository $roleRepository,
         UserRepository $userRepository,
-        LocationRepository $locationRepository
+        LocationRepository $locationRepository,
+        NominatimService $nominatimService
     ) {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->planRepository = $planRepository;
@@ -45,6 +48,7 @@ class SubscriptionService
         $this->roleRepository = $roleRepository;
         $this->userRepository = $userRepository;
         $this->locationRepository =  $locationRepository;
+        $this->nominatimService = $nominatimService;
         $this->secretKey = config('services.xendit.secret_key');
     }
 
@@ -80,13 +84,13 @@ class SubscriptionService
         $totalAmount = (float) data_get($priceModel, 'price', 0);
 
         $endDate = $billing_interval->addTo(Carbon::now())->toDateTimeString();
+
         return [
             'user' => $user,
             'plan' => $plan,
             'branch' => [
                 'name'           => $payload['branch_name'] ?? null,
                 'street'         => $payload['branch_street'] ?? null,
-                'postal_code'    => $payload['branch_postal_code'] ?? null,
                 'description'    => $payload['branch_description'] ?? null,
                 'city'           => $payload['branch_city'] ?? null,
                 'province'       => $payload['branch_province'] ?? null,
@@ -102,7 +106,6 @@ class SubscriptionService
                 'name'           => $payload['agency_name'] ?? null,
                 'description'    => $payload['agency_description'] ?? null,
                 'street'         => $payload['agency_street'] ?? null,
-                'postal_code'    => $payload['agency_postal_code'] ?? null,
                 'city'           => $payload['agency_city'] ?? null,
                 'province'       => $payload['agency_province'] ?? null,
                 'country'        => $payload['agency_country'] ?? null,
@@ -140,6 +143,16 @@ class SubscriptionService
                 if (!empty($agencyId)) {
                     $agencyData = $this->agencyRepository->findAgencyByField('agency_id', $agencyId);
                 }
+                $agencyLatitude = $agency['latitude'] ?? null;
+                $agencyLongitude = $agency['longitude'] ?? null;
+                if (
+                    empty($agencyLatitude) ||
+                    empty($agencyLongitude)
+                ) {
+                    $geo = $this->nominatimService->geocodeAddress(collect($agency)->only(['street', 'city', 'province', 'country'])->toArray());
+                    $agencyLatitude = $geo['lat'] ?? null;
+                    $agencyLongitude = $geo['lng'] ?? null;
+                }
 
                 if (empty($agencyData) && !empty($agencyName)) {
                     $agencyLocation = $this->locationRepository->create([
@@ -147,8 +160,8 @@ class SubscriptionService
                         'city'      => $agency['city'] ?? null,
                         'province'  => $agency['province'] ?? null,
                         'country'   => $agency['country'] ?? null,
-                        'latitude'  => $agency['latitude'] ?? null,
-                        'longitude' => $agency['longitude'] ?? null,
+                        'latitude'  => $agencyLatitude,
+                        'longitude' => $agencyLongitude,
                     ]);
 
                     $agencyData = $this->agencyRepository->createAgency([
@@ -159,13 +172,24 @@ class SubscriptionService
                     ]);
                 }
 
+
+                $branchLatitude = $branch['latitude'] ?? null;
+                $branchLongitude = $branch['longitude'] ?? null;
+                if (
+                    empty($branchLatitude) ||
+                    empty($branchLongitude)
+                ) {
+                    $geo = $this->nominatimService->geocodeAddress(collect($branch)->only(['street', 'city', 'province', 'country'])->toArray());
+                    $branchLatitude = $geo['lat'] ?? null;
+                    $branchLongitude = $geo['lng'] ?? null;
+                }
                 $branchLocation = $this->locationRepository->create([
                     'street'   => $branch['street'] ?? null,
                     'city'     => $branch['city'] ?? null,
                     'province' => $branch['province'] ?? null,
                     'country'  => $branch['country'] ?? null,
-                    'latitude'  => $branch['latitude'] ?? null,
-                    'longitude' => $branch['longitude'] ?? null,
+                    'latitude'  =>  $branchLatitude,
+                    'longitude' => $branchLongitude,
                 ]);
 
                 $branchData = $this->branchRepository->create([
@@ -224,6 +248,7 @@ class SubscriptionService
                     ],
                 ]);
 
+                Log::info($e);
                 return response()->json([
                     'status'  => false,
                     'message' => 'Subscription failed. Your payment has been refunded.',

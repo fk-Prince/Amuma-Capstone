@@ -138,7 +138,7 @@ const props = withDefaults(
             { label: "Product", to: "/product" },
             { label: "Booking", to: "/booking" },
             { label: "Documentation", to: "/" },
-            { label: "Company", to: "/" },
+            { label: "Company", to: "/company" },
         ],
     },
 );
@@ -149,9 +149,12 @@ const variant = computed(() => route.meta.navVariant ?? 1);
 const header = computed(() => {
     switch (variant.value) {
         case 1:
-            return "w-full md:px-[5%] lg:px-[10%] bg-transparent h-[90px]  border-1 border-b";
+            return "w-full md:px-[5%] lg:px-[10%] bg-transparent h-[90px] border-1 border-b";
+
         case 2:
-            return "fixed top-0 left-[2%] w-full h-[90px] bg-transparent z-[9999]";
+            return "absolute top-0 left-1/4 -translate-x-1/4 w-full h-[90px] bg-transparent z-[9999]";
+        default:
+            return "";
     }
 });
 </script>

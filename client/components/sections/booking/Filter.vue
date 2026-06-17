@@ -6,7 +6,7 @@
             <button
                 @click="isHide = !isHide"
                 class="absolute z-100 left-0 rotate-180 -bottom-9 w-9 h-9 rounded-full border bg-accent flex items-center justify-center shadow-md transition-transform duration-300"
-                :class="isHide ? ' -bottom-6' : '-bottom-4'"
+                :class="isHide ? '-bottom-6' : '-bottom-4'"
             >
                 <Dropdown :isOpen="isHide" />
             </button>
@@ -19,9 +19,8 @@
                     <div>
                         <label
                             class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                            >Search</label
                         >
-                            Search
-                        </label>
                         <BaseInput
                             v-model="searchName"
                             :is-search="true"
@@ -33,16 +32,18 @@
                     <div>
                         <label
                             class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                            >Location</label
                         >
-                            Location
-                        </label>
                         <BaseInput
                             v-model="searchLocation"
                             placeholder="Choose City / Area"
                             input-class="px-4 py-3 w-full"
                         >
                             <template #suffix>
-                                <Location clickable />
+                                <Location
+                                    clickable
+                                    @get-location="handleLocation"
+                                />
                             </template>
                         </BaseInput>
                     </div>
@@ -50,9 +51,8 @@
                     <div>
                         <label
                             class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                            >Care Type</label
                         >
-                            Care Type
-                        </label>
                         <Combobox
                             v-model="careType"
                             :items="careTypeList"
@@ -78,7 +78,7 @@
                     <button
                         v-for="sort in sortOptions"
                         :key="sort.value"
-                        @click="activeSortOption = sort.value"
+                        @click="handleSortChange(sort.value)"
                         :class="[
                             'px-4 py-1.5 rounded-full text-sm font-medium border transition-colors',
                             activeSortOption === sort.value
@@ -107,9 +107,8 @@
                 <div>
                     <label
                         class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                        >Search</label
                     >
-                        Search
-                    </label>
                     <BaseInput
                         v-model="searchName"
                         :is-search="true"
@@ -121,16 +120,18 @@
                 <div>
                     <label
                         class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                        >Location</label
                     >
-                        Location
-                    </label>
                     <BaseInput
                         v-model="searchLocation"
                         placeholder="Choose City / Area"
                         input-class="px-4 py-2.5"
                     >
                         <template #suffix>
-                            <Location clickable />
+                            <Location
+                                clickable
+                                @get-location="handleLocation"
+                            />
                         </template>
                     </BaseInput>
                 </div>
@@ -138,9 +139,8 @@
                 <div>
                     <label
                         class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                        >Care Type</label
                     >
-                        Care Type
-                    </label>
                     <Combobox
                         v-model="careType"
                         :items="careTypeList"
@@ -152,15 +152,13 @@
                 <div>
                     <label
                         class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                        >Sort By</label
                     >
-                        Sort By
-                    </label>
-
                     <div class="flex gap-2 flex-wrap">
                         <button
                             v-for="sort in sortOptions"
                             :key="sort.value"
-                            @click="activeSortOption = sort.value"
+                            @click="handleSortChange(sort.value)"
                             class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all"
                             :class="
                                 activeSortOption === sort.value
@@ -193,19 +191,33 @@ import Search from "~/components/icons/search.vue";
 import Dropdown from "~/components/icons/dropdown.vue";
 
 const route = useRoute();
+const router = useRouter();
 
 const isHide = ref(false);
-const activeSortOption = ref("recommended");
+const activeSortOption = ref((route.query.sort as string) ?? "recommended");
 
 const props = defineProps<{
     searchName?: string;
     searchLocation?: string;
+    lat?: number;
+    long?: number;
     careType?: string;
+    perPage?: number;
 }>();
 
-const searchName = computed(() => props.searchName ?? "");
-const searchLocation = computed(() => props.searchLocation ?? "");
-const careType = computed(() => props.careType ?? "all");
+const searchName = ref((route.query.name as string) ?? props.searchName ?? "");
+const searchLocation = ref(
+    (route.query.city as string) ?? props.searchLocation ?? "",
+);
+const careType = ref(
+    (route.query.plan_name as string) ?? props.careType ?? "all",
+);
+const lat = ref<string | number>(
+    (route.query.lat as string) ?? props.lat ?? "",
+);
+const long = ref<string | number>(
+    (route.query.long as string) ?? props.long ?? "",
+);
 
 const careTypeList = [
     { label: "All (Homecare & Inhouse Facility)", value: "all" },
@@ -222,16 +234,37 @@ const sortOptions = [
     { label: "Price: High to Low", value: "price_desc" },
 ];
 
-const handleSearch = async () => {
-    await navigateTo({
-        path: "/booking/filter",
+const updateQuery = () => {
+    router.replace({
         query: {
-            service: searchName.value,
-            location: searchLocation.value,
-            type: careType.value,
+            ...route.query,
+            name: searchName.value,
+            city: searchLocation.value,
+            lat: lat.value,
+            long: long.value,
+            plan_name: careType.value === "all" ? "Hybrid" : careType.value,
             sort: activeSortOption.value,
+            per_page: props.perPage ?? 10,
         },
     });
+};
+
+const handleLocation = (data: any) => {
+    searchLocation.value = data.label;
+    lat.value = data.lat ?? "";
+    long.value = data.long ?? "";
+    updateQuery();
+};
+
+const handleSortChange = (value: string) => {
+    activeSortOption.value = value;
+    updateQuery();
+};
+
+const handleSearch = () => {
+    lat.value = "";
+    long.value = "";
+    updateQuery();
 };
 </script>
 

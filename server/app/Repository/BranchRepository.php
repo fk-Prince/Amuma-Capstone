@@ -23,14 +23,55 @@ class BranchRepository
         return Branch::where($column, $value)->first();
     }
 
-    public function paginate(int $perPage)
+    public function getHighestReviewPaginate(int $perPage)
     {
         return Branch::with([
             'subscriptions.plans',
             'reviews',
             'locations'
         ])
+            ->withAvg('reviews', 'rate')
+            ->orderByDesc('reviews_avg_rate')
             ->latest()
+            ->paginate($perPage);
+    }
+
+    // public function paginate(int $perPage)
+    // {
+    //     return Branch::with([
+    //         'subscriptions.plans',
+    //         'reviews',
+    //         'locations'
+    //     ])
+    //         ->latest()
+    //         ->paginate($perPage);
+    // }
+
+    public function getFilterBranches(int $perPage, array $filters)
+    {
+        return Branch::with([
+            'subscriptions.plans',
+            'reviews',
+            'locations'
+        ])
+            ->withAvg('reviews', 'rate')
+
+            ->when(!empty($filters['city']), function ($query) use ($filters) {
+                $query->whereHas('locations', function ($q) use ($filters) {
+                    $q->where('city', $filters['city']);
+                });
+            })
+
+            ->when(!empty($filters['name']), function ($query) use ($filters) {
+                $query->where('name', 'like', '%' . $filters['name'] . '%');
+            })
+
+            ->when(!empty($filters['plan_name']), function ($query) use ($filters) {
+                $query->whereHas('subscriptions.plans', function ($q) use ($filters) {
+                    $q->where('plan_name', $filters['plan_name']);
+                });
+            })
+            ->orderByDesc('reviews_avg_rate')
             ->paginate($perPage);
     }
 }

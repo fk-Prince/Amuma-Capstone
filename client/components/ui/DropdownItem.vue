@@ -1,4 +1,3 @@
-<!-- DropdownItem.vue -->
 <template>
     <button
         type="button"

@@ -44,7 +44,9 @@ Route::prefix('branches')->group(function () {
     Route::get('/filtered', [BranchController::class, 'retrieveFilteredBranch']);
 });
 
+
 Route::get('/plans', [PlanController::class, 'index']);
 
+Route::get('/geocode', [NominatimController::class, 'geocode']);
 Route::get('/reverse-geocode', [NominatimController::class, 'reverse']);
 Route::get('/nereast-street', [NominatimController::class, 'nearest']);

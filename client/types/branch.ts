@@ -9,6 +9,13 @@ export interface Branch {
     location: Location
 };
 
+export interface BranchSettings {
+    opening: string,
+    closing: string,
+    currency: string,
+    online_additional_fee: number,
+    time_zone: string
+}
 
 
 export interface BranchRetrieve {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Service\BranchService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class BranchController extends Controller
 {
@@ -24,6 +25,7 @@ class BranchController extends Controller
 
     public function retrieveFilteredBranch(Request $request)
     {
-        return $this->branchService->getBranches($request->all());
+        Log::info($request->all());
+        return $this->branchService->getBranchesByFilter($request->all());
     }
 }

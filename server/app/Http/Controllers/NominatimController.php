@@ -14,6 +14,22 @@ class NominatimController extends Controller
         $this->nominatimService = $nominatimService;
     }
 
+    public function geocode(Request $request)
+    {
+        $q = $request->query('q');
+
+        if (!$q) {
+            return response()->json(['lat' => null, 'lng' => null]);
+        }
+
+        $result = $this->nominatimService->geocodeAddress(['city' => $q]);
+
+        return response()->json([
+            'lat' => $result['lat'] ?? null,
+            'lng' => $result['lng'] ?? null,
+        ]);
+    }
+
     public function reverse(Request $request)
     {
         $request->validate([

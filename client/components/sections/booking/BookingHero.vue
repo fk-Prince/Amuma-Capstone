@@ -186,9 +186,13 @@ useHead({ title: "Bookings" });
 const careType = ref("all");
 const searchName = ref("");
 const searchLocation = ref("");
+const lat = ref("");
+const long = ref("");
 
 const handleLocation = async (data: any) => {
     searchLocation.value = data.label;
+    lat.value = data.lat ?? data.latitude ?? "";
+    long.value = data.lng ?? data.longitude ?? "";
 };
 
 const searchClick = async () => {
@@ -197,6 +201,8 @@ const searchClick = async () => {
         query: {
             service: searchName.value,
             location: searchLocation.value,
+            lat: lat.value,
+            long: long.value,
             type: careType.value,
         },
     });

@@ -100,8 +100,6 @@ async function reverseGeocode(
             label,
         };
     } catch (err) {
-        console.error("reverseGeocode error:", err);
-
         return {
             street: "",
             city: "",

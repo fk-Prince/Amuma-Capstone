@@ -15,6 +15,25 @@ const props = defineProps<{
     extraClass?: string;
 }>();
 
+const fitToBounds = () => {
+    if (!map || !props.locations.length) return;
+
+    const valid = props.locations.filter(
+        (loc) =>
+            loc.latitude != null &&
+            loc.longitude != null &&
+            !Number.isNaN(loc.latitude) &&
+            !Number.isNaN(loc.longitude),
+    );
+
+    if (valid.length) {
+        map.fitBounds(
+            L.latLngBounds(valid.map((loc) => [loc.latitude, loc.longitude])),
+            { padding: [40, 40] },
+        );
+    }
+};
+
 const renderMarkers = () => {
     if (!map || !markersLayer) return;
 
@@ -32,23 +51,8 @@ const renderMarkers = () => {
         L.marker([location.latitude, location.longitude]).addTo(markersLayer);
     });
 
-    // Skip fitBounds if an explicit center is provided
-    if (props.locations.length && props.centerLat == null) {
-        const valid = props.locations.filter(
-            (loc) =>
-                loc.latitude != null &&
-                loc.longitude != null &&
-                !Number.isNaN(loc.latitude) &&
-                !Number.isNaN(loc.longitude),
-        );
-        if (valid.length) {
-            map.fitBounds(
-                L.latLngBounds(
-                    valid.map((loc) => [loc.latitude, loc.longitude]),
-                ),
-                { padding: [40, 40] },
-            );
-        }
+    if (props.centerLat == null) {
+        fitToBounds();
     }
 };
 
@@ -57,13 +61,11 @@ const applyCenter = () => {
 
     map.setView([props.centerLat, props.centerLng], props.zoom ?? 13);
 
-    // Remove previous center marker if any
     if (centerMarker) {
         centerMarker.remove();
         centerMarker = null;
     }
 
-    // Place a distinct center marker with a red icon
     const redIcon = L.icon({
         iconUrl:
             "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
@@ -116,7 +118,17 @@ onMounted(async () => {
 });
 
 watch(() => [props.centerLat, props.centerLng], applyCenter);
-watch(() => props.locations, renderMarkers, { deep: true });
+
+watch(
+    () => props.locations,
+    () => {
+        renderMarkers();
+        if (props.centerLat != null) {
+            applyCenter();
+        }
+    },
+    { deep: true },
+);
 
 onUnmounted(() => {
     map?.remove();
