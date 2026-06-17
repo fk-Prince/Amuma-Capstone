@@ -137,7 +137,7 @@ const props = withDefaults(
         navItems: () => [
             { label: "Product", to: "/product" },
             { label: "Booking", to: "/booking" },
-            { label: "Documentation", to: "/" },
+            { label: "Resources", to: "/resources" },
             { label: "Company", to: "/company" },
         ],
     },
