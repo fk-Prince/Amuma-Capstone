@@ -219,13 +219,13 @@
 </template>
 
 <script setup lang="ts">
-import Dropdown from "../icons/dropdown.vue";
+import Dropdown from "~/components/icons/dropdown.vue";
 import { ref, onMounted, watch, nextTick } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { planService } from "@/api/plan/PlanService";
-import BranchForm from "../forms/BranchForm.vue";
-import AgencyForm from "../forms/AgencyForm.vue";
-import SubcriptionConfigure from "../forms/SubcriptionConfigure.vue";
+import BranchForm from "~/components/forms/BranchForm.vue";
+import AgencyForm from "~/components/forms/AgencyForm.vue";
+import SubcriptionConfigure from "~/components/forms/SubcriptionConfigure.vue";
 
 const checkout = useSubscriptionCheckout();
 const loading = ref(true);

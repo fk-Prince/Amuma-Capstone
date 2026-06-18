@@ -14,7 +14,7 @@
 </template>
 <script setup lang="ts">
 import { reactive } from "vue";
-import CheckoutSummary from "~/components/sections/CheckoutSummary.vue";
+import CheckoutSummary from "~/components/sections/subscription/CheckoutSummary.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import {
@@ -67,8 +67,8 @@ const payCard = async () => {
             branch_image: checkout.branch?.image,
             branch_description: checkout.branch?.description,
             branch_settings: checkout.settings,
-            branch_latitude: checkout.branch?.location?.lat,
-            branch_longitude: checkout.branch?.location?.lng,
+            branch_latitude: checkout.branch?.location?.latitude,
+            branch_longitude: checkout.branch?.location?.longitude,
 
             agency_id: checkout.agency?.id,
             agency_name: checkout.agency?.name,
@@ -77,8 +77,8 @@ const payCard = async () => {
             agency_city: checkout.agency?.location?.city,
             agency_province: checkout.agency?.location?.province,
             agency_country: checkout.agency?.location?.country,
-            agency_latitude: checkout.agency?.location?.lat,
-            agency_longitude: checkout.agency?.location?.lng,
+            agency_latitude: checkout.agency?.location?.latitude,
+            agency_longitude: checkout.agency?.location?.longitude,
         };
 
         const res = await cardPayment(card, closeModal, data);
@@ -91,7 +91,6 @@ const payCard = async () => {
         processing.value = false;
     }
 };
-
 const payGCash = async () => {
     if (processing.value) return;
     processing.value = true;
@@ -110,8 +109,8 @@ const payGCash = async () => {
             branch_city: checkout.branch?.location?.city,
             branch_province: checkout.branch?.location?.province,
             branch_country: checkout.branch?.location?.country,
-            branch_latitude: checkout.branch?.location?.lat,
-            branch_longitude: checkout.branch?.location?.lng,
+            branch_latitude: checkout.branch?.location?.latitude,
+            branch_longitude: checkout.branch?.location?.longitude,
 
             agency_id: checkout.agency?.id,
             agency_name: checkout.agency?.name,
@@ -120,8 +119,8 @@ const payGCash = async () => {
             agency_city: checkout.agency?.location?.city,
             agency_province: checkout.agency?.location?.province,
             agency_country: checkout.agency?.location?.country,
-            agency_latitude: checkout.agency?.location?.lat,
-            agency_longitude: checkout.agency?.location?.lng,
+            agency_latitude: checkout.agency?.location?.latitude,
+            agency_longitude: checkout.agency?.location?.longitude,
         };
 
         const res = await gcashPayment(closeModal, data);

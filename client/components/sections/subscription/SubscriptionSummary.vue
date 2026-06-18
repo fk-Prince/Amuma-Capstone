@@ -217,8 +217,8 @@ const send = async () => {
             branch_city: checkout.branch.location.city,
             branch_province: checkout.branch.location.province,
             branch_country: checkout.branch.location.country,
-            branch_latitude: checkout.branch.location.lat,
-            branch_longitude: checkout.branch.location.lng,
+            branch_latitude: checkout.branch.location.latitude,
+            branch_longitude: checkout.branch.location.longitude,
 
             // AGENCY DATA
             agency_id: checkout.agency.id,
@@ -228,8 +228,8 @@ const send = async () => {
             agency_city: checkout.agency.location.city ?? "",
             agency_province: checkout.agency.location.province ?? "",
             agency_country: checkout.agency.location.country ?? "",
-            agency_latitude: checkout.agency.location.lat ?? undefined,
-            agency_longitude: checkout.agency.location.lng ?? undefined,
+            agency_latitude: checkout.agency.location.latitude ?? undefined,
+            agency_longitude: checkout.agency.location.longitude ?? undefined,
         };
 
         await subscriptionService.validateSubscription(payload);
