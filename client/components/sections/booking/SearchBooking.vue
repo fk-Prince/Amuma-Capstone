@@ -1,6 +1,6 @@
 <template>
     <div class="w-full mx-auto px-6">
-        <div v-if="loading" class="flex flex-col gap-4">
+        <div v-if="props.loading" class="flex flex-col gap-4">
             <div
                 v-for="n in 3"
                 :key="n"
@@ -21,7 +21,7 @@
         <div v-else class="flex flex-col gap-4">
             <CardBooking
                 :variant="2"
-                v-for="branch in branches"
+                v-for="branch in props.branches"
                 :key="branch.uuid"
                 :branch="branch"
                 @select="$emit('select', $event)"
@@ -29,7 +29,7 @@
         </div>
 
         <div
-            v-if="!loading && branches.length === 0"
+            v-if="!props.loading && props.branches.length === 0"
             class="text-center py-16 text-slate-400"
         >
             No branches found.
@@ -38,43 +38,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
-import { branchService } from "~/api/branch/BranchService";
 import CardBooking from "./CardBooking.vue";
 import type { BranchRetrieve } from "~/types/branch";
-import { useRoute } from "vue-router";
 
 defineEmits(["select"]);
 
-const route = useRoute();
-
-const branches = ref<BranchRetrieve[]>([]);
-const loading = ref(true);
-
-const fetchBranches = async () => {
-    loading.value = true;
-    try {
-        const res = await branchService.filtered({
-            per_page: Number(route.query.per_page ?? 9),
-            city: String(route.query.city ?? ""),
-            lat: String(route.query.lat ?? ""),
-            long: String(route.query.long ?? ""),
-            name: String(route.query.name ?? ""),
-            plan_name: String(route.query.plan_name ?? ""),
-            sort: String(route.query.sort ?? "recommended"),
-        });
-        branches.value = res?.data ?? [];
-    } catch (err) {
-        console.error(err);
-        branches.value = [];
-    } finally {
-        loading.value = false;
-    }
-};
-
-watch(
-    () => route.query,
-    () => fetchBranches(),
-    { immediate: true, deep: true },
-);
+const props = defineProps<{
+    branches: BranchRetrieve[];
+    loading?: boolean;
+}>();
 </script>

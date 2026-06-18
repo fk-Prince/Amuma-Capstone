@@ -72,33 +72,68 @@ class NominatimService
     public function geocodeAddress(array $payload)
     {
         try {
-            $address = collect([
+            $address = $payload['address'] ?? collect([
                 $payload['street'] ?? null,
                 $payload['city'] ?? null,
                 $payload['province'] ?? null,
                 $payload['country'] ?? null,
             ])->filter()->implode(', ');
+
             if (!$address) {
                 return null;
             }
-            $response = Http::get('https://nominatim.openstreetmap.org/search', [
+
+            $response = Http::withHeaders([
+                'User-Agent' => 'YourAppName/1.0 (contact@email.com)',
+            ])->get('https://nominatim.openstreetmap.org/search', [
                 'q' => $address,
                 'format' => 'json',
                 'limit' => 1,
             ]);
 
-            $data = $response->json();
 
-            if (empty($data)) {
+            $data = $response->json();
+            if (!empty($data) && isset($data[0])) {
+                return [
+                    'lat' => $data[0]['lat'] ?? null,
+                    'lng' => $data[0]['lon'] ?? null,
+                ];
+            }
+
+            $fallback = collect([
+                $payload['city'] ?? null,
+                $payload['province'] ?? null,
+                $payload['country'] ?? null,
+            ])->filter()->implode(', ');
+
+            if (!$fallback || $fallback === $address) {
                 return null;
             }
 
-            return [
-                'lat' => $data[0]['lat'] ?? null,
-                'lng' => $data[0]['lon'] ?? null,
-            ];
-        } catch (Exception $rex) {
-            return;
+
+            $response2 = Http::withHeaders([
+                'verify' => false,
+                'User-Agent' => 'YourAppName/1.0 (contact@email.com)',
+            ])->get('https://nominatim.openstreetmap.org/search', [
+                'q' => $fallback,
+                'format' => 'json',
+                'limit' => 1,
+            ]);
+
+
+            $data2 = $response2->json();
+
+            if (!empty($data2) && isset($data2[0])) {
+                return [
+                    'lat' => $data2[0]['lat'] ?? null,
+                    'lng' => $data2[0]['lon'] ?? null,
+                ];
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Geocode err' . $e->getMessage());
+            return null;
         }
     }
 
@@ -126,6 +161,7 @@ class NominatimService
 
             return $data['address']['city'] ?? null;
         } catch (\Exception $e) {
+            Log::info($e);
             return null;
         }
     }

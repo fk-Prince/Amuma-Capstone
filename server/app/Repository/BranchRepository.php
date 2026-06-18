@@ -58,19 +58,22 @@ class BranchRepository
 
             ->when(!empty($filters['city']), function ($query) use ($filters) {
                 $query->whereHas('locations', function ($q) use ($filters) {
-                    $q->where('city', $filters['city']);
+                    $q->where('city', 'ILIKE', $filters['city']);
                 });
             })
 
-            ->when(!empty($filters['name']), function ($query) use ($filters) {
-                $query->where('name', 'like', '%' . $filters['name'] . '%');
+            ->when(!empty($filters['provider_name']), function ($query) use ($filters) {
+                $query->where('branch_name', 'ilike', $filters['provider_name']);
             })
 
-            ->when(!empty($filters['plan_name']), function ($query) use ($filters) {
-                $query->whereHas('subscriptions.plans', function ($q) use ($filters) {
-                    $q->where('plan_name', $filters['plan_name']);
-                });
-            })
+            ->when(
+                !empty($filters['plan_code']) && $filters['plan_code'] !== 'C',
+                function ($query) use ($filters) {
+                    $query->whereHas('subscriptions.plans', function ($q) use ($filters) {
+                        $q->where('plan_code', $filters['plan_code']);
+                    });
+                }
+            )
             ->orderByDesc('reviews_avg_rate')
             ->paginate($perPage);
     }

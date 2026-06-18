@@ -83,7 +83,7 @@ const applyCenter = () => {
         icon: redIcon,
     })
         .addTo(map)
-        .bindPopup("Your location")
+        // .bindPopup("Your location")
         .openPopup();
 };
 

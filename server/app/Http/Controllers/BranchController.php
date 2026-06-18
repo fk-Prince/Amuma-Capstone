@@ -25,7 +25,6 @@ class BranchController extends Controller
 
     public function retrieveFilteredBranch(Request $request)
     {
-        Log::info($request->all());
         return $this->branchService->getBranchesByFilter($request->all());
     }
 }

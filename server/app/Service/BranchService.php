@@ -4,8 +4,6 @@ namespace App\Service;
 
 use App\Repository\BranchRepository;
 use App\Http\Resources\BranchResource;
-use App\Models\Branch;
-use App\Models\User;
 use App\Service\Utils\NominatimService;
 use Illuminate\Support\Facades\Log;
 use Stevebauman\Location\Facades\Location;
@@ -28,18 +26,23 @@ class BranchService
     }
     public function getBranchesByFilter(array $payload)
     {
+
+        Log::info($payload);
         if (!empty($payload['lat']) && !empty($payload['long'])) {
             $city = $this->nomaticeService->getCityByCords($payload['lat'], $payload['long']);
-        } elseif (!empty($payload['city'])) {
-            $city = $payload['city'];
-        } else {
-            $position = Location::get(request()->ip());
-            $city = $position?->cityName;
+        } elseif (!empty($payload['location'])) {
+            $city = $payload['location'];
         }
+        // else {
+        //     // $position = Location::get('8.8.8.8'); // TEST IP
+        //     // // $position = Location::get(request()->ip()); // REAL IP
+        //     // $city = $position?->cityName;
+        //     $city = "Davao City";
+        // }
         $filters = [
             'city' => $city,
-            'name' => $payload['name'],
-            'plan_name' => $payload['plan_name']
+            'provider_name' => $payload['provider_name'],
+            'plan_code' => $payload['plan_code']
         ];
 
         $branch = $this->branchRepository->getFilterBranches($payload['per_page'], $filters);

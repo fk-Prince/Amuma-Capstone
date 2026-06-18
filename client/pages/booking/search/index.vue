@@ -20,9 +20,8 @@
         </div>
     </div>
 </template>
-
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import Filter from "~/components/sections/booking/Filter.vue";
 import LocationPin from "~/components/ui/LocationPin.vue";
 import SearchBooking from "~/components/sections/booking/SearchBooking.vue";
@@ -31,12 +30,51 @@ import type { BranchRetrieve } from "~/types/branch";
 import { useGeo } from "~/composables/useGeo";
 import { useRoute } from "vue-router";
 
-useHead({ title: "Search" });
+useHead({ title: "Search Homecare" });
 
 const route = useRoute();
 const { centerLat, centerLng, geocodeLocation } = useGeo();
+
 const branches = ref<BranchRetrieve[]>([]);
 const loading = ref(false);
+
+const DEFAULT_LOCATION = {
+    label: "Davao City",
+    lat: 7.1907,
+    long: 125.4553,
+};
+
+const l = async () => {
+    loading.value = true;
+    try {
+        if (route.query.location) {
+            await geocodeLocation(route.query.location as string);
+        }
+        const res = await branchService.filtered({
+            provider_name: route.query.provider_name ?? "",
+            location: route.query.location ?? DEFAULT_LOCATION.label,
+            lat: route.query.lat ?? DEFAULT_LOCATION.lat,
+            long: route.query.long ?? DEFAULT_LOCATION.long,
+            plan_code: route.query.plan_code ?? "",
+            per_page: route.query.per_page ?? 6,
+        });
+
+        branches.value = res?.data ?? [];
+        loading.value = false;
+    } catch (err) {
+        console.error(err);
+        branches.value = [];
+        return [];
+    } finally {
+        loading.value = false;
+    }
+};
+
+watch(
+    () => route.query,
+    () => l(),
+    { immediate: true },
+);
 
 const locations = computed(() =>
     branches.value
@@ -50,36 +88,5 @@ const locations = computed(() =>
             province: branch.location.province,
             country: branch.location.country,
         })),
-);
-
-const fetchBranches = async () => {
-    loading.value = true;
-    try {
-        if (route.query.city?.toString().trim()) {
-            await geocodeLocation(route.query.city as string);
-        }
-
-        const res = await branchService.filtered({
-            name: route.query.name ?? "",
-            city: route.query.city ?? "",
-            lat: route.query.lat ?? "",
-            long: route.query.long ?? "",
-            plan_name: route.query.plan_name ?? "",
-            per_page: route.query.per_page ?? 6,
-        });
-
-        branches.value = res?.data ?? [];
-    } catch (err) {
-        console.error(err);
-        branches.value = [];
-    } finally {
-        loading.value = false;
-    }
-};
-
-watch(
-    () => route.query,
-    () => fetchBranches(),
-    { immediate: true, deep: true },
 );
 </script>

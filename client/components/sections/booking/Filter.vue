@@ -36,7 +36,7 @@
                         >
                         <BaseInput
                             v-model="searchLocation"
-                            placeholder="Choose City / Area"
+                            placeholder="Search by City"
                             input-class="px-4 py-3 w-full"
                         >
                             <template #suffix>
@@ -54,8 +54,8 @@
                             >Care Type</label
                         >
                         <Combobox
-                            v-model="careType"
-                            :items="careTypeList"
+                            v-model="planCodeType"
+                            :items="planCodeList"
                             input-class="px-4 py-2.5"
                             :searchBar="false"
                         />
@@ -124,7 +124,7 @@
                     >
                     <BaseInput
                         v-model="searchLocation"
-                        placeholder="Choose City / Area"
+                        placeholder="Search by City"
                         input-class="px-4 py-2.5"
                     >
                         <template #suffix>
@@ -142,8 +142,8 @@
                         >Care Type</label
                     >
                     <Combobox
-                        v-model="careType"
-                        :items="careTypeList"
+                        v-model="planCodeType"
+                        :items="planCodeList"
                         input-class="px-4 py-2.5"
                         :searchBar="false"
                     />
@@ -194,35 +194,20 @@ const route = useRoute();
 const router = useRouter();
 
 const isHide = ref(false);
-const activeSortOption = ref((route.query.sort as string) ?? "recommended");
 
 const props = defineProps<{
     searchName?: string;
     searchLocation?: string;
     lat?: number;
     long?: number;
-    careType?: string;
+    codeType?: string;
     perPage?: number;
 }>();
 
-const searchName = ref((route.query.name as string) ?? props.searchName ?? "");
-const searchLocation = ref(
-    (route.query.city as string) ?? props.searchLocation ?? "",
-);
-const careType = ref(
-    (route.query.plan_name as string) ?? props.careType ?? "all",
-);
-const lat = ref<string | number>(
-    (route.query.lat as string) ?? props.lat ?? "",
-);
-const long = ref<string | number>(
-    (route.query.long as string) ?? props.long ?? "",
-);
-
-const careTypeList = [
-    { label: "All (Homecare & Inhouse Facility)", value: "all" },
-    { label: "Homecare", value: "homecare" },
-    { label: "Inhouse Facility", value: "facility" },
+const planCodeList = [
+    { label: "All (Homecare & Inhouse Facility)", value: "C" },
+    { label: "Homecare Services", value: "A" },
+    { label: "In-house Facility", value: "B" },
 ];
 
 const sortOptions = [
@@ -230,29 +215,146 @@ const sortOptions = [
     { label: "Highest Rated", value: "highest_rated" },
     { label: "Most Popular", value: "most_popular" },
     { label: "Nearest", value: "nearest" },
-    { label: "Price: Low to High", value: "price_asc" },
-    { label: "Price: High to Low", value: "price_desc" },
 ];
+
+const DEFAULT_LOCATION = {
+    label: "Davao City",
+    lat: 7.1907,
+    long: 125.4553,
+};
+
+const activeSortOption = ref((route.query.sort as string) ?? "recommended");
+
+const searchName = ref(
+    (route.query.provider_name as string) ?? props.searchName ?? "",
+);
+
+const searchLocation = ref(
+    (route.query.location as string) ??
+        props.searchLocation ??
+        DEFAULT_LOCATION.label,
+);
+
+const planCodeType = ref(
+    (route.query.plan_code as string) ?? props.codeType ?? "C",
+);
+
+const lat = ref<string | number>(
+    (route.query.lat as string) ?? props.lat ?? DEFAULT_LOCATION.lat,
+);
+
+const long = ref<string | number>(
+    (route.query.long as string) ?? props.long ?? DEFAULT_LOCATION.long,
+);
 
 const updateQuery = () => {
     router.replace({
         query: {
-            ...route.query,
-            name: searchName.value,
-            city: searchLocation.value,
-            lat: lat.value,
-            long: long.value,
-            plan_name: careType.value === "all" ? "Hybrid" : careType.value,
+            provider_name: searchName.value,
+            location: searchLocation.value || DEFAULT_LOCATION.label,
+            lat: lat.value || DEFAULT_LOCATION.lat,
+            long: long.value || DEFAULT_LOCATION.long,
+            plan_code: planCodeType.value,
             sort: activeSortOption.value,
-            per_page: props.perPage ?? 10,
         },
     });
 };
 
 const handleLocation = (data: any) => {
-    searchLocation.value = data.label;
+    searchLocation.value = data.label || DEFAULT_LOCATION.label;
+    lat.value = data.lat ?? DEFAULT_LOCATION.lat;
+    long.value = data.lng ?? DEFAULT_LOCATION.long;
+    updateQuery();
+};
+
+const handleSortChange = (value: string) => {
+    activeSortOption.value = value;
+    updateQuery();
+};
+
+const handleSearch = () => {
+    if (!searchLocation.value?.trim()) {
+        searchLocation.value = DEFAULT_LOCATION.label;
+        lat.value = DEFAULT_LOCATION.lat;
+        long.value = DEFAULT_LOCATION.long;
+    }
+
+    updateQuery();
+};
+
+onMounted(() => {
+    if (!route.query.location) {
+        updateQuery();
+    }
+});
+</script>
+<!-- <script setup lang="ts">
+import BaseInput from "~/components/ui/BaseInput.vue";
+import Combobox from "~/components/ui/Combobox.vue";
+import Location from "~/components/icons/location.vue";
+import Search from "~/components/icons/search.vue";
+import Dropdown from "~/components/icons/dropdown.vue";
+
+const route = useRoute();
+const router = useRouter();
+
+const isHide = ref(false);
+
+const props = defineProps<{
+    searchName?: string;
+    searchLocation?: string;
+    lat?: number;
+    long?: number;
+    codeType?: string;
+    perPage?: number;
+}>();
+
+const planCodeList = [
+    { label: "All (Homecare & Inhouse Facility)", value: "C" },
+    { label: "Homecare Services", value: "A" },
+    { label: "In-house Facility", value: "B" },
+];
+
+const sortOptions = [
+    { label: "Recommended", value: "recommended" },
+    { label: "Highest Rated", value: "highest_rated" },
+    { label: "Most Popular", value: "most_popular" },
+    { label: "Nearest", value: "nearest" },
+];
+
+const activeSortOption = ref((route.query.sort as string) ?? "recommended");
+const searchName = ref((route.query.name as string) ?? props.searchName ?? "");
+const searchLocation = ref(
+    (route.query.location as string) ?? props.searchLocation ?? "",
+);
+const planCodeType = ref(
+    (route.query.plan_name as string) ?? props.codeType ?? "C",
+);
+
+const lat = ref<string | number>(
+    (route.query.lat as string) ?? props.lat ?? "",
+);
+const long = ref<string | number>(
+    (route.query.long as string) ?? props.long ?? "",
+);
+
+const updateQuery = () => {
+    router.replace({
+        query: {
+            provider_name: searchName.value,
+            location: searchLocation.value,
+            lat: lat.value || "",
+            long: long.value || "",
+            plan_code: planCodeType.value === "C" ? "C" : planCodeType.value,
+            sort: activeSortOption.value,
+        },
+    });
+};
+
+const handleLocation = (data: any) => {
+    searchLocation.value = data.label || "";
     lat.value = data.lat ?? "";
-    long.value = data.long ?? "";
+    long.value = data.lng ?? "";
     updateQuery();
 };
 
@@ -266,7 +368,7 @@ const handleSearch = () => {
     long.value = "";
     updateQuery();
 };
-</script>
+</script> -->
 
 <style scoped>
 .collapse-enter-active,

@@ -7,8 +7,8 @@ use DateTime;
 
 enum BillingIntervalEnum: string
 {
-    case MONTHLY = 'monthly';
-    case YEARLY = 'yearly';
+    case MONTHLY = 'MONTHLY';
+    case YEARLY = 'YEARLY';
 
     public function addTo(DateTime $date)
     {

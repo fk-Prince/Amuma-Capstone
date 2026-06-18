@@ -65,7 +65,7 @@ class SubscriptionService
         $user = Auth::user();
         $plan_code = $payload['plan_code'];
         $billing_interval = BillingIntervalEnum::tryFrom(
-            $payload['billing_interval']
+            strtoupper($payload['billing_interval'])
         );
 
         if (!$billing_interval) {
