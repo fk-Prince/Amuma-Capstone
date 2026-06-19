@@ -1,6 +1,6 @@
 <template>
     <div class="w-full mx-auto px-6">
-        <div v-if="loading" class="flex flex-col gap-4">
+        <div v-if="props.loading" class="flex flex-col gap-4">
             <div
                 v-for="n in 3"
                 :key="n"
@@ -21,7 +21,7 @@
         <div v-else class="flex flex-col gap-4">
             <CardBooking
                 :variant="2"
-                v-for="branch in branches"
+                v-for="branch in props.branches"
                 :key="branch.uuid"
                 :branch="branch"
                 @select="$emit('select', $event)"
@@ -29,7 +29,7 @@
         </div>
 
         <div
-            v-if="!loading && branches.length === 0"
+            v-if="!props.loading && props.branches.length === 0"
             class="text-center py-16 text-slate-400"
         >
             No branches found.
@@ -38,25 +38,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { branchService } from "~/api/branch/BranchService";
 import CardBooking from "./CardBooking.vue";
 import type { BranchRetrieve } from "~/types/branch";
 
 defineEmits(["select"]);
 
-const branches = ref<BranchRetrieve[]>([]);
-const loading = ref(true);
-
-onMounted(async () => {
-    try {
-        const res = await branchService.featured({ per_page: 9 });
-        branches.value = res?.data ?? [];
-    } catch (err) {
-        console.error(err);
-        branches.value = [];
-    } finally {
-        loading.value = false;
-    }
-});
+const props = defineProps<{
+    branches: BranchRetrieve[];
+    loading?: boolean;
+}>();
 </script>

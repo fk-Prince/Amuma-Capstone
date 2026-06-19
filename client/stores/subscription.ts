@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { type Agency } from "~/types/agency";
-import { type Branch } from "~/types/branch";
+import { type Branch, type BranchSettings } from "~/types/branch";
 import { type Subscription } from "~/types/subscription";
 
 const defaultLocation = () => ({
@@ -38,7 +38,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             currency: "PHP",
             online_additional_fee: 0,
             time_zone: "Asia/Manila"
-        },
+        } as BranchSettings,
         errors: {},
         subscriptionPayload: null,
     }),
@@ -105,10 +105,12 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             } as Agency;
 
             this.settings = {
-                opening: "12:00 AM",
-                closing: "12:00 AM",
+                opening: "00:00 AM",
+                closing: "09:00 PM",
                 currency: "PHP",
-            };
+                online_additional_fee: 0,
+                time_zone: "Asia/Manila"
+            } as BranchSettings;
 
             this.errors = {};
             this.subscriptionPayload = null;

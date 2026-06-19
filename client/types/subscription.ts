@@ -1,5 +1,5 @@
 import type { Agency } from "./agency";
-import type { Branch } from "./branch";
+import type { Branch, BranchSettings } from "./branch";
 
 export interface Subscription {
     plans: any[];
@@ -10,7 +10,7 @@ export interface Subscription {
     agency: Agency;
     errors?: any;
     subscriptionPayload?: SubscriptionRequest | null;
-    settings?: any;
+    settings?: BranchSettings;
 }
 
 export interface SubscriptionRequest {

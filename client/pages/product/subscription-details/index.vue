@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import Subscription from "~/components/sections/Subscription.vue";
-import SubscriptionSummary from "~/components/sections/SubscriptionSummary.vue";
+import Subscription from "~/components/sections/subscription/Subscription.vue";
+import SubscriptionSummary from "~/components/sections/subscription/SubscriptionSummary.vue";
 
 definePageMeta({
     middleware: "auth-client",

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use  App\Service\Utils\NominatimService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class NominatimController extends Controller
 {
@@ -12,6 +13,25 @@ class NominatimController extends Controller
     public function __construct(NominatimService $nominatimService)
     {
         $this->nominatimService = $nominatimService;
+    }
+
+    public function geocode(Request $request)
+    {
+        $q = $request->query('q');
+        Log::info('Geocode request: ' . $q);
+        if (!$q || !is_string($q)) {
+            return response()->json([
+                'lat' => null,
+                'lng' => null,
+            ]);
+        }
+        $result = $this->nominatimService->geocodeAddress([
+            'address' => trim($q),
+        ]);
+        return response()->json([
+            'lat' => $result['lat'] ?? null,
+            'lng' => $result['lng'] ?? null,
+        ]);
     }
 
     public function reverse(Request $request)
