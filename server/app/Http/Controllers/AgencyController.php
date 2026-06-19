@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AgencyRequest;
 use App\Service\AgencyService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -23,5 +24,14 @@ class AgencyController extends Controller
             'owned' => $owned,
         ];
         return $this->agencyService->listAgency($payload);
+    }
+
+    public function validate(AgencyRequest $request)
+    {
+        return response()->json([
+            'status' => true,
+            'message' => 'Validation passed',
+            'data' => $request->validated(),
+        ]);
     }
 }

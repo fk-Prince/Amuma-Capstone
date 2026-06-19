@@ -9,8 +9,8 @@ const defaultLocation = () => ({
     city: "",
     province: "",
     country: "",
-    lat: 0,
-    lng: 0,
+    latitude: 0,
+    longitude: 0,
 });
 
 export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
@@ -19,6 +19,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
         selectedPlan: null,
         selectedInterval: "",
         payment_method: "CREDIT-CARD",
+
         branch: {
             name: "",
             contact_number: "",
@@ -26,19 +27,22 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             description: "",
             location: defaultLocation(),
         } as Branch,
+
         agency: {
             id: undefined,
-            name: "",
-            description: "",
+            agency_name: "",
+            agency_description: "",
             location: defaultLocation(),
         } as Agency,
+
         settings: {
-            opening: "00:00 AM",
-            closing: "09:00 PM",
+            opening: "12:00 AM",
+            closing: "12:00 AM",
             currency: "PHP",
             online_additional_fee: 0,
-            time_zone: "Asia/Manila"
+            time_zone: "Asia/Manila",
         } as BranchSettings,
+
         errors: {},
         subscriptionPayload: null,
     }),
@@ -69,14 +73,16 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
         },
 
         clearError(field: string) {
-            delete this.errors[field];
+            this.errors = Object.fromEntries(
+                Object.entries(this.errors).filter(([k]) => k !== field)
+            );
         },
 
         clearAgency() {
             this.agency = {
                 id: undefined,
-                name: "",
-                description: "",
+                agency_name: "",
+                agency_description: "",
                 location: defaultLocation(),
             } as Agency;
         },
@@ -99,8 +105,8 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
 
             this.agency = {
                 id: undefined,
-                name: "",
-                description: "",
+                agency_name: "",
+                agency_description: "",
                 location: defaultLocation(),
             } as Agency;
 
@@ -109,7 +115,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
                 closing: "09:00 PM",
                 currency: "PHP",
                 online_additional_fee: 0,
-                time_zone: "Asia/Manila"
+                time_zone: "Asia/Manila",
             } as BranchSettings;
 
             this.errors = {};

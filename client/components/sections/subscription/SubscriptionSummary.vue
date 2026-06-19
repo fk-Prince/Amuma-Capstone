@@ -1,19 +1,21 @@
 <template>
-    <div class="bg-white rounded-2xl shadow-sm border p-6">
+    <div class="bg-white rounded-2xl shadow-lg p-6">
         <h2 class="text-lg font-bold mb-4">Summary</h2>
 
         <div class="mb-5">
-            <p
-                class="text-xs text-gray-400 uppercase font-semibold mb-2 flex items-center gap-2"
-            >
+            <div class="flex justify-between items-center">
+                <p
+                    class="text-xs text-gray-400 uppercase font-semibold mb-2 flex items-center gap-2"
+                >
+                    Subscription Details
+                </p>
+
                 <img
                     src="/assets/logo/logo.png"
                     alt="Preview"
-                    class="h-[30px] object-cover rounded-sm"
+                    class="h-[20px] object-cover rounded-sm"
                 />
-                Subscription
-            </p>
-
+            </div>
             <div class="space-y-2 text-sm ml-3">
                 <div class="flex justify-between">
                     <span class="text-gray-500">Plan</span>
@@ -43,17 +45,72 @@
         </div>
 
         <div class="mb-5 border-t pt-4">
-            <p
-                class="text-xs text-gray-400 uppercase font-semibold mb-2 flex gap-2 items-center"
-            >
+            <p class="text-xs text-gray-400 uppercase font-semibold mb-2">
+                Agency Information
+            </p>
+
+            <div class="space-y-2 text-sm ml-3">
+                <div
+                    v-for="field in agencyFields"
+                    :key="field.key"
+                    class="flex justify-between gap-3"
+                >
+                    <span class="text-gray-500">
+                        {{ field.label }}
+                    </span>
+
+                    <span
+                        class="font-semibold text-right max-w-[200px]"
+                        :class="
+                            field.type === 'computed'
+                                ? 'whitespace-normal break-words'
+                                : 'truncate'
+                        "
+                    >
+                        <template
+                            v-if="
+                                field.type === 'computed' &&
+                                field.key === 'address'
+                            "
+                        >
+                            {{
+                                [
+                                    checkout.agency.location.street,
+                                    checkout.agency.location.city,
+                                    checkout.agency.location.province,
+                                    checkout.agency.location.country,
+                                ]
+                                    .filter(Boolean)
+                                    .join(", ") || "—"
+                            }}
+                        </template>
+
+                        <template v-else>
+                            {{
+                                checkout.agency[
+                                    field.key as keyof typeof checkout.agency
+                                ] || "—"
+                            }}
+                        </template>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-5 border-t pt-4">
+            <div class="flex justify-between items-center">
+                <p
+                    class="text-xs text-gray-400 uppercase font-semibold mb-2 flex gap-2 items-center"
+                >
+                    Branch Information
+                </p>
                 <img
                     v-if="branchImagePreview"
                     :src="branchImagePreview"
                     alt="Preview"
-                    class="h-[30px] object-cover rounded-sm"
+                    class="h-[20px] object-cover rounded-sm"
                 />
-                Branch
-            </p>
+            </div>
 
             <div class="space-y-2 text-sm ml-3">
                 <div class="space-y-2 text-sm">
@@ -111,61 +168,6 @@
             </div>
         </div>
 
-        <!-- AGENCY -->
-        <div class="mb-5 border-t pt-4">
-            <p class="text-xs text-gray-400 uppercase font-semibold mb-2">
-                Agency
-            </p>
-
-            <div class="space-y-2 text-sm ml-3">
-                <div
-                    v-for="field in agencyFields"
-                    :key="field.key"
-                    class="flex justify-between gap-3"
-                >
-                    <span class="text-gray-500">
-                        {{ field.label }}
-                    </span>
-
-                    <span
-                        class="font-semibold text-right max-w-[200px]"
-                        :class="
-                            field.type === 'computed'
-                                ? 'whitespace-normal break-words'
-                                : 'truncate'
-                        "
-                    >
-                        <template
-                            v-if="
-                                field.type === 'computed' &&
-                                field.key === 'address'
-                            "
-                        >
-                            {{
-                                [
-                                    checkout.agency.location.street,
-                                    checkout.agency.location.city,
-                                    checkout.agency.location.province,
-                                    checkout.agency.location.country,
-                                ]
-                                    .filter(Boolean)
-                                    .join(", ") || "—"
-                            }}
-                        </template>
-
-                        <template v-else>
-                            {{
-                                checkout.agency[
-                                    field.key as keyof typeof checkout.agency
-                                ] || "—"
-                            }}
-                        </template>
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <!-- BRANCH -->
         <div class="border-t pt-4 flex justify-between items-center">
             <span class="font-bold">Total</span>
 
@@ -179,6 +181,7 @@
         </div>
 
         <button
+            v-if="stepCompleted"
             @click="send"
             class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition"
         >
@@ -192,7 +195,9 @@ import { useSubscriptionCheckout } from "~/stores/subscription";
 import { branchFields, agencyFields } from "~/utils/fields";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { type SubscriptionRequest } from "~/types/subscription";
-
+const props = defineProps<{
+    stepCompleted: boolean;
+}>();
 const checkout = useSubscriptionCheckout();
 const branchImagePreview = computed(() =>
     checkout.branch.image instanceof File
@@ -222,8 +227,8 @@ const send = async () => {
 
             // AGENCY DATA
             agency_id: checkout.agency.id,
-            agency_name: checkout.agency.name,
-            agency_description: checkout.agency.description,
+            agency_name: checkout.agency.agency_name,
+            agency_description: checkout.agency.agency_description,
             agency_street: checkout.agency.location.street ?? "",
             agency_city: checkout.agency.location.city ?? "",
             agency_province: checkout.agency.location.province ?? "",

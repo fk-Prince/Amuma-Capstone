@@ -23,6 +23,7 @@
             <input
                 v-model="value"
                 :type="inputType"
+                :maxlength="textMax"
                 :placeholder="placeholder"
                 class="flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400"
                 :class="[hasPrefix ? 'pl-2' : '', inputClass]"
@@ -40,7 +41,6 @@
         <p v-if="error" class="text-xs text-red-500 mt-0.5">{{ error }}</p>
     </div>
 </template>
-
 <script setup lang="ts">
 import { computed, useSlots } from "vue";
 import Search from "../icons/search.vue";
@@ -56,13 +56,17 @@ const props = defineProps({
     mode: { type: String, default: "text" },
     inputClass: { type: String, default: "" },
     isSearch: { type: Boolean, default: false },
+    textMax: { type: Number, default: 255 },
 });
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "clear-error"]);
 
 const value = computed({
     get: () => props.modelValue,
-    set: (val) => emit("update:modelValue", val),
+    set: (val) => {
+        emit("update:modelValue", val);
+        if (props.error) emit("clear-error");
+    },
 });
 
 const slots = useSlots();

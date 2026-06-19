@@ -6,6 +6,7 @@ import AlertMessage from "../ui/AlertMessage.vue";
 
 import { useAuthUser } from "~/composables/useAuthUser";
 import { authService } from "~/api/auth/AuthService";
+import type { Alert } from "~/types/alert.js";
 
 const route = useRoute();
 const user = useAuthUser();

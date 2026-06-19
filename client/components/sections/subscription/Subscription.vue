@@ -1,301 +1,296 @@
 <template>
-    <div class="max-w-4xl mx-auto p-6">
-        <div
-            v-if="loading"
-            class="bg-white rounded-2xl shadow p-10 flex justify-center"
-        >
+    <div class="max-w-6xl mx-auto p-6">
+        <div v-if="loading" class="rounded-2xl shadow p-10 flex justify-center">
             <div
                 class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"
             />
         </div>
 
         <template v-else>
-            <div
-                class="bg-white border rounded-2xl shadow-sm divide-y divide-gray-100"
-            >
-                <section id="section-plan">
-                    <button
-                        class="w-full flex items-center justify-between p-5 text-left"
-                        @click="isPlanOpen = !isPlanOpen"
+            <div class="mb-8">
+                <div class="flex items-center justify-between">
+                    <div
+                        v-for="(step, index) in STEPS"
+                        :key="step"
+                        class="flex items-center flex-1"
                     >
-                        <h2 class="font-semibold text-lg text-gray-900">
-                            Subscription Plan
-                            <p class="text-sm text-slate-500 font-normal">
-                                Manage your current AMUMA plan.
-                            </p>
-                        </h2>
-                        <div class="flex items-center gap-2">
-                            <span class="text-red-500 text-sm font-medium"
-                                >Required</span
-                            >
-                            <Dropdown :isOpen="isPlanOpen" />
-                        </div>
-                    </button>
-
-                    <Transition name="accordion">
-                        <div v-if="isPlanOpen" class="px-5 pb-5 space-y-3">
-                            <label
-                                v-for="plan in checkout.plans"
-                                :key="plan.plan_id"
-                                class="flex items-center justify-between rounded-xl border p-4 cursor-pointer transition-colors"
+                        <div class="flex items-center">
+                            <div
+                                class="w-10 h-10 rounded-full flex items-center justify-center font-semibold"
                                 :class="
-                                    checkout.selectedPlan?.plan_id ===
-                                    plan.plan_id
-                                        ? 'border-primary bg-blue-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    currentStep > index + 1
+                                        ? 'bg-green-500 text-white'
+                                        : currentStep === index + 1
+                                          ? 'bg-primary text-white'
+                                          : 'bg-gray-200 text-gray-500'
                                 "
                             >
-                                <div class="flex items-start gap-3">
-                                    <input
-                                        type="radio"
-                                        class="mt-0.5 accent-primary"
-                                        :checked="
-                                            checkout.selectedPlan?.plan_id ===
-                                            plan.plan_id
-                                        "
-                                        @change="checkout.selectedPlan = plan"
-                                    />
-                                    <div>
-                                        <p class="font-semibold text-gray-900">
-                                            {{ plan.name }}
-                                        </p>
-                                        <p class="text-sm text-gray-500 mx-3">
-                                            {{ plan.description }}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="font-bold text-primary">
-                                    ₱{{
-                                        checkout.selectedInterval === "yearly"
-                                            ? plan.yearly_price?.price
-                                            : plan.monthly_price?.price
-                                    }}
-                                </div>
-                            </label>
-                        </div>
-                    </Transition>
-                </section>
+                                {{ index + 1 }}
+                            </div>
 
-                <section id="section-billing">
-                    <button
-                        class="w-full flex items-center justify-between p-5 text-left"
-                        @click="isBillingOpen = !isBillingOpen"
+                            <span
+                                class="ml-3 text-sm font-medium hidden md:block"
+                            >
+                                {{ step }}
+                            </span>
+                        </div>
+
+                        <div
+                            v-if="index !== STEPS.length - 1"
+                            class="flex-1 h-[2px] mx-4"
+                            :class="
+                                currentStep > index + 1
+                                    ? 'bg-green-500'
+                                    : 'bg-gray-200'
+                            "
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-2xl p-6 space-y-8">
+                <div v-if="currentStep === 1">
+                    <h2 class="text-xl font-bold mb-4">
+                        Subscription Details
+                        <p class="text-sm text-slate-500 font-normal mt-1">
+                            Manage your AMUMA subscription plan and billing
+                            preferences.
+                        </p>
+                    </h2>
+
+                    <p
+                        v-if="stepError"
+                        class="text-sm text-red-500 bg-red-50 border border-red-200 px-4 py-2 rounded-lg mb-4"
                     >
-                        <h2 class="font-semibold text-lg text-gray-900">
-                            Billing Interval
-                            <p class="text-sm text-gray-500 font-normal">
+                        {{ stepError }}
+                    </p>
+
+                    <div class="space-y-3 mb-6">
+                        <label
+                            v-for="plan in checkout.plans"
+                            :key="plan.plan_id"
+                            class="flex items-center justify-between border p-4 rounded-xl cursor-pointer"
+                            :class="
+                                checkout.selectedPlan?.plan_id === plan.plan_id
+                                    ? 'border-primary bg-blue-50'
+                                    : 'border-gray-200'
+                            "
+                        >
+                            <div class="flex items-center gap-3">
+                                <input
+                                    type="radio"
+                                    class="accent-primary"
+                                    :checked="
+                                        checkout.selectedPlan?.plan_id ===
+                                        plan.plan_id
+                                    "
+                                    @change="checkout.selectedPlan = plan"
+                                />
+                                <div>
+                                    <p class="font-semibold">
+                                        {{ plan.name }}
+                                    </p>
+                                    <p class="text-sm text-gray-500">
+                                        {{ plan.description }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="font-bold text-primary">
+                                ₱{{
+                                    checkout.selectedInterval === "yearly"
+                                        ? plan.yearly_price?.price
+                                        : plan.monthly_price?.price
+                                }}
+                            </div>
+                        </label>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold mb-3">
+                            Billing Cycle
+                            <p class="text-sm text-slate-500 font-normal mt-1">
                                 Choose how your subscription is billed (monthly
                                 or yearly).
                             </p>
-                        </h2>
-                        <div class="flex gap-2">
-                            <span class="text-red-500 text-sm font-medium"
-                                >Required</span
+                        </h3>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <label
+                                v-for="opt in intervalOptions"
+                                :key="opt.value"
+                                class="border rounded-xl p-4 cursor-pointer"
+                                :class="
+                                    checkout.selectedInterval === opt.value
+                                        ? 'border-primary bg-blue-50'
+                                        : 'border-gray-200'
+                                "
                             >
-                            <Dropdown :isOpen="isBillingOpen" />
-                        </div>
-                    </button>
+                                <input
+                                    type="radio"
+                                    v-model="checkout.selectedInterval"
+                                    :value="opt.value"
+                                    class="accent-primary"
+                                />
 
-                    <Transition name="accordion">
-                        <div v-if="isBillingOpen" class="px-5 pb-5">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <label
-                                    v-for="opt in intervalOptions"
-                                    :key="opt.value"
-                                    class="border rounded-xl p-4 cursor-pointer transition-colors"
-                                    :class="
-                                        checkout.selectedInterval === opt.value
-                                            ? 'border-primary bg-blue-50'
-                                            : 'border-gray-200 hover:border-gray-300'
-                                    "
-                                >
-                                    <div class="flex items-start gap-3">
-                                        <input
-                                            type="radio"
-                                            class="mt-0.5 accent-primary"
-                                            v-model="checkout.selectedInterval"
-                                            :value="opt.value"
-                                        />
-                                        <div>
-                                            <p
-                                                class="font-semibold text-sm text-gray-900"
-                                            >
-                                                {{ opt.label }}
-                                            </p>
-                                            <p class="text-xs text-gray-500">
-                                                {{ opt.description }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
+                                <div class="mt-2">
+                                    <p class="font-semibold text-sm">
+                                        {{ opt.label }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        {{ opt.description }}
+                                    </p>
+                                </div>
+                            </label>
                         </div>
-                    </Transition>
-                </section>
+                    </div>
+                </div>
 
-                <section id="section-branch">
+                <div v-if="currentStep === 2">
+                    <h2 class="text-xl font-bold mb-4">
+                        Agency Information
+                        <p class="text-sm text-gray-500 font-normal">
+                            Configure your agency profile, branding, and agency
+                            details.
+                        </p>
+                    </h2>
+                    <AgencyForm :agency="checkout.agency" mode="new" />
+                </div>
+
+                <div v-if="currentStep === 3">
+                    <h2 class="text-xl font-bold mb-4">Branch Information</h2>
+                    <BranchForm :branch="checkout.branch" />
+                </div>
+
+                <div v-if="currentStep === 4">
+                    <h2 class="text-xl font-bold mb-4">Branch Configuration</h2>
+                    <SubcriptionConfigure :setting="checkout.settings" />
+                </div>
+
+                <div class="flex justify-between border-t pt-6">
                     <button
-                        class="w-full flex items-center justify-between p-5 text-left"
-                        @click="isBranchOpen = !isBranchOpen"
+                        v-if="currentStep > 1"
+                        @click="currentStep--"
+                        class="px-5 py-2 border rounded-xl"
                     >
-                        <h2 class="font-semibold text-lg text-gray-900">
-                            Branch Information
-                            <p class="text-sm text-slate-500 font-normal">
-                                Configure your branch profile and including
-                                location.
-                            </p>
-                        </h2>
-                        <div class="flex items-center gap-2">
-                            <span class="text-red-500 text-sm font-medium"
-                                >Required</span
-                            >
-                            <Dropdown :isOpen="isBranchOpen" />
-                        </div>
+                        Previous
                     </button>
 
-                    <Transition name="accordion">
-                        <div v-if="isBranchOpen" class="px-5 pb-5">
-                            <BranchForm :branch="checkout.branch" />
-                        </div>
-                    </Transition>
-                </section>
+                    <div v-else class="w-[110px]"></div>
 
-                <section id="section-branch-config">
                     <button
-                        class="w-full flex items-center justify-between p-5 text-left"
-                        @click="isBranchConfigureOpen = !isBranchConfigureOpen"
+                        v-if="currentStep < STEPS.length"
+                        @click="nextStep"
+                        :disabled="
+                            currentStep === 1 &&
+                            (!checkout.selectedPlan ||
+                                !checkout.selectedInterval)
+                        "
+                        class="px-6 py-2 bg-primary text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <h2 class="font-semibold text-lg text-gray-900">
-                            Branch Operational Setting
-                            <p class="text-sm text-slate-500 font-normal">
-                                Configure branch settings.
-                            </p>
-                        </h2>
-                        <div class="flex items-center gap-2">
-                            <span class="text-danger text-sm font-medium"
-                                >Required</span
-                            >
-                            <Dropdown :isOpen="isBranchConfigureOpen" />
-                        </div>
+                        Next
                     </button>
-
-                    <Transition name="accordion">
-                        <div v-if="isBranchConfigureOpen" class="px-5 pb-5">
-                            <SubcriptionConfigure
-                                :setting="checkout.settings"
-                            />
-                        </div>
-                    </Transition>
-                </section>
-
-                <section id="section-agency">
-                    <button
-                        class="w-full flex items-center justify-between p-5 text-left"
-                        @click="isAgencyOpen = !isAgencyOpen"
-                    >
-                        <h2 class="font-semibold text-lg text-gray-900">
-                            Agency Information
-                            <p class="text-sm text-gray-500 font-normal">
-                                Configure your agency profile, branding, and
-                                agency details.
-                            </p>
-                        </h2>
-                        <div class="flex items-center gap-2">
-                            <span class="text-muted text-sm font-medium"
-                                >Optional</span
-                            >
-                            <Dropdown :isOpen="isAgencyOpen" />
-                        </div>
-                    </button>
-                    <Transition name="accordion">
-                        <div v-if="isAgencyOpen" class="px-5 pb-5">
-                            <AgencyForm :agency="checkout.agency" />
-                        </div>
-                    </Transition>
-                </section>
+                </div>
             </div>
         </template>
     </div>
 </template>
 
 <script setup lang="ts">
-import Dropdown from "~/components/icons/dropdown.vue";
-import { ref, onMounted, watch, nextTick } from "vue";
+import { ref, onMounted } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { planService } from "@/api/plan/PlanService";
+import { agencyService } from "~/api/agency/AgencyService";
+import { branchService } from "~/api/branch/BranchService";
+
 import BranchForm from "~/components/forms/BranchForm.vue";
 import AgencyForm from "~/components/forms/AgencyForm.vue";
 import SubcriptionConfigure from "~/components/forms/SubcriptionConfigure.vue";
-
+const props = defineProps<{
+    stepCompleted: boolean;
+}>();
+const emit = defineEmits(["update:stepCompleted"]);
 const checkout = useSubscriptionCheckout();
+
 const loading = ref(true);
+const currentStep = ref(1);
+const stepError = ref<string | null>(null);
 
-const isPlanOpen = ref(true);
-const isBillingOpen = ref(true);
-const isBranchOpen = ref(true);
-const isBranchConfigureOpen = ref(true);
-const isAgencyOpen = ref(false);
-
-const errorSectionMap: Record<string, { open: typeof isPlanOpen; id: string }> =
-    {
-        plan: { open: isPlanOpen, id: "section-plan" },
-        billing_interval: { open: isBillingOpen, id: "section-billing" },
-        branch_name: { open: isBranchOpen, id: "section-branch" },
-        branch_description: { open: isBranchOpen, id: "section-branch" },
-        branch_contact_number: { open: isBranchOpen, id: "section-branch" },
-        branch_image: { open: isBranchOpen, id: "section-branch" },
-        branch_lat: { open: isBranchOpen, id: "section-branch" },
-        branch_config: {
-            open: isBranchConfigureOpen,
-            id: "section-branch-config",
-        },
-        agency_name: { open: isAgencyOpen, id: "section-agency" },
-        agency_street: { open: isAgencyOpen, id: "section-agency" },
-        agency_city: { open: isAgencyOpen, id: "section-agency" },
-        agency_province: { open: isAgencyOpen, id: "section-agency" },
-        agency_country: { open: isAgencyOpen, id: "section-agency" },
-    };
-const sectionOrder = [
-    "section-plan",
-    "section-billing",
-    "section-branch",
-    "section-branch-config",
-    "section-agency",
+const STEPS = [
+    "Subscription",
+    "Agency Information",
+    "Branch Information",
+    "Configuration",
 ];
-
-watch(
-    () => checkout.errors,
-    async (errors) => {
-        if (!errors || Object.keys(errors).length === 0) return;
-
-        const firstErrorSection = sectionOrder.find((sectionId) =>
-            Object.keys(errors).some(
-                (key) => errorSectionMap[key]?.id === sectionId,
-            ),
-        );
-
-        if (!firstErrorSection) return;
-
-        Object.keys(errors).forEach((key) => {
-            if (errorSectionMap[key]) {
-                errorSectionMap[key].open.value = true;
-            }
-        });
-
-        await nextTick();
-
-        document.getElementById(firstErrorSection)?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-        });
-    },
-    { deep: true },
-);
 
 const intervalOptions = [
     { value: "monthly", label: "Monthly", description: "Billed monthly" },
     { value: "yearly", label: "Yearly", description: "Save more yearly" },
 ];
+
+const nextStep = async () => {
+    stepError.value = null;
+
+    if (currentStep.value === 1) {
+        if (!checkout.selectedPlan || !checkout.selectedInterval) {
+            stepError.value = "Please select a plan and billing cycle.";
+            return;
+        }
+    }
+    if (currentStep.value === 2) {
+        const isValid = await validateAgency();
+        if (!isValid) return;
+    }
+
+    if (currentStep.value === 3) {
+        const isValid = await validateBranch();
+        if (!isValid) return;
+        emit("update:stepCompleted", isValid && currentStep.value === 3);
+    }
+
+    if (currentStep.value < STEPS.length) {
+        currentStep.value++;
+    }
+};
+
+const validateAgency = async (): Promise<boolean> => {
+    try {
+        await agencyService.validate(checkout.agency);
+        return true;
+    } catch (err: any) {
+        const errors = err?.errors || err?.response?.data?.errors;
+        console.error(err);
+        if (errors) {
+            checkout.errors = Object.fromEntries(
+                Object.entries(errors).map(([key, value]: any) => [
+                    key,
+                    Array.isArray(value) ? value[0] : value,
+                ]),
+            );
+        }
+        return false;
+    }
+};
+
+const validateBranch = async (): Promise<boolean> => {
+    try {
+        await branchService.validate(checkout.branch);
+        console.log(checkout.branch);
+        return true;
+    } catch (err: any) {
+        const errors = err?.errors || err?.response?.data?.errors;
+        console.error(err);
+        if (errors) {
+            checkout.errors = Object.fromEntries(
+                Object.entries(errors).map(([key, value]: any) => [
+                    key,
+                    Array.isArray(value) ? value[0] : value,
+                ]),
+            );
+        }
+        return false;
+    }
+};
 
 onMounted(async () => {
     try {
@@ -306,21 +301,3 @@ onMounted(async () => {
     }
 });
 </script>
-
-<style scoped>
-.accordion-enter-active,
-.accordion-leave-active {
-    transition: all 0.25s ease;
-    overflow: hidden;
-}
-.accordion-enter-from,
-.accordion-leave-to {
-    opacity: 0;
-    max-height: 0;
-}
-.accordion-enter-to,
-.accordion-leave-from {
-    opacity: 1;
-    max-height: 600px;
-}
-</style>

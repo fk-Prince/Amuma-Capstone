@@ -38,6 +38,12 @@ Route::middleware('auth:sanctum')->group(function () {
         'services' => ServiceController::class,
         'reviews' => ReviewController::class,
     ]);
+
+
+    Route::prefix('validate')->group(function () {
+        Route::post('/agencies', [AgencyController::class, 'validate']);
+        Route::post('/branches', [BranchController::class, 'validate']);
+    });
 });
 
 Route::prefix('branches')->group(function () {

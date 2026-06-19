@@ -20,12 +20,42 @@
                 <BillingToggle v-model="billingCycle" />
             </div>
 
-            <div v-if="loading" class="flex justify-center py-20">
+            <div
+                v-if="loading"
+                class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch"
+            >
                 <div
-                    class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"
-                />
-            </div>
+                    v-for="i in 3"
+                    :key="i"
+                    class="rounded-3xl border border-gray-200 p-8 animate-pulse"
+                >
+                    <div class="h-4 w-20 bg-gray-200 rounded mb-6"></div>
 
+                    <div class="h-8 w-40 bg-gray-200 rounded mb-4"></div>
+
+                    <div class="space-y-2 mb-8">
+                        <div class="h-4 bg-gray-200 rounded"></div>
+                        <div class="h-4 w-5/6 bg-gray-200 rounded"></div>
+                    </div>
+
+                    <div class="h-10 w-28 bg-gray-200 rounded mb-8"></div>
+
+                    <div class="h-12 bg-gray-200 rounded-xl mb-8"></div>
+
+                    <div class="space-y-4">
+                        <div
+                            v-for="j in 5"
+                            :key="j"
+                            class="flex items-center gap-3"
+                        >
+                            <div
+                                class="w-5 h-5 rounded-full bg-gray-200 flex-shrink-0"
+                            ></div>
+                            <div class="h-4 flex-1 bg-gray-200 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div
                 v-else
                 class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch"

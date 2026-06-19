@@ -1,10 +1,8 @@
 import type { Ref } from "vue";
+import { type Alert } from "~/types/alert";
 
-export interface Alert {
-    show: boolean;
-    type: "success" | "error" | "info";
-    message: string;
-}
+
+
 
 export function showAlert(
     alert: Ref<Alert>,

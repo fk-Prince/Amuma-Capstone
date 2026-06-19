@@ -71,8 +71,8 @@ const payCard = async () => {
             branch_longitude: checkout.branch?.location?.longitude,
 
             agency_id: checkout.agency?.id,
-            agency_name: checkout.agency?.name,
-            agency_description: checkout.agency?.description,
+            agency_name: checkout.agency?.agency_name,
+            agency_description: checkout.agency?.agency_description,
             agency_street: checkout.agency?.location?.street,
             agency_city: checkout.agency?.location?.city,
             agency_province: checkout.agency?.location?.province,
@@ -113,8 +113,8 @@ const payGCash = async () => {
             branch_longitude: checkout.branch?.location?.longitude,
 
             agency_id: checkout.agency?.id,
-            agency_name: checkout.agency?.name,
-            agency_description: checkout.agency?.description,
+            agency_name: checkout.agency?.agency_name,
+            agency_description: checkout.agency?.agency_description,
             agency_street: checkout.agency?.location?.street,
             agency_city: checkout.agency?.location?.city,
             agency_province: checkout.agency?.location?.province,

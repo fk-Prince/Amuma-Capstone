@@ -1,7 +1,12 @@
 import BaseService from '~/api/BaseService';
+import type { Branch } from '~/types/branch';
 
 class BranchService extends BaseService {
     private static instance: BranchService;
+    private get getBackendApi(): string {
+        const config = useRuntimeConfig();
+        return config.public.backendApi;
+    }
 
     public static getInstance(): BranchService {
         if (!BranchService.instance) {
@@ -19,9 +24,24 @@ class BranchService extends BaseService {
         return await this.request(this.resource + '/filtered', 'GET', params);
     }
 
+
+    async validate(params: Branch): Promise<any> {
+        // const errors: Record<string, string> = {};
+        // if (!params.name?.trim()) errors.branch_name = "Branch name is required";
+        // if (!params.description?.trim()) errors.branch_description = "Branch description is required";
+        // if (!params.location?.street?.trim()) errors["location.street"] = "Street is required";
+        // if (!params.location?.city?.trim()) errors["location.city"] = "City is required";
+        // if (!params.location?.province?.trim()) errors["location.province"] = "Province is required";
+        // if (!params.location?.country?.trim()) errors["location.country"] = "Country is required";
+        // if (Object.keys(errors).length) {
+        //     throw {
+        //         errors,
+        //     };
+        // }
+        return await this.request(this.getBackendApi + '/api/validate/branches', 'POST', params);
+    }
     private get resource(): string {
-        const config = useRuntimeConfig();
-        return `${config.public.backendApi}/api/branches`;
+        return `${this.getBackendApi}/api/branches`;
     }
 }
 

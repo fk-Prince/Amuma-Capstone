@@ -30,6 +30,11 @@ const fileContent = `import BaseService from '~/api/BaseService';
 class ${resourceName}Service extends BaseService {
     private static instance: ${resourceName}Service;
 
+
+    private get getBackendApi(): string {
+        const config = useRuntimeConfig();
+        return config.public.backendApi;
+    }
     public static getInstance(): ${resourceName}Service {
         if (!${resourceName}Service.instance) {
             ${resourceName}Service.instance = new ${resourceName}Service();
@@ -63,8 +68,8 @@ class ${resourceName}Service extends BaseService {
     }
 
     private get resource(): string {
-        const config = useRuntimeConfig();
-        return \`\${config.public.backendApi}/api/\`;
+        const backend = this.getBackendApi;
+        return \`\${backend}/api/\`;
     }
 }
 

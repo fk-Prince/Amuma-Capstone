@@ -1,12 +1,21 @@
 <template>
-    <div class="max-w-3xl mx-auto px-3 flex flex-col gap-5">
-        <Combobox
-            v-model="selectedCurrency"
-            :items="currencies"
-            placeholder="Select currency"
-            class="w-full"
-            label="Currency"
-        />
+    <div class="max-w-5xl mx-auto flex flex-col gap-5">
+        <div class="grid grid-cols-2 gap-4">
+            <Combobox
+                v-model="selectedCurrency"
+                :items="currencies"
+                placeholder="Select currency"
+                class="w-full"
+                label="Currency"
+            />
+            <Combobox
+                v-model="selectedTimeZone"
+                :items="timeZones"
+                placeholder="Select time-zone"
+                class="w-full"
+                label="Time-Zone"
+            />
+        </div>
 
         <div class="flex flex-col">
             <label class="text-sm font-semibold mb-1 text-slate-700">
@@ -14,60 +23,55 @@
             </label>
 
             <div class="grid grid-cols-2 gap-4">
-                <Combobox
-                    v-model="opening"
-                    :items="timeItems"
-                    required
-                    placeholder="Opening time"
-                    class="w-full"
-                />
+                <div>
+                    <p class="text-sm mb-1 text-slate-700">Opening Hours</p>
+                    <Combobox
+                        v-model="selectedOpening"
+                        :items="timeItems"
+                        required
+                        placeholder="Opening time"
+                        class="w-full"
+                    />
+                </div>
 
-                <Combobox
-                    v-model="closing"
-                    :items="timeItems"
-                    required
-                    placeholder="Closing time"
-                    class="w-full"
-                />
+                <div>
+                    <p class="text-sm mb-1 text-slate-700">Closing Hours</p>
+                    <Combobox
+                        v-model="selectedClosing"
+                        :items="timeItems"
+                        required
+                        placeholder="Closing time"
+                        class="w-full"
+                    />
+                </div>
             </div>
         </div>
-        <!-- 
-        <div class="flex flex-col gap-1">
-            <LabelInput
-                v-model="additionalPayment"
-                label="Additional Payment Online"
-                type="number"
-                min="0"
-                @blur="validateAdditionalPayment"
-            />
-            <p v-if="additionalPaymentError" class="text-xs text-red-500">
-                {{ additionalPaymentError }}
-            </p>
-        </div> -->
     </div>
 </template>
+
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import Combobox from "../ui/Combobox.vue";
 import { Currency } from "~/utils/currency";
-import { generateAmPmTimes } from "~/utils/time";
-import LabelInput from "../ui/BaseInput.vue";
+import { generateAmPmTimes, getTimeZone } from "~/utils/time";
+import { useSubscriptionCheckout } from "~/stores/subscription";
 
-const props = defineProps<{
-    setting: any;
-}>();
+const checkout = useSubscriptionCheckout();
+
+const emit = defineEmits(["update:setting"]);
 
 const times = generateAmPmTimes();
 const currencyList = Currency();
+const timeZoneList = getTimeZone();
+const setting = checkout.settings;
+
+const selectedCurrency = ref(setting?.currency);
+const selectedOpening = ref(setting?.opening);
+const selectedClosing = ref(setting?.closing);
+const selectedTimeZone = ref(setting?.time_zone);
 
 const currencies = ref(currencyList);
-const selectedCurrency = ref(
-    props.setting?.currency ?? currencyList[0]?.value ?? "",
-);
-const opening = ref(props.setting?.opening ?? times[0] ?? "");
-const closing = ref(props.setting?.closing ?? times[0] ?? "");
-const additionalPayment = ref(props.setting?.additional_payment ?? "0.00");
-const additionalPaymentError = ref("");
+const timeZones = ref(timeZoneList);
 
 const timeItems = computed(() =>
     times.map((t) => ({
@@ -76,28 +80,13 @@ const timeItems = computed(() =>
     })),
 );
 
-props.setting.currency = selectedCurrency.value;
-props.setting.opening = opening.value;
-props.setting.closing = closing.value;
-// props.setting.additional_payment = additionalPayment.value;
-
-// const validateAdditionalPayment = () => {
-//     const val = Number(additionalPayment.value);
-//     if (additionalPayment.value === "" || additionalPayment.value === null) {
-//         additionalPaymentError.value = "Additional payment is required.";
-//     } else if (val < 0) {
-//         additionalPaymentError.value =
-//             "Additional payment must be 0 or greater.";
-//     } else {
-//         additionalPaymentError.value = "";
-//     }
-// };
-
-watch(selectedCurrency, (val) => (props.setting.currency = val));
-watch(opening, (val) => (props.setting.opening = val));
-watch(closing, (val) => (props.setting.closing = val));
-// watch(additionalPayment, (val) => {
-//     validateAdditionalPayment();
-//     props.setting.additional_payment = val;
-// });
+watch([selectedCurrency, selectedOpening, selectedClosing], () => {
+    emit("update:setting", {
+        ...setting,
+        currency: selectedCurrency.value,
+        selectedOpening: selectedOpening.value,
+        selectedClosing: selectedClosing.value,
+        timeZone: selectedTimeZone.value,
+    });
+});
 </script>
