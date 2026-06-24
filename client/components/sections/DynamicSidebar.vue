@@ -343,6 +343,7 @@
                         </div>
                     </div>
                     <div
+                        v-if="!collapsed"
                         class="flex flex-wrap gap-1 my-2"
                         v-for="branches in branchStore.branches"
                     >
