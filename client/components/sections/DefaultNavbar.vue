@@ -1,18 +1,20 @@
 <template>
     <header :class="header">
-        <nav class="flex justify-between items-center px-6 h-[90px]">
+        <nav class="flex justify-between items-center w-full px-6 h-[90px]">
             <template v-if="variant === 1 || variant === 3">
-                <NuxtLink to="/">
-                    <img
-                        :src="logoAmuma"
-                        alt="AMUMA logo"
-                        class="w-[170px] md:w-[250px] object-contain"
-                    />
-                </NuxtLink>
-                <div v-if="variant === 1" class="hidden lg:flex gap-12">
-                    <NuxtLink v-for="i in navList" :key="i.to" :to="i.to">
-                        {{ i.label }}
+                <div class="flex items-center gap-5">
+                    <NuxtLink to="/">
+                        <img
+                            :src="logoAmuma"
+                            alt="AMUMA logo"
+                            class="w-[120px] md:w-[170px] object-contain"
+                        />
                     </NuxtLink>
+                    <div v-if="variant === 1" class="hidden lg:flex gap-5">
+                        <NuxtLink v-for="i in navList" :key="i.to" :to="i.to">
+                            {{ i.label }}
+                        </NuxtLink>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-3">
@@ -20,7 +22,6 @@
                         <NuxtLink to="/auth/signin">
                             <BaseButton class="px-[30px]">SIGN IN</BaseButton>
                         </NuxtLink>
-
                         <NuxtLink to="/auth/signup">
                             <BaseButton
                                 variant="secondary"
@@ -38,43 +39,37 @@
                                         stroke-width="1.8"
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
-                                    /></svg
-                            ></BaseButton>
+                                    />
+                                </svg>
+                            </BaseButton>
                         </NuxtLink>
                     </div>
-
                     <div v-else class="flex items-center gap-3">
-                        <div class="flex items-center gap-2">
-                            <NuxtLink v-if="!user" to="/auth/signin">
-                                <BaseButton class="px-[30px]"
-                                    >SIGN IN</BaseButton
+                        <NuxtLink v-if="!user" to="/auth/signin">
+                            <BaseButton class="px-[30px]">SIGN IN</BaseButton>
+                        </NuxtLink>
+                        <NuxtLink v-if="!user" to="/auth/signup">
+                            <BaseButton
+                                variant="secondary"
+                                class="bg-transparent px-[30px] border-muted-dark hover:bg-primary/20"
+                                >Get Started
+                                <svg
+                                    width="20"
+                                    height="16"
+                                    viewBox="0 0 16 16"
+                                    fill="none"
                                 >
-                            </NuxtLink>
-
-                            <NuxtLink v-if="!user" to="/auth/signup">
-                                <BaseButton
-                                    variant="secondary"
-                                    class="bg-transparent px-[30px] border-muted-dark hover:bg-primary/20"
-                                    >Get Started
-                                    <svg
-                                        width="20"
-                                        height="16"
-                                        viewBox="0 0 16 16"
-                                        fill="none"
-                                    >
-                                        <path
-                                            d="M3 8h10M9 4l4 4-4 4"
-                                            stroke="currentColor"
-                                            stroke-width="1.8"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                        /></svg
-                                ></BaseButton>
-                            </NuxtLink>
-                        </div>
-
+                                    <path
+                                        d="M3 8h10M9 4l4 4-4 4"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                            </BaseButton>
+                        </NuxtLink>
                         <NavbarProfileDropdown v-if="user" :user="user" />
-
                         <button
                             class="lg:hidden"
                             @click="mobileMenuOpen = true"
@@ -123,32 +118,29 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
-
-import BaseButton from "../ui/BaseButton.vue";
 import logoAmuma from "~/assets/logo/logoAmuma.png";
-import DynamicSidebar from "./DynamicSidebar.vue";
-import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
+import BaseButton from "../ui/BaseButton.vue";
 import { useAuthUser } from "~/composables/useAuthUser";
+import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
+import DynamicSidebar from "./DynamicSidebar.vue";
 
-const route = useRoute();
 const user = useAuthUser();
-
+const route = useRoute();
 const hydrated = ref(false);
 const mobileMenuOpen = ref(false);
 
 onMounted(() => {
     hydrated.value = true;
 });
-
 const props = defineProps<{
     navList?: { label: string; to: string }[];
 }>();
-
 const variant = computed(() => route.meta.navVariant ?? 1);
 const header = computed(() => {
     switch (variant.value) {
         case 1:
-            return "w-full md:px-[5%] lg:px-[10%] bg-transparent h-[90px] border-1 border-b";
+            // return "w-full md:px-[5%] lg:px-[10%] bg-transparent h-[90px] border-1 border-b";
+            return "fixed top-4 left-1/2 -translate-x-1/2 mx-auto w-[80%] rounded-2xl border border-blue-400/60 backdrop-blur-xl shadow-xl shadow-blue-100/50 z-50";
         case 2:
             return "absolute top-0 left-1/4 -translate-x-1/4 w-full h-[90px] bg-transparent z-[9999]";
         default:

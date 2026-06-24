@@ -4,12 +4,13 @@ useHead({
     title: "AMUMA",
 });
 definePageMeta({
+    layout: "default",
     navVariant: 1,
 });
 </script>
 
 <template>
-    <div class="min-h-screen w-full bg-primary/10 px-[10%]">
+    <div class="min-h-screen w-full">
         <Landing />
     </div>
 </template>

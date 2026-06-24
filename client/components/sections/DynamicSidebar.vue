@@ -109,7 +109,6 @@
                                             {{ user.email }}
                                         </p>
                                     </div>
-
                                 </div>
                                 <div
                                     class="flex flex-wrap gap-1 my-2"
@@ -120,8 +119,7 @@
                                         :key="role.role_type"
                                         class="text-[12px] px-2 py-0.5 rounded-full font-medium border"
                                         :class="
-                                            roleMeta[role.role_type]
-                                                ?.class ||
+                                            roleMeta[role.role_type]?.class ||
                                             'bg-gray-50 text-gray-600 border-gray-200'
                                         "
                                     >
