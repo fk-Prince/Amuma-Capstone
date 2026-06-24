@@ -7,6 +7,7 @@ import AlertMessage from "../ui/AlertMessage.vue";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { authService } from "~/api/auth/AuthService";
 import type { Alert } from "~/types/alert.js";
+import type { SigninRequest } from "~/types/auth.js";
 
 const route = useRoute();
 const user = useAuthUser();
@@ -48,7 +49,6 @@ async function handleSignIn() {
 
     try {
         const res = await authService.login(signinData.value);
-        localStorage.setItem("auth", res.token);
         showAlert(alert, "success", res.message);
         redirecting.value = true;
         setTimeout(async () => {
@@ -75,35 +75,14 @@ async function googleUrl() {
         const res = await authService.googleUrl();
         window.location.href = res.url;
     } catch (err: any) {
-        showAlert(
-            alert,
-            "error",
-            err?.message || "Invalid email or password.",
-            0,
-        );
+        showAlert(alert, "error", err?.message || "Internal Server Error", 0);
     } finally {
         loading.value = false;
     }
 }
 </script>
 <template>
-    <div
-        class="bg-white rounded-2xl shadow-xl px-10 py-11 w-full max-w-[460px]"
-    >
-        <div class="text-center mb-12">
-            <h2
-                class="text-[1.85rem] font-extrabold text-slate-900 tracking-tight"
-            >
-                Welcome back
-            </h2>
-
-            <p class="text-sm text-slate-500 mt-1">
-                Sign in to your
-                <span class="text-blue-600 font-semibold">AMUMA</span>
-                account
-            </p>
-        </div>
-
+    <div>
         <AlertMessage
             v-if="alert.show"
             :type="alert.type"
@@ -111,7 +90,7 @@ async function googleUrl() {
             class="mb-5"
         />
 
-        <div class="flex flex-col gap-5">
+        <form class="flex flex-col gap-5">
             <BaseInput
                 v-model="signinData.email"
                 label="Email"
@@ -263,6 +242,6 @@ async function googleUrl() {
                     Sign up
                 </NuxtLink>
             </p>
-        </div>
+        </form>
     </div>
 </template>

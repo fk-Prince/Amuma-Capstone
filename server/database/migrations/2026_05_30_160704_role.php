@@ -19,6 +19,7 @@ return new class extends Migration
         Schema::create('user_roles', function (Blueprint $table) {
             $table->foreignId('user_id')->constrained('users', 'user_id');
             $table->foreignId('role_id')->constrained('roles', 'role_id');
+            $table->foreignId('branch_id')->constrained('branches', 'branch_id');
             $table->boolean('is_active')->default(true);
         });
     }

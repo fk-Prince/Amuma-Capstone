@@ -18,10 +18,9 @@ class BranchController extends Controller
     }
 
 
-
     public function retrieveFeaturedBranch(Request $request)
     {
-        return $this->branchService->getBranches($request->all());
+        return $this->branchService->getFeaturedBranches($request->all());
     }
 
     public function retrieveFilteredBranch(Request $request)
@@ -31,9 +30,6 @@ class BranchController extends Controller
 
     public function validate(BranchRequest $request)
     {
-        // $validated = $request->validate([
-        //     'name' => ['required', 'string', 'max:255', 'unique:branches,name']
-        // ]);
         return response()->json([
             'status' => true,
             'message' => 'Validation passed',

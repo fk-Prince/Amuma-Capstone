@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import SigninSection from "~/components/sections/SigninSection.vue";
+import SigninSection from "~/components/sections/auth/SigninSection.vue";
 definePageMeta({
     middleware: "auth-client",
     navVariant: 2,

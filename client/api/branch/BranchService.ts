@@ -24,7 +24,6 @@ class BranchService extends BaseService {
         return await this.request(this.resource + '/filtered', 'GET', params);
     }
 
-
     async validate(params: Branch): Promise<any> {
         // const errors: Record<string, string> = {};
         // if (!params.name?.trim()) errors.branch_name = "Branch name is required";

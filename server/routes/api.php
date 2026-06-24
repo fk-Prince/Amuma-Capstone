@@ -9,16 +9,17 @@ use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SubscriptionController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
+
+
 Route::prefix('auth')->group(function () {
+    Route::middleware('auth:sanctum')->get('/me', [UserController::class, 'fetchMe']);
     Route::post('/login', [AuthController::class, 'login']);
-    Route::middleware('auth:sanctum')->get('/me', fn(Request $request) => $request->user()->load('roles'));
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    Route::post('/subscription/success', [SubscriptionController::class, 'subscriptionWebhook']); // SUBSCRIPTION GCASH WEBHOOK
+    Route::post('/subscription/success', [SubscriptionController::class, 'subscriptionWebhook']); // SUBSCRIPTION GCASH WEBHOOK { #TODO CHNAGE URL }
     Route::post('/google/url', [AuthController::class, 'google']);
     Route::get('/google/callback', [AuthController::class, 'googleCallback']);
 
@@ -29,17 +30,28 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
+
+    // SUBSCRIPTION
+
     Route::post('/subscription', [SubscriptionController::class, 'newSubscription']);
-    Route::get('/subscription-detail', [SubscriptionController::class, 'retrieveSubscriptionDetail']);
-    Route::post('/subscription-validate', [SubscriptionController::class, 'validateSubscription']);
+    Route::get('/subscription-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
+    Route::post('/subscription-validate',  [SubscriptionController::class, 'validateSubscription']);
+    // Route::prefix('subscription')->controller(SubscriptionController::class)->group(function () {
+    //     Route::post('/', 'newSubscription');
+    //     Route::get('-detail', 'retrieveSubscriptionDetail');
+    //     Route::post('-validate', 'validateSubscription');
+    // });
 
     Route::apiResources([
         'agencies' => AgencyController::class,
         'services' => ServiceController::class,
         'reviews' => ReviewController::class,
+        // 'branches' => BranchController::class,
+        'users' => UserController::class
     ]);
 
 
+    //VALIDATE INPUTS
     Route::prefix('validate')->group(function () {
         Route::post('/agencies', [AgencyController::class, 'validate']);
         Route::post('/branches', [BranchController::class, 'validate']);
@@ -47,13 +59,24 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::prefix('branches')->group(function () {
+    // PUBLIC BRANCHES
     Route::get('/featured', [BranchController::class, 'retrieveFeaturedBranch']);
     Route::get('/filtered', [BranchController::class, 'retrieveFilteredBranch']);
+
+    // AUTHENTICATED BRACNHES ACCESS
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/{uuid}/services', [ServiceController::class, 'getBranchServices']);
+    });
 });
 
 
+
+// PLANS
 Route::get('/plans', [PlanController::class, 'index']);
 
+
+// LOCATIONS
 Route::get('/geocode', [NominatimController::class, 'geocode']);
 Route::get('/reverse-geocode', [NominatimController::class, 'reverse']);
 Route::get('/nereast-street', [NominatimController::class, 'nearest']);
+// 

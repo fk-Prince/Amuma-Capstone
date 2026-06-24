@@ -26,7 +26,8 @@
         "pusher-js": "^8.5.0",
         "shadcn-nuxt": "2.7.4",
         "vue": "^3.5.33",
-        "vue-router": "^5.0.6"
+        "vue-router": "^5.0.6",
+        "zod": "^4.4.3"
     },
     "devDependencies": {
         "@nuxt/icon": "^2.2.3",

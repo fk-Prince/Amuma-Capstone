@@ -10,24 +10,37 @@
                     />
                 </NuxtLink>
                 <div v-if="variant === 1" class="hidden lg:flex gap-12">
-                    <NuxtLink v-for="i in navItems" :key="i.to" :to="i.to">
+                    <NuxtLink v-for="i in navList" :key="i.to" :to="i.to">
                         {{ i.label }}
                     </NuxtLink>
                 </div>
 
                 <div class="flex items-center gap-3">
                     <div v-if="!hydrated" class="flex items-center gap-3">
-                        <div
-                            class="w-9 h-9 bg-gray-200 rounded-full animate-pulse"
-                        />
-                        <div class="flex flex-col gap-2">
-                            <div
-                                class="w-24 h-3 bg-gray-200 rounded animate-pulse"
-                            />
-                            <div
-                                class="w-14 h-3 bg-gray-200 rounded animate-pulse"
-                            />
-                        </div>
+                        <NuxtLink to="/auth/signin">
+                            <BaseButton class="px-[30px]">SIGN IN</BaseButton>
+                        </NuxtLink>
+
+                        <NuxtLink to="/auth/signup">
+                            <BaseButton
+                                variant="secondary"
+                                class="bg-transparent px-[30px] border-muted-dark hover:bg-primary/20"
+                                >Get Started
+                                <svg
+                                    width="20"
+                                    height="16"
+                                    viewBox="0 0 16 16"
+                                    fill="none"
+                                >
+                                    <path
+                                        d="M3 8h10M9 4l4 4-4 4"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    /></svg
+                            ></BaseButton>
+                        </NuxtLink>
                     </div>
 
                     <div v-else class="flex items-center gap-3">
@@ -98,9 +111,9 @@
             <DynamicSidebar
                 :open="mobileMenuOpen"
                 :logo="logoAmuma"
-                :navItems="navItems"
+                :authMenu="navList"
                 :user="user"
-                :avatarSrc="avatarUrl"
+                :avatarSrc="user?.avatar"
                 @close="mobileMenuOpen = false"
             />
         </ClientOnly>
@@ -110,14 +123,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
-import BaseButton from "../ui/BaseButton.vue";
 
+import BaseButton from "../ui/BaseButton.vue";
 import logoAmuma from "~/assets/logo/logoAmuma.png";
 import DynamicSidebar from "./DynamicSidebar.vue";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
-
 import { useAuthUser } from "~/composables/useAuthUser";
-import { avatarSrc, userInitials } from "~/utils/user";
 
 const route = useRoute();
 const user = useAuthUser();
@@ -129,28 +140,15 @@ onMounted(() => {
     hydrated.value = true;
 });
 
-const props = withDefaults(
-    defineProps<{
-        navItems?: { label: string; to: string }[];
-    }>(),
-    {
-        navItems: () => [
-            { label: "Product", to: "/product" },
-            { label: "Booking", to: "/booking" },
-            { label: "Resources", to: "/resources" },
-            { label: "Company", to: "/company" },
-        ],
-    },
-);
+const props = defineProps<{
+    navList?: { label: string; to: string }[];
+}>();
 
-const initials = computed(() => userInitials(user));
-const avatarUrl = computed(() => avatarSrc(initials.value));
 const variant = computed(() => route.meta.navVariant ?? 1);
 const header = computed(() => {
     switch (variant.value) {
         case 1:
             return "w-full md:px-[5%] lg:px-[10%] bg-transparent h-[90px] border-1 border-b";
-
         case 2:
             return "absolute top-0 left-1/4 -translate-x-1/4 w-full h-[90px] bg-transparent z-[9999]";
         default:

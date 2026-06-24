@@ -20,6 +20,11 @@ class Role extends Model
             'user_roles',
             'role_id',
             'user_id'
-        )->withPivot('is_active');
+        )->withPivot('is_active', 'branch_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
     }
 }

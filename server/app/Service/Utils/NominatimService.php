@@ -28,7 +28,7 @@ class NominatimService
             ]);
 
             if ($response->failed()) {
-                throw new \Exception('Nominatim request failed: ' . $response->body());
+                throw new \Exception('Nominatim request failed: ' . $response->body(), 500);
             }
 
             return $response->json();
@@ -53,7 +53,7 @@ class NominatimService
             ]);
 
             if ($response->failed()) {
-                throw new \Exception('Overpass request failed: ' . $response->body());
+                throw new \Exception('Overpass request failed: ' . $response->body(), 500);
             }
 
             $elements = $response->json()['elements'] ?? [];
@@ -71,98 +71,88 @@ class NominatimService
 
     public function geocodeAddress(array $payload)
     {
-        try {
-            $address = $payload['address'] ?? collect([
-                $payload['street'] ?? null,
-                $payload['city'] ?? null,
-                $payload['province'] ?? null,
-                $payload['country'] ?? null,
-            ])->filter()->implode(', ');
+        $address = $payload['address'] ?? collect([
+            $payload['street'] ?? null,
+            $payload['city'] ?? null,
+            $payload['province'] ?? null,
+            $payload['country'] ?? null,
+        ])->filter()->implode(', ');
 
-            if (!$address) {
-                return null;
-            }
-
-            $response = Http::withHeaders([
-                'User-Agent' => 'YourAppName/1.0 (contact@email.com)',
-            ])->get('https://nominatim.openstreetmap.org/search', [
-                'q' => $address,
-                'format' => 'json',
-                'limit' => 1,
-            ]);
-
-
-            $data = $response->json();
-            if (!empty($data) && isset($data[0])) {
-                return [
-                    'lat' => $data[0]['lat'] ?? null,
-                    'lng' => $data[0]['lon'] ?? null,
-                ];
-            }
-
-            $fallback = collect([
-                $payload['city'] ?? null,
-                $payload['province'] ?? null,
-                $payload['country'] ?? null,
-            ])->filter()->implode(', ');
-
-            if (!$fallback || $fallback === $address) {
-                return null;
-            }
-
-
-            $response2 = Http::withHeaders([
-                'verify' => false,
-                'User-Agent' => 'YourAppName/1.0 (contact@email.com)',
-            ])->get('https://nominatim.openstreetmap.org/search', [
-                'q' => $fallback,
-                'format' => 'json',
-                'limit' => 1,
-            ]);
-
-
-            $data2 = $response2->json();
-
-            if (!empty($data2) && isset($data2[0])) {
-                return [
-                    'lat' => $data2[0]['lat'] ?? null,
-                    'lng' => $data2[0]['lon'] ?? null,
-                ];
-            }
-
-            return null;
-        } catch (\Exception $e) {
-            Log::error('Geocode err' . $e->getMessage());
+        if (!$address) {
             return null;
         }
+
+        $response = Http::withHeaders([
+            'User-Agent' => 'YourAppName/1.0 (contact@email.com)',
+        ])->get('https://nominatim.openstreetmap.org/search', [
+            'q' => $address,
+            'format' => 'json',
+            'limit' => 1,
+        ]);
+
+
+        $data = $response->json();
+        if (!empty($data) && isset($data[0])) {
+            return [
+                'lat' => $data[0]['lat'] ?? null,
+                'lng' => $data[0]['lon'] ?? null,
+            ];
+        }
+
+        $fallback = collect([
+            $payload['city'] ?? null,
+            $payload['province'] ?? null,
+            $payload['country'] ?? null,
+        ])->filter()->implode(', ');
+
+        if (!$fallback || $fallback === $address) {
+            return null;
+        }
+
+
+        $response2 = Http::withHeaders([
+            'verify' => false,
+            'User-Agent' => 'YourAppName/1.0 (contact@email.com)',
+        ])->get('https://nominatim.openstreetmap.org/search', [
+            'q' => $fallback,
+            'format' => 'json',
+            'limit' => 1,
+        ]);
+
+
+        $data2 = $response2->json();
+
+        if (!empty($data2) && isset($data2[0])) {
+            return [
+                'lat' => $data2[0]['lat'] ?? null,
+                'lng' => $data2[0]['lon'] ?? null,
+            ];
+        }
+
+        return null;
     }
 
     public function getCityByCords(float $lat, float $long)
     {
-        try {
-            $response = Http::withHeaders([
-                'User-Agent' => config('app.name') . ' ' . config('app.url'),
-            ])->get('https://nominatim.openstreetmap.org/reverse', [
+        $response = Http::withHeaders([
+            'User-Agent' => config('app.name') . ' ' . config('app.url'),
+        ])->get('https://nominatim.openstreetmap.org/reverse', [
+            'lat'    => $lat,
+            'lon'    => $long,
+            'format' => 'json',
+        ]);
+
+        if ($response->failed()) {
+            Log::warning('Nominatim reverse geocode failed', [
                 'lat'    => $lat,
-                'lon'    => $long,
-                'format' => 'json',
+                'long'   => $long,
+                'status' => $response->status(),
             ]);
-
-            if ($response->failed()) {
-                Log::warning('Nominatim reverse geocode failed', [
-                    'lat'    => $lat,
-                    'long'   => $long,
-                    'status' => $response->status(),
-                ]);
-                return null;
-            }
-
-            $data = $response->json();
-
-            return $data['address']['city'] ?? null;
-        } catch (\Exception $e) {
-            Log::info($e);
             return null;
         }
+
+        $data = $response->json();
+
+        return $data['address']['city'] ?? null;
     }
 }

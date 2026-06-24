@@ -13,10 +13,16 @@ class BranchRepository
         return Branch::create($payload);
     }
 
-    public function getBranches()
+    public function getUserBrancheses()
     {
         return Branch::all();
     }
+
+    public function getUserBranchesesByField(string $column, string $value)
+    {
+        return Branch::all();
+    }
+
 
     public function findByField(string $column, string $value)
     {
@@ -36,16 +42,13 @@ class BranchRepository
             ->paginate($perPage);
     }
 
-    // public function paginate(int $perPage)
-    // {
-    //     return Branch::with([
-    //         'subscriptions.plans',
-    //         'reviews',
-    //         'locations'
-    //     ])
-    //         ->latest()
-    //         ->paginate($perPage);
-    // }
+    public function getUserBranches(array $branchIds)
+    {
+        return  Branch::with(['locations', 'subscriptions.plans'])
+            ->whereIn('branch_id', $branchIds)
+            ->get()
+            ->keyBy('branch_id');
+    }
 
     public function getFilterBranches(int $perPage, array $filters)
     {

@@ -2,7 +2,7 @@
     <button
         type="button"
         @click="emit('click')"
-        class="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-gray-50"
+        class="w-full flex items-center bg-secondary text-white gap-2.5 px-5 py-2 text-sm transition-colors hover:bg-[#141d2c] hover:shadow-md hover:shadow-black/30"
         :class="[
             danger ? 'text-red-500 hover:bg-red-50' : 'text-gray-700',
             disabled
@@ -10,7 +10,6 @@
                 : 'cursor-pointer',
         ]"
     >
-        <i v-if="icon" :class="`ti ti-${icon} text-base`" aria-hidden="true" />
         <span class="flex-1 text-left">{{ label }}</span>
         <span
             v-if="badge"

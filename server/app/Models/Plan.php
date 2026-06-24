@@ -26,4 +26,9 @@ class Plan extends Model
     {
         return $this->belongsTo(Price::class, 'yearly_price_id', 'price_id');
     }
+
+    public function subscription()
+    {
+        return $this->hasMany(Subscription::class, 'plan_id', 'plan_id');
+    }
 }

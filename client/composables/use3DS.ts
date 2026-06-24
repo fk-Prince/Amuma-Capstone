@@ -11,7 +11,6 @@ export const use3DS = () => {
             z-index: 9999;
         `;
 
-        // MODAL
         const modal = document.createElement("div");
         modal.style.cssText = `
             background: white;
@@ -25,7 +24,6 @@ export const use3DS = () => {
             position: relative;
         `;
 
-        // HEADER
         const header = document.createElement("div");
         header.style.cssText = `
             padding: 12px 16px;
@@ -39,11 +37,10 @@ export const use3DS = () => {
             align-items: center;
         `;
 
-        // TITLE
         const titleEl = document.createElement("span");
         titleEl.innerHTML = `🔒 ${title}`;
 
-        // CLOSE BTN
+
         const closeBtn = document.createElement("button");
         closeBtn.innerHTML = "✕";
         closeBtn.style.cssText = `
@@ -58,7 +55,6 @@ export const use3DS = () => {
         header.appendChild(closeBtn);
 
 
-        // MODAL FRAME
         const iframe = document.createElement("iframe");
         iframe.src = url;
         iframe.style.cssText = `flex: 1; border: none; width: 100%;`;

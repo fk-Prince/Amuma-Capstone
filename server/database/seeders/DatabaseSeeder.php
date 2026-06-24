@@ -62,11 +62,6 @@ class DatabaseSeeder extends Seeder
             ['role_type' => 'caregiver'],
         ]);
 
-        $user->roles()->attach($role->role_id, [
-            'is_active' => true
-        ]);
-
-
         $prices = [2500, 3500, 4500, 28000, 40000, 58000];
 
         foreach ($prices as $price) {

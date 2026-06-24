@@ -13,6 +13,7 @@ class Service extends Model
     protected $primaryKey = 'service_id';
 
     protected $fillable = [
+        'category_id',
         'branch_id',
         'price_id',
         'service_name',
@@ -33,9 +34,14 @@ class Service extends Model
     /**
      * Branch that owns the service.
      */
-    public function branch()
+    public function branches()
     {
         return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
+    }
+
+    public function categories()
+    {
+        return $this->belongsTo(Category::class, 'category_id', 'category_id');
     }
 
     /**
@@ -45,6 +51,7 @@ class Service extends Model
     {
         return $this->belongsTo(Price::class, 'price_id', 'price_id');
     }
+
 
     public function staff()
     {

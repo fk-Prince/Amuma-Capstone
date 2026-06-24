@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SignupSection from "~/components/sections/SignupSection.vue";
+import SignupSection from "~/components/sections/auth/SignupSection.vue";
 definePageMeta({
     middleware: "auth-client",
     navVariant: 2,

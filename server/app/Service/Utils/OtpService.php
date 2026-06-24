@@ -4,6 +4,7 @@ namespace App\Service\Utils;
 
 use App\Mail\OtpMailer;
 use App\Service\AuthService;
+use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -41,17 +42,12 @@ class OtpService
     {
         $data = Cache::get("otp:{$payload['otp_key']}");
 
-
         if (!$data) {
-            return response()->json([
-                'message' => 'OTP expired or invalid.'
-            ], 422);
+            throw new Exception(__('OTP expired or invalid.'), 422);
         }
 
         if ($data['otp'] != $payload['otp_value']) {
-            return response()->json([
-                'message' => __('Invalid OTP.')
-            ], 422);
+            throw new Exception(__('Invalid OTP.'), 422);
         }
 
         Cache::forget("otp:{$payload['otp_key']}");

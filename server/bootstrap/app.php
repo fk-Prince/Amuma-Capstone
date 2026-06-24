@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,11 +14,19 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
-        $middleware->validateCsrfTokens(except: [
-            'api/*',
-            'sanctum/csrf-cookie',
-        ]);
+        // $middleware->validateCsrfTokens(except: [
+        //     'api/*',
+        //     'sanctum/csrf-cookie',
+        // ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (Throwable $e) {
+            $status = $e instanceof HttpExceptionInterface
+                ? $e->getStatusCode()
+                : 500;
+
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], $status);
+        });
     })->create();

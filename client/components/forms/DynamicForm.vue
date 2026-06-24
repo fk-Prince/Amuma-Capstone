@@ -5,10 +5,6 @@
             @click="show = !show"
         >
             <span>{{ title }}</span>
-
-            <span class="text-gray-400 text-sm">
-                {{ show ? "▲" : "▼" }}
-            </span>
         </button>
 
         <div v-if="show" class="mt-5 space-y-4">

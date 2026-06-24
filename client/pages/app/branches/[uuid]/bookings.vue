@@ -1,11 +1,12 @@
 <template>
-    <div>HELLO FROM BRANCH</div>
+    <div>HELLO FROM Bookings</div>
 </template>
+
 <script setup lang="ts">
 definePageMeta({
     layout: "dashboard",
     middleware: "auth-client",
 });
 
-useHead({ title: "Branches" });
+useHead({ title: "Bookings" });
 </script>

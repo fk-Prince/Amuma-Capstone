@@ -69,13 +69,13 @@ class SubscriptionService
         );
 
         if (!$billing_interval) {
-            throw new \Exception(__('Invalid billing interval.'));
+            throw new \Exception(__('Invalid billing interval.'), 422);
         }
 
         $plan = $this->planRepository->findByField('plan_code', $plan_code);
 
         if (!$plan) {
-            throw new \Exception(__('Plan not found.'));
+            throw new \Exception(__('Plan not found.'), 404);
         }
 
         $plan->load($billing_interval->loadPriceKey());
@@ -204,7 +204,7 @@ class SubscriptionService
                 ]);
 
                 if (empty($plan['plan_code'])) {
-                    throw new \Exception('Invalid plan type.');
+                    throw new \Exception('Invalid plan type.', 422);
                 }
 
                 $subscription = $this->subscriptionRepository->create([
@@ -230,6 +230,7 @@ class SubscriptionService
                 $userModel = $this->userRepository->findByField('user_id', $user['user_id']);
                 $userModel->roles()->attach($role->role_id, [
                     'is_active' => true,
+                    'branch_id' => $branchData->branch_id,
                 ]);
 
                 return response()->json([

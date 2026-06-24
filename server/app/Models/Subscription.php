@@ -36,7 +36,7 @@ class Subscription extends Model
 
     public function branches()
     {
-        return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
+        return $this->belongsToMany(Branch::class, 'branch_id', 'branch_id');
     }
 
     public function subscription_payments()

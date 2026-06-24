@@ -4,6 +4,8 @@ namespace App\Service;
 
 use App\Repository\BranchRepository;
 use App\Http\Resources\BranchResource;
+use App\Models\User;
+use App\Service\Utils\AuthGuard;
 use App\Service\Utils\NominatimService;
 use Illuminate\Support\Facades\Log;
 use Stevebauman\Location\Facades\Location;
@@ -19,15 +21,14 @@ class BranchService
         $this->nomaticeService = $nomaticeService;
     }
 
-    public function getBranches(array $payload)
+    public function getFeaturedBranches(array $payload)
     {
         $branch = $this->branchRepository->getHighestReviewPaginate($payload['per_page']);
         return BranchResource::collection($branch);
     }
+
     public function getBranchesByFilter(array $payload)
     {
-
-        Log::info($payload);
         if (!empty($payload['lat']) && !empty($payload['long'])) {
             $city = $this->nomaticeService->getCityByCords($payload['lat'], $payload['long']);
         } elseif (!empty($payload['location'])) {

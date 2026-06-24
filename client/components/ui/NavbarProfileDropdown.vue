@@ -8,7 +8,7 @@
                 >
                     <div class="relative">
                         <img
-                            :src="avatar"
+                            :src="user.avatar"
                             class="w-9 h-9 rounded-full border-2 border-white shadow-sm object-cover"
                             alt="Profile"
                         />
@@ -34,53 +34,58 @@
             </template>
 
             <template #default="{ close }">
-                <div
-                    class="px-4 py-3 border-b border-gray-100 flex items-center gap-3"
-                >
-                    <img
-                        :src="avatar"
-                        class="w-10 h-10 rounded-full border object-cover"
-                        alt="Profile"
-                    />
-                    <div class="flex flex-col min-w-0">
-                        <p class="text-sm font-medium text-gray-800 truncate">
-                            {{ user.first_name }} {{ user.last_name }}
-                        </p>
-                        <p class="text-xs text-gray-400 truncate">
-                            {{ user.email }}
-                        </p>
+                <div class="bg-secondary text-white rounded-xl overflow-hidden">
+                    <div
+                        class="px-4 py-3 border-b border-white/10 flex items-center gap-3"
+                    >
+                        <div class="relative">
+                            <img
+                                :src="user.avatar"
+                                class="w-9 h-9 rounded-full border-2 border-white shadow-sm object-cover"
+                                alt="Profile"
+                            />
+                            <span
+                                class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border border-white rounded-full"
+                            />
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <p class="text-sm font-medium truncate">
+                                {{ user.first_name }} {{ user.last_name }}
+                            </p>
+                            <p class="text-xs text-gray-400 truncate">
+                                {{ user.email }}
+                            </p>
+                        </div>
                     </div>
-                </div>
 
-                <div class="py-1">
-                    <DropdownItem
-                        v-for="item in menuItems"
-                        :key="item.label"
-                        :icon="item.icon"
-                        :label="item.label"
-                        @click="
-                            () => {
-                                navigateTo(item.to);
-                                close();
-                            }
-                        "
-                    />
-                </div>
+                    <div>
+                        <DropdownItem
+                            v-for="item in profileMenuDropDownList"
+                            v-show="!item.roles || hasRole(...item.roles)"
+                            :key="item.label"
+                            :icon="item.icon"
+                            :label="item.label"
+                            @click="
+                                async () => {
+                                    await handleMenuClick(item);
+                                    close();
+                                }
+                            "
+                        />
+                    </div>
 
-                <DropdownDivider />
-
-                <div class="py-1">
-                    <DropdownItem
-                        icon="logout"
-                        label="Log out"
-                        danger
-                        @click="
-                            () => {
-                                logout();
-                                close();
-                            }
-                        "
-                    />
+                    <div class="py-1 border-t border-white/10">
+                        <DropdownItem
+                            icon="logout"
+                            label="Log out"
+                            @click="
+                                () => {
+                                    logout();
+                                    close();
+                                }
+                            "
+                        />
+                    </div>
                 </div>
             </template>
         </BaseDropdownMenu>
@@ -88,7 +93,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
 import { navigateTo } from "#imports";
 import BaseDropdownMenu from "../ui/BaseDropdownMenu.vue";
 import DropdownDivider from "../ui/DropdownDivider.vue";
@@ -97,36 +101,27 @@ import ChevronIcon from "../icons/dropdown.vue";
 import { authService } from "~/api/auth/AuthService.js";
 import { resetAuth } from "~/composables/useAuthUser";
 import { useToast } from "~/composables/useToast";
-import { userInitials, avatarSrc } from "~/utils/user";
+import { usePermissions } from "~/composables/usePermission";
+import {
+    handleMenuClick,
+    profileMenuDropDownList,
+} from "~/config/profileMenu.js";
+import type { User } from "~/types/auth.js";
+
+const { hasRole } = usePermissions();
 
 const props = defineProps<{
-    user: {
-        first_name: string;
-        last_name: string;
-        email: string;
-        avatar?: string;
-    };
+    user: User;
 }>();
 
 const { success, error } = useToast();
 
-const menuItems = [
-    { icon: "user", label: "My profile", to: "/" },
-    { icon: "user", label: "Dashboard", to: "/app/dashboard" },
-    { icon: "settings", label: "Settings", to: "/" },
-];
-
-const avatar = computed(() => {
-    const initials = userInitials(props.user);
-    return props.user?.avatar || avatarSrc(initials);
-});
-
 const logout = async () => {
     try {
         const res = await authService.logout();
-        success(res.message);
-        resetAuth();
         await navigateTo("/auth/signin");
+        resetAuth();
+        success(res.message);
     } catch (err: any) {
         console.error(err);
         error(err);

@@ -13,7 +13,7 @@
             >
                 <div
                     v-if="open"
-                    class="absolute z-50 mt-2 border border-gray-100 rounded-2xl shadow-xl overflow-hidden py-1"
+                    class="absolute z-50 mt-2 rounded-2xl shadow-xl overflow-hidden"
                     :class="[alignClass, widthClass]"
                 >
                     <slot :close="close" />
@@ -22,7 +22,6 @@
         </div>
     </ClientOnly>
 </template>
-
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 
@@ -51,4 +50,12 @@ const widthClass = computed(() => props.width);
 const handleClickOutside = (e: MouseEvent) => {
     if (!dropdownRef.value?.contains(e.target as Node)) close();
 };
+
+onMounted(() => {
+    document.addEventListener("click", handleClickOutside, true);
+});
+
+onUnmounted(() => {
+    document.removeEventListener("click", handleClickOutside, true);
+});
 </script>

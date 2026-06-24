@@ -5,7 +5,7 @@ const { handle3DS } = use3DS();
 
 
 export interface CardDetails {
-    number: number
+    number: string
     expMonth: string,
     expYear: string,
     cvc: string,
@@ -13,7 +13,6 @@ export interface CardDetails {
     lastName: string,
     email: string
 }
-
 
 
 export async function cardPayment(

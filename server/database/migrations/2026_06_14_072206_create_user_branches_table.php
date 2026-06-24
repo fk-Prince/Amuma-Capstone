@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('user_branches', function (Blueprint $table) {
             $table->foreignId('user_id')->constrained('users', 'user_id');
             $table->foreignId('branch_id')->constrained('branches', 'branch_id');
-            $table->enum('type', ['Homecare', 'Facility', 'both']);
+            $table->enum('assignment_type', ['Homecare', 'Facility', 'Both']);
         });
     }
 

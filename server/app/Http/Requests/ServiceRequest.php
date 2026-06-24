@@ -28,7 +28,6 @@ class ServiceRequest extends FormRequest
                 'exists:categories,category_id',
                 'prohibits:category_name',
             ],
-
             'category_name' => [
                 'required_without:category_id',
                 'nullable',
@@ -36,17 +35,17 @@ class ServiceRequest extends FormRequest
                 'max:255',
                 'prohibits:category_id',
             ],
-            'price' => ['required', 'decimal:2'],
-
+            'price' => ['required', 'decimal:0,2', 'min:0'],
             'service_name' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('services', 'service_name')
-                    ->where('branch_id', $this->input('branch_id')),
             ],
 
-            'maximum_duration' => ['required'],
+            'maximum_duration' => [
+                'required',
+                'date_format:H:i:s',
+            ],
             'is_available' => ['boolean'],
             'type' => ['required', 'in:online,facility,both'],
         ];

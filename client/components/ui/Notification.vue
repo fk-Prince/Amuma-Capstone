@@ -1,5 +1,5 @@
 <template>
-    <div class="relative" ref="dropdownRef">
+    <div v-if="isMounted" class="relative" ref="dropdownRef">
         <button
             @click="toggle"
             class="relative w-[38px] h-[38px] flex items-center justify-center rounded-lg hover:bg-gray-50 text-gray-500"
@@ -20,6 +20,7 @@
                 />
                 <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
             </svg>
+
             <span
                 v-if="unreadCount > 0"
                 class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white"
@@ -72,6 +73,7 @@
                         >
                             <i :class="`ti ${notif.icon}`" />
                         </div>
+
                         <div class="flex-1 min-w-0">
                             <p class="text-[13px] font-medium truncate">
                                 {{ notif.title }}
@@ -83,6 +85,7 @@
                                 {{ notif.date }}
                             </p>
                         </div>
+
                         <div
                             v-if="notif.unread"
                             class="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5"
@@ -104,8 +107,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { onClickOutside } from "@vueuse/core";
+
+const isMounted = ref(false);
+
+onMounted(() => {
+    isMounted.value = true;
+});
 
 interface Notification {
     id: number;
@@ -143,7 +152,7 @@ const notifications = ref<Notification[]>([
         bg: "#E1F5EE",
     },
     {
-        id: 1,
+        id: 3,
         title: "New booking request",
         message: "YAWAYAYAWYAYWAYAWYAWYAYAWYA.",
         date: "Just now",
@@ -153,7 +162,7 @@ const notifications = ref<Notification[]>([
         bg: "#E6F1FB",
     },
     {
-        id: 2,
+        id: 4,
         title: "YAWA",
         message: "YAWA",
         date: "5 min ago",

@@ -170,7 +170,10 @@
                 <div class="flex justify-between border-t pt-6">
                     <button
                         v-if="currentStep > 1"
-                        @click="currentStep--"
+                        @click="
+                            currentStep--;
+                            emit('update:stepCompleted', false);
+                        "
                         class="px-5 py-2 border rounded-xl"
                     >
                         Previous
@@ -227,7 +230,6 @@ const intervalOptions = [
     { value: "monthly", label: "Monthly", description: "Billed monthly" },
     { value: "yearly", label: "Yearly", description: "Save more yearly" },
 ];
-
 const nextStep = async () => {
     stepError.value = null;
 

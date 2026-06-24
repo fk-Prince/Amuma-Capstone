@@ -166,6 +166,41 @@
                     </div>
                 </div>
             </div>
+
+            <div class="space-y-2 text-sm ml-3 mt-2">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Business Hours</span>
+                    <span class="font-semibold">
+                        {{
+                            checkout.settings?.opening &&
+                            checkout.settings?.closing
+                                ? `${checkout.settings.opening} - ${checkout.settings.closing}`
+                                : "—"
+                        }}
+                    </span>
+                </div>
+
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Currency</span>
+                    <span class="font-semibold">
+                        {{ checkout.settings?.currency || "—" }}
+                    </span>
+                </div>
+
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Time Zone</span>
+                    <span class="font-semibold">
+                        {{ checkout.settings?.time_zone || "—" }}
+                    </span>
+                </div>
+
+                <!-- <div class="flex justify-between">
+                    <span class="text-gray-500">Online Fee</span>
+                    <span class="font-semibold">
+                        ₱{{ checkout.settings?.online_additional_fee ?? 0 }}
+                    </span>
+                </div> -->
+            </div>
         </div>
 
         <div class="border-t pt-4 flex justify-between items-center">

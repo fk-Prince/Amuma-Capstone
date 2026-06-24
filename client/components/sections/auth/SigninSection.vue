@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SigninForm from "../forms/SigninForm.vue";
+import SigninForm from "~/components/forms/SigninForm.vue";
 import signinLogo from "~/assets/logo/signinLogo.png";
 </script>
 
@@ -141,7 +141,24 @@ import signinLogo from "~/assets/logo/signinLogo.png";
         <section
             class="relative z-10 flex flex-col items-center justify-center px-6 py-12"
         >
-            <SigninForm />
+            <div
+                class="bg-white rounded-2xl shadow-xl px-10 py-11 w-full max-w-[460px]"
+            >
+                <div class="text-center mb-12">
+                    <h2
+                        class="text-[1.85rem] font-extrabold text-slate-900 tracking-tight"
+                    >
+                        Welcome back
+                    </h2>
+
+                    <p class="text-sm text-slate-500 mt-1">
+                        Sign in to your
+                        <span class="text-blue-600 font-semibold">AMUMA</span>
+                        account
+                    </p>
+                </div>
+                <SigninForm />
+            </div>
         </section>
     </div>
 </template>

@@ -53,6 +53,15 @@ class Branch extends Model
         return $this->belongsTo(Agency::class, 'agency_id', 'agency_id');
     }
 
+    public function services()
+    {
+        return $this->hasMany(Service::class, 'branch_id', 'branch_id');
+        //     'services.price' => function ($query) {
+        //     $query->whereNull('until_from');
+        // },
+    }
+
+
     public function users()
     {
         return $this->belongsToMany(

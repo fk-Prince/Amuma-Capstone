@@ -8,7 +8,7 @@
         <div
             class="flex items-center border-[1.5px] rounded-lg bg-white overflow-hidden transition"
             :class="[
-                error
+                currentError
                     ? 'border-red-400 focus-within:ring-red-500/15'
                     : 'border-slate-200 focus-within:border-blue-500 focus-within:ring-blue-500/15',
                 'focus-within:ring-2',
@@ -20,6 +20,7 @@
             >
                 <slot name="prefix" />
             </span>
+
             <input
                 v-model="value"
                 :type="inputType"
@@ -28,21 +29,24 @@
                 class="flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400"
                 :class="[hasPrefix ? 'pl-2' : '', inputClass]"
             />
+
             <span
                 v-if="hasSuffix || isSearch"
                 class="flex items-center flex-shrink-0 pr-3"
             >
-                <!-- :class="hasSuffix ? 'pr-3' : isSearch ? 'pr-3' : ''" -->
                 <slot v-if="hasSuffix" name="suffix" />
                 <Search v-else-if="isSearch" />
             </span>
         </div>
 
-        <p v-if="error" class="text-xs text-red-500 mt-0.5">{{ error }}</p>
+        <p v-if="currentError" class="text-xs text-red-500 mt-0.5">
+            {{ currentError }}
+        </p>
     </div>
 </template>
+
 <script setup lang="ts">
-import { computed, useSlots } from "vue";
+import { computed, ref, watch, useSlots } from "vue";
 import Search from "../icons/search.vue";
 
 defineOptions({ name: "BaseInput" });
@@ -59,17 +63,30 @@ const props = defineProps({
     textMax: { type: Number, default: 255 },
 });
 
-const emit = defineEmits(["update:modelValue", "clear-error"]);
+const emit = defineEmits(["update:modelValue"]);
+
+const currentError = ref(props.error);
+
+watch(
+    () => props.error,
+    (val) => {
+        currentError.value = val;
+    },
+);
 
 const value = computed({
     get: () => props.modelValue,
     set: (val) => {
         emit("update:modelValue", val);
-        if (props.error) emit("clear-error");
+
+        if (currentError.value) {
+            currentError.value = "";
+        }
     },
 });
 
 const slots = useSlots();
+
 const hasPrefix = computed(() => !!slots.prefix);
 const hasSuffix = computed(() => !!slots.suffix);
 

@@ -52,8 +52,16 @@ class User extends Authenticatable
             'user_roles',
             'user_id',
             'role_id'
-        )->withPivot('is_active');
+        )
+            ->using(UserRole::class)
+            ->withPivot('is_active', 'branch_id');
     }
+
+    public function userRoles()
+    {
+        return $this->hasMany(UserRole::class, 'user_id');
+    }
+
 
     #[Override]
     public function uniqueIds()

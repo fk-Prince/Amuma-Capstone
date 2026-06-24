@@ -1,94 +1,63 @@
+type HttpMethod =
+    | 'GET'
+    | 'POST'
+    | 'PUT'
+    | 'PATCH'
+    | 'DELETE';
+
 export class BaseService {
+    private async getCsrfToken() {
+        const config = useRuntimeConfig()
+
+        await $fetch('/sanctum/csrf-cookie', {
+            baseURL: config.public.backendApi,
+            credentials: 'include',
+        })
+    }
+
     async request<T>(
         url: string,
-        method: string,
-        params: object = {},
+        method: HttpMethod,
+        params: Record<string, any> = {}
     ): Promise<T> {
-        const runtimeConfig = useRuntimeConfig();
+        const config = useRuntimeConfig()
+
+        // if (method !== 'GET') {
+        //     await this.getCsrfToken()
+        // }
+
+        const xsrfToken = useCookie('XSRF-TOKEN').value
 
         const headers: Record<string, string> = {
-            Accept: "application/json",
-        };
-
-        if (typeof window !== "undefined") {
-            const token = localStorage.getItem("auth");
-            if (token) {
-                headers.Authorization = `Bearer ${token}`;
-            }
+            Accept: 'application/json',
         }
 
-        const config: any = {
-            baseURL: runtimeConfig.public.backendApi,
-            method,
-            credentials: "include",
-            headers,
-        };
-
-        if (method.toUpperCase() === "GET") {
-            config.params = params;
-        } else {
-            config.body = params;
+        if (xsrfToken) {
+            headers['X-XSRF-TOKEN'] = decodeURIComponent(xsrfToken)
         }
 
         try {
-            return await $fetch<T>(url, config);
+            return await $fetch<T>(url, {
+                baseURL: config.public.backendApi,
+                method,
+                credentials: 'include',
+                headers,
+                ...(method === 'GET'
+                    ? { params }
+                    : { body: params }),
+            })
         } catch (error: any) {
-            // const status = error?.response?.status;
-            // const message =
-            //     error?.response?._data?.message ||
-            //     error?.data?.message ||
-            //     error?.message;
+            const status = error?.response?.status
+            const data = error?.response?._data
 
-            // switch (status) {
-            //     case 400:
-            //         throw new Error(message);
-            //     case 401:
-            //         throw new Error(message);
-            //     case 404:
-            //         throw new Error(message);
-            //     case 422:
-            //         throw new Error(message);
-            //     case 429:
-            //         throw new Error(message || "Validation or Request Error");
-            //     case 500:
-            //         throw new Error(
-            //             "Server error. Please try again or contact the administrator." + message,
-            //         );
-            //     default:
-            //         throw new Error(message || "Something went wrong. Please try again.");
-            // }
-            const status = error?.response?.status;
-            const data = error?.response?._data;
-
-            const message =
-                data?.message ||
-                error?.message ||
-                "Something went wrong";
-
-            const payload = {
+            throw {
                 status,
-                message,
-                errors: data?.errors || null,
-                data: data || null,
-            };
-
-            switch (status) {
-                case 400:
-                    throw new Error(message);
-                case 401:
-                    throw new Error(message);
-                case 404:
-                    throw new Error(message);
-                case 422:
-                    throw payload;
-                case 429:
-                    throw new Error(message || "Validation or Request Error");
-                case 500:
-                    throw new Error(
-                        "Server error. Please try again or contact the administrator." + message,
-                    );
-                default:
-                    throw payload;
+                message:
+                    data?.message ||
+                    error?.message ||
+                    'Something went wrong',
+                errors: data?.errors || {},
+                data,
             }
         }
     }

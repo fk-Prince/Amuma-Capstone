@@ -23,4 +23,9 @@ class Category extends Model
     {
         return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
     }
+
+    public function services()
+    {
+        return $this->hasMany(Service::class, 'category_id', 'category_id');
+    }
 }

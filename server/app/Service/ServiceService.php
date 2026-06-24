@@ -7,8 +7,11 @@ use App\Http\Resources\ServiceResource;
 use App\Models\User;
 use App\Repository\BranchRepository;
 use App\Repository\CategoryRepository;
+use App\Service\Utils\AuthGuard;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ServiceService
 {
@@ -27,31 +30,14 @@ class ServiceService
 
     public function createService(array $payload, User $user)
     {
-        $user->load('roles');
-
-        $hasRole = $user->roles->contains(
-            fn($role) => in_array($role->role_type, ['branch_owner', 'administrator'])
-        );
-
-        if (!$hasRole) {
-            abort(403, 'Unauthorized');
-        }
+        AuthGuard::requireRole($user, ['branch_owner', 'administrator']);
 
         $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
 
-        if (!$branch) {
-            return response()->json([
-                'message' => 'Branch does not exist'
-            ], 404);
-        }
-
+        if (!$branch)  throw new Exception(__('Branch does not exist'), 404);
         $existingService = $this->serviceRepository->existsInBranch($branch->branch_id, 'service_name', $payload['service_name']);
-        if ($existingService) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Service already exists in this branch',
-            ], 409);
-        }
+
+        if ($existingService) throw new Exception(__('Service already exists in this branch'), 409);
 
         return DB::transaction(function () use ($payload, $branch) {
 
@@ -74,10 +60,64 @@ class ServiceService
             ]);
 
             return response()->json([
-                'success' => true,
                 'message' => 'Service created successfully',
                 'data'    => $service
             ], 201);
         });
+    }
+
+    public function getBranchService(array $payload)
+    {
+        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
+        if (!$branch)  throw new Exception(__('Branch does not exist'), 404);
+
+        $branch->load([
+            'services.categories',
+            'services.price'
+        ]);
+
+        return response()->json([
+            'branch_uuid' => $branch->uuid,
+            'branch_name' => $branch->name,
+            'services' => $branch->services->map(function ($service) {
+                return [
+                    'service_uuid' => $service->service_uuid,
+                    'service_name' => $service->service_name,
+                    'price_id' => $service->price_id,
+                    'price' => $service->price?->price,
+                    'category_name' => $service->categories?->category_name,
+                    'type' => $service->type,
+                    'maximum_duration' => date('H:i:s', strtotime($service->maximum_duration)),
+                    'is_available' => $service->is_available,
+                ];
+            }),
+        ]);
+    }
+
+    public function retrieveService(array $payload, User $user)
+    {
+        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
+        if (!$branch)  throw new Exception(__('Branch does not exist'), 404);
+
+        $branch->load([
+            'services.categories',
+            'services.price'
+        ]);
+
+        return response()->json([
+            'branch_uuid' => $branch->uuid,
+            'branch_name' => $branch->name,
+            'services' => $branch->services->map(function ($service) {
+                return [
+                    'service_uuid' => $service->service_uuid,
+                    'service_name' => $service->service_name,
+                    'price_id' => $service->price_id,
+                    'price' => $service->price,
+                    'category' => $service->categories?->category_name,
+                    'type' => $service->type,
+                    'is_available' => $service->is_available,
+                ];
+            }),
+        ]);
     }
 }

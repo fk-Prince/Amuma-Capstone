@@ -1,12 +1,17 @@
+import type { User } from "./auth";
 import { type Location } from "./location";
 import type { Reviews } from "./review";
 
 export interface Branch {
+    uuid?: string;
     name: string;
     contact_number: string;
     description: string;
     image: File | null;
     location: Location
+    settings?: BranchSettings | null
+    plan?: BranchPlan[] | null;
+    roles?: BranchRole[];
 };
 
 export interface BranchSettings {
@@ -45,3 +50,19 @@ interface BranchSubscription {
     plan_code: string | null;
     plan_name: string | null;
 }
+
+interface BranchPlan {
+    plan_code: string;
+    name: string;
+}
+
+interface BranchRole {
+    role_type: string;
+    is_active: boolean;
+}
+
+export interface UserBranch {
+    user: User;
+    branches?: Branch[]
+}
+

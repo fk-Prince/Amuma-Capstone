@@ -6,6 +6,7 @@ use App\Repository\ReviewRepository;
 use App\Http\Resources\ReviewResource;
 use App\Models\User;
 use App\Repository\BranchRepository;
+use Exception;
 
 class ReviewService
 {
@@ -23,9 +24,7 @@ class ReviewService
 
         $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
         if (!$branch) {
-            return response()->json([
-                'message' => 'Branch does not exist'
-            ], 404);
+            throw new Exception(__('Branch does not exist'), 404);
         }
 
         $reviewData = [

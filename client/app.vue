@@ -1,11 +1,11 @@
 <template>
     <div>
-        <!-- <UApp> -->
         <NuxtLayout class="font-sans m-0 p-0">
             <NuxtPage />
         </NuxtLayout>
-        <!-- </UApp> -->
-        <AppToast ref="toastRef" />
+        <ClientOnly>
+            <AppToast ref="toastRef" />
+        </ClientOnly>
     </div>
 </template>
 

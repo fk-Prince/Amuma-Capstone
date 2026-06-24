@@ -2,13 +2,12 @@
 
 namespace App\Service;
 
-use App\Repository\UserRepository;
 use App\Models\User;
+use App\Repository\UserRepository;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 
 class AuthService
@@ -25,71 +24,65 @@ class AuthService
         $user = $this->userRepository->findByField('email', $payload['email']);
 
         if (!$user) {
-            return response()->json([
-                'status' => false,
-                'message' => __('User not found'),
-            ], 404);
+            throw new Exception(__('User not found'), 404);
         }
 
         if (!Hash::check($payload['password'], $user->password)) {
-            return response()->json([
-                'status' => false,
-                'message' => __('Incorrect credentials'),
-            ], 401);
+            throw new Exception(__('Incorrect credentials'), 401);
         }
 
         Auth::login($user);
         request()->session()->regenerate();
-        $token = $user->createToken('auth-token')->plainTextToken;
+
 
         return response()->json([
-            'status' => true,
-            'message' => __('Login successful'),
             'user' => $user->load('roles'),
-            'token' => $token
+            'message' => __('Successsfully logged-in.'),
+            'token' => $user->createToken('auth-token')->plainTextToken,
         ], 200);
     }
 
     public function logout(Request $request)
     {
+        $request->user()?->currentAccessToken()?->delete();
+
         Auth::logout();
+
         $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return response()->json([
-            'status' => true,
-            'message' => __('Logged out successfully')
-        ])->withCookie(cookie()->forget('laravel-session'))
-            ->withCookie(cookie()->forget('XSRF-TOKEN'));;
+            'message' => __('Logged out successfully'),
+        ], 200);
     }
 
     public function register(array $payload)
     {
         $exists = $this->userRepository->findByField('email', $payload['email']);
+
         if ($exists) {
-            return response()->json([
-                'status'  => false,
-                'message' => __('Email already exists.'),
-            ]);
+            throw new Exception(__('Email already exists.'), 409);
         }
 
         $payload['password'] = Hash::make($payload['password']);
+
         $user = $this->userRepository->create($payload);
 
+
         return response()->json([
-            'status'  => true,
+            'user' => $user,
             'message' => __('Registration successful.'),
-            'user' => $user
-        ]);
+        ], 201);
     }
 
     public function google()
     {
         /** @var \Laravel\Socialite\Two\GoogleProvider $driver */
         $driver = Socialite::driver('google');
-        $redirectUrl = $driver->stateless()->redirect()->getTargetUrl();
 
         return response()->json([
-            'url' => $redirectUrl
-        ]);
+            'url' => $driver->stateless()->redirect()->getTargetUrl(),
+        ], 200);
     }
 
     public function googleCallback()
@@ -99,32 +92,32 @@ class AuthService
         $googleUser = $driver->stateless()->user();
 
         $user = $this->userRepository->findByField('email', $googleUser->getEmail());
-        $clientUrl = config('app.client_url');
 
         if (!$user) {
+            $nameParts = explode(' ', trim($googleUser->getName()), 2);
+
             $user = User::create([
-                'first_name' => explode(' ', $googleUser->getName())[0],
-                'last_name'  => explode(' ', $googleUser->getName())[1] ?? '',
-                'email'      => $googleUser->getEmail(),
-                'uuid'       => $googleUser->getId(),
-                'avatar'     => $googleUser->getAvatar(),
-                'provider'   => 'google',
+                'first_name' => $nameParts[0] ?? '',
+                'last_name' => $nameParts[1] ?? '',
+                'email' => $googleUser->getEmail(),
+                'uuid' => $googleUser->getId(),
+                'avatar' => $googleUser->getAvatar(),
+                'provider' => 'google',
             ]);
         }
 
         if ($user->provider !== 'google') {
             $user->update([
                 'provider' => 'google',
-                'uuid'     => $googleUser->getId(),
-                'avatar'   => $googleUser->getAvatar(),
+                'uuid' => $googleUser->getId(),
+                'avatar' => $googleUser->getAvatar(),
             ]);
         }
 
-
         $token = $user->createToken('auth-token')->plainTextToken;
-        $clientUrl = config('app.client_url');
-        $redirectUrl = $clientUrl . '/auth/success?token=' . urlencode($token);
 
-        return redirect()->away($redirectUrl);
+        return redirect()->away(
+            config('app.client_url') . '/auth/success?token=' . urlencode($token)
+        );
     }
 }

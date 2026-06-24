@@ -1,5 +1,5 @@
 import BaseService from '~/api/BaseService';
-import type { SigninRequest } from '~/stores/auth';
+import type { SigninRequest } from '~/types/auth';
 
 class AuthService extends BaseService {
     private static instance: AuthService;
@@ -12,13 +12,12 @@ class AuthService extends BaseService {
     }
 
     async login(payload: SigninRequest): Promise<any> {
-        const config = useRuntimeConfig();
-        $fetch('/sanctum/csrf-cookie', {
+        const config = useRuntimeConfig()
+
+        await $fetch('/sanctum/csrf-cookie', {
             baseURL: config.public.backendApi,
             credentials: 'include',
-        }).then(() => { }).catch((e) => {
-            console.error('Failed to initialize CSRF.', e);
-        });
+        })
         return await this.request(this.resource + '/login', 'POST', payload);
     }
 
