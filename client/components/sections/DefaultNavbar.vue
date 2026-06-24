@@ -1,53 +1,51 @@
 <template>
     <header :class="header">
-        <nav class="flex justify-between items-center px-6 h-[90px]">
+        <nav class="flex justify-between items-center px-6 h-[72px]">
             <template v-if="variant === 1 || variant === 3">
                 <NuxtLink to="/">
                     <img
                         :src="logoAmuma"
                         alt="AMUMA logo"
-                        class="w-[170px] md:w-[250px] object-contain"
+                        class="w-[80px] md:w-[120px] object-contain"
                     />
                 </NuxtLink>
-                <div v-if="variant === 1" class="hidden lg:flex gap-12">
-                    <NuxtLink v-for="i in navItems" :key="i.to" :to="i.to">
+                <div v-if="variant === 1" class="hidden lg:flex gap-10">
+                    <NuxtLink
+                        v-for="i in navItems"
+                        :key="i.to"
+                        :to="i.to"
+                        class="text-sm text-gray-400 hover:text-blue-600 transition-colors"
+                    >
                         {{ i.label }}
                     </NuxtLink>
                 </div>
 
                 <div class="flex items-center gap-3">
                     <div v-if="!hydrated" class="flex items-center gap-3">
-                        <div
-                            class="w-9 h-9 bg-gray-200 rounded-full animate-pulse"
-                        />
+                        <div class="w-9 h-9 bg-gray-200 rounded-full animate-pulse" />
                         <div class="flex flex-col gap-2">
-                            <div
-                                class="w-24 h-3 bg-gray-200 rounded animate-pulse"
-                            />
-                            <div
-                                class="w-14 h-3 bg-gray-200 rounded animate-pulse"
-                            />
+                            <div class="w-24 h-3 bg-gray-200 rounded animate-pulse" />
+                            <div class="w-14 h-3 bg-gray-200 rounded animate-pulse" />
                         </div>
                     </div>
 
                     <div v-else class="flex items-center gap-3">
                         <div class="flex items-center gap-2">
                             <NuxtLink v-if="!user" to="/auth/signin">
-                                <BaseButton class="px-[30px]"
-                                    >SIGN IN</BaseButton
-                                >
+                                <BaseButton class="px-[20px]">SIGN IN</BaseButton>
                             </NuxtLink>
 
                             <NuxtLink v-if="!user" to="/auth/signup">
                                 <BaseButton
                                     variant="secondary"
-                                    class="bg-transparent px-[30px] border-muted-dark hover:bg-primary/20"
-                                    >Get Started
+                                    class="bg-transparent px-[30px] border-muted-dark hover:bg-primary/20 group"
+                                >Get Started
                                     <svg
                                         width="20"
                                         height="16"
                                         viewBox="0 0 16 16"
                                         fill="none"
+                                        class="transition-transform duration-200 group-hover:translate-x-1"
                                     >
                                         <path
                                             d="M3 8h10M9 4l4 4-4 4"
@@ -55,25 +53,16 @@
                                             stroke-width="1.8"
                                             stroke-linecap="round"
                                             stroke-linejoin="round"
-                                        /></svg
-                                ></BaseButton>
+                                        />
+                                    </svg>
+                                </BaseButton>
                             </NuxtLink>
                         </div>
 
                         <NavbarProfileDropdown v-if="user" :user="user" />
 
-                        <button
-                            class="lg:hidden"
-                            @click="mobileMenuOpen = true"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                class="w-6 h-6"
-                            >
+                        <button class="lg:hidden" @click="mobileMenuOpen = true">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6">
                                 <line x1="3" y1="6" x2="21" y2="6" />
                                 <line x1="3" y1="12" x2="21" y2="12" />
                                 <line x1="3" y1="18" x2="21" y2="18" />
@@ -85,11 +74,7 @@
 
             <template v-else-if="variant === 2">
                 <NuxtLink to="/">
-                    <img
-                        :src="logoAmuma"
-                        alt="AMUMA logo"
-                        class="w-[250px] object-contain"
-                    />
+                    <img :src="logoAmuma" alt="AMUMA logo" class="w-[250px] object-contain" />
                 </NuxtLink>
             </template>
         </nav>
@@ -149,8 +134,7 @@ const variant = computed(() => route.meta.navVariant ?? 1);
 const header = computed(() => {
     switch (variant.value) {
         case 1:
-            return "w-full md:px-[5%] lg:px-[10%] bg-transparent h-[90px] border-1 border-b";
-
+            return "fixed top-4 left-1/2 -translate-x-1/2 w-[88%] max-w-[1200px] rounded-2xl border border-blue-400/60 backdrop-blur-xl shadow-xl shadow-blue-100/50 z-50";
         case 2:
             return "absolute top-0 left-1/4 -translate-x-1/4 w-full h-[90px] bg-transparent z-[9999]";
         default:
