@@ -12,7 +12,7 @@ export const colors = {
 }
 
 export const fontFamily = {
-    sans: ['Outfit' , 'sans-serif'],
+    sans: ['Outfit'],
 }
 
 

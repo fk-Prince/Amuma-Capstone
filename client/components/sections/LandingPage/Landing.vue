@@ -1033,7 +1033,7 @@
   color:#64748b;
   font-size:.95rem;
   line-height:1.7;
-  margin-bottom:2rem;
+  margin-bottom:2rem; 
 }
 
   .pricing-card.featured .plan-sub {
