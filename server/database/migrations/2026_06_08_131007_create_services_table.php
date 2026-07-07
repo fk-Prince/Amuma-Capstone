@@ -16,7 +16,7 @@ return new class extends Migration
             $table->uuid('service_uuid')->unique();
             $table->foreignId('branch_id')->constrained('branches', 'branch_id');
             $table->foreignId('category_id')->constrained('categories', 'category_id');
-            $table->foreignId('price_id')->constrained('prices', 'price_id');
+            $table->decimal('price', 10, 2);
             $table->string('service_name');
             $table->time('maximum_duration');
             $table->boolean('is_available')->default(true);

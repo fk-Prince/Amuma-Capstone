@@ -28,19 +28,28 @@ enum BillingIntervalEnum: string
         };
     }
 
-    public function loadPrice()
+
+    public function loadPriceKey(): string
     {
         return match ($this) {
-            BillingIntervalEnum::YEARLY => 'yearly_price',
-            BillingIntervalEnum::MONTHLY => 'monthly_price',
+            self::MONTHLY => 'monthly_price',
+            self::YEARLY => 'yearly_price',
         };
     }
 
-    public function loadPriceKey()
-    {
-        return match ($this) {
-            BillingIntervalEnum::YEARLY  => 'yearlyPrice',
-            BillingIntervalEnum::MONTHLY => 'monthlyPrice',
-        };
-    }
+    //  public function loadPrice()
+    // {
+    //     return match ($this) {
+    //         BillingIntervalEnum::YEARLY => 'yearly_price',
+    //         BillingIntervalEnum::MONTHLY => 'monthly_price',
+    //     };
+    // }
+
+    // public function loadPriceKey()
+    // {
+    //     return match ($this) {
+    //         BillingIntervalEnum::YEARLY  => 'yearlyPrice',
+    //         BillingIntervalEnum::MONTHLY => 'monthlyPrice',
+    //     };
+    // }
 }

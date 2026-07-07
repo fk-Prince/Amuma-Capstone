@@ -9,13 +9,13 @@ class PriceRepository
 {
 
 
-    public function create(array $payload)
-    {
-        return Price::create($payload);
-    }
+    // public function create(array $payload)
+    // {
+    //     return Price::create($payload);
+    // }
 
-    public function findPriceByField(string $column, string $value)
-    {
-        return Price::where($column, $value)->first();
-    }
+    // public function findPriceByField(string $column, string $value)
+    // {
+    //     return Price::where($column, $value)->first();
+    // }
 }

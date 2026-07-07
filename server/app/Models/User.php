@@ -29,6 +29,7 @@ class User extends Authenticatable
         'email',
         'password',
         'provider',
+        'provider_id',
         'is_verified',
         'is_active',
         'uuid',

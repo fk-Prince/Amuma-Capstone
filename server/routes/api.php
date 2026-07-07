@@ -1,12 +1,16 @@
 <?php
 
+use App\Events\NotificationEvent;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\NominatimController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\sample;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
@@ -29,10 +33,32 @@ Route::prefix('auth')->group(function () {
     });
 });
 
+Route::prefix('branches')->group(function () {
+    // PUBLIC BRANCHES
+    Route::get('/featured', [BranchController::class, 'retrieveFeaturedBranch']);
+    Route::get('/filtered', [BranchController::class, 'retrieveFilteredBranch']);
+
+    // AUTHENTICATED BRACNHES ACCESS
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/{uuid}/services', [ServiceController::class, 'getBranchServices']);
+    });
+});
+
+Route::prefix('reviews')->group(function () {
+    // PUBLIC REVIEW
+    Route::get('/',  [ReviewController::class, 'list']);
+
+
+    // AUTHENTICATED REVIEW ACCESS
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/',  [ReviewController::class, 'store']);
+    });
+});
+
+
+
 Route::middleware('auth:sanctum')->group(function () {
-
     // SUBSCRIPTION
-
     Route::post('/subscription', [SubscriptionController::class, 'newSubscription']);
     Route::get('/subscription-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
     Route::post('/subscription-validate',  [SubscriptionController::class, 'validateSubscription']);
@@ -45,10 +71,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResources([
         'agencies' => AgencyController::class,
         'services' => ServiceController::class,
-        'reviews' => ReviewController::class,
-        // 'branches' => BranchController::class,
-        'users' => UserController::class
+        'branches' => BranchController::class,
+        'users' => UserController::class,
+        'bookings' => BookingController::class,
+        'notifications' => NotificationController::class,
     ]);
+
 
 
     //VALIDATE INPUTS
@@ -58,19 +86,6 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-Route::prefix('branches')->group(function () {
-    // PUBLIC BRANCHES
-    Route::get('/featured', [BranchController::class, 'retrieveFeaturedBranch']);
-    Route::get('/filtered', [BranchController::class, 'retrieveFilteredBranch']);
-
-    // AUTHENTICATED BRACNHES ACCESS
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/{uuid}/services', [ServiceController::class, 'getBranchServices']);
-    });
-});
-
-
-
 // PLANS
 Route::get('/plans', [PlanController::class, 'index']);
 
@@ -79,4 +94,3 @@ Route::get('/plans', [PlanController::class, 'index']);
 Route::get('/geocode', [NominatimController::class, 'geocode']);
 Route::get('/reverse-geocode', [NominatimController::class, 'reverse']);
 Route::get('/nereast-street', [NominatimController::class, 'nearest']);
-// 

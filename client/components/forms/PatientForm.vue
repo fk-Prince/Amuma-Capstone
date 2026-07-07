@@ -1,0 +1,163 @@
+<template>
+    <section class="rounded-2xl p-8 md:p-10">
+        <div class="flex items-baseline gap-3 mb-8">
+            <span class="text-2xl text-primary">02</span>
+            <div>
+                <h2 class="text-xl text-primary">Patient Information</h2>
+                <p class="text-[13px] text-muted">
+                    Details about the person receiving care
+                </p>
+            </div>
+        </div>
+
+        <div class="space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <BaseInput
+                    label="First Name"
+                    :model-value="model.first_name"
+                    @update:model-value="update('first_name', $event)"
+                    required
+                />
+                <BaseInput
+                    label="Middle Name"
+                    :model-value="model.middle_name"
+                    @update:model-value="update('middle_name', $event)"
+                />
+                <BaseInput
+                    label="Last Name"
+                    :model-value="model.last_name"
+                    @update:model-value="update('last_name', $event)"
+                    required
+                />
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-semibold text-slate-700">
+                        Gender <span class="text-danger">*</span>
+                    </label>
+                    <div
+                        class="flex gap-5 h-11 items-center text-[15px] text-muted"
+                    >
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="radio"
+                                value="Female"
+                                :checked="model.gender === 'Female'"
+                                @change="update('gender', 'Female')"
+                                class="bg-accent"
+                            />
+                            Female
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="radio"
+                                value="Male"
+                                :checked="model.gender === 'Male'"
+                                @change="update('gender', 'Male')"
+                                class="bg-accent"
+                            />
+                            Male
+                        </label>
+                    </div>
+                </div>
+
+                <BaseInput
+                    label="Date of Birth"
+                    :model-value="model.date_of_birth"
+                    @update:model-value="update('date_of_birth', $event)"
+                    placeholder="YYYY-MM-DD"
+                    required
+                />
+                <BaseInput
+                    label="Phone Number"
+                    :model-value="model.phone_number"
+                    @update:model-value="update('phone_number', $event)"
+                />
+            </div>
+
+            <div class="h-px bg-[#E4E0D6]" />
+
+            <div class="grid grid-cols-3 gap-6">
+                <BaseInput
+                    label="Citizenship"
+                    :model-value="model.citizenship"
+                    @update:model-value="update('citizenship', $event)"
+                    required
+                />
+                <BaseInput
+                    label="Occupation"
+                    :model-value="model.occupation"
+                    @update:model-value="update('occupation', $event)"
+                    required
+                />
+                <Combobox
+                    :model-value="model.marital_status"
+                    @update:model-value="update('marital_status', $event)"
+                    label="Marital Status"
+                    placeholder="Select status"
+                    :items="[
+                        { label: 'Single', value: 'single' },
+                        { label: 'Married', value: 'married' },
+                        { label: 'Divorced', value: 'divorced' },
+                        { label: 'Widowed', value: 'widowed' },
+                    ]"
+                />
+            </div>
+
+            <div class="grid grid-cols-3 max-w-[20rem] gap-6">
+                <BaseInput
+                    label="Height (cm)"
+                    :model-value="model.height"
+                    @update:model-value="update('height', $event)"
+                    mode="number"
+                    input-class="text-center"
+                />
+                <BaseInput
+                    label="Weight (kg)"
+                    :model-value="model.weight"
+                    @update:model-value="update('weight', $event)"
+                    mode="number"
+                    input-class="text-center"
+                />
+                <Combobox
+                    :model-value="model.blood_type"
+                    @update:model-value="update('blood_type', $event)"
+                    label="Blood Type"
+                    placeholder="Select"
+                    :items="[
+                        { label: 'A+', value: 'A+' },
+                        { label: 'A-', value: 'A-' },
+                        { label: 'B+', value: 'B+' },
+                        { label: 'B-', value: 'B-' },
+                        { label: 'AB+', value: 'AB+' },
+                        { label: 'AB-', value: 'AB-' },
+                        { label: 'O+', value: 'O+' },
+                        { label: 'O-', value: 'O-' },
+                    ]"
+                />
+            </div>
+        </div>
+    </section>
+</template>
+
+<script setup lang="ts">
+import BaseInput from "../ui/BaseInput.vue";
+import Combobox from "../ui/Combobox.vue";
+import type { Patient } from "~/types/patient";
+
+const props = defineProps<{
+    model: Patient;
+}>();
+
+const emit = defineEmits<{
+    (e: "update:model", value: Patient): void;
+}>();
+
+function update<K extends keyof Patient>(key: K, value: Patient[K]) {
+    emit("update:model", {
+        ...props.model,
+        [key]: value,
+    });
+}
+</script>

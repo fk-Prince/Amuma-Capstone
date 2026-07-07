@@ -2,6 +2,7 @@ import { useAuthUser } from "~/composables/useAuthUser";
 import { authMenuList } from "~/config/authMenu";
 
 const AUTH_ROUTES = ["/auth/signin", "/auth/signup"];
+const dashboard = ["/app/branches/"];
 
 export default defineNuxtRouteMiddleware((to) => {
     const user = useAuthUser();

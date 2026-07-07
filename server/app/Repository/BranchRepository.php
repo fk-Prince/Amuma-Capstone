@@ -34,7 +34,7 @@ class BranchRepository
         return Branch::with([
             'subscriptions.plans',
             'reviews',
-            'locations'
+            'location'
         ])
             ->withAvg('reviews', 'rate')
             ->orderByDesc('reviews_avg_rate')
@@ -44,7 +44,7 @@ class BranchRepository
 
     public function getUserBranches(array $branchIds)
     {
-        return  Branch::with(['locations', 'subscriptions.plans'])
+        return  Branch::with(['location', 'subscriptions.plans'])
             ->whereIn('branch_id', $branchIds)
             ->get()
             ->keyBy('branch_id');
@@ -55,12 +55,12 @@ class BranchRepository
         return Branch::with([
             'subscriptions.plans',
             'reviews',
-            'locations'
+            'location'
         ])
             ->withAvg('reviews', 'rate')
 
             ->when(!empty($filters['city']), function ($query) use ($filters) {
-                $query->whereHas('locations', function ($q) use ($filters) {
+                $query->whereHas('location', function ($q) use ($filters) {
                     $q->where('city', 'ILIKE', $filters['city']);
                 });
             })
@@ -79,5 +79,22 @@ class BranchRepository
             )
             ->orderByDesc('reviews_avg_rate')
             ->paginate($perPage);
+    }
+
+    public function getBranch(string $uuid)
+    {
+        return Branch::with([
+            'subscriptions.plans',
+            'location',
+            'agencies',
+            'services' => function ($query) {
+                $query->where('is_available', true)
+                    ->with('categories');
+            },
+        ])
+            ->withAvg('reviews', 'rate')
+            ->withCount('reviews')
+            ->where('uuid', $uuid)
+            ->first();
     }
 }

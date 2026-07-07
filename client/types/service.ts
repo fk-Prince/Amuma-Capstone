@@ -1,16 +1,24 @@
 import { z } from "zod";
 
+
 export interface Service {
     branch_uuid: string;
     service_uuid?: string;
+    service_id?: number;
+    categories?: Category;
     category_id?: number | null;
     category_name?: string | null;
-    price_id?: string;
     price: number;
     service_name: string;
     maximum_duration: string;
     is_available?: boolean;
     type: 'online' | 'facility' | 'both';
+}
+
+interface Category {
+    branch_uuid?: string;
+    category_id?: number | null;
+    category_name?: string | null;
 }
 
 export const createServiceForm = (): Service => ({
@@ -39,5 +47,3 @@ export const serviceSchema = z.object({
             "Maximum duration must be HH:mm:ss"
         )
 });
-
-

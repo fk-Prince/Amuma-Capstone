@@ -1,13 +1,13 @@
 import type { User } from "./auth";
 import { type Location } from "./location";
-import type { Reviews } from "./review";
+import type { Review } from "./review";
 
 export interface Branch {
     uuid?: string;
     name: string;
     contact_number: string;
     description: string;
-    image: File | null;
+    image: File;
     location: Location
     settings?: BranchSettings | null
     plan?: BranchPlan[] | null;
@@ -15,11 +15,11 @@ export interface Branch {
 };
 
 export interface BranchSettings {
-    opening: string,
-    closing: string,
-    currency: string,
-    online_additional_fee: number,
-    time_zone: string
+    opening: string | null;
+    closing: string | null;
+    currency: string | null;
+    online_additional_fee: number;
+    time_zone: string | null;
 }
 
 
@@ -28,11 +28,12 @@ export interface BranchRetrieve {
     uuid: string;
     name: string;
     description: string | null;
-    image: string | null;
+    image: string | undefined;
+    secondaryImage: string[] | undefined;
     availability: BranchAvailability;
     averageRating: number | null;
     reviewCount: number;
-    reviews: Reviews[];
+    reviews: Review[];
     subscriptions: BranchSubscription[];
     location: Location;
 }
@@ -46,13 +47,14 @@ interface BranchAvailability {
 }
 
 interface BranchSubscription {
+    subscription_id: number;
+    uuid: string;
     status: string;
-    plan_code: string | null;
-    plan_name: string | null;
+    plans: BranchPlan;
 }
 
 interface BranchPlan {
-    plan_code: string;
+    plan_code: "A" | "B" | "C";
     name: string;
 }
 
@@ -65,4 +67,5 @@ export interface UserBranch {
     user: User;
     branches?: Branch[]
 }
+
 

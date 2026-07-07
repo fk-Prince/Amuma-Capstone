@@ -8,7 +8,7 @@ let markersLayer: any = null;
 let centerMarker: any = null;
 
 const props = defineProps<{
-    locations: Location[];
+    locations?: Location[];
     centerLat?: number;
     centerLng?: number;
     zoom?: number;
@@ -16,19 +16,24 @@ const props = defineProps<{
 }>();
 
 const fitToBounds = () => {
-    if (!map || !props.locations.length) return;
+    if (!map || !props.locations?.length) return;
 
     const valid = props.locations.filter(
         (loc) =>
             loc.latitude != null &&
             loc.longitude != null &&
-            !Number.isNaN(loc.latitude) &&
-            !Number.isNaN(loc.longitude),
+            !Number.isNaN(Number(loc.latitude)) &&
+            !Number.isNaN(Number(loc.longitude)),
     );
 
     if (valid.length) {
         map.fitBounds(
-            L.latLngBounds(valid.map((loc) => [loc.latitude, loc.longitude])),
+            L.latLngBounds(
+                valid.map((loc) => [
+                    Number(loc.latitude),
+                    Number(loc.longitude),
+                ]),
+            ),
             { padding: [40, 40] },
         );
     }
@@ -39,16 +44,18 @@ const renderMarkers = () => {
 
     markersLayer.clearLayers();
 
-    props.locations.forEach((location) => {
+    props.locations?.forEach((location) => {
         if (
             location.latitude == null ||
             location.longitude == null ||
-            Number.isNaN(location.latitude) ||
-            Number.isNaN(location.longitude)
+            Number.isNaN(Number(location.latitude)) ||
+            Number.isNaN(Number(location.longitude))
         )
             return;
 
-        L.marker([location.latitude, location.longitude]).addTo(markersLayer);
+        L.marker([Number(location.latitude), Number(location.longitude)]).addTo(
+            markersLayer,
+        );
     });
 
     if (props.centerLat == null) {
@@ -63,7 +70,6 @@ const applyCenter = () => {
 
     if (centerMarker) {
         centerMarker.remove();
-        centerMarker = null;
     }
 
     const redIcon = L.icon({
@@ -81,10 +87,7 @@ const applyCenter = () => {
 
     centerMarker = L.marker([props.centerLat, props.centerLng], {
         icon: redIcon,
-    })
-        .addTo(map)
-        // .bindPopup("Your location")
-        .openPopup();
+    }).addTo(map);
 };
 
 onMounted(async () => {
@@ -102,7 +105,9 @@ onMounted(async () => {
             "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
     });
 
-    map = L.map("locations-map", { attributionControl: false }).setView(
+    map = L.map("locations-map", {
+        attributionControl: false,
+    }).setView(
         [props.centerLat ?? 7.0736, props.centerLng ?? 125.611],
         props.zoom ?? 13,
     );
@@ -113,17 +118,41 @@ onMounted(async () => {
 
     markersLayer = L.layerGroup().addTo(map);
 
-    renderMarkers();
-    applyCenter();
+    if (props.locations?.length) {
+        renderMarkers();
+    }
+
+    if (props.centerLat != null && props.centerLng != null) {
+        applyCenter();
+    }
+
+    setTimeout(() => {
+        map?.invalidateSize();
+    }, 200);
 });
 
-watch(() => [props.centerLat, props.centerLng], applyCenter);
+watch(
+    () => [props.centerLat, props.centerLng],
+    () => {
+        if (!props.locations?.length) {
+            applyCenter();
+        }
+    },
+);
 
 watch(
     () => props.locations,
-    () => {
-        renderMarkers();
-        if (props.centerLat != null) {
+    (locs) => {
+        if (!map) return;
+
+        if (locs?.length) {
+            renderMarkers();
+
+            if (props.centerLat != null && props.centerLng != null) {
+                applyCenter();
+            }
+        } else if (props.centerLat != null && props.centerLng != null) {
+            markersLayer?.clearLayers();
             applyCenter();
         }
     },
@@ -141,7 +170,7 @@ onUnmounted(() => {
     <div
         id="locations-map"
         :class="[
-            'w-full h-full rounded-xl overflow-hidden border border-gray-200 shadow-sm',
+            'w-full h-[400px] rounded-xl overflow-hidden border border-gray-200 shadow-sm',
             extraClass,
         ]"
     />

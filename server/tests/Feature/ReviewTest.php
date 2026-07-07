@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -10,17 +11,22 @@ use Tests\TestCase;
 
 class ReviewTest extends TestCase
 {
-    /**
-     * A basic feature test example.
-     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+    }
+
+
     public function test_example(): void
     {
         $user = User::firstOrFail();
         Auth::login($user);
 
+
         $response = $this->postJson('/api/reviews', [
-            'branch_uuid' => '23432423423',
-            'rate' => '5.00',
+            // 'branch_uuid' =>  $branch->uuid,
+            'branch_uuid' =>  '019f275e-c434-7210-a16d-92288c25b8f8',
+            'rate' => '4.00',
             'description' => 'Excellent service',
         ]);
 

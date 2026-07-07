@@ -1,7 +1,7 @@
 <template>
     <div
         :class="[
-            'relative rounded-2xl flex flex-col transition-all duration-300',
+            'relative rounded-2xl flex flex-col transition-all duration-300  hover:-translate-y-1',
             featured
                 ? 'bg-primary text-white shadow-2xl pt-10 pb-8 px-8'
                 : 'bg-white text-secondary shadow-sm border border-muted-light p-8',
@@ -62,6 +62,12 @@
             >
                 {{ billingInterval === "yearly" ? "/ year" : "/ month" }}
             </span>
+            <span
+                v-if="billingInterval === 'yearly' && annualDiscount > 0"
+                class="text-xs font-bold px-2 py-1 rounded bg-green-100 text-green-700"
+            >
+                Save {{ annualDiscount }}%
+            </span>
         </div>
 
         <NuxtLink
@@ -121,16 +127,31 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed } from "vue";
+
+const props = defineProps<{
     planLabel: string;
     title: string;
     description: string;
     billingInterval: "monthly" | "yearly";
-    price: number | undefined;
+    price: number | undefined | string;
+    monthly_price: number | string;
+    yearly_price: number | string;
     ctaText: string;
     features: string[];
     featured?: boolean;
 }>();
+
+const annualDiscount = computed(() => {
+    const monthly = Number(props.monthly_price);
+    const yearly = Number(props.yearly_price);
+
+    if (!monthly || !yearly) return 0;
+
+    const fullYear = monthly * 12;
+
+    return Math.round(((fullYear - yearly) / fullYear) * 100);
+});
 
 defineEmits<{
     (e: "select", plan: any): void;

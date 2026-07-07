@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('xendit_invoice_id');
             $table->string('payment_reference_id');
             $table->foreignId('subscription_id')->constrained('subscriptions', 'subscription_id');
-            $table->foreignId('price_id')->constrained('prices', 'price_id');
+            $table->decimal('price', 10, 2);
             $table->timestamps();
         });
     }

@@ -15,7 +15,7 @@ class Service extends Model
     protected $fillable = [
         'category_id',
         'branch_id',
-        'price_id',
+        'price',
         'service_name',
         'maximum_duration',
         'is_available',
@@ -44,13 +44,6 @@ class Service extends Model
         return $this->belongsTo(Category::class, 'category_id', 'category_id');
     }
 
-    /**
-     * Price assigned to the service.
-     */
-    public function price()
-    {
-        return $this->belongsTo(Price::class, 'price_id', 'price_id');
-    }
 
 
     public function staff()

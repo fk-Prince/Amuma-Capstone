@@ -12,11 +12,6 @@ class SubscriptionPayment extends Model
         'subscription_id',
         'xendit_invoice_id',
         'payment_reference_id',
-        'price_id',
+        'price',
     ];
-
-    public function prices()
-    {
-        return $this->belongsTo(Price::class, 'price_id', 'price_id');
-    }
 }

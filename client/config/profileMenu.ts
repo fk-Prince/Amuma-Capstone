@@ -27,6 +27,7 @@ export const profileMenuDropDownList = [
         label: "Dashboard",
         action: "dashboard",
         roles: [
+            "owner",
             "branch_owner",
             "administrator",
             "caregiver",

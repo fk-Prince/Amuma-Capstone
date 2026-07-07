@@ -3,19 +3,70 @@
 namespace App\Repository;
 
 use App\Models\Review;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ReviewRepository
 {
-    public function paginate(int $perPage = 15, ?string $companyId = null)
-    {
-        $query = Review::latest();
+    public function paginate(
+        int $perPage,
+        string $branch_uuid,
+        ?int $rate = null,
+        bool $withComments = false
+    ) {
 
-        if ($companyId) {
-            $query->where('company_id', $companyId);
-        }
+        $query = Review::query()
+            ->whereHas(
+                'branch',
+                fn($bq) =>
+                $bq->where('uuid', $branch_uuid)
+            )
+            ->when(
+                $rate !== null,
+                fn($q) =>
+                $q->whereRaw('ROUND(rate) = ?', [$rate])
+            )
+            ->when(
+                $withComments,
+                fn($q) =>
+                $q->whereNotNull('description')
+                    ->where('description', '!=', '')
+            );
 
-        return $query->paginate($perPage);
+        $reviews = (clone $query)
+            ->with('user')
+            ->orderByRaw('ROUND(rate) DESC')
+            ->latest()
+            ->paginate($perPage);
+
+        $statsQuery = Review::query()
+            ->whereHas(
+                'branch',
+                fn($bq) =>
+                $bq->where('uuid', $branch_uuid)
+            );
+
+        $averageRating = (clone $statsQuery)->avg('rate');
+
+        $starCounts = (clone $statsQuery)
+            ->selectRaw('ROUND(rate) as star, COUNT(*) as total')
+            ->groupBy('star')
+            ->pluck('total', 'star');
+
+        $ratingBreakdown = collect(range(1, 5))
+            ->mapWithKeys(fn($star) => [
+                $star => $starCounts[$star] ?? 0
+            ]);
+
+        $withCommentsCount = (clone $statsQuery)
+            ->whereNotNull('description')
+            ->where('description', '!=', '')
+            ->count();
+
+        return [
+            'paginator' => $reviews,
+            'average_rating' => round($averageRating, 2),
+            'rating_breakdown' => $ratingBreakdown,
+            'with_comments_count' => $withCommentsCount,
+        ];
     }
 
     public function create(array $payload)

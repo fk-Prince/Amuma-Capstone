@@ -2,16 +2,16 @@
     <div class="flex flex-col gap-1.5 font-primary">
         <label v-if="label" class="text-sm font-semibold text-slate-700">
             {{ label }}
-            <span v-if="required" class="text-red-500 ml-0.5">*</span>
+            <span v-if="required" class="text-danger ml-0.5">*</span>
         </label>
 
         <div
-            class="flex items-center border-[1.5px] rounded-lg bg-white overflow-hidden transition"
+            class="flex items-center rounded-lg bg-white overflow-hidden transition"
             :class="[
                 currentError
                     ? 'border-red-400 focus-within:ring-red-500/15'
                     : 'border-slate-200 focus-within:border-blue-500 focus-within:ring-blue-500/15',
-                'focus-within:ring-2',
+                boxClass,
             ]"
         >
             <span
@@ -24,7 +24,7 @@
             <input
                 v-model="value"
                 :type="inputType"
-                :maxlength="textMax"
+                :maxlength="inputType === 'number' ? undefined : textMax"
                 :placeholder="placeholder"
                 class="flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400"
                 :class="[hasPrefix ? 'pl-2' : '', inputClass]"
@@ -47,20 +47,54 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, useSlots } from "vue";
+
 import Search from "../icons/search.vue";
 
 defineOptions({ name: "BaseInput" });
 
 const props = defineProps({
-    modelValue: { type: [String, Number], default: "" },
-    label: { type: String, default: "" },
+    modelValue: {
+        type: [String, Number],
+        default: "",
+    },
+    label: {
+        type: String,
+        default: "",
+    },
     placeholder: String,
     error: String,
-    required: { type: Boolean, default: false },
-    mode: { type: String, default: "text" },
-    inputClass: { type: String, default: "" },
-    isSearch: { type: Boolean, default: false },
-    textMax: { type: Number, default: 255 },
+    required: {
+        type: Boolean,
+        default: false,
+    },
+    mode: {
+        type: String,
+        default: "text",
+    },
+    inputClass: {
+        type: String,
+        default: "",
+    },
+    isSearch: {
+        type: Boolean,
+        default: false,
+    },
+    textMax: {
+        type: Number,
+        default: 255,
+    },
+    min: {
+        type: String,
+        default: "",
+    },
+    max: {
+        type: String,
+        default: "",
+    },
+    boxClass: {
+        type: String,
+        default: "border-[1.5px] focus-within:ring-2",
+    },
 });
 
 const emit = defineEmits(["update:modelValue"]);
@@ -91,8 +125,15 @@ const hasPrefix = computed(() => !!slots.prefix);
 const hasSuffix = computed(() => !!slots.suffix);
 
 const inputType = computed(() => {
-    if (props.mode === "password") return "password";
-    if (props.mode === "email") return "email";
-    return "text";
+    switch (props.mode) {
+        case "password":
+            return "password";
+        case "email":
+            return "email";
+        case "number":
+            return "number";
+        default:
+            return "text";
+    }
 });
 </script>

@@ -4,11 +4,7 @@ namespace App\Service;
 
 use App\Repository\BranchRepository;
 use App\Http\Resources\BranchResource;
-use App\Models\User;
-use App\Service\Utils\AuthGuard;
 use App\Service\Utils\NominatimService;
-use Illuminate\Support\Facades\Log;
-use Stevebauman\Location\Facades\Location;
 
 class BranchService
 {
@@ -21,6 +17,23 @@ class BranchService
         $this->nomaticeService = $nomaticeService;
     }
 
+    public function getBranch(string $uuid)
+    {
+        // $branch = $this->branchRepository->getBranch($uuid);
+        // $averageRating = $branch->reviews->count()
+        //     ? $branch->reviews->avg('rating')
+        //     : 0;
+        // $branch->averageRating = round($averageRating, 1);
+        // $branch->reviewsCount = $branch->reviews->count();
+        // return $branch;
+        $branch = $this->branchRepository->getBranch($uuid);
+
+        $branch->averageRating = round($branch->reviews_avg_rate ?? 0, 1);
+        $branch->reviewCount = $branch->reviews_count ?? 0;
+
+        return $branch;
+    }
+
     public function getFeaturedBranches(array $payload)
     {
         $branch = $this->branchRepository->getHighestReviewPaginate($payload['per_page']);
@@ -29,13 +42,14 @@ class BranchService
 
     public function getBranchesByFilter(array $payload)
     {
+        $city = null;
         if (!empty($payload['lat']) && !empty($payload['long'])) {
             $city = $this->nomaticeService->getCityByCords($payload['lat'], $payload['long']);
         } elseif (!empty($payload['location'])) {
             $city = $payload['location'];
         }
         // else {
-        //     // $position = Location::get('8.8.8.8'); // TEST IP
+        //     $position = Location::get('8.8.8.8'); // TEST IP
         //     // // $position = Location::get(request()->ip()); // REAL IP
         //     // $city = $position?->cityName;
         //     $city = "Davao City";
@@ -45,6 +59,7 @@ class BranchService
             'provider_name' => $payload['provider_name'],
             'plan_code' => $payload['plan_code']
         ];
+
 
         $branch = $this->branchRepository->getFilterBranches($payload['per_page'], $filters);
         return BranchResource::collection($branch);

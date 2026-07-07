@@ -22,10 +22,10 @@ class ServiceServiceTest extends TestCase
         $user = User::firstOrFail();
         Auth::login($user);
         $payload = [
-            'branch_uuid' => '019ec61e-c549-72d6-952c-b69b82ba5376',
+            'branch_uuid' => '019f275e-c434-7210-a16d-92288c25b8f8',
             'category_name' => 'Test Category',
             'price' => '50.00',
-            'service_name' => 'Physical Therapy',
+            'service_name' => 'Service 1',
             'maximum_duration' => '00:30:00',
             'is_available' => true,
             'type' => 'facility',

@@ -1,16 +1,19 @@
 <template>
     <header :class="header">
         <nav class="flex justify-between items-center w-full px-6 h-[90px]">
-            <template v-if="variant === 1 || variant === 3">
+            <template v-if="variant === 1 || variant === 2 || variant === 4">
                 <div class="flex items-center gap-5">
                     <NuxtLink to="/">
                         <img
                             :src="logoAmuma"
                             alt="AMUMA logo"
-                            class="w-[120px] md:w-[170px] object-contain"
+                            class="w-[120px] md:w-[220px] object-contain"
                         />
                     </NuxtLink>
-                    <div v-if="variant === 1" class="hidden lg:flex gap-5">
+                    <div
+                        v-if="variant === 1 || variant === 2"
+                        class="hidden lg:flex gap-5"
+                    >
                         <NuxtLink v-for="i in navList" :key="i.to" :to="i.to">
                             {{ i.label }}
                         </NuxtLink>
@@ -91,7 +94,7 @@
                 </div>
             </template>
 
-            <template v-else-if="variant === 2">
+            <template v-else-if="variant === 3">
                 <NuxtLink to="/">
                     <img
                         :src="logoAmuma"
@@ -102,7 +105,7 @@
             </template>
         </nav>
 
-        <ClientOnly v-if="variant === 1">
+        <ClientOnly v-if="variant === 1 || variant === 2">
             <DynamicSidebar
                 :open="mobileMenuOpen"
                 :logo="logoAmuma"
@@ -139,10 +142,13 @@ const variant = computed(() => route.meta.navVariant ?? 1);
 const header = computed(() => {
     switch (variant.value) {
         case 1:
-            // return "w-full md:px-[5%] lg:px-[10%] bg-transparent h-[90px] border-1 border-b";
-            return "fixed top-4 left-1/2 -translate-x-1/2 mx-auto w-[80%] rounded-2xl border border-blue-400/60 backdrop-blur-xl shadow-xl shadow-blue-100/50 z-50";
+            return "w-full md:px-[5%] lg:px-[10%] bg-transparent h-[90px] border-1 border-b";
         case 2:
+            return "fixed top-4 left-1/2 -translate-x-1/2 mx-auto w-[80%] rounded-2xl border border-blue-400/60 backdrop-blur-xl shadow-xl shadow-blue-100/50 z-50";
+        case 3:
             return "absolute top-0 left-1/4 -translate-x-1/4 w-full h-[90px] bg-transparent z-[9999]";
+        case 4:
+            return "w-full md:px-[5%] lg:px-[10%] bg-transparent h-[90px] ";
         default:
             return "";
     }

@@ -20,6 +20,7 @@ class Branch extends Model
         'name',
         'location_id',
         'description',
+        'is_verified',
         'contact_number',
         'settings',
         'image',
@@ -38,7 +39,7 @@ class Branch extends Model
         return $this->belongsTo(User::class, 'owner_user_id', 'user_id');
     }
 
-    public function locations()
+    public function location()
     {
         return $this->belongsTo(Location::class, 'location_id', 'location_id');
     }
@@ -56,9 +57,6 @@ class Branch extends Model
     public function services()
     {
         return $this->hasMany(Service::class, 'branch_id', 'branch_id');
-        //     'services.price' => function ($query) {
-        //     $query->whereNull('until_from');
-        // },
     }
 
 

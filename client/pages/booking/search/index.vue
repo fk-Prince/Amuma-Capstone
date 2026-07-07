@@ -2,37 +2,52 @@
     <div class="flex flex-col h-screen overflow-hidden">
         <Filter />
 
-        <div
-            class="flex-1 overflow-hidden justify-center mx-auto w-full max-w-[95%] px-4 py-6 flex flex-col md:flex-row gap-6"
-        >
-            <div class="w-full md:w-2/5 overflow-y-auto">
-                <SearchBooking :branches="branches" :loading="loading" />
-            </div>
+        <div class="flex-1 overflow-hidden">
+            <div class="mx-auto max-w-[100rem] px-4 py-6 h-full">
+                <div
+                    class="flex flex-col lg:flex-row gap-6 h-full items-stretch"
+                >
+                    <div
+                        class="w-full lg:w-[60%] flex flex-col overflow-hidden rounded-xl"
+                    >
+                        <div class="flex-1 overflow-y-auto">
+                            <SearchBooking
+                                :branches="branches"
+                                :loading="loading"
+                            />
+                        </div>
+                    </div>
 
-            <div class="w-full md:w-2/5 bg-secondary rounded-xl">
-                <LocationPin
-                    :key="`map-${locations.length}-${centerLat}-${centerLng}`"
-                    :locations="locations"
-                    :center-lat="centerLat"
-                    :center-lng="centerLng"
-                />
+                    <div
+                        class="w-full lg:w-[40%] flex flex-col rounded-xl overflow-hidden"
+                    >
+                        <LocationPin
+                            class="flex-1 h-full w-full"
+                            :locations="locations"
+                            :center-lat="centerLat"
+                            :center-lng="centerLng"
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </template>
+
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import Filter from "~/components/sections/booking/Filter.vue";
+import { ref, computed, watch, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import Filter from "~/components/sections/booking/search/Filter.vue";
 import LocationPin from "~/components/ui/LocationPin.vue";
-import SearchBooking from "~/components/sections/booking/SearchBooking.vue";
+import SearchBooking from "~/components/sections/booking/search/SearchBooking.vue";
 import { branchService } from "~/api/branch/BranchService";
 import type { BranchRetrieve } from "~/types/branch";
 import { useGeo } from "~/composables/useGeo";
-import { useRoute } from "vue-router";
 
 useHead({ title: "Search Homecare" });
 
 const route = useRoute();
+const router = useRouter();
 const { centerLat, centerLng, geocodeLocation } = useGeo();
 
 const branches = ref<BranchRetrieve[]>([]);
@@ -46,36 +61,54 @@ const DEFAULT_LOCATION = {
 
 const l = async () => {
     loading.value = true;
+
     try {
         if (route.query.location) {
             await geocodeLocation(route.query.location as string);
         }
-        const res = await branchService.filtered({
+
+        const payload = {
             provider_name: route.query.provider_name ?? "",
             location: route.query.location ?? DEFAULT_LOCATION.label,
             lat: route.query.lat ?? DEFAULT_LOCATION.lat,
             long: route.query.long ?? DEFAULT_LOCATION.long,
             plan_code: route.query.plan_code ?? "",
             per_page: route.query.per_page ?? 6,
-        });
+        };
 
+        const res = await branchService.filtered(payload);
         branches.value = res?.data ?? [];
-        loading.value = false;
+        console.log(branches.value);
     } catch (err) {
         console.error(err);
         branches.value = [];
-        return [];
     } finally {
         loading.value = false;
     }
 };
 
+onMounted(async () => {
+    if (Object.keys(route.query).length === 0) {
+        await router.replace({
+            query: {
+                location: DEFAULT_LOCATION.label,
+                lat: DEFAULT_LOCATION.lat,
+                long: DEFAULT_LOCATION.long,
+                plan_code: "C",
+                sort: "recommended",
+            },
+        });
+
+        return;
+    }
+
+    l();
+});
+
 watch(
     () => route.query,
     () => l(),
-    { immediate: true },
 );
-
 const locations = computed(() =>
     branches.value
         .filter((branch) => branch.location)

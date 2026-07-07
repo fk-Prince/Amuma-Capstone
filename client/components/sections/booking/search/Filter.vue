@@ -5,7 +5,7 @@
         <div class="relative">
             <button
                 @click="isHide = !isHide"
-                class="absolute z-100 left-0 rotate-180 -bottom-9 w-9 h-9 rounded-full border bg-accent flex items-center justify-center shadow-md transition-transform duration-300"
+                class="absolute z-100 left-0 rotate-180 -bottom-9 w-9 h-9 rounded-full border bg-primary flex items-center justify-center shadow-md transition-transform duration-300"
                 :class="isHide ? '-bottom-6' : '-bottom-4'"
             >
                 <Dropdown :isOpen="isHide" />
@@ -14,7 +14,7 @@
             <Transition name="collapse">
                 <div
                     v-show="!isHide"
-                    class="max-w-[80rem] grid grid-cols-[1fr_2fr_1fr_50px] ml-10 items-end gap-5 relative"
+                    class="w-full lg:max-w-[80rem] grid grid-cols-[1fr_1fr_1fr_50px] lg:ml-10 items-end gap-5 relative"
                 >
                     <div>
                         <label
@@ -96,7 +96,7 @@
     <header class="md:hidden border-b bg-white shadow-sm relative">
         <button
             @click="isHide = !isHide"
-            class="absolute z-[1000] rotate-180 left-9 -translate-x-1/2 w-9 h-9 rounded-full border bg-accent flex items-center justify-center shadow-md transition-transform duration-300"
+            class="absolute z-[1000] rotate-180 left-9 -translate-x-1/2 w-9 h-9 rounded-full border bg-primary flex items-center justify-center shadow-md transition-transform duration-300"
             :class="isHide ? '-bottom-6' : '-bottom-5'"
         >
             <Dropdown :isOpen="isHide" />
@@ -182,7 +182,6 @@
         </Transition>
     </header>
 </template>
-
 <script setup lang="ts">
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
@@ -248,16 +247,20 @@ const long = ref<string | number>(
 );
 
 const updateQuery = () => {
-    router.replace({
-        query: {
-            provider_name: searchName.value,
-            location: searchLocation.value || DEFAULT_LOCATION.label,
-            lat: lat.value || DEFAULT_LOCATION.lat,
-            long: long.value || DEFAULT_LOCATION.long,
-            plan_code: planCodeType.value,
-            sort: activeSortOption.value,
-        },
-    });
+    const query = {
+        provider_name: searchName.value,
+        location: searchLocation.value || DEFAULT_LOCATION.label,
+        lat: lat.value || DEFAULT_LOCATION.lat,
+        long: long.value || DEFAULT_LOCATION.long,
+        plan_code: planCodeType.value,
+        // sort: activeSortOption.value,
+    };
+
+    if (JSON.stringify(route.query) === JSON.stringify(query)) {
+        return;
+    }
+
+    router.replace({ query });
 };
 
 const handleLocation = (data: any) => {
@@ -281,94 +284,7 @@ const handleSearch = () => {
 
     updateQuery();
 };
-
-onMounted(() => {
-    if (!route.query.location) {
-        updateQuery();
-    }
-});
 </script>
-<!-- <script setup lang="ts">
-import BaseInput from "~/components/ui/BaseInput.vue";
-import Combobox from "~/components/ui/Combobox.vue";
-import Location from "~/components/icons/location.vue";
-import Search from "~/components/icons/search.vue";
-import Dropdown from "~/components/icons/dropdown.vue";
-
-const route = useRoute();
-const router = useRouter();
-
-const isHide = ref(false);
-
-const props = defineProps<{
-    searchName?: string;
-    searchLocation?: string;
-    lat?: number;
-    long?: number;
-    codeType?: string;
-    perPage?: number;
-}>();
-
-const planCodeList = [
-    { label: "All (Homecare & Inhouse Facility)", value: "C" },
-    { label: "Homecare Services", value: "A" },
-    { label: "In-house Facility", value: "B" },
-];
-
-const sortOptions = [
-    { label: "Recommended", value: "recommended" },
-    { label: "Highest Rated", value: "highest_rated" },
-    { label: "Most Popular", value: "most_popular" },
-    { label: "Nearest", value: "nearest" },
-];
-
-const activeSortOption = ref((route.query.sort as string) ?? "recommended");
-const searchName = ref((route.query.name as string) ?? props.searchName ?? "");
-const searchLocation = ref(
-    (route.query.location as string) ?? props.searchLocation ?? "",
-);
-const planCodeType = ref(
-    (route.query.plan_name as string) ?? props.codeType ?? "C",
-);
-
-const lat = ref<string | number>(
-    (route.query.lat as string) ?? props.lat ?? "",
-);
-const long = ref<string | number>(
-    (route.query.long as string) ?? props.long ?? "",
-);
-
-const updateQuery = () => {
-    router.replace({
-        query: {
-            provider_name: searchName.value,
-            location: searchLocation.value,
-            lat: lat.value || "",
-            long: long.value || "",
-            plan_code: planCodeType.value === "C" ? "C" : planCodeType.value,
-            sort: activeSortOption.value,
-        },
-    });
-};
-
-const handleLocation = (data: any) => {
-    searchLocation.value = data.label || "";
-    lat.value = data.lat ?? "";
-    long.value = data.lng ?? "";
-    updateQuery();
-};
-
-const handleSortChange = (value: string) => {
-    activeSortOption.value = value;
-    updateQuery();
-};
-
-const handleSearch = () => {
-    lat.value = "";
-    long.value = "";
-    updateQuery();
-};
-</script> -->
 
 <style scoped>
 .collapse-enter-active,

@@ -10,8 +10,9 @@ class PlanRepository
 
     public function getPlans()
     {
-        return Plan::with(['monthlyPrice', 'yearlyPrice'])->get();
+        return Plan::all();
     }
+
     public function findByField(string $field, string $value)
     {
         return Plan::where($field, $value)->first();

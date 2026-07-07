@@ -79,6 +79,9 @@ class AuthService
     {
         /** @var \Laravel\Socialite\Two\GoogleProvider $driver */
         $driver = Socialite::driver('google');
+        $driver->setHttpClient(new \GuzzleHttp\Client([
+            'verify' => false
+        ]));
 
         return response()->json([
             'url' => $driver->stateless()->redirect()->getTargetUrl(),
@@ -89,6 +92,9 @@ class AuthService
     {
         /** @var \Laravel\Socialite\Two\GoogleProvider $driver */
         $driver = Socialite::driver('google');
+        $driver->setHttpClient(new \GuzzleHttp\Client([
+            'verify' => false
+        ]));
         $googleUser = $driver->stateless()->user();
 
         $user = $this->userRepository->findByField('email', $googleUser->getEmail());
@@ -100,9 +106,9 @@ class AuthService
                 'first_name' => $nameParts[0] ?? '',
                 'last_name' => $nameParts[1] ?? '',
                 'email' => $googleUser->getEmail(),
-                'uuid' => $googleUser->getId(),
                 'avatar' => $googleUser->getAvatar(),
                 'provider' => 'google',
+                'provider_id' => $googleUser->getId(),
             ]);
         }
 
@@ -115,6 +121,8 @@ class AuthService
         }
 
         $token = $user->createToken('auth-token')->plainTextToken;
+
+        Auth::login($user);
 
         return redirect()->away(
             config('app.client_url') . '/auth/success?token=' . urlencode($token)

@@ -1,5 +1,5 @@
 <template>
-    <section class="relative min-h-screen overflow-hidden pt-[70px]">
+    <section class="relative min-h-screen overflow-hidden">
         <img
             :src="Logo"
             class="absolute inset-0 w-full h-full object-cover opacity-60 object-center"
@@ -158,7 +158,7 @@ import { ref } from "vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Location from "~/components/icons/location.vue";
-import Logo from "~/assets/logo/booking_logo.png";
+import Logo from "~/assets/images/Booking_Logo.png";
 import BaseButton from "~/components/ui/BaseButton.vue";
 
 useHead({ title: "Bookings" });
@@ -168,6 +168,12 @@ const searchName = ref("");
 const searchLocation = ref("");
 const lat = ref("");
 const long = ref("");
+
+const DEFAULT_LOCATION = {
+    label: "Davao City",
+    lat: 7.1907,
+    long: 125.4553,
+};
 
 const handleLocation = async (data: any) => {
     searchLocation.value = data.label;
@@ -180,10 +186,11 @@ const searchClick = async () => {
         path: "/booking/search",
         query: {
             provider_name: searchName.value,
-            location: searchLocation.value,
-            lat: lat.value,
-            long: long.value,
+            location: searchLocation.value || DEFAULT_LOCATION.label,
+            lat: lat.value || DEFAULT_LOCATION.lat,
+            long: long.value || DEFAULT_LOCATION.long,
             plan_code: planCode.value,
+            per_page: 6,
         },
     });
 };

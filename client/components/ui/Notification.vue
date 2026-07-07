@@ -76,13 +76,13 @@
 
                         <div class="flex-1 min-w-0">
                             <p class="text-[13px] font-medium truncate">
-                                {{ notif.title }}
+                                {{ notif.message_type }}
                             </p>
                             <p class="text-xs text-gray-500 truncate">
                                 {{ notif.message }}
                             </p>
                             <p class="text-[11px] text-gray-400 mt-0.5">
-                                {{ notif.date }}
+                                {{ formatDate(notif.created_at) }}
                             </p>
                         </div>
 
@@ -107,71 +107,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { onClickOutside } from "@vueuse/core";
+import { notificationService } from "~/api/notification/NotificationService";
+import type { Notification } from "~/types/notification";
+import { useAuthUser } from "~/composables/useAuthUser";
+import { formatDate } from "~/utils/time";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
+const user = useAuthUser();
+const { $echo } = useNuxtApp();
 
 const isMounted = ref(false);
-
-onMounted(() => {
-    isMounted.value = true;
-});
-
-interface Notification {
-    id: number;
-    title: string;
-    message: string;
-    date: string;
-    unread: boolean;
-    icon: string;
-    color: string;
-    bg: string;
-}
-
 const open = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
 
-const notifications = ref<Notification[]>([
-    {
-        id: 1,
-        title: "New booking request",
-        message: "YAWAYAYAWYAYWAYAWYAWYAYAWYA.",
-        date: "Just now",
-        unread: true,
-        icon: "",
-        color: "#185FA5",
-        bg: "#E6F1FB",
-    },
-    {
-        id: 2,
-        title: "YAWA",
-        message: "YAWA",
-        date: "5 min ago",
-        unread: true,
-        icon: "",
-        color: "#0F6E56",
-        bg: "#E1F5EE",
-    },
-    {
-        id: 3,
-        title: "New booking request",
-        message: "YAWAYAYAWYAYWAYAWYAWYAYAWYA.",
-        date: "Just now",
-        unread: true,
-        icon: "",
-        color: "#185FA5",
-        bg: "#E6F1FB",
-    },
-    {
-        id: 4,
-        title: "YAWA",
-        message: "YAWA",
-        date: "5 min ago",
-        unread: true,
-        icon: "",
-        color: "#0F6E56",
-        bg: "#E1F5EE",
-    },
-]);
+const notifications = ref<Notification[]>([]);
+const notification = ref<string | null>(null);
+
+let channel: any = null;
 
 const unreadCount = computed(
     () => notifications.value.filter((n) => n.unread).length,
@@ -189,4 +144,59 @@ const markAllRead = () => {
 };
 
 onClickOutside(dropdownRef, () => (open.value = false));
+
+const loadNotifications = async (branchUuid: string) => {
+    try {
+        const res = await notificationService.list({
+            per_page: 4,
+            branch_uuid: branchUuid,
+        });
+
+        notifications.value = Array.isArray(res?.data) ? res.data : [];
+    } catch (err) {
+        console.error(err);
+        notifications.value = [];
+    }
+};
+
+const bindChannel = (branchUuid: string) => {
+    if (!user.value?.uuid) return;
+
+    if (channel) {
+        channel.stopListening(".NotificationEvent");
+        $echo.leave(`Notification.${user.value.uuid}`);
+    }
+
+    channel = $echo
+        .private(`Notification.${user.value.uuid}`)
+        .listen(".NotificationEvent", (e: any) => {
+            if (e.branch_uuid === branchUuid) {
+                alert(e.message);
+            }
+
+            notification.value = e.message;
+        });
+};
+
+watch(
+    () => route.params.uuid,
+    async (newUuid) => {
+        if (!newUuid) return;
+
+        await loadNotifications(newUuid as string);
+        bindChannel(newUuid as string);
+    },
+    { immediate: true },
+);
+
+onMounted(() => {
+    isMounted.value = true;
+});
+
+onBeforeUnmount(() => {
+    if (channel) {
+        channel.stopListening(".NotificationEvent");
+        $echo.leave(`Notification.${user.value?.uuid}`);
+    }
+});
 </script>

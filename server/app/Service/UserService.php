@@ -101,8 +101,8 @@ class UserService
                 'roles' => $user->userRoles->map(function ($ur) {
                     return [
                         'is_active' => $ur->is_active,
-                        'role' => $ur->role->role_type,
-                        'branch' => $ur->branch->uuid,
+                        'role' => $ur->role?->role_type,
+                        'branch' => $ur->branch?->uuid,
                     ];
                 })
             ],

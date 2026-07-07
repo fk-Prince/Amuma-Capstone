@@ -21,8 +21,16 @@ return new class extends Migration
             $table->boolean('has_read')->default(false);
             $table->timestamps();
 
-            $table->foreign('to_user_id')->references('user_id')->on('users');
-            $table->foreign('from_user_id')->references('user_id')->on('users');
+
+            $table->foreign('to_user_id')
+                ->references('user_id')
+                ->on('users')
+                ->onDelete('cascade');
+
+            $table->foreign('from_user_id')
+                ->references('user_id')
+                ->on('users')
+                ->onDelete('cascade');
         });
     }
 

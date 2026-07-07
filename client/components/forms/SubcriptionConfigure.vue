@@ -53,14 +53,14 @@
 import { ref, computed, watch } from "vue";
 import Combobox from "../ui/Combobox.vue";
 import { Currency } from "~/utils/currency";
-import { generateAmPmTimes, getTimeZone } from "~/utils/time";
+import { generate24HourTimes, getTimeZone } from "~/utils/time";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 
 const checkout = useSubscriptionCheckout();
 
 const emit = defineEmits(["update:setting"]);
 
-const times = generateAmPmTimes();
+const times = generate24HourTimes();
 const currencyList = Currency();
 const timeZoneList = getTimeZone();
 const setting = checkout.settings;

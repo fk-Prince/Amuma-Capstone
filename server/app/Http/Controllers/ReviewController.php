@@ -20,4 +20,9 @@ class ReviewController extends Controller
     {
         return $this->reviewService->createReview($request->user(), $request->all());
     }
+
+    public function list(Request $request)
+    {
+        return $this->reviewService->retrieveReview($request->all());
+    }
 }

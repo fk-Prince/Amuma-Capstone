@@ -8,7 +8,7 @@
 import SigninSection from "~/components/sections/auth/SigninSection.vue";
 definePageMeta({
     middleware: "auth-client",
-    navVariant: 2,
+    navVariant: 3,
     footer: false,
 });
 

@@ -17,6 +17,11 @@ class BranchController extends Controller
         $this->branchService = $branchService;
     }
 
+    public function show(string $uuid)
+    {
+        return $this->branchService->getBranch($uuid);
+    }
+
 
     public function retrieveFeaturedBranch(Request $request)
     {

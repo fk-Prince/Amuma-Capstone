@@ -23,7 +23,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
         branch: {
             name: "",
             contact_number: "",
-            image: null,
+            image: undefined as any,
             description: "",
             location: defaultLocation(),
         } as Branch,
@@ -36,8 +36,8 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
         } as Agency,
 
         settings: {
-            opening: "12:00 AM",
-            closing: "12:00 AM",
+            opening: "00:00",
+            closing: "00:00",
             currency: "PHP",
             online_additional_fee: 0,
             time_zone: "Asia/Manila",
@@ -51,8 +51,8 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
         selectedPrice: (state) => {
             if (!state.selectedPlan) return null;
             return state.selectedInterval === "yearly"
-                ? state.selectedPlan.yearly_price?.price
-                : state.selectedPlan.monthly_price?.price;
+                ? state.selectedPlan.yearly_price
+                : state.selectedPlan.monthly_price;
         },
     },
 
@@ -98,7 +98,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             this.branch = {
                 name: "",
                 contact_number: "",
-                image: null,
+                image: undefined as any,
                 description: "",
                 location: defaultLocation(),
             } as Branch;

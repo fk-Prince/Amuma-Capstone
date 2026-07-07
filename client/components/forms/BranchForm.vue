@@ -12,6 +12,7 @@
                 <LabelInput
                     v-model="checkout.branch.description"
                     label="Description"
+                    :text-max="500"
                     @update:modelValue="clearError('branch_description')"
                     :error="checkout.errors?.branch_description"
                 />
@@ -242,7 +243,6 @@ const handleLocation = ({
 const handleBranchImage = (event: Event) => {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
-
     checkout.branch.image = file;
     branchImagePreview.value = URL.createObjectURL(file);
     clearError("branch_image");

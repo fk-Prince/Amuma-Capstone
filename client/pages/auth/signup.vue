@@ -2,7 +2,7 @@
 import SignupSection from "~/components/sections/auth/SignupSection.vue";
 definePageMeta({
     middleware: "auth-client",
-    navVariant: 2,
+    navVariant: 3,
     footer: false,
 });
 useHead({

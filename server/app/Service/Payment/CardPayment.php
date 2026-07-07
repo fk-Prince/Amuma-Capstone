@@ -25,7 +25,9 @@ class CardPayment implements ISubscriptionPayment
         $user      = Auth::user();
         $reference = (string) Str::uuid();
         try {
-            $response = Http::withBasicAuth($this->secretKey, '')
+            $response = Http::withOptions([
+                'verify' => false
+            ])->withBasicAuth($this->secretKey, '')
                 ->post('https://api.xendit.co/credit_card_charges', [
                     'token_id'          => $payload['token_id'],
                     'authentication_id' => $payload['authentication_id'],

@@ -99,11 +99,8 @@ const payCard = async () => {
     if (processing.value) return;
     processing.value = true;
     try {
-        const res = await cardPayment(
-            card,
-            closeModal,
-            buildSubscriptionPayload(),
-        );
+        const payload = buildSubscriptionPayload();
+        const res = await cardPayment(card, closeModal, payload);
         if (res) {
             success(res.message);
         }

@@ -16,7 +16,9 @@ class NominatimService
         $cacheKey = "reverse_geo:" . round($lat, 5) . ":" . round($lon, 5) . ":z{$zoom}";
 
         return Cache::remember($cacheKey, now()->addDays(7), function () use ($lat, $lon, $zoom) {
-            $response = Http::withHeaders([
+            $response = Http::withOptions([
+                'verify' => false,
+            ])->withHeaders([
                 'User-Agent' => config('app.name') . ' prince.sestoso@gmail.com',
                 'Accept-Language' => 'en',
             ])->get('https://nominatim.openstreetmap.org/reverse', [
@@ -46,8 +48,10 @@ class NominatimService
         out geom 1;
         OVERPASS;
 
-            $response = Http::withHeaders([
-                'User-Agent' => config('app.name') . ' prince.sestoso@gmail.com',
+            $response = Http::withOptions([
+                'verify' => false,
+            ])->withHeaders([
+                'User-Agent' => 'YourAppName/1.0 (contact@email.com)',
             ])->post('https://overpass-api.de/api/interpreter', [
                 'data' => $query,
             ]);
@@ -82,7 +86,9 @@ class NominatimService
             return null;
         }
 
-        $response = Http::withHeaders([
+        $response = Http::withOptions([
+            'verify' => false,
+        ])->withHeaders([
             'User-Agent' => 'YourAppName/1.0 (contact@email.com)',
         ])->get('https://nominatim.openstreetmap.org/search', [
             'q' => $address,
@@ -110,9 +116,10 @@ class NominatimService
         }
 
 
-        $response2 = Http::withHeaders([
+        $response2 = $response =   Http::withOptions([
             'verify' => false,
-            'User-Agent' => 'YourAppName/1.0 (contact@email.com)',
+        ])->withHeaders([
+            'User-Agent' => 'YourAppName/1.0 (contact@email.com)'
         ])->get('https://nominatim.openstreetmap.org/search', [
             'q' => $fallback,
             'format' => 'json',
@@ -134,13 +141,16 @@ class NominatimService
 
     public function getCityByCords(float $lat, float $long)
     {
-        $response = Http::withHeaders([
-            'User-Agent' => config('app.name') . ' ' . config('app.url'),
+        $response =   Http::withOptions([
+            'verify' => false,
+        ])->withHeaders([
+            'User-Agent' => 'YourAppName/1.0 (contact@email.com)',
         ])->get('https://nominatim.openstreetmap.org/reverse', [
             'lat'    => $lat,
             'lon'    => $long,
             'format' => 'json',
         ]);
+
 
         if ($response->failed()) {
             Log::warning('Nominatim reverse geocode failed', [

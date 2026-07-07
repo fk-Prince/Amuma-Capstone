@@ -1,5 +1,10 @@
 <template>
-    <div class="relative" :class="className" v-bind="restAttrs">
+    <div
+        ref="wrapperRef"
+        class="relative"
+        :class="className"
+        v-bind="restAttrs"
+    >
         <div>
             <label
                 v-if="props.label"
@@ -109,7 +114,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, nextTick, useAttrs, watch } from "vue";
+import {
+    computed,
+    ref,
+    nextTick,
+    useAttrs,
+    watch,
+    onMounted,
+    onBeforeUnmount,
+} from "vue";
 import SearchIcon from "../icons/search.vue";
 
 const attrs = useAttrs();
@@ -139,6 +152,8 @@ const emit = defineEmits(["update:modelValue", "create:item"]);
 const isOpen = ref(false);
 const search = ref("");
 const searchInput = ref<HTMLInputElement | null>(null);
+
+const wrapperRef = ref<HTMLElement | null>(null);
 
 const baseItems = ref<Item[]>([]);
 const localItems = ref<Item[]>([]);
@@ -211,7 +226,7 @@ function createItem(label: string) {
     close();
 }
 
-const placeholder = props.placeholder ?? "Select option";
+const placeholder = props.placeholder;
 const searchPlaceholder = props.searchPlaceholder ?? "Search...";
 
 const selectedOption = computed(() => {
@@ -253,4 +268,20 @@ watch(
     },
     { immediate: true, deep: true },
 );
+
+function handleClickOutside(event: MouseEvent) {
+    if (!wrapperRef.value) return;
+    if (!wrapperRef.value.contains(event.target as Node)) {
+        isOpen.value = false;
+        search.value = "";
+    }
+}
+
+onMounted(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener("mousedown", handleClickOutside);
+});
 </script>

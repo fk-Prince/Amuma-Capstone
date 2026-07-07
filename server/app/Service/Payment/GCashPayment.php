@@ -20,7 +20,9 @@ class GCashPayment implements ISubscriptionPayment
     {
         $user = Auth::user();
         $reference = (string) Str::uuid();
-        $response = Http::withBasicAuth($this->secretKey, '')
+        $response = Http::withOptions([
+            'verify' => false
+        ])->withBasicAuth($this->secretKey, '')
             ->post('https://api.xendit.co/v2/invoices', [
                 'external_id' =>  $reference,
                 'amount' => $subscription['total_amount'],

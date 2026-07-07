@@ -35,7 +35,6 @@ export const useGeo = () => {
     const geocodeLocation = async (locationQuery: string) => {
         try {
             const coordMatch = locationQuery.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
-            console.log(coordMatch);
             if (coordMatch) {
                 centerLat.value = Number(coordMatch[1]);
                 centerLng.value = Number(coordMatch[2]);
@@ -56,7 +55,6 @@ export const useGeo = () => {
 
             const data = await res.json();
 
-            console.log("---" + data)
             if (data.lat && data.lng) {
                 centerLat.value = Number(data.lat);
                 centerLng.value = Number(data.lng);

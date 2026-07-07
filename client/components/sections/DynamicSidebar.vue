@@ -342,13 +342,9 @@
                             </p>
                         </div>
                     </div>
-                    <div
-                        v-if="!collapsed"
-                        class="flex flex-wrap gap-1 my-2"
-                        v-for="branches in branchStore.branches"
-                    >
+                    <div v-if="!collapsed" class="flex flex-wrap gap-1 my-2">
                         <span
-                            v-for="role in branches.roles"
+                            v-for="role in branchStore.activeBranch?.roles"
                             :key="role.role_type"
                             class="text-[12px] px-2 py-0.5 rounded-full font-medium border"
                             :class="

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password')->nullable();
             $table->string('provider')->default('local');
+            $table->string('provider_id')->nullable();
             $table->string('phone_number')->nullable();
             $table->boolean('is_active')->default(true);
             $table->boolean('is_verified')->default(false);

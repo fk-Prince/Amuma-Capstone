@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('prices', function (Blueprint $table) {
-            $table->id('price_id');
-            $table->decimal('price', 10, 2);
-            $table->dateTime('valid_from');
-            $table->dateTime('valid_to')->nullable(true);
-        });
+        // Schema::create('prices', function (Blueprint $table) {
+        //     $table->id('price_id');
+        //     $table->decimal('price', 10, 2);
+        //     $table->dateTime('valid_from');
+        //     $table->dateTime('valid_to')->nullable(true);
+        // });
     }
 
     /**

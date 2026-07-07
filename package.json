@@ -5,8 +5,9 @@
     "main": "index.js",
     "scripts": {
         "artisan": "cd server && php artisan serve",
+        "reverb": "cd server && php artisan reverb:start",
         "client": "pnpm --prefix client run dev",
-        "dev": "concurrently \"npm run artisan\" \"npm run client\""
+        "dev": "concurrently \"npm run artisan\"  \"npm run reverb\" \"npm run client\""
     },
     "keywords": [],
     "author": "",

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionRequest extends FormRequest
 {
@@ -15,6 +16,7 @@ class SubscriptionRequest extends FormRequest
 
     public function rules(): array
     {
+
         return [
             'token_id' => ['nullable', 'string'],
             'authentication_id' => ['nullable', 'string'],
@@ -40,7 +42,7 @@ class SubscriptionRequest extends FormRequest
             'branch_province' => ['required', 'string'],
             'branch_country' => ['required', 'string'],
             'branch_contact_number' => ['nullable', 'string'],
-            'branch_image' => ['nullable'],
+            'branch_image' => ['nullable', 'file', 'image', 'max:5120'],
             'branch_settings' => ['required', 'array'],
             'branch_settings.currency' => ['required', 'string'],
             'branch_settings.opening' => ['required', 'string'],

@@ -24,7 +24,7 @@
                 v-for="branch in props.branches"
                 :key="branch.uuid"
                 :branch="branch"
-                @select="$emit('select', $event)"
+                @select="handleSelect"
             />
         </div>
 
@@ -47,4 +47,10 @@ const props = defineProps<{
     branches: BranchRetrieve[];
     loading?: boolean;
 }>();
+
+const handleSelect = (branch: BranchRetrieve) => {
+    navigateTo({
+        path: `/booking/provider/${branch.uuid}`,
+    });
+};
 </script>

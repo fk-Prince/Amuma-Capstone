@@ -18,10 +18,11 @@ return new class extends Migration
             $table->foreignId('agency_id')->nullable()->constrained('agencies', 'agency_id');
             $table->foreignId('location_id')->nullable()->constrained('locations', 'location_id');
             $table->string('name')->unique();
+            $table->boolean('is_verified')->default(false);
             $table->string('description');
             $table->json('settings')->nullable();
             $table->string('contact_number')->nullable();
-            $table->binary('image')->nullable(true);
+            $table->string('image')->nullable(true);
             $table->timestamps();
         });
     }

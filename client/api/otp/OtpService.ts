@@ -1,4 +1,5 @@
 import BaseService from '~/api/BaseService';
+import type { SignupRequest } from '~/types/auth';
 
 export interface OtpRequest {
     otp_key?: string,

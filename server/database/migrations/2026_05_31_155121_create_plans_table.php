@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id('plan_id');
             $table->string('description');
             $table->string('name');
-            $table->foreignId('monthly_price_id')->constrained('prices', 'price_id');
-            $table->foreignId('yearly_price_id')->constrained('prices', 'price_id');
+            $table->decimal('monthly_price', 10, 2);
+            $table->decimal('yearly_price', 10, 2);
             $table->string('plan_code');
         });
     }

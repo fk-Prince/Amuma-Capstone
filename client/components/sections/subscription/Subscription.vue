@@ -99,8 +99,8 @@
                             <div class="font-bold text-primary">
                                 ₱{{
                                     checkout.selectedInterval === "yearly"
-                                        ? plan.yearly_price?.price
-                                        : plan.monthly_price?.price
+                                        ? plan.yearly_price
+                                        : plan.monthly_price
                                 }}
                             </div>
                         </label>

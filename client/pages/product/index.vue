@@ -3,7 +3,7 @@
         <main class="max-w-6xl mx-auto px-6 py-16">
             <div class="text-center mb-10">
                 <p
-                    class="text-xs font-bold tracking-[0.2em] text-gray-400 uppercase mb-4"
+                    class="text-xs font-bold tracking-[0.2em] text-primary uppercase mb-4"
                 >
                     Pricing
                 </p>
@@ -116,8 +116,11 @@ const formattedPlans = computed(() =>
         description: plan.description,
         price:
             billingCycle.value === "yearly"
-                ? plan.yearly_price?.price
-                : plan.monthly_price?.price,
+                ? plan.yearly_price
+                : plan.monthly_price,
+
+        monthly_price: Number(plan.monthly_price),
+        yearly_price: Number(plan.yearly_price),
         billing_interval: billingCycle.value,
         ctaText: `Subscribe to ${plan.name}`,
         featured: index === checkout.plans.length - 1,

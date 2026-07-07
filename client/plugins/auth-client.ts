@@ -18,7 +18,7 @@ export default defineNuxtPlugin(async () => {
         }
         const res = await authService.me();
         user.value = res.user;
-        if (!user.value?.avatar) {
+        if (user.value && !user.value.avatar) {
             const initials = userInitials(user.value);
             user.value.avatar = avatarSrc(initials);
         }

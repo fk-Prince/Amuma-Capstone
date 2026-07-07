@@ -1,25 +1,73 @@
-export function generateAmPmTimes(stepMinutes = 60): string[] {
+import type { BranchRetrieve } from "~/types/branch";
+
+export function generate24HourTimes(stepMinutes = 60): string[] {
     const times: string[] = [];
 
     for (let totalMinutes = 0; totalMinutes < 24 * 60; totalMinutes += stepMinutes) {
-        const hour24 = Math.floor(totalMinutes / 60);
+        const hour = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
 
-        const ampm = hour24 >= 12 ? "PM" : "AM";
-        const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
-
-        const hStr = String(hour12);
+        const hStr = String(hour).padStart(2, "0");
         const mStr = String(minutes).padStart(2, "0");
 
-        times.push(`${hStr}:${mStr} ${ampm}`);
+        times.push(`${hStr}:${mStr}`);
     }
 
     return times;
 }
 
-
 export function getTimeZone() {
     return [
         { label: 'Asia / Manila', value: 'Asia/Manila' },
     ]
+}
+
+type TimeDisplay = {
+    is24Hours: boolean;
+    label: string;
+    time: string | null;
+};
+
+export function format24To12(time: string) {
+    if (!time) return "";
+
+    const [hourStr, minute] = time.split(":");
+    let hour = Number(hourStr);
+
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
+
+    return `${hour}:${minute} ${ampm}`;
+}
+
+export function getBranchTimeDisplay(
+    availability: BranchRetrieve["availability"]
+): TimeDisplay {
+    if (!availability?.opening_time || !availability?.closing_time) {
+        return {
+            is24Hours: false,
+            label: "Not available",
+            time: null,
+        };
+    }
+
+    const is24Hours =
+        availability.opening_time === "00:00" &&
+        availability.closing_time === "00:00";
+
+    if (is24Hours) {
+        return {
+            is24Hours: true,
+            label: "Open 24 Hours",
+            time: null,
+        };
+    }
+
+    return {
+        is24Hours: false,
+        label: `${format24To12(availability.opening_time)} - ${format24To12(
+            availability.closing_time
+        )}`,
+        time: `${availability.opening_time} - ${availability.closing_time}`,
+    };
 }

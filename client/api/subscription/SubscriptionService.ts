@@ -12,7 +12,7 @@ class SubscriptionService extends BaseService {
         return SubscriptionService.instance;
     }
 
-    async createSubscription(payload: SubscriptionRequest): Promise<any> {
+    async createSubscription(payload: SubscriptionRequest | any): Promise<any> {
         return await this.request(this.resource, 'POST', payload);
     }
 
@@ -20,7 +20,7 @@ class SubscriptionService extends BaseService {
         return await this.request(this.resource + '-detail', 'GET', payload);
     }
 
-    async validateSubscription(payload: SubscriptionRequest) {
+    async validateSubscription(payload: SubscriptionRequest | any) {
         return await this.request(this.resource + '-validate', 'POST', payload);
     }
 

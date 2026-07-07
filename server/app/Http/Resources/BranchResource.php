@@ -37,8 +37,7 @@ class BranchResource extends JsonResource
                 'opening_time' => $openingTime,
                 'closing_time' => $closingTime,
             ],
-            'location' => $this->locations,
-            'reviews' => $this->whenLoaded('reviews'),
+            'location' => $this->location,
             'reviewCount' => $this->reviews->count(),
             'averageRating' => $this->reviews->count() > 0
                 ? round($this->reviews->avg(fn($r) => (float) $r->rate), 2)
@@ -46,11 +45,61 @@ class BranchResource extends JsonResource
             'subscriptions' => $this->subscriptions->map(function ($subscription) {
                 return [
                     'status' => $subscription->status,
-                    'plan_code' => optional($subscription->plans)->plan_code,
-                    'plan_name' => optional($subscription->plans)->name,
+                    'plans' => [
+                        'plan_code' => optional($subscription->plans)->plan_code,
+                        'name' => optional($subscription->plans)->name,
+                    ],
                 ];
             })->values()->all(),
+            'services' => $this->whenLoaded('services', function () {
+                return $this->services->map(function ($service) {
+                    return [
+                        'service_id' => $service->service_id,
+                        'service_uuid' => $service->service_uuid,
+                        'service_name' => $service->service_name,
+                        'price' => $service->price,
+                        'maximum_duration' => $service->maximum_duration,
+                        'is_available' => $service->is_available,
+                        'type' => $service->type,
+                        'category' => $service->category ? [
+                            'category_id' => $service->category->category_id,
+                            'category_name' => $service->category->category_name,
+                        ] : null,
+                    ];
+                });
+            }),
         ];
+        // return [
+        //     'branch_id' => $this->branch_id,
+        //     'uuid' => $this->uuid,
+        //     'name' => $this->name,
+        //     'description' => $this->description,
+        //     'image' => $this->image,
+        //     'availability' => [
+        //         'status' => $status,
+        //         'is_open' => $isOpen,
+        //         'timezone' => $timezone,
+        //         'opening_time' => $openingTime,
+        //         'closing_time' => $closingTime,
+        //     ],
+        //     'location' => $this->location,
+        //     // 'reviews' => $this->whenLoaded('reviews'),
+        //     'reviewCount' => $this->reviews->count(),
+        //     'averageRating' => $this->reviews->count() > 0
+        //         ? round($this->reviews->avg(fn($r) => (float) $r->rate), 2)
+        //         : null,
+
+        //     'subscriptions' => $this->subscriptions->map(function ($subscription) {
+        //         return [
+        //             'status' => $subscription->status,
+        //             'plans' => [
+        //                 'plan_code' => optional($subscription->plans)->plan_code,
+        //                 'name' => optional($subscription->plans)->name,
+        //             ],
+        //         ];
+        //     })->values()->all(),
+
+        // ];
     }
 
     private function normalizeTime(string $time): string

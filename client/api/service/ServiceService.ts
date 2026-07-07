@@ -25,6 +25,7 @@ class ServiceService extends BaseService {
         return await this.request(this.resource, 'POST', payload);
     }
 
+
     private get resource(): string {
         const backend = this.getBackendApi;
         return `${backend}/api/services`;

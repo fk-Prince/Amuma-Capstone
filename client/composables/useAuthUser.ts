@@ -1,6 +1,7 @@
+import type { User } from "~/types/auth"
 
 export const useAuthUser = () =>
-    useState<any | null>("auth_user", () => null)
+    useState<User | null>("auth_user", () => null)
 export const useAuthReady = () => useState("auth_ready", () => false)
 
 export const resetAuth = () => {

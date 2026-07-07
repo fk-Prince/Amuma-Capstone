@@ -7,6 +7,7 @@ use App\Http\Resources\ReviewResource;
 use App\Models\User;
 use App\Repository\BranchRepository;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class ReviewService
 {
@@ -21,7 +22,6 @@ class ReviewService
 
     public function createReview(User $user, array $payload)
     {
-
         $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
         if (!$branch) {
             throw new Exception(__('Branch does not exist'), 404);
@@ -41,5 +41,20 @@ class ReviewService
             'message' => __('Review successfully submited.'),
             'data' => $review
         ], 201);
+    }
+
+    public function retrieveReview(array $payload)
+    {
+
+        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
+        if (!$branch) {
+            throw new Exception(__('Branch does not exist'), 404);
+        }
+        return $this->reviewRepository->paginate(
+            $payload['per_page'],
+            $branch->uuid,
+            $payload['rate'] ?? null,
+            $payload['withComments'] ?? false
+        );
     }
 }

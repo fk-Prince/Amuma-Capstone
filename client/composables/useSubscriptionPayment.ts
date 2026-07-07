@@ -18,12 +18,17 @@ export interface CardDetails {
 export async function cardPayment(
     card: CardDetails,
     closeModal: any,
-    subData: SubscriptionRequest
+    subData: SubscriptionRequest | any
 ): Promise<any> {
     const config = useRuntimeConfig();
     window.Xendit.setPublishableKey(config.public.xenditPublicKey);
-    const res = await subscriptionService.retrieveSubscriptionDetail(subData);
 
+    const detailPayload = { ...subData };
+    if (detailPayload.branch_image instanceof File) {
+        delete detailPayload.branch_image;
+    }
+
+    const res = await subscriptionService.retrieveSubscriptionDetail(detailPayload);
 
     if (!res.status) return;
 
@@ -79,6 +84,7 @@ export async function cardPayment(
 
                                 onComplete(async () => {
                                     try {
+
                                         const result = await executePayment();
                                         await finish(result);
                                     } catch (err) {
