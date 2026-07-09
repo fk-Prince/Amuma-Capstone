@@ -112,8 +112,8 @@ import { onClickOutside } from "@vueuse/core";
 import { notificationService } from "~/api/notification/NotificationService";
 import type { Notification } from "~/types/notification";
 import { useAuthUser } from "~/composables/useAuthUser";
-import { formatDate } from "~/utils/time";
 import { useRoute } from "vue-router";
+import { formatDate } from "~/utils/time";
 
 const route = useRoute();
 const user = useAuthUser();

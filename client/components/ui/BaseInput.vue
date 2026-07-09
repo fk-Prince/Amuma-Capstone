@@ -29,7 +29,6 @@
                 class="flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400"
                 :class="[hasPrefix ? 'pl-2' : '', inputClass]"
             />
-
             <span
                 v-if="hasSuffix || isSearch"
                 class="flex items-center flex-shrink-0 pr-3"

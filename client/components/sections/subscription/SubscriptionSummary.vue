@@ -230,6 +230,7 @@ import { useSubscriptionCheckout } from "~/stores/subscription";
 import { branchFields, agencyFields } from "~/utils/fields";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { type SubscriptionRequest } from "~/types/subscription";
+import { getBranchImage } from "~/types/branch";
 const props = defineProps<{
     stepCompleted: boolean;
 }>();
@@ -242,6 +243,7 @@ const branchImagePreview = computed(() =>
 
 const send = async () => {
     try {
+        const hasImageFile = checkout.branch.image instanceof File;
         const payload: SubscriptionRequest = {
             plan_code: checkout.selectedPlan.plan_code,
             payment_method: checkout.payment_method,
@@ -271,7 +273,6 @@ const send = async () => {
             agency_latitude: checkout.agency.location.latitude ?? undefined,
             agency_longitude: checkout.agency.location.longitude ?? undefined,
         };
-
         await subscriptionService.validateSubscription(payload);
         checkout.subscriptionPayload = payload;
         await navigateTo({

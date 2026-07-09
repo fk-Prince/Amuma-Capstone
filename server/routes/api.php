@@ -3,6 +3,7 @@
 use App\Events\NotificationEvent;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BedController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\NominatimController;
@@ -10,10 +11,12 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\RoomController;
 use App\Http\Controllers\sample;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
+use App\Models\Room;
 use Illuminate\Support\Facades\Route;
 
 
@@ -62,11 +65,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/subscription', [SubscriptionController::class, 'newSubscription']);
     Route::get('/subscription-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
     Route::post('/subscription-validate',  [SubscriptionController::class, 'validateSubscription']);
-    // Route::prefix('subscription')->controller(SubscriptionController::class)->group(function () {
-    //     Route::post('/', 'newSubscription');
-    //     Route::get('-detail', 'retrieveSubscriptionDetail');
-    //     Route::post('-validate', 'validateSubscription');
-    // });
 
     Route::apiResources([
         'agencies' => AgencyController::class,
@@ -75,6 +73,8 @@ Route::middleware('auth:sanctum')->group(function () {
         'users' => UserController::class,
         'bookings' => BookingController::class,
         'notifications' => NotificationController::class,
+        'rooms' => RoomController::class,
+        'beds' => BedController::class,
     ]);
 
 

@@ -27,7 +27,7 @@ export interface SubscriptionRequest {
     branch_province?: string;
     branch_country?: string;
     branch_contact_number?: string;
-    branch_image?: File | null;
+    branch_image?: File | string | null;
     branch_settings?: any;
     branch_latitude?: number | null;
     branch_longitude?: number | null;

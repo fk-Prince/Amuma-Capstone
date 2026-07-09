@@ -23,7 +23,12 @@
                         class="w-9 h-9 rounded-lg overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center"
                     >
                         <img
-                            v-if="branchStore.activeBranch?.image"
+                            v-if="
+                                getBranchImage(branchStore.activeBranch?.image)
+                            "
+                            :src="
+                                getBranchImage(branchStore.activeBranch?.image)
+                            "
                             :alt="branchStore.activeBranch?.name"
                             class="w-full h-full object-cover"
                         />
@@ -209,9 +214,9 @@
                         <div
                             class="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center shrink-0"
                         >
-                            <!-- :src="branch.image" -->
                             <img
                                 v-if="branch.image"
+                                :src="getBranchImage(branch.image)"
                                 class="w-full h-full object-cover"
                             />
                             <span v-else class="text-xs text-gray-400"
@@ -283,14 +288,15 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref } from "vue";
 import Notification from "../ui/Notification.vue";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
-import logoAmuma from "~/assets/logo/logoAmuma.png";
 import Location from "../icons/location.vue";
 
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 import { formatRole, roleMeta } from "~/utils/user";
+import { getBranchImage } from "~/types/branch.js";
 
 const user = useAuthUser();
 
@@ -299,6 +305,10 @@ defineEmits<{ open: [] }>();
 const branchStore = useBranchStore();
 
 const isMounted = ref(false);
+
+const branches = computed(() =>
+    branchStore.branches.filter((branch) => branch != null),
+);
 
 onMounted(() => {
     isMounted.value = true;

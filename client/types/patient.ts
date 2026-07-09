@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { Location } from "./location";
 export interface Patient {
+    patient_id?: number;
     first_name: string;
     middle_name: string;
     last_name: string;

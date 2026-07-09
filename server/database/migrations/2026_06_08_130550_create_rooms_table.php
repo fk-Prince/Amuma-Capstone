@@ -15,6 +15,7 @@ return new class extends Migration
         Schema::create('rooms', function (Blueprint $table) {
             $table->id('room_id');
             $table->string('room_no');
+            $table->string('floor');
             $table->foreignId('branch_id')->constrained('branches', 'branch_id');
             $table->enum('room_type', ['VIP', 'Common']);
             $table->string('capacity');

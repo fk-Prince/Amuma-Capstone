@@ -1,5 +1,4 @@
 
-// ______________________
 
 export type TimeSlot = {
     value: string;

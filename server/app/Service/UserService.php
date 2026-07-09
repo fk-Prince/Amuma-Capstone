@@ -32,15 +32,19 @@ class UserService
             ->groupBy(fn($role) => $role->pivot->branch_id)
             ->map(function ($roles, $branchId) use ($branchModels) {
                 $branch = $branchModels->get($branchId);
-                $location = $branch?->locations;
+
+                if (!$branch || !$branch->uuid) {
+                    return null;
+                }
+
+                $location = $branch?->location;
                 // $subscription = $branch?->subscriptions->first();
                 // $subscription = $branch?->subscriptions;
-
 
                 return [
                     'uuid' => $branch?->uuid,
                     'name' => $branch?->name,
-
+                    'image' => $branch?->image,
                     'location' => $location ? [
                         'street' => $location->street,
                         'city' => $location->city,
@@ -71,6 +75,7 @@ class UserService
                     })->values(),
                 ];
             })
+            ->filter()
             ->values();
 
         return response()->json([

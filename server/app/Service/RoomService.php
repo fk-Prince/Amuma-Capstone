@@ -5,85 +5,72 @@ namespace App\Service;
 use App\Repository\RoomRepository;
 use App\Http\Resources\RoomResource;
 use App\Models\User;
+use App\Repository\BranchRepository;
+use App\Service\Utils\AuthGuard;
+use Exception;
 
 class RoomService
 {
     private RoomRepository $roomRepository;
+    private BranchRepository $branchRepository;
 
-    public function __construct(RoomRepository $roomRepository) 
+    public function __construct(RoomRepository $roomRepository, BranchRepository $branchRepository)
     {
+        $this->branchRepository = $branchRepository;
         $this->roomRepository = $roomRepository;
     }
 
-    public function createRoom(User $actor, array $payload)
+
+    public function createRoom(User $user, array $payload)
     {
-        if (! $actor->hasRole('superadmin')) {
-            $payload['company_id'] = $actor->company_id;
+        AuthGuard::requireRole($user, ['branch_owner', 'administrator']);
+
+        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
+
+        if (!$branch) {
+            throw new Exception(__('Branch does not exist.'), 404);
         }
+
+        if (! $branch->hasFacilitySubscription()) {
+            throw new Exception(__('No active facility subscription.'), 403);
+        }
+
+        $existingRoom = $this->roomRepository->findByField([
+            ['branch_id', '=', $branch->branch_id],
+            ['room_no', '=', $payload['room_no']],
+        ]);
+
+
+        if ($existingRoom) {
+            throw new Exception(__('Room number already exists in this branch.'), 409);
+        }
+
+        $payload['branch_id'] = $branch->branch_id;
 
         $model = $this->roomRepository->create($payload);
-        return new RoomResource($model);
-    }
 
-    public function listRoom(User $actor, int $perPage = 15)
-    {
-        $companyId = $actor->hasRole('superadmin') ? null : $actor->company_id;
-
-        $collection = $this->roomRepository->paginate($perPage, $companyId);
-        return RoomResource::collection($collection);
-    }
-
-    /**
-     * Helper to ensure the actor owns the record
-     */
-    private function findScoped(User $actor, string $uuid)
-    {
-        $model = $this->roomRepository->findByUuid($uuid);
-        
         if (! $model) {
-            abort(404, 'Resource not found');
+            throw new Exception(__('Failed to create room.'), 500);
         }
 
-        if (! $actor->hasRole('superadmin')) {
-            if ($model->company_id !== $actor->company_id) {
-                abort(403, 'Unauthorized access to this resource.');
-            }
+        return response()->json([
+            'data' => new RoomResource($model),
+            'message' => __('Successfully created a room.'),
+            'status' => true,
+        ], 201);
+    }
+
+    public function listRoom(User $user, array $payload)
+    {
+        AuthGuard::requireUser($user);
+        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
+
+        if (!$branch) {
+            throw new Exception(__('Branch does not exist.'), 404);
         }
-        return $model;
-    }
 
-    public function getRoom(User $actor, string $uuid)
-    {
-        $model = $this->findScoped($actor, $uuid);
-        return new RoomResource($model);
-    }
+        $model = $this->roomRepository->paginate($payload['per_page'], $branch->branch_id);
 
-    public function updateRoom(User $actor, string $uuid, array $payload)
-    {
-        $this->findScoped($actor, $uuid);
-        
-        unset($payload['company_id']); 
-
-        $model = $this->roomRepository->update($uuid, $payload);
-        return new RoomResource($model);
-    }
-
-    public function deleteRoom(User $actor, string $uuid)
-    {
-        $this->findScoped($actor, $uuid);
-        $this->roomRepository->delete($uuid);
-        return true;
-    }
-
-    public function restoreRoom(User $actor, string $uuid)
-    {
-        $model = $this->roomRepository->restore($uuid);
-
-        if (! $actor->hasRole('superadmin') && $model->company_id !== $actor->company_id) {
-            $model->delete(); 
-            abort(403, 'Unauthorized');
-        }
-        
-        return new RoomResource($model);
+        return  new RoomResource($model);
     }
 }

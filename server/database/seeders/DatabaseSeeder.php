@@ -31,7 +31,9 @@ class DatabaseSeeder extends Seeder
             'latitude' => '7.0731',
             'longitude' => '125.6128'
         ]);
-
+        $initials = strtoupper(
+            substr('Prince', 0, 1) . substr('Sestoso', 0, 1)
+        );
         $user = User::factory()->create([
             'first_name' => 'Prince',
             'last_name' => 'Sestoso',
@@ -39,6 +41,7 @@ class DatabaseSeeder extends Seeder
             'phone_number' => '123',
             'email' => 'prince.sestoso@gmail.com',
             'password' => Hash::make('password'),
+            'avatar' => 'https://ui-avatars.com/api/?name=' . $initials
         ]);
 
         $role = Role::create([

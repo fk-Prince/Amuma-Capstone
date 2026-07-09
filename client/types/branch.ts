@@ -7,7 +7,7 @@ export interface Branch {
     name: string;
     contact_number: string;
     description: string;
-    image: File;
+    image: File | string | null;
     location: Location
     settings?: BranchSettings | null
     plan?: BranchPlan[] | null;
@@ -22,6 +22,13 @@ export interface BranchSettings {
     time_zone: string | null;
 }
 
+export const getBranchImage = (image: File | string | null | undefined) => {
+    if (!image) return "";
+
+    return typeof image === "string"
+        ? image
+        : URL.createObjectURL(image);
+};
 
 export interface BranchRetrieve {
     branch_id: number;

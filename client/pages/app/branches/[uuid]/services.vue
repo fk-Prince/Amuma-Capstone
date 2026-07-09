@@ -1,17 +1,8 @@
 <template>
-    <div>
-        <div v-if="loading" class="flex justify-center py-12">
-            <div
-                class="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"
-            />
-        </div>
+    <div class="w-full max-w-8xl mx-auto p-4 md:p-6 space-y-5">
+        <ServiceSearch v-model="searchData" v-model:activeTab="activeTab" />
 
-        <ServiceSection
-            v-else
-            :services="services"
-            :loading="loading"
-            @refresh="loadServices"
-        />
+        <ServiceList :loading="loading" :services="services" />
     </div>
 </template>
 
@@ -19,9 +10,9 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { serviceService } from "~/api/service/ServiceService";
-import ServiceSection from "~/components/sections/app/ServiceSection.vue";
 import type { Service } from "~/types/service";
-import { useAuthReady } from "~/composables/useAuthUser";
+import ServiceSearch from "~/components/sections/app/Service/ServiceSearch.vue";
+import ServiceList from "~/components/sections/app/Service/ServiceList.vue";
 
 definePageMeta({
     layout: "dashboard",
@@ -31,6 +22,8 @@ definePageMeta({
 useHead({ title: "Branches" });
 
 const route = useRoute();
+const searchData = ref("");
+const activeTab = ref("All Services");
 
 const loading = ref(true);
 const services = ref<Service[]>([]);

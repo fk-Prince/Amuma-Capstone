@@ -5,85 +5,70 @@ namespace App\Service;
 use App\Repository\BedRepository;
 use App\Http\Resources\BedResource;
 use App\Models\User;
+use App\Repository\BranchRepository;
+use App\Repository\RoomRepository;
+use App\Service\Utils\AuthGuard;
+use Exception;
+use Illuminate\Support\Facades\DB;
 
 class BedService
 {
     private BedRepository $bedRepository;
+    private BranchRepository $branchRepository;
+    private  RoomRepository $roomRepository;
 
-    public function __construct(BedRepository $bedRepository) 
+    public function __construct(BedRepository $bedRepository, BranchRepository $branchRepository, RoomRepository $roomRepository)
     {
         $this->bedRepository = $bedRepository;
+        $this->branchRepository = $branchRepository;
+        $this->roomRepository = $roomRepository;
     }
 
-    public function createBed(User $actor, array $payload)
+    public function createBed(User $user, array $payload)
     {
-        if (! $actor->hasRole('superadmin')) {
-            $payload['company_id'] = $actor->company_id;
+        AuthGuard::requireRole($user, ['branch_owner', 'administrator']);
+
+        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
+
+        if (! $branch) {
+            return response()->json([
+                'status' => false,
+                'message' => __('Branch does not exist.')
+            ], 404);
         }
 
-        $model = $this->bedRepository->create($payload);
-        return new BedResource($model);
-    }
-
-    public function listBed(User $actor, int $perPage = 15)
-    {
-        $companyId = $actor->hasRole('superadmin') ? null : $actor->company_id;
-
-        $collection = $this->bedRepository->paginate($perPage, $companyId);
-        return BedResource::collection($collection);
-    }
-
-    /**
-     * Helper to ensure the actor owns the record
-     */
-    private function findScoped(User $actor, string $uuid)
-    {
-        $model = $this->bedRepository->findByUuid($uuid);
-        
-        if (! $model) {
-            abort(404, 'Resource not found');
+        if (!$branch->hasFacilitySubscription()) {
+            return response()->json([
+                'status' => false,
+                'message' => __('No active facility subscription.')
+            ], 403);
         }
 
-        if (! $actor->hasRole('superadmin')) {
-            if ($model->company_id !== $actor->company_id) {
-                abort(403, 'Unauthorized access to this resource.');
-            }
+        $existingRoom = $this->roomRepository->findByField([
+            ['branch_id', '=', $branch->branch_id],
+            ['room_no', '=', $payload['room_no']],
+        ]);
+
+        if (!$existingRoom) {
+            throw new Exception(__('Room doenst exists in this branch.'), 409);
         }
-        return $model;
-    }
 
-    public function getBed(User $actor, string $uuid)
-    {
-        $model = $this->findScoped($actor, $uuid);
-        return new BedResource($model);
-    }
+        $currentBedsCount = $existingRoom->beds()->count();
+        $availableSlots = $existingRoom->capacity - $currentBedsCount;
 
-    public function updateBed(User $actor, string $uuid, array $payload)
-    {
-        $this->findScoped($actor, $uuid);
-        
-        unset($payload['company_id']); 
-
-        $model = $this->bedRepository->update($uuid, $payload);
-        return new BedResource($model);
-    }
-
-    public function deleteBed(User $actor, string $uuid)
-    {
-        $this->findScoped($actor, $uuid);
-        $this->bedRepository->delete($uuid);
-        return true;
-    }
-
-    public function restoreBed(User $actor, string $uuid)
-    {
-        $model = $this->bedRepository->restore($uuid);
-
-        if (! $actor->hasRole('superadmin') && $model->company_id !== $actor->company_id) {
-            $model->delete(); 
-            abort(403, 'Unauthorized');
+        if ($availableSlots <= 0) {
+            throw new Exception(__("Room capacity exceeded. Cannot add these beds."), 422);
         }
-        
-        return new BedResource($model);
+
+        $createdBeds = $this->bedRepository->create([
+            'room_id' => $existingRoom->room_id,
+            'bed_no' => $payload['bed_no'],
+            'status' => 'available',
+        ]);
+
+        return response()->json([
+            'message' => __('Beds created successfully.'),
+            'data' => $createdBeds,
+        ], 201);
     }
 }

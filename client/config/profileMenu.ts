@@ -8,11 +8,17 @@ export const handleMenuClick = async (item: any) => {
             await branchStore.fetchBranches();
         }
 
-        const uuid =
+        let uuid =
             branchStore.activeBranch?.uuid ??
             branchStore.branches[0]?.uuid;
 
-        if (!uuid) return;
+
+        if (!uuid) {
+            const branch = branchStore.branches.find(
+                (branch) => branch?.uuid
+            );
+            uuid = branch?.uuid;
+        };
 
         await navigateTo(`/app/branches/${uuid}/dashboard`);
     } else {
@@ -35,5 +41,7 @@ export const profileMenuDropDownList = [
             "accounting",
         ],
     },
+    { icon: "Family Portal", label: "Family Portal", to: "/" },
+    { icon: "Subscription Management", label: "Subscription Management", to: "/" },
     { icon: "user", label: "Settings", to: "/" },
 ];

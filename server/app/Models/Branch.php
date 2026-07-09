@@ -26,6 +26,17 @@ class Branch extends Model
         'image',
     ];
 
+    public function hasFacilitySubscription(): bool
+    {
+        return $this->subscriptions()
+            ->where('status', 'active')
+            ->whereDate('end_date', '>=', now())
+            ->whereHas('plans', function ($q) {
+                $q->whereIn('plan_code', ['B', 'C']);
+            })
+            ->exists();
+    }
+
     protected $casts = [
         'settings' => 'array',
     ];

@@ -7,49 +7,20 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class RoomRepository
 {
-    public function paginate(int $perPage = 15, ?string $companyId = null)
-    {
-        $query = Room::latest();
-
-        if ($companyId) {
-            $query->where('company_id', $companyId);
-        }
-
-        return $query->paginate($perPage);
-    }
 
     public function create(array $payload)
     {
         return Room::create($payload);
     }
-
-    public function findByUuid(string $uuid)
+    public function findByField(array $conditions)
     {
-        return Room::where('uuid', $uuid)->first();
+        return Room::where($conditions)->first();
     }
 
-    public function update(string $uuid, array $payload)
+    public function paginate(int $perPage, string $branch_id)
     {
-        $model = $this->findByUuid($uuid);
-        if ($model) {
-            $model->update($payload);
-        }
-        return $model;
-    }
-
-    public function delete(string $uuid)
-    {
-        $model = $this->findByUuid($uuid);
-        if ($model) {
-            return $model->delete();
-        }
-        return false;
-    }
-
-    public function restore(string $uuid)
-    {
-        $model = Room::withTrashed()->where('uuid', $uuid)->firstOrFail();
-        $model->restore();
-        return $model;
+        return Room::with('beds')
+            ->where('branch_id', $branch_id)
+            ->paginate($perPage);
     }
 }
