@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Room\StoreRoomRequest;
+use App\Http\Requests\Room\UpdateRoomRequest;
+use App\Http\Requests\RoomRequest;
 use App\Service\RoomService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class RoomController extends Controller
 {
@@ -20,8 +24,14 @@ class RoomController extends Controller
         return $this->roomService->listRoom($request->user(), $request->all());
     }
 
-    public function store(Request $request)
+    public function store(StoreRoomRequest $request)
     {
         return $this->roomService->createRoom($request->user(), $request->all());
+    }
+
+    public function update(UpdateRoomRequest $request, string $id)
+    {
+        Log::info($request);
+        return $this->roomService->updateRoom($request->user(), $id, $request->all());
     }
 }

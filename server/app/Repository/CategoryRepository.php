@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CategoryRepository
 {
-    public function paginate(int $perPage = 15, ?string $companyId = null)
+    public function paginate(int $perPage, ?string $companyId = null)
     {
         $query = Category::latest();
 
@@ -18,38 +18,18 @@ class CategoryRepository
         return $query->paginate($perPage);
     }
 
+    public function getCategories()
+    {
+        return Category::all();
+    }
+
     public function create(array $payload)
     {
         return Category::create($payload);
     }
 
-    public function findByUuid(string $uuid)
+    public function findByFields(array $conditions)
     {
-        return Category::where('uuid', $uuid)->first();
-    }
-
-    public function update(string $uuid, array $payload)
-    {
-        $model = $this->findByUuid($uuid);
-        if ($model) {
-            $model->update($payload);
-        }
-        return $model;
-    }
-
-    public function delete(string $uuid)
-    {
-        $model = $this->findByUuid($uuid);
-        if ($model) {
-            return $model->delete();
-        }
-        return false;
-    }
-
-    public function restore(string $uuid)
-    {
-        $model = Category::withTrashed()->where('uuid', $uuid)->firstOrFail();
-        $model->restore();
-        return $model;
+        return Category::where($conditions)->first();
     }
 }

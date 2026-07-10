@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('branch_id')->constrained('branches', 'branch_id');
             $table->enum('room_type', ['VIP', 'Common']);
             $table->string('capacity');
+            $table->enum('status', ['Available', 'Occupied', 'Maintenance']);
             $table->timestamps();
         });
     }

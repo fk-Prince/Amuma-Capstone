@@ -18,4 +18,10 @@ class ServiceRepository
             ->where($col, $value)
             ->exists();
     }
+
+    public function findByFields(array $conditions)
+    {
+        return Service::where($conditions)->first();
+    }
+    public function update() {}
 }

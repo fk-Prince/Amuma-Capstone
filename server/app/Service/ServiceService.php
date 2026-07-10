@@ -53,17 +53,17 @@ class ServiceService
 
         return DB::transaction(function () use ($payload, $branch) {
 
-            $categoryData = !empty($payload['category_id'])
-                ? [
-                    'category_id' => $payload['category_id'],
-                    'branch_id'   => $branch->branch_id
-                ]
-                : [
-                    'category_name' => $payload['category_name'],
-                    'branch_id'     => $branch->branch_id
-                ];
+            $category = $this->categoryRepository->findByFields([
+                ['branch_id', '=', $branch->branch_id],
+                ['category_name', '=', $payload['category_name']],
+            ]);
 
-            $category = $this->categoryRepository->create($categoryData);
+            if (!$category) {
+                $category = $this->categoryRepository->create([
+                    'category_name' => $payload['category_name'],
+                    'branch_id' => $branch->branch_id,
+                ]);
+            }
 
             $service = $this->serviceRepository->create([
                 'category_id'      => $category->category_id,
@@ -81,6 +81,59 @@ class ServiceService
             ], 201);
         });
     }
+    public function updateService(array $payload, string $id, User $user)
+    {
+        AuthGuard::requireRole($user, ['branch_owner', 'administrator']);
+
+        return DB::transaction(function () use ($payload, $id) {
+
+            $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
+
+            if (!$branch) {
+                throw new Exception(__('Branch does not exist'), 404);
+            }
+
+            $existingService = $this->serviceRepository->findByFields([
+                ['branch_id', '=', $branch->branch_id],
+                ['service_id', '=', $id],
+            ]);
+
+            if (!$existingService) {
+                throw new Exception(__('Service dont exists.'), 409);
+            }
+
+            if (!isset($payload['price']) || $payload['price'] <= 0) {
+                throw new Exception(__('Invalid price.'), 422);
+            }
+
+            $category = $this->categoryRepository->findByFields([
+                ['branch_id', '=', $branch->branch_id],
+                ['category_name', '=', $payload['category_name']],
+            ]);
+
+            if (!$category) {
+                $category = $this->categoryRepository->create([
+                    'category_name' => $payload['category_name'],
+                    'branch_id' => $branch->branch_id,
+                ]);
+            }
+
+            $existingService->update([
+                'category_id'      => $category->category_id,
+                'price'            => $payload['price'],
+                'service_name'     => $payload['service_name'],
+                'maximum_duration' => $payload['maximum_duration'],
+                'is_available'     => $payload['is_available'] ?? true,
+                'type'             => $payload['type'],
+            ]);
+
+            return response()->json([
+                'message' => 'Service updated successfully',
+                'data' => $existingService->fresh(),
+            ]);
+        });
+    }
+
     public function getBranchService(array $payload)
     {
         $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);

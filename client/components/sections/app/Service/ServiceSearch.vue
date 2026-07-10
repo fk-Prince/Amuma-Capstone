@@ -9,6 +9,7 @@ defineProps<{
 const emit = defineEmits<{
     "update:modelValue": [value: string];
     "update:activeTab": [value: string];
+    addService: [];
 }>();
 
 const tabs = [
@@ -35,7 +36,7 @@ const tabs = [
             <BaseInput
                 :model-value="modelValue"
                 @update:model-value="emit('update:modelValue', $event)"
-                placeholder="Search rooms, residents..."
+                placeholder="Search service..."
                 input-class="pl-[3rem]"
             />
         </div>
@@ -56,6 +57,26 @@ const tabs = [
                     {{ tab }}
                 </button>
             </div>
+            <button
+                @click="emit('addService')"
+                class="inline-flex items-center gap-2 rounded-xl border border-primary bg-white px-5 py-2.5 text-sm font-medium text-primary transition-all duration-200 hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 4v16m8-8H4"
+                    />
+                </svg>
+                <span>Add Service</span>
+            </button>
         </div>
     </div>
 </template>

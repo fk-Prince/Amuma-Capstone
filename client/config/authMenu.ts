@@ -12,7 +12,6 @@ import {
     ClipboardMinus,
     Settings,
     CreditCard,
-    ListChecks,
 } from 'lucide-vue-next';
 
 

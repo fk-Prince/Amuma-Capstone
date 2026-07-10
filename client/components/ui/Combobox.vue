@@ -58,7 +58,7 @@
 
         <div
             v-if="isOpen"
-            class="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg"
+            class="absolute z-50 w-full mt-1 bg-white border overflow-hidden rounded-lg shadow-lg"
         >
             <div class="p-2 border-b" v-if="searchBar">
                 <div class="relative">

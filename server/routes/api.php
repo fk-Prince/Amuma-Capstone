@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\NominatimController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
@@ -74,6 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'bookings' => BookingController::class,
         'notifications' => NotificationController::class,
         'rooms' => RoomController::class,
+        'categories' => CategoryController::class,
         'beds' => BedController::class,
     ]);
 

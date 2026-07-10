@@ -73,4 +73,37 @@ class RoomService
 
         return  new RoomResource($model);
     }
+
+    public function updateRoom(User $user, string $id, array $payload)
+    {
+        AuthGuard::requireRole($user, ['branch_owner', 'administrator']);
+
+        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
+
+        if (!$branch) {
+            throw new Exception(__('Branch does not exist.'), 404);
+        }
+
+        if (! $branch->hasFacilitySubscription()) {
+            throw new Exception(__('No active facility subscription.'), 403);
+        }
+
+        $existingRoom = $this->roomRepository->findByField([
+            ['branch_id', '=', $branch->branch_id],
+            ['room_id', '=',  $id],
+        ]);
+
+        $existingRoom->update([
+            'room_no'   => $payload['room_no'],
+            'floor'     => $payload['floor'],
+            'capacity'  => $payload['capacity'],
+            'room_type' => $payload['room_type'],
+            'status'    => $payload['status'],
+        ]);
+
+        return response()->json([
+            'data' => $existingRoom->fresh(),
+            'message' => __('Successfully updated a room.'),
+        ], 201);
+    }
 }

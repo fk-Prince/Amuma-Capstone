@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ServiceRequest;
+use App\Http\Requests\Service\StoreServiceRequest;
+use App\Http\Requests\Service\UpdateServiceRequest;
 use App\Service\ServiceService;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 
 class ServiceController extends Controller
 {
@@ -16,43 +16,17 @@ class ServiceController extends Controller
         $this->serviceService = $serviceService;
     }
 
-    public function store(ServiceRequest $request)
+    public function store(StoreServiceRequest $request)
     {
         return $this->serviceService->createService($request->all(), $request->user());
+    }
+    public function update(UpdateServiceRequest  $request, string $id)
+    {
+        return $this->serviceService->updateService($request->all(), $id, $request->user());
     }
 
     public function getBranchServices(Request $request, string $uuid)
     {
         return $this->serviceService->getBranchService(['branch_uuid' => $uuid, ...$request->all()]);
-    }
-
-
-    public function index(Request $request)
-    {
-        // return $this->serviceService->listService(
-        //     $request->user(),
-        //     $request->input('per_page', 15)
-        // );
-    }
-    public function show(Request $request, string $uuid)
-    {
-        // return $this->serviceService->updateService($request->user(), $uuid, $request->all());
-    }
-
-
-    public function update(Request $request, string $uuid)
-    {
-        // return $this->serviceService->updateService($request->user(), $uuid, $request->all());
-    }
-
-    public function destroy(Request $request, string $uuid)
-    {
-        // $this->serviceService->deleteService($request->user(), $uuid);
-        // return response()->json(['message' => 'Deleted successfully'], 200);
-    }
-
-    public function restore(Request $request, string $uuid)
-    {
-        // return $this->serviceService->restoreService($request->user(), $uuid);
     }
 }

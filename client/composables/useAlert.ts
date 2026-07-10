@@ -16,6 +16,8 @@ export function showAlert(
         message,
     };
 
+    console.log("asd")
+
     if (duration > 0) {
         setTimeout(() => {
             alert.value.show = false;

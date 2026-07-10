@@ -20,27 +20,27 @@ const styles: Record<
 > = {
     success: {
         wrapper:
-            "bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl shadow-md",
+            "bg-secondary border border-green-200 text-white px-4 py-3 rounded-xl shadow-md",
         icon: "text-green-500",
-        title: "text-slate-900",
+        title: "text-white",
     },
     error: {
         wrapper:
-            "border-red-200 bg-red-50/80 text-red-900 px-4 py-3 rounded-xl shadow-sm backdrop-blur",
+            "border-red-200 bg-secondary text-red-900 px-4 py-3 rounded-xl shadow-sm backdrop-blur",
         icon: "text-red-500",
-        title: "text-red-900 font-medium",
+        title: "text-red-900",
     },
 
     warning: {
         wrapper:
-            "border-amber-200 bg-amber-50/80 text-amber-900 px-4 py-3 rounded-xl shadow-sm backdrop-blur",
+            "border-amber-200 bg-secondary text-amber-900 px-4 py-3 rounded-xl shadow-sm backdrop-blur",
         icon: "text-amber-500",
         title: "text-amber-900 font-medium",
     },
 
     info: {
         wrapper:
-            "border-blue-200 bg-blue-50/80 text-blue-900 px-4 py-3 rounded-xl shadow-sm backdrop-blur",
+            "border-blue-200 bg-secondary text-blue-900 px-4 py-3 rounded-xl shadow-sm backdrop-blur",
         icon: "text-blue-500",
         title: "text-blue-900 font-medium",
     },
@@ -61,6 +61,13 @@ function add(toast: Omit<Toast, "id">) {
     return newToast;
 }
 
+onMounted(() => {
+    registerToast({ add, remove });
+});
+onUnmounted(() => {
+    registerToast(null as any);
+});
+
 function remove(id: number) {
     toasts.value = toasts.value.filter((t) => t.id !== id);
 }
@@ -72,7 +79,7 @@ defineExpose({ add, remove });
         <div
             aria-live="polite"
             aria-label="Notifications"
-            class="fixed top-[15%] right-10 z-[9999] flex flex-col gap-2.5 items-end pointer-events-none"
+            class="fixed top-[15%] right-1/2 translate-x-1/2 z-[9999] flex flex-col gap-2.5 items-end pointer-events-none"
         >
             <TransitionGroup
                 enter-active-class="transition duration-300 ease-out"
@@ -85,7 +92,7 @@ defineExpose({ add, remove });
                 <div
                     v-for="toast in toasts"
                     :key="toast.id"
-                    class="pointer-events-auto flex items-start gap-4 px-5 py-4 rounded-2xl shadow-lg min-w-[400px] max-w-[420px]"
+                    class="pointer-events-auto flex items-start gap-4 px-5 py-5 rounded-2xl shadow-lg min-w-[400px] max-w-[420px]"
                     :class="styles[toast.type].wrapper"
                     role="alert"
                 >

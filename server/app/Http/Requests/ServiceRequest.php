@@ -33,7 +33,6 @@ class ServiceRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:255',
-                'prohibits:category_id',
             ],
             'price' => ['required', 'decimal:0,2', 'min:0'],
             'service_name' => [

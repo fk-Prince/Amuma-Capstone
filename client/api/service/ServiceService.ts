@@ -25,6 +25,10 @@ class ServiceService extends BaseService {
         return await this.request(this.resource, 'POST', payload);
     }
 
+    async update(id: number, payload: {}) {
+        return await this.request(`${this.resource}/${id}`, 'PUT', payload);
+    }
+
 
     private get resource(): string {
         const backend = this.getBackendApi;

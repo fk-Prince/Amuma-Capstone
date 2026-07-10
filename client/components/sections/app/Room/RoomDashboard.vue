@@ -3,9 +3,34 @@ const totalRooms = 5;
 const availableBeds = 5;
 const occupiedBeds = 5;
 const maintenanceRoomsCount = 5;
+const emit = defineEmits<{
+    addRoom: [];
+}>();
 </script>
 
 <template>
+    <div class="flex justify-end items-end">
+        <button
+            @click="emit('addRoom')"
+            class="inline-flex items-center gap-2 rounded-xl border border-primary bg-white px-5 py-2.5 text-sm font-medium text-primary transition-all duration-200 hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/30"
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 4v16m8-8H4"
+                />
+            </svg>
+            <span>Add Room</span>
+        </button>
+    </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div
             class="rounded-2xl border border-blue-200 border-t-4 border-t-blue-500 bg-white p-4 shadow-sm"
