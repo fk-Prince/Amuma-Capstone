@@ -1,8 +1,9 @@
 <template>
-    <div>HELLO FROM Billing</div>
+    <div><Calendar /></div>
 </template>
 
 <script setup lang="ts">
+import Calendar from "~/components/ui/Calendar.vue";
 definePageMeta({
     layout: "dashboard",
     middleware: "auth-client",

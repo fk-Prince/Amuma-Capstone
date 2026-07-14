@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import BaseInput from "~/components/ui/BaseInput.vue";
+import { Modules } from "~/types/module";
+import { usePermissions } from "~/composables/usePermission";
 
+const { canCreate } = usePermissions();
 defineProps<{
     modelValue: string;
     activeTab: string;
@@ -58,6 +61,7 @@ const tabs = [
                 </button>
             </div>
             <button
+                v-if="canCreate(Modules.Services)"
                 @click="emit('addService')"
                 class="inline-flex items-center gap-2 rounded-xl border border-primary bg-white px-5 py-2.5 text-sm font-medium text-primary transition-all duration-200 hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/30"
             >

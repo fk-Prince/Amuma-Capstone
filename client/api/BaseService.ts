@@ -81,13 +81,15 @@ export class BaseService {
                 )),
             );
 
+
         const body = method === 'GET'
             ? undefined
-            : params instanceof FormData
-                ? params
-                : hasFileInput
-                    ? buildFormData(params as Record<string, any>)
-                    : params;
+            : hasFileInput
+                ? buildFormData({
+                    ...params,
+                    _method: method,
+                })
+                : params;
 
         if (body instanceof FormData) {
             delete headers['Content-Type'];

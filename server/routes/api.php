@@ -7,6 +7,8 @@ use App\Http\Controllers\BedController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\NominatimController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
@@ -67,7 +69,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/subscription-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
     Route::post('/subscription-validate',  [SubscriptionController::class, 'validateSubscription']);
 
+    Route::get('/users/branches',  [UserController::class, 'getUserBranch']);
+
+
+
     Route::apiResources([
+        'employees' => EmployeeController::class,
         'agencies' => AgencyController::class,
         'services' => ServiceController::class,
         'branches' => BranchController::class,
@@ -77,6 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'rooms' => RoomController::class,
         'categories' => CategoryController::class,
         'beds' => BedController::class,
+        'modules' => ModuleController::class,
     ]);
 
 

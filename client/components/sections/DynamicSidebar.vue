@@ -108,23 +108,23 @@
                                         >
                                             {{ user.email }}
                                         </p>
+
+                                        <p
+                                            v-if="activeRoleName"
+                                            class="inline-block w-fit text-[12px] px-2 py-0.5 rounded-full font-medium border mt-1"
+                                            :class="
+                                                roleMeta[activeRoleName]
+                                                    ?.class ||
+                                                'bg-gray-50 text-gray-600 border-gray-200'
+                                            "
+                                        >
+                                            {{
+                                                roleMeta[activeRoleName]
+                                                    ?.label ||
+                                                formatRole(activeRoleName)
+                                            }}
+                                        </p>
                                     </div>
-                                </div>
-                                <div
-                                    class="flex flex-wrap gap-1 my-2"
-                                    v-for="branches in branchStore.branches"
-                                >
-                                    <span
-                                        v-for="role in branches.roles"
-                                        :key="role.role_type"
-                                        class="text-[12px] px-2 py-0.5 rounded-full font-medium border"
-                                        :class="
-                                            roleMeta[role.role_type]?.class ||
-                                            'bg-gray-50 text-gray-600 border-gray-200'
-                                        "
-                                    >
-                                        {{ formatRole(role.role_type) }}
-                                    </span>
                                 </div>
 
                                 <button
@@ -253,20 +253,20 @@
                             <p class="truncate text-xs text-gray-400">
                                 {{ user.email }}
                             </p>
+                            <p
+                                v-if="activeRoleName"
+                                class="inline-block w-fit text-[12px] px-2 py-0.5 rounded-full font-medium border mt-1"
+                                :class="
+                                    roleMeta[activeRoleName]?.class ||
+                                    'bg-gray-50 text-gray-600 border-gray-200'
+                                "
+                            >
+                                {{
+                                    roleMeta[activeRoleName]?.label ||
+                                    formatRole(activeRoleName)
+                                }}
+                            </p>
                         </div>
-                    </div>
-                    <div v-if="!collapsed" class="flex flex-wrap gap-1 my-2">
-                        <span
-                            v-for="role in branchStore.activeBranch?.roles"
-                            :key="role.role_type"
-                            class="text-[12px] px-2 py-0.5 rounded-full font-medium border"
-                            :class="
-                                roleMeta[role.role_type]?.class ||
-                                'bg-gray-50 text-gray-600 border-gray-200'
-                            "
-                        >
-                            {{ formatRole(role.role_type) }}
-                        </span>
                     </div>
 
                     <button
@@ -300,7 +300,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
 import { authService } from "~/api/auth/AuthService";
 import { useToast } from "~/composables/useToast";
@@ -309,6 +309,8 @@ import { navigateTo } from "#imports";
 import DropdownDivider from "../ui/DropdownDivider.vue";
 import { ChevronLeft, ChevronRight, LogOut } from "lucide-vue-next";
 import { useBranchStore } from "~/stores/branch";
+import { formatRole, roleMeta } from "~/utils/user";
+
 const branchStore = useBranchStore();
 
 const route = useRoute();
@@ -325,12 +327,7 @@ const props = withDefaults(
             icon?: any;
             divider?: boolean;
         }>;
-        user?: {
-            first_name: string;
-            last_name: string;
-            email: string;
-            avatar: any;
-        } | null;
+        user?: any | null;
         variant?: 1 | 2;
     }>(),
     {
@@ -345,13 +342,17 @@ defineEmits<{
 
 const navItems = computed(() => props.authMenu ?? []);
 
+const activeRoleName = computed(
+    () => branchStore.activeBranch?.role_name ?? null,
+);
+
 function isActive(to: string) {
     return route.path === to || route.path.startsWith(to + "/");
 }
 
 function navClass(to: string) {
     return [
-        "px-3 py-2.5 rounded-lg transition flex gap-2 items-center",
+        "px-3 py-1.5 rounded-lg transition flex gap-2 items-center",
         collapsed.value ? "lg:justify-center" : "",
         isActive(to)
             ? "bg-primary hover:bg-primary/70 font-medium text-white hover:text-black stroke-white"
@@ -366,7 +367,7 @@ const logout = async () => {
         resetAuth();
         await navigateTo("/auth/signin");
     } catch (err: any) {
-        error(err);
+        error("Internal Server Error");
     }
 };
 </script>

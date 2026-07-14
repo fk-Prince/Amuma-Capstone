@@ -2,9 +2,17 @@
 
 namespace App\Service;
 
+use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
 use App\Repository\BranchRepository;
 use App\Http\Resources\BranchResource;
+use App\Models\User;
+use App\Service\Utils\AuthGuard;
 use App\Service\Utils\NominatimService;
+use App\Service\Utils\SupabaseService;
+use Exception;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 
 class BranchService
 {
@@ -19,13 +27,6 @@ class BranchService
 
     public function getBranch(string $uuid)
     {
-        // $branch = $this->branchRepository->getBranch($uuid);
-        // $averageRating = $branch->reviews->count()
-        //     ? $branch->reviews->avg('rating')
-        //     : 0;
-        // $branch->averageRating = round($averageRating, 1);
-        // $branch->reviewsCount = $branch->reviews->count();
-        // return $branch;
         $branch = $this->branchRepository->getBranch($uuid);
 
         $branch->averageRating = round($branch->reviews_avg_rate ?? 0, 1);
@@ -63,5 +64,51 @@ class BranchService
 
         $branch = $this->branchRepository->getFilterBranches($payload['per_page'], $filters);
         return BranchResource::collection($branch);
+    }
+
+    public function updateBranch(array $payload, User $user, string $branchUuid)
+    {
+        $branch = $this->branchRepository->findByField('uuid', $branchUuid);
+
+        if (!$branch) {
+            throw new Exception(__('Branch does not exist'), 404);
+        }
+
+        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Update);
+
+        return DB::transaction(function () use ($branch, $payload) {
+            if (
+                isset($payload['image']) &&
+                $payload['image'] instanceof UploadedFile
+            ) {
+                $image = SupabaseService::store($payload['image']);
+            }
+
+            $branch->update([
+                'name' => $payload['name'],
+                'description' => $payload['description'],
+                'contact_number' => $payload['contact_number'] ?? null,
+                'image' => $image ?? $payload['image'] ?? null,
+                'settings' => $payload['settings'] ?? null,
+            ]);
+
+
+
+            $branch->location()->updateOrCreate(
+                [],
+                [
+                    'street' => $payload['location']['street'],
+                    'city' => $payload['location']['city'],
+                    'province' => $payload['location']['province'],
+                    'country' => $payload['location']['country'],
+                    'longitude' => $payload['location']['longitude'] ?? null,
+                    'latitude' => $payload['location']['latitude'] ?? null,
+                ]
+            );
+
+            return response()->json([
+                'message' => 'Branch Information Successfully Updated.'
+            ], 200);
+        });
     }
 }

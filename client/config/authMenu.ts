@@ -14,87 +14,97 @@ import {
     CreditCard,
 } from 'lucide-vue-next';
 
-
 export interface MenuItems {
     label: string;
     to: string;
-    roles?: string[];
+    modules?: string[];
     route?: string[];
     icon?: any;
+    plan?: string[];
 }
 
 export const authMenuList: MenuItems[] = [
     {
-        label: "Branch Dashboard",
+        label: "Dashboard",
         icon: LayoutDashboard,
         to: "/app/branches/[uuid]/dashboard",
-        roles: ["branch_owner", "administrator", "admission_staff", "accounting", "caregiver", "nurses"],
+    },
+    {
+        label: "Bookings",
+        icon: LayoutDashboard,
+        to: "/app/branches/[uuid]/dashboard",
+    },
+    {
+        label: "Branch Subscription",
+        icon: LayoutDashboard,
+        to: "/app/branches/[uuid]/dashboard",
     },
     {
         label: "Admissions",
         icon: ClipboardList,
         to: "/app/branches/[uuid]/admissions",
-        roles: ["branch_owner", "administrator", "admission_staff"],
+        modules: ["Admissions"],
     },
     {
         label: "Homecare Bookings",
         icon: Stethoscope,
         to: "/app/branches/[uuid]/bookings",
-        roles: ["branch_owner", "administrator", "admission_staff"],
+        modules: ["Homecare Bookings"],
     },
     {
         label: "Patients",
         icon: Users,
         to: "/app/branches/[uuid]/patients",
-        roles: ["branch_owner", "administrator", "admission_staff", "caregiver", "nurses"],
+        modules: ["Patients"],
     },
     {
         label: "Schedules",
         icon: CalendarCheck2,
         to: "/app/branches/[uuid]/schedules",
-        roles: ["branch_owner", "administrator", "admission_staff", "caregiver", "nurses"],
+        modules: ["Schedules"],
     },
     {
         label: "Facility Management",
         icon: Building2,
         to: "/app/branches/[uuid]/facility",
-        roles: ["branch_owner", "administrator"],
+        modules: ["Facility Management"],
     },
     {
         label: "Rooms & Beds",
         icon: BedDouble,
         to: "/app/branches/[uuid]/rooms-beds",
-        roles: ["branch_owner", "administrator"],
+        modules: ["Rooms & Beds"],
     },
     {
         label: "Services",
         icon: Wrench,
         to: "/app/branches/[uuid]/services",
-        roles: ["branch_owner", "administrator"],
+        modules: ["Services"],
     },
     {
-        label: "Staff Management",
+        label: "Employee Management",
         icon: UserCog,
-        to: "/app/branches/[uuid]/staffs",
-        roles: ["branch_owner", "administrator"],
+        to: "/app/branches/[uuid]/employees",
+        modules: ["Employee Management"],
     },
     {
         label: "Billing & Invoices",
         icon: HandCoins,
         to: "/app/branches/[uuid]/billing",
-        roles: ["branch_owner", "administrator", "accounting"],
+        modules: ["Billing & Invoices"],
+        plan: ["A", "B"]
     },
     {
         label: "Reports",
         icon: ClipboardMinus,
         to: "/app/branches/[uuid]/reports",
-        roles: ["branch_owner"],
+        modules: ["Reports"],
     },
     {
         label: "Branch Settings",
         icon: Settings,
         to: "/app/branches/[uuid]/settings",
-        roles: ["branch_owner"],
+        modules: ["Branch Settings"],
     },
 ];
 
@@ -103,27 +113,27 @@ export const ownerMenuList: MenuItems[] = [
         label: "AMUMA Dashboard",
         icon: LayoutDashboard,
         to: "/app/owner/dashboard",
-        roles: ["owner"],
+        modules: ["AMUMA Dashboard"],
     },
     {
         label: "AMUMA Subscription",
         icon: CreditCard,
         to: "/app/owner/subscription",
-        roles: ["owner"],
+        modules: ["AMUMA Subscription"],
     },
-]
+];
 
 export const branchOwnerMenuLists: MenuItems[] = [
     {
         label: "Branch Owner Dashboard",
         icon: LayoutDashboard,
         to: "/app/branches/dashboard",
-        roles: ["branch_owner"],
+        modules: ["Branch Owner Dashboard"],
     },
     {
         label: "Manage Branches",
         icon: Building2,
         to: "/app/branches/manage",
-        roles: ["branch_owner"],
+        modules: ["Manage Branches"],
     },
-]
+];

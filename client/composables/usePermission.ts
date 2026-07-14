@@ -1,16 +1,29 @@
-import { useAuthUser } from "~/composables/useAuthUser";
+import { useBranchStore } from "~/stores/branch";
 
 export const usePermissions = () => {
-    const user = useAuthUser();
+    const branchStore = useBranchStore();
 
-    const hasRole = (...roles: string[]) => {
-        return (
-            user.value?.roles?.some((r: any) =>
-                roles.includes(r.role)
-            ) ?? false
+    const hasModule = (...modules: string[]) => {
+        const permissions = branchStore.activeBranch?.permissions ?? [];
+
+        return permissions.some(
+            (p) => modules.includes(p.module_name) && p.can_read
         );
     };
+
+    const canCreate = (module_name: string) => {
+        const permissions = branchStore.activeBranch?.permissions ?? [];
+        return permissions.some((p) => p.module_name === module_name && p.can_create);
+    };
+
+    const canUpdate = (module_name: string) => {
+        const permissions = branchStore.activeBranch?.permissions ?? [];
+        return permissions.some((p) => p.module_name === module_name && p.can_update);
+    };
+
     return {
-        hasRole,
+        hasModule,
+        canCreate,
+        canUpdate,
     };
 };

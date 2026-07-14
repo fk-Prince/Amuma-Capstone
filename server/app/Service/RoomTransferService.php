@@ -10,7 +10,7 @@ class RoomTransferService
 {
     private RoomTransferRepository $roomTransferRepository;
 
-    public function __construct(RoomTransferRepository $roomTransferRepository) 
+    public function __construct(RoomTransferRepository $roomTransferRepository)
     {
         $this->roomTransferRepository = $roomTransferRepository;
     }
@@ -39,7 +39,7 @@ class RoomTransferService
     private function findScoped(User $actor, string $uuid)
     {
         $model = $this->roomTransferRepository->findByUuid($uuid);
-        
+
         if (! $model) {
             abort(404, 'Resource not found');
         }
@@ -61,8 +61,8 @@ class RoomTransferService
     public function updateRoomTransfer(User $actor, string $uuid, array $payload)
     {
         $this->findScoped($actor, $uuid);
-        
-        unset($payload['company_id']); 
+
+        unset($payload['company_id']);
 
         $model = $this->roomTransferRepository->update($uuid, $payload);
         return new RoomTransferResource($model);
@@ -80,10 +80,10 @@ class RoomTransferService
         $model = $this->roomTransferRepository->restore($uuid);
 
         if (! $actor->hasRole('superadmin') && $model->company_id !== $actor->company_id) {
-            $model->delete(); 
+            $model->delete();
             abort(403, 'Unauthorized');
         }
-        
+
         return new RoomTransferResource($model);
     }
 }

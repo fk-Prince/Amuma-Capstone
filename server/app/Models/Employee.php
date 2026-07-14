@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Models;
+
+use App\Models\Location;
+use Illuminate\Database\Eloquent\Model;
+
+class Employee extends Model
+{
+    protected $primaryKey = 'employee_id';
+
+
+    protected $fillable = [
+        'user_id',
+        'first_name',
+        'last_name',
+        'role_name',
+        'birth_date',
+        'location_id',
+        'phone_number',
+        'status',
+        'avatar',
+    ];
+
+    public function users()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    public function permissions()
+    {
+        return $this->hasMany(EmployeePermission::class, 'employee_id', 'employee_id');
+    }
+
+    public function locations()
+    {
+        return $this->belongsTo(Location::class, 'location_id', 'location_id');
+    }
+
+    public function employeeBranch()
+    {
+        return $this->hasMany(EmployeeBranch::class, 'employee_id', 'employee_id');
+    }
+}

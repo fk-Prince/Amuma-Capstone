@@ -28,8 +28,8 @@ class GCashPayment implements ISubscriptionPayment
                 'amount' => $subscription['total_amount'],
                 'payer_email' => $user->email,
                 'payment_methods' => ['GCASH'],
-                'success_redirect_url' => config('app.client_url') . '/pricing/subscription-summary?status=success',
-                'failure_redirect_url' => config('app.client_url') . '/pricing/subscription-summary?status=failed',
+                'success_redirect_url' => config('app.client_url') . '/product/subscription-summary?status=success',
+                'failure_redirect_url' => config('app.client_url') . '/product/subscription-summary?status=failed',
                 'metadata' => [
                     'type' => $subscription['type'],
                     'plan' => $subscription['plan'],

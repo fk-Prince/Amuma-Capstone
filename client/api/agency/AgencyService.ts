@@ -20,21 +20,25 @@ class AgencyService extends BaseService {
         return await this.request(this.resource, 'GET', params);
     }
 
-    async validate(params: Agency): Promise<any> {
-        const errors: Record<string, string> = {};
-
-        if (!params.agency_name?.trim()) errors.agency_name = "Agency name is required";
-        if (!params.agency_description?.trim()) errors.agency_description = "Agency description is required";
-        if (!params.location?.street?.trim()) errors["location.street"] = "Street is required";
-        if (!params.location?.city?.trim()) errors["location.city"] = "City is required";
-        if (!params.location?.province?.trim()) errors["location.province"] = "Province is required";
-        if (!params.location?.country?.trim()) errors["location.country"] = "Country is required";
-        if (Object.keys(errors).length) {
-            throw {
-                errors,
-            };
-        }
+    async update(uuid: string, payload: object = {}): Promise<any> {
+        return await this.request(`${this.resource}/${uuid}`, 'PUT', payload);
     }
+
+    // async validate(params: Agency): Promise<any> {
+    //     const errors: Record<string, string> = {};
+
+    //     if (!params.agency_name?.trim()) errors.agency_name = "Agency name is required";
+    //     if (!params.agency_description?.trim()) errors.agency_description = "Agency description is required";
+    //     if (!params.location?.street?.trim()) errors["location.street"] = "Street is required";
+    //     if (!params.location?.city?.trim()) errors["location.city"] = "City is required";
+    //     if (!params.location?.province?.trim()) errors["location.province"] = "Province is required";
+    //     if (!params.location?.country?.trim()) errors["location.country"] = "Country is required";
+    //     if (Object.keys(errors).length) {
+    //         throw {
+    //             errors,
+    //         };
+    //     }
+    // }
 
     private get resource(): string {
         const backend = this.getBackendApi;

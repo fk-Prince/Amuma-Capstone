@@ -22,7 +22,6 @@ class BranchController extends Controller
         return $this->branchService->getBranch($uuid);
     }
 
-
     public function retrieveFeaturedBranch(Request $request)
     {
         return $this->branchService->getFeaturedBranches($request->all());
@@ -40,5 +39,10 @@ class BranchController extends Controller
             'message' => 'Validation passed',
             'data' => $request->validated(),
         ]);
+    }
+
+    public function update(BranchRequest $request, string $uuid)
+    {
+        return $this->branchService->updateBranch($request->all(), $request->user(), $uuid);
     }
 }

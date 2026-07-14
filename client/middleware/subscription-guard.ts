@@ -15,7 +15,7 @@ export default defineNuxtRouteMiddleware((to) => {
     }
 
 
-    // if (!checkout.selectedPlan) {
-    //     return navigateTo("/product");
-    // }
+    if (!checkout.selectedPlan) {
+        return navigateTo("/product");
+    }
 });

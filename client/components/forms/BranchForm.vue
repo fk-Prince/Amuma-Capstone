@@ -3,25 +3,25 @@
         <div class="flex gap-4 items-start">
             <div class="flex flex-col flex-1 gap-2">
                 <LabelInput
-                    v-model="checkout.branch.name"
+                    v-model="branch.name"
                     label="Branch Name"
                     @update:modelValue="clearError('branch_name')"
-                    :error="checkout.errors?.branch_name"
+                    :error="errors?.branch_name"
                 />
 
                 <LabelInput
-                    v-model="checkout.branch.description"
+                    v-model="branch.description"
                     label="Description"
                     :text-max="500"
                     @update:modelValue="clearError('branch_description')"
-                    :error="checkout.errors?.branch_description"
+                    :error="errors?.branch_description"
                 />
 
                 <LabelInput
-                    v-model="checkout.branch.contact_number"
+                    v-model="branch.contact_number"
                     label="Contact Number"
                     @update:modelValue="clearError('branch_contact_number')"
-                    :error="checkout.errors?.branch_contact_number"
+                    :error="errors?.branch_contact_number"
                 />
             </div>
 
@@ -32,7 +32,7 @@
                     </label>
 
                     <button
-                        v-if="checkout.branch.image"
+                        v-if="branch.image"
                         @click="removeBranchImage"
                         class="text-[12px] text-danger hover:underline"
                     >
@@ -62,11 +62,8 @@
                     @change="handleBranchImage"
                 />
 
-                <p
-                    v-if="checkout.errors?.branch_image"
-                    class="text-xs text-red-500"
-                >
-                    {{ checkout.errors.branch_image }}
+                <p v-if="errors?.branch_image" class="text-xs text-red-500">
+                    {{ errors.branch_image }}
                 </p>
             </div>
         </div>
@@ -104,54 +101,56 @@
             </div>
 
             <template v-if="useGeolocation">
-                <LocationSelector
-                    :initial-lat="
-                        checkout.branch.location?.latitude || undefined
-                    "
-                    :initial-lng="
-                        checkout.branch.location?.longitude || undefined
-                    "
-                    :initial-street="
-                        checkout.branch.location?.street || undefined
-                    "
-                    :initial-city="checkout.branch.location?.city || undefined"
-                    :initial-province="
-                        checkout.branch.location?.province || undefined
-                    "
-                    :initial-country="
-                        checkout.branch.location?.country || undefined
-                    "
-                    @location-selected="handleLocation"
-                />
+                <ClientOnly>
+                    <LocationSelector
+                        :initial-lat="branch.location?.latitude || undefined"
+                        :initial-lng="branch.location?.longitude || undefined"
+                        :initial-street="branch.location?.street || undefined"
+                        :initial-city="branch.location?.city || undefined"
+                        :initial-province="
+                            branch.location?.province || undefined
+                        "
+                        :initial-country="branch.location?.country || undefined"
+                        @location-selected="handleLocation"
+                    />
+
+                    <template #fallback>
+                        <div
+                            class="h-64 w-full rounded-lg border bg-slate-50 flex items-center justify-center text-sm text-gray-400"
+                        >
+                            Loading map...
+                        </div>
+                    </template>
+                </ClientOnly>
             </template>
 
             <div v-else class="grid grid-cols-1 gap-2">
                 <LabelInput
-                    v-model="checkout.branch.location.street"
+                    v-model="branch.location.street"
                     label="Street"
                     @update:modelValue="clearError('location.street')"
-                    :error="checkout.errors?.['location.street']"
+                    :error="errors?.['location.street']"
                 />
 
                 <LabelInput
-                    v-model="checkout.branch.location.city"
+                    v-model="branch.location.city"
                     label="City"
                     @update:modelValue="clearError('location.city')"
-                    :error="checkout.errors?.['location.city']"
+                    :error="errors?.['location.city']"
                 />
 
                 <LabelInput
-                    v-model="checkout.branch.location.province"
+                    v-model="branch.location.province"
                     label="Province"
                     @update:modelValue="clearError('location.province')"
-                    :error="checkout.errors?.['location.province']"
+                    :error="errors?.['location.province']"
                 />
 
                 <LabelInput
-                    v-model="checkout.branch.location.country"
+                    v-model="branch.location.country"
                     label="Country"
                     @update:modelValue="clearError('location.country')"
-                    :error="checkout.errors?.['location.country']"
+                    :error="errors?.['location.country']"
                 />
             </div>
         </div>
@@ -162,13 +161,30 @@
 import { ref, computed } from "vue";
 import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
-import { useSubscriptionCheckout } from "~/stores/subscription";
+import type { Branch } from "~/types/branch";
 
-const checkout = useSubscriptionCheckout();
+const props = defineProps<{
+    branch: Branch;
+    errors?: Record<string, string> | null;
+}>();
 
-const branchImagePreview = ref<string | null>(null);
+const emit = defineEmits<{
+    (e: "update:branch", value: Branch): void;
+    (e: "update:errors", value: Record<string, string>): void;
+}>();
+
+const branch = computed({
+    get: () => props.branch,
+    set: (value) => emit("update:branch", value),
+});
+
+const errors = computed(() => props.errors);
+
+const branchImagePreview = ref<string | null>(
+    typeof props.branch.image === "string" ? props.branch.image : null,
+);
 const branchImageInput = ref<HTMLInputElement | null>(null);
-const useGeolocation = ref(false);
+const useGeolocation = ref(true);
 
 const locationError = computed(() => {
     const keys = [
@@ -178,7 +194,7 @@ const locationError = computed(() => {
         "location.country",
     ];
 
-    return keys.some((k) => checkout.errors?.[k])
+    return keys.some((k) => props.errors?.[k])
         ? "Location is required. Please complete address information."
         : "";
 });
@@ -198,14 +214,17 @@ const handleLocation = ({
     province: string;
     country: string;
 }) => {
-    checkout.branch.location = {
-        street: street ?? "",
-        city: city ?? "",
-        province: province ?? "",
-        country: country ?? "",
-        latitude: lat ?? 0,
-        longitude: lng ?? 0,
-    };
+    emit("update:branch", {
+        ...props.branch,
+        location: {
+            street: street ?? "",
+            city: city ?? "",
+            province: province ?? "",
+            country: country ?? "",
+            latitude: lat ?? 0,
+            longitude: lng ?? 0,
+        },
+    });
 
     if (
         !street?.trim() ||
@@ -213,19 +232,20 @@ const handleLocation = ({
         !province?.trim() ||
         !country?.trim()
     ) {
-        const errors: Record<string, string> = {};
+        const newErrors: Record<string, string> = {};
 
-        if (!street?.trim()) errors["location.street"] = "Street is required";
+        if (!street?.trim())
+            newErrors["location.street"] = "Street is required";
 
-        if (!city?.trim()) errors["location.city"] = "City is required";
+        if (!city?.trim()) newErrors["location.city"] = "City is required";
 
         if (!province?.trim())
-            errors["location.province"] = "Province is required";
+            newErrors["location.province"] = "Province is required";
 
         if (!country?.trim())
-            errors["location.country"] = "Country is required";
+            newErrors["location.country"] = "Country is required";
 
-        checkout.setErrors(errors);
+        emit("update:errors", { ...props.errors, ...newErrors });
         useGeolocation.value = false;
         return;
     }
@@ -243,13 +263,13 @@ const handleLocation = ({
 const handleBranchImage = (event: Event) => {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    checkout.branch.image = file;
+    emit("update:branch", { ...props.branch, image: file });
     branchImagePreview.value = URL.createObjectURL(file);
     clearError("branch_image");
 };
 
 const removeBranchImage = () => {
-    checkout.branch.image = null;
+    emit("update:branch", { ...props.branch, image: null });
     branchImagePreview.value = null;
 
     if (branchImageInput.value) {
@@ -258,6 +278,9 @@ const removeBranchImage = () => {
 };
 
 function clearError(field: string) {
-    if (checkout.errors) delete checkout.errors[field];
+    if (!props.errors) return;
+    const updated = { ...props.errors };
+    delete updated[field];
+    emit("update:errors", updated);
 }
 </script>

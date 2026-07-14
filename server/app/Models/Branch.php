@@ -15,7 +15,6 @@ class Branch extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'owner_user_id',
         'agency_id',
         'name',
         'location_id',
@@ -40,15 +39,13 @@ class Branch extends Model
     protected $casts = [
         'settings' => 'array',
     ];
+
     public function uniqueIds()
     {
         return ['uuid'];
     }
 
-    public function owner()
-    {
-        return $this->belongsTo(User::class, 'owner_user_id', 'user_id');
-    }
+
 
     public function location()
     {
@@ -71,17 +68,17 @@ class Branch extends Model
     }
 
 
-    public function users()
-    {
-        return $this->belongsToMany(
-            User::class,
-            'user_branches',
-            'branch_id',
-            'user_id'
-        )->withPivot('type');
-    }
+    // public function users()
+    // {
+    //     return $this->belongsToMany(
+    //         User::class,
+    //         'user_branches',
+    //         'branch_id',
+    //         'user_id'
+    //     )->withPivot('type');
+    // }
 
-    public function branch()
+    public function notifications()
     {
         return $this->hasMany(Notification::class, 'branch_id', 'branch_id');
     }

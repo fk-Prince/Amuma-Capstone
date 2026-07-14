@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import type { Room } from "~/types/room";
+import { Modules } from "~/types/module";
+import { usePermissions } from "~/composables/usePermission";
+
+const { canUpdate } = usePermissions();
 
 const props = defineProps<{
     loading: boolean;
@@ -122,7 +126,7 @@ const openEditRoom = (room: Room) => {
                                                 d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
                                             />
                                         </svg>
-                                        Floor {{ room.floor }}
+                                        {{ room.floor }} Floor
                                     </span>
                                     <span class="text-gray-200">|</span>
                                     <span class="flex items-center gap-1">
@@ -176,7 +180,8 @@ const openEditRoom = (room: Room) => {
                                         {{
                                             room.beds.filter((b) => b.patient)
                                                 .length
-                                        }}/{{ room.beds.length }}
+                                        }}
+                                        / {{ room.capacity }}
                                         Occupied
                                     </span>
                                     <template
@@ -239,6 +244,7 @@ const openEditRoom = (room: Room) => {
                             <div class="flex items-center gap-2 mb-3">
                                 <button
                                     type="button"
+                                    v-if="canUpdate(Modules.RoomsAndBeds)"
                                     @click.stop="openEditRoom(room)"
                                     class="flex items-center gap-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 bg-white hover:border-blue-300 hover:text-blue-600 transition-colors"
                                 >
@@ -259,6 +265,7 @@ const openEditRoom = (room: Room) => {
                                 </button>
                                 <!-- @click.stop="openDeleteRoom(room)" -->
                                 <button
+                                    v-if="canUpdate(Modules.RoomsAndBeds)"
                                     type="button"
                                     class="flex items-center gap-1.5 text-xs font-medium text-rose-500 border border-rose-200 rounded-lg px-3 py-1.5 bg-white hover:bg-rose-50 transition-colors"
                                 >

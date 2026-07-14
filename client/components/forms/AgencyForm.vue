@@ -1,18 +1,21 @@
 <template>
     <div class="max-w-5xl mx-auto space-y-4">
-        <LabelInput
-            v-model="checkout.agency.agency_name"
-            label="Agency Name"
-            :error="checkout.errors?.agency_name"
-            @clear-error="clearError('agency_name')"
-        />
+        <div class="flex flex-col gap-2">
+            <LabelInput
+                v-model="agency.agency_name"
+                label="Agency Name"
+                :error="errors?.agency_name"
+                @clear-error="clearError('agency_name')"
+            />
 
-        <LabelInput
-            v-model="checkout.agency.agency_description"
-            label="Description"
-            :error="checkout.errors?.agency_description"
-            @clear-error="clearError('agency_description')"
-        />
+            <LabelInput
+                v-model="agency.agency_description"
+                label="Description"
+                :text-max="500"
+                :error="errors?.agency_description"
+                @clear-error="clearError('agency_description')"
+            />
+        </div>
 
         <div class="flex gap-2 flex-col">
             <div class="flex items-center justify-between">
@@ -47,50 +50,52 @@
             </div>
 
             <template v-if="useGeolocation">
-                <LocationSelector
-                    :initial-lat="
-                        checkout.agency.location.latitude || undefined
-                    "
-                    :initial-lng="
-                        checkout.agency.location.longitude || undefined
-                    "
-                    :initial-street="
-                        checkout.agency.location.street || undefined
-                    "
-                    :initial-city="checkout.agency.location.city || undefined"
-                    :initial-province="
-                        checkout.agency.location.province || undefined
-                    "
-                    :initial-country="
-                        checkout.agency.location.country || undefined
-                    "
-                    @location-selected="handleLocation"
-                />
+                <ClientOnly>
+                    <LocationSelector
+                        :initial-lat="agency.location?.latitude || undefined"
+                        :initial-lng="agency.location?.longitude || undefined"
+                        :initial-street="agency.location?.street || undefined"
+                        :initial-city="agency.location?.city || undefined"
+                        :initial-province="
+                            agency.location?.province || undefined
+                        "
+                        :initial-country="agency.location?.country || undefined"
+                        @location-selected="handleLocation"
+                    />
+
+                    <template #fallback>
+                        <div
+                            class="h-64 w-full rounded-lg border bg-slate-50 flex items-center justify-center text-sm text-gray-400"
+                        >
+                            Loading map...
+                        </div>
+                    </template>
+                </ClientOnly>
             </template>
 
             <div v-else class="grid grid-cols-1 gap-2">
                 <LabelInput
-                    v-model="checkout.agency.location.street"
+                    v-model="agency.location.street"
                     label="Street"
-                    :error="checkout.errors?.['location.street']"
+                    :error="errors?.['location.street']"
                     @clear-error="clearError('location.street')"
                 />
                 <LabelInput
-                    v-model="checkout.agency.location.city"
+                    v-model="agency.location.city"
                     label="City"
-                    :error="checkout.errors?.['location.city']"
+                    :error="errors?.['location.city']"
                     @clear-error="clearError('location.city')"
                 />
                 <LabelInput
-                    v-model="checkout.agency.location.province"
+                    v-model="agency.location.province"
                     label="Province"
-                    :error="checkout.errors?.['location.province']"
+                    :error="errors?.['location.province']"
                     @clear-error="clearError('location.province')"
                 />
                 <LabelInput
-                    v-model="checkout.agency.location.country"
+                    v-model="agency.location.country"
                     label="Country"
-                    :error="checkout.errors?.['location.country']"
+                    :error="errors?.['location.country']"
                     @clear-error="clearError('location.country')"
                 />
             </div>
@@ -102,10 +107,27 @@
 import { ref, computed } from "vue";
 import LabelInput from "../ui/BaseInput.vue";
 import LocationSelector from "../ui/LocationSelector.vue";
-import { useSubscriptionCheckout } from "~/stores/subscription";
+import type { Agency } from "~/types/agency";
 
-const checkout = useSubscriptionCheckout();
-const useGeolocation = ref(false);
+const props = defineProps<{
+    agency: Agency | any;
+    errors?: Record<string, string> | null;
+}>();
+
+const emit = defineEmits<{
+    (e: "update:agency", value: Agency): void;
+    (e: "update:errors", value: Record<string, string>): void;
+}>();
+
+const agency = computed({
+    get: () => props.agency,
+    set: (value) => emit("update:agency", value),
+});
+
+console.log(props.agency);
+const errors = computed(() => props.errors);
+
+const useGeolocation = ref(true);
 
 const locationError = computed(() => {
     const keys = [
@@ -115,16 +137,10 @@ const locationError = computed(() => {
         "location.country",
     ];
 
-    return keys.some((k) => checkout.errors?.[k])
+    return keys.some((k) => props.errors?.[k])
         ? "Location is required. Please complete address information."
         : "";
 });
-
-const clearError = (key: string) => {
-    checkout.errors = Object.fromEntries(
-        Object.entries(checkout.errors || {}).filter(([k]) => k !== key),
-    );
-};
 
 const handleLocation = ({
     lat,
@@ -141,14 +157,17 @@ const handleLocation = ({
     province: string;
     country: string;
 }) => {
-    checkout.agency.location = {
-        street: street ?? "",
-        city: city ?? "",
-        province: province ?? "",
-        country: country ?? "",
-        latitude: lat ?? 0,
-        longitude: lng ?? 0,
-    };
+    emit("update:agency", {
+        ...props.agency,
+        location: {
+            street: street ?? "",
+            city: city ?? "",
+            province: province ?? "",
+            country: country ?? "",
+            latitude: lat ?? 0,
+            longitude: lng ?? 0,
+        },
+    });
 
     if (
         !street?.trim() ||
@@ -156,25 +175,24 @@ const handleLocation = ({
         !province?.trim() ||
         !country?.trim()
     ) {
-        const errors: Record<string, string> = {};
+        const newErrors: Record<string, string> = {};
 
         if (!street?.trim())
-            errors["location.street"] =
-                "We couldn't detect your street. Please enter it manually.";
+            newErrors["location.street"] = "Street is required";
 
-        if (!city?.trim())
-            errors["location.city"] =
-                "We couldn't detect your city. Please enter it manually.";
+        if (!city?.trim()) newErrors["location.city"] = "City is required";
 
         if (!province?.trim())
-            errors["location.province"] =
-                "We couldn't detect your province. Please enter it manually.";
+            newErrors["location.province"] = "Province is required";
 
         if (!country?.trim())
-            errors["location.country"] =
-                "We couldn't detect your country. Please enter it manually.";
+            newErrors["location.country"] = "Country is required";
 
-        checkout.setErrors(errors);
+        emit("update:errors", {
+            ...props.errors,
+            ...newErrors,
+        });
+
         useGeolocation.value = false;
         return;
     }
@@ -188,4 +206,13 @@ const handleLocation = ({
         "location.country",
     ].forEach(clearError);
 };
+
+function clearError(field: string) {
+    if (!props.errors) return;
+
+    const updated = { ...props.errors };
+    delete updated[field];
+
+    emit("update:errors", updated);
+}
 </script>

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\StoreEmployeeRequest;
+use App\Http\Requests\Auth\UpdateEmployeeRequest;
 use App\Service\UserService;
 use Illuminate\Http\Request;
 
@@ -21,7 +23,7 @@ class UserController extends Controller
         return $this->userService->fetchMe($request->user());
     }
 
-    public function index(Request $request)
+    public function getUserBranch(Request $request)
     {
         return $this->userService->getUserBranch($request->user());
     }

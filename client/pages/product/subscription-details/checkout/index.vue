@@ -48,6 +48,15 @@ definePageMeta({
     middleware: ["auth-client", "subscription-guard"],
     navVariant: 1,
 });
+// const card = reactive({
+//     number: "",
+//     expMonth: "",
+//     expYear: "",
+//     cvc: "",
+//     firstName: "",
+//     lastName: "",
+//     email: "",
+// });
 const card = reactive({
     number: "4000000000002503",
     expMonth: "04",

@@ -26,12 +26,8 @@ class AgencyController extends Controller
         return $this->agencyService->listAgency($payload);
     }
 
-    public function validate(AgencyRequest $request)
+    public function update(AgencyRequest $request, string $uuid)
     {
-        return response()->json([
-            'status' => true,
-            'message' => 'Validation passed',
-            'data' => $request->validated(),
-        ]);
+        return $this->agencyService->update($request->all(), $request->user(), $uuid);
     }
 }

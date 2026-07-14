@@ -24,7 +24,7 @@ class AuthService
         $user = $this->userRepository->findByField('email', $payload['email']);
 
         if (!$user) {
-            throw new Exception(__('User not found'), 404);
+            throw new Exception(__('Incorrect credentials'), 404);
         }
 
         if (!Hash::check($payload['password'], $user->password)) {
@@ -36,9 +36,9 @@ class AuthService
 
 
         return response()->json([
-            'user' => $user->load('roles'),
-            'message' => __('Successsfully logged-in.'),
-            'token' => $user->createToken('auth-token')->plainTextToken,
+            'user' => $user,
+            'message' => __('Successfully logged-in.'),
+            // 'token' => $user->createToken('auth-token')->plainTextToken,
         ], 200);
     }
 

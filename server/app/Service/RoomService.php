@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
 use App\Repository\RoomRepository;
 use App\Http\Resources\RoomResource;
 use App\Models\User;
@@ -23,13 +25,13 @@ class RoomService
 
     public function createRoom(User $user, array $payload)
     {
-        AuthGuard::requireRole($user, ['branch_owner', 'administrator']);
 
         $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
 
         if (!$branch) {
             throw new Exception(__('Branch does not exist.'), 404);
         }
+        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Create);
 
         if (! $branch->hasFacilitySubscription()) {
             throw new Exception(__('No active facility subscription.'), 403);
@@ -62,12 +64,13 @@ class RoomService
 
     public function listRoom(User $user, array $payload)
     {
-        AuthGuard::requireUser($user);
         $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
 
         if (!$branch) {
             throw new Exception(__('Branch does not exist.'), 404);
         }
+
+        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Read);
 
         $model = $this->roomRepository->paginate($payload['per_page'], $branch->branch_id);
 
@@ -76,13 +79,15 @@ class RoomService
 
     public function updateRoom(User $user, string $id, array $payload)
     {
-        AuthGuard::requireRole($user, ['branch_owner', 'administrator']);
+
 
         $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
 
         if (!$branch) {
             throw new Exception(__('Branch does not exist.'), 404);
         }
+
+        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Update);
 
         if (! $branch->hasFacilitySubscription()) {
             throw new Exception(__('No active facility subscription.'), 403);

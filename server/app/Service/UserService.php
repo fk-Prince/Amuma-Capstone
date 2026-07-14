@@ -2,62 +2,83 @@
 
 namespace App\Service;
 
-use App\Models\Branch;
+use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Repository\BranchRepository;
-use App\Repository\RoleRepository;
+use App\Repository\LocationRepository;
 use App\Repository\UserRepository;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use App\Service\Utils\AuthGuard;
+use App\Service\Utils\SupabaseService;
+use Carbon\Carbon;
+use Exception;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserService
 {
     private UserRepository $userRepository;
     private BranchRepository $branchRepository;
-    public function __construct(UserRepository $userRepository, BranchRepository $branchRepository)
+    private LocationRepository $locationRepository;
+    public function __construct(UserRepository $userRepository, BranchRepository $branchRepository, LocationRepository $locationRepository)
     {
         $this->userRepository = $userRepository;
         $this->branchRepository = $branchRepository;
+        $this->locationRepository = $locationRepository;
     }
 
     public function getUserBranch(User $user)
     {
-        $user->load('roles');
+        $user->load('employee.permissions.modules');
+        $employee = $user->employee;
+        $permissions = $user->employee?->permissions ?? collect();
 
-        $branchIds = $user->roles->pluck('pivot.branch_id')->filter()->unique()->values();
+        $branchIds = $permissions->pluck('branch_id')->filter()->unique()->values();
 
         $branchModels = $this->branchRepository->getUserBranches($branchIds->all());
 
-        $branches = $user->roles
-            ->groupBy(fn($role) => $role->pivot->branch_id)
-            ->map(function ($roles, $branchId) use ($branchModels) {
+        $branches = $permissions
+            ->groupBy('branch_id')
+            ->map(function ($perms, $branchId) use ($branchModels, $employee) {
                 $branch = $branchModels->get($branchId);
 
                 if (!$branch || !$branch->uuid) {
                     return null;
                 }
 
+                $employeeBranch = $employee->employeeBranch
+                    ->firstWhere('branch_id', $branchId);
+
+                // $employeeBranches = $employee->employeeBranch;
+
                 $location = $branch?->location;
-                // $subscription = $branch?->subscriptions->first();
-                // $subscription = $branch?->subscriptions;
 
                 return [
                     'uuid' => $branch?->uuid,
                     'name' => $branch?->name,
+                    'description' => $branch?->description,
+                    'contact_number' => $branch?->contact_number,
+                    'role_name' => $employeeBranch?->role_name,
+                    'assignment_type' => $employeeBranch?->assignment_type,
                     'image' => $branch?->image,
                     'location' => $location ? [
                         'street' => $location->street,
                         'city' => $location->city,
                         'province' => $location->province,
                         'country' => $location->country,
+                        'longitude' => $location->longitude,
+                        'latitude' => $location->latitude,
                         'address' => $location->full_address,
                     ] : null,
-
-                    // 'plan' => $subscription && $subscription->plans ? [
-                    //     'plan_code' => $subscription->plans->plan_code,
-                    //     'name' => $subscription->plans->name,
-                    // ] : null,
-
+                    'agency' => [
+                        'agency_name' => $branch?->agencies->name,
+                        'agency_description' => $branch?->agencies->description,
+                        'location' => $branch?->agencies->locations,
+                    ],
+                    'settings' => $branch->settings,
                     'plan' => $branch?->subscriptions
                         ? $branch->subscriptions->map(function ($subscription) {
                             return [
@@ -67,10 +88,12 @@ class UserService
                         })->values()
                         : [],
 
-                    'roles' => $roles->map(function ($role) {
+                    'permissions' => $perms->map(function ($permission) {
                         return [
-                            'role_type' => $role->role_type,
-                            'is_active' => $role->pivot->is_active,
+                            'module_name'     => $permission->modules?->module_name,
+                            'can_read'   => $permission->can_read,
+                            'can_update' => $permission->can_update,
+                            'can_create' => $permission->can_create,
                         ];
                     })->values(),
                 ];
@@ -87,30 +110,10 @@ class UserService
 
     public function fetchMe(User $user)
     {
-        $user = $user->load([
-            'userRoles.role',
-            'userRoles.branch'
-        ]);
+        $user->load(['employee', 'client', 'systemOwner']);
+
         return [
-            'user' => [
-                'uuid' => $user->uuid,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'email' => $user->email,
-                'provider' => $user->provider,
-                'phone_number' => $user->phone_number,
-                'is_active' => $user->is_active,
-                'is_verified' => $user->is_verified,
-                'avatar' => $user->avatar,
-                'address' => $user->location?->full_address,
-                'roles' => $user->userRoles->map(function ($ur) {
-                    return [
-                        'is_active' => $ur->is_active,
-                        'role' => $ur->role?->role_type,
-                        'branch' => $ur->branch?->uuid,
-                    ];
-                })
-            ],
+            'user' => $user,
         ];
     }
 }

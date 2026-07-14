@@ -15,32 +15,19 @@ export interface User {
     uuid: string,
     email: string,
     first_name: string,
+    middle_name?: string,
     last_name: string
     avatar: string
     location?: Location,
     phone_number?: string,
-    is_active: boolean,
-    is_verified: boolean
+    birth_date?: string,
+    // is_active: boolean,
+    // is_verified: boolean
     address: string,
-    roles?: Roles[]
+    isEmployee?: false,
+    isClient?: false,
+    isSystemOwner?: false,
 }
-
-
-interface Roles {
-    role: string,
-    branch: string,
-    is_active: boolean
-}
-
-export type RoleType =
-    | 'owner'
-    | 'branch_owner'
-    | 'administrator'
-    | 'accounting'
-    | 'admission'
-    | 'nurse'
-    | 'caregiver';
-
 
 export interface Guardian {
     first_name: string,
@@ -51,16 +38,6 @@ export interface Guardian {
     relationship: string,
     occupation?: string,
 }
-
-// export const guardianData = reactive<Guardian>({
-//     first_name: "",
-//     middle_name: "",
-//     last_name: "",
-//     phone_number: "",
-//     email: "",
-//     relationship: "",
-//     occupation: "",
-// });
 
 export const guardianData = reactive<Guardian>({
     first_name: "Maria",

@@ -43,4 +43,9 @@ class UserRepository
             ]
         );
     }
+
+    public function update(string $user_id, array $payload)
+    {
+        return User::where('user_id', $user_id)->update($payload);
+    }
 }

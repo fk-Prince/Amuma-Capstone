@@ -17,8 +17,9 @@ class UserService extends BaseService {
     }
 
     public async userBranch(params: object = {}): Promise<any> {
-        return await this.request(this.resource, 'GET', params);
+        return await this.request(this.resource + '/branches', 'GET', params);
     }
+
 
     private get resource(): string {
         const backend = this.getBackendApi;

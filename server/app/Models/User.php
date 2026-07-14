@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\PlatformAdmin;
+use App\Models\Branch;
+use App\Models\Location;
+use App\Models\Service;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,18 +26,11 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'first_name',
-        'last_name',
-        'location_id',
-        'phone_number',
+        'uuid',
         'email',
         'password',
         'provider',
         'provider_id',
-        'is_verified',
-        'is_active',
-        'uuid',
-        'avatar'
     ];
 
     /**
@@ -44,24 +41,11 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'employee',
+        'client',
+        'systemOwner',
     ];
 
-    public function roles()
-    {
-        return $this->belongsToMany(
-            Role::class,
-            'user_roles',
-            'user_id',
-            'role_id'
-        )
-            ->using(UserRole::class)
-            ->withPivot('is_active', 'branch_id');
-    }
-
-    public function userRoles()
-    {
-        return $this->hasMany(UserRole::class, 'user_id');
-    }
 
 
     #[Override]
@@ -109,13 +93,79 @@ class User extends Authenticatable
         )->withPivot('type');
     }
 
-    public function recipient()
+    // public function recipient()
+    // {
+    //     return $this->hasMany(Notifiable::class, 'user_id', 'to_user_id');
+    // }
+
+    // public function sender()
+    // {
+    //     return $this->hasMany(Notifiable::class, 'user_id', 'from_user_id');
+    // }
+    protected $appends = [
+        'isEmployee',
+        'isClient',
+        'isSystemOwner',
+        'first_name',
+        'last_name',
+        'avatar',
+    ];
+
+    public function employee()
     {
-        return $this->hasMany(Notifiable::class, 'user_id', 'to_user_id');
+        return $this->hasOne(Employee::class, 'user_id', 'user_id');
+    }
+    public function client()
+    {
+        return $this->hasOne(Client::class, 'user_id', 'user_id');
+    }
+    public function systemOwner()
+    {
+        return $this->hasOne(PlatformAdmin::class, 'user_id', 'user_id');
     }
 
-    public function sender()
+    public function getIsEmployeeAttribute(): bool
     {
-        return $this->hasMany(Notifiable::class, 'user_id', 'from_user_id');
+        return $this->relationLoaded('employee')
+            ? $this->employee !== null
+            : $this->employee()->exists();
+    }
+
+    public function getIsClientAttribute(): bool
+    {
+        return $this->relationLoaded('client')
+            ? $this->client !== null
+            : $this->client()->exists();
+    }
+
+    public function getIsSystemOwnerAttribute(): bool
+    {
+        return $this->relationLoaded('systemOwner')
+            ? $this->systemOwner !== null
+            : $this->systemOwner()->exists();
+    }
+
+    public function getFirstNameAttribute(): ?string
+    {
+        return $this->employee?->first_name
+            ?? $this->client?->first_name
+            ?? $this->systemOwner?->first_name
+            ?? null;
+    }
+
+    public function getLastNameAttribute(): ?string
+    {
+        return $this->employee?->last_name
+            ?? $this->client?->last_name
+            ?? $this->systemOwner?->last_name
+            ?? null;
+    }
+
+    public function getAvatarAttribute(): ?string
+    {
+        return $this->employee?->avatar
+            ?? $this->client?->avatar
+            ?? $this->systemOwner?->avatar
+            ?? null;
     }
 }

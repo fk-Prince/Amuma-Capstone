@@ -10,18 +10,17 @@ use Carbon\Carbon;
 use App\Factories\PaymentFactory;
 use App\Models\User;
 use App\Repository\AgencyRepository;
+use App\Repository\EmployeeRepository;
 use App\Repository\LocationRepository;
-use App\Repository\RoleRepository;
-use App\Repository\UserRepository;
+use App\Repository\ModuleRepository;
 use App\Service\Utils\AuthGuard;
 use App\Service\Utils\NominatimService;
 use App\Service\Utils\SupabaseService;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionService
 {
@@ -29,11 +28,10 @@ class SubscriptionService
     private PlanRepository $planRepository;
     private BranchRepository $branchRepository;
     private AgencyRepository $agencyRepository;
-    private RoleRepository $roleRepository;
-    private UserRepository $userRepository;
     private LocationRepository $locationRepository;
     private NominatimService $nominatimService;
-    private SupabaseService $supabaseService;
+    private ModuleRepository $moduleRepository;
+    private EmployeeRepository $employeeRepository;
     private string $secretKey;
 
     public function __construct(
@@ -41,22 +39,19 @@ class SubscriptionService
         PlanRepository $planRepository,
         BranchRepository $branchRepository,
         AgencyRepository $agencyRepository,
-        RoleRepository $roleRepository,
-        UserRepository $userRepository,
         LocationRepository $locationRepository,
         NominatimService $nominatimService,
-        SupabaseService $supabaseService,
-
+        EmployeeRepository $employeeRepository,
+        ModuleRepository $moduleRepository
     ) {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->planRepository = $planRepository;
+        $this->moduleRepository = $moduleRepository;
         $this->branchRepository = $branchRepository;
         $this->agencyRepository = $agencyRepository;
-        $this->roleRepository = $roleRepository;
-        $this->userRepository = $userRepository;
+        $this->employeeRepository = $employeeRepository;
         $this->locationRepository =  $locationRepository;
         $this->nominatimService = $nominatimService;
-        $this->supabaseService = $supabaseService;
         $this->secretKey = config('services.xendit.secret_key');
     }
 
@@ -65,14 +60,12 @@ class SubscriptionService
     {
         AuthGuard::requireUser($user);
         $paymentMethod = PaymentFactory::make($payload['payment_method']);
-        $subscription = $this->createSubscription($payload);
+        $subscription = $this->createSubscription($user, $payload);
         return $paymentMethod->subscriptionInvoice($payload, $subscription);
     }
 
-    public function createSubscription(array $payload)
+    public function createSubscription(User $user, array $payload)
     {
-        Log::info($payload);
-        $user = Auth::user();
         $plan_code = $payload['plan_code'];
         $billing_interval = BillingIntervalEnum::tryFrom(
             strtoupper($payload['billing_interval'])
@@ -95,7 +88,7 @@ class SubscriptionService
 
         $image = null;
         if (!empty($payload['branch_image']) && $payload['branch_image'] instanceof UploadedFile) {
-            $image = $this->supabaseService->store($payload['branch_image']);
+            $image = SupabaseService::store($payload['branch_image']);
         }
 
         return [
@@ -232,7 +225,6 @@ class SubscriptionService
                 ]);
 
                 $branchData = $this->branchRepository->create([
-                    'owner_user_id' => $user['user_id'],
                     'agency_id' => $agencyData->agency_id ?? null,
                     'location_id' => $branchLocation->location_id,
                     'description' => $branch['description'] ?? null,
@@ -261,15 +253,33 @@ class SubscriptionService
                     'payment_reference_id' => $reference_id,
                     'price' => $totalAmount,
                 ]);
-
-                $role = $this->roleRepository->findByUuid('role_type', 'branch_owner');
-
-                $userModel = $this->userRepository->findByField('user_id', $user['user_id']);
-
-                $userModel->roles()->attach($role->role_id, [
-                    'is_active' => true,
-                    'branch_id' => $branchData->branch_id,
+                $employee = $this->employeeRepository->findEmployeeByFields([
+                    ['user_id', '=', $user['user_id']],
                 ]);
+
+                if (!$employee) {
+                    $employee = $this->employeeRepository->createEmployee([
+                        'user_id'    => $user['user_id'],
+                        'first_name' => $user['first_name'],
+                        'last_name'  => $user['last_name'],
+                        'avatar'     => $user['avatar'] ?? null,
+                    ]);
+                }
+                $employee->employeeBranch()->create([
+                    'role_name' => 'branch_owner',
+                    'branch_id'   => $branchData->branch_id,
+                    'employee_id' => $employee->employee_id,
+                ]);
+
+                $modules = $this->moduleRepository->getAllModules();
+
+                foreach ($modules as $module) {
+                    $employee->permissions()->create([
+                        'module_id'   => $module->module_id,
+                        'branch_id'   => $branchData->branch_id,
+                        'employee_id' => $employee->employee_id,
+                    ]);
+                }
 
                 return response()->json([
                     'status' => true,
@@ -277,7 +287,6 @@ class SubscriptionService
                 ], 201);
             });
         } catch (\Exception $e) {
-
             Http::withOptions([
                 'verify' => false,
             ])->withHeaders([
@@ -289,7 +298,7 @@ class SubscriptionService
                     'amount' => $meta['total_amount'],
                     'external_id' => (string) Str::uuid(),
                     'metadata' => [
-                        'reason' => 'Subscription creation failed — auto refund.',
+                        'reason' => 'Subscription creation failed your payment is refund.',
                     ],
                 ]
             );

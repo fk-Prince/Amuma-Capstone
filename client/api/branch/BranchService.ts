@@ -30,20 +30,14 @@ class BranchService extends BaseService {
     }
 
     async validate(params: Branch): Promise<any> {
-        // const errors: Record<string, string> = {};
-        // if (!params.name?.trim()) errors.branch_name = "Branch name is required";
-        // if (!params.description?.trim()) errors.branch_description = "Branch description is required";
-        // if (!params.location?.street?.trim()) errors["location.street"] = "Street is required";
-        // if (!params.location?.city?.trim()) errors["location.city"] = "City is required";
-        // if (!params.location?.province?.trim()) errors["location.province"] = "Province is required";
-        // if (!params.location?.country?.trim()) errors["location.country"] = "Country is required";
-        // if (Object.keys(errors).length) {
-        //     throw {
-        //         errors,
-        //     };
-        // }
         return await this.request(this.getBackendApi + '/api/validate/branches', 'POST', params);
     }
+
+    async update(uuid: string, params: object = {}): Promise<any> {
+        return await this.request(`${this.resource}/${uuid}`, 'PUT', params);
+    }
+
+
     private get resource(): string {
         return `${this.getBackendApi}/api/branches`;
     }

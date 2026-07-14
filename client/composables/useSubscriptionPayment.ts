@@ -45,6 +45,7 @@ export async function cardPayment(
         card_holder_email: card.email,
     };
 
+
     return new Promise((resolve, reject) => {
         window.Xendit.card.createToken(
             { ...cardData, is_multiple_use: false, should_authenticate: true },

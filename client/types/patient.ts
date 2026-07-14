@@ -40,21 +40,7 @@ export const patientData = reactive<Patient>({
         longitude: 125.4553,
     },
 });
-// export const patientData = reactive<Patient>({
-//     first_name: "",
-//     middle_name: "",
-//     last_name: "",
-//     gender: "",
-//     citizenship: "",
-//     occupation: "",
-//     date_of_birth: "",
-//     phone_number: "",
-//     marital_status: "",
-//     height: "",
-//     weight: "",
-//     blood_type: "",
-//     location: undefined,
-// });
+
 
 export const patientSchema = z.object({
     first_name: z.string().min(1),

@@ -60,8 +60,7 @@
 
                     <div>
                         <DropdownItem
-                            v-for="item in profileMenuDropDownList"
-                            v-show="!item.roles || hasRole(...item.roles)"
+                            v-for="item in visibleMenuItems"
                             :key="item.label"
                             :icon="item.icon"
                             :label="item.label"
@@ -93,28 +92,32 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { navigateTo } from "#imports";
 import BaseDropdownMenu from "../ui/BaseDropdownMenu.vue";
-import DropdownDivider from "../ui/DropdownDivider.vue";
 import DropdownItem from "../ui/DropdownItem.vue";
 import ChevronIcon from "../icons/dropdown.vue";
 import { authService } from "~/api/auth/AuthService.js";
 import { resetAuth } from "~/composables/useAuthUser";
 import { useToast } from "~/composables/useToast";
-import { usePermissions } from "~/composables/usePermission";
 import {
     handleMenuClick,
     profileMenuDropDownList,
 } from "~/config/profileMenu.js";
 import type { User } from "~/types/auth.js";
 
-const { hasRole } = usePermissions();
-
 const props = defineProps<{
     user: User;
 }>();
 
 const { success, error } = useToast();
+
+const visibleMenuItems = computed(() =>
+    profileMenuDropDownList.filter((item) => {
+        if (!item.types) return true;
+        return item.types.some((type) => props.user[type as keyof User]);
+    }),
+);
 
 const logout = async () => {
     try {

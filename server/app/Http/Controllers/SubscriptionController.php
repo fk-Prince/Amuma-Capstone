@@ -19,6 +19,7 @@ class SubscriptionController extends Controller
 
     public function newSubscription(SubscriptionRequest $request)
     {
+
         $data = $request->validated();
         if ($request->hasFile('branch_image')) {
             $data['branch_image'] = $request->file('branch_image');
@@ -44,6 +45,6 @@ class SubscriptionController extends Controller
 
     public function retrieveSubscriptionDetail(Request $request)
     {
-        return $this->subscriptionService->createSubscription($request->all());
+        return $this->subscriptionService->createSubscription($request->user(), $request->all());
     }
 }

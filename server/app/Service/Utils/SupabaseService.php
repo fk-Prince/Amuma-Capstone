@@ -11,7 +11,7 @@ class SupabaseService
 {
     public function __construct() {}
 
-    public function store(UploadedFile $image): array
+    public static function store(UploadedFile $image): array
     {
         $filePath = Str::uuid() . '.' . $image->getClientOriginalExtension();
         $bucket = env('SUPABASE_BUCKET');

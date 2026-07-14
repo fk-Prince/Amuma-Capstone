@@ -24,6 +24,7 @@ class CardPayment implements ISubscriptionPayment
     {
         $user      = Auth::user();
         $reference = (string) Str::uuid();
+
         try {
             $response = Http::withOptions([
                 'verify' => false
@@ -63,6 +64,13 @@ class CardPayment implements ISubscriptionPayment
                 'external_id'       => $charge['external_id'] ?? null,
                 'xendit_invoice_id' => $charge['id'] ?? null,
             ]);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+
+            Log::error("API timeout: " . $e->getMessage());
+
+            return response()->json([
+                'message' => 'The external service took too long to respond.'
+            ], 504);
         } catch (\Exception $e) {
             Log::info($e);
         }

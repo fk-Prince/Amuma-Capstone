@@ -47,6 +47,17 @@ const handleLocation = async (lat: number, lng: number): Promise<void> => {
     confirmLocation();
 };
 
+watch(
+    () => [props.initialLat, props.initialLng] as const,
+    async ([lat, lng]) => {
+        if (!map || lat == null || lng == null) return;
+        if (selectedLocation.value) return;
+        map.setView([lat, lng], 15);
+        placeMarker(lat, lng);
+        await reverseGeocode(lat, lng);
+    },
+);
+
 const reverseGeocode = async (lat: number, lng: number): Promise<void> => {
     try {
         const config = useRuntimeConfig();
@@ -306,7 +317,7 @@ onUnmounted(() => {
 });
 </script>
 <template>
-    <div class="flex flex-col gap-2 w-full">
+    <div class="flex flex-col gap-2 w-full z-20">
         <div
             class="flex items-start gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm shadow-sm min-h-[48px]"
         >

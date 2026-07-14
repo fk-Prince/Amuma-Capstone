@@ -1,4 +1,9 @@
 <script lang="ts" setup>
+import { Modules } from "~/types/module";
+import { usePermissions } from "~/composables/usePermission";
+
+const { canCreate } = usePermissions();
+
 const totalRooms = 5;
 const availableBeds = 5;
 const occupiedBeds = 5;
@@ -11,6 +16,7 @@ const emit = defineEmits<{
 <template>
     <div class="flex justify-end items-end">
         <button
+            v-if="canCreate(Modules.RoomsAndBeds)"
             @click="emit('addRoom')"
             class="inline-flex items-center gap-2 rounded-xl border border-primary bg-white px-5 py-2.5 text-sm font-medium text-primary transition-all duration-200 hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
@@ -33,14 +39,14 @@ const emit = defineEmits<{
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div
-            class="rounded-2xl border border-blue-200 border-t-4 border-t-blue-500 bg-white p-4 shadow-sm"
+            class="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-blue-400"
         >
             <div
-                class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center"
+                class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center transition-colors duration-300 group-hover:bg-blue-100"
             >
                 <svg
                     viewBox="0 0 24 24"
-                    class="w-5.5 h-5.5 text-blue-600"
+                    class="w-5.5 h-5.5 text-blue-600 transition-transform duration-300 hover:scale-110"
                     fill="none"
                     stroke="currentColor"
                     stroke-width="2"
@@ -53,20 +59,25 @@ const emit = defineEmits<{
                     <path d="M10 6h4M10 10h4M10 14h4M10 18h4" />
                 </svg>
             </div>
+
             <p
                 class="mt-3 text-[11px] uppercase tracking-wide text-gray-400 font-medium"
             >
                 Total Rooms
             </p>
-            <p class="text-2xl font-bold text-gray-800">{{ totalRooms }}</p>
+
+            <p class="text-2xl font-bold text-gray-800">
+                {{ totalRooms }}
+            </p>
+
             <p class="mt-1 text-xs text-emerald-600 flex items-center gap-1">
-                <span>↑ 3</span
-                ><span class="text-gray-400 font-normal">new this month</span>
+                <span>↑ 3</span>
+                <span class="text-gray-400 font-normal">new this month</span>
             </p>
         </div>
 
         <div
-            class="rounded-2xl border border-emerald-200 border-t-4 border-t-emerald-500 bg-white p-4 shadow-sm"
+            class="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-emerald-400"
         >
             <div
                 class="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center"
@@ -101,7 +112,7 @@ const emit = defineEmits<{
         </div>
 
         <div
-            class="rounded-2xl border border-violet-200 border-t-4 border-t-violet-500 bg-white p-4 shadow-sm"
+            class="rounded-2xl border border-violet-200 bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-violet-400"
         >
             <div
                 class="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center"
@@ -138,7 +149,7 @@ const emit = defineEmits<{
         </div>
 
         <div
-            class="rounded-2xl border border-rose-200 border-t-4 border-t-rose-500 bg-white p-4 shadow-sm"
+            class="rounded-2xl border border-rose-200 bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-rose-400"
         >
             <div
                 class="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center"

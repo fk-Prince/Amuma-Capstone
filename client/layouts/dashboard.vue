@@ -27,11 +27,7 @@ import { ref, computed, onMounted } from "vue";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 
-import {
-    authMenuList,
-    branchOwnerMenuLists,
-    ownerMenuList,
-} from "~/config/authMenu";
+import { authMenuList } from "~/config/authMenu";
 
 const user = useAuthUser();
 const isOpen = ref(false);
@@ -42,82 +38,58 @@ onMounted(async () => {
     if (!branchStore.branches.length) {
         await branchStore.fetchBranches();
     }
+
+    let uuid = branchStore.activeBranch?.uuid ?? branchStore.branches[0]?.uuid;
+
+    if (!uuid) {
+        const branch = branchStore.branches.find((branch) => branch?.uuid);
+        uuid = branch?.uuid;
+    }
+
+    await navigateTo(`/app/branches/${uuid}/dashboard`);
 });
 
-const initials = userInitials(user);
-const avatar = avatarSrc(initials);
-
-const activeRoles = computed(() => {
+const activeModules = computed(() => {
     const branch = branchStore.activeBranch;
 
     return (
-        branch?.roles?.filter((r) => r.is_active).map((r) => r.role_type) ?? []
+        branch?.permissions
+            ?.filter((p) => p.can_read)
+            .map((p) => p.module_name) ?? []
     );
 });
 
 const menus = computed(() => {
-    const roles = activeRoles.value ?? [];
+    const modules = activeModules.value ?? [];
     const uuid = branchStore.routeUuid;
 
+    // const branch = branchStore.activeBranch;
+    //   const branchPlans =
+    //         branch?.plan?.map((p) => p.plan_code) ?? [];
     return authMenuList
         .filter((item) => {
-            if (!item.roles) return true;
-            return item.roles.some((r) => roles.includes(r));
+            if (!item.modules) return true;
+            return item.modules.some((m) => modules.includes(m));
+
+            // if (item.modules) {
+            //     const hasModule = item.modules.some((m) => modules.includes(m));
+
+            //     if (!hasModule) return false;
+            // }
+
+            // if (item.plan?.length) {
+            //     const hasPlan = item.plan.some((plan) =>
+            //         branchPlans.includes(plan)
+            //     );
+
+            //     if (!hasPlan) return false;
+            // }
+            // return true;
         })
-        .map((item) => {
-            return {
-                label: item.label,
-                to: uuid ? item.to.replace("[uuid]", uuid) : item.to,
-                icon: item.icon,
-            };
-        });
+        .map((item) => ({
+            label: item.label,
+            to: uuid ? item.to.replace("[uuid]", uuid) : item.to,
+            icon: item.icon,
+        }));
 });
-
-// const menus = computed(() => {
-//     const roles = activeRoles.value ?? [];
-//     const uuid = branchStore.routeUuid;
-
-//     const allMenus = [
-//         ...ownerMenuList.map((item) => ({
-//             ...item,
-//             needsUuid: false,
-//             group: "owner",
-//         })),
-//         ...branchOwnerMenuLists.map((item) => ({
-//             ...item,
-//             needsUuid: false,
-//             group: "branchOwner",
-//         })),
-//         ...authMenuList.map((item) => ({
-//             ...item,
-//             needsUuid: true,
-//             group: "auth",
-//         })),
-//     ];
-
-//     const filtered = allMenus
-//         .filter((item) => {
-//             if (!item.roles) return true;
-//             return item.roles.some((r) => roles.includes(r));
-//         })
-//         .map((item) => ({
-//             label: item.label,
-//             to:
-//                 item.needsUuid && uuid
-//                     ? item.to.replace("[uuid]", uuid)
-//                     : item.to,
-//             icon: item.icon,
-//             group: item.group,
-//         }));
-
-//     const result: typeof filtered = [];
-//     filtered.forEach((item, index) => {
-//         if (index > 0 && item.group !== filtered[index - 1]?.group) {
-//             result.push({ divider: true, id: `divider-${item.group}` } as any);
-//         }
-//         result.push(item);
-//     });
-
-//     return result;
-// });
 </script>

@@ -111,7 +111,6 @@
                 :logo="logoAmuma"
                 :authMenu="navList"
                 :user="user"
-                :avatarSrc="user?.avatar"
                 @close="mobileMenuOpen = false"
             />
         </ClientOnly>

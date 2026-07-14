@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { Service } from "~/types/service";
+import { Modules } from "~/types/module";
+import { usePermissions } from "~/composables/usePermission";
+
+const { canUpdate } = usePermissions();
 
 const props = defineProps<{
     loading: boolean;
@@ -215,6 +219,7 @@ const formatPrice = (price: number | string) => {
                         >
                             <div class="flex items-center gap-2 mb-3">
                                 <button
+                                    v-if="canUpdate(Modules.Services)"
                                     type="button"
                                     @click.stop="openEditService(service)"
                                     class="flex items-center gap-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 bg-white hover:border-blue-300 hover:text-blue-600 transition-colors"

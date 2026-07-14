@@ -1,6 +1,10 @@
+import type { Agency } from "./agency";
 import type { User } from "./auth";
 import { type Location } from "./location";
+import type { Permissions } from "./permission";
 import type { Review } from "./review";
+import { z } from 'zod';
+
 
 export interface Branch {
     uuid?: string;
@@ -11,8 +15,12 @@ export interface Branch {
     location: Location
     settings?: BranchSettings | null
     plan?: BranchPlan[] | null;
-    roles?: BranchRole[];
+    role_name?: string;
+    permissions?: Permissions[];
+    agency: Agency
+    images: any[];
 };
+
 
 export interface BranchSettings {
     opening: string | null;
@@ -65,14 +73,71 @@ interface BranchPlan {
     name: string;
 }
 
-interface BranchRole {
-    role_type: string;
-    is_active: boolean;
-}
-
 export interface UserBranch {
     user: User;
     branches?: Branch[]
 }
+
+
+
+
+export const locationSchema = z.object({
+    street: z
+        .string()
+        .trim()
+        .min(1, "Street is required"),
+
+    city: z
+        .string()
+        .trim()
+        .min(1, "City is required"),
+
+    province: z
+        .string()
+        .trim()
+        .min(1, "Province is required"),
+
+    country: z
+        .string()
+        .trim()
+        .min(1, "Country is required"),
+
+    latitude: z.coerce.number().optional(),
+    longitude: z.coerce.number().optional(),
+});
+
+export const branchSchema = z.object({
+    name: z
+        .string()
+        .trim()
+        .min(1, "Branch name is required")
+        .max(255),
+
+    description: z
+        .string()
+        .trim()
+        .min(1, "Description is required")
+        .max(500),
+
+    contact_number: z
+        .string()
+        .trim()
+        .min(1, "Contact number is required")
+        .regex(
+            /^\+?[0-9]{10,15}$/,
+            "Enter a valid contact number"
+        ),
+
+    image: z
+        .union([
+            z.instanceof(File),
+            z.string(),
+            z.null(),
+        ])
+        .optional(),
+
+    location: locationSchema,
+});
+
 
 

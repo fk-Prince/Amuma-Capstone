@@ -44,7 +44,7 @@ class BranchRepository
 
     public function getUserBranches(array $branchIds)
     {
-        return  Branch::with(['location', 'subscriptions.plans'])
+        return  Branch::with(['location', 'subscriptions.plans', 'agencies.locations'])
             ->whereIn('branch_id', $branchIds)
             ->get()
             ->keyBy('branch_id');

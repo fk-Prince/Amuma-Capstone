@@ -2,6 +2,8 @@
 
 namespace App\Service\Utils;
 
+use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -19,21 +21,32 @@ class AuthGuard
         return $user;
     }
 
-    public static function requireRole(?User $user, string|array $roles)
+    public static function requireModule(?User $user,  string|bool $branchId = false, ModuleEnum $module, PermissionAction $action)
     {
         $user = self::requireUser($user);
 
-        if (!$user->relationLoaded('roles')) {
-            $user->load('roles');
+        if (!$user->relationLoaded('employee')) {
+            $user->load('employee.permissions.modules');
         }
-        $roles = (array) $roles;
 
-        $hasRole = $user->roles->contains(
-            fn($role) => in_array($role->role_type, $roles, true)
-        );
+        $employee = $user->employee;
 
-        if (!$hasRole) {
-            throw new Exception('Insufficient permissions', 403);
+        if (!$employee) {
+            throw new Exception('Insufficient permissionsa', 403);
+        }
+
+        // $hasPermission = $employee->permissions->contains(function ($permission) use ($module, $action) {
+        //     return $permission->modules?->module_name === $module->value
+        //         && (bool) $permission->{$action->value};
+        // });
+        $hasPermission = $employee->permissions->contains(function ($permission) use ($module, $action, $branchId) {
+            return $permission->modules?->module_name === $module->value
+                && ($permission->{$action->value} ?? false)
+                && ($branchId === false || $permission->branch_id == $branchId);
+        });
+
+        if (!$hasPermission) {
+            throw new Exception('Insufficient permissionsb', 403);
         }
 
         return $user;

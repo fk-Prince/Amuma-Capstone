@@ -5,13 +5,16 @@
     >
         <div class="flex justify-between items-center h-full w-full">
             <div class="flex justify-start items-center gap-4">
-                <!-- <NuxtLink to="/" class="flex items-center">
+                <NuxtLink
+                    to="/"
+                    class="flex items-center border-r border-r-muted pr-5"
+                >
                     <img
-                        :src="logoAmuma"
+                        :src="logo"
                         alt="AMUMA logo"
-                        class="w-[170px] md:w-[250px] object-contain"
+                        class="w-[50px] md:w-[50px] object-contain"
                     />
-                </NuxtLink> -->
+                </NuxtLink>
 
                 <!-- class="items-center lg:flex hidden gap-2.5 cursor-pointer select-none" -->
                 <div
@@ -267,15 +270,16 @@
                                 </div>
                                 <div class="flex flex-wrap gap-1 mt-2">
                                     <span
-                                        v-for="role in branch.roles"
-                                        :key="role.role_type"
                                         class="text-[12px] px-2 py-0.5 rounded-full font-medium border"
                                         :class="
-                                            roleMeta[role.role_type]?.class ||
+                                            roleMeta[branch?.role_name ?? '']
+                                                ?.class ||
                                             'bg-gray-50 text-gray-600 border-gray-200'
                                         "
                                     >
-                                        {{ formatRole(role.role_type) }}
+                                        {{
+                                            formatRole(branch?.role_name ?? "")
+                                        }}
                                     </span>
                                 </div>
                             </div>
@@ -288,6 +292,7 @@
 </template>
 
 <script setup lang="ts">
+import logo from "assets/logo/logo.png";
 import { computed, onMounted, ref } from "vue";
 import Notification from "../ui/Notification.vue";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";

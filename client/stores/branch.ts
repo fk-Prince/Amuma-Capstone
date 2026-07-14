@@ -30,6 +30,14 @@ export const useBranchStore = defineStore("branch", () => {
     const hasMultipleBranches = computed(() => branches.value.length > 1);
 
 
+    async function refreshBranch() {
+        try {
+            const res = await userService.userBranch();
+            branches.value = res.data?.branches ?? [];
+        } finally {
+            loading.value = false;
+        }
+    }
 
     async function fetchBranches() {
         loading.value = true;
@@ -103,6 +111,7 @@ export const useBranchStore = defineStore("branch", () => {
         openModal,
         closeModal,
         selectBranch,
+        refreshBranch,
         lastSelectedBranch,
     };
 });

@@ -16,7 +16,7 @@ class SubscriptionRequest extends FormRequest
 
     public function rules(): array
     {
-
+        //, 'unique:branches,name'
         return [
             'token_id' => ['nullable', 'string'],
             'authentication_id' => ['nullable', 'string'],
@@ -35,7 +35,7 @@ class SubscriptionRequest extends FormRequest
             'agency_country'     => ['nullable', 'string', 'required_with:agency_name'],
 
             // Branch data
-            'branch_name' => ['required', 'string', 'unique:branches,name'],
+            'branch_name' => ['required', 'string'],
             'branch_street' => ['required', 'string'],
             'branch_description' => ['required', 'string'],
             'branch_city' => ['required', 'string'],
@@ -47,6 +47,7 @@ class SubscriptionRequest extends FormRequest
             'branch_settings.currency' => ['required', 'string'],
             'branch_settings.opening' => ['required', 'string'],
             'branch_settings.closing' => ['required', 'string'],
+            'branch_settings.time_zone' => ['required', 'string'],
         ];
     }
 }

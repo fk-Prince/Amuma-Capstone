@@ -2,18 +2,23 @@
     <div class="max-w-5xl mx-auto flex flex-col gap-5">
         <div class="grid grid-cols-2 gap-4">
             <Combobox
-                v-model="selectedCurrency"
+                v-model="setting.currency"
                 :items="currencies"
                 placeholder="Select currency"
                 class="w-full"
                 label="Currency"
+                :error="errors?.currency"
+                @update:modelValue="clearError('currency')"
             />
+
             <Combobox
-                v-model="selectedTimeZone"
+                v-model="setting.time_zone"
                 :items="timeZones"
                 placeholder="Select time-zone"
                 class="w-full"
                 label="Time-Zone"
+                :error="errors?.time_zone"
+                @update:modelValue="clearError('time_zone')"
             />
         </div>
 
@@ -26,22 +31,26 @@
                 <div>
                     <p class="text-sm mb-1 text-slate-700">Opening Hours</p>
                     <Combobox
-                        v-model="selectedOpening"
+                        v-model="setting.opening"
                         :items="timeItems"
                         required
                         placeholder="Opening time"
                         class="w-full"
+                        :error="errors?.opening"
+                        @update:modelValue="clearError('opening')"
                     />
                 </div>
 
                 <div>
                     <p class="text-sm mb-1 text-slate-700">Closing Hours</p>
                     <Combobox
-                        v-model="selectedClosing"
+                        v-model="setting.closing"
                         :items="timeItems"
                         required
                         placeholder="Closing time"
                         class="w-full"
+                        :error="errors?.closing"
+                        @update:modelValue="clearError('closing')"
                     />
                 </div>
             </div>
@@ -50,28 +59,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import Combobox from "../ui/Combobox.vue";
 import { Currency } from "~/utils/currency";
 import { generate24HourTimes, getTimeZone } from "~/utils/time";
-import { useSubscriptionCheckout } from "~/stores/subscription";
 
-const checkout = useSubscriptionCheckout();
+const props = defineProps<{
+    setting: any;
+    errors?: Record<string, string> | null;
+}>();
 
-const emit = defineEmits(["update:setting"]);
+const emit = defineEmits<{
+    (e: "update:setting", value: any): void;
+    (e: "update:errors", value: Record<string, string>): void;
+}>();
+
+const setting = computed({
+    get: () => props.setting,
+    set: (value) => emit("update:setting", value),
+});
+
+const errors = computed(() => props.errors);
 
 const times = generate24HourTimes();
-const currencyList = Currency();
-const timeZoneList = getTimeZone();
-const setting = checkout.settings;
-
-const selectedCurrency = ref(setting?.currency);
-const selectedOpening = ref(setting?.opening);
-const selectedClosing = ref(setting?.closing);
-const selectedTimeZone = ref(setting?.time_zone);
-
-const currencies = ref(currencyList);
-const timeZones = ref(timeZoneList);
+const currencies = ref(Currency());
+const timeZones = ref(getTimeZone());
 
 const timeItems = computed(() =>
     times.map((t) => ({
@@ -80,13 +92,12 @@ const timeItems = computed(() =>
     })),
 );
 
-watch([selectedCurrency, selectedOpening, selectedClosing], () => {
-    emit("update:setting", {
-        ...setting,
-        currency: selectedCurrency.value,
-        selectedOpening: selectedOpening.value,
-        selectedClosing: selectedClosing.value,
-        timeZone: selectedTimeZone.value,
-    });
-});
+function clearError(field: string) {
+    if (!props.errors) return;
+
+    const updated = { ...props.errors };
+    delete updated[field];
+
+    emit("update:errors", updated);
+}
 </script>

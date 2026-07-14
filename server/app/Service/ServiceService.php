@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
 use App\Repository\ServiceRepository;
 use App\Http\Resources\ServiceResource;
 use App\Models\User;
@@ -18,7 +20,6 @@ class ServiceService
     private ServiceRepository $serviceRepository;
     private BranchRepository $branchRepository;
     private CategoryRepository $categoryRepository;
-    private PriceService $priceService;
 
     public function __construct(ServiceRepository $serviceRepository, BranchRepository $branchRepository, CategoryRepository $categoryRepository)
     {
@@ -29,13 +30,13 @@ class ServiceService
 
     public function createService(array $payload, User $user)
     {
-        AuthGuard::requireRole($user, ['branch_owner', 'administrator']);
 
         $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
 
         if (!$branch) {
             throw new Exception(__('Branch does not exist'), 404);
         }
+        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
 
         $existingService = $this->serviceRepository->existsInBranch(
             $branch->branch_id,
@@ -83,15 +84,15 @@ class ServiceService
     }
     public function updateService(array $payload, string $id, User $user)
     {
-        AuthGuard::requireRole($user, ['branch_owner', 'administrator']);
 
-        return DB::transaction(function () use ($payload, $id) {
+        return DB::transaction(function () use ($payload, $id, $user) {
 
             $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
 
             if (!$branch) {
                 throw new Exception(__('Branch does not exist'), 404);
             }
+            AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Update);
 
             $existingService = $this->serviceRepository->findByFields([
                 ['branch_id', '=', $branch->branch_id],
@@ -166,10 +167,13 @@ class ServiceService
         $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
         if (!$branch)  throw new Exception(__('Branch does not exist'), 404);
 
+        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Read);
+
         $branch->load([
             'services.categories',
             'services.price'
         ]);
+
 
         return response()->json([
             'branch_uuid' => $branch->uuid,
