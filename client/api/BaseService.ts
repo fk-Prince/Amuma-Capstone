@@ -98,15 +98,27 @@ export class BaseService {
         }
 
         try {
+            // return await $fetch<T>(url, {
+            //     baseURL: config.public.backendApi,
+            //     method,
+            //     credentials: 'include',
+            //     headers,
+            //     ...(method === 'GET'
+            //         ? { params }
+            //         : { body }),
+            // })
+            const requestMethod =
+                body instanceof FormData ? "POST" : method;
+
             return await $fetch<T>(url, {
                 baseURL: config.public.backendApi,
-                method,
-                credentials: 'include',
+                method: requestMethod,
+                credentials: "include",
                 headers,
-                ...(method === 'GET'
+                ...(requestMethod === "GET"
                     ? { params }
                     : { body }),
-            })
+            });
         } catch (error: any) {
             const status = error?.response?.status
             const data = error?.response?._data

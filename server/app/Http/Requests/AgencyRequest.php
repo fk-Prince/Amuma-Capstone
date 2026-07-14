@@ -22,8 +22,9 @@ class AgencyRequest extends FormRequest
      */
     public function rules(): array
     {
+        //, 'unique:agencies,name'
         return [
-            'agency_name'        => ['required', 'string', 'unique:agencies,name'],
+            'agency_name'        => ['required', 'string'],
             'agency_description' => ['required', 'string'],
 
             'location.street'     => ['required', 'string'],

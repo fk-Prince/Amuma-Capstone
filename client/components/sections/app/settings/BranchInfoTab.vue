@@ -73,7 +73,6 @@ const fieldKeyMap: Record<string, string> = {
 
 const handleSave = async (): Promise<boolean> => {
     if (!localValue.value) return false;
-
     const result = branchSchema.safeParse(localValue.value);
 
     if (!result.success) {
@@ -114,7 +113,10 @@ const handleSave = async (): Promise<boolean> => {
             payload,
         );
 
-        branch.value = structuredClone(toRaw(localValue.value));
+        branch.value = {
+            ...toRaw(localValue.value),
+            image: localValue.value.image,
+        };
 
         await branchStore.refreshBranch();
 

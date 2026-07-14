@@ -88,7 +88,7 @@ class BranchService
                 'name' => $payload['name'],
                 'description' => $payload['description'],
                 'contact_number' => $payload['contact_number'] ?? null,
-                'image' => $image ?? $payload['image'] ?? null,
+                'image' => $image['url'] ?? $payload['image'] ?? null,
                 'settings' => $payload['settings'] ?? null,
             ]);
 
