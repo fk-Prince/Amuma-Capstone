@@ -1,5 +1,5 @@
 <template>
-    <section class="py-20 bg-white">
+    <section class="py-20">
         <div class="max-w-6xl mx-auto px-6">
             <div class="text-center mb-14">
                 <span

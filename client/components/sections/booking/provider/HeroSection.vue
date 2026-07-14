@@ -1,30 +1,25 @@
 <template>
     <div class="text-secondary py-5">
-        <!-- Skeleton -->
         <template v-if="loading">
             <div class="flex items-start justify-between gap-6">
                 <div class="flex flex-col gap-6 flex-1 animate-pulse">
-                    <!-- Title -->
                     <div class="flex justify-between items-center">
                         <div class="h-6 w-48 bg-gray-200 rounded"></div>
                         <div class="h-9 w-32 bg-gray-200 rounded-md"></div>
                     </div>
 
-                    <!-- Rating -->
                     <div class="flex items-center gap-2 ml-2">
                         <div class="h-4 w-4 bg-gray-200 rounded"></div>
                         <div class="h-4 w-12 bg-gray-200 rounded"></div>
                         <div class="h-4 w-24 bg-gray-200 rounded"></div>
                     </div>
 
-                    <!-- Description -->
                     <div class="space-y-2 mt-3 w-[90%] mx-auto">
                         <div class="h-4 bg-gray-200 rounded w-full"></div>
                         <div class="h-4 bg-gray-200 rounded w-5/6"></div>
                         <div class="h-4 bg-gray-200 rounded w-4/6"></div>
                     </div>
 
-                    <!-- Buttons -->
                     <div class="flex flex-col gap-4 mt-10">
                         <div class="h-24 bg-gray-200 rounded-2xl"></div>
 
@@ -34,9 +29,8 @@
             </div>
         </template>
 
-        <!-- Content -->
         <template v-else>
-            <div class="flex items-start justify-between gap-6">
+            <div class="flex items-start justify-center gap-6 px-5">
                 <div class="flex flex-col justify-between min-h-[270px] flex-1">
                     <div class="flex flex-col gap-2">
                         <div class="flex justify-between items-center">
@@ -64,7 +58,9 @@
                         <div
                             class="ml-2 flex items-center gap-2 text-sm w-full text-gray-600"
                         >
-                            <span class="text-yellow-500">⭐</span>
+                            <Star
+                                class="h-4 w-4 text-orange-400 fill-orange-400"
+                            />
 
                             <span class="font-medium text-gray-800">
                                 {{ branch?.averageRating || 0 }}
@@ -91,30 +87,31 @@
                                 )
                             "
                             @click="emit('homecare')"
-                            class="group w-full rounded-2xl border border-primary/20 bg-primary/5 p-5 text-left transition-all duration-300 hover:border-primary hover:bg-primary hover:text-white hover:shadow-xl"
+                            class="group flex items-center justify-between rounded-2xl border border-primary/20 bg-primary/5 p-4 text-left transition-all hover:bg-primary hover:border-primary hover:text-white hover:shadow-lg"
                         >
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-white group-hover:bg-white group-hover:text-primary"
-                                    >
-                                        <House />
-                                    </div>
-
-                                    <div>
-                                        <h3 class="text-lg font-semibold">
-                                            Homecare Services
-                                        </h3>
-                                        <p class="text-sm opacity-80">
-                                            Receive professional care at home.
-                                        </p>
-                                    </div>
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-white transition group-hover:bg-white group-hover:text-primary"
+                                >
+                                    <House class="h-6 w-6" />
                                 </div>
 
-                                <ArrowRight class="h-5 w-5" />
-                            </div>
-                        </button>
+                                <div>
+                                    <h3 class="font-semibold text-base">
+                                        Homecare Services
+                                    </h3>
 
+                                    <p class="text-sm opacity-70">
+                                        Professional care delivered at your
+                                        home.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <ArrowRight
+                                class="h-5 w-5 transition group-hover:translate-x-1"
+                            />
+                        </button>
                         <button
                             v-if="
                                 branch?.subscriptions.some((s) =>
@@ -122,29 +119,30 @@
                                 )
                             "
                             @click="emit('facility')"
-                            class="group w-full rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-left transition-all duration-300 hover:border-emerald-500 hover:bg-emerald-600 hover:text-white hover:shadow-xl"
+                            class="group flex items-center justify-between rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-left transition-all hover:bg-emerald-600 hover:border-emerald-600 hover:text-white hover:shadow-lg"
                         >
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-white group-hover:bg-white group-hover:text-emerald-600"
-                                    >
-                                        <Building2 />
-                                    </div>
-
-                                    <div>
-                                        <h3 class="text-lg font-semibold">
-                                            Inhouse Facility Admission
-                                        </h3>
-                                        <p class="text-sm opacity-80">
-                                            Request admission and receive care
-                                            at our inhouse facility.
-                                        </p>
-                                    </div>
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-white transition group-hover:bg-white group-hover:text-emerald-600"
+                                >
+                                    <Building2 class="h-6 w-6" />
                                 </div>
 
-                                <ArrowRight class="h-5 w-5" />
+                                <div>
+                                    <h3 class="font-semibold text-base">
+                                        In-House Facility Admission
+                                    </h3>
+
+                                    <p class="text-sm opacity-70">
+                                        Get admitted and receive facility-based
+                                        care.
+                                    </p>
+                                </div>
                             </div>
+
+                            <ArrowRight
+                                class="h-5 w-5 transition group-hover:translate-x-1"
+                            />
                         </button>
                     </div>
                 </div>
@@ -154,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { Heart, House, Building2, ArrowRight } from "lucide-vue-next";
+import { Heart, House, Building2, ArrowRight, Star } from "lucide-vue-next";
 import type { BranchRetrieve } from "~/types/branch";
 
 defineProps<{
@@ -165,7 +163,6 @@ defineProps<{
 const emit = defineEmits<{
     (e: "homecare"): void;
     (e: "facility"): void;
-    (e: "service-offers"): void;
     (e: "favorite"): void;
 }>();
 </script>

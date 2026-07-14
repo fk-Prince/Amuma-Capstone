@@ -1,22 +1,45 @@
 <template>
     <div
         v-if="variant === 1"
-        class="rounded-2xl border bg-white overflow-hidden cursor-pointer transition hover:shadow-md"
+        class="rounded-2xl border bg-white overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300"
         @click="$emit('select', branch)"
     >
-        <div class="h-32 bg-slate-100">
+        <div class="relative h-32 bg-slate-100">
             <img
                 v-if="branch?.image"
                 :src="branch.image"
                 class="w-full h-full object-cover"
                 alt="branch image"
             />
+
             <img
                 v-else
                 :src="Logo"
-                class="w-16 h-16 object-contain opacity-60"
+                class="w-full h-full object-contain opacity-60 p-6"
                 alt="default logo"
             />
+            <span
+                class="absolute left-3 top-3 rounded-md bg-white/90 px-2.5 py-1 text-xs font-semibold text-emerald-700 shadow-sm backdrop-blur-sm"
+            >
+                {{ getTime(branch.availability).label }}
+            </span>
+
+            <div
+                class="absolute right-3 top-3 flex items-center gap-1 rounded-md bg-white/90 px-2.5 py-1 shadow-sm backdrop-blur-sm"
+            >
+                <Star class="h-3 w-3 text-orange-400 fill-orange-400" />
+
+                <span class="text-xs font-semibold text-slate-700">
+                    {{ branch.averageRating ?? "0.0" }}
+                </span>
+
+                <span
+                    v-if="branch.reviewCount > 0"
+                    class="text-xs text-slate-500"
+                >
+                    ({{ branch.reviewCount }})
+                </span>
+            </div>
         </div>
 
         <div class="p-4">
@@ -29,34 +52,48 @@
                 {{ branch.location.street }}, {{ branch.location.city }}
             </p>
 
-            <div class="mt-3 flex items-center justify-between">
-                <span
-                    class="text-xs px-2 py-1 rounded-full font-semibold"
-                    :class="
-                        branch.availability.is_open
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-600'
-                    "
+            <div class="mt-3 flex items-center justify-start gap-2">
+                <template
+                    v-for="subscription in branch.subscriptions"
+                    :key="subscription.subscription_id"
                 >
-                    {{ branch.availability.is_open ? "Open" : "Closed" }}
-                </span>
+                    <template v-if="subscription.plans.name === 'Hybrid'">
+                        <span
+                            class="text-xs px-2 py-1 rounded-full font-semibold bg-slate-100 text-slate-700"
+                        >
+                            Homecare Services
+                        </span>
 
-                <span class="text-xs text-slate-400">
-                    {{ getTime(branch.availability).label }}
-                </span>
-            </div>
+                        <span
+                            class="text-xs px-2 py-1 rounded-full font-semibold bg-slate-100 text-slate-700"
+                        >
+                            In-House Facility
+                        </span>
+                    </template>
 
-            <div class="mt-3 text-xs text-slate-500">
-                ⭐
-                <span class="font-semibold text-slate-700">
-                    {{ branch.averageRating ?? "No rating" }}
-                </span>
-                ({{ branch.reviewCount }})
+                    <span
+                        v-else
+                        class="text-xs px-2 py-1 rounded-full font-semibold bg-slate-100 text-slate-700"
+                    >
+                        {{ subscription.plans.name }}
+                    </span>
+                </template>
             </div>
         </div>
 
-        <div class="p-4 border-t bg-slate-50 flex justify-end items-center">
+        <div class="p-4 border-t bg-slate-50 flex justify-between items-center">
+            <span
+                class="text-xs px-4 uppercase py-1 rounded-full font-semibold"
+                :class="
+                    branch.availability.is_open
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-600'
+                "
+            >
+                {{ branch.availability.is_open ? "Open" : "Closed" }}
+            </span>
             <button
+                @click="$emit('select', branch)"
                 class="text-xs font-semibold text-white bg-primary px-5 py-1.5 rounded-lg hover:bg-blue-700"
             >
                 Book Now
@@ -88,11 +125,11 @@
             />
 
             <span
-                class="absolute left-3 top-3 rounded-md border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide backdrop-blur-sm"
+                class="absolute left-3 bg-white/90 top-3 rounded-md border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide backdrop-blur-sm"
                 :class="
                     branch.availability.is_open
-                        ? 'bg-white/90 text-emerald-700 border-emerald-200'
-                        : 'bg-white/90 text-slate-500 border-slate-200'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-600'
                 "
             >
                 {{ branch.availability.is_open ? "Open Now" : "Closed" }}
@@ -101,7 +138,8 @@
             <div
                 class="absolute right-3 top-3 flex items-center gap-1 rounded-md bg-white/90 px-2.5 py-1 shadow-sm backdrop-blur-sm"
             >
-                <span class="text-amber-500 text-xs">★</span>
+                <!-- <span class="text-amber-500 text-xs">★</span> -->
+                <Star class="h-3 w-3 text-orange-400 fill-orange-400" />
 
                 <span class="text-xs font-semibold text-slate-700">
                     {{ branch.averageRating ?? "0.0" }}
@@ -217,6 +255,7 @@
 import type { BranchRetrieve } from "~/types/branch";
 import Location from "~/components/icons/location.vue";
 import Logo from "~/assets/logo/logo.png";
+import { Star } from "lucide-vue-next";
 import { getBranchTimeDisplay } from "~/utils/time";
 
 const props = defineProps<{

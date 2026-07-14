@@ -22,13 +22,16 @@
 
                 <div class="flex items-center gap-3">
                     <div v-if="!hydrated" class="flex items-center gap-3">
-                        <NuxtLink to="/auth/signin">
-                            <BaseButton class="px-[30px]">SIGN IN</BaseButton>
+                        <NuxtLink>
+                            <BaseButton
+                                buttonClass="px-[15px] lg:px-[30px] whitespace-nowrap min-w-fit"
+                                >SIGN IN</BaseButton
+                            >
                         </NuxtLink>
-                        <NuxtLink to="/auth/signup">
+                        <NuxtLink>
                             <BaseButton
                                 variant="secondary"
-                                class="bg-transparent px-[30px] border-muted-dark hover:bg-primary/20"
+                                class="bg-transparent px-[30px] border-muted-dark hover:bg-primary/20 whitespace-nowrap min-w-fit"
                                 >Get Started
                                 <svg
                                     width="20"
@@ -49,12 +52,15 @@
                     </div>
                     <div v-else class="flex items-center gap-3">
                         <NuxtLink v-if="!user" to="/auth/signin">
-                            <BaseButton class="px-[30px]">SIGN IN</BaseButton>
+                            <BaseButton
+                                class="px-[30px] whitespace-nowrap min-w-fit"
+                                >SIGN IN</BaseButton
+                            >
                         </NuxtLink>
                         <NuxtLink v-if="!user" to="/auth/signup">
                             <BaseButton
                                 variant="secondary"
-                                class="bg-transparent px-[30px] border-muted-dark hover:bg-primary/20"
+                                class="bg-transparent px-[30px] border-muted-dark hover:bg-primary/20 whitespace-nowrap min-w-fit"
                                 >Get Started
                                 <svg
                                     width="20"
@@ -143,7 +149,7 @@ const header = computed(() => {
         case 1:
             return "w-full md:px-[5%] lg:px-[10%] bg-transparent h-[90px] border-1 border-b";
         case 2:
-            return "fixed top-4 left-1/2 -translate-x-1/2 mx-auto w-[80%] rounded-2xl border border-blue-400/60 backdrop-blur-xl shadow-xl shadow-blue-100/50 z-50";
+            return "fixed top-4 left-1/2 -translate-x-1/2 mx-auto w-[80%] rounded-2xl border border-blue-400/60 backdrop-blur-xl shadow-xl shadow-blue-100/50 z-50 ";
         case 3:
             return "absolute top-0 left-1/4 -translate-x-1/4 w-full h-[90px] bg-transparent z-[9999]";
         case 4:

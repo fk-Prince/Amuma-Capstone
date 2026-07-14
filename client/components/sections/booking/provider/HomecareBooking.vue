@@ -280,7 +280,7 @@ import {
     getTimeSlots,
     getLocalDateStr,
     filterAvailableSlots,
-} from "~/utils/time-slot";
+} from "~/utils/time";
 import type { HomecareBooking } from "~/types/booking";
 import type { Service } from "~/types/service";
 

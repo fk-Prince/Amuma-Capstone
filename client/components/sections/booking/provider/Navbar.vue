@@ -1,33 +1,31 @@
 <template>
-    <nav class="sticky top-0 z-30 bg-white w-full mt-10">
-        <div
-            class="w-full md:w-[90%] mx-auto h-[70px] flex justify-center items-center px-3 md:px-6"
-        >
+    <nav class="z-30 mt-[2rem] w-full">
+        <div class="w-full mx-auto h-[70px] flex items-end">
             <div
                 ref="containerRef"
-                class="flex gap-4 md:gap-6 text-sm font-medium relative"
+                class="flex w-full text-[15px] font-medium relative"
             >
                 <button
                     v-for="(tab, index) in tabs"
                     :key="tab"
+                    :ref="(el) => setTabRef(el, index)"
                     @click="setTab(index)"
-                    class="pb-3 px-3 md:px-6 transition whitespace-nowrap"
+                    class="flex-1 pb-4 transition text-center whitespace-nowrap"
                     :class="
                         activeIndex === index
                             ? 'text-primary'
-                            : 'text-secondary opacity-70 hover:opacity-100'
+                            : 'text-slate-500 hover:text-slate-700'
                     "
-                    :ref="(el) => setTabRef(el, index)"
                 >
                     {{ tab }}
                 </button>
 
                 <span
-                    class="absolute bottom-0 left-0 w-full h-[2px] bg-slate-200 rounded"
+                    class="absolute bottom-0 left-0 w-full h-[1px] bg-slate-200"
                 />
 
                 <span
-                    class="absolute bottom-0 h-[2px] bg-primary rounded transition-all duration-300 ease-out"
+                    class="absolute left-0 bottom-0 h-[2px] bg-primary rounded transition-all duration-300 ease-out"
                     :style="underlineStyle"
                 />
             </div>
@@ -36,13 +34,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from "vue";
+import { ref, nextTick, onMounted, onBeforeUnmount } from "vue";
 
 const emit = defineEmits<{
     (e: "change", index: number): void;
 }>();
 
-const tabs = ["Overview", "Services", "Photos", "Reviews", "Location"];
+const tabs = ["Overview", "Services", "Reviews", "Location"];
 
 const activeIndex = ref(0);
 
@@ -55,7 +53,9 @@ const underlineStyle = ref({
 });
 
 const setTabRef = (el: any, index: number) => {
-    if (el) tabRefs.value[index] = el;
+    if (el) {
+        tabRefs.value[index] = el;
+    }
 };
 
 const updateUnderline = () => {
@@ -85,7 +85,9 @@ const setTab = async (index: number) => {
 
 const setActive = async (index: number) => {
     activeIndex.value = index;
+
     await nextTick();
+
     updateUnderline();
 };
 
@@ -93,8 +95,19 @@ defineExpose({
     setActive,
 });
 
-onMounted(() => {
-    nextTick(updateUnderline);
-    window.addEventListener("resize", updateUnderline);
+const handleResize = () => {
+    updateUnderline();
+};
+
+onMounted(async () => {
+    await nextTick();
+
+    updateUnderline();
+
+    window.addEventListener("resize", handleResize);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener("resize", handleResize);
 });
 </script>

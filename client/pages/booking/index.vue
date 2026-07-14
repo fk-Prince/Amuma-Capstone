@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-[calc(100vh-90px)] bg-primary/10 text-slate-900 flex flex-col"
+        class="min-h-[calc(100vh-90px)] bg-primary/10 text-slate-900 flex flex-col bg-slate-100"
     >
         <BookingHero />
         <AmumaServices />

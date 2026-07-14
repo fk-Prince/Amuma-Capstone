@@ -69,51 +69,16 @@ class BranchResource extends JsonResource
                 });
             }),
         ];
-        // return [
-        //     'branch_id' => $this->branch_id,
-        //     'uuid' => $this->uuid,
-        //     'name' => $this->name,
-        //     'description' => $this->description,
-        //     'image' => $this->image,
-        //     'availability' => [
-        //         'status' => $status,
-        //         'is_open' => $isOpen,
-        //         'timezone' => $timezone,
-        //         'opening_time' => $openingTime,
-        //         'closing_time' => $closingTime,
-        //     ],
-        //     'location' => $this->location,
-        //     // 'reviews' => $this->whenLoaded('reviews'),
-        //     'reviewCount' => $this->reviews->count(),
-        //     'averageRating' => $this->reviews->count() > 0
-        //         ? round($this->reviews->avg(fn($r) => (float) $r->rate), 2)
-        //         : null,
-
-        //     'subscriptions' => $this->subscriptions->map(function ($subscription) {
-        //         return [
-        //             'status' => $subscription->status,
-        //             'plans' => [
-        //                 'plan_code' => optional($subscription->plans)->plan_code,
-        //                 'name' => optional($subscription->plans)->name,
-        //             ],
-        //         ];
-        //     })->values()->all(),
-
-        // ];
     }
 
     private function normalizeTime(string $time): string
     {
-        [$timePart, $meridiem] = explode(' ', $time);
-        [$hour, $minute] = explode(':', $timePart);
-
-        $hour = (int) $hour;
-
-        if ($hour === 0) {
-            $hour = 12;
+        if (str_contains($time, 'AM') || str_contains($time, 'PM')) {
+            return $time;
         }
 
-        return sprintf('%02d:%s %s', $hour, $minute, $meridiem);
+        return Carbon::createFromFormat('H:i', $time)
+            ->format('h:i A');
     }
 
     private function calculateAutoAvailability(?string $timezone, ?string $openingTime, ?string $closingTime): bool
@@ -122,10 +87,24 @@ class BranchResource extends JsonResource
             return false;
         }
 
+        if ($openingTime === '00:00' && $closingTime === '00:00') {
+            return true;
+        }
+
         try {
             $now = Carbon::now($timezone);
-            $open = Carbon::createFromFormat('h:i A', $this->normalizeTime($openingTime), $timezone);
-            $close = Carbon::createFromFormat('h:i A', $this->normalizeTime($closingTime), $timezone);
+
+            $open = Carbon::createFromFormat(
+                'h:i A',
+                $this->normalizeTime($openingTime),
+                $timezone
+            );
+
+            $close = Carbon::createFromFormat(
+                'h:i A',
+                $this->normalizeTime($closingTime),
+                $timezone
+            );
 
             if ($close->lessThanOrEqualTo($open)) {
                 $close->addDay();

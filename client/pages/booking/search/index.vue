@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col h-screen overflow-hidden">
+    <div class="flex flex-col h-screen overflow-hidden bg-slate-100">
         <Filter />
 
         <div class="flex-1 overflow-hidden">

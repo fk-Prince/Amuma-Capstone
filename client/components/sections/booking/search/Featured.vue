@@ -1,5 +1,5 @@
 <template>
-    <section class="py-16 bg-white">
+    <section class="py-16">
         <div class="max-w-6xl mx-auto px-6">
             <div class="mb-10">
                 <span
@@ -47,7 +47,7 @@
                     v-for="branch in branches"
                     :key="branch.uuid"
                     :branch="branch"
-                    @select="$emit('select', $event)"
+                    @select="handleSelect"
                 />
             </div>
 
@@ -72,6 +72,11 @@ defineEmits(["select"]);
 const branches = ref<BranchRetrieve[]>([]);
 const loading = ref(false);
 
+const handleSelect = (branch: BranchRetrieve) => {
+    navigateTo({
+        path: `/booking/provider/${branch.uuid}`,
+    });
+};
 onMounted(async () => {
     try {
         const res = await branchService.featured({ per_page: 9 });

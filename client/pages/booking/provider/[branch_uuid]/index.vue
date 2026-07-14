@@ -1,29 +1,28 @@
 <template>
-    <div class="min-h-screen flex flex-col gap-2">
-        <Navbar @change="scrollToSection" />
+    <div class="min-h-screen flex flex-col bg-slate-100 relative">
+        <div class="w-full md:max-w-[60%] max-w-[90%] mx-auto">
+            <Navbar @change="scrollToSection" />
+            <div class="flex flex-col gap-8">
+                <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-5 scroll-mt-20"
+                    ref="overviewRef"
+                >
+                    <div class="order-1 md:order-1 flex flex-col py-4 gap-2">
+                        <ProviderImage
+                            :loading="loading"
+                            :primaryImage="branch?.image"
+                            :secondaryImage="branch?.secondaryImage"
+                        />
+                    </div>
 
-        <div
-            class="w-full md:max-w-[60%] max-w-[90%] mx-auto mt-[2rem] flex flex-col gap-8"
-        >
-            <div
-                class="grid grid-cols-1 md:grid-cols-2 gap-5 scroll-mt-20"
-                ref="overviewRef"
-            >
-                <div class="order-1 md:order-1 flex flex-col py-4 gap-2">
-                    <ProviderImage
-                        :loading="loading"
-                        :primaryImage="branch?.image"
-                        :secondaryImage="branch?.secondaryImage"
-                    />
-                </div>
-
-                <div class="order-2 md:order-2">
-                    <HeroSection
-                        :branch="branch"
-                        :loading="loading"
-                        @homecare="homecare"
-                        @facility="facility"
-                    />
+                    <div class="order-2 md:order-2">
+                        <HeroSection
+                            :branch="branch"
+                            :loading="loading"
+                            @homecare="homecare"
+                            @facility="facility"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -135,7 +134,6 @@ const overviewRef = ref<HTMLElement | null>(null);
 const servicesRef = ref<HTMLElement | null>(null);
 const reviewsRef = ref<HTMLElement | null>(null);
 const locationRef = ref<HTMLElement | null>(null);
-
 const sections = [overviewRef, servicesRef, reviewsRef, locationRef];
 
 const scrollToSection = (index: number) => {

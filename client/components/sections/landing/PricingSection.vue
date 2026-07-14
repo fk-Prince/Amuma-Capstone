@@ -79,10 +79,6 @@ import PricingCard from "~/components/ui/PricingCard.vue";
 import { planService } from "@/api/plan/PlanService";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 
-definePageMeta({
-    navVariant: 1,
-});
-
 const billingCycle = ref<"monthly" | "yearly">("monthly");
 const loading = ref(true);
 const checkout = useSubscriptionCheckout();

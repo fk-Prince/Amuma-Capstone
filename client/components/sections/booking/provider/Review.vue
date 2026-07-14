@@ -1,10 +1,6 @@
 <template>
     <section class="rounded-2xl border-slate-200 bg-white p-6 md:p-8">
         <div>
-            <p class="text-sm font-medium text-primary uppercase tracking-wide">
-                Patient Reviews
-            </p>
-
             <h2 class="text-3xl font-bold text-slate-900 my-2">
                 Ratings & Reviews
             </h2>
@@ -65,9 +61,14 @@
                     <span class="text-sm text-slate-500"> out of 5 </span>
                 </div>
 
-                <div class="flex gap-0.5 text-orange-500 text-lg mt-1 mb-4">
+                <div class="flex gap-0.5 text-lg mt-1 mb-4">
                     <span v-for="n in 5" :key="n">
-                        {{ n <= Math.round(averageRating ?? 0) ? "★" : "☆" }}
+                        <Star
+                            v-if="n <= Math.round(averageRating ?? 0)"
+                            class="h-4 w-4 text-orange-400 fill-orange-400"
+                        />
+
+                        <Star v-else class="h-4 w-4 text-slate-300" />
                     </span>
                 </div>
 
@@ -131,6 +132,25 @@
                     </button>
                 </div>
             </div>
+            <div
+                v-else
+                class="flex flex-col items-center justify-center py-12 text-center"
+            >
+                <div
+                    class="flex h-16 w-16 items-center justify-center rounded-full bg-orange-50 pl-1"
+                >
+                    <Star class="h-8 w-8 text-orange-400 fill-orange-400" />
+                </div>
+
+                <h3 class="mt-4 text-lg font-semibold text-slate-900">
+                    No reviews yet
+                </h3>
+
+                <p class="mt-2 max-w-sm text-sm text-slate-500">
+                    This provider does not have any patient reviews yet. Be the
+                    first one to share your experience.
+                </p>
+            </div>
         </template>
     </section>
 </template>
@@ -139,7 +159,7 @@
 import { ref, watch, computed } from "vue";
 import { reviewService } from "~/api/review/ReviewService";
 import type { Review } from "~/types/review";
-
+import { Star } from "lucide-vue-next";
 const props = defineProps<{
     branchUuid: string;
 }>();
