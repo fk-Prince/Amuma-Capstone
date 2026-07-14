@@ -154,17 +154,27 @@
                             details.
                         </p>
                     </h2>
-                    <AgencyForm :agency="checkout.agency" mode="new" />
+                    <AgencyForm
+                        v-model:agency="checkout.agency"
+                        v-model:errors="checkout.errors"
+                        mode="new"
+                    />
                 </div>
 
                 <div v-if="currentStep === 3">
                     <h2 class="text-xl font-bold mb-4">Branch Information</h2>
-                    <BranchForm :branch="checkout.branch" />
+                    <BranchForm
+                        v-model:branch="checkout.branch"
+                        v-model:errors="checkout.errors"
+                    />
                 </div>
 
                 <div v-if="currentStep === 4">
                     <h2 class="text-xl font-bold mb-4">Branch Configuration</h2>
-                    <SubcriptionConfigure :setting="checkout.settings" />
+                    <SubcriptionConfigure
+                        :setting="checkout.settings"
+                        :errors="checkout.errors"
+                    />
                 </div>
 
                 <div class="flex justify-between border-t pt-6">
@@ -204,7 +214,7 @@ import { ref, onMounted } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { planService } from "@/api/plan/PlanService";
 import { agencyService } from "~/api/agency/AgencyService";
-import { agencySchema } from "~/types/agency";
+import { agencySchema, agencySchema2 } from "~/types/agency";
 import { branchService } from "~/api/branch/BranchService";
 
 import BranchForm from "~/components/forms/BranchForm.vue";
@@ -262,35 +272,35 @@ const fieldKeyMap: Record<string, string> = {
 };
 
 const validateAgency = async (): Promise<boolean> => {
-    try {
-        const result = agencySchema.safeParse(checkout.agency);
+    // try {
+    const result = agencySchema2.safeParse(checkout.agency);
 
-        if (!result.success) {
-            const validationErrors: Record<string, string> = {};
+    if (!result.success) {
+        const validationErrors: Record<string, string> = {};
 
-            result.error.issues.forEach((issue: any) => {
-                const path = issue.path.join(".");
-                validationErrors[fieldKeyMap[path] ?? path] = issue.message;
-            });
+        result.error.issues.forEach((issue: any) => {
+            const path = issue.path.join(".");
+            validationErrors[fieldKeyMap[path] ?? path] = issue.message;
+        });
 
-            checkout.errors(validationErrors);
-            return false;
-        }
-        // await agencyService.validate(checkout.agency);
-        return true;
-    } catch (err: any) {
-        const errors = err?.errors || err?.response?.data?.errors;
-        console.error(err);
-        if (errors) {
-            checkout.errors = Object.fromEntries(
-                Object.entries(errors).map(([key, value]: any) => [
-                    key,
-                    Array.isArray(value) ? value[0] : value,
-                ]),
-            );
-        }
+        checkout.errors = validationErrors;
         return false;
     }
+    // await agencyService.validate(checkout.agency);
+    return true;
+    // } catch (err: any) {
+    //     const errors = err?.errors || err?.response?.data?.errors;
+    //     console.error(err);
+    //     if (errors) {
+    //         checkout.errors = Object.fromEntries(
+    //             Object.entries(errors).map(([key, value]: any) => [
+    //                 key,
+    //                 Array.isArray(value) ? value[0] : value,
+    //             ]),
+    //         );
+    //     }
+    //     return false;
+    // }
 };
 
 const validateBranch = async (): Promise<boolean> => {
@@ -315,33 +325,33 @@ const validateBranch = async (): Promise<boolean> => {
         checkout.setErrors(errors);
         return false;
     }
+    return true;
+    // try {
+    //     // await branchService.validate(checkout.branch);
+    //     return true;
+    // } catch (err: any) {
+    //     const errors = err?.errors || err?.response?.data?.errors;
 
-    try {
-        await branchService.validate(checkout.branch);
-        return true;
-    } catch (err: any) {
-        const errors = err?.errors || err?.response?.data?.errors;
+    //     const keyMap: Record<string, string> = {
+    //         name: "branch_name",
+    //         description: "branch_description",
+    //         contact_number: "branch_contact_number",
+    //         image: "branch_image",
+    //     };
 
-        const keyMap: Record<string, string> = {
-            name: "branch_name",
-            description: "branch_description",
-            contact_number: "branch_contact_number",
-            image: "branch_image",
-        };
+    //     if (errors) {
+    //         checkout.setErrors(
+    //             Object.fromEntries(
+    //                 Object.entries(errors).map(([key, value]: any) => [
+    //                     keyMap[key] ?? key,
+    //                     Array.isArray(value) ? value[0] : value,
+    //                 ]),
+    //             ),
+    //         );
+    //     }
 
-        if (errors) {
-            checkout.setErrors(
-                Object.fromEntries(
-                    Object.entries(errors).map(([key, value]: any) => [
-                        keyMap[key] ?? key,
-                        Array.isArray(value) ? value[0] : value,
-                    ]),
-                ),
-            );
-        }
-
-        return false;
-    }
+    //     return false;
+    // }
 };
 
 onMounted(async () => {

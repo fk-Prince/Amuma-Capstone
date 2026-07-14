@@ -188,6 +188,7 @@ const useGeolocation = ref(true);
 
 const locationError = computed(() => {
     const keys = [
+        "location",
         "location.street",
         "location.city",
         "location.province",
@@ -226,40 +227,43 @@ const handleLocation = ({
         },
     });
 
+    const updatedErrors = {
+        ...(props.errors || {}),
+    };
+
+    Object.keys(updatedErrors).forEach((key) => {
+        if (key === "location" || key.startsWith("location.")) {
+            delete updatedErrors[key];
+        }
+    });
+
     if (
         !street?.trim() ||
         !city?.trim() ||
         !province?.trim() ||
         !country?.trim()
     ) {
-        const newErrors: Record<string, string> = {};
+        if (!street?.trim()) {
+            updatedErrors["location.street"] = "Street is required";
+        }
 
-        if (!street?.trim())
-            newErrors["location.street"] = "Street is required";
+        if (!city?.trim()) {
+            updatedErrors["location.city"] = "City is required";
+        }
 
-        if (!city?.trim()) newErrors["location.city"] = "City is required";
+        if (!province?.trim()) {
+            updatedErrors["location.province"] = "Province is required";
+        }
 
-        if (!province?.trim())
-            newErrors["location.province"] = "Province is required";
+        if (!country?.trim()) {
+            updatedErrors["location.country"] = "Country is required";
+        }
 
-        if (!country?.trim())
-            newErrors["location.country"] = "Country is required";
-
-        emit("update:errors", { ...props.errors, ...newErrors });
         useGeolocation.value = false;
-        return;
     }
 
-    [
-        "branch_name",
-        "branch_description",
-        "location.street",
-        "location.city",
-        "location.province",
-        "location.country",
-    ].forEach(clearError);
+    emit("update:errors", updatedErrors);
 };
-
 const handleBranchImage = (event: Event) => {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -279,8 +283,13 @@ const removeBranchImage = () => {
 
 function clearError(field: string) {
     if (!props.errors) return;
-    const updated = { ...props.errors };
+
+    const updated = {
+        ...props.errors,
+    };
+
     delete updated[field];
+
     emit("update:errors", updated);
 }
 </script>

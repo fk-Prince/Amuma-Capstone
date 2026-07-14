@@ -102,7 +102,6 @@
         </div>
     </div>
 </template>
-
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import LabelInput from "../ui/BaseInput.vue";
@@ -112,10 +111,11 @@ import type { Agency } from "~/types/agency";
 const props = defineProps<{
     agency: Agency | any;
     errors?: Record<string, string> | null;
+    mode?: "new" | "edit";
 }>();
 
 const emit = defineEmits<{
-    (e: "update:agency", value: Agency): void;
+    (e: "update:agency", value: Agency | any): void;
     (e: "update:errors", value: Record<string, string>): void;
 }>();
 
@@ -124,13 +124,13 @@ const agency = computed({
     set: (value) => emit("update:agency", value),
 });
 
-console.log(props.agency);
 const errors = computed(() => props.errors);
 
 const useGeolocation = ref(true);
 
 const locationError = computed(() => {
     const keys = [
+        "location",
         "location.street",
         "location.city",
         "location.province",
@@ -157,8 +157,8 @@ const handleLocation = ({
     province: string;
     country: string;
 }) => {
-    emit("update:agency", {
-        ...props.agency,
+    const updatedAgency = {
+        ...agency.value,
         location: {
             street: street ?? "",
             city: city ?? "",
@@ -167,6 +167,18 @@ const handleLocation = ({
             latitude: lat ?? 0,
             longitude: lng ?? 0,
         },
+    };
+
+    emit("update:agency", updatedAgency);
+
+    const updatedErrors = {
+        ...(props.errors || {}),
+    };
+
+    Object.keys(updatedErrors).forEach((key) => {
+        if (key === "location" || key.startsWith("location.")) {
+            delete updatedErrors[key];
+        }
     });
 
     if (
@@ -175,44 +187,37 @@ const handleLocation = ({
         !province?.trim() ||
         !country?.trim()
     ) {
-        const newErrors: Record<string, string> = {};
+        if (!street?.trim()) {
+            updatedErrors["location.street"] = "Street is required";
+        }
 
-        if (!street?.trim())
-            newErrors["location.street"] = "Street is required";
+        if (!city?.trim()) {
+            updatedErrors["location.city"] = "City is required";
+        }
 
-        if (!city?.trim()) newErrors["location.city"] = "City is required";
+        if (!province?.trim()) {
+            updatedErrors["location.province"] = "Province is required";
+        }
 
-        if (!province?.trim())
-            newErrors["location.province"] = "Province is required";
-
-        if (!country?.trim())
-            newErrors["location.country"] = "Country is required";
-
-        emit("update:errors", {
-            ...props.errors,
-            ...newErrors,
-        });
+        if (!country?.trim()) {
+            updatedErrors["location.country"] = "Country is required";
+        }
 
         useGeolocation.value = false;
-        return;
     }
 
-    [
-        "agency_name",
-        "agency_description",
-        "location.street",
-        "location.city",
-        "location.province",
-        "location.country",
-    ].forEach(clearError);
+    emit("update:errors", updatedErrors);
 };
 
 function clearError(field: string) {
     if (!props.errors) return;
 
-    const updated = { ...props.errors };
-    delete updated[field];
+    const updatedErrors = {
+        ...props.errors,
+    };
 
-    emit("update:errors", updated);
+    delete updatedErrors[field];
+
+    emit("update:errors", updatedErrors);
 }
 </script>
