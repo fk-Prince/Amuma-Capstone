@@ -318,7 +318,6 @@ const pageSubtitle = computed(() => {
 
 <template>
     <div class="flex w-full flex-col relative bg-slate-50/40">
-        <!-- Header -->
         <div
             class="flex flex-wrap items-center justify-between gap-4 border-b bg-white px-8 py-6"
         >
@@ -387,7 +386,6 @@ const pageSubtitle = computed(() => {
         </div>
 
         <template v-else>
-            <!-- Stepper -->
             <div class="border-b bg-white px-8">
                 <div class="flex gap-10">
                     <button
@@ -445,7 +443,6 @@ const pageSubtitle = computed(() => {
             </div>
 
             <Transition name="fade-slide" mode="out-in">
-                <!-- Information tab -->
                 <div
                     v-if="activeTab === 'information'"
                     key="information"
@@ -688,7 +685,6 @@ const pageSubtitle = computed(() => {
                     </div>
                 </div>
 
-                <!-- Permissions tab -->
                 <div v-else key="permissions" class="space-y-5 p-8">
                     <div
                         class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
@@ -884,7 +880,6 @@ const pageSubtitle = computed(() => {
                 </div>
             </Transition>
 
-            <!-- Footer -->
             <div
                 class="sticky bottom-0 mt-auto flex items-center justify-between gap-3 border-t bg-white/95 px-8 py-5 shadow-[0_-4px_12px_-8px_rgba(0,0,0,0.15)] backdrop-blur"
             >
