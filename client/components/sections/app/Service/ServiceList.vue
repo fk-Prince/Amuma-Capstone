@@ -3,8 +3,20 @@ import { ref } from "vue";
 import type { Service } from "~/types/service";
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
+import {
+    ChevronDown,
+    Pencil,
+    UserPlus,
+    Trash2,
+    Clock,
+    Tag,
+    Banknote,
+    Stethoscope,
+    CheckCircle2,
+    XCircle,
+} from "lucide-vue-next";
 
-const { canUpdate } = usePermissions();
+const { canUpdate, canCreate } = usePermissions();
 
 const props = defineProps<{
     loading: boolean;
@@ -13,26 +25,50 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     edit: [service: Service];
+    assign: [service: Service];
 }>();
 
-const expandedServices = ref<number[]>([]);
+// const expandedServices = ref<number[]>([]);
+
+// const isExpanded = (service_id: number | undefined) => {
+//     if (service_id === undefined) return false;
+//     return expandedServices.value.includes(service_id);
+// };
+
+// const toggleService = (service_id: number | undefined) => {
+//     if (service_id === undefined) return false;
+//     expandedServices.value.includes(service_id)
+//         ? (expandedServices.value = expandedServices.value.filter(
+//               (x) => x !== service_id,
+//           ))
+//         : expandedServices.value.push(service_id);
+// };
+
+const expandedService = ref<number | null>(null);
 
 const isExpanded = (service_id: number | undefined) => {
-    if (service_id === undefined) return false;
-    return expandedServices.value.includes(service_id);
+    if (!service_id) return false;
+
+    return expandedService.value === service_id;
 };
 
 const toggleService = (service_id: number | undefined) => {
-    if (service_id === undefined) return false;
-    expandedServices.value.includes(service_id)
-        ? (expandedServices.value = expandedServices.value.filter(
-              (x) => x !== service_id,
-          ))
-        : expandedServices.value.push(service_id);
+    if (!service_id) return;
+
+    if (expandedService.value === service_id) {
+        expandedService.value = null;
+        return;
+    }
+
+    expandedService.value = service_id;
 };
 
 const openEditService = (service: Service) => {
     emit("edit", service);
+};
+
+const openAssignService = (service: Service) => {
+    emit("assign", service);
 };
 
 const formatDuration = (duration: string) => {
@@ -50,53 +86,59 @@ const formatPrice = (price: number | string) => {
 </script>
 
 <template>
-    <div class="space-y-3 max-h-[560px]">
-        <div class="overflow-hidden pr-1 space-y-3 scroll-thin p-3">
+    <div class="space-y-3">
+        <div class="space-y-3 scrollbar-thin pr-1">
             <template v-if="loading">
                 <div
                     v-for="n in 5"
                     :key="n"
-                    class="rounded-xl border border-gray-100 border-l-4 border-l-gray-200 bg-white p-4 animate-pulse"
+                    class="rounded-2xl border border-[#E4EFED] bg-white p-4 animate-pulse"
                 >
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
-                            <div class="h-5 w-24 bg-gray-200 rounded"></div>
+                            <div class="h-5 w-32 bg-slate-100 rounded-md" />
 
                             <div class="flex gap-2 mt-3">
-                                <div class="h-3 w-20 bg-gray-200 rounded"></div>
-                                <div class="h-3 w-16 bg-gray-200 rounded"></div>
-                                <div class="h-3 w-24 bg-gray-200 rounded"></div>
+                                <div class="h-3 w-20 bg-slate-100 rounded" />
+                                <div class="h-3 w-16 bg-slate-100 rounded" />
+                                <div class="h-3 w-24 bg-slate-100 rounded" />
                             </div>
                         </div>
 
                         <div class="flex items-center gap-4">
-                            <div class="w-3 h-3 rounded-full bg-gray-200"></div>
-                            <div class="w-4 h-4 rounded bg-gray-200"></div>
+                            <div class="w-14 h-5 rounded-full bg-slate-100" />
+                            <div class="w-4 h-4 rounded bg-slate-100" />
                         </div>
                     </div>
                 </div>
             </template>
+
             <template v-else>
                 <div
                     v-if="services.length === 0"
-                    class="flex flex-col items-center justify-center py-12 text-center"
+                    class="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[#E4EFED] bg-[#F7FAF9]/40"
                 >
-                    <svg
-                        viewBox="0 0 24 24"
-                        class="w-10 h-10 text-gray-300 mb-3"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
+                    <div
+                        class="w-14 h-14 rounded-full bg-[#EAF4F2] flex items-center justify-center mb-3"
                     >
-                        <path d="M3 21h18M5 21V7l7-4 7 4v14" />
-                        <path d="M9 21v-6h6v6" />
-                    </svg>
-                    <p class="text-sm font-medium text-gray-500">
-                        No Service found
+                        <svg
+                            viewBox="0 0 24 24"
+                            class="w-6 h-6 text-primary"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M3 21h18M5 21V7l7-4 7 4v14" />
+                            <path d="M9 21v-6h6v6" />
+                        </svg>
+                    </div>
+
+                    <p class="text-sm font-medium text-[#16302E]">
+                        No services found
                     </p>
-                    <p class="text-xs text-gray-400 mt-1">
+                    <p class="text-xs text-[#6B8A87] mt-1 max-w-xs">
                         Try adjusting your search or filters, or add a new
                         service.
                     </p>
@@ -106,85 +148,86 @@ const formatPrice = (price: number | string) => {
                     <div
                         v-for="service in services"
                         :key="service.service_id"
-                        class="rounded-xl border border-gray-100 border-l-4 bg-gray-50/60 overflow-hidden bg-white"
-                        :class="
-                            service.is_available
-                                ? 'border-l-emerald-400'
-                                : 'border-l-gray-300'
-                        "
+                        class="group rounded-2xl border border-[#E4EFED] bg-white overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-lg"
                     >
                         <button
                             type="button"
                             @click="toggleService(service.service_id)"
-                            class="w-full text-left hover:bg-gray-100/60 transition-colors p-4 flex items-center justify-between gap-3"
+                            class="w-full flex items-center justify-between gap-4 p-5 text-left"
+                            :class="
+                                isExpanded(service.service_id)
+                                    ? 'bg-[#F7FAF9]'
+                                    : 'hover:bg-[#FAFCFB]'
+                            "
                         >
-                            <div class="min-w-0">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <p class="font-semibold text-gray-800">
-                                        {{ service.service_name }}
-                                    </p>
-                                    <span
-                                        v-if="service.category_name"
-                                        class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-600"
-                                    >
-                                        {{ service.category_name }}
-                                    </span>
-                                </div>
+                            <div class="flex items-center gap-4 min-w-0">
                                 <div
-                                    class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 text-xs text-gray-400"
+                                    class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
                                 >
-                                    <span class="flex items-center gap-1">
-                                        <svg
-                                            viewBox="0 0 24 24"
-                                            class="w-3.5 h-3.5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="1.8"
-                                        >
-                                            <path
-                                                d="M2.5 19h19l-1.7-9.3-4.8 4-3-6.7-3 6.7-4.8-4Z"
-                                            />
-                                        </svg>
-                                        {{ service.type }}
-                                    </span>
-                                    <span class="text-gray-200">|</span>
-                                    <span class="flex items-center gap-1">
-                                        <svg
-                                            viewBox="0 0 24 24"
-                                            class="w-3.5 h-3.5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="1.8"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                        >
-                                            <circle cx="12" cy="12" r="9" />
-                                            <path d="M12 7v5l3 3" />
-                                        </svg>
-                                        {{
-                                            formatDuration(
-                                                service.maximum_duration,
-                                            )
-                                        }}
-                                    </span>
-                                    <span class="text-gray-200">|</span>
-                                    <span
-                                        class="flex items-center gap-1 font-medium text-gray-600"
+                                    <Stethoscope class="w-5 h-5 text-primary" />
+                                </div>
+
+                                <div class="min-w-0">
+                                    <div
+                                        class="flex items-center gap-2 flex-wrap"
                                     >
-                                        {{ formatPrice(service.price) }}
-                                    </span>
+                                        <p
+                                            class="font-semibold text-[#16302E] truncate"
+                                        >
+                                            {{ service.service_name }}
+                                        </p>
+
+                                        <span
+                                            v-if="service.category_name"
+                                            class="px-2 py-0.5 rounded-full text-[11px] bg-violet-50 text-violet-600"
+                                        >
+                                            {{ service.category_name }}
+                                        </span>
+                                    </div>
+
+                                    <div
+                                        class="flex flex-wrap items-center gap-3 mt-2 text-xs text-[#6B8A87]"
+                                    >
+                                        <span class="flex items-center gap-1">
+                                            <Tag class="w-3.5 h-3.5" />
+                                            {{ service.type_formatted }}
+                                        </span>
+
+                                        <span class="flex items-center gap-1">
+                                            <Clock class="w-3.5 h-3.5" />
+                                            {{
+                                                formatDuration(
+                                                    service.maximum_duration,
+                                                )
+                                            }}
+                                        </span>
+
+                                        <span
+                                            class="flex items-center gap-1 font-semibold text-primary"
+                                        >
+                                            <Banknote class="w-3.5 h-3.5" />
+                                            {{ formatPrice(service.price) }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-4 shrink-0">
+                            <div class="flex items-center gap-3 shrink-0">
                                 <span
-                                    class="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                                    class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium"
                                     :class="
                                         service.is_available
-                                            ? 'bg-emerald-100 text-emerald-600'
+                                            ? 'bg-green-50 text-green-600'
                                             : 'bg-gray-100 text-gray-500'
                                     "
                                 >
+                                    <CheckCircle2
+                                        v-if="service.is_available"
+                                        class="w-3.5 h-3.5"
+                                    />
+
+                                    <XCircle v-else class="w-3.5 h-3.5" />
+
                                     {{
                                         service.is_available
                                             ? "Available"
@@ -192,119 +235,247 @@ const formatPrice = (price: number | string) => {
                                     }}
                                 </span>
 
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    class="w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200"
+                                <ChevronDown
+                                    class="w-4 h-4 text-[#9AB3AF] transition-transform"
                                     :class="{
                                         'rotate-180': isExpanded(
                                             service.service_id,
                                         ),
                                     }"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                >
-                                    <path
-                                        d="M6 9l6 6 6-6"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    />
-                                </svg>
+                                />
                             </div>
                         </button>
 
-                        <div
-                            v-if="isExpanded(service.service_id)"
-                            class="px-4 pb-4 border-t border-gray-100 pt-4"
-                        >
-                            <div class="flex items-center gap-2 mb-3">
-                                <button
-                                    v-if="canUpdate(Modules.Services)"
-                                    type="button"
-                                    @click.stop="openEditService(service)"
-                                    class="flex items-center gap-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 bg-white hover:border-blue-300 hover:text-blue-600 transition-colors"
+                        <Transition name="slide">
+                            <div
+                                v-if="isExpanded(service.service_id)"
+                                class="border-t border-[#E4EFED] bg-[#FAFCFB] p-5 space-y-6"
+                            >
+                                <div
+                                    class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                                 >
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        class="w-3.5 h-3.5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                    >
-                                        <path
-                                            d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                        />
-                                    </svg>
-                                    Edit Service
-                                </button>
+                                    <div>
+                                        <h4
+                                            class="text-sm font-semibold text-[#16302E]"
+                                        >
+                                            Service Management
+                                        </h4>
 
-                                <button
-                                    type="button"
-                                    class="flex items-center gap-1.5 text-xs font-medium text-rose-500 border border-rose-200 rounded-lg px-3 py-1.5 bg-white hover:bg-rose-50 transition-colors"
-                                >
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        class="w-3.5 h-3.5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                    >
-                                        <path
-                                            d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                        />
-                                    </svg>
-                                    Delete
-                                </button>
-                            </div>
+                                        <p class="text-xs text-[#9AB3AF] mt-1">
+                                            Manage service settings and
+                                            assignments
+                                        </p>
+                                    </div>
 
-                            <div class="grid grid-cols-2 gap-3 text-xs">
-                                <div
-                                    class="rounded-lg bg-white border border-gray-100 p-3"
-                                >
-                                    <p class="text-gray-400 mb-0.5">Price</p>
-                                    <p class="font-semibold text-gray-700">
-                                        {{ formatPrice(service.price) }}
-                                    </p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <button
+                                            v-if="canUpdate(Modules.Services)"
+                                            @click.stop="
+                                                openEditService(service)
+                                            "
+                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition"
+                                        >
+                                            <Pencil class="w-4 h-4" />
+                                            Edit
+                                        </button>
+
+                                        <button
+                                            v-if="canCreate(Modules.Services)"
+                                            @click.stop="
+                                                openAssignService(service)
+                                            "
+                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition"
+                                        >
+                                            <UserPlus class="w-4 h-4" />
+                                            Assign Employee
+                                        </button>
+
+                                        <button
+                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-rose-600 bg-white border border-rose-200 hover:bg-rose-50 transition"
+                                        >
+                                            <Trash2 class="w-4 h-4" />
+                                            Delete
+                                        </button>
+                                    </div>
                                 </div>
+
                                 <div
-                                    class="rounded-lg bg-white border border-gray-100 p-3"
+                                    class="rounded-2xl border border-[#E4EFED] bg-white overflow-hidden shadow-sm"
                                 >
-                                    <p class="text-gray-400 mb-0.5">Duration</p>
-                                    <p class="font-semibold text-gray-700">
-                                        {{
-                                            formatDuration(
-                                                service.maximum_duration,
-                                            )
-                                        }}
-                                    </p>
-                                </div>
-                                <div
-                                    class="rounded-lg bg-white border border-gray-100 p-3"
-                                >
-                                    <p class="text-gray-400 mb-0.5">Type</p>
-                                    <p
-                                        class="font-semibold text-gray-700 capitalize"
+                                    <div
+                                        class="px-5 py-4 border-b border-[#E4EFED] bg-gradient-to-r from-[#F7FAF9] to-white"
                                     >
-                                        {{ service.type }}
-                                    </p>
+                                        <div class="flex items-center gap-2">
+                                            <Stethoscope
+                                                class="w-4 h-4 text-primary"
+                                            />
+
+                                            <h3
+                                                class="text-sm font-semibold text-[#16302E]"
+                                            >
+                                                Service Information
+                                            </h3>
+                                        </div>
+
+                                        <p class="text-xs text-[#9AB3AF] mt-1">
+                                            Overview of service configuration
+                                        </p>
+                                    </div>
+
+                                    <div
+                                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+                                    >
+                                        <div class="p-5">
+                                            <div
+                                                class="flex items-center gap-2 mb-3"
+                                            >
+                                                <Tag
+                                                    class="w-4 h-4 text-primary"
+                                                />
+
+                                                <span
+                                                    class="text-[11px] uppercase tracking-wide text-[#9AB3AF]"
+                                                >
+                                                    Category
+                                                </span>
+                                            </div>
+
+                                            <p
+                                                class="text-sm font-semibold text-[#16302E]"
+                                            >
+                                                {{
+                                                    service.category_name || "-"
+                                                }}
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            class="p-5 border-b lg:border-b-0 lg:border-r border-[#E4EFED]"
+                                        >
+                                            <div
+                                                class="flex items-center gap-2 mb-3"
+                                            >
+                                                <Banknote
+                                                    class="w-4 h-4 text-primary"
+                                                />
+
+                                                <span
+                                                    class="text-[11px] uppercase tracking-wide text-[#9AB3AF]"
+                                                >
+                                                    Price
+                                                </span>
+                                            </div>
+
+                                            <p
+                                                class="text-lg font-bold text-primary"
+                                            >
+                                                {{ formatPrice(service.price) }}
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            class="p-5 border-b lg:border-b-0 lg:border-r border-[#E4EFED]"
+                                        >
+                                            <div
+                                                class="flex items-center gap-2 mb-3"
+                                            >
+                                                <Clock
+                                                    class="w-4 h-4 text-primary"
+                                                />
+
+                                                <span
+                                                    class="text-[11px] uppercase tracking-wide text-[#9AB3AF]"
+                                                >
+                                                    Duration
+                                                </span>
+                                            </div>
+
+                                            <p
+                                                class="text-lg font-bold text-[#16302E]"
+                                            >
+                                                {{
+                                                    formatDuration(
+                                                        service.maximum_duration,
+                                                    )
+                                                }}
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            class="p-5 border-b lg:border-b-0 lg:border-r border-[#E4EFED]"
+                                        >
+                                            <div
+                                                class="flex items-center gap-2 mb-3"
+                                            >
+                                                <Tag
+                                                    class="w-4 h-4 text-primary"
+                                                />
+
+                                                <span
+                                                    class="text-[11px] uppercase tracking-wide text-[#9AB3AF]"
+                                                >
+                                                    Service Type
+                                                </span>
+                                            </div>
+
+                                            <p
+                                                class="text-sm font-semibold text-[#16302E]"
+                                            >
+                                                {{ service.type_formatted }}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div
-                                    class="rounded-lg bg-white border border-gray-100 p-3"
-                                >
-                                    <p class="text-gray-400 mb-0.5">Category</p>
-                                    <p class="font-semibold text-gray-700">
-                                        {{ service.category_name || "—" }}
-                                    </p>
+
+                                <!-- Status -->
+                                <div class="flex flex-wrap gap-3">
+                                    <div
+                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4EFED] text-xs text-[#6B8A87]"
+                                    >
+                                        <span
+                                            class="w-2 h-2 rounded-full bg-green-500"
+                                        />
+
+                                        Available for booking
+                                    </div>
+
+                                    <div
+                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4EFED] text-xs text-[#6B8A87]"
+                                    >
+                                        Updated recently
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </Transition>
                     </div>
                 </template>
             </template>
         </div>
     </div>
 </template>
+
+<style scoped>
+.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #c7d9d6 transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #c7d9d6;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: #9fb8b4;
+}
+</style>

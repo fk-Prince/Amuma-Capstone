@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Models\Employee;
+use App\Models\EmployeeBranch;
 use App\Models\EmployeePermission;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -83,5 +84,49 @@ class EmployeeRepository
             'total_employee' => $totalEmployees,
             'status_counts' => $statusCounts,
         ];
+    }
+
+    public function getPaginateEmployeeSchedule(array $payload, string $branchId)
+    {
+        return EmployeeBranch::with('employees')
+            ->where('branch_id', $branchId)
+            ->paginate($payload['per_page']);
+    }
+
+
+    public function getEmployeeServices(string $branchId, array $payload)
+    {
+        $query = EmployeeBranch::query()
+            ->where('branch_id', $branchId)
+            ->whereDoesntHave('employeeServices', function ($query) use ($payload) {
+                $query->where('service_id', $payload['service_id']);
+            })
+            ->with('employees');
+
+        if (isset($payload['per_page'])) {
+            return $query->paginate((int) $payload['per_page']);
+        }
+
+        return $query->get();
+        // $service = Service::where('service_id', $payload['service_id'])
+        //     ->first();
+
+        // if (!$service) {
+        //     return collect();
+        // }
+
+        // $query = EmployeeBranch::query()
+        //     ->where('branch_id', $branchId)
+        //     ->where('assignment_type', $service->type)
+        //     ->whereDoesntHave('employeeServices', function ($query) use ($payload) {
+        //         $query->where('service_id', $payload['service_id']);
+        //     })
+        //     ->with('employees');
+
+        // if (isset($payload['per_page'])) {
+        //     return $query->paginate((int) $payload['per_page']);
+        // }
+
+        // return $query->get();
     }
 }

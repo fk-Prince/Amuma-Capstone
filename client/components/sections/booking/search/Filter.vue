@@ -5,7 +5,7 @@
         <div class="relative">
             <button
                 @click="isHide = !isHide"
-                class="absolute z-100 left-0 rotate-180 -bottom-9 w-9 h-9 rounded-full border bg-primary flex items-center justify-center shadow-md transition-transform duration-300"
+                class="absolute z-100 left-0 rotate-180 -bottom-9 w-9 h-9 rounded-full border bg-white flex items-center justify-center shadow-md transition-transform duration-300"
                 :class="isHide ? '-bottom-6' : '-bottom-4'"
             >
                 <Dropdown :isOpen="isHide" />
@@ -62,7 +62,7 @@
                     </div>
 
                     <button
-                        class="w-12 h-12 bg-secondary flex items-center justify-center rounded-full border"
+                        class="w-12 h-12 bg-primary flex items-center justify-center rounded-full border"
                         @click="handleSearch"
                     >
                         <Search extraClass="text-white" />
@@ -82,7 +82,7 @@
                         :class="[
                             'px-4 py-1.5 rounded-full text-sm font-medium border transition-colors',
                             activeSortOption === sort.value
-                                ? 'bg-secondary text-white border-secondary'
+                                ? 'bg-secondary  text-white border-muted'
                                 : 'bg-white text-slate-600 border-slate-200 hover:border-secondary hover:text-secondary',
                         ]"
                     >
@@ -96,7 +96,7 @@
     <header class="md:hidden border-b bg-white shadow-sm relative">
         <button
             @click="isHide = !isHide"
-            class="absolute z-[1000] rotate-180 left-9 -translate-x-1/2 w-9 h-9 rounded-full border bg-primary flex items-center justify-center shadow-md transition-transform duration-300"
+            class="absolute z-[1000] rotate-180 left-9 -translate-x-1/2 w-9 h-9 rounded-full border bg-white flex items-center justify-center shadow-md transition-transform duration-300"
             :class="isHide ? '-bottom-6' : '-bottom-5'"
         >
             <Dropdown :isOpen="isHide" />
@@ -162,7 +162,7 @@
                             class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all"
                             :class="
                                 activeSortOption === sort.value
-                                    ? 'bg-secondary text-white border-secondary'
+                                    ? 'bg-secondary text-white border-muted'
                                     : 'bg-white text-slate-600 border-slate-200'
                             "
                         >
@@ -172,7 +172,7 @@
                 </div>
 
                 <button
-                    class="w-full py-2.5 bg-secondary flex items-center justify-center gap-2 rounded-full border"
+                    class="w-full py-2.5 bg-primary flex items-center justify-center gap-2 rounded-full border"
                     @click="handleSearch"
                 >
                     <Search class="text-white" />

@@ -30,12 +30,14 @@ class BranchResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'image' => $this->image,
-            'availability' => [
+            'settings' => [
                 'status' => $status,
                 'is_open' => $isOpen,
                 'timezone' => $timezone,
                 'opening_time' => $openingTime,
                 'closing_time' => $closingTime,
+                'ald_per_hour' => 150.00,
+                'ald_min_hour' => 8
             ],
             'location' => $this->location,
             'reviewCount' => $this->reviews->count(),
@@ -51,23 +53,23 @@ class BranchResource extends JsonResource
                     ],
                 ];
             })->values()->all(),
-            'services' => $this->whenLoaded('services', function () {
-                return $this->services->map(function ($service) {
-                    return [
-                        'service_id' => $service->service_id,
-                        'service_uuid' => $service->service_uuid,
-                        'service_name' => $service->service_name,
-                        'price' => $service->price,
-                        'maximum_duration' => $service->maximum_duration,
-                        'is_available' => $service->is_available,
-                        'type' => $service->type,
-                        'category' => $service->category ? [
-                            'category_id' => $service->category->category_id,
-                            'category_name' => $service->category->category_name,
-                        ] : null,
-                    ];
-                });
-            }),
+            // 'services' => $this->whenLoaded('services', function () {
+            //     return $this->services->map(function ($service) {
+            //         return [
+            //             'service_id' => $service->service_id,
+            //             'service_uuid' => $service->service_uuid,
+            //             'service_name' => $service->service_name,
+            //             'price' => $service->price,
+            //             'maximum_duration' => $service->maximum_duration,
+            //             'is_available' => $service->is_available,
+            //             'type' => $service->type,
+            //             'category' => $service->category ? [
+            //                 'category_id' => $service->category->category_id,
+            //                 'category_name' => $service->category->category_name,
+            //             ] : null,
+            //         ];
+            //     });
+            // }),
         ];
     }
 

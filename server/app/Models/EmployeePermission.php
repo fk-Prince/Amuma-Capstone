@@ -16,7 +16,8 @@ class EmployeePermission extends Model
         'module_id',
         'can_read',
         'can_update',
-        'can_create'
+        'can_create',
+        'can_approve',
     ];
 
     public function modules()

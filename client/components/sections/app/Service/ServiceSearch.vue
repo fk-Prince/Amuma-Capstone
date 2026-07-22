@@ -3,7 +3,10 @@ import BaseInput from "~/components/ui/BaseInput.vue";
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
 
+import { Search, Plus } from "lucide-vue-next";
+
 const { canCreate } = usePermissions();
+
 defineProps<{
     modelValue: string;
     activeTab: string;
@@ -25,61 +28,59 @@ const tabs = [
 <template>
     <div class="space-y-4">
         <div class="relative">
-            <svg
-                viewBox="0 0 24 24"
-                class="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-            >
-                <circle cx="11" cy="11" r="7" />
-                <path d="M21 21l-4.35-4.35" stroke-linecap="round" />
-            </svg>
+            <Search
+                class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9AB3AF]"
+            />
 
             <BaseInput
                 :model-value="modelValue"
                 @update:model-value="emit('update:modelValue', $event)"
-                placeholder="Search service..."
-                input-class="pl-[3rem]"
+                placeholder="Search services..."
+                input-class="pl-[3rem] rounded-xl border-[#E4EFED] focus:border-[#0E7C7B] focus:ring-[#0E7C7B]/20"
             />
         </div>
 
-        <div class="flex flex-wrap items-center justify-between gap-3 py-4">
-            <div class="flex items-center gap-1 bg-gray-50 rounded-full p-1">
+        <div
+            class="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+        >
+            <div
+                class="inline-flex w-full lg:w-fit overflow-x-auto items-center gap-1 rounded-2xl bg-[#F7FAF9] border border-[#E4EFED] p-1"
+            >
                 <button
                     v-for="tab in tabs"
                     :key="tab"
+                    type="button"
                     @click="emit('update:activeTab', tab)"
-                    class="px-3.5 py-1.5 rounded-full text-xs"
+                    class="relative whitespace-nowrap px-4 py-2 rounded-xl text-xs font-medium transition-all duration-200"
                     :class="
                         activeTab === tab
-                            ? 'bg-white shadow text-gray-800'
-                            : 'text-gray-400'
+                            ? `
+                                bg-white
+                                text-[#16302E]
+                                shadow-sm
+                                ring-1
+                                ring-[#E4EFED]
+                            `
+                            : `
+                                text-[#6B8A87]
+                                hover:text-[#16302E]
+                                hover:bg-white/60
+                            `
                     "
                 >
                     {{ tab }}
                 </button>
             </div>
+
             <button
                 v-if="canCreate(Modules.Services)"
+                type="button"
                 @click="emit('addService')"
-                class="inline-flex items-center gap-2 rounded-xl border border-primary bg-white px-5 py-2.5 text-sm font-medium text-primary transition-all duration-200 hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/30"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 h-11 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-90 hover:shadow-md active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="2"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 4v16m8-8H4"
-                    />
-                </svg>
-                <span>Add Service</span>
+                <Plus class="w-4 h-4" />
+
+                <span> Add Service </span>
             </button>
         </div>
     </div>

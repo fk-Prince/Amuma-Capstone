@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, readonly } from "vue";
+import { computed, onMounted, ref } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import {
     createEmployee,
@@ -12,21 +12,41 @@ import {
 import Combobox from "~/components/ui/Combobox.vue";
 import { moduleService } from "~/api/module/ModuleService";
 import type { Module } from "~/types/module";
-import { useRoute } from "vue-router";
 import { employeeService } from "~/api/employee/EmployeeService";
-import { useToast } from "~/composables/useToast";
 import { useBranchStore } from "~/stores/branch";
+import { useToast } from "~/composables/useToast";
 import { useAuthUser } from "~/composables/useAuthUser";
+import { useRoute } from "vue-router";
+import {
+    MoveLeft,
+    Camera,
+    X,
+    Check,
+    User,
+    MapPin,
+    Briefcase,
+    ShieldCheck,
+    Search,
+} from "lucide-vue-next";
+
 const branchStore = useBranchStore();
 const user = useAuthUser();
 const { success, error } = useToast();
-const emit = defineEmits<{ back: [] }>();
-
 const props = defineProps<{
     employee?: Employee | null;
+    mode?: "view" | "edit";
 }>();
 
-const isEditMode = computed(() => !!props.employee?.uuid);
+const emit = defineEmits<{
+    back: [];
+    edit: [];
+}>();
+
+const isViewMode = computed(() => props.mode === "view");
+const hasExistingEmployee = computed(() => !!props.employee?.uuid);
+const isEditMode = computed(
+    () => hasExistingEmployee.value && !isViewMode.value,
+);
 
 const activeTab = ref("information");
 const employee = ref<EmployeePayload>(createEmployee());
@@ -51,8 +71,17 @@ type PermissionSet = {
 const modules = ref<Module[]>([]);
 const modulesLoading = ref(false);
 const modulesError = ref<string | null>(null);
+const moduleSearch = ref("");
 
 const permissions = ref<Record<number, PermissionSet>>({});
+
+const filteredModules = computed(() => {
+    const query = moduleSearch.value.trim().toLowerCase();
+    if (!query) return modules.value;
+    return modules.value.filter((m) =>
+        m.module_name.toLowerCase().includes(query),
+    );
+});
 
 const allPermissionsEnabled = computed(
     () =>
@@ -152,6 +181,7 @@ function loadEmployee() {
 }
 
 function openFilePicker() {
+    if (isViewMode.value) return;
     fileInput.value?.click();
 }
 
@@ -237,10 +267,10 @@ async function saveEmployee() {
         success(res.message);
         emit("back");
         if (user.value?.uuid === props.employee?.uuid) {
-            await branchStore.fetchBranches();
+            await branchStore.fetchBranches(useRoute());
         }
     } catch (err: any) {
-        success(err?.data?.message || err?.message || "Internal Server Error");
+        error(err?.data?.message || err?.message || "Internal Server Error");
         console.error(err);
     } finally {
         saving.value = false;
@@ -250,7 +280,7 @@ async function saveEmployee() {
 onMounted(async () => {
     await loadModules();
 
-    if (isEditMode.value) {
+    if (hasExistingEmployee.value) {
         loadEmployee();
     }
 });
@@ -264,32 +294,73 @@ const avatarPreview = computed(() => {
 
     return employee.value.avatar;
 });
-import { MoveLeft } from "lucide-vue-next";
+
+const initials = computed(() => {
+    const first = employee.value.first_name?.[0] ?? "";
+    const last = employee.value.last_name?.[0] ?? "";
+    return (first + last).toUpperCase();
+});
+
+const pageTitle = computed(() => {
+    if (isViewMode.value) return "View Employee";
+    if (isEditMode.value) return "Edit Employee";
+    return "Add Employee";
+});
+
+const pageSubtitle = computed(() => {
+    if (isViewMode.value)
+        return "Review this employee's details and system permissions.";
+    if (isEditMode.value)
+        return "Update the employee details and system permissions.";
+    return "Fill in the employee details and assign system permissions.";
+});
 </script>
 
 <template>
-    <div class="flex w-full flex-col relative">
-        <div class="flex justify-between items-center border-b">
-            <div class="px-8 py-6">
-                <h1 class="text-2xl font-bold text-gray-900">
-                    {{ isEditMode ? "Edit Employee" : "Add Employee" }}
-                </h1>
-                <p class="mt-1 text-sm text-gray-500">
-                    {{
-                        isEditMode
-                            ? "Update the employee details and system permissions."
-                            : "Fill in the employee details and assign system permissions."
-                    }}
-                </p>
+    <div class="flex w-full flex-col relative bg-slate-50/40">
+        <!-- Header -->
+        <div
+            class="flex flex-wrap items-center justify-between gap-4 border-b bg-white px-8 py-6"
+        >
+            <div class="flex items-center gap-4">
+                <div
+                    v-if="isEditMode || isViewMode"
+                    class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-sm font-semibold text-primary"
+                >
+                    <img
+                        v-if="avatarPreview"
+                        :src="String(avatarPreview)"
+                        class="h-full w-full object-cover"
+                    />
+                    <span v-else>{{ initials || "—" }}</span>
+                </div>
+
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {{ pageTitle }}
+                    </h1>
+                    <p class="mt-1 text-sm text-gray-500">
+                        {{ pageSubtitle }}
+                    </p>
+                </div>
             </div>
 
-            <div>
+            <div class="flex gap-3">
+                <button
+                    v-if="isViewMode"
+                    type="button"
+                    @click="emit('edit')"
+                    class="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+                >
+                    Update Employee
+                </button>
+
                 <button
                     @click="emit('back')"
                     type="button"
-                    class="px-6 py-2.5 font-medium hover:underline flex gap-2 items-center"
+                    class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-slate-100 hover:text-gray-900"
                 >
-                    <MoveLeft class="w-4" /> Back
+                    <MoveLeft class="w-4 h-4" /> Back
                 </button>
             </div>
         </div>
@@ -309,28 +380,52 @@ import { MoveLeft } from "lucide-vue-next";
             <button
                 type="button"
                 @click="loadEmployee"
-                class="font-medium underline"
+                class="font-medium underline underline-offset-2"
             >
                 Retry
             </button>
         </div>
 
         <template v-else>
-            <div class="border-b px-8">
-                <div class="flex gap-8">
+            <!-- Stepper -->
+            <div class="border-b bg-white px-8">
+                <div class="flex gap-10">
                     <button
-                        v-for="tab in tabs"
+                        v-for="(tab, index) in tabs"
                         :key="tab.value"
                         type="button"
                         @click="activeTab = tab.value"
-                        class="relative flex items-center gap-2 py-4 text-sm font-medium transition"
-                        :class="
-                            activeTab === tab.value
-                                ? 'text-primary'
-                                : 'text-gray-500 hover:text-gray-700'
-                        "
+                        class="group relative flex items-center gap-3 py-4 text-sm font-medium transition"
                     >
-                        {{ tab.label }}
+                        <span
+                            class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors"
+                            :class="[
+                                activeTab === tab.value
+                                    ? 'border-primary bg-primary text-white'
+                                    : index === 0 && activeTab === 'permissions'
+                                      ? 'border-primary bg-primary text-white'
+                                      : 'border-slate-300 bg-white text-slate-400 group-hover:border-slate-400',
+                            ]"
+                        >
+                            <Check
+                                v-if="
+                                    index === 0 && activeTab === 'permissions'
+                                "
+                                class="h-3.5 w-3.5"
+                            />
+                            <template v-else>{{ index + 1 }}</template>
+                        </span>
+
+                        <span
+                            :class="
+                                activeTab === tab.value
+                                    ? 'text-gray-900'
+                                    : 'text-gray-500 group-hover:text-gray-700'
+                            "
+                        >
+                            {{ tab.label }}
+                        </span>
+
                         <span
                             v-if="
                                 tab.value === 'permissions' &&
@@ -340,403 +435,476 @@ import { MoveLeft } from "lucide-vue-next";
                         >
                             {{ enabledPermissionCount }}
                         </span>
+
                         <span
                             v-if="activeTab === tab.value"
-                            class="absolute bottom-0 left-0 h-[3px] w-full rounded-full bg-primary"
+                            class="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-primary"
                         />
                     </button>
                 </div>
             </div>
 
-            <div
-                v-if="activeTab === 'information'"
-                class="grid grid-cols-1 gap-10 p-8 lg:grid-cols-4"
-            >
-                <div class="flex flex-col items-center gap-3">
-                    <button
-                        type="button"
-                        @click="openFilePicker"
-                        class="group relative flex h-40 w-40 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-slate-300 bg-slate-50 transition hover:border-primary hover:bg-primary/5"
-                    >
-                        <img
-                            v-if="avatarPreview"
-                            :src="String(avatarPreview)"
-                            class="h-full w-full object-cover"
-                        />
-                        <span
-                            v-else
-                            class="flex flex-col items-center gap-2 text-slate-400 group-hover:text-primary"
+            <Transition name="fade-slide" mode="out-in">
+                <!-- Information tab -->
+                <div
+                    v-if="activeTab === 'information'"
+                    key="information"
+                    class="grid grid-cols-1 gap-10 p-8 lg:grid-cols-4"
+                >
+                    <div class="flex flex-col items-center gap-3">
+                        <button
+                            type="button"
+                            @click="openFilePicker"
+                            :disabled="isViewMode"
+                            class="group relative flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-slate-300 bg-white transition hover:border-primary hover:bg-primary/5 disabled:hover:border-slate-300 disabled:hover:bg-white"
                         >
-                            <svg
-                                class="h-7 w-7"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.5"
+                            <img
+                                v-if="avatarPreview"
+                                :src="String(avatarPreview)"
+                                class="h-full w-full object-cover"
+                            />
+                            <span
+                                v-else
+                                class="flex flex-col items-center gap-2 text-slate-400 group-hover:text-primary"
                             >
-                                <path
-                                    d="M4 17.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.5M12 15V4m0 0 4 4m-4-4-4 4"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                />
-                            </svg>
-                            <span class="text-xs font-medium"
-                                >Upload photo</span
-                            >
-                        </span>
-                        <div
-                            v-if="employee.avatar"
-                            class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition group-hover:opacity-100"
-                        >
-                            <span class="text-xs font-medium text-white"
-                                >Change photo</span
-                            >
-                        </div>
-                    </button>
+                                <Camera class="h-6 w-6" />
+                                <span class="text-xs font-medium"
+                                    >Upload photo</span
+                                >
+                            </span>
 
-                    <input
-                        ref="fileInput"
-                        type="file"
-                        accept="image/*"
-                        class="hidden"
-                        @change="onFileSelected"
-                    />
-
-                    <button
-                        v-if="employee.avatar"
-                        type="button"
-                        @click="removePhoto"
-                        class="text-xs font-medium text-slate-400 hover:text-red-500"
-                    >
-                        Remove photo
-                    </button>
-                    <p
-                        v-else
-                        class="max-w-[10rem] text-center text-xs text-slate-400"
-                    >
-                        PNG or JPG, at least 400×400px
-                    </p>
-                </div>
-
-                <div class="space-y-10 lg:col-span-3">
-                    <section class="space-y-4">
-                        <h2
-                            class="text-xs font-semibold uppercase tracking-wide text-slate-400"
-                        >
-                            Personal Details
-                        </h2>
-                        <div class="grid gap-6 md:grid-cols-3">
-                            <BaseInput
-                                v-model="employee.first_name"
-                                label="First Name"
-                                required
-                                :schema="employeeSchema.shape.first_name"
-                                :error="errors.first_name"
-                            />
-                            <BaseInput
-                                v-model="employee.middle_name"
-                                label="Middle Name"
-                                :schema="employeeSchema.shape.middle_name"
-                                :error="errors.middle_name"
-                            />
-                            <BaseInput
-                                v-model="employee.last_name"
-                                label="Last Name"
-                                required
-                                :schema="employeeSchema.shape.last_name"
-                                :error="errors.last_name"
-                            />
-                        </div>
-                        <div class="grid gap-6 md:grid-cols-3">
-                            <BaseInput
-                                v-model="employee.birth_date"
-                                label="Birth Date"
-                                mode="date"
-                                :schema="employeeSchema.shape.birth_date"
-                                :error="errors.birth_date"
-                                required
-                            />
-                            <BaseInput
-                                v-model="employee.phone_number"
-                                label="Phone Number"
-                                required
-                                :schema="employeeSchema.shape.phone_number"
-                                :error="errors.phone_number"
-                            />
-                            <BaseInput
-                                v-model="employee.email"
-                                label="Email"
-                                mode="email"
-                                required
-                                :schema="employeeSchema.shape.email"
-                                :error="errors.email"
-                            />
-                        </div>
-                    </section>
-
-                    <section class="space-y-4 border-t pt-8">
-                        <h2
-                            class="text-xs font-semibold uppercase tracking-wide text-slate-400"
-                        >
-                            Address
-                        </h2>
-                        <div class="grid gap-6">
-                            <BaseInput
-                                v-model="employee.location.street"
-                                label="Street Address"
-                                required
-                                placeholder="House / unit no., building, street"
-                                :schema="
-                                    employeeSchema.shape.location.shape.street
+                            <span
+                                v-if="!isViewMode"
+                                class="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-sm ring-2 ring-white transition group-hover:opacity-100"
+                                :class="
+                                    avatarPreview ? 'opacity-90' : 'opacity-0'
                                 "
-                                :error="errors['location.street']"
-                            />
+                            >
+                                <Camera class="h-4 w-4" />
+                            </span>
+                        </button>
+
+                        <input
+                            ref="fileInput"
+                            type="file"
+                            accept="image/*"
+                            class="hidden"
+                            @change="onFileSelected"
+                        />
+
+                        <button
+                            v-if="employee.avatar && !isViewMode"
+                            type="button"
+                            @click="removePhoto"
+                            class="flex items-center gap-1 text-xs font-medium text-slate-400 transition hover:text-red-500"
+                        >
+                            <X class="h-3 w-3" /> Remove photo
+                        </button>
+                        <p
+                            v-else-if="!isViewMode"
+                            class="max-w-[10rem] text-center text-xs text-slate-400"
+                        >
+                            PNG or JPG, at least 400×400px
+                        </p>
+                    </div>
+
+                    <div class="space-y-10 lg:col-span-3">
+                        <section class="space-y-4">
+                            <h2
+                                class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400"
+                            >
+                                <User class="h-3.5 w-3.5" />
+                                Personal Details
+                            </h2>
                             <div class="grid gap-6 md:grid-cols-3">
                                 <BaseInput
-                                    v-model="employee.location.city"
-                                    label="City"
+                                    v-model="employee.first_name"
+                                    label="First Name"
                                     required
-                                    :schema="
-                                        employeeSchema.shape.location.shape.city
-                                    "
-                                    :error="errors['location.city']"
+                                    :schema="employeeSchema.shape.first_name"
+                                    :error="errors.first_name"
+                                    :disabled="isViewMode"
                                 />
                                 <BaseInput
-                                    v-model="employee.location.province"
-                                    label="Province"
-                                    required
-                                    :schema="
-                                        employeeSchema.shape.location.shape
-                                            .province
-                                    "
-                                    :error="errors['location.province']"
+                                    v-model="employee.middle_name"
+                                    label="Middle Name"
+                                    :schema="employeeSchema.shape.middle_name"
+                                    :error="errors.middle_name"
+                                    :disabled="isViewMode"
                                 />
                                 <BaseInput
-                                    v-model="employee.location.country"
-                                    label="Country"
+                                    v-model="employee.last_name"
+                                    label="Last Name"
                                     required
-                                    :schema="
-                                        employeeSchema.shape.location.shape
-                                            .country
-                                    "
-                                    :error="errors['location.country']"
+                                    :schema="employeeSchema.shape.last_name"
+                                    :error="errors.last_name"
+                                    :disabled="isViewMode"
                                 />
                             </div>
-                        </div>
-                    </section>
 
-                    <section class="space-y-4 border-t pt-8">
-                        <h2
-                            class="text-xs font-semibold uppercase tracking-wide text-slate-400"
-                        >
-                            Employment Details
-                        </h2>
-                        <div class="grid gap-6 md:grid-cols-2">
-                            <div>
+                            <div class="grid gap-6 md:grid-cols-3">
                                 <BaseInput
-                                    v-if="employee.role_name === 'branch_owner'"
-                                    model-value="Branch Owner"
-                                    label="Position"
-                                    disabled
+                                    v-model="employee.birth_date"
+                                    label="Birth Date"
+                                    mode="date"
+                                    :schema="employeeSchema.shape.birth_date"
+                                    :error="errors.birth_date"
+                                    :disabled="isViewMode"
+                                    required
                                 />
-
-                                <Combobox
-                                    v-else
-                                    label="Position"
-                                    v-model="employee.role_name"
-                                    :items="employeePositions"
+                                <BaseInput
+                                    v-model="employee.phone_number"
+                                    label="Phone Number"
+                                    required
+                                    :schema="employeeSchema.shape.phone_number"
+                                    :disabled="isViewMode"
+                                    :error="errors.phone_number"
                                 />
-
-                                <p
-                                    v-if="errors.position"
-                                    class="text-xs text-red-500 mt-0.5"
-                                >
-                                    {{ errors.position }}
-                                </p>
+                                <BaseInput
+                                    v-model="employee.email"
+                                    label="Email"
+                                    mode="email"
+                                    required
+                                    :schema="employeeSchema.shape.email"
+                                    :disabled="isViewMode"
+                                    :error="errors.email"
+                                />
                             </div>
+                        </section>
 
-                            <div>
-                                <Combobox
-                                    label="Employee Assignment"
-                                    v-model="employee.assignment_type"
-                                    :items="employeeAssignmentTypes"
-                                />
-                                <p
-                                    v-if="errors.assignment_type"
-                                    class="text-xs text-red-500 mt-0.5"
-                                >
-                                    {{ errors.assignment_type }}
-                                </p>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-            </div>
-
-            <div v-else class="space-y-6 p-8">
-                <div class="flex items-center justify-between">
-                    <p class="text-sm text-gray-500">
-                        Choose what this employee can access in the system.
-                    </p>
-                    <button
-                        v-if="modules.length"
-                        type="button"
-                        @click="toggleAllPermissions"
-                        class="text-sm font-medium text-primary hover:underline"
-                    >
-                        {{ allPermissionsEnabled ? "Clear all" : "Select all" }}
-                    </button>
-                </div>
-
-                <div
-                    v-if="modulesLoading"
-                    class="py-10 text-center text-sm text-slate-400"
-                >
-                    Loading modules...
-                </div>
-
-                <div
-                    v-else-if="modulesError"
-                    class="flex items-center justify-between rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600"
-                >
-                    {{ modulesError }}
-                    <button
-                        type="button"
-                        @click="loadModules"
-                        class="font-medium underline"
-                    >
-                        Retry
-                    </button>
-                </div>
-
-                <div v-else class="grid gap-4 md:grid-cols-2">
-                    <div
-                        v-for="module in modules"
-                        :key="module.module_id"
-                        class="rounded-xl border p-5 transition"
-                        :class="
-                            permissions[module.module_id]?.can_read
-                                ? 'border-primary/40 bg-primary/5'
-                                : 'border-slate-200 hover:border-slate-300'
-                        "
-                    >
-                        <div class="flex items-start justify-between gap-4">
-                            <h3 class="font-semibold text-gray-900">
-                                {{ module.module_name }}
-                                <p
-                                    class="text-xs font-normal text-muted mt-0.5"
-                                >
-                                    Manage access to this module.
-                                </p>
-                            </h3>
-                            <button
-                                type="button"
-                                @click="toggleModule(module.module_id)"
-                                class="relative inline-flex shrink-0 items-center"
-                                :aria-label="`Toggle access to ${module.module_name}`"
+                        <section class="space-y-4 border-t pt-8">
+                            <h2
+                                class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400"
                             >
-                                <span
-                                    class="h-6 w-11 rounded-full transition-colors"
-                                    :class="
-                                        permissions[module.module_id]?.can_read
-                                            ? 'bg-primary'
-                                            : 'bg-slate-200'
+                                <MapPin class="h-3.5 w-3.5" />
+                                Address
+                            </h2>
+                            <div class="grid gap-6">
+                                <BaseInput
+                                    v-model="employee.location.street"
+                                    :disabled="isViewMode"
+                                    label="Street Address"
+                                    required
+                                    placeholder="House / unit no., building, street"
+                                    :schema="
+                                        employeeSchema.shape.location.shape
+                                            .street
                                     "
+                                    :error="errors['location.street']"
                                 />
-                                <span
-                                    class="absolute left-[3px] top-[3px] h-5 w-5 rounded-full bg-white shadow transition-transform"
-                                    :class="
-                                        permissions[module.module_id]?.can_read
-                                            ? 'translate-x-5'
-                                            : ''
-                                    "
+                                <div class="grid gap-6 md:grid-cols-3">
+                                    <BaseInput
+                                        v-model="employee.location.city"
+                                        :disabled="isViewMode"
+                                        label="City"
+                                        required
+                                        :schema="
+                                            employeeSchema.shape.location.shape
+                                                .city
+                                        "
+                                        :error="errors['location.city']"
+                                    />
+                                    <BaseInput
+                                        v-model="employee.location.province"
+                                        :disabled="isViewMode"
+                                        label="Province"
+                                        required
+                                        :schema="
+                                            employeeSchema.shape.location.shape
+                                                .province
+                                        "
+                                        :error="errors['location.province']"
+                                    />
+                                    <BaseInput
+                                        v-model="employee.location.country"
+                                        :disabled="isViewMode"
+                                        label="Country"
+                                        required
+                                        :schema="
+                                            employeeSchema.shape.location.shape
+                                                .country
+                                        "
+                                        :error="errors['location.country']"
+                                    />
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="space-y-4 border-t pt-8">
+                            <h2
+                                class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400"
+                            >
+                                <Briefcase class="h-3.5 w-3.5" />
+                                Employment Details
+                            </h2>
+                            <div class="grid gap-6 md:grid-cols-2">
+                                <div>
+                                    <BaseInput
+                                        v-if="
+                                            employee.role_name ===
+                                                'branch_owner' ||
+                                            employee.role_name ===
+                                                'Branch Owner'
+                                        "
+                                        model-value="Branch Owner"
+                                        label="Position"
+                                        disabled
+                                    />
+
+                                    <Combobox
+                                        v-else
+                                        position="top"
+                                        :disabled="isViewMode"
+                                        label="Position"
+                                        v-model="employee.role_name"
+                                        :items="employeePositions"
+                                    />
+
+                                    <p
+                                        v-if="errors.position"
+                                        class="mt-1 text-xs text-red-500"
+                                    >
+                                        {{ errors.position }}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <Combobox
+                                        label="Employee Assignment"
+                                        position="top"
+                                        v-model="employee.assignment_type"
+                                        :disabled="isViewMode"
+                                        :items="employeeAssignmentTypes"
+                                    />
+                                    <p
+                                        v-if="errors.assignment_type"
+                                        class="mt-1 text-xs text-red-500"
+                                    >
+                                        {{ errors.assignment_type }}
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- Permissions tab -->
+                <div v-else key="permissions" class="space-y-5 p-8">
+                    <div
+                        class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <div class="flex items-center gap-2 text-gray-700">
+                            <ShieldCheck class="h-4 w-4 text-primary" />
+                            <p class="text-sm">
+                                Choose what this employee can access in the
+                                system.
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <div class="relative">
+                                <Search
+                                    class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
                                 />
+                                <input
+                                    v-model="moduleSearch"
+                                    type="text"
+                                    placeholder="Search modules..."
+                                    class="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 sm:w-56"
+                                />
+                            </div>
+
+                            <button
+                                v-if="modules.length && !isViewMode"
+                                type="button"
+                                @click="toggleAllPermissions"
+                                class="shrink-0 whitespace-nowrap text-sm font-medium text-primary hover:underline underline-offset-2"
+                            >
+                                {{
+                                    allPermissionsEnabled
+                                        ? "Clear all"
+                                        : "Select all"
+                                }}
                             </button>
                         </div>
+                    </div>
 
-                        <div
-                            v-if="permissions[module.module_id]?.can_read"
-                            class="mt-4 flex gap-4 border-t pt-4"
+                    <div
+                        v-if="modulesLoading"
+                        class="py-10 text-center text-sm text-slate-400"
+                    >
+                        Loading modules...
+                    </div>
+
+                    <div
+                        v-else-if="modulesError"
+                        class="flex items-center justify-between rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600"
+                    >
+                        {{ modulesError }}
+                        <button
+                            type="button"
+                            @click="loadModules"
+                            class="font-medium underline underline-offset-2"
                         >
-                            <label
-                                class="flex items-center gap-2 text-sm text-gray-600"
+                            Retry
+                        </button>
+                    </div>
+
+                    <div
+                        v-else-if="!filteredModules.length"
+                        class="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-400"
+                    >
+                        No modules match “{{ moduleSearch }}”.
+                    </div>
+
+                    <div
+                        v-else
+                        class="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                    >
+                        <div
+                            v-for="(module, i) in filteredModules"
+                            :key="module.module_id"
+                            class="flex flex-col gap-4 px-5 py-4 transition sm:flex-row sm:items-center sm:justify-between"
+                            :class="[
+                                i !== filteredModules.length - 1
+                                    ? 'border-b border-slate-100'
+                                    : '',
+                                permissions[module.module_id]?.can_read
+                                    ? 'bg-primary/5'
+                                    : 'hover:bg-slate-50',
+                            ]"
+                        >
+                            <div class="flex items-center gap-4">
+                                <button
+                                    :disabled="isViewMode"
+                                    type="button"
+                                    @click="toggleModule(module.module_id)"
+                                    class="relative inline-flex shrink-0 items-center disabled:cursor-not-allowed"
+                                    :aria-label="`Toggle access to ${module.module_name}`"
+                                >
+                                    <span
+                                        class="h-6 w-11 rounded-full transition-colors"
+                                        :class="
+                                            permissions[module.module_id]
+                                                ?.can_read
+                                                ? 'bg-primary'
+                                                : 'bg-slate-200'
+                                        "
+                                    />
+                                    <span
+                                        class="absolute left-[3px] top-[3px] h-5 w-5 rounded-full bg-white shadow transition-transform"
+                                        :class="
+                                            permissions[module.module_id]
+                                                ?.can_read
+                                                ? 'translate-x-5'
+                                                : ''
+                                        "
+                                    />
+                                </button>
+
+                                <div>
+                                    <h3
+                                        class="text-sm font-semibold text-gray-900"
+                                    >
+                                        {{ module.module_name }}
+                                    </h3>
+                                    <p class="text-xs text-slate-400">
+                                        Manage access to this module.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div
+                                v-if="permissions[module.module_id]?.can_read"
+                                class="flex flex-wrap gap-x-5 gap-y-2 pl-14 sm:pl-0"
                             >
-                                <input
-                                    type="checkbox"
-                                    :checked="
-                                        permissions[module.module_id]?.can_read
-                                    "
-                                    @change="
-                                        toggleAction(
-                                            module.module_id,
-                                            'can_read',
-                                        )
-                                    "
-                                    class="rounded border-slate-300 text-primary focus:ring-primary"
-                                />
-                                Read
-                            </label>
-                            <label
-                                class="flex items-center gap-2 text-sm text-gray-600"
-                            >
-                                <input
-                                    type="checkbox"
-                                    :checked="
-                                        permissions[module.module_id]
-                                            ?.can_create
-                                    "
-                                    @change="
-                                        toggleAction(
-                                            module.module_id,
-                                            'can_create',
-                                        )
-                                    "
-                                    class="rounded border-slate-300 text-primary focus:ring-primary"
-                                />
-                                Create
-                            </label>
-                            <label
-                                class="flex items-center gap-2 text-sm text-gray-600"
-                            >
-                                <input
-                                    type="checkbox"
-                                    :checked="
-                                        permissions[module.module_id]
-                                            ?.can_update
-                                    "
-                                    @change="
-                                        toggleAction(
-                                            module.module_id,
-                                            'can_update',
-                                        )
-                                    "
-                                    class="rounded border-slate-300 text-primary focus:ring-primary"
-                                />
-                                Update
-                            </label>
+                                <label
+                                    class="flex items-center gap-2 text-sm text-gray-600"
+                                >
+                                    <input
+                                        :disabled="isViewMode"
+                                        type="checkbox"
+                                        :checked="
+                                            permissions[module.module_id]
+                                                ?.can_read
+                                        "
+                                        @change="
+                                            toggleAction(
+                                                module.module_id,
+                                                'can_read',
+                                            )
+                                        "
+                                        class="rounded border-slate-300 text-primary focus:ring-primary"
+                                    />
+                                    Read
+                                </label>
+                                <label
+                                    class="flex items-center gap-2 text-sm text-gray-600"
+                                >
+                                    <input
+                                        :disabled="isViewMode"
+                                        type="checkbox"
+                                        :checked="
+                                            permissions[module.module_id]
+                                                ?.can_create
+                                        "
+                                        @change="
+                                            toggleAction(
+                                                module.module_id,
+                                                'can_create',
+                                            )
+                                        "
+                                        class="rounded border-slate-300 text-primary focus:ring-primary"
+                                    />
+                                    Create
+                                </label>
+                                <label
+                                    class="flex items-center gap-2 text-sm text-gray-600"
+                                >
+                                    <input
+                                        :disabled="isViewMode"
+                                        type="checkbox"
+                                        :checked="
+                                            permissions[module.module_id]
+                                                ?.can_update
+                                        "
+                                        @change="
+                                            toggleAction(
+                                                module.module_id,
+                                                'can_update',
+                                            )
+                                        "
+                                        class="rounded border-slate-300 text-primary focus:ring-primary"
+                                    />
+                                    Update
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </Transition>
 
+            <!-- Footer -->
             <div
-                class="mt-auto flex items-center justify-between gap-3 border-t px-8 py-5"
+                class="sticky bottom-0 mt-auto flex items-center justify-between gap-3 border-t bg-white/95 px-8 py-5 shadow-[0_-4px_12px_-8px_rgba(0,0,0,0.15)] backdrop-blur"
             >
                 <button
                     v-if="activeTab === 'permissions'"
                     type="button"
                     @click="activeTab = 'information'"
-                    class="rounded-lg border border-slate-300 px-6 py-2.5 text-sm font-medium hover:bg-slate-50"
+                    class="rounded-lg border border-slate-300 px-6 py-2.5 text-sm font-medium transition hover:bg-slate-50"
                 >
                     Back
                 </button>
-                <span v-else />
+                <span v-else class="text-xs text-slate-400">
+                    Step {{ activeTab === "information" ? 1 : 2 }} of 2
+                </span>
 
                 <div class="flex gap-3">
                     <button
                         @click="emit('back')"
                         type="button"
-                        class="rounded-lg border border-slate-300 px-6 py-2.5 text-sm font-medium hover:bg-slate-50"
+                        class="rounded-lg border border-slate-300 px-6 py-2.5 text-sm font-medium transition hover:bg-slate-50"
                     >
                         Cancel
                     </button>
@@ -770,3 +938,20 @@ import { MoveLeft } from "lucide-vue-next";
         </template>
     </div>
 </template>
+
+<style scoped>
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+    transition:
+        opacity 0.15s ease,
+        transform 0.15s ease;
+}
+.fade-slide-enter-from {
+    opacity: 0;
+    transform: translateY(4px);
+}
+.fade-slide-leave-to {
+    opacity: 0;
+    transform: translateY(-4px);
+}
+</style>

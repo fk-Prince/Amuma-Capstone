@@ -1,0 +1,277 @@
+<template>
+    <Teleport to="body">
+        <div
+            v-if="open"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+        >
+            <div
+                class="w-full max-w-xl bg-white rounded-2xl shadow-xl border border-[#E4EFED]"
+            >
+                <div class="flex justify-between items-center p-5 border-b">
+                    <div>
+                        <h2 class="text-lg font-semibold text-[#16302E]">
+                            {{
+                                isEditMode
+                                    ? "Update Facility Plan"
+                                    : "Create Facility Plan"
+                            }}
+                        </h2>
+                        <p class="text-sm text-[#9AB3AF]">
+                            {{
+                                isEditMode
+                                    ? "Update this branch contract plan."
+                                    : "Configure a new branch contract plan."
+                            }}
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        @click="close"
+                        class="text-gray-400 hover:text-gray-700"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <form class="p-5 space-y-4" @submit.prevent="submit">
+                    <Combobox
+                        :model-value="form.type"
+                        @update:model-value="update('type', $event)"
+                        label="Plan Type"
+                        placeholder="Select plan type"
+                        :items="planTypes"
+                        :error="errors.type"
+                        required
+                    />
+
+                    <Combobox
+                        :model-value="form.billing_interval"
+                        @update:model-value="update('billing_interval', $event)"
+                        label="Billing Interval"
+                        placeholder="Select billing interval"
+                        :items="billingIntervals"
+                        :error="errors.billing_interval"
+                        required
+                    />
+
+                    <BaseInput
+                        :model-value="form.price"
+                        @update:model-value="update('price', $event)"
+                        label="Price"
+                        mode="number"
+                        placeholder="0.00"
+                        :error="errors.price"
+                        required
+                    />
+
+                    <BaseInput
+                        :model-value="form.description"
+                        @update:model-value="update('description', $event)"
+                        label="Description"
+                        placeholder="Enter plan description"
+                        :error="errors.description"
+                        mode="textarea"
+                    />
+
+                    <div class="grid grid-cols-2 gap-3 pt-3">
+                        <button
+                            type="button"
+                            class="rounded-xl border px-4 py-3 text-sm"
+                            @click="close"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            :disabled="isSubmitting"
+                            class="rounded-xl bg-primary text-white px-4 py-3 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            <svg
+                                v-if="isSubmitting"
+                                class="w-4 h-4 animate-spin"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <circle
+                                    class="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    stroke-width="4"
+                                />
+                                <path
+                                    class="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                />
+                            </svg>
+
+                            {{
+                                isSubmitting
+                                    ? isEditMode
+                                        ? "Updating..."
+                                        : "Creating..."
+                                    : isEditMode
+                                      ? "Update Plan"
+                                      : "Create Plan"
+                            }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </Teleport>
+</template>
+
+<script setup lang="ts">
+import { reactive, computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+
+import BaseInput from "~/components/ui/BaseInput.vue";
+import Combobox from "~/components/ui/Combobox.vue";
+
+import { branchContractService } from "~/api/branch-contract/BranchContractService";
+import { facilityPlanForm, facilityPlanSchema } from "~/types/contract";
+import { useToast } from "~/composables/useToast";
+
+const { success, error } = useToast();
+
+const route = useRoute();
+
+const isSubmitting = ref(false);
+
+const props = defineProps<{
+    open: boolean;
+    data?: any;
+}>();
+
+const emit = defineEmits<{
+    close: [];
+}>();
+
+const planTypes = [
+    { label: "VIP", value: "VIP" },
+    { label: "Common", value: "COMMON" },
+];
+
+const billingIntervals = [
+    { label: "Monthly", value: "MONTHLY" },
+    { label: "Yearly", value: "YEARLY" },
+];
+
+const uuid = computed(() => route.params.uuid as string);
+
+const isEditMode = computed(() => !!props.data?.branch_contract_id);
+
+const form = reactive({
+    ...props.data,
+    branch_uuid: uuid.value,
+});
+
+watch(
+    () => props.data,
+    (newData) => {
+        Object.assign(form, facilityPlanForm(), newData ?? {}, {
+            branch_uuid: uuid.value,
+        });
+        clearErrors();
+    },
+);
+
+const errors = reactive<Record<string, string>>({
+    type: "",
+    price: "",
+    billing_interval: "",
+    description: "",
+    general: "",
+});
+
+function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
+    form[key] = value;
+    clearError(String(key));
+}
+
+function clearError(field: string) {
+    errors[field] = "";
+}
+
+function clearErrors() {
+    Object.keys(errors).forEach((key) => {
+        errors[key] = "";
+    });
+}
+
+function close() {
+    if (isSubmitting.value) return;
+
+    clearErrors();
+    emit("close");
+}
+
+async function submit() {
+    clearErrors();
+
+    const payload = {
+        ...form,
+        price: Number(form.price),
+        description: form.description || null,
+    };
+
+    const result = facilityPlanSchema.safeParse(payload);
+
+    if (!result.success) {
+        const formatted = result.error.flatten().fieldErrors;
+
+        Object.entries(formatted).forEach(([key, value]) => {
+            errors[key] = value?.[0] ?? "";
+        });
+        console.log(formatted);
+        return;
+    }
+
+    try {
+        isSubmitting.value = true;
+
+        const res = isEditMode.value
+            ? await branchContractService.update(
+                  props.data.branch_contract_id,
+                  payload,
+              )
+            : await branchContractService.create(payload);
+
+        success(
+            res.message ??
+                (isEditMode.value
+                    ? "Facility plan updated successfully"
+                    : "Facility plan created successfully"),
+        );
+
+        close();
+    } catch (err: any) {
+        const message =
+            err?.data?.message ||
+            err?.response?.data?.message ||
+            err?.message ||
+            (isEditMode.value
+                ? "Failed to update facility plan"
+                : "Failed to create facility plan");
+
+        const apiErrors = err?.data?.errors || err?.response?.data?.errors;
+
+        console.error(err);
+
+        if (apiErrors && Object.keys(apiErrors).length > 0) {
+            Object.entries(apiErrors).forEach(([key, value]: any) => {
+                errors[key] = Array.isArray(value) ? value[0] : value;
+            });
+        } else {
+            error(message);
+        }
+    } finally {
+        isSubmitting.value = false;
+    }
+}
+</script>

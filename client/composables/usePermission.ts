@@ -21,9 +21,16 @@ export const usePermissions = () => {
         return permissions.some((p) => p.module_name === module_name && p.can_update);
     };
 
+
+    const canApprove = (module_name: string) => {
+        const permissions = branchStore.activeBranch?.permissions ?? [];
+        return permissions.some((p) => p.module_name === module_name && p.can_approve);
+    };
+
     return {
         hasModule,
         canCreate,
         canUpdate,
+        canApprove
     };
 };

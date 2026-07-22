@@ -40,7 +40,7 @@ const emit = defineEmits<{
     (e: "change", index: number): void;
 }>();
 
-const tabs = ["Overview", "Services", "Reviews", "Location"];
+const tabs = ["Overview", "Location", "Services", "Reviews"];
 
 const activeIndex = ref(0);
 

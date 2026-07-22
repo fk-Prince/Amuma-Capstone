@@ -1,3 +1,4 @@
+
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 import { authMenuList } from "~/config/authMenu";
@@ -29,7 +30,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         if (!branchUuid) return;
 
         if (!branchStore.branches.length) {
-            await branchStore.fetchBranches();
+            await branchStore.fetchBranches(to);
         }
 
         const branch = branchStore.branches.find((b) => b?.uuid === branchUuid);

@@ -45,7 +45,7 @@ export interface BranchRetrieve {
     description: string | null;
     image: string | undefined;
     secondaryImage: string[] | undefined;
-    availability: BranchAvailability;
+    settings: BranchAvailability;
     averageRating: number | null;
     reviewCount: number;
     reviews: Review[];
@@ -53,12 +53,14 @@ export interface BranchRetrieve {
     location: Location;
 }
 
-interface BranchAvailability {
+export interface BranchAvailability {
     status: 'OPEN' | 'CLOSED' | 'AUTO';
     is_open: boolean;
     timezone: string;
-    opening_time: string | null;
-    closing_time: string | null;
+    opening: string | null;
+    closing: string | null;
+    adl_hourly_rate?: number;
+    adl_min_hour?: number
 }
 
 interface BranchSubscription {

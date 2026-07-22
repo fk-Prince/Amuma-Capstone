@@ -17,6 +17,10 @@ class ServiceService extends BaseService {
         return ServiceService.instance;
     }
 
+    async assignEmployeeService(payload: object): Promise<any> {
+        return await this.request(this.resource + '/assign-employee', 'POST', payload);
+    }
+
     async getBranchService(uuid: string) {
         return await this.request(`${this.getBackendApi}/api/branches/${uuid}/services`, 'GET');
     }
@@ -28,7 +32,6 @@ class ServiceService extends BaseService {
     async update(id: number, payload: {}) {
         return await this.request(`${this.resource}/${id}`, 'PUT', payload);
     }
-
 
     private get resource(): string {
         const backend = this.getBackendApi;

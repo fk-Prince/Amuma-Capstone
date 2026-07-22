@@ -16,17 +16,20 @@
                     label="First Name"
                     :model-value="model.first_name"
                     @update:model-value="update('first_name', $event)"
+                    :error="errors?.first_name"
                     required
                 />
                 <BaseInput
                     label="Middle Name"
                     :model-value="model.middle_name"
                     @update:model-value="update('middle_name', $event)"
+                    :error="errors?.middle_name"
                 />
                 <BaseInput
                     label="Last Name"
                     :model-value="model.last_name"
                     @update:model-value="update('last_name', $event)"
+                    :error="errors?.last_name"
                     required
                 />
             </div>
@@ -60,6 +63,9 @@
                             Male
                         </label>
                     </div>
+                    <p v-if="errors?.gender" class="text-xs text-red-500">
+                        {{ errors.gender }}
+                    </p>
                 </div>
 
                 <BaseInput
@@ -67,12 +73,23 @@
                     :model-value="model.date_of_birth"
                     @update:model-value="update('date_of_birth', $event)"
                     placeholder="YYYY-MM-DD"
+                    :error="errors?.date_of_birth"
                     required
                 />
                 <BaseInput
                     label="Phone Number"
                     :model-value="model.phone_number"
                     @update:model-value="update('phone_number', $event)"
+                    :error="errors?.phone_number"
+                />
+            </div>
+
+            <div class="grid grid-cols-1 gap-6">
+                <BaseInput
+                    label="Address"
+                    :model-value="props.model.address"
+                    @update:model-value="update('address', $event)"
+                    :error="errors?.address"
                 />
             </div>
 
@@ -83,19 +100,23 @@
                     label="Citizenship"
                     :model-value="model.citizenship"
                     @update:model-value="update('citizenship', $event)"
+                    :error="errors?.citizenship"
                     required
                 />
                 <BaseInput
                     label="Occupation"
                     :model-value="model.occupation"
                     @update:model-value="update('occupation', $event)"
+                    :error="errors?.occupation"
                     required
                 />
                 <Combobox
                     :model-value="model.marital_status"
                     @update:model-value="update('marital_status', $event)"
                     label="Marital Status"
+                    required
                     placeholder="Select status"
+                    :error="errors?.marital_status"
                     :items="[
                         { label: 'Single', value: 'single' },
                         { label: 'Married', value: 'married' },
@@ -112,6 +133,7 @@
                     @update:model-value="update('height', $event)"
                     mode="number"
                     input-class="text-center"
+                    :error="errors?.height"
                 />
                 <BaseInput
                     label="Weight (kg)"
@@ -119,12 +141,14 @@
                     @update:model-value="update('weight', $event)"
                     mode="number"
                     input-class="text-center"
+                    :error="errors?.weight"
                 />
                 <Combobox
                     :model-value="model.blood_type"
                     @update:model-value="update('blood_type', $event)"
                     label="Blood Type"
                     placeholder="Select"
+                    :error="errors?.blood_type"
                     :items="[
                         { label: 'A+', value: 'A+' },
                         { label: 'A-', value: 'A-' },
@@ -148,10 +172,12 @@ import type { Patient } from "~/types/patient";
 
 const props = defineProps<{
     model: Patient;
+    errors?: Record<string, string> | null;
 }>();
 
 const emit = defineEmits<{
     (e: "update:model", value: Patient): void;
+    (e: "update:errors", value: Record<string, string>): void;
 }>();
 
 function update<K extends keyof Patient>(key: K, value: Patient[K]) {
@@ -159,5 +185,16 @@ function update<K extends keyof Patient>(key: K, value: Patient[K]) {
         ...props.model,
         [key]: value,
     });
+
+    clearError(key as string);
+}
+
+function clearError(field: string) {
+    if (!props.errors) return;
+
+    const updated = { ...props.errors };
+    delete updated[field];
+
+    emit("update:errors", updated);
 }
 </script>

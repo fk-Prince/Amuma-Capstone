@@ -45,7 +45,10 @@ class Branch extends Model
         return ['uuid'];
     }
 
-
+    public function contracts()
+    {
+        return $this->hasMany(BranchContract::class, 'branch_id', 'branch_id');
+    }
 
     public function location()
     {

@@ -1,16 +1,79 @@
 <template>
     <div class="overflow-x-auto rounded-xl">
-        <div
-            v-if="loading"
-            class="flex min-h-[300px] flex-col items-center justify-center text-center"
-        >
-            <div
-                class="w-8 h-8 mb-3 rounded-full border-4 border-gray-200 border-t-primary animate-spin"
-            ></div>
+        <div v-if="loading" class="bg-white rounded-xl overflow-hidden">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b text-left">
+                        <th v-for="header in 6" :key="header" class="py-3 px-6">
+                            <div
+                                class="h-3 w-20 bg-gray-200 rounded animate-pulse"
+                            />
+                        </th>
+                    </tr>
+                </thead>
 
-            <p class="text-sm font-medium text-gray-500">
-                Loading employees...
-            </p>
+                <tbody>
+                    <tr
+                        v-for="n in 4"
+                        :key="n"
+                        class="border-b last:border-none"
+                    >
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="h-9 w-9 rounded-full bg-gray-200 animate-pulse"
+                                />
+
+                                <div class="space-y-2">
+                                    <div
+                                        class="h-3.5 w-32 bg-gray-200 rounded animate-pulse"
+                                    />
+
+                                    <div
+                                        class="h-3 w-20 bg-gray-100 rounded animate-pulse"
+                                    />
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <div
+                                class="h-3.5 w-40 bg-gray-200 rounded animate-pulse"
+                            />
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <div
+                                class="h-3.5 w-28 bg-gray-200 rounded animate-pulse"
+                            />
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <div
+                                class="h-3.5 w-24 bg-gray-200 rounded animate-pulse"
+                            />
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <div
+                                class="h-6 w-16 rounded-full bg-gray-200 animate-pulse"
+                            />
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <div class="flex justify-end gap-3">
+                                <div
+                                    class="h-8 w-8 rounded-lg bg-gray-200 animate-pulse"
+                                />
+
+                                <div
+                                    class="h-8 w-8 rounded-lg bg-gray-200 animate-pulse"
+                                />
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
         <div
@@ -43,12 +106,36 @@
             <table class="w-full text-sm bg-white mt-2">
                 <thead>
                     <tr class="border-b text-left text-xs text-gray-500">
-                        <th class="px-6 py-4 font-medium">Name ↕</th>
-                        <th class="px-6 py-4 font-medium">Email ↕</th>
-                        <th class="px-6 py-4 font-medium">Phone Number</th>
-                        <th class="px-6 py-4 font-medium">Assignment</th>
-                        <th class="px-6 py-4 font-medium">Status Label ↕</th>
-                        <th class="px-6 py-4"></th>
+                        <th
+                            class="py-3 pl-6 pr-3 text-xs font-semibold text-muted uppercase tracking-wide"
+                        >
+                            Name ↕
+                        </th>
+                        <th
+                            class="py-3 pl-6 pr-3 text-xs font-semibold text-muted uppercase tracking-wide"
+                        >
+                            Email ↕
+                        </th>
+                        <th
+                            class="py-3 pl-6 pr-3 text-xs font-semibold text-muted uppercase tracking-wide"
+                        >
+                            Phone Number
+                        </th>
+                        <th
+                            class="py-3 pl-6 pr-3 text-xs font-semibold text-muted uppercase tracking-wide"
+                        >
+                            Assignment
+                        </th>
+                        <th
+                            class="py-3 pl-6 pr-3 text-xs font-semibold text-muted uppercase tracking-wide"
+                        >
+                            Status Label ↕
+                        </th>
+                        <th
+                            class="py-3 pl-6 pr-5 text-xs font-semibold text-muted text-right uppercase tracking-wide"
+                        >
+                            Action
+                        </th>
                     </tr>
                 </thead>
 

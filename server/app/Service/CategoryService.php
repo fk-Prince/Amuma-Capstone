@@ -20,7 +20,6 @@ class CategoryService
     }
 
 
-
     public function listCategory(User $actor, array $payload)
     {
 
@@ -31,7 +30,7 @@ class CategoryService
         }
 
         return response()->json([
-            'data' => $this->categoryRepository->getCategories() ?? []
+            'data' => $this->categoryRepository->getCategoriesByBranch($branch->branch_id) ?? []
         ], 200);
     }
 }

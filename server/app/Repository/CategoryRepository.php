@@ -18,9 +18,9 @@ class CategoryRepository
         return $query->paginate($perPage);
     }
 
-    public function getCategories()
+    public function getCategoriesByBranch(string $branchId)
     {
-        return Category::all();
+        return Category::where('branch_id', $branchId)->get();
     }
 
     public function create(array $payload)

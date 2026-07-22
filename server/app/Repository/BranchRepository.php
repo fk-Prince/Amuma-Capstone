@@ -87,10 +87,10 @@ class BranchRepository
             'subscriptions.plans',
             'location',
             'agencies',
-            'services' => function ($query) {
-                $query->where('is_available', true)
-                    ->with('categories');
-            },
+            // 'services' => function ($query) {
+            //     $query->where('is_available', true)
+            //         ->with('categories');
+            // },
         ])
             ->withAvg('reviews', 'rate')
             ->withCount('reviews')

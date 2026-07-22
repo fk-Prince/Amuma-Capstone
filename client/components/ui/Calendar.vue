@@ -63,7 +63,7 @@ function isToday(day) {
 </script>
 
 <template>
-    <div class="bg-white rounded-2xl shadow-sm p-5 w-full max-w-sm">
+    <div class="bg-white rounded-2xl shadow-sm p-3 w-full max-w-sm">
         <div class="flex items-center justify-between mb-5">
             <button
                 @click="previousMonth"

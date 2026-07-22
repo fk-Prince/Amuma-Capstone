@@ -165,16 +165,16 @@
     >
         <button
             @click="collapsed = !collapsed"
-            class="absolute bg-primary w-8 h-8 flex items-center justify-center rounded-full mx-auto"
+            class="absolute bg-white border border-primary w-8 h-8 flex items-center justify-center rounded-full mx-auto"
             :class="
                 collapsed
-                    ? '-right-[21%] top-[2%] pl-0.5'
-                    : '-right-[6%] top-[2%] pr-0.5'
+                    ? '-right-[21%] top-[1%] pl-0.5'
+                    : '-right-[6%] top-[1%] pr-0.5'
             "
         >
             <component
                 :is="collapsed ? ChevronRight : ChevronLeft"
-                class="text-white"
+                class="text-primary"
             />
         </button>
         <div class="flex flex-col px-4 py-6 gap-1 flex-1 overflow-y-auto">

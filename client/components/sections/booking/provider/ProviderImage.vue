@@ -1,72 +1,153 @@
 <template>
-    <div class="text-white space-y-3">
+    <div class="relative py-4">
         <div
             v-if="loading"
-            class="relative w-full h-[320px] overflow-hidden bg-gray-800 animate-pulse"
+            class="h-[240px] sm:h-[420px] w-full animate-pulse rounded-2xl bg-gray-200"
         ></div>
 
-        <div
-            v-else-if="images.length"
-            class="relative w-full h-[320px] overflow-hidden bg-gray-900"
-            @click="openImage(images[0])"
-        >
-            <img
-                :src="images[0]"
-                class="w-full h-full object-cover object-left"
-            />
-        </div>
-
-        <div class="flex gap-2">
-            <template v-if="loading">
-                <div
-                    v-for="i in 4"
-                    :key="i"
-                    class="w-20 h-20 rounded-lg bg-gray-800 animate-pulse"
-                ></div>
-            </template>
-
-            <template v-else>
-                <div
-                    v-for="(img, index) in previewImages"
-                    :key="index"
-                    @click="openImage(img)"
-                    class="relative w-20 h-20 rounded-lg overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-110"
-                >
-                    <img :src="img" class="w-full h-full object-cover" />
-                </div>
-
-                <div
-                    v-if="images.length > 5"
-                    class="relative w-20 h-20 rounded-lg overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-110"
+        <template v-else>
+            <div
+                class="hidden sm:flex gap-[3px] h-[420px] overflow-hidden rounded-2xl"
+            >
+                <button
+                    type="button"
+                    class="group relative flex-1 overflow-hidden"
+                    @click="openImage(images[0])"
                 >
                     <img
-                        :src="images[5]"
-                        class="w-full h-full object-cover blur-sm scale-110"
+                        :src="images[0]"
+                        class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        alt=""
                     />
-
                     <div
-                        class="absolute inset-0 flex items-center justify-center bg-black/40"
+                        class="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10"
+                    ></div>
+                </button>
+
+                <div class="flex w-40 flex-col gap-[3px]">
+                    <button
+                        v-for="(img, i) in sideImages"
+                        :key="i"
+                        type="button"
+                        class="group relative flex-1 overflow-hidden"
+                        :class="[
+                            i === 0 ? 'rounded-tr-2xl' : '',
+                            i === sideImages.length - 1 ? 'rounded-br-2xl' : '',
+                        ]"
+                        @click="openImage(img)"
                     >
-                        <span class="text-white font-semibold text-sm">
-                            +{{ images.length - 5 }}
-                        </span>
-                    </div>
+                        <img
+                            :src="img"
+                            class="h-full w-full object-cover transition-transform duration-500"
+                            :class="
+                                i === sideImages.length - 1 && overflowCount > 0
+                                    ? 'blur-sm scale-110'
+                                    : 'group-hover:scale-105'
+                            "
+                            alt=""
+                        />
+                        <div
+                            v-if="
+                                i === sideImages.length - 1 && overflowCount > 0
+                            "
+                            class="absolute inset-0 flex items-center justify-center bg-black/40 text-sm font-semibold text-white"
+                        >
+                            +{{ overflowCount }}
+                        </div>
+                        <div
+                            v-else
+                            class="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10"
+                        ></div>
+                    </button>
                 </div>
-            </template>
+            </div>
+
+            <button
+                type="button"
+                @click="openImage(images[0])"
+                class="hidden sm:inline-flex absolute bottom-8 right-3 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50"
+            >
+                <LayoutGrid class="h-4 w-4" />
+                Show all photos
+            </button>
+
+            <div class="sm:hidden">
+                <button
+                    type="button"
+                    @click="openImage(heroImage)"
+                    class="relative block h-[240px] w-full overflow-hidden rounded-2xl bg-gray-100"
+                >
+                    <img
+                        :src="heroImage"
+                        class="h-full w-full object-cover"
+                        alt=""
+                    />
+                    <span
+                        class="absolute bottom-3 left-3 rounded-full bg-black/50 px-2.5 py-1 text-xs font-medium text-white"
+                    >
+                        {{ selectedIndex + 1 }} / {{ images.length }}
+                    </span>
+                </button>
+                <div class="mt-2 flex gap-2 overflow-x-auto">
+                    <button
+                        v-for="(img, i) in images"
+                        :key="i"
+                        type="button"
+                        @click="selectedIndex = i"
+                        class="h-16 w-16 shrink-0 overflow-hidden rounded-lg"
+                        :class="
+                            i === selectedIndex
+                                ? 'ring-2 ring-primary'
+                                : 'ring-1 ring-black/5'
+                        "
+                    >
+                        <img
+                            :src="img"
+                            class="h-full w-full object-cover"
+                            alt=""
+                        />
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        <div class="absolute top-8 left-3 flex gap-2">
+            <button
+                @click="emit('share')"
+                aria-label="Share"
+                class="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white"
+            >
+                <Share2 class="h-4 w-4" />
+            </button>
+            <button
+                @click="emit('favorite')"
+                aria-label="Add to favorites"
+                class="group flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white"
+            >
+                <Heart
+                    class="h-4 w-4 transition-colors group-hover:fill-red-500 group-hover:text-red-500"
+                />
+            </button>
         </div>
     </div>
 
-    <ImagePopup :image="selectedImage" @close="closeImage" />
+    <ImagePopup :image="lightboxImage" @close="lightboxImage = null" />
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
+import { Heart, Share2, LayoutGrid } from "lucide-vue-next";
 import ImagePopup from "~/components/ui/ImagePopup.vue";
 
 const props = defineProps<{
     primaryImage?: string;
     secondaryImage?: string[];
     loading?: boolean;
+}>();
+
+const emit = defineEmits<{
+    (e: "favorite"): void;
+    (e: "share"): void;
 }>();
 
 const images = computed<string[]>(() => {
@@ -78,19 +159,21 @@ const images = computed<string[]>(() => {
         "https://picsum.photos/id/1021/800/500",
         "https://picsum.photos/id/1022/800/500",
         "https://picsum.photos/id/1023/800/500",
+        "https://picsum.photos/id/1023/800/500",
+        "https://picsum.photos/id/1023/800/500",
     ].filter((i): i is string => typeof i === "string");
 });
 
-const previewImages = computed(() => images.value.slice(1, 5));
+const sideImages = computed(() => images.value.slice(1, 5));
+const overflowCount = computed(() => Math.max(images.value.length - 5, 0));
 
-const selectedImage = ref<string | null>(null);
+const selectedIndex = ref(0);
+watch(images, () => (selectedIndex.value = 0));
+const heroImage = computed(() => images.value[selectedIndex.value]);
 
-const openImage = (img?: string) => {
-    if (!img) return;
-    selectedImage.value = img;
-};
-
-const closeImage = () => {
-    selectedImage.value = null;
+const lightboxImage = ref<string | null>(null);
+const openImage = (src?: string) => {
+    if (!src) return;
+    lightboxImage.value = src;
 };
 </script>

@@ -34,3 +34,15 @@ export const roleMeta: Record<string, { label: string; class: string }> = {
         class: 'bg-teal-50 text-teal-600 border-teal-200',
     },
 }
+
+
+export function fullName(
+    firstName: string,
+    middleName: string | null | undefined,
+    lastName: string
+) {
+
+    return `${firstName ?? ""} ${middleName ?? ""} ${lastName ?? ""}`
+        .trim()
+        || "—";
+}

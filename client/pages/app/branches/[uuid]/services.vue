@@ -1,5 +1,11 @@
 <template>
     <div class="w-full max-w-8xl mx-auto p-4 md:p-6 space-y-5">
+        <PageHeader
+            title="Medical Services"
+            subtitle="Healthcare"
+            description="View and manage available medical services."
+        />
+
         <ServiceSearch
             v-model="searchData"
             v-model:activeTab="activeTab"
@@ -10,6 +16,7 @@
             :loading="loading"
             :services="filteredServices"
             @edit="editServiceClicked"
+            @assign="assignService"
         />
 
         <ServiceModal
@@ -23,6 +30,12 @@
             :button-title="buttonTitle"
             :submitLoading="submitLoading"
         />
+
+        <ServiceEmployeeModal
+            :open="showAssignModal"
+            :service="selectedService"
+            @close="showAssignModal = false"
+        />
     </div>
 </template>
 
@@ -35,6 +48,8 @@ import ServiceSearch from "~/components/sections/app/Service/ServiceSearch.vue";
 import ServiceList from "~/components/sections/app/Service/ServiceList.vue";
 import ServiceModal from "~/components/sections/app/Service/ServiceModal.vue";
 import { useToast } from "~/composables/useToast";
+import PageHeader from "~/components/ui/PageHeader.vue";
+import ServiceEmployeeModal from "~/components/sections/app/Service/ServiceEmployeeModal.vue";
 
 const { success, error } = useToast();
 
@@ -56,21 +71,19 @@ const services = ref<Service[]>([]);
 
 const filteredServices = computed(() => {
     let list = services.value;
-
     if (activeTab.value !== "All Services") {
         list = list.filter((s) => s.type === "both");
     }
-
     if (searchData.value.trim()) {
         const keyword = searchData.value.toLowerCase();
         list = list.filter((s) =>
             s.service_name.toLowerCase().includes(keyword),
         );
     }
-
     return list;
 });
 
+const showAssignModal = ref(false);
 const serviceForm = reactive(createServiceForm());
 const modalOpen = ref(false);
 const submitLoading = ref(false);
@@ -102,6 +115,13 @@ const addServiceClicked = () => {
     title.value = "Add Service";
     subtitle.value = "Fill in the details below to create a new service.";
     buttonTitle.value = "Add Service";
+};
+
+const selectedService = ref<Service>();
+
+const assignService = (service: Service) => {
+    selectedService.value = service;
+    showAssignModal.value = true;
 };
 
 const editServiceClicked = (service: Service) => {

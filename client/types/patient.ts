@@ -1,5 +1,7 @@
 import { z } from "zod";
 import type { Location } from "./location";
+
+
 export interface Patient {
     patient_id?: number;
     first_name: string;
@@ -15,6 +17,7 @@ export interface Patient {
     weight?: string;
     blood_type?: string;
     location?: Location
+    address?: string
 }
 
 export const patientData = reactive<Patient>({
@@ -30,31 +33,73 @@ export const patientData = reactive<Patient>({
     height: "175",
     weight: "70",
     blood_type: "O+",
-    location: {
-        address: "123 Main Street, Barangay 5",
-        street: "Main Street",
-        city: "Davao City",
-        province: "Davao del Sur",
-        country: "Philippines",
-        latitude: 7.1907,
-        longitude: 125.4553,
-    },
+    address: ""
+});
+
+const decimalString = z
+    .string()
+    .optional()
+    .refine((val) => !val || /^\d+(\.\d+)?$/.test(val), {
+        message: "Must be a valid number",
+    });
+
+export const patientSchema = z.object({
+    first_name: z.string().min(1, "First name is required"),
+    middle_name: z.string().optional(),
+    last_name: z.string().min(1, "Last name is required"),
+    gender: z.string().min(1, "Gender is required"),
+    citizenship: z.string().min(1, "Citizenship is required"),
+    occupation: z.string().min(1, "Occupation is required"),
+    date_of_birth: z.string().min(1, "Date of birth is required"),
+    phone_number: z.string().optional(),
+    marital_status: z.string().min(1, "Marital status is required"),
+    height: z.string()
+        .optional()
+        .refine((val) => !val || /^\d+(\.\d+)?$/.test(val), {
+            message: "Must be a height number",
+        }),
+    weight: z.string()
+        .optional()
+        .refine((val) => !val || /^\d+(\.\d+)?$/.test(val), {
+            message: "Must be a weight number",
+        }),
+    blood_type: z.string().optional(),
+    // address: z.string().min(1, "Address is required"),
+    address: z.string().optional(),
 });
 
 
-export const patientSchema = z.object({
-    first_name: z.string().min(1),
-    middle_name: z.string().optional(),
-    last_name: z.string().min(1),
-    gender: z.string().min(1),
-    citizenship: z.string().min(1),
-    occupation: z.string().min(1),
-    date_of_birth: z.string().min(1),
-    phone_number: z.string().optional(),
-    marital_status: z.string().min(1),
-    height: z.string().optional(),
-    weight: z.string().optional(),
-    blood_type: z.string().optional(),
+export interface Guardian {
+    first_name: string,
+    middle_name: string,
+    last_name: string,
+    phone_number?: string,
+    email: string,
+    relationship: string,
+    occupation?: string,
+    address?: string,
+}
+
+export const guardianData = reactive<Guardian>({
+    first_name: "Maria",
+    middle_name: "Santos",
+    last_name: "Cruz",
+    phone_number: "+63 917 888 9999",
+    email: "maria.cruz@example.com",
+    relationship: "Mother",
+    occupation: "Teacher",
+    address: "",
+});
+
+export const guardianSchema = z.object({
+    first_name: z.string().min(1, "First name is required"),
+    middle_name: z.string().min(1, "Middle name is required"),
+    last_name: z.string().min(1, "Last name is required"),
+    phone_number: z.string().min(1, "Phone number is required"),
+    email: z.string().min(1, "Email is required").email("Enter a valid email"),
+    relationship: z.string().min(1, "Relationship is required"),
+    occupation: z.string().min(1, "Occupation is required"),
+    address: z.string().min(1, "Address is required"),
 });
 
 
@@ -103,3 +148,4 @@ export const assessmentData = reactive<Assessment>({
     memory_issues: "none",
     mood: "calm",
 });
+

@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { Permissions } from "./permission";
 
 export interface Employee {
+    id: string
     uuid: string,
     email: string;
     first_name: string;
@@ -15,6 +16,7 @@ export interface Employee {
     assignment_type: string;
     status: string;
     permissions: Permissions[]
+    hired_date?: string;
 }
 
 
@@ -59,10 +61,15 @@ export const employeeSchema = z.object({
     first_name: z.string().min(1, "First name is required"),
     middle_name: z.string().optional(),
     last_name: z.string().min(1, "Last name is required"),
+    // birth_date: z
+    //     .string()
+    //     .min(1, "Birth date is required")
+    //     .refine((val) => !isNaN(Date.parse(val)), "Enter a valid birth date"),
     birth_date: z
         .string()
-        .min(1, "Birth date is required")
-        .refine((val) => !isNaN(Date.parse(val)), "Enter a valid birth date"),
+        .nullable()
+        .refine((val) => !!val, "Birth date is required")
+        .refine((val) => !isNaN(Date.parse(val as string)), "Enter a valid birth date"),
     phone_number: z
         .string()
         .min(1, "Phone number is required")

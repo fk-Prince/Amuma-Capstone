@@ -24,11 +24,13 @@ import DynamicSidebar from "~/components/sections/DynamicSidebar.vue";
 import DashboardHeader from "~/components/sections/DashboardHeader.vue";
 
 import { ref, computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 
 import { authMenuList } from "~/config/authMenu";
 
+const route = useRoute();
 const user = useAuthUser();
 const isOpen = ref(false);
 
@@ -36,7 +38,7 @@ const branchStore = useBranchStore();
 
 onMounted(async () => {
     if (!branchStore.branches.length) {
-        await branchStore.fetchBranches();
+        await branchStore.fetchBranches(route);
     }
 
     let uuid = branchStore.activeBranch?.uuid ?? branchStore.branches[0]?.uuid;
@@ -46,7 +48,9 @@ onMounted(async () => {
         uuid = branch?.uuid;
     }
 
-    await navigateTo(`/app/branches/${uuid}/dashboard`);
+    if (uuid && !route.path.startsWith("/app/branches/")) {
+        await navigateTo(`/app/branches/${uuid}/dashboard`);
+    }
 });
 
 const activeModules = computed(() => {

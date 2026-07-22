@@ -5,7 +5,7 @@ namespace App\Service;
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Http\Resources\EmployeeResource;
-use App\Http\Resources\UserResource;
+use App\Http\Resources\EmployeeScheduleResource;
 use App\Models\User;
 use App\Repository\BranchRepository;
 use App\Repository\EmployeeRepository;
@@ -18,6 +18,7 @@ use Exception;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class EmployeeService
@@ -227,27 +228,39 @@ class EmployeeService
         });
     }
 
-    public function getEmployees(array $payload, User $user)
+    public function getEmployees(array $payload, User $user, string $type)
     {
-
-
+        Log::info($payload);
         $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
 
         if (!$branch) {
             throw new Exception('Branch not found.', 404);
         }
-        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Read);
 
-        $result =  $this->employeeRepository->getPaginateEmployee($payload, $branch->branch_id);
+        if ($type === 'regular') {
+            AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Read);
 
-        request()->merge([
-            'branch_id' => $branch->branch_id
-        ]);
+            $result =  $this->employeeRepository->getPaginateEmployee($payload, $branch->branch_id);
 
-        return EmployeeResource::collection($result['users'])
-            ->additional([
-                'total_employee' => $result['total_employee'],
-                'status_counts' => $result['status_counts'],
+            request()->merge([
+                'branch_id' => $branch->branch_id
             ]);
+
+            return EmployeeResource::collection($result['users'])
+                ->additional([
+                    'total_employee' => $result['total_employee'],
+                    'status_counts' => $result['status_counts'],
+                ]);
+        } else if ($type === 'schedule') {
+            AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Create);
+
+            $result = $this->employeeRepository->getPaginateEmployeeSchedule($payload, $branch->branch_id);
+            return EmployeeScheduleResource::collection($result);
+        } else if ($type === 'service') {
+            AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
+
+            $result = $this->employeeRepository->getEmployeeServices($branch->branch_id, $payload);
+            return EmployeeScheduleResource::collection($result);
+        }
     }
 }

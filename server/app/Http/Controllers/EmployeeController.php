@@ -29,6 +29,6 @@ class EmployeeController extends Controller
 
     public function index(Request $request)
     {
-        return $this->employeeService->getEmployees($request->all(), $request->user());
+        return $this->employeeService->getEmployees($request->all(), $request->user(),  $request->input('type', 'regular'));
     }
 }

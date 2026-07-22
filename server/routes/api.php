@@ -1,10 +1,10 @@
 <?php
 
-use App\Events\NotificationEvent;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BranchContractController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\EmployeeController;
@@ -15,11 +15,9 @@ use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RoomController;
-use App\Http\Controllers\sample;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
-use App\Models\Room;
 use Illuminate\Support\Facades\Route;
 
 
@@ -49,6 +47,11 @@ Route::prefix('branches')->group(function () {
         Route::get('/{uuid}/services', [ServiceController::class, 'getBranchServices']);
     });
 });
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/services/assign-employee', [ServiceController::class, 'assignEmployee']);
+    Route::post('/bookings/action', [BookingController::class, 'action']);
+    Route::post('/contracts/overview', [BranchContractController::class, 'overview']);
+});
 
 Route::prefix('reviews')->group(function () {
     // PUBLIC REVIEW
@@ -72,7 +75,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/branches',  [UserController::class, 'getUserBranch']);
 
 
-
     Route::apiResources([
         'employees' => EmployeeController::class,
         'agencies' => AgencyController::class,
@@ -85,6 +87,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'categories' => CategoryController::class,
         'beds' => BedController::class,
         'modules' => ModuleController::class,
+        'contracts' => BranchContractController::class
     ]);
 
 

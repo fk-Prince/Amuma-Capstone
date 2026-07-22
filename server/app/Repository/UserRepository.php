@@ -20,14 +20,7 @@ class UserRepository
         return User::where($column, $value)->first();
     }
 
-    public function getAllUsersByBranchAndRole(string $branch_id, string $role_type)
-    {
-        return User::whereHas('roles', function ($q) use ($role_type, $branch_id) {
-            $q->where('roles.role_type', $role_type)
-                ->where('user_roles.branch_id', $branch_id)
-                ->where('user_roles.is_active', 1);
-        })->get();
-    }
+
 
     public function updateOrCreate(object $payload)
     {

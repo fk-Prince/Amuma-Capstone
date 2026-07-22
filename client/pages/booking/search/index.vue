@@ -1,6 +1,8 @@
 <template>
     <div class="flex flex-col h-screen overflow-hidden bg-slate-100">
-        <Filter />
+        <div class="w-full z-40">
+            <Filter />
+        </div>
 
         <div class="flex-1 overflow-hidden">
             <div class="mx-auto max-w-[100rem] px-4 py-6 h-full">
@@ -19,10 +21,10 @@
                     </div>
 
                     <div
-                        class="w-full lg:w-[40%] flex flex-col rounded-xl overflow-hidden"
+                        class="w-full lg:w-[40%] z-20 flex flex-col rounded-xl overflow-hidden"
                     >
                         <LocationPin
-                            class="flex-1 h-full w-full"
+                            class="flex-1 h-full w-full z-20"
                             :locations="locations"
                             :center-lat="centerLat"
                             :center-lng="centerLng"

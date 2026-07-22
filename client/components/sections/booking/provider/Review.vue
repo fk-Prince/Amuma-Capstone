@@ -6,30 +6,56 @@
             </h2>
         </div>
 
+        <div
+            class="rounded-xl border border-orange-100 bg-orange-50/60 p-5 mb-6"
+        >
+            <div class="flex items-baseline gap-3">
+                <span class="text-3xl font-bold text-orange-500">
+                    {{ (averageRating ?? 0).toFixed(1) }}
+                </span>
+
+                <span class="text-sm text-slate-500"> out of 5 </span>
+            </div>
+
+            <div class="flex gap-0.5 text-lg mt-1 mb-4">
+                <span v-for="n in 5" :key="n">
+                    <Star
+                        v-if="n <= Math.round(averageRating ?? 0)"
+                        class="h-4 w-4 text-orange-400 fill-orange-400"
+                    />
+
+                    <Star v-else class="h-4 w-4 text-slate-300" />
+                </span>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <button
+                    @click="setFilter('all')"
+                    :class="btnClass(activeFilter === 'all')"
+                >
+                    All
+                </button>
+
+                <button
+                    v-for="star in [5, 4, 3, 2, 1]"
+                    :key="star"
+                    @click="setFilter(star)"
+                    :class="btnClass(activeFilter === star)"
+                >
+                    {{ star }} Star ({{ ratingBreakdown[star] ?? 0 }})
+                </button>
+
+                <button
+                    @click="setFilter('comments')"
+                    :class="btnClass(activeFilter === 'comments')"
+                >
+                    With Comments ({{ withCommentCounts }})
+                </button>
+            </div>
+        </div>
+
         <template v-if="loading">
             <div class="animate-pulse">
-                <div
-                    class="rounded-xl border border-orange-100 bg-orange-50/60 p-5 mb-6"
-                >
-                    <div class="h-10 w-20 bg-gray-200 rounded"></div>
-
-                    <div class="flex gap-1 mt-3 mb-5">
-                        <div
-                            v-for="i in 5"
-                            :key="i"
-                            class="h-5 w-5 bg-gray-200 rounded"
-                        ></div>
-                    </div>
-
-                    <div class="flex flex-wrap gap-2">
-                        <div
-                            v-for="i in 7"
-                            :key="i"
-                            class="h-8 w-20 bg-gray-200 rounded-lg"
-                        ></div>
-                    </div>
-                </div>
-
                 <div
                     v-for="i in 3"
                     :key="i"
@@ -50,54 +76,6 @@
         </template>
 
         <template v-else>
-            <div
-                class="rounded-xl border border-orange-100 bg-orange-50/60 p-5 mb-6"
-            >
-                <div class="flex items-baseline gap-3">
-                    <span class="text-3xl font-bold text-orange-500">
-                        {{ (averageRating ?? 0).toFixed(1) }}
-                    </span>
-
-                    <span class="text-sm text-slate-500"> out of 5 </span>
-                </div>
-
-                <div class="flex gap-0.5 text-lg mt-1 mb-4">
-                    <span v-for="n in 5" :key="n">
-                        <Star
-                            v-if="n <= Math.round(averageRating ?? 0)"
-                            class="h-4 w-4 text-orange-400 fill-orange-400"
-                        />
-
-                        <Star v-else class="h-4 w-4 text-slate-300" />
-                    </span>
-                </div>
-
-                <div class="flex flex-wrap gap-2">
-                    <button
-                        @click="setFilter('all')"
-                        :class="btnClass(activeFilter === 'all')"
-                    >
-                        All
-                    </button>
-
-                    <button
-                        v-for="star in [5, 4, 3, 2, 1]"
-                        :key="star"
-                        @click="setFilter(star)"
-                        :class="btnClass(activeFilter === star)"
-                    >
-                        {{ star }} Star ({{ ratingBreakdown[star] ?? 0 }})
-                    </button>
-
-                    <button
-                        @click="setFilter('comments')"
-                        :class="btnClass(activeFilter === 'comments')"
-                    >
-                        With Comments ({{ withCommentCounts }})
-                    </button>
-                </div>
-            </div>
-
             <div v-if="reviews.length">
                 <div
                     v-for="review in reviews"
@@ -132,12 +110,13 @@
                     </button>
                 </div>
             </div>
+
             <div
                 v-else
                 class="flex flex-col items-center justify-center py-12 text-center"
             >
                 <div
-                    class="flex h-16 w-16 items-center justify-center rounded-full bg-orange-50 pl-1"
+                    class="flex h-16 w-16 items-center justify-center rounded-full bg-orange-50"
                 >
                     <Star class="h-8 w-8 text-orange-400 fill-orange-400" />
                 </div>
@@ -160,6 +139,7 @@ import { ref, watch, computed } from "vue";
 import { reviewService } from "~/api/review/ReviewService";
 import type { Review } from "~/types/review";
 import { Star } from "lucide-vue-next";
+
 const props = defineProps<{
     branchUuid: string;
 }>();

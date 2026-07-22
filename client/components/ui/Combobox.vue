@@ -58,7 +58,12 @@
 
         <div
             v-if="isOpen"
-            class="absolute z-50 w-full mt-1 bg-white border overflow-hidden rounded-lg shadow-lg"
+            class="absolute z-50 w-full bg-white border overflow-hidden rounded-lg shadow-lg"
+            :class="
+                dropdownPosition === 'top'
+                    ? 'bottom-full mb-1'
+                    : 'top-full mt-1'
+            "
         >
             <div class="p-2 border-b" v-if="searchBar">
                 <div class="relative">
@@ -134,18 +139,24 @@ type Item = {
     icon?: string;
 };
 
-const props = defineProps<{
-    modelValue: any;
-    items: Item[];
-    label?: string;
-    placeholder?: string;
-    searchPlaceholder?: string;
-    required?: boolean;
-    searchBar?: boolean;
-    inputClass?: string;
-    allowCustom?: boolean;
-    error?: string;
-}>();
+const props = withDefaults(
+    defineProps<{
+        modelValue: any;
+        items: Item[];
+        label?: string;
+        placeholder?: string;
+        searchPlaceholder?: string;
+        required?: boolean;
+        searchBar?: boolean;
+        inputClass?: string;
+        allowCustom?: boolean;
+        error?: string;
+        position?: "top" | "bottom";
+    }>(),
+    {
+        position: "bottom",
+    },
+);
 
 const emit = defineEmits(["update:modelValue", "create:item"]);
 
@@ -159,6 +170,8 @@ const baseItems = ref<Item[]>([]);
 const localItems = ref<Item[]>([]);
 
 const currentError = ref(props.error);
+
+const dropdownPosition = computed(() => props.position ?? "bottom");
 
 watch(
     () => props.error,

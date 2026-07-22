@@ -2,6 +2,8 @@
 
 namespace App\Repository;
 
+use App\Models\EmployeeBranch;
+use App\Models\EmployeeService;
 use App\Models\Service;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -23,5 +25,20 @@ class ServiceRepository
     {
         return Service::where($conditions)->first();
     }
-    public function update() {}
+
+
+    public function existsEmployeeService(string $serviceId, string $employeeId, string $branchId)
+    {
+        return EmployeeService::where('service_id', $serviceId)
+            ->whereHas('employeeBranch', function ($query) use ($employeeId, $branchId) {
+                $query->where('employee_id', $employeeId)
+                    ->where('branch_id', $branchId);
+            })
+            ->exists();
+    }
+
+    public function assignEmployee(array $payload)
+    {
+        return EmployeeService::create($payload);
+    }
 }

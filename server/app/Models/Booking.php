@@ -24,9 +24,24 @@ class Booking extends Model
         'category',
         'valid_until',
     ];
+
     public function uniqueIds()
     {
         return ['reference_id'];
+    }
+
+    public function user()
+    {
+        return $this->hasOne(User::class, 'user_id', 'user_id');
+    }
+    public function branch()
+    {
+        return $this->hasOne(Branch::class, 'branch_id', 'branch_id');
+    }
+
+    public function patientBooking()
+    {
+        return $this->hasMany(PatientBooking::class, 'booking_id', 'booking_id');
     }
 
     protected $casts = [

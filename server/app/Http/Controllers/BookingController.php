@@ -15,16 +15,18 @@ class BookingController extends Controller
         $this->bookingService = $bookingService;
     }
 
-    // public function index(Request $request)
-    // {
-    //     return $this->bookingService->listBooking(
-    //         $request->user(),
-    //         $request->input('per_page', 15)
-    //     );
-    // }
+    public function index(Request $request)
+    {
+        return $this->bookingService->listBooking($request->user(), $request->all());
+    }
 
     public function store(Request $request)
     {
         return $this->bookingService->createBooking($request->user(), $request->all());
+    }
+
+    public function action(Request $request)
+    {
+        return $this->bookingService->bookingAccepted($request->user(), $request->all());
     }
 }

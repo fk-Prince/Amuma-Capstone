@@ -21,7 +21,7 @@
             <span
                 class="absolute left-3 top-3 rounded-md bg-white/90 px-2.5 py-1 text-xs font-semibold text-emerald-700 shadow-sm backdrop-blur-sm"
             >
-                {{ getTime(branch.availability).label }}
+                {{ getTime(branch.settings).label }}
             </span>
 
             <div
@@ -85,12 +85,12 @@
             <span
                 class="text-xs px-4 uppercase py-1 rounded-full font-semibold"
                 :class="
-                    branch.availability.is_open
+                    branch.settings.is_open
                         ? 'bg-green-100 text-green-700'
                         : 'bg-red-100 text-red-600'
                 "
             >
-                {{ branch.availability.is_open ? "Open" : "Closed" }}
+                {{ branch.settings.is_open ? "Open" : "Closed" }}
             </span>
             <button
                 @click="$emit('select', branch)"
@@ -127,12 +127,12 @@
             <span
                 class="absolute left-3 bg-white/90 top-3 rounded-md border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide backdrop-blur-sm"
                 :class="
-                    branch.availability.is_open
+                    branch.settings.is_open
                         ? 'bg-green-100 text-green-700'
                         : 'bg-red-100 text-red-600'
                 "
             >
-                {{ branch.availability.is_open ? "Open Now" : "Closed" }}
+                {{ branch.settings.is_open ? "Open Now" : "Closed" }}
             </span>
 
             <div
@@ -211,7 +211,7 @@
                 <svg
                     class="h-4 w-4 shrink-0"
                     :class="
-                        getTime(branch.availability).is24Hours
+                        getTime(branch.settings).is24Hours
                             ? 'text-emerald-600'
                             : 'text-slate-400'
                     "
@@ -228,14 +228,14 @@
                 </svg>
 
                 <span
-                    v-if="getTime(branch.availability).is24Hours"
+                    v-if="getTime(branch.settings).is24Hours"
                     class="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700"
                 >
                     Open 24 Hours
                 </span>
 
                 <span v-else class="font-medium text-slate-600">
-                    {{ getTime(branch.availability).label }}
+                    {{ getTime(branch.settings).label }}
                 </span>
             </div>
 
@@ -265,6 +265,6 @@ const props = defineProps<{
 
 defineEmits(["select"]);
 
-const getTime = (availability: BranchRetrieve["availability"]) =>
-    getBranchTimeDisplay(availability);
+const getTime = (settings: BranchRetrieve["settings"]) =>
+    getBranchTimeDisplay(settings);
 </script>

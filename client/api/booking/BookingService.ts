@@ -8,6 +8,7 @@ class BookingService extends BaseService {
         const config = useRuntimeConfig();
         return config.public.backendApi;
     }
+
     public static getInstance(): BookingService {
         if (!BookingService.instance) {
             BookingService.instance = new BookingService();
@@ -18,6 +19,15 @@ class BookingService extends BaseService {
 
     async create(payload: object): Promise<any> {
         return await this.request(this.resource, 'POST', payload);
+    }
+
+    async list(payload: object): Promise<any> {
+        return await this.request(this.resource, 'GET', payload);
+    }
+
+
+    async actionBooking(payload: object): Promise<any> {
+        return await this.request(this.resource + '/action', 'POST', payload);
     }
 
 

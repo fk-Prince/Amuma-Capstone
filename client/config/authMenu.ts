@@ -32,12 +32,8 @@ export const authMenuList: MenuItems[] = [
     {
         label: "Bookings",
         icon: LayoutDashboard,
-        to: "/app/branches/[uuid]/dashboard",
-    },
-    {
-        label: "Branch Subscription",
-        icon: LayoutDashboard,
-        to: "/app/branches/[uuid]/dashboard",
+        to: "/app/branches/[uuid]/bookings",
+        modules: ["Bookings"],
     },
     {
         label: "Admissions",
@@ -46,10 +42,10 @@ export const authMenuList: MenuItems[] = [
         modules: ["Admissions"],
     },
     {
-        label: "Homecare Bookings",
+        label: "Homecare Services",
         icon: Stethoscope,
         to: "/app/branches/[uuid]/bookings",
-        modules: ["Homecare Bookings"],
+        modules: ["Homecare"],
     },
     {
         label: "Patients",
@@ -64,10 +60,10 @@ export const authMenuList: MenuItems[] = [
         modules: ["Schedules"],
     },
     {
-        label: "Facility Management",
+        label: "Pricing",
         icon: Building2,
-        to: "/app/branches/[uuid]/facility",
-        modules: ["Facility Management"],
+        to: "/app/branches/[uuid]/pricing",
+        modules: ["Pricing"],
     },
     {
         label: "Rooms & Beds",
@@ -92,13 +88,19 @@ export const authMenuList: MenuItems[] = [
         icon: HandCoins,
         to: "/app/branches/[uuid]/billing",
         modules: ["Billing & Invoices"],
-        plan: ["A", "B"]
+        plan: ["A", "B"],
     },
     {
         label: "Reports",
         icon: ClipboardMinus,
         to: "/app/branches/[uuid]/reports",
         modules: ["Reports"],
+    },
+    {
+        label: "Manage Branches",
+        icon: Building2,
+        to: "/app/branches/[uuid]/dashboard",
+        modules: ["Manage Branches"],
     },
     {
         label: "Branch Settings",

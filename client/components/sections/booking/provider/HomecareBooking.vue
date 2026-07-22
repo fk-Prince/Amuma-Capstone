@@ -102,6 +102,10 @@
                             </div>
                         </div>
                     </div>
+
+                    <p v-if="errors?.type" class="text-xs text-red-500 mt-2">
+                        {{ errors.type }}
+                    </p>
                 </template>
             </div>
 
@@ -132,25 +136,17 @@
                 </template>
 
                 <template v-else>
-                    <div>
-                        <label class="text-sm font-semibold text-slate-700"
-                            >Select Schedule Date</label
-                        >
-                        <input
-                            type="date"
-                            :value="model.date"
-                            @input="
-                                update(
-                                    'date',
-                                    ($event.target as HTMLInputElement).value,
-                                )
-                            "
-                            :min="todayStr"
-                            class="w-full border rounded-lg p-2 mt-1"
-                        />
-                    </div>
+                    <BaseInput
+                        label="Select Schedule Date"
+                        :model-value="model.date"
+                        @update:model-value="update('date', $event)"
+                        mode="date"
+                        :min="todayStr"
+                        :error="errors?.date"
+                        required
+                    />
 
-                    <div class="flex flex-col gap-1.5">
+                    <div class="flex flex-col gap-1.5 mt-0.5">
                         <Combobox
                             :model-value="model.prefered_time"
                             @update:model-value="
@@ -158,17 +154,29 @@
                             "
                             label="Preferred Time"
                             :placeholder="displayTime"
+                            :error="errors?.prefered_time"
                             required
                             :items="availableTimeSlots"
                         />
 
-                        <p
-                            class="text-[12px] text-muted"
+                        <div
                             v-if="model.type === 'Medical'"
+                            class="text-[12px] flex items-center gap-1.5"
                         >
-                            Open {{ formatHour(openingHour) }} –
-                            {{ formatHour(closingHour) }}
-                        </p>
+                            <span
+                                v-if="operatingHours === 'Open 24 hrs'"
+                                class="inline-flex uppercase items-center gap-1 rounded-full bg-green-50 px-4 py-1 text-green-600 font-medium"
+                            >
+                                <span
+                                    class="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"
+                                />
+                                Open 24 hrs
+                            </span>
+
+                            <span v-else class="text-muted">
+                                {{ operatingHours }}
+                            </span>
+                        </div>
                     </div>
 
                     <div
@@ -184,11 +192,14 @@
                             type="button"
                             @click="isServiceModalOpen = true"
                             class="w-full border rounded-lg p-2 text-left flex items-center justify-between"
-                            :class="
+                            :class="[
                                 selectedServiceLabel
                                     ? 'text-slate-800'
-                                    : 'text-muted'
-                            "
+                                    : 'text-muted',
+                                errors?.services
+                                    ? 'border-red-400'
+                                    : 'border-slate-200',
+                            ]"
                         >
                             <span class="truncate">
                                 {{ selectedServiceLabel || "Select service" }}
@@ -196,54 +207,82 @@
                             <span class="text-slate-400 text-sm">›</span>
                         </button>
 
+                        <p v-if="errors?.services" class="text-xs text-red-500">
+                            {{ errors.services }}
+                        </p>
+
                         <p
-                            v-if="selectedServicesTotal"
+                            v-else-if="selectedServicesTotal"
                             class="text-[12px] font-semibold text-primary"
                         >
                             Total: ₱{{ selectedServicesTotal.toFixed(2) }}
                         </p>
                     </div>
-
                     <div
-                        v-if="model.type === 'ADL'"
-                        class="flex flex-col gap-1.5"
+                        v-if="
+                            model.type === 'ADL' && Number(adlRatePerHour) > 0
+                        "
+                        class="flex flex-col gap-3"
                     >
-                        <label class="text-sm font-semibold text-slate-700">
-                            Duration (hours)
-                            <span class="text-danger">*</span>
-                        </label>
-                        <input
-                            type="number"
-                            :min="minAdlHours"
-                            step="1"
-                            :value="model.time_span"
-                            @input="
-                                update(
-                                    'time_span',
-                                    ($event.target as HTMLInputElement).value,
-                                )
-                            "
-                            class="w-full border rounded-lg p-2"
+                        <BaseInput
+                            label="Duration (hours)"
+                            :model-value="model.time_span"
+                            @update:model-value="update('time_span', $event)"
+                            mode="number"
+                            :min="String(minAdlHours)"
                             placeholder="Enter total hours"
+                            :error="errors?.time_span"
+                            required
                         />
 
-                        <p class="text-[12px] text-muted">
-                            {{ adlRatePerHour }} / hour • Minimum
-                            {{ minAdlHours }} hours
-                        </p>
-                        <p
-                            v-if="adlTotal"
-                            class="text-[12px] font-semibold text-primary"
+                        <div
+                            class="rounded-lg bg-slate-50 border border-slate-200 p-3 space-y-2"
                         >
-                            Total: ₱{{ adlTotal.toLocaleString() }}
-                        </p>
+                            <p class="text-xs font-semibold text-slate-700">
+                                Requirements
+                            </p>
+
+                            <div
+                                class="flex items-center justify-between text-[12px]"
+                            >
+                                <span class="text-muted">Hourly Rate</span>
+                                <span class="font-semibold text-slate-700">
+                                    ₱{{ adlRatePerHour.toLocaleString() }}/hr
+                                </span>
+                            </div>
+
+                            <div
+                                class="flex items-center justify-between text-[12px]"
+                            >
+                                <span class="text-muted">Minimum Hours</span>
+                                <span class="font-semibold text-slate-700">
+                                    {{ minAdlHours }} hrs
+                                </span>
+                            </div>
+
+                            <div
+                                v-if="adlTotal"
+                                class="pt-2 mt-2 border-t border-slate-200 flex items-center justify-between"
+                            >
+                                <span
+                                    class="text-sm font-semibold text-slate-700"
+                                >
+                                    Total
+                                </span>
+
+                                <span class="text-sm font-bold text-primary">
+                                    ₱{{ adlTotal.toLocaleString() }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
                     <BaseInput
                         :model-value="model.address"
                         @update:model-value="update('address', $event)"
-                        label="Address"
-                        placeholder="Target Location"
+                        label="Service Location"
+                        placeholder="Where should the caregiver/nurse visit?"
+                        :error="errors?.address"
                         required
                     >
                         <template #suffix>
@@ -273,7 +312,6 @@ import { computed, ref, watch } from "vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import LocationIcon from "~/components/icons/location.vue";
-import { Stethoscope, Users } from "lucide-vue-next";
 import ServiceModal from "~/components/sections/booking/provider/ServiceModal.vue";
 import {
     formatHour,
@@ -283,15 +321,28 @@ import {
 } from "~/utils/time";
 import type { HomecareBooking } from "~/types/booking";
 import type { Service } from "~/types/service";
+import type { BranchAvailability } from "~/types/branch";
+import { useMedicalServices } from "~/composables/useBooking";
 
 const props = defineProps<{
     model: HomecareBooking;
     services: Service[];
     loading?: boolean;
+    errors?: Record<string, string> | null;
+    settings?: BranchAvailability;
 }>();
+
+const { selectedServiceLabel, selectedServicesTotal, bookingTypes } =
+    useMedicalServices(
+        () => props.services,
+        () => props.model.services,
+        () => adlRatePerHour.value,
+        () => minAdlHours.value,
+    );
 
 const emit = defineEmits<{
     (e: "update:model", value: HomecareBooking): void;
+    (e: "update:errors", value: Record<string, string>): void;
 }>();
 
 function update<K extends keyof HomecareBooking>(
@@ -302,10 +353,23 @@ function update<K extends keyof HomecareBooking>(
         ...props.model,
         [key]: value,
     });
+
+    clearError(key as string);
 }
 
-const minAdlHours = 8;
-const adlRatePerHour = 150;
+function clearError(field: string) {
+    if (!props.errors) return;
+
+    const updated = { ...props.errors };
+    delete updated[field];
+
+    emit("update:errors", updated);
+}
+
+const minAdlHours = computed<number>(() => props.settings?.adl_min_hour ?? 0);
+const adlRatePerHour = computed<number>(
+    () => props.settings?.adl_hourly_rate ?? 0,
+);
 
 const handleLocation = (data: any) => {
     const address =
@@ -316,86 +380,34 @@ const handleLocation = (data: any) => {
 
     update("address", address);
 };
-const medicalRateLabel = computed(() => {
-    if (!props.services.length) return "No services";
-
-    const prices = props.services
-        .map((service) => Number(service.price))
-        .filter((price) => !isNaN(price));
-
-    if (!prices.length) return "No pricing";
-
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-
-    if (min === max) {
-        return `₱${min.toLocaleString()}`;
-    }
-
-    return `₱${min.toLocaleString()} - ₱${max.toLocaleString()}`;
-});
-
-const medicalDescription = computed(() => {
-    if (!props.services.length) {
-        return "No medical services available";
-    }
-
-    const names = props.services.map((service) => service.service_name);
-
-    if (names.length <= 3) {
-        return names.join(", ");
-    }
-
-    return `${names.slice(0, 3).join(", ")} and ${names.length - 3} more`;
-});
-const bookingTypes = computed(() => [
-    {
-        value: "Medical",
-        title: "Medical Services",
-        description: medicalDescription,
-        icon: Stethoscope,
-        rateLabel: medicalRateLabel,
-    },
-    {
-        value: "ADL",
-        title: "Caregiver (ADL Services)",
-        description: "Daily assistance like bathing, feeding, dressing",
-        icon: Users,
-        rateLabel: `${adlRatePerHour} / hour   •   Min ${minAdlHours} hrs`,
-    },
-]);
 
 const adlTotal = computed(() => {
     const hours = Number(props.model.time_span);
+    if (isNaN(hours) || hours < minAdlHours.value) return 0;
+    return hours * adlRatePerHour.value;
+});
 
-    if (isNaN(hours) || hours < minAdlHours) {
-        return 0;
+const operatingHours = computed(() => {
+    const opening = props.settings?.opening ?? "00:00";
+    const closing = props.settings?.closing ?? "00:00";
+
+    if (opening === "00:00" && closing === "00:00") {
+        return "Open 24 hrs";
     }
 
-    return hours * adlRatePerHour;
+    return `Open ${formatHour(parseHourString(opening))} – ${formatHour(parseHourString(closing))}`;
 });
 
 const isServiceModalOpen = ref(false);
-
-const selectedServiceLabel = computed(() => {
-    const services = props.model.services ?? [];
-    if (!services.length) return "";
-    return services.map((s) => s.service_name).join(", ");
-});
-
-const selectedServicesTotal = computed(() => {
-    const services = props.model.services ?? [];
-    return services.reduce((sum, s) => sum + Number(s.price), 0);
-});
-
-const openingHour = 8;
-const closingHour = 18;
-const slotLengthHours = 2;
-
+const slotLengthHours = 1;
 const todayStr = getLocalDateStr(new Date());
 
 const allTimeSlots = computed(() =>
-    getTimeSlots(openingHour, closingHour, slotLengthHours),
+    getTimeSlots(
+        props.settings?.opening,
+        props.settings?.closing,
+        slotLengthHours,
+    ),
 );
 
 const availableTimeSlots = computed(() =>
@@ -407,7 +419,7 @@ const displayTime = computed(() =>
 );
 
 watch(availableTimeSlots, (slots) => {
-    if (!slots.find((s) => s.value === props.model.prefered_time)) {
+    if (!slots.find((s: any) => s.value === props.model.prefered_time)) {
         update("prefered_time", "");
     }
 });
@@ -422,6 +434,10 @@ watch(
             }
         } else {
             update("time_span", "");
+        }
+
+        if (props.errors) {
+            emit("update:errors", {});
         }
     },
 );

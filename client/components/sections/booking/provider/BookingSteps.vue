@@ -1,25 +1,38 @@
 <template>
-    <div class="flex flex-col gap-3">
-        <div
+    <nav class="flex flex-col">
+        <button
             v-for="(step, index) in steps"
             :key="step.key"
+            type="button"
             @click="$emit('go', step.key)"
-            class="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition hover:bg-gray-50"
+            class="group relative flex items-center gap-3 rounded-xl p-3 text-left transition-colors"
+            :class="
+                active === step.key
+                    ? 'bg-primary/10 ring-1 ring-primary/20'
+                    : 'hover:bg-gray-50'
+            "
         >
-            <div
-                class="w-8 h-8 flex items-center justify-center rounded-full text-sm font-semibold"
-                :class="
-                    active === step.key
-                        ? 'bg-primary text-white'
-                        : 'bg-gray-100 text-gray-500'
-                "
-            >
-                {{ index + 1 }}
+            <div class="flex flex-col items-center self-stretch">
+                <div
+                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors"
+                    :class="
+                        active === step.key
+                            ? 'bg-primary text-white'
+                            : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'
+                    "
+                >
+                    {{ index + 1 }}
+                </div>
+
+                <div
+                    v-if="index < steps.length - 1"
+                    class="w-px flex-1 my-1 bg-gray-200"
+                ></div>
             </div>
 
-            <div class="flex flex-col">
+            <div class="flex flex-col justify-center">
                 <span
-                    class="text-sm font-medium"
+                    class="text-sm font-medium transition-colors"
                     :class="
                         active === step.key ? 'text-primary' : 'text-gray-700'
                     "
@@ -31,8 +44,8 @@
                     {{ step.desc }}
                 </span>
             </div>
-        </div>
-    </div>
+        </button>
+    </nav>
 </template>
 
 <script setup lang="ts">
@@ -48,7 +61,7 @@ const steps = [
     {
         key: "step1",
         title: "Booking Type & Scheduling",
-        desc: "Select service & schedule ",
+        desc: "Select service & schedule",
     },
     {
         key: "step2",
@@ -61,7 +74,7 @@ const steps = [
         desc: "Enter guardian information",
     },
     {
-        key: "step5",
+        key: "step4",
         title: "Assessment",
         desc: "Health assessment",
     },

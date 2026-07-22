@@ -185,7 +185,7 @@
 
 <script setup lang="ts">
 import { watch, computed } from "vue";
-import { getLocalDateStr } from "~/utils/time-slot";
+import { getLocalDateStr } from "~/utils/time";
 import type { FacilityBooking } from "~/types/booking";
 import { Star, CalendarDays, CalendarRange, Users } from "lucide-vue-next";
 const props = defineProps<{

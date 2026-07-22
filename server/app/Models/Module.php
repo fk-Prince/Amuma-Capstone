@@ -11,6 +11,10 @@ class Module extends Model
     public $timestamps = false;
     protected $fillable = [
         'module_name',
+        'has_read',
+        'has_create',
+        'has_approve',
+        'has_update',
     ];
 
 

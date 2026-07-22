@@ -7,49 +7,59 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class BookingRepository
 {
-    // public function paginate(int $perPage = 15, ?string $companyId = null)
-    // {
-    //     $query = Booking::latest();
+    public function paginate(string $branchId, array $payload)
+    {
+        return Booking::with('user')
+            ->where('branch_id', $branchId)
+            ->when(
+                isset($payload['category']) && $payload['category'] !== 'all',
+                function ($query) use ($payload) {
+                    $query->where('category', $payload['category']);
+                }
+            )
+            ->when(
+                !empty($payload['status']),
+                function ($query) use ($payload) {
+                    $query->where('status', $payload['status']);
+                }
+            )
+            ->when(
+                !empty($payload['search']),
+                function ($query) use ($payload) {
+                    $search = $payload['search'];
 
-    //     if ($companyId) {
-    //         $query->where('company_id', $companyId);
-    //     }
-
-    //     return $query->paginate($perPage);
-    // }
+                    $query->where(function ($q) use ($search) {
+                        $q->where('reference_id', 'ilike', "%{$search}%")
+                            ->orWhereRaw(
+                                "LOWER(booking_data->'patient'->>'first_name') LIKE ?",
+                                ['%' . strtolower($search) . '%']
+                            )
+                            ->orWhereRaw(
+                                "LOWER(booking_data->'patient'->>'middle_name') LIKE ?",
+                                ['%' . strtolower($search) . '%']
+                            )
+                            ->orWhereRaw(
+                                "LOWER(booking_data->'patient'->>'last_name') LIKE ?",
+                                ['%' . strtolower($search) . '%']
+                            )
+                            ->orWhereRaw(
+                                "LOWER(CONCAT(booking_data->'patient'->>'first_name', ' ', booking_data->'patient'->>'last_name')) LIKE ?",
+                                ['%' . strtolower($search) . '%']
+                            );
+                    });
+                }
+            )
+            ->orderByDesc('created_at')
+            ->paginate($payload['per_page'] ?? 10);
+    }
 
     public function create(array $payload)
     {
         return Booking::create($payload);
     }
 
-    // public function findByUuid(string $uuid)
-    // {
-    //     return Booking::where('uuid', $uuid)->first();
-    // }
-
-    // public function update(string $uuid, array $payload)
-    // {
-    //     $model = $this->findByUuid($uuid);
-    //     if ($model) {
-    //         $model->update($payload);
-    //     }
-    //     return $model;
-    // }
-
-    // public function delete(string $uuid)
-    // {
-    //     $model = $this->findByUuid($uuid);
-    //     if ($model) {
-    //         return $model->delete();
-    //     }
-    //     return false;
-    // }
-
-    // public function restore(string $uuid)
-    // {
-    //     $model = Booking::withTrashed()->where('uuid', $uuid)->firstOrFail();
-    //     $model->restore();
-    //     return $model;
-    // }
+    public function findByField(array $conditions)
+    {
+        return Booking::where($conditions)->first();
+    }
 }

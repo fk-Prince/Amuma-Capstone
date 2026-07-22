@@ -11,7 +11,11 @@
                 currentError
                     ? 'border-red-400 focus-within:ring-red-500/15'
                     : 'border-slate-200 focus-within:border-blue-500 focus-within:ring-blue-500/15',
-                disabled ? 'bg-slate-100' : 'bg-white',
+                disabled
+                    ? 'bg-slate-100'
+                    : readonly
+                      ? 'bg-slate-50'
+                      : 'bg-white',
                 boxClass,
             ]"
         >
@@ -22,7 +26,22 @@
                 <slot name="prefix" />
             </span>
 
+            <textarea
+                v-if="props.mode === 'textarea'"
+                v-model="value"
+                :maxlength="textMax"
+                :placeholder="placeholder"
+                :disabled="disabled"
+                :readonly="readonly"
+                :class="[
+                    'flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400 resize-none',
+                    readonly ? 'cursor-default' : '',
+                    inputClass,
+                ]"
+                @blur="validateSelf"
+            />
             <input
+                v-else
                 v-model="value"
                 :type="inputType"
                 :maxlength="inputType === 'number' ? undefined : textMax"
@@ -30,10 +49,16 @@
                 :max="max || undefined"
                 :placeholder="placeholder"
                 class="flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400"
-                :class="[hasPrefix ? 'pl-2' : '', inputClass]"
+                :class="[
+                    hasPrefix ? 'pl-2' : '',
+                    readonly ? 'cursor-default' : '',
+                    inputClass,
+                ]"
                 @blur="validateSelf"
                 :disabled="disabled"
+                :readonly="readonly"
             />
+
             <span
                 v-if="hasSuffix || isSearch"
                 class="flex items-center flex-shrink-0 pr-3"
@@ -108,11 +133,14 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    readonly: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(["update:modelValue"]);
 
-// externally-supplied error (e.g. from a parent's full-schema safeParse on submit) takes precedence
 const externalError = ref(props.error);
 const localError = ref("");
 

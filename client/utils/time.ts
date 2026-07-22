@@ -1,5 +1,6 @@
 import type { BranchRetrieve } from "~/types/branch";
 
+// GENERATE 00:00 to 00:00
 export function generate24HourTimes(stepMinutes = 60): string[] {
     const times: string[] = [];
 
@@ -16,18 +17,14 @@ export function generate24HourTimes(stepMinutes = 60): string[] {
     return times;
 }
 
+//TIME ZONE
 export function getTimeZone() {
     return [
         { label: 'Asia / Manila', value: 'Asia/Manila' },
     ]
 }
 
-type TimeDisplay = {
-    is24Hours: boolean;
-    label: string;
-    time: string | null;
-};
-
+// FORMAT 00:00 to AM : PM
 export function format24To12(time: string) {
     if (!time) return "";
 
@@ -40,10 +37,11 @@ export function format24To12(time: string) {
     return `${hour}:${minute} ${ampm}`;
 }
 
+// DISPLAY TIME 
 export function getBranchTimeDisplay(
-    availability: BranchRetrieve["availability"]
-): TimeDisplay {
-    if (!availability?.opening_time || !availability?.closing_time) {
+    availability: BranchRetrieve["settings"]
+): any {
+    if (!availability?.opening || !availability?.closing) {
         return {
             is24Hours: false,
             label: "Not available",
@@ -52,8 +50,8 @@ export function getBranchTimeDisplay(
     }
 
     const is24Hours =
-        availability.opening_time === "00:00" &&
-        availability.closing_time === "00:00";
+        availability.opening === "00:00" &&
+        availability.closing === "00:00";
 
     if (is24Hours) {
         return {
@@ -65,79 +63,103 @@ export function getBranchTimeDisplay(
 
     return {
         is24Hours: false,
-        label: `${format24To12(availability.opening_time)} - ${format24To12(
-            availability.closing_time
+        label: `${format24To12(availability.opening)} - ${format24To12(
+            availability.closing
         )}`,
-        time: `${availability.opening_time} - ${availability.closing_time}`,
+        time: `${availability.opening} - ${availability.closing}`,
     };
 }
 
 
-const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-export const formatDate = (date: string | Date) => {
-    const now = new Date();
-    const target = new Date(date);
+export const formatHour = (hours: number): string => {
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
 
-    const diff = target.getTime() - now.getTime();
-    const seconds = Math.round(diff / 1000);
 
-    const intervals = [
-        { limit: 60, unit: "second", value: seconds },
-        { limit: 3600, unit: "minute", value: Math.round(seconds / 60) },
-        { limit: 86400, unit: "hour", value: Math.round(seconds / 3600) },
-        { limit: 604800, unit: "day", value: Math.round(seconds / 86400) },
-        { limit: 2629800, unit: "week", value: Math.round(seconds / 604800) },
-        { limit: 31557600, unit: "month", value: Math.round(seconds / 2629800) },
-        { limit: Infinity, unit: "year", value: Math.round(seconds / 31557600) },
-    ];
-
-    for (const interval of intervals) {
-        if (Math.abs(seconds) < interval.limit) {
-            return rtf.format(interval.value as number, interval.unit as Intl.RelativeTimeFormatUnit);
-        }
+    if (h === 0) {
+        return `00:${String(m).padStart(2, "0")} AM`;
     }
-};
 
 
-
-
-export type TimeSlot = {
-    value: string;
-    label: string;
-    start: number;
-    end: number;
-};
-
-export const formatHour = (h: number): string => {
     const period = h >= 12 ? "PM" : "AM";
-    const hour12 = h % 12 === 0 ? 12 : h % 12;
-    return `${String(hour12).padStart(2, "0")}:00 ${period}`;
+    const hour12 = h % 12 || 12;
+
+    return `${String(hour12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${period}`;
 };
 
+
+// FOR TIME 00:00 - 23:59
+export const parseHourString = (t: string | null | undefined,): number => {
+    if (!t) return 0;
+    const [h, m = "0"] = t.split(":");
+    return Number(h) + Number(m) / 60;
+};
+
+// GENERATE TIME SLOTS 
 export const getTimeSlots = (
-    openingHour: number,
-    closingHour: number,
+    openingTime: string | null | undefined,
+    closingTime: string | null | undefined,
     slotLengthHours: number,
-): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
+) => {
+    let openingHour = parseHourString(openingTime);
+    let closingHour = parseHourString(closingTime);
+
+
+    if (openingTime === "00:00" && closingTime === "00:00") {
+        openingHour = 0;
+        closingHour = 24;
+    }
+    const slots = [];
 
     for (
         let h = openingHour;
         h + slotLengthHours <= closingHour;
         h += slotLengthHours
     ) {
-        const start = h;
+
         const end = h + slotLengthHours;
+        const displayEnd = end === 24 ? 23.9833 : end;
+        const displayStart = h === 0 ? 0 : h;
         slots.push({
-            value: `${start}-${end}`,
-            label: `${formatHour(start)} - ${formatHour(end)}`,
-            start,
+            value: `${formatHour(displayStart)} - ${formatHour(displayEnd)}`,
+            label: `${formatHour(displayStart)} - ${formatHour(displayEnd)}`,
+            start: h,
             end,
         });
     }
 
     return slots;
 };
+
+// GENERATE TIMESLOT PER DATE
+// export const filterAvailableSlots = (
+//     slots: any[],
+//     selectedDate: string,
+//     now: Date = new Date(),
+// ): any[] => {
+//     if (!selectedDate) return slots;
+
+//     const isToday = selectedDate === getLocalDateStr(now);
+//     if (!isToday) return slots;
+
+//     const currentHour = now.getHours() + now.getMinutes() / 60;
+
+//     return slots.filter((slot) => slot.start > currentHour);
+// };
+
+// GENERATE TIMESLOT PER DATE
+export const filterAvailableSlots = (
+    slots: any[],
+    selectedDate: string,
+    now: Date = new Date(),
+): any[] => {
+    if (!selectedDate) return slots;
+    const isToday = selectedDate === getLocalDateStr(now);
+    if (!isToday) return slots;
+    const currentHour = now.getHours() + now.getMinutes() / 60;
+    return slots.filter((slot) => slot.start > currentHour);
+};
+
 
 export const getLocalDateStr = (d: Date): string => {
     const year = d.getFullYear();
@@ -146,17 +168,3 @@ export const getLocalDateStr = (d: Date): string => {
     return `${year}-${month}-${day}`;
 };
 
-export const filterAvailableSlots = (
-    slots: TimeSlot[],
-    selectedDate: string,
-    now: Date = new Date(),
-): TimeSlot[] => {
-    if (!selectedDate) return slots;
-
-    const isToday = selectedDate === getLocalDateStr(now);
-    if (!isToday) return slots;
-
-    const currentHour = now.getHours() + now.getMinutes() / 60;
-
-    return slots.filter((slot) => slot.start > currentHour);
-};

@@ -18,10 +18,16 @@ class EmployeeBranch extends Model
 
     public function branches()
     {
-        return $this->belongsToMany(Branch::class, 'branch_id', 'branch_id');
+        return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
     }
+
     public function employees()
     {
-        return $this->belongsToMany(Employee::class, 'employee_id', 'employee_id');
+        return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
+    }
+
+    public function employeeServices()
+    {
+        return $this->hasMany(EmployeeService::class, 'employee_branch_id', 'employee_branch_id');
     }
 }

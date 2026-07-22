@@ -37,7 +37,7 @@ class StoreEmployeeRequest extends FormRequest
             'location.province' => ['required', 'string', 'max:255'],
             'location.country' => ['required', 'string', 'max:255'],
 
-            'position' => ['required', 'string', 'max:255'],
+            'role_name' => ['required', 'string', 'max:255'],
             'assignment_type' => ['required', 'string', 'max:255'],
 
             'branch_uuid' => ['required', 'string', 'exists:branches,uuid'],

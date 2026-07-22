@@ -1,17 +1,20 @@
 import { userService } from "~/api/user/UserService";
 import type { Branch } from "~/types/branch";
+import type { RouteLocationNormalizedLoaded } from "vue-router";
 
 export const useBranchStore = defineStore("branch", () => {
-    const route = useRoute();
     const router = useRouter();
 
     const branches = ref<Branch[]>([]);
     const loading = ref(false);
     const showModal = ref(false);
     const lastSelectedBranch = ref<Branch | null>(null);
+    const currentRoute = ref<RouteLocationNormalizedLoaded | null>(null);
+
 
     const routeUuid = computed(() => {
-        const v = route.params.uuid;
+        if (!currentRoute || !currentRoute.value) return;
+        const v = currentRoute.value.params.uuid;
         const uuid = Array.isArray(v) ? v[0] : v;
 
         if (!uuid || uuid === "[uuid]") return null;
@@ -39,9 +42,9 @@ export const useBranchStore = defineStore("branch", () => {
         }
     }
 
-    async function fetchBranches() {
+    async function fetchBranches(route: RouteLocationNormalizedLoaded) {
         loading.value = true;
-
+        currentRoute.value = route;
         try {
             const res = await userService.userBranch();
             branches.value = res.data?.branches ?? [];
@@ -49,14 +52,20 @@ export const useBranchStore = defineStore("branch", () => {
 
             const first = branches.value[0];
 
-            if (!uuid && first?.uuid) {
+            // if (!uuid && first?.uuid) {
+            //     lastSelectedBranch.value = first;
+            //     await router.replace(
+            //         `/app/branches/${first.uuid}/dashboard`
+            //     );
+            //     return;
+            // }
+            if (!uuid && !route.path.startsWith("/app/branches/") && first?.uuid) {
                 lastSelectedBranch.value = first;
                 await router.replace(
                     `/app/branches/${first.uuid}/dashboard`
                 );
                 return;
             }
-
             const exists = branches.value.some(
                 (b) => b.uuid === uuid
             );

@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class ScheduleService extends Model
+{
+    use HasFactory;
+
+    protected $primaryKey = 'schedule_services_id';
+
+    protected $fillable = [
+        'schedule_id',
+        'service_id',
+        'hours_booked',
+        'status',
+        'type'
+    ];
+
+    protected $casts = [
+        'hours_booked' => 'decimal:2',
+    ];
+
+    public function schedule()
+    {
+        return $this->belongsTo(Schedule::class, 'schedule_id',   'schedule_id');
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class, 'service_id', 'service_id');
+    }
+}

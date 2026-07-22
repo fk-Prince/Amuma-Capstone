@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
+import PageHeader from "~/components/ui/PageHeader.vue";
 
 const { canCreate } = usePermissions();
 
@@ -14,7 +15,12 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <div class="flex justify-end items-end">
+    <div class="flex justify-between items-end">
+        <PageHeader
+            title="Room and Bed Management"
+            subtitle="Facility Management"
+            description="View and manage available rooms, beds, and occupancy details."
+        />
         <button
             v-if="canCreate(Modules.RoomsAndBeds)"
             @click="emit('addRoom')"

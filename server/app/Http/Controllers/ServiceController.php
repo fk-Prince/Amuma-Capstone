@@ -29,4 +29,9 @@ class ServiceController extends Controller
     {
         return $this->serviceService->getBranchService(['branch_uuid' => $uuid, ...$request->all()]);
     }
+
+    public function assignEmployee(Request $request)
+    {
+        return $this->serviceService->assignEmployeeService($request->user(), $request->all());
+    }
 }

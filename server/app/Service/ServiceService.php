@@ -4,28 +4,31 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
+use App\Models\EmployeeBranch;
 use App\Repository\ServiceRepository;
-use App\Http\Resources\ServiceResource;
 use App\Models\User;
 use App\Repository\BranchRepository;
 use App\Repository\CategoryRepository;
+use App\Repository\EmployeeRepository;
 use App\Service\Utils\AuthGuard;
 use Exception;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log as FacadesLog;
+use Resend\Log;
 
 class ServiceService
 {
     private ServiceRepository $serviceRepository;
     private BranchRepository $branchRepository;
     private CategoryRepository $categoryRepository;
+    private EmployeeRepository $employeeRepository;
 
-    public function __construct(ServiceRepository $serviceRepository, BranchRepository $branchRepository, CategoryRepository $categoryRepository)
+    public function __construct(ServiceRepository $serviceRepository, BranchRepository $branchRepository, CategoryRepository $categoryRepository,  EmployeeRepository $employeeRepository)
     {
         $this->serviceRepository = $serviceRepository;
         $this->branchRepository = $branchRepository;
         $this->categoryRepository = $categoryRepository;
+        $this->employeeRepository = $employeeRepository;
     }
 
     public function createService(array $payload, User $user)
@@ -134,7 +137,6 @@ class ServiceService
             ]);
         });
     }
-
     public function getBranchService(array $payload)
     {
         $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
@@ -155,13 +157,15 @@ class ServiceService
                     'price' => $service->price,
                     'category_name' => $service->categories?->category_name,
                     'type' => $service->type,
+                    'type_formatted' => $service->type === 'online'
+                        ? 'Homecare Services'
+                        : ($service->type == 'both' ? 'Homecare and Inhouse Services' : 'Inhouse Services'),
                     'maximum_duration' => date('H:i:s', strtotime($service->maximum_duration)),
                     'is_available' => $service->is_available,
                 ];
             }),
         ]);
     }
-
     public function retrieveService(array $payload, User $user)
     {
         $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
@@ -190,5 +194,38 @@ class ServiceService
                 ];
             }),
         ]);
+    }
+
+    public function assignEmployeeService(User $user, array $payload)
+    {
+        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
+        if (!$branch)  throw new Exception(__('Branch does not exist'), 404);
+
+        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
+
+        foreach ($payload['employee_service'] as $item) {
+            $employeeBranch = EmployeeBranch::where('employee_id', $item['employee_id'])
+                ->where('branch_id', $branch->branch_id)
+                ->first();
+
+            if (!$employeeBranch) {
+                continue;
+            }
+
+            $exists = $this->serviceRepository->existsEmployeeService($item['service_id'], $item['employee_id'], $branch->branch_id);
+            if ($exists) {
+                continue;
+            }
+            $payload = [
+                'employee_branch_id' => $employeeBranch->employee_branch_id,
+                'service_id' => $item['service_id'],
+            ];
+
+            $this->serviceRepository->assignEmployee($payload);
+        };
+
+        return response()->json([
+            'message' => 'Successfully Assigned Services to Employee'
+        ], 200);
     }
 }

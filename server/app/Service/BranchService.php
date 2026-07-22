@@ -32,6 +32,13 @@ class BranchService
         $branch->averageRating = round($branch->reviews_avg_rate ?? 0, 1);
         $branch->reviewCount = $branch->reviews_count ?? 0;
 
+        $settings = (array) ($branch->settings ?? []);
+
+        $branch->settings = array_merge($settings, [
+            'adl_hourly_rate' => 500,
+            'adl_min_hour' => 8,
+        ]);
+
         return $branch;
     }
 

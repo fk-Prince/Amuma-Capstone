@@ -13,6 +13,7 @@ export interface Service {
     maximum_duration: string;
     is_available?: boolean;
     type: 'online' | 'facility' | 'both';
+    type_formatted?: "Homecare Services" | "Inhouse Services" | 'Homecare and Inhouse Services';
 }
 
 interface Category {

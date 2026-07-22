@@ -113,7 +113,7 @@ import { notificationService } from "~/api/notification/NotificationService";
 import type { Notification } from "~/types/notification";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useRoute } from "vue-router";
-import { formatDate } from "~/utils/time";
+import { formatDate } from "~/utils/notification-time";
 
 const route = useRoute();
 const user = useAuthUser();

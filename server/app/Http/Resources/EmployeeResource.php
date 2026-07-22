@@ -24,8 +24,7 @@ class EmployeeResource extends JsonResource
             'avatar' => $this->avatar,
             'birth_date' => $this->employee->birth_date,
             'location' => $this->employee->locations,
-            'role_name' => $employeeBranch?->role_name,
-
+            'role_name' => ucwords(str_replace('_', ' ', $employeeBranch?->role_name)),
             'assignment_type' => match ($employeeBranch?->assignment_type) {
                 'both' => 'Homecare + Inhouse Facility',
                 'homecare' => 'Homecare',
@@ -35,6 +34,7 @@ class EmployeeResource extends JsonResource
 
             'phone_number' => $this->employee?->phone_number,
             'status' => $this->employee?->status,
+            'hired_date' => $this->employee->created_at,
 
             'permissions' => $this->employee?->permissions
                 ->map(fn($permission) => [

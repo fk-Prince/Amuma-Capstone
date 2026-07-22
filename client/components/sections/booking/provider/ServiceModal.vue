@@ -83,7 +83,16 @@
                             />
                         </div>
 
-                        <div class="relative w-52" ref="categoryMenuRef">
+                        <div class="w-52">
+                            <Combobox
+                                :model-value="selectedCategory"
+                                @update:model-value="selectCategory"
+                                :items="categoryOptions"
+                                placeholder="All categories"
+                                search-bar
+                            />
+                        </div>
+                        <!-- <div class="relative w-52" ref="categoryMenuRef">
                             <button
                                 type="button"
                                 @click="categoryOpen = !categoryOpen"
@@ -152,7 +161,7 @@
                                     </button>
                                 </div>
                             </Transition>
-                        </div>
+                        </div> -->
                     </div>
 
                     <div class="overflow-y-auto px-6 py-4 space-y-2 flex-1">
@@ -238,11 +247,11 @@
         </div>
     </Transition>
 </template>
-
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from "vue";
+import { ref, computed, watch } from "vue";
 import type { Service } from "~/types/service";
 import type { BookedService } from "~/types/booking";
+import Combobox from "~/components/ui/Combobox.vue";
 
 const props = defineProps<{
     open: boolean;
@@ -260,38 +269,33 @@ const localSelected = ref<number[]>([]);
 watch(
     () => props.modelValue,
     (val) => {
-        localSelected.value = val.map((s) => s.service_id);
+        localSelected.value = val.map((s) => Number(s.service_id));
     },
     { immediate: true },
 );
 
 const searchQuery = ref("");
+
 const selectedCategory = ref<string | null>(null);
-const categoryOpen = ref(false);
-const categoryMenuRef = ref<HTMLElement | null>(null);
-
-function handleDocumentClick(event: MouseEvent) {
-    const el = categoryMenuRef.value;
-    if (!el) return;
-    if (!el.contains(event.target as Node)) {
-        closeCategoryMenu();
-    }
-}
-
-onMounted(() => {
-    document.addEventListener("click", handleDocumentClick);
-});
-
-onUnmounted(() => {
-    document.removeEventListener("click", handleDocumentClick);
-});
 
 const categories = computed(() => {
     const names = props.services
         .map((s) => s.category_name)
         .filter((name): name is string => Boolean(name));
+
     return [...new Set(names)].sort();
 });
+
+const categoryOptions = computed(() => [
+    {
+        label: "All categories",
+        value: null,
+    },
+    ...categories.value.map((cat) => ({
+        label: cat,
+        value: cat,
+    })),
+]);
 
 const filteredServices = computed(() => {
     return props.services.filter((service) => {
@@ -315,13 +319,8 @@ const selectedTotal = computed(() => {
         .reduce((sum, service) => sum + Number(service.price), 0);
 });
 
-function selectCategory(cat: string | null) {
-    selectedCategory.value = cat;
-    categoryOpen.value = false;
-}
-
-function closeCategoryMenu() {
-    categoryOpen.value = false;
+function selectCategory(value: string | null) {
+    selectedCategory.value = value;
 }
 
 function apply() {

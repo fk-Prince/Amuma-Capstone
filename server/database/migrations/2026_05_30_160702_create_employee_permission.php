@@ -23,6 +23,7 @@ return new class extends Migration
             $table->boolean('can_read')->default(true);
             $table->boolean('can_create')->default(true);
             $table->boolean('can_update')->default(true);
+            $table->boolean('can_approve')->default(true);
         });
     }
 

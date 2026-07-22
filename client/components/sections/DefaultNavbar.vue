@@ -52,15 +52,12 @@
                     </div>
                     <div v-else class="flex items-center gap-3">
                         <NuxtLink v-if="!user" to="/auth/signin">
-                            <BaseButton
-                                class="px-[30px] whitespace-nowrap min-w-fit"
-                                >SIGN IN</BaseButton
-                            >
+                            <BaseButton class="px-[30px]">SIGN IN</BaseButton>
                         </NuxtLink>
                         <NuxtLink v-if="!user" to="/auth/signup">
                             <BaseButton
                                 variant="secondary"
-                                class="bg-transparent px-[30px] border-muted-dark hover:bg-primary/20 whitespace-nowrap min-w-fit"
+                                class="bg-transparent px-[30px] border-muted-dark hover:bg-primary/20"
                                 >Get Started
                                 <svg
                                     width="20"
