@@ -28,9 +28,9 @@ class UpdateBranchContractRequest extends FormRequest
             'branch_contract_id' => ['required', 'string', Rule::unique('branch_contracts', 'branch_contract_id')->ignore($id, 'id')],
             'branch_uuid' => ['nullable', 'string', 'exists:branches,uuid'],
             'category' => ['required',  Rule::in(['Homecare', 'Facility'])],
-            'type' => ['required', Rule::in(['ADL', 'VIP', 'COMMON'])],
+            'accommodation_type' => ['required', Rule::in(['ADL', 'VIP', 'COMMON'])],
             'price' => ['required',  'numeric',  'min:1'],
-            'billing_interval' => ['required',   Rule::in(['MONTHLY', 'YEARLY', 'OPEN', 'HOURLY'])],
+            'billing_cycle' => ['required',   Rule::in(['MONTHLY', 'YEARLY', 'OPEN', 'HOURLY'])],
             'description' => ['nullable', 'string',  'max:500'],
         ];
     }

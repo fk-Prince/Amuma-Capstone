@@ -30,4 +30,14 @@ class EmployeeBranch extends Model
     {
         return $this->hasMany(EmployeeService::class, 'employee_branch_id', 'employee_branch_id');
     }
+
+
+    public function scheduleAssignments()
+    {
+        return $this->hasMany(
+            ScheduleAssigned::class,
+            'employee_id',
+            'employee_id'
+        );
+    }
 }

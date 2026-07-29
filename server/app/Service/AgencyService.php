@@ -4,11 +4,11 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
+use App\Guard\AuthGuard;
 use App\Repository\AgencyRepository;
 use App\Http\Resources\AgencyResource;
 use App\Models\User;
 use App\Repository\BranchRepository;
-use App\Service\Utils\AuthGuard;
 use Exception;
 use Illuminate\Support\Facades\DB;
 

@@ -4,12 +4,12 @@
             class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden"
         >
             <div
-                class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-7 py-6 border-b border-[#EDF4F3] bg-gradient-to-b from-[#0E7C7B]/[0.04] to-transparent"
+                class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 px-7 py-6 border-b border-[#EDF4F3] bg-gradient-to-b from-[#0E7C7B]/[0.04] to-transparent"
             >
                 <div class="flex items-center gap-4 min-w-0">
                     <div class="min-w-0">
                         <span
-                            class="w-fit font-mono text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] inline-block mb-1.5"
+                            class="w-fit font-mono text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] inline-block mb-2"
                         >
                             #{{ booking.reference_id }}
                         </span>
@@ -32,22 +32,44 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3 shrink-0">
-                    <span
-                        class="px-3 py-1 rounded-full text-xs font-medium capitalize"
-                        :class="statusClasses(booking.status)"
-                    >
-                        {{ booking.status }}
-                    </span>
+                <div class="flex flex-col items-end gap-2 shrink-0">
+                    <div class="text-right">
+                        <p
+                            class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono"
+                        >
+                            Created
+                        </p>
 
-                    <span class="text-base font-semibold text-[#16302E]">
-                        {{ formatCurrency(totalPrice(booking)) }}
-                    </span>
+                        <p class="text-sm font-medium text-[#16302E]">
+                            {{ new Date(booking.created_at).toLocaleString() }}
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <span
+                            class="px-3 py-1 rounded-full text-xs font-medium capitalize"
+                            :class="statusClasses(booking.status)"
+                        >
+                            {{ booking.status }}
+                        </span>
+
+                        <div class="text-right">
+                            <p
+                                class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono"
+                            >
+                                Total
+                            </p>
+
+                            <p class="text-base font-semibold text-[#16302E]">
+                                {{ formatCurrency(totalPrice(booking)) }}
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="px-7 py-6 space-y-8">
-                <section>
+                <!-- <section>
                     <h3
                         class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
                     >
@@ -138,6 +160,112 @@
                                 </span>
                             </div>
                         </div>
+                    </div>
+                </section> -->
+
+                <section>
+                    <h3
+                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
+                    >
+                        <svg
+                            class="h-3.5 w-3.5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path
+                                d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"
+                            />
+                            <path d="M15 3h6v6" />
+                            <path d="M10 14 21 3" />
+                        </svg>
+                        {{
+                            booking.category === "Facility"
+                                ? "Admission Information"
+                                : "Service Information"
+                        }}
+                    </h3>
+
+                    <div
+                        class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm"
+                    >
+                        <Field label="Category" :value="booking.category" />
+
+                        <Field
+                            label="Type"
+                            :value="
+                                booking.booking_data?.service?.type ===
+                                'Medical'
+                                    ? 'Medical Services'
+                                    : booking.booking_data?.service?.type ===
+                                            'Complete' ||
+                                        booking.booking_data?.service?.type ===
+                                            'Pre'
+                                      ? 'Admission'
+                                      : booking.booking_data?.service?.type
+                            "
+                        />
+
+                        <Field
+                            v-if="booking.category === 'Facility'"
+                            label="Admission Date"
+                            :value="
+                                formatDate(
+                                    booking.booking_data?.service
+                                        ?.admission_date,
+                                )
+                            "
+                        />
+
+                        <template v-else>
+                            <Field
+                                label="Schedule Date"
+                                :value="
+                                    formatDate(
+                                        booking.booking_data?.service?.date,
+                                    )
+                                "
+                            />
+
+                            <Field
+                                v-if="
+                                    booking.booking_data?.service?.prefered_time
+                                "
+                                label="Preferred Time"
+                                :value="
+                                    booking.booking_data?.service?.prefered_time
+                                "
+                            />
+
+                            <Field
+                                label="Address"
+                                :value="booking.booking_data?.service?.address"
+                            />
+                        </template>
+
+                        <Field
+                            v-if="booking.category === 'Facility'"
+                            label="Plan"
+                            :value="booking.booking_data?.service?.plan"
+                        />
+
+                        <Field
+                            v-if="booking.category === 'Facility'"
+                            label="Billing Cycle"
+                            :value="
+                                booking.booking_data?.service?.billing_cycle
+                            "
+                        />
+                    </div>
+
+                    <div
+                        v-if="booking.booking_data?.service?.services?.length"
+                        class="mt-5"
+                    >
+                        <!-- existing services table -->
                     </div>
                 </section>
 
@@ -342,12 +470,20 @@
                                 <p class="text-sm text-[#6B8A87]">
                                     {{ booking.user?.email }}
                                 </p>
+                                <p class="text-sm text-[#6B8A87]">
+                                    {{
+                                        new Date(
+                                            booking.created_at,
+                                        ).toLocaleString()
+                                    }}
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     <div class="flex gap-3">
                         <button
+                            v-if="booking.status.toLowerCase() === 'pending'"
                             type="button"
                             @click="emit('reject', booking)"
                             class="px-5 py-2 text-sm font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 transition"

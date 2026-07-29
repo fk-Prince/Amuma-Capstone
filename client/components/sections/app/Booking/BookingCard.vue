@@ -38,18 +38,31 @@
         </td>
 
         <td class="py-4 px-3 text-sm text-muted whitespace-nowrap">
+            {{ booking.category ?? "—" }}
+        </td>
+
+        <td class="py-4 px-3 text-sm text-muted whitespace-nowrap">
             {{
                 booking.booking_data?.service?.type === "Medical"
                     ? "Medical Services"
-                    : (booking.booking_data?.service?.type ?? "—")
+                    : booking.booking_data?.service?.type === "Complete" ||
+                        booking.booking_data?.service?.type === "Pre"
+                      ? "Complete Admission"
+                      : (booking.booking_data?.service?.type ?? "—")
             }}
         </td>
 
         <td class="py-4 px-3 text-sm text-muted whitespace-nowrap">
             {{
-                booking.booking_data?.service?.date
-                    ? formatDate(booking.booking_data.service.date)
-                    : "—"
+                booking.category === "Facility"
+                    ? booking.booking_data?.service?.admission_date
+                        ? formatDate(
+                              booking.booking_data.service.admission_date,
+                          )
+                        : "—"
+                    : booking.booking_data?.service?.date
+                      ? formatDate(booking.booking_data.service.date)
+                      : "—"
             }}
         </td>
 
@@ -71,6 +84,7 @@
         <td class="py-4 pl-3 pr-6 whitespace-nowrap">
             <div class="flex items-center justify-end gap-2">
                 <button
+                    v-if="booking.status.toLowerCase() === 'pending'"
                     type="button"
                     @click.stop="emit('reject', booking)"
                     class="px-3 py-1.5 text-xs font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 transition"

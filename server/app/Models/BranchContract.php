@@ -14,9 +14,9 @@ class BranchContract extends Model
     protected $fillable = [
         'branch_id',
         'category',
-        'type',
+        'accommodation_type',
         'price',
-        'billing_interval',
+        'billing_cycle',
         'is_active',
         'description',
     ];

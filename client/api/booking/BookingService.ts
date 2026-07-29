@@ -21,6 +21,10 @@ class BookingService extends BaseService {
         return await this.request(this.resource, 'POST', payload);
     }
 
+    async facilityBooking(payload: object): Promise<any> {
+        return await this.request(this.resource + '/facility', 'POST', payload);
+    }
+
     async list(payload: object): Promise<any> {
         return await this.request(this.resource, 'GET', payload);
     }
@@ -28,6 +32,10 @@ class BookingService extends BaseService {
 
     async actionBooking(payload: object): Promise<any> {
         return await this.request(this.resource + '/action', 'POST', payload);
+    }
+
+    async facilityAdmission(payload: object): Promise<any> {
+        return await this.request(this.resource + '/facility-admission', 'POST', payload);
     }
 
 

@@ -12,7 +12,9 @@
                 <LabelInput
                     v-model="branch.description"
                     label="Description"
-                    :text-max="500"
+                    mode="textarea"
+                    :textMax="1000"
+                    :allowResize="true"
                     @update:modelValue="clearError('branch_description')"
                     :error="errors?.branch_description"
                 />

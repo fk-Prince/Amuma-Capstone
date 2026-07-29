@@ -16,21 +16,30 @@
                 <div
                     class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors"
                     :class="
-                        active === step.key
+                        isCompleted(step.key)
                             ? 'bg-primary text-white'
-                            : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'
+                            : active === step.key
+                              ? 'bg-primary text-white'
+                              : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'
                     "
                 >
-                    {{ index + 1 }}
+                    <Check
+                        v-if="isCompleted(step.key) && active !== step.key"
+                        class="h-4 w-4"
+                    />
+                    <template v-else>{{ index + 1 }}</template>
                 </div>
 
                 <div
                     v-if="index < steps.length - 1"
-                    class="w-px flex-1 my-1 bg-gray-200"
+                    class="w-px flex-1 my-1 transition-colors"
+                    :class="
+                        isCompleted(step.key) ? 'bg-primary/40' : 'bg-gray-200'
+                    "
                 ></div>
             </div>
 
-            <div class="flex flex-col justify-center">
+            <div class="flex flex-col justify-center py-1">
                 <span
                     class="text-sm font-medium transition-colors"
                     :class="
@@ -38,6 +47,12 @@
                     "
                 >
                     {{ step.title }}
+                    <span
+                        v-if="step.optional"
+                        class="ml-1 text-[10px] font-medium uppercase tracking-wide text-gray-400"
+                    >
+                        (Optional)
+                    </span>
                 </span>
 
                 <span class="text-xs text-gray-400">
@@ -49,13 +64,20 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { Check } from "lucide-vue-next";
+
+const props = defineProps<{
     active?: string;
+    completed?: string[];
 }>();
 
 defineEmits<{
     (e: "go", step: string): void;
 }>();
+
+function isCompleted(key: string) {
+    return props.completed?.includes(key) ?? false;
+}
 
 const steps = [
     {
@@ -77,6 +99,12 @@ const steps = [
         key: "step4",
         title: "Assessment",
         desc: "Health assessment",
+        optional: true,
+    },
+    {
+        key: "step5",
+        title: "Review & Submit",
+        desc: "Confirm your details",
     },
 ];
 </script>

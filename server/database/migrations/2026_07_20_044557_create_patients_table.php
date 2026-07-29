@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('patient_id');
             $table->foreignId('branch_id')
                 ->constrained('branches', 'branch_id');
-            $table->foreignId('location_id')
+            $table->foreignId('location_id')->nullable()
                 ->constrained('locations', 'location_id');
             $table->uuid('uuid')->unique();
             $table->string('first_name');

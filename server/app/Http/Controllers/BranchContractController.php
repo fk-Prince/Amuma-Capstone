@@ -26,6 +26,7 @@ class BranchContractController extends Controller
         return $this->branchContractService->overview($request->user(), $request->all());
     }
 
+
     public function index(Request $request)
     {
         return $this->branchContractService->list($request->user(), $request->all());

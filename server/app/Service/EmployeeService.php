@@ -4,6 +4,8 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
+use App\Guard\AuthGuard;
+use App\Guard\BranchGuard;
 use App\Http\Resources\EmployeeResource;
 use App\Http\Resources\EmployeeScheduleResource;
 use App\Models\User;
@@ -11,8 +13,7 @@ use App\Repository\BranchRepository;
 use App\Repository\EmployeeRepository;
 use App\Repository\LocationRepository;
 use App\Repository\UserRepository;
-use App\Service\Utils\AuthGuard;
-use App\Service\Utils\SupabaseService;
+use App\Service\External\SupabaseService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\UploadedFile;
@@ -45,12 +46,7 @@ class EmployeeService
 
         return DB::transaction(function () use ($payload, $user) {
 
-            $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-
-            if (!$branch) {
-                throw new Exception('Branch not found.', 404);
-            }
-
+            $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
             AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Create);
 
             //INSERT USER
@@ -144,18 +140,8 @@ class EmployeeService
                 throw new Exception('Employee not found.', 404);
             }
 
-            $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-
-            if (!$branch) {
-                throw new Exception('Branch not found.', 404);
-            }
-
-            AuthGuard::requireModule(
-                $user,
-                $branch->branch_id,
-                ModuleEnum::EmployeeManagement,
-                PermissionAction::Update
-            );
+            $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+            AuthGuard::requireModule($user,   $branch->branch_id, ModuleEnum::EmployeeManagement,  PermissionAction::Update);
 
             $user = $this->userRepository->update($employee->user_id, ['email' => $payload['email']]);
 
@@ -185,7 +171,6 @@ class EmployeeService
             if (!empty($payload['avatar']) && $payload['avatar'] instanceof UploadedFile) {
                 $image = SupabaseService::store($payload['avatar']);
             }
-
 
             // UPDATE EMPLOYEE
             $employee->update([
@@ -230,22 +215,13 @@ class EmployeeService
 
     public function getEmployees(array $payload, User $user, string $type)
     {
-        Log::info($payload);
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-
-        if (!$branch) {
-            throw new Exception('Branch not found.', 404);
-        }
-
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
         if ($type === 'regular') {
             AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Read);
-
             $result =  $this->employeeRepository->getPaginateEmployee($payload, $branch->branch_id);
-
             request()->merge([
                 'branch_id' => $branch->branch_id
             ]);
-
             return EmployeeResource::collection($result['users'])
                 ->additional([
                     'total_employee' => $result['total_employee'],
@@ -253,14 +229,12 @@ class EmployeeService
                 ]);
         } else if ($type === 'schedule') {
             AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Create);
-
-            $result = $this->employeeRepository->getPaginateEmployeeSchedule($payload, $branch->branch_id);
+            $result = $this->employeeRepository->getEmployeesWithBusyLabel($payload['schedule_id'], $branch->branch_id);
             return EmployeeScheduleResource::collection($result);
         } else if ($type === 'service') {
             AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
-
             $result = $this->employeeRepository->getEmployeeServices($branch->branch_id, $payload);
-            return EmployeeScheduleResource::collection($result);
+            return $result;
         }
     }
 }

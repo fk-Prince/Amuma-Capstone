@@ -17,4 +17,9 @@ class Bed extends Model
     {
         return $this->belongsTo(Room::class, 'room_id', 'room_id');
     }
+
+    public function currentAdmission()
+    {
+        return $this->hasOne(PatientAdmission::class,   'bed_id', 'bed_id')->where('status', 'admitted');
+    }
 }

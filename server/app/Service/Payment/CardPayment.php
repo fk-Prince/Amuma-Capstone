@@ -2,7 +2,9 @@
 
 namespace App\Service\Payment;
 
+use App\Interfaces\IFacilityPayment;
 use App\Interfaces\ISubscriptionPayment;
+use App\Service\BookingService;
 use App\Service\SubscriptionService;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -10,14 +12,16 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class CardPayment implements ISubscriptionPayment
+class CardPayment implements ISubscriptionPayment, IFacilityPayment
 {
     private string $secretKey;
     private SubscriptionService $subscriptionService;
-    public function __construct(SubscriptionService $subscriptionService)
+    private BookingService $bookingService;
+    public function __construct(SubscriptionService $subscriptionService, BookingService $bookingService)
     {
         $this->secretKey = config('services.xendit.secret_key');
         $this->subscriptionService = $subscriptionService;
+        $this->bookingService = $bookingService;
     }
 
     public function subscriptionInvoice(array $payload, array $subscription)
@@ -68,6 +72,51 @@ class CardPayment implements ISubscriptionPayment
 
             Log::error("API timeout: " . $e->getMessage());
 
+            return response()->json([
+                'message' => 'The external service took too long to respond.'
+            ], 504);
+        } catch (\Exception $e) {
+            Log::info($e);
+        }
+    }
+
+
+    public function facilityBilling(array $payload)
+    {
+        $user      = Auth::user();
+        $reference = (string) Str::uuid();
+        try {
+            $response = Http::withOptions([
+                'verify' => false
+            ])->withBasicAuth($this->secretKey, '')
+                ->post('https://api.xendit.co/credit_card_charges', [
+                    'token_id'          => $payload['token_id'],
+                    'authentication_id' => $payload['authentication_id'],
+                    'capture'           => true,
+                    'descriptor'        => 'subscription',
+                    'currency'          => 'PHP',
+                    'external_id'       => $reference,
+                    'amount'            => 5000,
+                    'payer_email'       => $user->email,
+                    'payment_methods'   => ['CREDIT-CARD'],
+                    'metadata'          => $payload
+                ]);
+
+            if ($response->failed()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $response->json('message') ?? 'Charge failed.',
+                    'error'   => $response->json(),
+                ], $response->status());
+            }
+            $charge = $response->json();
+            $payload =  [
+                'metadata'          => $charge['metadata'] ?? [],
+                'external_id'       => $charge['external_id'] ?? null,
+                'xendit_invoice_id' => $charge['id'] ?? null,
+            ];
+            return $this->bookingService->createPaymentBooking($user, $payload);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
             return response()->json([
                 'message' => 'The external service took too long to respond.'
             ], 504);

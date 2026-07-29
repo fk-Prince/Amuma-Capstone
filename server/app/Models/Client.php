@@ -20,13 +20,17 @@ class Client extends Model
         'avatar',
     ];
 
-    public function users()
+    public function user()
     {
-        return $this->belongsToMany(User::class, 'user_id', 'user_id');
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
-    public function locations()
+    public function location()
     {
         return $this->belongsTo(Location::class, 'location_id', 'location_id');
+    }
+    public function patientAccess()
+    {
+        return $this->hasMany(PatientAccess::class,  'client_id', 'client_id');
     }
 }

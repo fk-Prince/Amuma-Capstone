@@ -1,3 +1,4 @@
+import { authService } from "~/api/auth/AuthService"
 import type { User } from "~/types/auth"
 
 export const useAuthUser = () =>
@@ -13,3 +14,20 @@ export const resetAuth = () => {
 
     localStorage.removeItem("auth");
 }
+
+export const fetchAuthUser = async () => {
+    const user = useAuthUser();
+    const ready = useAuthReady();
+
+    try {
+        ready.value = false;
+        const res = await authService.me();
+        user.value = res.user;
+        return res.user;
+    } catch (err) {
+        resetAuth();
+        throw err;
+    } finally {
+        ready.value = true;
+    }
+};

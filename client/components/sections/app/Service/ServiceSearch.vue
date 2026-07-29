@@ -1,9 +1,8 @@
 <script setup lang="ts">
+import { Search, Stethoscope, Globe2, Building2, Plus } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
-
-import { Search, Plus } from "lucide-vue-next";
 
 const { canCreate } = usePermissions();
 
@@ -19,69 +18,90 @@ const emit = defineEmits<{
 }>();
 
 const tabs = [
-    "All Services",
-    "Online Medical Services",
-    "Facility Medical Services",
+    {
+        label: "All Services",
+        icon: Stethoscope,
+    },
+    {
+        label: "Homecare Services",
+        icon: Globe2,
+    },
+    {
+        label: "Facility Services",
+        icon: Building2,
+    },
 ];
 </script>
 
 <template>
-    <div class="space-y-4">
+    <div class="bg-white px-5 py-2 space-y-5">
         <div class="relative">
             <Search
-                class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9AB3AF]"
+                class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
             />
 
             <BaseInput
                 :model-value="modelValue"
                 @update:model-value="emit('update:modelValue', $event)"
                 placeholder="Search services..."
-                input-class="pl-[3rem] rounded-xl border-[#E4EFED] focus:border-[#0E7C7B] focus:ring-[#0E7C7B]/20"
+                input-class="pl-11 rounded-xl border-[#E4EFED] focus:border-primary focus:ring-primary/20"
             />
         </div>
 
         <div
-            class="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+            class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
         >
             <div
-                class="inline-flex w-full lg:w-fit overflow-x-auto items-center gap-1 rounded-2xl bg-[#F7FAF9] border border-[#E4EFED] p-1"
+                class="inline-flex w-full lg:w-fit overflow-x-auto rounded-xl bg-slate-100 p-1"
             >
                 <button
                     v-for="tab in tabs"
-                    :key="tab"
+                    :key="tab.label"
                     type="button"
-                    @click="emit('update:activeTab', tab)"
-                    class="relative whitespace-nowrap px-4 py-2 rounded-xl text-xs font-medium transition-all duration-200"
+                    @click="emit('update:activeTab', tab.label)"
+                    class="flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
                     :class="
-                        activeTab === tab
-                            ? `
-                                bg-white
-                                text-[#16302E]
-                                shadow-sm
-                                ring-1
-                                ring-[#E4EFED]
-                            `
-                            : `
-                                text-[#6B8A87]
-                                hover:text-[#16302E]
-                                hover:bg-white/60
-                            `
+                        activeTab === tab.label
+                            ? 'bg-white text-slate-900 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700'
                     "
                 >
-                    {{ tab }}
+                    <component :is="tab.icon" class="h-4 w-4" />
+
+                    {{ tab.label }}
                 </button>
             </div>
 
-            <button
-                v-if="canCreate(Modules.Services)"
-                type="button"
-                @click="emit('addService')"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 h-11 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-90 hover:shadow-md active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-                <Plus class="w-4 h-4" />
+            <div class="flex flex-wrap items-center gap-4">
+                <div
+                    class="hidden items-center gap-5 text-xs text-slate-500 lg:flex"
+                >
+                    <span class="flex items-center gap-2">
+                        <span
+                            class="h-2.5 w-2.5 rounded-full bg-emerald-500"
+                        ></span>
+                        Available
+                    </span>
 
-                <span> Add Service </span>
-            </button>
+                    <span class="flex items-center gap-2">
+                        <span
+                            class="h-2.5 w-2.5 rounded-full bg-slate-400"
+                        ></span>
+                        Unavailable
+                    </span>
+                </div>
+
+                <button
+                    v-if="canCreate(Modules.Services)"
+                    type="button"
+                    @click="emit('addService')"
+                    class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 hover:shadow-md active:scale-[0.98]"
+                >
+                    <Plus class="h-4 w-4" />
+
+                    Add Service
+                </button>
+            </div>
         </div>
     </div>
 </template>

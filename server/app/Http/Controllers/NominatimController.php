@@ -2,17 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use  App\Service\Utils\NominatimService;
+use App\Service\Geo\NominatimService;
+use App\Service\Geo\OverpassService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class NominatimController extends Controller
 {
     private NominatimService $nominatimService;
+    private OverpassService $overpassService;
 
-    public function __construct(NominatimService $nominatimService)
+    public function __construct(NominatimService $nominatimService, OverpassService $overpassService)
     {
         $this->nominatimService = $nominatimService;
+        $this->overpassService = $overpassService;
     }
 
     public function geocode(Request $request)
@@ -67,7 +70,7 @@ class NominatimController extends Controller
         ]);
 
         try {
-            $data = $this->nominatimService->nearestStreet(
+            $data = $this->overpassService->nearestStreet(
                 $request->lat,
                 $request->lon
             );

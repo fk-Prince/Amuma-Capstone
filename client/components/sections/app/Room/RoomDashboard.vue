@@ -2,13 +2,41 @@
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
 import PageHeader from "~/components/ui/PageHeader.vue";
+import { type Overview } from "~/types/room";
 
 const { canCreate } = usePermissions();
 
-const totalRooms = 5;
-const availableBeds = 5;
-const occupiedBeds = 5;
-const maintenanceRoomsCount = 5;
+const props = defineProps<{
+    overview?: Overview | null;
+}>();
+
+const overview = computed<Overview>(() => {
+    return (
+        props.overview ?? {
+            total_rooms: {
+                value: 0,
+                secondary: "",
+                trend: "",
+            },
+            available: {
+                value: 0,
+                secondary: "",
+                trend: "",
+            },
+            occupied: {
+                value: 0,
+                secondary: "",
+                trend: "",
+            },
+            maintenance: {
+                value: 0,
+                secondary: "",
+                trend: "",
+            },
+        }
+    );
+});
+
 const emit = defineEmits<{
     addRoom: [];
 }>();
@@ -21,6 +49,7 @@ const emit = defineEmits<{
             subtitle="Facility Management"
             description="View and manage available rooms, beds, and occupancy details."
         />
+
         <button
             v-if="canCreate(Modules.RoomsAndBeds)"
             @click="emit('addRoom')"
@@ -43,16 +72,17 @@ const emit = defineEmits<{
             <span>Add Room</span>
         </button>
     </div>
+
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div
             class="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-blue-400"
         >
             <div
-                class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center transition-colors duration-300 group-hover:bg-blue-100"
+                class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center"
             >
                 <svg
                     viewBox="0 0 24 24"
-                    class="w-5.5 h-5.5 text-blue-600 transition-transform duration-300 hover:scale-110"
+                    class="w-5.5 h-5.5 text-blue-600"
                     fill="none"
                     stroke="currentColor"
                     stroke-width="2"
@@ -73,12 +103,14 @@ const emit = defineEmits<{
             </p>
 
             <p class="text-2xl font-bold text-gray-800">
-                {{ totalRooms }}
+                {{ overview.total_rooms.value }}
             </p>
 
             <p class="mt-1 text-xs text-emerald-600 flex items-center gap-1">
-                <span>↑ 3</span>
-                <span class="text-gray-400 font-normal">new this month</span>
+                <span v-if="overview.total_rooms.trend === 'up'">↑</span>
+                <span class="text-gray-400 font-normal">
+                    {{ overview.total_rooms.secondary }}
+                </span>
             </p>
         </div>
 
@@ -101,19 +133,22 @@ const emit = defineEmits<{
                     <path d="m9 11 3 3L22 4" />
                 </svg>
             </div>
+
             <p
                 class="mt-3 text-[11px] uppercase tracking-wide text-gray-400 font-medium"
             >
                 Available
             </p>
+
             <p class="text-2xl font-bold text-gray-800">
-                {{ availableBeds }}
+                {{ overview.available.value }}
             </p>
+
             <p class="mt-1 text-xs text-emerald-600 flex items-center gap-1">
-                <span>↑ 15%</span
-                ><span class="text-gray-400 font-normal"
-                    >of available rooms</span
-                >
+                <span v-if="overview.available.trend === 'up'">↑</span>
+                <span class="text-gray-400 font-normal">
+                    {{ overview.available.secondary }}
+                </span>
             </p>
         </div>
 
@@ -138,19 +173,22 @@ const emit = defineEmits<{
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
             </div>
+
             <p
                 class="mt-3 text-[11px] uppercase tracking-wide text-gray-400 font-medium"
             >
                 Occupied
             </p>
+
             <p class="text-2xl font-bold text-gray-800">
-                {{ occupiedBeds }}
+                {{ overview.occupied.value }}
             </p>
+
             <p class="mt-1 text-xs text-emerald-600 flex items-center gap-1">
-                <span>↑ 85%</span
-                ><span class="text-gray-400 font-normal"
-                    >of occupied rooms</span
-                >
+                <span v-if="overview.occupied.trend === 'up'">↑</span>
+                <span class="text-gray-400 font-normal">
+                    {{ overview.occupied.secondary }}
+                </span>
             </p>
         </div>
 
@@ -176,16 +214,26 @@ const emit = defineEmits<{
                     <path d="M12 17h.01" />
                 </svg>
             </div>
+
             <p
                 class="mt-3 text-[11px] uppercase tracking-wide text-gray-400 font-medium"
             >
                 Maintenance
             </p>
+
             <p class="text-2xl font-bold text-gray-800">
-                {{ maintenanceRoomsCount }}
+                {{ overview.maintenance.value }}
             </p>
-            <p class="mt-1 text-xs text-rose-500 font-medium">
-                Requires Attention
+
+            <p
+                class="mt-1 text-xs font-medium"
+                :class="
+                    overview.maintenance.trend === 'success'
+                        ? 'text-emerald-500'
+                        : 'text-rose-500'
+                "
+            >
+                {{ overview.maintenance.secondary }}
             </p>
         </div>
     </div>

@@ -16,9 +16,22 @@ interface Props {
     processing: boolean;
     onCardPay?: () => void | Promise<void>;
     onGCashPay?: () => void | Promise<void>;
+    title?: string;
+    description?: string;
+    submitLabel?: string;
+    processingLabel?: string;
+    gcashLabel?: string;
+    gcashProcessingLabel?: string;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    title: "Payment",
+    description: "Choose your payment method and complete your subscription.",
+    submitLabel: "Complete subscription",
+    processingLabel: "Processing payment...",
+    gcashLabel: "Continue to GCash",
+    gcashProcessingLabel: "Redirecting...",
+});
 
 const emit = defineEmits<{
     (e: "update:card", value: CardDetails): void;
@@ -40,7 +53,6 @@ const methods = [
 ];
 
 const isCard = computed(() => checkout.payment_method === "CREDIT-CARD");
-
 const isGCash = computed(() => checkout.payment_method === "GCASH");
 
 const errors = reactive<Record<string, string>>({
@@ -87,9 +99,7 @@ const cardBrand = computed(() => {
     const digits = digitsOnly(props.card.number);
 
     if (/^4/.test(digits)) return "Visa";
-
     if (/^(5[1-5]|2[2-7])/.test(digits)) return "Mastercard";
-
     if (/^3[47]/.test(digits)) return "Amex";
 
     return null;
@@ -114,7 +124,6 @@ const validateCardForm = () => {
     if (!result.success) {
         result.error.issues.forEach((issue) => {
             const field = issue.path[0] as keyof typeof errors;
-
             errors[field] = issue.message;
         });
 
@@ -126,12 +135,12 @@ const validateCardForm = () => {
 
 const handleCardPay = () => {
     if (props.processing) return;
-
     if (!validateCardForm()) return;
 
     props.onCardPay?.();
 };
 </script>
+
 <template>
     <div class="w-full max-w-2xl mx-auto">
         <div
@@ -147,12 +156,11 @@ const handleCardPay = () => {
 
                     <div>
                         <h2 class="text-xl font-bold text-slate-800">
-                            Payment
+                            {{ title }}
                         </h2>
 
                         <p class="text-sm text-slate-500">
-                            Choose your payment method and complete your
-                            subscription.
+                            {{ description }}
                         </p>
                     </div>
                 </div>
@@ -201,7 +209,6 @@ const handleCardPay = () => {
                     <h3 class="font-semibold text-slate-800">
                         Card information
                     </h3>
-
                     <p class="text-sm text-slate-500">
                         Your payment details are encrypted and secure.
                     </p>
@@ -216,9 +223,9 @@ const handleCardPay = () => {
                     @update:model-value="handleCardNumberInput"
                 >
                     <template #suffix v-if="cardBrand">
-                        <span class="text-xs text-slate-400">
-                            {{ cardBrand }}
-                        </span>
+                        <span class="text-xs text-slate-400">{{
+                            cardBrand
+                        }}</span>
                     </template>
                 </LabelInput>
 
@@ -284,11 +291,7 @@ const handleCardPay = () => {
                     :disabled="processing"
                     class="w-full rounded-xl bg-primary py-3 text-white font-semibold hover:bg-primary/90 transition disabled:opacity-50"
                 >
-                    {{
-                        processing
-                            ? "Processing payment..."
-                            : "Complete subscription"
-                    }}
+                    {{ processing ? processingLabel : submitLabel }}
                 </button>
 
                 <div
@@ -299,13 +302,11 @@ const handleCardPay = () => {
                 </div>
             </form>
 
-            <!-- GCash -->
             <div v-else-if="isGCash" class="p-6 space-y-5">
                 <div class="rounded-xl border border-blue-100 bg-blue-50 p-4">
                     <h3 class="font-semibold text-slate-800">
                         Pay using GCash
                     </h3>
-
                     <p class="text-sm text-slate-500 mt-1">
                         You will be redirected to GCash to complete payment.
                     </p>
@@ -317,7 +318,7 @@ const handleCardPay = () => {
                     :disabled="processing"
                     class="w-full rounded-xl bg-primary py-3 text-white font-semibold disabled:opacity-50"
                 >
-                    {{ processing ? "Redirecting..." : "Continue to GCash" }}
+                    {{ processing ? gcashProcessingLabel : gcashLabel }}
                 </button>
             </div>
         </div>

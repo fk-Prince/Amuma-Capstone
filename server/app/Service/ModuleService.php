@@ -4,10 +4,11 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
+use App\Guard\AuthGuard;
 use App\Repository\ModuleRepository;
 use App\Http\Resources\ModuleResource;
 use App\Models\User;
-use App\Service\Utils\AuthGuard;
+
 
 class ModuleService
 {

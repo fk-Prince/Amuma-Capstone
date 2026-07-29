@@ -4,17 +4,18 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
+use App\Guard\AuthGuard;
+use App\Guard\BranchGuard;
+use App\Http\Resources\ServiceResource;
 use App\Models\EmployeeBranch;
 use App\Repository\ServiceRepository;
 use App\Models\User;
 use App\Repository\BranchRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\EmployeeRepository;
-use App\Service\Utils\AuthGuard;
+
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log as FacadesLog;
-use Resend\Log;
 
 class ServiceService
 {
@@ -34,11 +35,7 @@ class ServiceService
     public function createService(array $payload, User $user)
     {
 
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-
-        if (!$branch) {
-            throw new Exception(__('Branch does not exist'), 404);
-        }
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
 
         $existingService = $this->serviceRepository->existsInBranch(
@@ -81,7 +78,7 @@ class ServiceService
 
             return response()->json([
                 'message' => 'Service created successfully',
-                'data'    => $service,
+                'data'    => new ServiceResource($service->load('categories')),
             ], 201);
         });
     }
@@ -90,11 +87,7 @@ class ServiceService
 
         return DB::transaction(function () use ($payload, $id, $user) {
 
-            $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-
-            if (!$branch) {
-                throw new Exception(__('Branch does not exist'), 404);
-            }
+            $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
             AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Update);
 
             $existingService = $this->serviceRepository->findByFields([
@@ -133,14 +126,14 @@ class ServiceService
 
             return response()->json([
                 'message' => 'Service updated successfully',
-                'data' => $existingService->fresh(),
+                'data'    => new ServiceResource($existingService->fresh()->load('categories')),
             ]);
         });
     }
+
     public function getBranchService(array $payload)
     {
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-        if (!$branch)  throw new Exception(__('Branch does not exist'), 404);
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
 
         $branch->load([
             'services.categories',
@@ -166,44 +159,136 @@ class ServiceService
             }),
         ]);
     }
+
+    // public function retrieveService(array $payload, User $user)
+    // {
+    //     $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+    //     AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Read);
+
+    //     $branch->load([
+    //         'services.categories',
+    //     ]);
+    //     $services = $branch->services;
+
+    //     if (!empty($payload['type'])) {
+    //         $type = strtolower($payload['type'] ?? '');
+    //         $services = $services->filter(function ($service) use ($type) {
+    //             $serviceType = strtolower($service->type);
+    //             return $serviceType === $type || $serviceType === 'both';
+    //         });
+    //     }
+
+    //     return response()->json([
+    //         'branch_uuid' => $branch->uuid,
+    //         'branch_name' => $branch->name,
+    //         'services' => $services->map(function ($service) {
+    //             return [
+    //                 'service_uuid' => $service->service_uuid,
+    //                 'service_name' => $service->service_name,
+    //                 'price_id' => $service->price_id,
+    //                 'price' => $service->price,
+    //                 'category' => $service->categories?->category_name,
+    //                 'type' => $service->type,
+    //                 'is_available' => $service->is_available,
+    //             ];
+    //         }),
+    //     ]);
+    // }
     public function retrieveService(array $payload, User $user)
     {
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-        if (!$branch)  throw new Exception(__('Branch does not exist'), 404);
+        $branch = BranchGuard::resolveBranch(
+            $this->branchRepository,
+            $payload['branch_uuid']
+        );
 
-        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Read);
+        AuthGuard::requireModule(
+            $user,
+            $branch->branch_id,
+            ModuleEnum::Services,
+            PermissionAction::Read
+        );
 
         $branch->load([
             'services.categories',
-            'services.price'
         ]);
 
+        $services = $branch->services;
+
+        if (!empty($payload['type'])) {
+            $type = strtolower($payload['type']);
+
+            $services = $services->filter(function ($service) use ($type) {
+                $serviceType = strtolower($service->type);
+
+                return $serviceType === $type || $serviceType === 'both';
+            });
+        }
 
         return response()->json([
             'branch_uuid' => $branch->uuid,
             'branch_name' => $branch->name,
-            'services' => $branch->services->map(function ($service) {
-                return [
-                    'service_uuid' => $service->service_uuid,
-                    'service_name' => $service->service_name,
-                    'price_id' => $service->price_id,
-                    'price' => $service->price,
-                    'category' => $service->categories?->category_name,
-                    'type' => $service->type,
-                    'is_available' => $service->is_available,
-                ];
-            }),
+            'services' => $services
+                ->values()
+                ->map(function ($service) {
+                    return [
+                        'service_id' => $service->service_id,
+                        'service_uuid' => $service->service_uuid,
+                        'service_name' => $service->service_name,
+                        'price' => $service->price,
+                        'category_name' => $service->categories?->category_name,
+                        'type' => $service->type,
+                        'type_formatted' => match ($service->type) {
+                            'facility' => 'In-house Services',
+                            'online' => 'Homecare Services',
+                            'both' => 'Homecare and In-house Services',
+                            default => '',
+                        },
+                        'is_available' => $service->is_available,
+                    ];
+                }),
         ]);
     }
 
+    // public function assignEmployeeService(User $user, array $payload)
+    // {
+    //     $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
+    //     if (!$branch)  throw new Exception(__('Branch does not exist'), 404);
+
+    //     AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
+
+    //     foreach ($payload['employee_service'] as $item) {
+    //         $employeeBranch = EmployeeBranch::where('employee_id', $item['employee_id'])
+    //             ->where('branch_id', $branch->branch_id)
+    //             ->first();
+
+    //         if (!$employeeBranch) {
+    //             continue;
+    //         }
+
+    //         $exists = $this->serviceRepository->existsEmployeeService($item['service_id'], $item['employee_id'], $branch->branch_id);
+    //         if ($exists) {
+    //             continue;
+    //         }
+    //         $payload = [
+    //             'employee_branch_id' => $employeeBranch->employee_branch_id,
+    //             'service_id' => $item['service_id'],
+    //         ];
+
+    //         $this->serviceRepository->assignEmployee($payload);
+    //     };
+
+    //     return response()->json([
+    //         'message' => 'Successfully Assigned Services to Employee'
+    //     ], 200);
+    // }
+
     public function assignEmployeeService(User $user, array $payload)
     {
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-        if (!$branch)  throw new Exception(__('Branch does not exist'), 404);
-
-        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+        AuthGuard::requireModule($user,  $branch->branch_id,  ModuleEnum::Services, PermissionAction::Create);
 
         foreach ($payload['employee_service'] as $item) {
+
             $employeeBranch = EmployeeBranch::where('employee_id', $item['employee_id'])
                 ->where('branch_id', $branch->branch_id)
                 ->first();
@@ -212,20 +297,30 @@ class ServiceService
                 continue;
             }
 
-            $exists = $this->serviceRepository->existsEmployeeService($item['service_id'], $item['employee_id'], $branch->branch_id);
-            if ($exists) {
-                continue;
-            }
-            $payload = [
-                'employee_branch_id' => $employeeBranch->employee_branch_id,
-                'service_id' => $item['service_id'],
-            ];
+            if ($item['action'] === 'assign') {
 
-            $this->serviceRepository->assignEmployee($payload);
-        };
+                $exists = $this->serviceRepository->existsEmployeeService(
+                    $item['service_id'],
+                    $item['employee_id'],
+                    $branch->branch_id
+                );
+
+
+                $this->serviceRepository->assignEmployee([
+                    'employee_branch_id' => $employeeBranch->employee_branch_id,
+                    'service_id' => $item['service_id'],
+                ]);
+            } elseif ($item['action'] === 'unassign') {
+
+                $this->serviceRepository->unassignEmployee(
+                    $employeeBranch->employee_branch_id,
+                    $item['service_id']
+                );
+            }
+        }
 
         return response()->json([
-            'message' => 'Successfully Assigned Services to Employee'
-        ], 200);
+            'message' => 'Employee service assignments updated successfully.'
+        ]);
     }
 }

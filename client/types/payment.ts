@@ -45,3 +45,15 @@ export const paymentSchema = z.object({
 });
 
 export type PaymentSchema = z.infer<typeof paymentSchema>;
+
+
+
+export interface CardDetails {
+    number: string
+    expMonth: string,
+    expYear: string,
+    cvc: string,
+    firstName: string,
+    lastName: string,
+    email: string
+}

@@ -132,6 +132,4 @@ const formattedPlans = computed(() =>
                 ],
     })),
 );
-
-console.log(formattedPlans.value);
 </script>

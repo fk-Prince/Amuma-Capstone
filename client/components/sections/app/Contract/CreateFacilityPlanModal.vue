@@ -26,7 +26,7 @@
                     </div>
 
                     <button
-                        type="button"
+                        accommodation_type="button"
                         @click="close"
                         class="text-gray-400 hover:text-gray-700"
                     >
@@ -36,22 +36,24 @@
 
                 <form class="p-5 space-y-4" @submit.prevent="submit">
                     <Combobox
-                        :model-value="form.type"
-                        @update:model-value="update('type', $event)"
-                        label="Plan Type"
-                        placeholder="Select plan type"
+                        :model-value="form.accommodation_type"
+                        @update:model-value="
+                            update('accommodation_type', $event)
+                        "
+                        label="Accomodation Type"
+                        placeholder="Select Accommodation"
                         :items="planTypes"
-                        :error="errors.type"
+                        :error="errors.accommodation_type"
                         required
                     />
 
                     <Combobox
-                        :model-value="form.billing_interval"
-                        @update:model-value="update('billing_interval', $event)"
-                        label="Billing Interval"
-                        placeholder="Select billing interval"
+                        :model-value="form.billing_cycle"
+                        @update:model-value="update('billing_cycle', $event)"
+                        label="Billing Cycle"
+                        placeholder="Select billing cycle"
                         :items="billingIntervals"
-                        :error="errors.billing_interval"
+                        :error="errors.billing_cycle"
                         required
                     />
 
@@ -76,7 +78,7 @@
 
                     <div class="grid grid-cols-2 gap-3 pt-3">
                         <button
-                            type="button"
+                            accommodation_type="button"
                             class="rounded-xl border px-4 py-3 text-sm"
                             @click="close"
                         >
@@ -84,7 +86,7 @@
                         </button>
 
                         <button
-                            type="submit"
+                            accommodation_type="submit"
                             :disabled="isSubmitting"
                             class="rounded-xl bg-primary text-white px-4 py-3 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
@@ -182,9 +184,9 @@ watch(
 );
 
 const errors = reactive<Record<string, string>>({
-    type: "",
+    accommodation_type: "",
     price: "",
-    billing_interval: "",
+    billing_cycle: "",
     description: "",
     general: "",
 });

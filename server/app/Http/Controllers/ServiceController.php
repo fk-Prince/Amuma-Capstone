@@ -20,9 +20,14 @@ class ServiceController extends Controller
     {
         return $this->serviceService->createService($request->all(), $request->user());
     }
-    public function update(UpdateServiceRequest  $request, string $id)
+    public function update(UpdateServiceRequest $request, string $id)
     {
         return $this->serviceService->updateService($request->all(), $id, $request->user());
+    }
+
+    public function index(Request $request)
+    {
+        return $this->serviceService->retrieveService($request->all(),  $request->user());
     }
 
     public function getBranchServices(Request $request, string $uuid)

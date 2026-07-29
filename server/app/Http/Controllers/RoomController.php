@@ -31,7 +31,11 @@ class RoomController extends Controller
 
     public function update(UpdateRoomRequest $request, string $id)
     {
-        Log::info($request);
         return $this->roomService->updateRoom($request->user(), $id, $request->all());
+    }
+
+    public function overview(Request $request)
+    {
+        return $this->roomService->overview($request->user(), $request->all());
     }
 }

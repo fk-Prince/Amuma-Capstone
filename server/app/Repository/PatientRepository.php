@@ -7,49 +7,44 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class PatientRepository
 {
-    public function paginate(int $perPage = 15, ?string $companyId = null)
-    {
-        $query = Patient::latest();
-
-        if ($companyId) {
-            $query->where('company_id', $companyId);
-        }
-
-        return $query->paginate($perPage);
-    }
 
     public function create(array $payload)
     {
         return Patient::create($payload);
     }
 
-    public function findByUuid(string $uuid)
+    public function findByFields(array $conditions)
     {
-        return Patient::where('uuid', $uuid)->first();
+        return Patient::where($conditions)->first();
     }
 
-    public function update(string $uuid, array $payload)
+    public function getPatient(int $branchId)
     {
-        $model = $this->findByUuid($uuid);
-        if ($model) {
-            $model->update($payload);
-        }
-        return $model;
+        return Patient::with([
+            'location',
+            'admissions' => function ($query) {
+                $query->where('status', 'admitted');
+            },
+            'admissions.bed.room',
+            'admissions.admissionContracts.branchContract',
+            'schedules.location',
+            'schedules.scheduleServices.service',
+        ])
+            ->where('branch_id', $branchId)
+            ->get();
     }
 
-    public function delete(string $uuid)
+    public function showPatient(string $uuid)
     {
-        $model = $this->findByUuid($uuid);
-        if ($model) {
-            return $model->delete();
-        }
-        return false;
-    }
-
-    public function restore(string $uuid)
-    {
-        $model = Patient::withTrashed()->where('uuid', $uuid)->firstOrFail();
-        $model->restore();
-        return $model;
+        return Patient::with([
+            'location',
+            'admissions',
+            'admissions.bed.room',
+            'admissions.admissionContracts.branchContract',
+            'schedules.location',
+            'schedules.scheduleServices.service',
+        ])
+            ->where('uuid', $uuid)
+            ->get();
     }
 }

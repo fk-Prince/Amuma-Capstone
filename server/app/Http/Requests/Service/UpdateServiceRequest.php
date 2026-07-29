@@ -14,7 +14,7 @@ class UpdateServiceRequest extends FormRequest
 
     public function rules(): array
     {
-        $id = $this->route('service_id');
+        $id = $this->route('service');
 
         return [
             'branch_uuid' => ['required', 'string'],
@@ -28,6 +28,7 @@ class UpdateServiceRequest extends FormRequest
             ],
             'price' => ['required', 'numeric', 'min:1'],
             'maximum_duration' => ['required', 'date_format:H:i:s',],
+            'is_available' => ['boolean'],
             'type' => ['required', Rule::in(['online', 'facility', 'both'])],
         ];
     }

@@ -8,26 +8,33 @@ use App\Http\Controllers\BranchContractController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\MedicationController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\NominatimController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
+use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\XenditController;
 use Illuminate\Support\Facades\Route;
 
 
 
+// PUBLIC 
 Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->get('/me', [UserController::class, 'fetchMe']);
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    Route::post('/subscription/success', [SubscriptionController::class, 'subscriptionWebhook']); // SUBSCRIPTION GCASH WEBHOOK { #TODO CHNAGE URL }
+    Route::post('/webhook/xendit', [XenditController::class, 'xenditWebhook']);
+
+
     Route::post('/google/url', [AuthController::class, 'google']);
     Route::get('/google/callback', [AuthController::class, 'googleCallback']);
 
@@ -37,6 +44,8 @@ Route::prefix('auth')->group(function () {
     });
 });
 
+
+// BRNACHES
 Route::prefix('branches')->group(function () {
     // PUBLIC BRANCHES
     Route::get('/featured', [BranchController::class, 'retrieveFeaturedBranch']);
@@ -47,34 +56,41 @@ Route::prefix('branches')->group(function () {
         Route::get('/{uuid}/services', [ServiceController::class, 'getBranchServices']);
     });
 });
+
+// PRIVATE - CUSTOM
 Route::middleware('auth:sanctum')->group(function () {
+    // EMPLOYEE / STAFF
     Route::post('/services/assign-employee', [ServiceController::class, 'assignEmployee']);
+
+
+
+    // CUSTOM-BOOKING
+    Route::post('/bookings/facility', [BookingController::class, 'createBooking']);
+    Route::post('/bookings/facility-admission', [BookingController::class, 'admission']);
     Route::post('/bookings/action', [BookingController::class, 'action']);
+    Route::post('/total', [BookingController::class, 'getTotal']);
+
+
+    // OVERVIEW / STATS
     Route::post('/contracts/overview', [BranchContractController::class, 'overview']);
-});
-
-Route::prefix('reviews')->group(function () {
-    // PUBLIC REVIEW
-    Route::get('/',  [ReviewController::class, 'list']);
+    Route::get('/rooms/overview', [RoomController::class, 'overview']);
 
 
-    // AUTHENTICATED REVIEW ACCESS
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/',  [ReviewController::class, 'store']);
-    });
-});
-
-
-
-Route::middleware('auth:sanctum')->group(function () {
     // SUBSCRIPTION
     Route::post('/subscription', [SubscriptionController::class, 'newSubscription']);
     Route::get('/subscription-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
     Route::post('/subscription-validate',  [SubscriptionController::class, 'validateSubscription']);
-
     Route::get('/users/branches',  [UserController::class, 'getUserBranch']);
+    Route::get('/reviews/public',  [ReviewController::class, 'publicReviews']);
 
 
+
+    Route::post('/schedules/assign',  [ScheduleController::class, 'assign']);
+});
+
+
+// PRIVATE API ROUTES
+Route::middleware('auth:sanctum')->group(function () {
     Route::apiResources([
         'employees' => EmployeeController::class,
         'agencies' => AgencyController::class,
@@ -87,10 +103,12 @@ Route::middleware('auth:sanctum')->group(function () {
         'categories' => CategoryController::class,
         'beds' => BedController::class,
         'modules' => ModuleController::class,
-        'contracts' => BranchContractController::class
+        'contracts' => BranchContractController::class,
+        'reviews' => ReviewController::class,
+        'patients' => PatientController::class,
+        'medications' => MedicationController::class,
+        'schedules' => ScheduleController::class
     ]);
-
-
 
     //VALIDATE INPUTS
     Route::prefix('validate')->group(function () {
@@ -101,7 +119,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // PLANS
 Route::get('/plans', [PlanController::class, 'index']);
-
 
 // LOCATIONS
 Route::get('/geocode', [NominatimController::class, 'geocode']);

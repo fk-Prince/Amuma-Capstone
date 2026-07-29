@@ -3,9 +3,16 @@
         <div class="flex items-baseline gap-3 mb-8">
             <span class="text-2xl text-primary">04</span>
             <div>
-                <h2 class="text-xl text-primary">Patient Assessment</h2>
+                <h2 class="text-xl text-primary">
+                    Patient Assessment
+                    <span
+                        class="ml-1 align-middle text-[11px] font-medium uppercase tracking-wide text-slate-400"
+                        >(Optional)</span
+                    >
+                </h2>
                 <p class="text-[13px] text-muted">
                     Recent diagnosis, vital status, and mental / cognitive state
+                    — share whatever you already know
                 </p>
             </div>
         </div>

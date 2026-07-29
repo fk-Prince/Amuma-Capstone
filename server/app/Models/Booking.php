@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Booking extends Model
 {
     //
-    use HasUuids;
     protected $primaryKey = 'booking_id';
+    protected $keyType = 'int';
     /**
      * The attributes that are mass assignable.
      *
@@ -25,9 +25,19 @@ class Booking extends Model
         'valid_until',
     ];
 
-    public function uniqueIds()
+
+    protected static function booted()
     {
-        return ['reference_id'];
+        static::created(function ($booking) {
+            $booking->updateQuietly([
+                'reference_id' => 'BKN-' . str_pad(
+                    $booking->booking_id,
+                    6,
+                    '0',
+                    STR_PAD_LEFT
+                ),
+            ]);
+        });
     }
 
     public function user()

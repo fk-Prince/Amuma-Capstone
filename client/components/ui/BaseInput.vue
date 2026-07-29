@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col gap-1.5 font-primary">
+    <div class="flex flex-col gap-1.5 font-primary" :class="[className]">
         <label v-if="label" class="text-sm font-semibold text-slate-700">
             {{ label }}
             <span v-if="required" class="text-danger ml-0.5">*</span>
@@ -34,7 +34,8 @@
                 :disabled="disabled"
                 :readonly="readonly"
                 :class="[
-                    'flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400 resize-none',
+                    'flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400',
+                    allowResize ? 'resize-y' : 'resize-none',
                     readonly ? 'cursor-default' : '',
                     inputClass,
                 ]"
@@ -59,9 +60,19 @@
                 :readonly="readonly"
             />
 
-            <span
+            <!-- <span
                 v-if="hasSuffix || isSearch"
                 class="flex items-center flex-shrink-0 pr-3"
+            >
+                <slot v-if="hasSuffix" name="suffix" />
+                <Search v-else-if="isSearch" />
+            </span> -->
+            <span
+                v-if="hasSuffix || isSearch"
+                :class="[
+                    'flex flex-shrink-0 items-center',
+                    isSearch ? 'pr-3' : '',
+                ]"
             >
                 <slot v-if="hasSuffix" name="suffix" />
                 <Search v-else-if="isSearch" />
@@ -76,7 +87,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, useSlots } from "vue";
-import type { ZodType } from "zod";
+import { type ZodType } from "zod";
 
 import Search from "../icons/search.vue";
 
@@ -137,6 +148,14 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    className: {
+        type: String,
+        default: "",
+    },
+    allowResize: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(["update:modelValue"]);
@@ -189,6 +208,8 @@ const inputType = computed(() => {
             return "number";
         case "date":
             return "date";
+        case "time":
+            return "time";
         default:
             return "text";
     }

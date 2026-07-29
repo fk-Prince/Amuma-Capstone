@@ -7,6 +7,7 @@ export interface Module {
     has_create: string,
     has_update: string,
     has_read: string,
+    description: string,
 }
 
 export enum Modules {

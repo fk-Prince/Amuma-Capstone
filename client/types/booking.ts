@@ -1,29 +1,36 @@
 import { reactive } from "vue";
 import { z } from "zod";
-
+import { getLocalDateStr } from "~/utils/time";
 
 //FACILITY
 export interface FacilityBooking {
     type: "Complete" | "Pre-Admission" | "";
     plan: "VIP" | "Common" | "";
-    billing_interval: "Monthly" | "Yearly" | "";
+    billing_cycle: "Monthly" | "Yearly" | "";
     admission_date: string;
 }
 
 export const facilityData = reactive<FacilityBooking>({
     type: "Pre-Admission",
-    plan: "Common",
-    billing_interval: "",
+    plan: "",
+    billing_cycle: "",
     admission_date: "",
 });
+
 
 
 export const facilityBookingSchema = z
     .object({
         type: z.enum(["Complete", "Pre-Admission"]),
-        plan: z.enum(["VIP", "Common"]).optional(),
-        billing_interval: z.enum(["Monthly", "Yearly"]).optional(),
-        admission_date: z.string().min(1, "Admission date is required"),
+        plan: z.preprocess(
+            (val) => (val === "" ? undefined : val),
+            z.enum(["VIP", "Common"]).optional(),
+        ),
+        billing_cycle: z.preprocess(
+            (val) => (val === "" ? undefined : val),
+            z.enum(["Monthly", "Yearly"]).optional(),
+        ),
+        admission_date: z.string().optional(),
     })
     .superRefine((data, ctx) => {
         if (data.type === "Complete") {
@@ -31,21 +38,29 @@ export const facilityBookingSchema = z
                 ctx.addIssue({
                     code: "custom",
                     path: ["plan"],
-                    message: "Room type is required for Complete Admission",
+                    message: "Accommodation is required for Complete Admission",
                 });
             }
 
-            if (!data.billing_interval) {
+            if (!data.billing_cycle) {
                 ctx.addIssue({
                     code: "custom",
-                    path: ["billing_interval"],
-                    message: "Plan is required for Complete Admission",
+                    path: ["billing_cycle"],
+                    message: "Admission plan is required for Complete Admission",
+                });
+            }
+
+            if (!data.admission_date) {
+                ctx.addIssue({
+                    code: "custom",
+                    path: ["admission_date"],
+                    message: "Admission date is required for Complete Admission",
                 });
             }
         }
 
         if (data.type === "Pre-Admission") {
-            if (data.plan || data.billing_interval) {
+            if (data.plan || data.billing_cycle) {
                 ctx.addIssue({
                     code: "custom",
                     path: ["type"],
@@ -56,8 +71,6 @@ export const facilityBookingSchema = z
     });
 
 
-
-//HOMECARE
 export interface HomecareBooking {
     services?: BookedService[];
     type: "Medical" | "ADL";
@@ -73,9 +86,11 @@ export interface BookedService {
     price: number;
 }
 
+
+
 export const homecareData = reactive<HomecareBooking>({
     type: "Medical",
-    date: "",
+    date: getLocalDateStr(new Date()),
     prefered_time: "",
     address: "",
     time_span: "",

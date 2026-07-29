@@ -51,6 +51,20 @@ export interface BranchRetrieve {
     reviews: Review[];
     subscriptions: BranchSubscription[];
     location: Location;
+    homecare: BranchHomecare,
+    facility: BranchFacility[]
+}
+
+export interface BranchHomecare {
+    adl_hourly_rate?: number;
+    adl_min_hour?: number
+}
+export interface BranchFacility {
+    available_slot: number
+    accommodation_type: "VIP" | "COMMON";
+    billing_cycle: "HOURLY" | "MONTHLY" | "YEARLY";
+    price: number;
+    description?: string;
 }
 
 export interface BranchAvailability {
@@ -59,20 +73,18 @@ export interface BranchAvailability {
     timezone: string;
     opening: string | null;
     closing: string | null;
-    adl_hourly_rate?: number;
-    adl_min_hour?: number
 }
 
 interface BranchSubscription {
     subscription_id: number;
     uuid: string;
-    status: string;
     plans: BranchPlan;
 }
 
 interface BranchPlan {
     plan_code: "A" | "B" | "C";
     name: string;
+    status: string;
 }
 
 export interface UserBranch {
@@ -119,7 +131,7 @@ export const branchSchema = z.object({
         .string()
         .trim()
         .min(1, "Description is required")
-        .max(500),
+        .max(1000),
 
     contact_number: z
         .string()

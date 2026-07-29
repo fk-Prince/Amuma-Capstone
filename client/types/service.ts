@@ -26,25 +26,89 @@ export const createServiceForm = (): Service => ({
     branch_uuid: "",
     category_id: null,
     category_name: "",
-    price: 0.00,
+    price: 1,
     service_name: "",
     maximum_duration: "",
     is_available: true,
     type: "online",
 });
 
+export const serviceSchema = z
+    .object({
+        service_name: z.string().min(1, "Service name is required"),
+        category_name: z
+            .string()
+            .min(1, "Category name is required"),
+        type: z
+            .string()
+            .min(1, "Type is required"),
+        price: z.coerce
+            .number("Invalid Price")
+            .min(1, "Price cannot be negative or empty"),
+        durationType: z.enum(["minutes", "time"]),
+        maximum_duration: z.string().min(1, "Maximum duration is required"),
+        is_available: z.boolean().optional(),
+    });
 
-export const serviceSchema = z.object({
-    service_name: z.string().min(1, "Service name is required"),
-    category: z.string().min(1, "Category name is required"),
-    type: z.string().min(1, "Type is required"),
-    price: z.coerce
-        .number('Invalid Price')
-        .min(1, "Price cannot be negative or empty"),
-    duration: z
-        .string()
-        .regex(
-            /^([0-1]\d|2[0-3]):([0-5]\d):([0-5]\d)$/,
-            "Maximum duration must be HH:mm:ss"
-        )
-});
+
+// const createDurationSchema = (durationType: "minutes" | "time") =>
+//     z.object({
+//         maximum_duration:
+//             durationType === "minutes"
+//                 ? z
+//                     .union([z.string(), z.number()])
+//                     .transform((val) => String(val))
+//                     .refine((val) => /^\d+$/.test(val), {
+//                         message:
+//                             "Duration must be a whole number of minutes",
+//                     })
+//                     .refine((val) => Number(val) > 0, {
+//                         message:
+//                             "Duration must be greater than 0",
+//                     })
+//                 : z
+//                     .string()
+//                     .regex(
+//                         /^([0-1]\d|2[0-3]):([0-5]\d):([0-5]\d)$/,
+//                         "Duration must be HH:mm:ss",
+//                     ),
+//     });
+
+// export const createServiceSchema = (
+//     durationType: "minutes" | "time",
+// ) =>
+//     serviceSchema.extend(
+//         createDurationSchema(durationType).shape,
+//     );
+
+const createDurationSchema = (durationType: "minutes" | "time") =>
+    z.object({
+
+        durationType: z.literal(durationType),
+        maximum_duration:
+            durationType === "minutes"
+                ? z
+                    .union([z.string(), z.number()])
+                    .transform((val) => String(val))
+                    .refine((val) => /^\d+$/.test(val), {
+                        message: "Duration must be a whole number of minutes",
+                    })
+                    .refine((val) => Number(val) > 0, {
+                        message: "Duration must be greater than 0",
+                    })
+                : z
+                    .string()
+                    .regex(
+                        /^([0-1]\d|2[0-3]):([0-5]\d):([0-5]\d)$/,
+                        "Duration must be HH:mm:ss",
+                    ),
+    });
+
+export const createServiceSchema = (
+    durationType: "minutes" | "time",
+) =>
+    serviceSchema
+        .omit({
+            maximum_duration: true,
+        })
+        .extend(createDurationSchema(durationType).shape);

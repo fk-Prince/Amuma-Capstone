@@ -31,7 +31,7 @@
                     </div>
 
                     <button
-                        type="button"
+                        accommodation_type="button"
                         @click="close"
                         class="text-gray-400 hover:text-gray-700 text-lg shrink-0"
                     >
@@ -56,7 +56,7 @@
                                 <th
                                     class="py-3 px-6 text-xs uppercase text-muted"
                                 >
-                                    Type
+                                    accommodation_type
                                 </th>
 
                                 <th
@@ -123,7 +123,7 @@
                                 <td
                                     class="px-6 py-4 text-sm font-medium text-[#16302E]"
                                 >
-                                    {{ plan.type }}
+                                    {{ plan.accommodation_type }}
                                 </td>
 
                                 <td class="px-3 py-4 text-sm font-semibold">
@@ -131,7 +131,7 @@
                                 </td>
 
                                 <td class="px-3 py-4 text-sm">
-                                    {{ plan.billing_interval }}
+                                    {{ plan.billing_cycle }}
                                 </td>
 
                                 <td class="px-3 py-4">
@@ -157,7 +157,7 @@
 
                                 <td class="px-6 py-4 text-right">
                                     <button
-                                        type="button"
+                                        accommodation_type="button"
                                         class="text-sm font-medium text-primary hover:underline"
                                         @click="onUpdate(plan)"
                                     >
@@ -178,7 +178,7 @@
                     </p>
 
                     <button
-                        type="button"
+                        accommodation_type="button"
                         class="rounded-xl border px-4 py-2 text-sm"
                         @click="close"
                     >
@@ -224,9 +224,9 @@ const filteredPlans = computed(() => {
 
     return plans.value.filter((plan) => {
         return (
-            plan.type?.toLowerCase().includes(keyword) ||
+            plan.accommodation_type?.toLowerCase().includes(keyword) ||
             plan.category?.toLowerCase().includes(keyword) ||
-            plan.billing_interval?.toLowerCase().includes(keyword) ||
+            plan.billing_cycle?.toLowerCase().includes(keyword) ||
             plan.description?.toLowerCase().includes(keyword)
         );
     });

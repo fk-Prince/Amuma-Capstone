@@ -29,22 +29,24 @@
 
                 <form class="p-5 space-y-4" @submit.prevent="submit">
                     <Combobox
-                        :model-value="form.type"
-                        @update:model-value="update('type', $event)"
+                        :model-value="form.accommodation_type"
+                        @update:model-value="
+                            update('accommodation_type', $event)
+                        "
                         label="Service Type"
                         placeholder="Select service type"
                         :items="serviceTypes"
-                        :error="errors.type"
+                        :error="errors.accommodation_type"
                         required
                     />
 
                     <Combobox
-                        :model-value="form.billing_interval"
-                        @update:model-value="update('billing_interval', $event)"
-                        label="Billing Interval"
-                        placeholder="Select billing interval"
+                        :model-value="form.billing_cycle"
+                        @update:model-value="update('billing_cycle', $event)"
+                        label="Billing Cycle"
+                        placeholder="Select billing cycle"
                         :items="billingIntervals"
-                        :error="errors.billing_interval"
+                        :error="errors.billing_cycle"
                         required
                     />
 
@@ -162,9 +164,9 @@ const form = reactive({
 });
 
 const errors = reactive<Record<string, string>>({
-    type: "",
+    accommodation_type: "",
     price: "",
-    billing_interval: "",
+    billing_cycle: "",
     description: "",
     general: "",
 });
@@ -221,24 +223,23 @@ async function submit() {
 
         close();
     } catch (err: any) {
-        const apiErrors = err?.errors || err?.response?.data?.errors;
+        const message = err?.data?.message || err?.response?.data?.message;
+        //     ||
+        //     err?.message ||
+        //     (isEditMode.value
+        //         ? "Failed to update facility plan"
+        //         : "Failed to create facility plan");
 
-        if (apiErrors) {
-            Object.assign(
-                errors,
-                Object.fromEntries(
-                    Object.entries(apiErrors).map(([key, value]: any) => [
-                        key,
-                        Array.isArray(value) ? value[0] : value,
-                    ]),
-                ),
-            );
+        const apiErrors = err?.data?.errors || err?.response?.data?.errors;
+
+        console.error(err);
+
+        if (apiErrors && Object.keys(apiErrors).length > 0) {
+            Object.entries(apiErrors).forEach(([key, value]: any) => {
+                errors[key] = Array.isArray(value) ? value[0] : value;
+            });
         } else {
-            error(
-                err?.response?.data?.message ??
-                    err?.message ??
-                    "Failed to create homecare package",
-            );
+            error(message);
         }
     } finally {
         isSubmitting.value = false;

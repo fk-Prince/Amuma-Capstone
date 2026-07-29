@@ -40,28 +40,32 @@
                         Gender <span class="text-danger">*</span>
                     </label>
                     <div
-                        class="flex gap-5 h-11 items-center text-[15px] text-muted"
+                        class="inline-flex h-11 items-center rounded-lg border border-slate-200 bg-slate-50 p-1"
                     >
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                value="Female"
-                                :checked="model.gender === 'Female'"
-                                @change="update('gender', 'Female')"
-                                class="bg-accent"
-                            />
+                        <button
+                            type="button"
+                            @click="update('gender', 'Female')"
+                            class="flex-1 h-full rounded-md px-4 text-sm font-medium transition-colors"
+                            :class="
+                                model.gender === 'Female'
+                                    ? 'bg-white text-primary shadow-sm'
+                                    : 'text-muted hover:text-slate-700'
+                            "
+                        >
                             Female
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                value="Male"
-                                :checked="model.gender === 'Male'"
-                                @change="update('gender', 'Male')"
-                                class="bg-accent"
-                            />
+                        </button>
+                        <button
+                            type="button"
+                            @click="update('gender', 'Male')"
+                            class="flex-1 h-full rounded-md px-4 text-sm font-medium transition-colors"
+                            :class="
+                                model.gender === 'Male'
+                                    ? 'bg-white text-primary shadow-sm'
+                                    : 'text-muted hover:text-slate-700'
+                            "
+                        >
                             Male
-                        </label>
+                        </button>
                     </div>
                     <p v-if="errors?.gender" class="text-xs text-red-500">
                         {{ errors.gender }}
@@ -86,10 +90,12 @@
 
             <div class="grid grid-cols-1 gap-6">
                 <BaseInput
+                    v-if="category === 'facility'"
                     label="Address"
                     :model-value="props.model.address"
                     @update:model-value="update('address', $event)"
                     :error="errors?.address"
+                    required
                 />
             </div>
 
@@ -110,6 +116,7 @@
                     :error="errors?.occupation"
                     required
                 />
+
                 <Combobox
                     :model-value="model.marital_status"
                     @update:model-value="update('marital_status', $event)"
@@ -173,6 +180,7 @@ import type { Patient } from "~/types/patient";
 const props = defineProps<{
     model: Patient;
     errors?: Record<string, string> | null;
+    category?: string;
 }>();
 
 const emit = defineEmits<{

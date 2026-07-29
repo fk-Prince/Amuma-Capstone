@@ -28,6 +28,10 @@ class RoomService extends BaseService {
         return await this.request(`${this.resource}/${id}`, 'PUT', payload);
     }
 
+    async overview(payload: object): Promise<any> {
+        return await this.request(`${this.resource}/overview`, 'GET', payload);
+    }
+
     private get resource(): string {
         const backend = this.getBackendApi;
         return `${backend}/api/rooms`;

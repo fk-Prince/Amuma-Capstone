@@ -38,7 +38,7 @@ export const agencySchema2 = z.object({
         .string()
         .trim()
         .min(1, "Description is required")
-        .max(500),
+        .max(1000),
 
 
     location: locationSchema,

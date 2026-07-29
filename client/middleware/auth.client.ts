@@ -30,7 +30,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         if (!branchUuid) return;
 
         if (!branchStore.branches.length) {
-            await branchStore.fetchBranches(to);
+            await branchStore.fetchBranches();
         }
 
         const branch = branchStore.branches.find((b) => b?.uuid === branchUuid);

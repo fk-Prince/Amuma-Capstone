@@ -14,12 +14,12 @@ return new class extends Migration
 
         Schema::create('bookings', function (Blueprint $table) {
             $table->id('booking_id');
-            $table->uuid('reference_id')->unique();
+            $table->string('reference_id')->unique();
             $table->foreignId('user_id')->constrained('users', 'user_id');
             $table->foreignId('branch_id')->constrained('branches', 'branch_id');
             $table->json('booking_data');
             $table->enum('category', ['Homecare', 'Facility']);
-            $table->enum('status', ['confirmed', 'pending', 'rejected'])->default('pending');
+            $table->enum('status', ['approved', 'pending', 'rejected', 'expired'])->default('pending');
             $table->date('valid_until');
             $table->timestamps();
         });

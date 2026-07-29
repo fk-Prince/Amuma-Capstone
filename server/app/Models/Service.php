@@ -28,7 +28,6 @@ class Service extends Model
 
     protected $casts = [
         'is_available' => 'boolean',
-        'maximum_duration' => 'datetime:H:i:s',
     ];
 
     /**

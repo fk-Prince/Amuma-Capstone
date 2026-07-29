@@ -4,11 +4,13 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
+use App\Guard\AuthGuard;
+use App\Guard\BranchGuard;
 use App\Repository\RoomRepository;
 use App\Http\Resources\RoomResource;
 use App\Models\User;
 use App\Repository\BranchRepository;
-use App\Service\Utils\AuthGuard;
+
 use Exception;
 
 class RoomService
@@ -22,15 +24,19 @@ class RoomService
         $this->roomRepository = $roomRepository;
     }
 
+    public function overview(User $user, array $payload)
+    {
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Read);
+
+        return $this->roomRepository->getRoomStats($branch->branch_id);
+    }
+
 
     public function createRoom(User $user, array $payload)
     {
 
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-
-        if (!$branch) {
-            throw new Exception(__('Branch does not exist.'), 404);
-        }
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Create);
 
         if (! $branch->hasFacilitySubscription()) {
@@ -62,31 +68,18 @@ class RoomService
         ], 201);
     }
 
+
     public function listRoom(User $user, array $payload)
     {
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-
-        if (!$branch) {
-            throw new Exception(__('Branch does not exist.'), 404);
-        }
-
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Read);
-
-        $model = $this->roomRepository->paginate($payload['per_page'], $branch->branch_id);
-
-        return  new RoomResource($model);
+        $model = $this->roomRepository->paginate($branch->branch_id, $payload, $payload['per_page']);
+        return RoomResource::collection($model);
     }
 
     public function updateRoom(User $user, string $id, array $payload)
     {
-
-
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-
-        if (!$branch) {
-            throw new Exception(__('Branch does not exist.'), 404);
-        }
-
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Update);
 
         if (! $branch->hasFacilitySubscription()) {

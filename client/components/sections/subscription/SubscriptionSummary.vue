@@ -218,9 +218,31 @@
         <button
             v-if="stepCompleted"
             @click="send"
-            class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition"
+            :disabled="isLoading"
+            class="mt-6 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2"
         >
-            Confirm & Pay
+            <svg
+                v-if="isLoading"
+                class="w-5 h-5 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+            >
+                <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                />
+                <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                />
+            </svg>
+
+            {{ isLoading ? "Validating..." : "Confirm & Pay" }}
         </button>
     </div>
 </template>
@@ -230,7 +252,7 @@ import { useSubscriptionCheckout } from "~/stores/subscription";
 import { branchFields, agencyFields } from "~/utils/fields";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { type SubscriptionRequest } from "~/types/subscription";
-import { getBranchImage } from "~/types/branch";
+const isLoading = ref(false);
 const props = defineProps<{
     stepCompleted: boolean;
 }>();
@@ -243,6 +265,7 @@ const branchImagePreview = computed(() =>
 
 const send = async () => {
     try {
+        isLoading.value = true;
         const hasImageFile = checkout.branch.image instanceof File;
         const payload: SubscriptionRequest = {
             plan_code: checkout.selectedPlan.plan_code,
@@ -293,6 +316,8 @@ const send = async () => {
                 ]),
             );
         }
+    } finally {
+        isLoading.value = false;
     }
 };
 </script>

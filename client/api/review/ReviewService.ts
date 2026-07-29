@@ -17,7 +17,7 @@ class ReviewService extends BaseService {
 
 
     async list(params: object = {}): Promise<any> {
-        return await this.request(this.resource, 'GET', params);
+        return await this.request(this.resource + '/public', 'GET', params);
     }
 
     async create(payload: object): Promise<any> {

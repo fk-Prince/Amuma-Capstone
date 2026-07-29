@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('schedules', function (Blueprint $table) {
             $table->id('schedule_id');
+            $table->string('schedule_code', 20)->unique();
             $table->foreignId('scheduled_location_id')
                 ->constrained('locations', 'location_id');
             $table->foreignId('patient_id')

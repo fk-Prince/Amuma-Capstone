@@ -23,33 +23,30 @@ class BedRepository
         return Bed::create($payload);
     }
 
-    public function findByUuid(string $uuid)
+    public function findByField(array $conditions)
     {
-        return Bed::where('uuid', $uuid)->first();
+        return Bed::where($conditions)->first();
     }
 
-    public function update(string $uuid, array $payload)
-    {
-        $model = $this->findByUuid($uuid);
-        if ($model) {
-            $model->update($payload);
-        }
-        return $model;
-    }
+    // public function findByUuid(string $uuid)
+    // {
+    //     return Bed::where('uuid', $uuid)->first();
+    // }
 
-    public function delete(string $uuid)
-    {
-        $model = $this->findByUuid($uuid);
-        if ($model) {
-            return $model->delete();
-        }
-        return false;
-    }
 
-    public function restore(string $uuid)
-    {
-        $model = Bed::withTrashed()->where('uuid', $uuid)->firstOrFail();
-        $model->restore();
-        return $model;
-    }
+    // public function delete(string $uuid)
+    // {
+    //     $model = $this->findByUuid($uuid);
+    //     if ($model) {
+    //         return $model->delete();
+    //     }
+    //     return false;
+    // }
+
+    // public function restore(string $uuid)
+    // {
+    //     $model = Bed::withTrashed()->where('uuid', $uuid)->firstOrFail();
+    //     $model->restore();
+    //     return $model;
+    // }
 }

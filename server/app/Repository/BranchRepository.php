@@ -34,7 +34,8 @@ class BranchRepository
         return Branch::with([
             'subscriptions.plans',
             'reviews',
-            'location'
+            'location',
+            'contracts',
         ])
             ->withAvg('reviews', 'rate')
             ->orderByDesc('reviews_avg_rate')
@@ -55,7 +56,8 @@ class BranchRepository
         return Branch::with([
             'subscriptions.plans',
             'reviews',
-            'location'
+            'location',
+            'contracts',
         ])
             ->withAvg('reviews', 'rate')
 
@@ -86,6 +88,7 @@ class BranchRepository
         return Branch::with([
             'subscriptions.plans',
             'location',
+            'contracts',
             'agencies',
             // 'services' => function ($query) {
             //     $query->where('is_available', true)

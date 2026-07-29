@@ -4,17 +4,26 @@ import type { RouteLocationNormalizedLoaded } from "vue-router";
 
 export const useBranchStore = defineStore("branch", () => {
     const router = useRouter();
+    const route = useRoute();
 
     const branches = ref<Branch[]>([]);
     const loading = ref(false);
     const showModal = ref(false);
     const lastSelectedBranch = ref<Branch | null>(null);
-    const currentRoute = ref<RouteLocationNormalizedLoaded | null>(null);
+    // const currentRoute = ref<RouteLocationNormalizedLoaded | null>(null);
 
 
+    // const routeUuid = computed(() => {
+    //     if (!currentRoute || !currentRoute.value) return;
+    //     const v = currentRoute.value.params.uuid;
+    //     const uuid = Array.isArray(v) ? v[0] : v;
+
+    //     if (!uuid || uuid === "[uuid]") return null;
+
+    //     return uuid;
+    // });
     const routeUuid = computed(() => {
-        if (!currentRoute || !currentRoute.value) return;
-        const v = currentRoute.value.params.uuid;
+        const v = route.params.uuid;
         const uuid = Array.isArray(v) ? v[0] : v;
 
         if (!uuid || uuid === "[uuid]") return null;
@@ -41,31 +50,26 @@ export const useBranchStore = defineStore("branch", () => {
             loading.value = false;
         }
     }
-
-    async function fetchBranches(route: RouteLocationNormalizedLoaded) {
+    async function fetchBranches() {
         loading.value = true;
-        currentRoute.value = route;
+
         try {
             const res = await userService.userBranch();
             branches.value = res.data?.branches ?? [];
-            const uuid = routeUuid.value;
 
+            const uuid = routeUuid.value;
             const first = branches.value[0];
 
-            // if (!uuid && first?.uuid) {
-            //     lastSelectedBranch.value = first;
-            //     await router.replace(
-            //         `/app/branches/${first.uuid}/dashboard`
-            //     );
-            //     return;
-            // }
-            if (!uuid && !route.path.startsWith("/app/branches/") && first?.uuid) {
+            if (!uuid && first?.uuid) {
                 lastSelectedBranch.value = first;
+
                 await router.replace(
                     `/app/branches/${first.uuid}/dashboard`
                 );
+
                 return;
             }
+
             const exists = branches.value.some(
                 (b) => b.uuid === uuid
             );
@@ -76,6 +80,7 @@ export const useBranchStore = defineStore("branch", () => {
                 await router.replace(
                     `/app/branches/${first.uuid}/dashboard`
                 );
+
                 return;
             }
 
@@ -86,6 +91,101 @@ export const useBranchStore = defineStore("branch", () => {
             loading.value = false;
         }
     }
+    // async function fetchBranches(route?: RouteLocationNormalizedLoaded) {
+    //     loading.value = true;
+
+    //     const activeRoute = route ?? router.currentRoute.value;
+    //     // currentRoute.value = activeRoute;
+
+    //     try {
+    //         const res = await userService.userBranch();
+    //         branches.value = res.data?.branches ?? [];
+
+    //         const uuid = routeUuid.value;
+    //         const first = branches.value[0];
+
+    //         console.log("route:", activeRoute);
+
+    //         if (
+    //             !uuid &&
+    //             !activeRoute.path.startsWith("/app/branches/") &&
+    //             first?.uuid
+    //         ) {
+    //             lastSelectedBranch.value = first;
+
+    //             await router.replace(
+    //                 `/app/branches/${first.uuid}/dashboard`
+    //             );
+    //             return;
+    //         }
+
+    //         const exists = branches.value.some(
+    //             (b) => b.uuid === uuid
+    //         );
+
+    //         if (!exists && first?.uuid) {
+    //             lastSelectedBranch.value = first;
+
+    //             await router.replace(
+    //                 `/app/branches/${first.uuid}/dashboard`
+    //             );
+    //             return;
+    //         }
+
+    //         if (activeBranch.value) {
+    //             lastSelectedBranch.value = activeBranch.value;
+    //         }
+    //     } finally {
+    //         loading.value = false;
+    //     }
+    // }
+    // async function fetchBranches(route: RouteLocationNormalizedLoaded) {
+    //     loading.value = true;
+    //     currentRoute.value = route;
+
+
+    //     try {
+    //         const res = await userService.userBranch();
+    //         branches.value = res.data?.branches ?? [];
+    //         const uuid = routeUuid.value;
+
+    //         const first = branches.value[0];
+
+    //         // if (!uuid && first?.uuid) {
+    //         //     lastSelectedBranch.value = first;
+    //         //     await router.replace(
+    //         //         `/app/branches/${first.uuid}/dashboard`
+    //         //     );
+    //         //     return;
+    //         // }
+    //         console.log("route:", route);
+    //         if (!uuid && !route.path.startsWith("/app/branches/") && first?.uuid) {
+    //             lastSelectedBranch.value = first;
+    //             await router.replace(
+    //                 `/app/branches/${first.uuid}/dashboard`
+    //             );
+    //             return;
+    //         }
+    //         const exists = branches.value.some(
+    //             (b) => b.uuid === uuid
+    //         );
+
+    //         if (!exists && first?.uuid) {
+    //             lastSelectedBranch.value = first;
+
+    //             await router.replace(
+    //                 `/app/branches/${first.uuid}/dashboard`
+    //             );
+    //             return;
+    //         }
+
+    //         if (activeBranch.value) {
+    //             lastSelectedBranch.value = activeBranch.value;
+    //         }
+    //     } finally {
+    //         loading.value = false;
+    //     }
+    // }
 
     function openModal() {
         if (!branches.value.length || branches.value.length === 1) return;

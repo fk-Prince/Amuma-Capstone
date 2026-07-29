@@ -1,7 +1,30 @@
 <template>
     <div class="max-w-6xl mx-auto p-6">
-        <div v-if="loading" class="rounded-2xl shadow p-10 flex justify-center">
-            <div class="w-10 h-10 border-primary rounded-full animate-spin" />
+        <div
+            v-if="loading"
+            class="min-h-[500px] flex items-center justify-center"
+        >
+            <div
+                class="rounded-2xl bg-white px-10 py-12 flex flex-col items-center gap-5"
+            >
+                <div class="relative">
+                    <div
+                        class="h-12 w-12 rounded-full border-4 border-gray-200"
+                    ></div>
+                    <div
+                        class="absolute inset-0 h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin"
+                    ></div>
+                </div>
+
+                <div class="text-center">
+                    <p class="text-sm font-semibold text-gray-700">
+                        Loading subscription setup
+                    </p>
+                    <p class="text-xs text-gray-400 mt-1">
+                        Preparing plans and configuration options...
+                    </p>
+                </div>
+            </div>
         </div>
 
         <template v-else>

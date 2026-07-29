@@ -176,7 +176,7 @@
                         </td>
 
                         <td class="px-6 py-4 text-gray-600">
-                            {{ employee.assignment_type || "-" }}
+                            {{ formatAssignmentType(employee.assignment_type) }}
                         </td>
 
                         <td class="px-6 py-4">
@@ -257,7 +257,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { formatRole } from "~/utils/user";
-import type { Employee } from "~/types/employee";
+import { type Employee, formatAssignmentType } from "~/types/employee";
 import { Pencil } from "lucide-vue-next";
 import { Calendar } from "lucide-vue-next";
 import { Modules } from "~/types/module";

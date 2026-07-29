@@ -287,14 +287,7 @@ const formatPrice = (price: number | string) => {
                                             class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition"
                                         >
                                             <UserPlus class="w-4 h-4" />
-                                            Assign Employee
-                                        </button>
-
-                                        <button
-                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-rose-600 bg-white border border-rose-200 hover:bg-rose-50 transition"
-                                        >
-                                            <Trash2 class="w-4 h-4" />
-                                            Delete
+                                            Assign Nurse
                                         </button>
                                     </div>
                                 </div>
@@ -427,7 +420,6 @@ const formatPrice = (price: number | string) => {
                                     </div>
                                 </div>
 
-                                <!-- Status -->
                                 <div class="flex flex-wrap gap-3">
                                     <div
                                         class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4EFED] text-xs text-[#6B8A87]"
@@ -439,11 +431,11 @@ const formatPrice = (price: number | string) => {
                                         Available for booking
                                     </div>
 
-                                    <div
+                                    <!-- <div
                                         class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4EFED] text-xs text-[#6B8A87]"
                                     >
                                         Updated recently
-                                    </div>
+                                    </div> -->
                                 </div>
                             </div>
                         </Transition>

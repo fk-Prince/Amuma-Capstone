@@ -4,13 +4,13 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
+use App\Guard\AuthGuard;
+use App\Guard\BranchGuard;
 use App\Repository\BranchRepository;
 use App\Http\Resources\BranchResource;
 use App\Models\User;
-use App\Service\Utils\AuthGuard;
-use App\Service\Utils\NominatimService;
-use App\Service\Utils\SupabaseService;
-use Exception;
+use App\Service\External\SupabaseService;
+use App\Service\Geo\NominatimService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
@@ -27,19 +27,21 @@ class BranchService
 
     public function getBranch(string $uuid)
     {
+        // $branch = $this->branchRepository->getBranch($uuid);
+
+        // $branch->averageRating = round($branch->reviews_avg_rate ?? 0, 1);
+        // $branch->reviewCount = $branch->reviews_count ?? 0;
+
+        // $settings = (array) ($branch->settings ?? []);
+
+        // $branch->settings = array_merge($settings, [
+        //     'adl_hourly_rate' => 500,
+        //     'adl_min_hour' => 8,
+        // ]);
+
+        // return $branch;
         $branch = $this->branchRepository->getBranch($uuid);
-
-        $branch->averageRating = round($branch->reviews_avg_rate ?? 0, 1);
-        $branch->reviewCount = $branch->reviews_count ?? 0;
-
-        $settings = (array) ($branch->settings ?? []);
-
-        $branch->settings = array_merge($settings, [
-            'adl_hourly_rate' => 500,
-            'adl_min_hour' => 8,
-        ]);
-
-        return $branch;
+        return new BranchResource($branch);
     }
 
     public function getFeaturedBranches(array $payload)
@@ -52,7 +54,7 @@ class BranchService
     {
         $city = null;
         if (!empty($payload['lat']) && !empty($payload['long'])) {
-            $city = $this->nomaticeService->getCityByCords($payload['lat'], $payload['long']);
+            $city = $this->nomaticeService->getCityByCoords($payload['lat'], $payload['long']);
         } elseif (!empty($payload['location'])) {
             $city = $payload['location'];
         }
@@ -75,12 +77,7 @@ class BranchService
 
     public function updateBranch(array $payload, User $user, string $branchUuid)
     {
-        $branch = $this->branchRepository->findByField('uuid', $branchUuid);
-
-        if (!$branch) {
-            throw new Exception(__('Branch does not exist'), 404);
-        }
-
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Update);
 
         return DB::transaction(function () use ($branch, $payload) {

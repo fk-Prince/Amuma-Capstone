@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Service\ScheduleService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class ScheduleController extends Controller
 {
@@ -15,37 +16,24 @@ class ScheduleController extends Controller
         $this->scheduleService = $scheduleService;
     }
 
-    public function index(Request $request)
-    {
-        return $this->scheduleService->listSchedule(
-            $request->user(), 
-            $request->input('per_page', 15)
-        );
-    }
-
     public function store(Request $request)
     {
         return $this->scheduleService->createSchedule($request->user(), $request->all());
     }
 
-    public function show(Request $request, string $uuid)
+    public function index(Request $request)
     {
-        return $this->scheduleService->getSchedule($request->user(), $uuid);
+        return $this->scheduleService->retrieveSchedule($request->user(), $request->all());
     }
 
-    public function update(Request $request, string $uuid)
+    public function assign(Request $request)
     {
-        return $this->scheduleService->updateSchedule($request->user(), $uuid, $request->all());
+        return $this->scheduleService->assign($request->user(), $request->all());
     }
 
-    public function destroy(Request $request, string $uuid)
+    public function update(Request $request, string $id)
     {
-        $this->scheduleService->deleteSchedule($request->user(), $uuid);
-        return response()->json(['message' => 'Deleted successfully'], 200);
-    }
-    
-    public function restore(Request $request, string $uuid)
-    {
-        return $this->scheduleService->restoreSchedule($request->user(), $uuid);
+
+        return $this->scheduleService->checkConflictSchedule($request->user(), $request->all());
     }
 }

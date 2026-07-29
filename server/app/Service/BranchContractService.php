@@ -4,11 +4,12 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
+use App\Guard\AuthGuard;
+use App\Guard\BranchGuard;
 use App\Repository\BranchContractRepository;
 use App\Http\Resources\BranchContractResource;
 use App\Models\User;
 use App\Repository\BranchRepository;
-use App\Service\Utils\AuthGuard;
 use Exception;
 
 class BranchContractService
@@ -25,10 +26,7 @@ class BranchContractService
 
     public function overview(User $user, array $payload)
     {
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-
-        if (!$branch)  throw new Exception("Branch doesn't exist", 404);
-
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Pricing,  PermissionAction::Read);
 
         return [
@@ -46,23 +44,19 @@ class BranchContractService
 
     public function createBranchContract(User $user, array $payload)
     {
-
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-
-        if (!$branch)  throw new Exception("Branch doesn't exist", 404);
-
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Pricing,  PermissionAction::Create);
 
         $existingContract = $this->branchContractRepository->findByField([
             ['branch_id', '=', $branch->branch_id],
             ['category', '=', $payload['category']],
-            ['type', '=', $payload['type']],
-            ['billing_interval', '=', $payload['billing_interval']],
+            ['accommodation_type', '=', $payload['accommodation_type']],
+            ['billing_cycle', '=', $payload['billing_cycle']],
         ]);
 
         if ($existingContract) {
             throw new Exception(
-                "A {$payload['category']} {$payload['type']} {$payload['billing_interval']} contract already exists for this branch.",
+                "A {$payload['category']} {$payload['accommodation_type']} {$payload['billing_cycle']} contract already exists for this branch.",
                 409
             );
         }
@@ -70,9 +64,9 @@ class BranchContractService
         $payload = [
             'branch_id' => $branch->branch_id,
             'category' => $payload['category'],
-            'type' => $payload['type'],
+            'accommodation_type' => $payload['accommodation_type'],
             'price' => $payload['price'],
-            'billing_interval' => $payload['billing_interval'],
+            'billing_cycle' => $payload['billing_cycle'],
             'description' => $payload['description'] ?? null,
         ];
 
@@ -86,10 +80,7 @@ class BranchContractService
 
     public function list(User $user, array $payload)
     {
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-
-        if (!$branch)  throw new Exception("Branch doesn't exist", 404);
-
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Pricing,  PermissionAction::Read);
 
         $data = $this->branchContractRepository->all($branch->branch_id);
@@ -99,18 +90,8 @@ class BranchContractService
 
     public function updateBranchContract(User $user, array $payload, string $id)
     {
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-
-        if (!$branch) {
-            throw new Exception("Branch doesn't exist", 404);
-        }
-
-        AuthGuard::requireModule(
-            $user,
-            $branch->branch_id,
-            ModuleEnum::Pricing,
-            PermissionAction::Update
-        );
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+        AuthGuard::requireModule($user,  $branch->branch_id, ModuleEnum::Pricing, PermissionAction::Update);
 
         $contract = $this->branchContractRepository->findByField([
             ['branch_contract_id', '=', $id],
@@ -123,23 +104,23 @@ class BranchContractService
         $existingContract = $this->branchContractRepository->findByField([
             ['branch_id', '=', $branch->branch_id],
             ['category', '=', $payload['category']],
-            ['type', '=', $payload['type']],
-            ['billing_interval', '=', $payload['billing_interval']],
+            ['accommodation_type', '=', $payload['accommodation_type']],
+            ['billing_cycle', '=', $payload['billing_cycle']],
             ['branch_contract_id', '!=', $payload['branch_contract_id']],
         ]);
 
 
         if ($existingContract) {
             throw new Exception(
-                "A {$payload['category']} {$payload['type']} {$payload['billing_interval']} contract already exists for this branch.",
+                "A {$payload['category']} {$payload['accommodation_type']} {$payload['billing_cycle']} contract already exists for this branch.",
                 409
             );
         }
         $contract->update([
             'category' => $payload['category'],
-            'type' => $payload['type'],
+            'accommodation_type' => $payload['accommodation_type'],
             'price' => $payload['price'],
-            'billing_interval' => $payload['billing_interval'],
+            'billing_cycle' => $payload['billing_cycle'],
             'description' => $payload['description'] ?? null,
         ]);
 

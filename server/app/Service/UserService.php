@@ -20,14 +20,10 @@ use Illuminate\Support\Str;
 
 class UserService
 {
-    private UserRepository $userRepository;
     private BranchRepository $branchRepository;
-    private LocationRepository $locationRepository;
     public function __construct(UserRepository $userRepository, BranchRepository $branchRepository, LocationRepository $locationRepository)
     {
-        $this->userRepository = $userRepository;
         $this->branchRepository = $branchRepository;
-        $this->locationRepository = $locationRepository;
     }
 
     public function getUserBranch(User $user)

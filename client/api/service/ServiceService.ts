@@ -17,6 +17,10 @@ class ServiceService extends BaseService {
         return ServiceService.instance;
     }
 
+    async list(payload: object = {}): Promise<any> {
+        return await this.request(this.resource, 'GET', payload);
+    }
+
     async assignEmployeeService(payload: object): Promise<any> {
         return await this.request(this.resource + '/assign-employee', 'POST', payload);
     }

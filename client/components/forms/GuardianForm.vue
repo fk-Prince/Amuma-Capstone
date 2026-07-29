@@ -10,6 +10,17 @@
             </div>
         </div>
 
+        <div
+            v-if="hasLockedFields"
+            class="flex items-center gap-2 rounded-lg bg-primary/5 border border-primary/10 px-4 py-2.5 text-[13px] text-primary mb-8"
+        >
+            <Lock class="h-3.5 w-3.5 shrink-0" />
+            <span>
+                Some fields below were auto-filled from your account. Update
+                them from your profile settings if they've changed.
+            </span>
+        </div>
+
         <div class="space-y-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <BaseInput
@@ -75,7 +86,6 @@
                     @update:model-value="update('relationship', $event)"
                     placeholder="e.g. Father, Mother, Guardian"
                     :error="errors?.relationship"
-                    :disabled="lockedFields.relationship"
                     required
                 />
                 <BaseInput
@@ -83,7 +93,6 @@
                     :model-value="props.model.occupation"
                     @update:model-value="update('occupation', $event)"
                     :error="errors?.occupation"
-                    :disabled="lockedFields.occupation"
                     required
                 />
             </div>
@@ -92,7 +101,8 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted } from "vue";
+import { reactive, computed, onMounted } from "vue";
+import { Lock } from "lucide-vue-next";
 import BaseInput from "@/components/ui/BaseInput.vue";
 import type { Guardian } from "~/types/patient";
 import type { User } from "~/types/auth";
@@ -137,29 +147,34 @@ const lockedFields = reactive({
     occupation: false,
 });
 
+const hasLockedFields = computed(() =>
+    Object.values(lockedFields).some(Boolean),
+);
+
 onMounted(() => {
     const updates: Partial<Guardian> = {};
 
     if (props.currentUser?.first_name) {
         updates.first_name = props.currentUser.first_name;
+        lockedFields.first_name = true;
     }
+
     if (props.currentUser?.last_name) {
         updates.last_name = props.currentUser.last_name;
+        lockedFields.last_name = true;
     }
+
     if (props.currentUser?.email) {
         updates.email = props.currentUser.email;
+        lockedFields.email = true;
     }
+
     if (props.currentUser?.phone_number) {
         updates.phone_number = props.currentUser.phone_number;
+        lockedFields.phone_number = true;
     }
 
     const merged = { ...props.model, ...updates };
-
-    (Object.keys(lockedFields) as (keyof typeof lockedFields)[]).forEach(
-        (key) => {
-            lockedFields[key] = !!merged[key as keyof Guardian];
-        },
-    );
 
     if (Object.keys(updates).length) {
         emit("update:model", merged);

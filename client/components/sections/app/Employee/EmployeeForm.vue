@@ -66,6 +66,7 @@ type PermissionSet = {
     can_read: boolean;
     can_create: boolean;
     can_update: boolean;
+    can_approve: boolean;
 };
 
 const modules = ref<Module[]>([]);
@@ -100,20 +101,23 @@ function toggleAllPermissions() {
 
     modules.value.forEach((m) => {
         permissions.value[m.module_id] = {
-            can_read: next,
-            can_create: next,
-            can_update: next,
+            can_read: next && !!m.has_read,
+            can_create: next && !!m.has_create,
+            can_update: next && !!m.has_update,
+            can_approve: next && !!m.has_approve,
         };
     });
 }
 
 function toggleModule(moduleId: number) {
+    const module = modules.value.find((m) => m.module_id === moduleId);
     const next = !(permissions.value[moduleId]?.can_read ?? false);
 
     permissions.value[moduleId] = {
         can_read: next,
-        can_create: next,
-        can_update: next,
+        can_create: next && !!module?.has_create,
+        can_update: next && !!module?.has_update,
+        can_approve: next && !!module?.has_approve,
     };
 }
 
@@ -123,6 +127,7 @@ function toggleAction(moduleId: number, action: keyof PermissionSet) {
             can_read: false,
             can_create: false,
             can_update: false,
+            can_approve: false,
         };
     }
 
@@ -142,6 +147,7 @@ async function loadModules() {
                 can_read: false,
                 can_create: false,
                 can_update: false,
+                can_approve: false,
             };
         });
     } catch (err) {
@@ -176,6 +182,7 @@ function loadEmployee() {
             can_read: p.can_read,
             can_create: p.can_create,
             can_update: p.can_update,
+            can_approve: p.can_approve ?? false,
         };
     });
 }
@@ -245,6 +252,7 @@ async function saveEmployee() {
             can_read: set.can_read,
             can_create: set.can_create,
             can_update: set.can_update,
+            can_approve: set.can_approve,
         }),
     );
 
@@ -267,7 +275,7 @@ async function saveEmployee() {
         success(res.message);
         emit("back");
         if (user.value?.uuid === props.employee?.uuid) {
-            await branchStore.fetchBranches(useRoute());
+            await branchStore.fetchBranches();
         }
     } catch (err: any) {
         error(err?.data?.message || err?.message || "Internal Server Error");
@@ -805,7 +813,10 @@ const pageSubtitle = computed(() => {
                                         {{ module.module_name }}
                                     </h3>
                                     <p class="text-xs text-slate-400">
-                                        Manage access to this module.
+                                        {{
+                                            module.description ??
+                                            "Manage access to this module."
+                                        }}
                                     </p>
                                 </div>
                             </div>
@@ -815,6 +826,7 @@ const pageSubtitle = computed(() => {
                                 class="flex flex-wrap gap-x-5 gap-y-2 pl-14 sm:pl-0"
                             >
                                 <label
+                                    v-if="module.has_read"
                                     class="flex items-center gap-2 text-sm text-gray-600"
                                 >
                                     <input
@@ -835,6 +847,7 @@ const pageSubtitle = computed(() => {
                                     Read
                                 </label>
                                 <label
+                                    v-if="module.has_create"
                                     class="flex items-center gap-2 text-sm text-gray-600"
                                 >
                                     <input
@@ -855,6 +868,7 @@ const pageSubtitle = computed(() => {
                                     Create
                                 </label>
                                 <label
+                                    v-if="module.has_update"
                                     class="flex items-center gap-2 text-sm text-gray-600"
                                 >
                                     <input
@@ -873,6 +887,27 @@ const pageSubtitle = computed(() => {
                                         class="rounded border-slate-300 text-primary focus:ring-primary"
                                     />
                                     Update
+                                </label>
+                                <label
+                                    v-if="module.has_approve"
+                                    class="flex items-center gap-2 text-sm text-gray-600"
+                                >
+                                    <input
+                                        :disabled="isViewMode"
+                                        type="checkbox"
+                                        :checked="
+                                            permissions[module.module_id]
+                                                ?.can_approve
+                                        "
+                                        @change="
+                                            toggleAction(
+                                                module.module_id,
+                                                'can_approve',
+                                            )
+                                        "
+                                        class="rounded border-slate-300 text-primary focus:ring-primary"
+                                    />
+                                    Approve
                                 </label>
                             </div>
                         </div>

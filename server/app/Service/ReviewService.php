@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Guard\BranchGuard;
 use App\Repository\ReviewRepository;
 use App\Http\Resources\ReviewResource;
 use App\Models\User;
@@ -22,11 +23,7 @@ class ReviewService
 
     public function createReview(User $user, array $payload)
     {
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-        if (!$branch) {
-            throw new Exception(__('Branch does not exist'), 404);
-        }
-
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
         $reviewData = [
             'branch_id' => $branch->branch_id ?? null,
             'user_id' => $user->user_id,

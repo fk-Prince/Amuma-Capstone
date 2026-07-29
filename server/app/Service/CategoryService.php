@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Guard\BranchGuard;
 use App\Repository\CategoryRepository;
 use App\Http\Resources\CategoryResource;
 use App\Models\User;
@@ -22,13 +23,7 @@ class CategoryService
 
     public function listCategory(User $actor, array $payload)
     {
-
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-
-        if (!$branch) {
-            throw new Exception(__('Branch does not exist'), 404);
-        }
-
+        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
         return response()->json([
             'data' => $this->categoryRepository->getCategoriesByBranch($branch->branch_id) ?? []
         ], 200);

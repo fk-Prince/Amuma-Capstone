@@ -25,12 +25,18 @@ class Location extends Model
     protected function fullAddress(): Attribute
     {
         return Attribute::make(
-            get: fn() => implode(', ', array_filter([
-                $this->street,
-                $this->city,
-                $this->province,
-                $this->country,
-            ]))
+            get: function ($value) {
+                if (!empty($value)) {
+                    return $value;
+                }
+
+                return implode(', ', array_filter([
+                    $this->street,
+                    $this->city,
+                    $this->province,
+                    $this->country,
+                ]));
+            }
         );
     }
     public function userLocations()
@@ -45,5 +51,10 @@ class Location extends Model
     public function branchLocations()
     {
         return $this->hasMany(Branch::class, 'location_id', 'location_id');
+    }
+
+    public function patientLocations()
+    {
+        return $this->hasMany(Patient::class, 'location_id', 'location_id');
     }
 }

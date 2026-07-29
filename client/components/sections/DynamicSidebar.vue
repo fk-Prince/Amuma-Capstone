@@ -51,8 +51,8 @@
                         class="flex flex-col px-4 py-6 gap-1 flex-1 overflow-y-auto"
                     >
                         <NuxtLink
-                            v-for="item in navItems"
-                            :key="item.id || item.to"
+                            v-for="(item, index) in navItems"
+                            :key="`${item.id || item.to}-${index}`"
                             :to="item.to"
                             :class="navClass(item.to)"
                             @click="$emit('close')"
@@ -187,7 +187,10 @@
                     />
                 </template>
 
-                <template v-for="item in navItems" :key="item.id || item.to">
+                <template
+                    v-for="(item, index) in navItems"
+                    :key="`${item.id || item.to}-${index}`"
+                >
                     <DropdownDivider v-if="item.divider" />
 
                     <NuxtLink

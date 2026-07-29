@@ -3,8 +3,10 @@
 namespace App\Repository;
 
 use App\Models\Auth;
+use App\Models\Client;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 class UserRepository
@@ -13,6 +15,19 @@ class UserRepository
     public function create(array $payload)
     {
         return User::create($payload);
+    }
+
+    public function createUpdateTypeUser(array $payload, string $type)
+    {
+        if ($type === 'client') {
+            $user = User::where('email', $payload['email'])->first();
+            return Client::updateOrCreate(
+                [
+                    'user_id' => $user->user_id,
+                ],
+                $payload
+            );
+        }
     }
 
     public function findByField(string $column, string $value)

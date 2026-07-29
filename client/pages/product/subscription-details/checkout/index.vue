@@ -34,12 +34,16 @@ import { reactive, ref } from "vue";
 import CheckoutSummary from "~/components/sections/subscription/CheckoutSummary.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
-import {
-    gcashPayment,
-    cardPayment,
-} from "~/composables/useSubscriptionPayment";
+// import {
+//     gcashPayment,
+//     cardPayment,
+// } from "~/composables/useSubscriptionPayment";
+
+import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import { type SubscriptionRequest } from "~/types/subscription";
+import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { useToast } from "~/composables/useToast";
+import { fetchAuthUser } from "~/composables/useAuthUser";
 
 const checkout = useSubscriptionCheckout();
 useHead({ title: "Subscription Checkout" });
@@ -109,10 +113,37 @@ const payCard = async () => {
     processing.value = true;
     try {
         const payload = buildSubscriptionPayload();
-        const res = await cardPayment(card, closeModal, payload);
-        if (res) {
-            success(res.message);
-        }
+        const res =
+            await subscriptionService.retrieveSubscriptionDetail(payload);
+
+        await cardPayment({
+            card,
+            amount: Number(res.total_amount),
+            onClose: () => {
+                processing.value = false;
+            },
+
+            createPayment: ({ token_id, authentication_id }) =>
+                subscriptionService.createSubscription({
+                    ...payload,
+                    token_id: token_id,
+                    authentication_id: authentication_id,
+                    payment_method: "CREDIT-CARD",
+                    payment_type: "SUBSCRIPTION",
+                }),
+
+            onSuccess: async (result) => {
+                success(result.message);
+                await fetchAuthUser();
+
+                await navigateTo({
+                    path: `/product/subscription-summary?status=success`,
+                    query: {
+                        status: result.status,
+                    },
+                });
+            },
+        });
     } catch (err: any) {
         error(err.message);
     } finally {
@@ -121,15 +152,35 @@ const payCard = async () => {
 };
 
 const payGCash = async () => {
+    const payload = buildSubscriptionPayload();
     if (processing.value) return;
     processing.value = true;
     try {
-        const res = await gcashPayment(closeModal, buildSubscriptionPayload());
-        if (res) {
-            success(res.message);
-        }
+        await gcashPayment({
+            closeModal,
+            createPayment: () =>
+                subscriptionService.createSubscription({
+                    ...payload,
+                    payment_method: "GCASH",
+                    payment_type: "SUBSCRIPTION",
+                }),
+
+            onSuccess: async (result) => {
+                success(result.message);
+                await fetchAuthUser();
+                await navigateTo({
+                    path: `/product/subscription-summary`,
+                    query: {
+                        status: result.status,
+                    },
+                });
+            },
+            onClose: () => {
+                processing.value = false;
+            },
+        });
     } catch (err: any) {
-        error(err.message);
+        console.error(err);
     } finally {
         processing.value = false;
     }

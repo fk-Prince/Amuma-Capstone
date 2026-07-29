@@ -71,15 +71,24 @@
                                     item.value as HomecareBooking['type'],
                                 )
                             "
-                            class="border rounded-xl p-4 cursor-pointer transition"
+                            class="group relative border rounded-xl p-4 cursor-pointer transition-all duration-200 hover:border-primary hover:bg-primary/5"
                             :class="
                                 model.type === item.value
-                                    ? 'border-primary bg-primary/5'
+                                    ? 'border-primary bg-primary/5 shadow-sm'
                                     : 'border-slate-200'
                             "
                         >
+                            <span
+                                v-if="model.type === item.value"
+                                class="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white"
+                            >
+                                <Check class="h-3 w-3" />
+                            </span>
+
                             <div class="flex items-center gap-5">
-                                <div class="text-primary text-xl">
+                                <div
+                                    class="text-primary text-xl w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 group-hover:bg-primary/10 transition shrink-0"
+                                >
                                     <component
                                         v-if="typeof item.icon !== 'string'"
                                         :is="item.icon"
@@ -87,7 +96,9 @@
                                     />
                                 </div>
                                 <div>
-                                    <p class="font-semibold text-slate-800">
+                                    <p
+                                        class="font-semibold text-slate-800 group-hover:text-primary"
+                                    >
                                         {{ item.title }}
                                     </p>
                                     <p class="text-[13px] text-muted">
@@ -238,16 +249,13 @@
                         <div
                             class="rounded-lg bg-slate-50 border border-slate-200 p-3 space-y-2"
                         >
-                            <p class="text-xs font-semibold text-slate-700">
-                                Requirements
-                            </p>
-
                             <div
                                 class="flex items-center justify-between text-[12px]"
                             >
                                 <span class="text-muted">Hourly Rate</span>
                                 <span class="font-semibold text-slate-700">
-                                    ₱{{ adlRatePerHour.toLocaleString() }}/hr
+                                    ₱{{ adlRatePerHour.toLocaleString() }} /
+                                    hours
                                 </span>
                             </div>
 
@@ -256,7 +264,7 @@
                             >
                                 <span class="text-muted">Minimum Hours</span>
                                 <span class="font-semibold text-slate-700">
-                                    {{ minAdlHours }} hrs
+                                    {{ minAdlHours }} hours
                                 </span>
                             </div>
 
@@ -278,11 +286,11 @@
                     </div>
 
                     <BaseInput
-                        :model-value="model.address"
-                        @update:model-value="update('address', $event)"
-                        label="Service Location"
+                        v-model="model.address"
+                        label="Service Location / Patient Location"
                         placeholder="Where should the caregiver/nurse visit?"
                         :error="errors?.address"
+                        boxClass="pr-3 border-[1.5px] focus-within:ring-2"
                         required
                     >
                         <template #suffix>
@@ -309,6 +317,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import { Check } from "lucide-vue-next";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import LocationIcon from "~/components/icons/location.vue";
@@ -321,14 +330,16 @@ import {
 } from "~/utils/time";
 import type { HomecareBooking } from "~/types/booking";
 import type { Service } from "~/types/service";
-import type { BranchAvailability } from "~/types/branch";
+import type { BranchAvailability, BranchHomecare } from "~/types/branch";
 import { useMedicalServices } from "~/composables/useBooking";
+import { generateAvailableAmPmTimesBySchedule } from "~/utils/time-slot";
 
 const props = defineProps<{
     model: HomecareBooking;
     services: Service[];
     loading?: boolean;
     errors?: Record<string, string> | null;
+    homecare?: BranchHomecare;
     settings?: BranchAvailability;
 }>();
 
@@ -366,9 +377,12 @@ function clearError(field: string) {
     emit("update:errors", updated);
 }
 
-const minAdlHours = computed<number>(() => props.settings?.adl_min_hour ?? 0);
-const adlRatePerHour = computed<number>(
-    () => props.settings?.adl_hourly_rate ?? 0,
+const minAdlHours = computed<number>(() =>
+    Number(props.homecare?.adl_min_hour ?? 0),
+);
+
+const adlRatePerHour = computed<number>(() =>
+    Number(props.homecare?.adl_hourly_rate ?? 0),
 );
 
 const handleLocation = (data: any) => {
@@ -399,19 +413,15 @@ const operatingHours = computed(() => {
 });
 
 const isServiceModalOpen = ref(false);
-const slotLengthHours = 1;
 const todayStr = getLocalDateStr(new Date());
 
-const allTimeSlots = computed(() =>
-    getTimeSlots(
-        props.settings?.opening,
-        props.settings?.closing,
-        slotLengthHours,
-    ),
-);
-
 const availableTimeSlots = computed(() =>
-    filterAvailableSlots(allTimeSlots.value, props.model.date),
+    generateAvailableAmPmTimesBySchedule(
+        props.settings?.opening ?? "00:00",
+        props.settings?.closing ?? "00:00",
+        props.model.date,
+        60,
+    ),
 );
 
 const displayTime = computed(() =>
@@ -430,7 +440,7 @@ watch(
         if (type === "ADL") {
             update("services", []);
             if (!props.model.time_span) {
-                update("time_span", String(minAdlHours));
+                update("time_span", String(minAdlHours.value));
             }
         } else {
             update("time_span", "");

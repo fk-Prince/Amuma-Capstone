@@ -97,8 +97,5 @@ useHead({
 });
 
 const route = useRoute();
-
-const status = computed(() => String(route.query.status || "false"));
-
-const isSuccess = computed(() => status.value.toLowerCase() === "true");
+const isSuccess = computed(() => route.query.status === "success");
 </script>

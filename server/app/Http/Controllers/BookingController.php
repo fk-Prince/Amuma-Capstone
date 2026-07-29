@@ -27,6 +27,21 @@ class BookingController extends Controller
 
     public function action(Request $request)
     {
-        return $this->bookingService->bookingAccepted($request->user(), $request->all());
+        if ($request->action === 'total') {
+            return $this->bookingService->getTotal($request->all());
+        } else {
+            return $this->bookingService->bookingAccepted($request->user(), $request->all());
+        }
+    }
+
+    public function createBooking(Request $request)
+    {
+        return $this->bookingService->makeBooking($request->user(), $request->all());
+    }
+
+
+    public function admission(Request $request)
+    {
+        return $this->bookingService->admissionAccepted($request->user(), $request->all());
     }
 }

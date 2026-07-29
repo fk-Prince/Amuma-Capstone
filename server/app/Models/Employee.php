@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Location;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 class Employee extends Model
@@ -21,6 +22,16 @@ class Employee extends Model
         'status',
         'avatar',
     ];
+    protected function fullName()
+    {
+        return Attribute::make(
+            get: fn() => trim("{$this->first_name} " . ($this->middle_name ? "{$this->middle_name} " : '') . "{$this->last_name}")
+        );
+    }
+    public function getFullNameAttribute()
+    {
+        return trim("{$this->first_name} " . ($this->middle_name ? "{$this->middle_name} " : '') . "{$this->last_name}");
+    }
 
     public function users()
     {

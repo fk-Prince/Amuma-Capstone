@@ -34,25 +34,44 @@ class BranchResource extends JsonResource
                 'status' => $status,
                 'is_open' => $isOpen,
                 'timezone' => $timezone,
-                'opening_time' => $openingTime,
-                'closing_time' => $closingTime,
-                'ald_per_hour' => 150.00,
-                'ald_min_hour' => 8
+                'opening' => $openingTime,
+                'closing' => $closingTime,
             ],
             'location' => $this->location,
             'reviewCount' => $this->reviews->count(),
             'averageRating' => $this->reviews->count() > 0
                 ? round($this->reviews->avg(fn($r) => (float) $r->rate), 2)
-                : null,
+                : 0.00,
+
             'subscriptions' => $this->subscriptions->map(function ($subscription) {
                 return [
-                    'status' => $subscription->status,
                     'plans' => [
+                        'status' => $subscription->status,
                         'plan_code' => optional($subscription->plans)->plan_code,
                         'name' => optional($subscription->plans)->name,
                     ],
                 ];
             })->values()->all(),
+            'facility' => $this->contracts
+                ->where('category', 'Facility')
+                ->map(function ($contract) {
+                    return [
+                        'available_slot' => random_int(5, 10),
+                        'accommodation_type' => $contract->accommodation_type,
+                        'billing_cycle' => $contract->billing_cycle,
+                        'price' => $contract->price,
+                        'description' => $contract->description,
+                    ];
+                })
+                ->values(),
+
+            'homecare' => [
+                'adl_hourly_rate' => $this->contracts
+                    ->where('category', 'Homecare')
+                    ->where('accommodation_type', 'ADL')
+                    ->first()?->price,
+                'adl_min_hour' => 8,
+            ],
             // 'services' => $this->whenLoaded('services', function () {
             //     return $this->services->map(function ($service) {
             //         return [

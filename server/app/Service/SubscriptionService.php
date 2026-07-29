@@ -8,14 +8,14 @@ use App\Repository\SubscriptionRepository;
 use App\Repository\PlanRepository;
 use Carbon\Carbon;
 use App\Factories\PaymentFactory;
+use App\Guard\AuthGuard;
 use App\Models\User;
 use App\Repository\AgencyRepository;
 use App\Repository\EmployeeRepository;
 use App\Repository\LocationRepository;
 use App\Repository\ModuleRepository;
-use App\Service\Utils\AuthGuard;
-use App\Service\Utils\NominatimService;
-use App\Service\Utils\SupabaseService;
+use App\Service\External\SupabaseService;
+use App\Service\Geo\NominatimService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -64,7 +64,7 @@ class SubscriptionService
         return $paymentMethod->subscriptionInvoice($payload, $subscription);
     }
 
-    public function createSubscription(User $user, array $payload)
+    public function createSubscription(?User $user, array $payload)
     {
         $plan_code = $payload['plan_code'];
         $billing_interval = BillingIntervalEnum::tryFrom(
@@ -123,7 +123,8 @@ class SubscriptionService
             'total_amount' => $totalAmount,
             'endDate' => $endDate,
             'type' => 'subscription',
-            'status' => true
+            'status' => true,
+            'payment_type' => $payload['payment_type'] ?? null,
         ];
     }
 
@@ -132,7 +133,6 @@ class SubscriptionService
         $meta = $payload['metadata'];
         $reference_id = $payload['external_id'];
         $xendit_invoice_id = $payload['xendit_invoice_id'];
-
         try {
 
             return DB::transaction(function () use (
@@ -289,19 +289,16 @@ class SubscriptionService
         } catch (\Exception $e) {
             Http::withOptions([
                 'verify' => false,
-            ])->withHeaders([
-                'Authorization' => 'Basic ' . $this->secretKey,
-                'Content-Type' => 'application/json',
-            ])->post(
-                "https://api.xendit.co/credit_card_charges/{$xendit_invoice_id}/refunds",
-                [
-                    'amount' => $meta['total_amount'],
-                    'external_id' => (string) Str::uuid(),
+            ])->withBasicAuth($this->secretKey, '')
+                ->post('https://api.xendit.co/refunds', [
+                    'invoice_id'   => $xendit_invoice_id,
+                    'reference_id' => (string) Str::uuid(),
+                    'amount'       => $meta['total_amount'],
+                    'reason'       => 'CANCELLATION',
                     'metadata' => [
-                        'reason' => 'Subscription creation failed your payment is refund.',
+                        'message' => 'Subscription creation failed.',
                     ],
-                ]
-            );
+                ]);
 
             return response()->json([
                 'status' => false,

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Str;
+
 use Illuminate\Database\Eloquent\Model;
 
 class Schedule extends Model
@@ -11,10 +13,10 @@ class Schedule extends Model
 
     protected $fillable = [
         'patient_id',
-        'scheduled_location_id',
         'scheduled_at',
         'status',
         'category',
+        'schedule_code'
     ];
 
     protected $casts = [
@@ -30,8 +32,28 @@ class Schedule extends Model
     {
         return $this->belongsTo(Location::class, 'scheduled_location_id', 'location_id');
     }
+
+
     public function scheduleServices()
     {
         return $this->hasMany(ScheduleService::class, 'schedule_id', 'schedule_id');
+    }
+
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($schedule) {
+            $schedule->schedule_code =
+                'SCH-' . str_pad(
+                    $schedule->schedule_id,
+                    6,
+                    '0',
+                    STR_PAD_LEFT
+                );
+
+            $schedule->saveQuietly();
+        });
     }
 }

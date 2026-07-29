@@ -1,8 +1,10 @@
 import { useBranchStore } from "~/stores/branch";
+import { useRoute } from "vue-router";
 
 
 export const handleMenuClick = async (item: any) => {
     const branchStore = useBranchStore();
+
     if (item.action === "dashboard") {
         if (!branchStore.branches.length) {
             await branchStore.fetchBranches();
@@ -12,13 +14,12 @@ export const handleMenuClick = async (item: any) => {
             branchStore.activeBranch?.uuid ??
             branchStore.branches[0]?.uuid;
 
-
         if (!uuid) {
             const branch = branchStore.branches.find(
                 (branch) => branch?.uuid
             );
             uuid = branch?.uuid;
-        };
+        }
 
         await navigateTo(`/app/branches/${uuid}/dashboard`);
     } else {

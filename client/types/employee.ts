@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { Permissions } from "./permission";
 
 export interface Employee {
-    id: string
+    employee_id: string
     uuid: string,
     email: string;
     first_name: string;
@@ -14,9 +14,22 @@ export interface Employee {
     phone_number: string;
     role_name: string;
     assignment_type: string;
+    formatted_assignment_type: string;
     status: string;
     permissions: Permissions[]
     hired_date?: string;
+    assigned: EmployeeService[]
+    full_name?: string;
+
+
+
+    is_busy?: boolean;
+    is_assigned?: boolean;
+}
+
+export interface EmployeeService {
+    service_id: string;
+    is_assigned: boolean
 }
 
 
@@ -89,7 +102,7 @@ export const employeeSchema = z.object({
 export type EmployeeFormData = z.infer<typeof employeeSchema>;
 
 export const employeeAssignmentTypes = [
-    { label: "All", value: "both" },
+    { label: "All", value: "both", },
     { label: "Homecare", value: "homecare" },
     { label: "Facility", value: "facility" },
 ];
@@ -101,3 +114,16 @@ export const employeePositions = [
     { label: "Nurse", value: "nurse" },
     { label: "Caregiver", value: "caregiver" },
 ];
+
+export const formatAssignmentType = (type?: string | null) => {
+    switch (type?.toLowerCase()) {
+        case "both":
+            return "Homecare + Inhouse Facility";
+        case "homecare":
+            return "Homecare";
+        case "facility":
+            return "Inhouse Facility";
+        default:
+            return null;
+    }
+}

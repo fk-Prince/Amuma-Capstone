@@ -7,11 +7,12 @@
                 :error="errors?.agency_name"
                 @clear-error="clearError('agency_name')"
             />
-
             <LabelInput
                 v-model="agency.agency_description"
                 label="Description"
-                :text-max="500"
+                mode="textarea"
+                :allowResize="true"
+                :textMax="1000"
                 :error="errors?.agency_description"
                 @clear-error="clearError('agency_description')"
             />

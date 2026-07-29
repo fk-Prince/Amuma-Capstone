@@ -17,35 +17,15 @@ class PatientController extends Controller
 
     public function index(Request $request)
     {
-        return $this->patientService->listPatient(
-            $request->user(), 
-            $request->input('per_page', 15)
-        );
-    }
-
-    public function store(Request $request)
-    {
-        return $this->patientService->createPatient($request->user(), $request->all());
+        return $this->patientService->retrievePatients($request->all(), $request->user());
     }
 
     public function show(Request $request, string $uuid)
     {
-        return $this->patientService->getPatient($request->user(), $uuid);
+        return $this->patientService->showPatient($request->all(), $request->user(), $uuid);
     }
-
-    public function update(Request $request, string $uuid)
-    {
-        return $this->patientService->updatePatient($request->user(), $uuid, $request->all());
-    }
-
-    public function destroy(Request $request, string $uuid)
-    {
-        $this->patientService->deletePatient($request->user(), $uuid);
-        return response()->json(['message' => 'Deleted successfully'], 200);
-    }
-    
-    public function restore(Request $request, string $uuid)
-    {
-        return $this->patientService->restorePatient($request->user(), $uuid);
-    }
+    // public function medication(Request $request)
+    // {
+    //     return $this->patientService->saveMedication($request->all(), $request->user());
+    // }
 }

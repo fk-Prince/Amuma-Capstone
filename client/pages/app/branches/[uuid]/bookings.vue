@@ -100,7 +100,12 @@
                                         <th
                                             class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide"
                                         >
-                                            Service
+                                            Category
+                                        </th>
+                                        <th
+                                            class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide"
+                                        >
+                                            Type
                                         </th>
                                         <th
                                             class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide"
@@ -299,7 +304,7 @@
             </div>
         </div>
 
-        <AssignEmployeeModal
+        <!-- <AssignEmployeeModal
             v-if="isAssignedOpen && selectedBooking"
             :open="isAssignedOpen"
             :reference-id="selectedBooking.reference_id"
@@ -308,7 +313,7 @@
             @close="isAssignedOpen = false"
             @confirm="handleAssignConfirm"
             :type="selectedBooking.category ?? ''"
-        />
+        /> -->
     </div>
 </template>
 
@@ -320,10 +325,12 @@ import BookingCard from "~/components/sections/app/Booking/BookingCard.vue";
 import BookingSidebar from "~/components/sections/app/Booking/BookingSidebar.vue";
 import { useRoute, useRouter } from "vue-router";
 import PageHeader from "~/components/ui/PageHeader.vue";
-import AssignEmployeeModal from "~/components/sections/app/Booking/AssignEmployeeModal.vue";
+// import AssignEmployeeModal from "~/components/sections/app/Booking/AssignEmployeeModal.vue";
 import BookingDetails from "~/components/sections/app/Booking/BookingDetails.vue";
 import { usePagination } from "~/composables/usePagination";
+import { useToast } from "~/composables/useToast";
 
+const { success, error } = useToast();
 const route = useRoute();
 const router = useRouter();
 
@@ -416,11 +423,13 @@ const confirmBooking = async (e: any) => {
         branch_uuid: branch_uuid.value,
     };
     try {
-        const res = await bookingService.actionBooking(payload);
-        console.log(res);
-        // Refetch current page so the confirmed booking's status updates in place.
-        fetchBookings();
+        const res = await bookingService.facilityAdmission(payload);
+        success(res.message);
+        // const res = await bookingService.actionBooking(payload);
+        // console.log(res);
+        // fetchBookings();
     } catch (err: any) {
+        error(err.message);
         console.log(err);
     }
 };

@@ -123,5 +123,3 @@ export function useMedicalServices(
     };
 }
 
-
-const slotLengthHours = 1;

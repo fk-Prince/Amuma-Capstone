@@ -32,4 +32,13 @@ class ScheduleService extends Model
     {
         return $this->belongsTo(Service::class, 'service_id', 'service_id');
     }
+
+    public function invoiceServices()
+    {
+        return $this->hasMany(InvoiceService::class, 'schedule_services_id', 'schedule_services_id');
+    }
+    public function assigned()
+    {
+        return $this->hasMany(ScheduleAssigned::class, 'schedule_services_id', 'schedule_services_id');
+    }
 }

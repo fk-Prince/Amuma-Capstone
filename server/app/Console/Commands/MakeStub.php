@@ -12,31 +12,41 @@ class MakeStub extends Command
 
     protected $description = 'Create a new stub file';
 
-    public function handle()
+    public function handle(): int
     {
-        $name = $this->argument('name');
-
-        $name = str_replace('\\', '/', $name);
+        $name = str_replace('\\', '/', trim($this->argument('name'), '/'));
 
         $parts = collect(explode('/', $name))
             ->filter()
             ->values();
 
+        if ($parts->isEmpty()) {
+            $this->error('Invalid class name.');
+
+            return self::FAILURE;
+        }
+
         $className = Str::studly($parts->last());
 
-        $namespaceParts = $parts->slice(0, -1);
+        $directories = $parts
+            ->slice(0, -1)
+            ->map(fn($part) => Str::studly($part));
 
-        $namespace = $namespaceParts
-            ->map(fn($p) => Str::studly($p))
-            ->implode('\\');
+        $namespace = 'App';
 
-        $relativePath = $parts
-            ->map(fn($p) => Str::studly($p))
+        if ($directories->isNotEmpty()) {
+            $namespace .= '\\' . $directories->implode('\\');
+        }
+
+        $relativePath = $directories
+            ->push($className)
             ->implode('/');
 
-        $path = base_path("app/{$relativePath}.php");
+
+        $path = app_path($relativePath . '.php');
 
         $filesystem = new Filesystem();
+
         $filesystem->ensureDirectoryExists(dirname($path));
 
         if ($filesystem->exists($path)) {
@@ -47,15 +57,15 @@ class MakeStub extends Command
         $content = <<<PHP
         <?php
 
-        namespace App\{$namespace};
+        namespace {$namespace};
 
         class {$className}
         {
             public function __construct()
             {
-            
             }
         }
+
         PHP;
 
         $filesystem->put($path, $content);

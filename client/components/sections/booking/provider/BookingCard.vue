@@ -16,11 +16,45 @@
             v-else
             class="hidden lg:block sticky top-24 rounded-2xl border border-gray-200 bg-white p-5 shadow-xl shadow-gray-100"
         >
-            <p
-                class="text-xs font-semibold uppercase tracking-wide text-gray-400"
-            >
-                Choose a service
-            </p>
+            <div class="w-full flex justify-between items-center">
+                <p
+                    class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+                >
+                    Choose a service
+                </p>
+
+                <div class="flex items-center gap-2 text-sm">
+                    <svg
+                        class="h-4 w-4 shrink-0"
+                        :class="
+                            getBranchTimeDisplay(branch.settings).is24Hours
+                                ? 'text-emerald-600'
+                                : 'text-slate-400'
+                        "
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 6v6l4 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+
+                    <span
+                        v-if="getBranchTimeDisplay(branch.settings).is24Hours"
+                        class="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700"
+                    >
+                        Open 24 Hours
+                    </span>
+
+                    <span v-else class="font-medium text-slate-600">
+                        {{ getBranchTimeDisplay(branch.settings).label }}
+                    </span>
+                </div>
+            </div>
 
             <div class="mt-4 flex flex-col gap-3">
                 <button
@@ -77,6 +111,27 @@
                         <span class="block text-sm text-gray-500"
                             >In-house, facility-based care</span
                         >
+                        <span
+                            v-if="availableSlots > 0"
+                            class="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-600/10"
+                        >
+                            <span
+                                class="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                            ></span>
+                            {{ availableSlots }} room{{
+                                availableSlots === 1 ? "" : "s"
+                            }}
+                            available
+                        </span>
+                        <span
+                            v-else
+                            class="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 ring-1 ring-gray-200"
+                        >
+                            <span
+                                class="h-1.5 w-1.5 rounded-full bg-gray-400"
+                            ></span>
+                            No rooms available
+                        </span>
                     </span>
                     <CheckCircle2
                         v-if="selected === 'facility'"
@@ -132,10 +187,13 @@
 import { computed, ref, watchEffect } from "vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import { House, Building2, CheckCircle2, Circle } from "lucide-vue-next";
+import { getBranchTimeDisplay } from "~/utils/time";
+import type { BranchRetrieve } from "~/types/branch";
 
 const props = defineProps<{
     hasHomecare: boolean;
     hasFacility: boolean;
+    branch: BranchRetrieve;
     loading?: boolean;
 }>();
 
@@ -143,6 +201,14 @@ const emit = defineEmits<{
     (e: "homecare"): void;
     (e: "facility"): void;
 }>();
+
+const availableSlots = computed(() => {
+    if (!props.branch.facility?.length) return 0;
+
+    return Math.max(
+        ...props.branch.facility.map((item) => item.available_slot),
+    );
+});
 
 const serviceOptions = computed(() => {
     const options: { label: string; value: "homecare" | "facility" }[] = [];
