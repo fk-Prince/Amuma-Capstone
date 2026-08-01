@@ -71,16 +71,10 @@ class Branch extends Model
     }
 
 
-    // public function users()
-    // {
-    //     return $this->belongsToMany(
-    //         User::class,
-    //         'user_branches',
-    //         'branch_id',
-    //         'user_id'
-    //     )->withPivot('type');
-    // }
-
+    public function rooms()
+    {
+        return $this->hasMany(Room::class, 'branch_id', 'branch_id');
+    }
     public function notifications()
     {
         return $this->hasMany(Notification::class, 'branch_id', 'branch_id');
@@ -90,5 +84,16 @@ class Branch extends Model
     public function reviews()
     {
         return $this->hasMany(Review::class, 'branch_id', 'branch_id');
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'branch_id', 'branch_id');
+    }
+
+    public function availableBeds()
+    {
+        return $this->hasMany(Bed::class, 'room_id', 'room_id')
+            ->where('status', 'Available');
     }
 }

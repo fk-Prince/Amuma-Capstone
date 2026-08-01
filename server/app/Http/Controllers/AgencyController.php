@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Guard\BranchGuard;
 use App\Http\Requests\AgencyRequest;
 use App\Service\AgencyService;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class AgencyController extends Controller
 
     public function update(AgencyRequest $request, string $uuid)
     {
+
         return $this->agencyService->update($request->all(), $request->user(), $uuid);
     }
 }

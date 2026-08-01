@@ -10,7 +10,7 @@ import {
 } from "lucide-vue-next";
 
 import type { PatientRetrieve } from "~/types/patient";
-import { stringToDate } from "~/utils/time";
+import { formatDate } from "~/utils/time";
 
 defineProps<{
     patient: PatientRetrieve;
@@ -55,7 +55,7 @@ function fullName(
                     >
                         <span class="flex items-center gap-1.5">
                             <Calendar class="h-4 w-4" />
-                            {{ stringToDate(patient.date_of_birth) }}
+                            {{ formatDate(patient.date_of_birth) }}
                         </span>
 
                         <span>•</span>

@@ -4,7 +4,7 @@ import { getLocalDateStr } from "~/utils/time";
 
 //FACILITY
 export interface FacilityBooking {
-    type: "Complete" | "Pre-Admission" | "";
+    type: "Complete" | "Pre-Admission" | "" | "Walk-in Admission";
     plan: "VIP" | "Common" | "";
     billing_cycle: "Monthly" | "Yearly" | "";
     admission_date: string;
@@ -179,3 +179,11 @@ export const createHomecareBookingSchema = (
         medicalSchema,
         createAdlSchema(minAdlHours),
     ]);
+
+
+
+export const typeFilters = [
+    { label: "All Category", value: "all" },
+    { label: "Facility", value: "facility" },
+    { label: "Homecare", value: "homecare" },
+];

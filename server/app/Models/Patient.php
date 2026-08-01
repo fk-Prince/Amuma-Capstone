@@ -59,4 +59,9 @@ class Patient extends Model
     {
         return $this->hasMany(PatientAdmission::class, 'patient_id', 'patient_id');
     }
+
+    public function bookings()
+    {
+        return $this->hasMany(PatientBooking::class, 'patient_id', 'patient_id');
+    }
 }

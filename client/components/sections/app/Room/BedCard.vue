@@ -20,7 +20,7 @@ const emit = defineEmits<{
     cancel: [];
 }>();
 
-const editing = ref(props.action === "create");
+const editing = ref(props.action === "update");
 
 const bed = reactive(bedForm());
 

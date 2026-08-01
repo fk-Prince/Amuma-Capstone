@@ -227,9 +227,7 @@
                                                     <p
                                                         class="text-sm font-semibold text-slate-800"
                                                     >
-                                                        {{
-                                                            employee.employee_name
-                                                        }}
+                                                        {{ employee.full_name }}
                                                     </p>
 
                                                     <p
@@ -273,7 +271,7 @@
 
                         <button
                             type="button"
-                            class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                            class="rounded-lg flex gap-2 items-center bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                             :disabled="submitLoading"
                             @click="handleSchedule"
                         >
@@ -317,10 +315,11 @@
 import { ref, computed, watch } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
-import { stringToDate, getLocalDateStr, getTimeSlots } from "~/utils/time";
+import { getLocalDateStr } from "~/utils/time";
 import { generateAvailableAmPmTimes } from "~/utils/time-slot";
 import { fullName } from "~/utils/user";
 import type { Employee } from "~/types/employee";
+import { CalendarCheck2, LoaderCircle } from "lucide-vue-next";
 
 const props = defineProps<{
     open: boolean;

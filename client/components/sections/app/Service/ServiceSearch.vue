@@ -35,17 +35,30 @@ const tabs = [
 
 <template>
     <div class="bg-white px-5 py-2 space-y-5">
-        <div class="relative">
-            <Search
-                class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-            />
+        <div class="flex gap-2">
+            <div class="relative flex-1">
+                <Search
+                    class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                />
 
-            <BaseInput
-                :model-value="modelValue"
-                @update:model-value="emit('update:modelValue', $event)"
-                placeholder="Search services..."
-                input-class="pl-11 rounded-xl border-[#E4EFED] focus:border-primary focus:ring-primary/20"
-            />
+                <BaseInput
+                    :model-value="modelValue"
+                    @update:model-value="emit('update:modelValue', $event)"
+                    placeholder="Search services..."
+                    input-class="pl-11 rounded-xl border-[#E4EFED] focus:border-primary focus:ring-primary/20"
+                />
+            </div>
+
+            <button
+                v-if="canCreate(Modules.Services)"
+                type="button"
+                @click="emit('addService')"
+                class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 hover:shadow-md active:scale-[0.98]"
+            >
+                <Plus class="h-4 w-4" />
+
+                Add Service
+            </button>
         </div>
 
         <div
@@ -90,17 +103,6 @@ const tabs = [
                         Unavailable
                     </span>
                 </div>
-
-                <button
-                    v-if="canCreate(Modules.Services)"
-                    type="button"
-                    @click="emit('addService')"
-                    class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 hover:shadow-md active:scale-[0.98]"
-                >
-                    <Plus class="h-4 w-4" />
-
-                    Add Service
-                </button>
             </div>
         </div>
     </div>

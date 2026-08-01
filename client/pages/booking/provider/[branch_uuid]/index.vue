@@ -20,6 +20,7 @@
                         class="lg:col-span-2 flex flex-col divide-y divide-gray-100"
                     >
                         <HeroSection :branch="branch" :loading="loading" />
+
                         <div
                             class="flex flex-col gap-2 w-full py-8"
                             ref="locationRef"
@@ -95,8 +96,6 @@
                             v-if="branch"
                             :has-homecare="hasHomecare"
                             :has-facility="hasFacility"
-                            :loading="loading"
-                            :branch="branch"
                             @homecare="homecare"
                             @facility="facility"
                         />
@@ -116,28 +115,14 @@ import ServiceSection from "~/components/sections/booking/provider/ServiceSectio
 import ReviewSection from "~/components/sections/booking/provider/Review.vue";
 import LocationPin from "~/components/ui/LocationPin.vue";
 import Location from "~/components/icons/location.vue";
-
-import { branchService } from "~/api/branch/BranchService";
-import type { BranchRetrieve } from "~/types/branch";
-
+import { useBranch } from "~/composables/useBranchProvider";
 useHead({ title: "Search Homecare" });
 definePageMeta({ navVariant: 1 });
 
 const route = useRoute();
 const uuid = computed(() => route.params.branch_uuid as string);
 
-const branch = ref<BranchRetrieve | null>(null);
-const loading = ref(true);
-
-const fetchBranch = async (id: string) => {
-    loading.value = true;
-    try {
-        const res: any = await branchService.get(id);
-        branch.value = res.data ?? res;
-    } finally {
-        loading.value = false;
-    }
-};
+const { loading, branch, fetchBranch } = useBranch();
 
 watch(
     uuid,

@@ -393,7 +393,7 @@ const bloodPressureDisplay = computed(() => {
 
                                     <BaseInput
                                         v-model="form.recordedTime"
-                                        type="time"
+                                        mode="time"
                                         label="Time"
                                         :error="errors.recordedTime"
                                         @update:modelValue="

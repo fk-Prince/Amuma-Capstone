@@ -10,6 +10,7 @@ defineProps<{
 const emit = defineEmits<{
     "update:modelValue": [value: string];
     "update:activeTab": [value: string];
+    addRoom: [];
     search: [];
 }>();
 
@@ -27,24 +28,53 @@ const tabs = [
         icon: BedDouble,
     },
 ];
+import { Modules } from "~/types/module";
+
+const { canCreate } = usePermissions();
 </script>
 
 <template>
     <div class="bg-white px-5 py-2 space-y-5">
         <div class="flex gap-2">
             <div class="relative flex-1">
-                <Search
-                    class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-                />
+                <div class="relative flex-1">
+                    <Search
+                        class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                    />
 
-                <BaseInput
-                    :model-value="modelValue"
-                    @update:model-value="emit('update:modelValue', $event)"
-                    placeholder="Search rooms, beds, or residents..."
-                    input-class="pl-11"
-                    @keyup.enter="emit('search')"
-                />
+                    <BaseInput
+                        :model-value="modelValue"
+                        @update:model-value="emit('update:modelValue', $event)"
+                        placeholder="Search rooms, beds, or residents..."
+                        input-class="pl-11"
+                        @keyup.enter="emit('search')"
+                    />
+                </div>
             </div>
+
+            <button
+                type="button"
+                v-if="canCreate(Modules.RoomsAndBeds)"
+                @click="emit('addRoom')"
+                class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 hover:shadow-md active:scale-[0.98]"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 4v16m8-8H4"
+                    />
+                </svg>
+
+                Add Room<
+            </button>
         </div>
 
         <div

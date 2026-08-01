@@ -1,6 +1,6 @@
 export interface Notification {
     id: number;
-    uuid: string;
+    uuid?: string;
     message_type: string;
     message: string;
     created_at: string;

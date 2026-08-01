@@ -21,10 +21,10 @@ class ServiceRepository
             ->exists();
     }
 
-    // public function findByFields(array $conditions)
-    // {
-    //     return Service::where($conditions)->first();
-    // }
+    public function findOneByFields(array $conditions)
+    {
+        return Service::where($conditions)->first();
+    }
 
     public function findByFields(array $conditions)
     {

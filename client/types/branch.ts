@@ -4,6 +4,7 @@ import { type Location } from "./location";
 import type { Permissions } from "./permission";
 import type { Review } from "./review";
 import { z } from 'zod';
+import type { Service } from "./service";
 
 
 export interface Branch {
@@ -33,6 +34,7 @@ export interface BranchSettings {
 export const getBranchImage = (image: File | string | null | undefined) => {
     if (!image) return "";
 
+
     return typeof image === "string"
         ? image
         : URL.createObjectURL(image);
@@ -53,11 +55,13 @@ export interface BranchRetrieve {
     location: Location;
     homecare: BranchHomecare,
     facility: BranchFacility[]
+    services: Service[];
 }
 
 export interface BranchHomecare {
     adl_hourly_rate?: number;
     adl_min_hour?: number
+    description?: string
 }
 export interface BranchFacility {
     available_slot: number

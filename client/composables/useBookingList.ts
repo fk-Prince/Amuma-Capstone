@@ -1,0 +1,108 @@
+import { ref, watch, onUnmounted, type Ref } from "vue";
+import { bookingService } from "~/api/booking/BookingService";
+import { usePagination } from "~/composables/usePagination";
+
+
+export function useBookingList(branchUuid: Ref<string>) {
+    const bookingData = ref<any[] | null>(null);
+    const isLoading = ref(true);
+    const isFetching = ref(false);
+
+    const searchQuery = ref("");
+    const statusFilter = ref<string>("pending");
+    const typeFilter = ref<string>("all");
+
+    function toDateInputValue(date: Date): string {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    const today = toDateInputValue(new Date());
+    const dateFrom = ref<string>(today);
+    const dateTo = ref<string>(today);
+
+    const pagination = usePagination({ pageSize: 10 });
+
+    let requestId = 0;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    async function fetchBookings() {
+        const thisRequest = ++requestId;
+        isFetching.value = true;
+
+        try {
+            const res: any = await bookingService.list({
+                category: typeFilter.value !== "all" ? typeFilter.value : "all",
+                branch_uuid: branchUuid.value,
+                page: pagination.currentPage.value,
+                per_page: pagination.pageSize.value,
+                search: searchQuery.value.trim() || undefined,
+                status:
+                    statusFilter.value !== "all" ? statusFilter.value : undefined,
+                date_from: dateFrom.value || undefined,
+                date_to: dateTo.value || undefined,
+            });
+
+            if (thisRequest !== requestId) return;
+
+            bookingData.value = res.data;
+            const total = res.meta?.total ?? res.total ?? res.data.length;
+            pagination.setTotal(total);
+        } catch (err) {
+            console.error("Failed to fetch bookings", err);
+            if (thisRequest === requestId) bookingData.value = [];
+        } finally {
+            if (thisRequest === requestId) {
+                isFetching.value = false;
+                isLoading.value = false;
+            }
+        }
+    }
+
+    function goToPage(page: number) {
+        if (page < 1 || page > pagination.totalPages.value) return;
+        pagination.currentPage.value = page;
+        fetchBookings();
+    }
+
+    watch([searchQuery, statusFilter, typeFilter, dateFrom, dateTo], () => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            pagination.reset();
+            fetchBookings();
+        }, 350);
+    });
+
+    function jumpToToday() {
+        dateFrom.value = toDateInputValue(new Date());
+        dateTo.value = toDateInputValue(new Date());
+    }
+
+    function clearDateRange() {
+        dateFrom.value = "";
+        dateTo.value = "";
+    }
+
+    onUnmounted(() => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        requestId++;
+    });
+
+    return {
+        bookingData,
+        isLoading,
+        isFetching,
+        searchQuery,
+        statusFilter,
+        typeFilter,
+        dateFrom,
+        dateTo,
+        pagination,
+        fetchBookings,
+        goToPage,
+        jumpToToday,
+        clearDateRange,
+    };
+}

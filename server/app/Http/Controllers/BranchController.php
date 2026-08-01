@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
+use App\Guard\AuthGuard;
+use App\Guard\BranchGuard;
 use App\Http\Requests\BranchRequest;
 use App\Service\BranchService;
 use Illuminate\Http\Request;
@@ -17,7 +21,7 @@ class BranchController extends Controller
         $this->branchService = $branchService;
     }
 
-    public function show(string $uuid)
+    public function fetchBranch(string $uuid)
     {
         return $this->branchService->getBranch($uuid);
     }
@@ -43,6 +47,11 @@ class BranchController extends Controller
 
     public function update(BranchRequest $request, string $uuid)
     {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Update);
+        $request->merge([
+            'branch_id' => $branch->branch_id,
+        ]);
         return $this->branchService->updateBranch($request->all(), $request->user(), $uuid);
     }
 }

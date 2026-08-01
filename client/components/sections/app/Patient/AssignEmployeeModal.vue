@@ -24,7 +24,6 @@
                 <div
                     class="relative z-50 flex max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
                 >
-                    <!-- Header -->
                     <div
                         class="flex items-start justify-between border-b border-slate-100 px-6 py-5"
                     >
@@ -57,7 +56,6 @@
                     <div
                         class="grid flex-1 overflow-hidden lg:grid-cols-[1fr_320px]"
                     >
-                        <!-- Services -->
                         <div class="overflow-y-auto p-6 space-y-4">
                             <div
                                 v-for="service in schedule?.services ?? []"
@@ -88,7 +86,7 @@
                                                 class="mt-1 text-xs text-slate-400"
                                             >
                                                 {{
-                                                    stringToDate(
+                                                    formatDate(
                                                         schedule?.scheduled_at,
                                                     )
                                                 }}
@@ -101,7 +99,11 @@
                                             <p
                                                 class="mt-1 text-xs text-slate-400"
                                             >
-                                                {{ service.duration_minutes }}
+                                                <!-- {{ service.duration_minutes }} -->
+                                                {{
+                                                    schedule?.total_duration_minutes ??
+                                                    service.duration_minutes
+                                                }}
                                                 minutes
                                             </p>
                                         </div>
@@ -371,7 +373,7 @@
 import type { Employee } from "~/types/employee";
 import type { ScheduleItem } from "~/types/schedule";
 import { fullName } from "~/utils/user";
-import { stringToDate } from "~/utils/time";
+import { formatDate } from "~/utils/time";
 import Combobox from "~/components/ui/Combobox.vue";
 
 const props = defineProps<{

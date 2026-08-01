@@ -77,7 +77,7 @@ class BranchService
 
     public function updateBranch(array $payload, User $user, string $branchUuid)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Update);
 
         return DB::transaction(function () use ($branch, $payload) {
@@ -95,7 +95,6 @@ class BranchService
                 'image' => $image['url'] ?? $payload['image'] ?? null,
                 'settings' => $payload['settings'] ?? null,
             ]);
-
 
 
             $branch->location()->updateOrCreate(

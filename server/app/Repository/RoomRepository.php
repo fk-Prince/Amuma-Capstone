@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Models\Bed;
+use App\Models\Booking;
 use App\Models\Room;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -16,6 +17,11 @@ class RoomRepository
     public function findByField(array $conditions)
     {
         return Room::where($conditions)->first();
+    }
+
+    public function findAllByConditions(array $conditions)
+    {
+        return Room::where($conditions)->get();
     }
 
     public function paginate(string $branch_id, array $payload, int $perPage = 20)
@@ -59,12 +65,31 @@ class RoomRepository
 
         $totalRooms = (clone $rooms)->count();
 
+        $branchBedIds = (clone $beds)->pluck('bed_id');
+
+        $reservedBedIds = Booking::query()
+            ->whereIn('status', [
+                Booking::STATUS_AWAITING,
+            ])
+            ->get()
+            ->pluck('booking_data.reserved.bed.bed_id')
+            ->filter()
+            ->unique()
+            ->intersect($branchBedIds)
+            ->values();
+
+        $reservedBeds = $reservedBedIds->count();
+
         $availableBeds = (clone $beds)
             ->where('status', 'Available')
+            ->whereNotIn('bed_id', $reservedBedIds)
             ->count();
 
         $occupiedBeds = (clone $beds)
-            ->where('status', 'Occupied')
+            ->where(function ($query) use ($reservedBedIds) {
+                $query->where('status', 'Occupied')
+                    ->orWhereIn('bed_id', $reservedBedIds);
+            })
             ->count();
 
         $maintenanceBeds = (clone $beds)
@@ -91,7 +116,7 @@ class RoomRepository
 
             'occupied' => [
                 'value' => $occupiedBeds,
-                'secondary' => "{$occupiedBeds} beds occupied",
+                'secondary' => "{$occupiedBeds} occupied / {$reservedBeds} reserved",
                 'trend' => 'up',
             ],
 

@@ -24,3 +24,10 @@ export function Currency() {
     ];;
 }
 
+
+export function formatCurrency(value?: number | string | null): string {
+    if (value === undefined || value === null || isNaN(Number(value))) {
+        return "—";
+    }
+    return `₱${Number(value).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`;
+}

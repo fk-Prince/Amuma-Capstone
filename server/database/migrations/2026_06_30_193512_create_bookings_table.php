@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('branch_id')->constrained('branches', 'branch_id');
             $table->json('booking_data');
             $table->enum('category', ['Homecare', 'Facility']);
-            $table->enum('status', ['approved', 'pending', 'rejected', 'expired'])->default('pending');
+            $table->enum('status', ['approved', 'pending', 'rejected', 'expired', 'awaiting'])->default('pending');
             $table->date('valid_until');
             $table->timestamps();
         });

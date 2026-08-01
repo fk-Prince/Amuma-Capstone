@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
+use App\Guard\AuthGuard;
+use App\Guard\BranchGuard;
 use App\Service\ScheduleService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -26,14 +30,22 @@ class ScheduleController extends Controller
         return $this->scheduleService->retrieveSchedule($request->user(), $request->all());
     }
 
-    public function assign(Request $request)
+    public function action(Request $request)
     {
-        return $this->scheduleService->assign($request->user(), $request->all());
+        if ($request->type === 'assign') {
+            return $this->scheduleService->assignEmployee($request->user(), $request->all());
+        } else  if ($request->type === 'available_employee') {
+            $branch = BranchGuard::resolveBranch($request->branch_uuid);
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Create);
+            $request->merge([
+                'branch_id' => $branch->branch_id,
+            ]);
+            return $this->scheduleService->availableEmployee($request->all());
+        }
     }
 
     public function update(Request $request, string $id)
     {
-
         return $this->scheduleService->checkConflictSchedule($request->user(), $request->all());
     }
 }

@@ -7,12 +7,29 @@ use Exception;
 
 class BranchGuard
 {
-    public static function resolveBranch(BranchRepository $branchRepository, string $id)
+    protected static ?BranchRepository $branchRepository = null;
+
+    public function __construct(BranchRepository $branchRepository)
     {
-        $branch = $branchRepository->findByField('uuid',   $id);
+        self::$branchRepository = $branchRepository;
+    }
+
+    public static function resolveBranch(string $id, bool $facility = false)
+    {
+        if (!self::$branchRepository) {
+            self::$branchRepository = app(BranchRepository::class);
+        }
+
+        $branch = self::$branchRepository->findByField('uuid', $id);
+
         if (!$branch) {
             throw new Exception("Branch doesn't exist.", 404);
         }
+
+        if ($facility && !$branch->hasFacilitySubscription()) {
+            throw new Exception(__('No active facility subscription.'), 403);
+        }
+
         return $branch;
     }
 }

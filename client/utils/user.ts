@@ -1,3 +1,4 @@
+import { formatDate } from "~/utils/time";
 export const formatRole = (role: string) => {
     return role
         .replace(/_/g, ' ')
@@ -45,4 +46,18 @@ export function fullName(
     return `${firstName ?? ""} ${middleName ?? ""} ${lastName ?? ""}`
         .trim()
         || "—";
+}
+
+export function calculateAge(date?: string) {
+    if (!date) {
+        return "—";
+    }
+    const birthDate = new Date(date);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const month = today.getMonth() - birthDate.getMonth();
+    if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return `${formatDate(date)} (${age} years old)`;
 }

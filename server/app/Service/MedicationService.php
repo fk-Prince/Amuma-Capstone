@@ -24,7 +24,6 @@ class MedicationService
         $medications = $patient->medication ?? [];
 
         if ($payload['category'] === "dosage") {
-            Log::info("xd");
             $schedule = $payload['medSchedule'];
             $updatedSchedule = null;
             foreach ($medications as &$medication) {

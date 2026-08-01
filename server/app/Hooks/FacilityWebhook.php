@@ -38,6 +38,7 @@ class FacilityWebhook
         $payload['xendit_invoice_id'] = $payload['id'];
         $user = $cachedPayload['user'] ?? null;
 
-        return $this->bookingService->createPaymentBooking($user, $payload);
+        // return $this->bookingService->createPaymentBooking($user, $payload);
+        return null;
     }
 }

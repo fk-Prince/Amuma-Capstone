@@ -20,6 +20,6 @@ class Bed extends Model
 
     public function currentAdmission()
     {
-        return $this->hasOne(PatientAdmission::class,   'bed_id', 'bed_id')->where('status', 'admitted');
+        return $this->hasOne(PatientAdmission::class, 'bed_id', 'bed_id')->where('status', 'admitted');
     }
 }

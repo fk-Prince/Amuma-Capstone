@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Models\Employee;
 use App\Models\Schedule;
+use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -85,9 +86,14 @@ class ScheduleRepository
 
         $query->orderBy($sortBy, $sortDir);
 
-        $perPage = min((int) ($payload['per_page'] ?? 15), 100);
+        // $perPage = min((int) ($payload['per_page'] ?? 15), 100);
+        if (isset($payload['per_page'])) {
+            $perPage = min((int) $payload['per_page'], 100);
+            return $query->paginate($perPage);
+        }
 
-        return $query->paginate($perPage)->withQueryString();
+        // return $query->paginate($perPage)->withQueryString();
+        return $query->get();
     }
 
     public function getEmployeesForReassignment(
@@ -135,6 +141,7 @@ class ScheduleRepository
                     ]);
             },
         ])
+            ->where('status', 'active')
             ->whereHas('employeeBranch', function ($query) use ($branchId, $allowedRoles) {
                 $query->where('branch_id', $branchId)
                     ->whereIn('role_name', $allowedRoles);
@@ -164,6 +171,138 @@ class ScheduleRepository
                             ->whereIn('service_id', $scheduleServiceIds);
                     });
             }])
+            ->get();
+    }
+
+
+    public function getEmployeeAvailable(
+        array $serviceIds,
+        string $branchId,
+        string $date,
+        string $preferredTime,
+        ?float $timeSpanHours = null
+    ) {
+        $targetStart = Carbon::parse("{$date} {$preferredTime}");
+
+        $allowedRoles = ['nurse', 'caregiver'];
+
+        if ($timeSpanHours !== null) {
+            $targetDurationMinutes = $timeSpanHours * 60;
+        } else {
+            $targetDurationMinutes = Service::whereIn('service_id', $serviceIds)
+                ->get()
+                ->sum(function ($service) {
+                    $duration = $service->maximum_duration ?? null;
+
+                    if (!$duration) {
+                        return 60;
+                    }
+
+                    [$hours, $minutes, $seconds] = array_pad(
+                        explode(':', $duration),
+                        3,
+                        0
+                    );
+
+                    return ((int) $hours * 60)
+                        + (int) $minutes
+                        + ((int) $seconds / 60);
+                });
+        }
+        $targetEnd = $targetStart->copy()
+            ->addMinutes($targetDurationMinutes);
+
+
+        return Employee::with([
+            'locations',
+            'employeeBranch' => function ($query) use (
+                $branchId,
+                $allowedRoles
+            ) {
+                $query->where('branch_id', $branchId)
+                    ->whereIn('role_name', $allowedRoles)
+                    ->with([
+                        'branches',
+                        'employeeServices' => function ($q) {
+                            $q->where('is_active', true)
+                                ->with('services');
+                        },
+                    ]);
+            },
+        ])->where('status', 'active')
+            ->whereHas('employeeBranch', function ($query) use (
+                $branchId,
+                $allowedRoles
+            ) {
+                $query->where('branch_id', $branchId)
+                    ->whereIn('role_name', $allowedRoles);
+            })
+
+            ->withExists([
+                'employeeBranch as is_busy' => function ($query) use (
+                    $branchId,
+                    $allowedRoles,
+                    $targetStart,
+                    $targetEnd
+                ) {
+                    $query->where('branch_id', $branchId)
+                        ->whereIn('role_name', $allowedRoles)
+
+                        ->whereHas(
+                            'scheduleAssignments.scheduleService.schedule',
+                            function ($q) use (
+                                $targetStart,
+                                $targetEnd
+                            ) {
+                                $q->whereIn('schedules.status', ['ongoing', 'pending'])
+                                    ->where(
+                                        'schedules.scheduled_at',
+                                        '<',
+                                        $targetEnd
+                                    )
+
+                                    ->whereRaw(
+                                        '
+                            schedules.scheduled_at + (
+                                SELECT COALESCE(
+                                    SUM(
+                                        EXTRACT(EPOCH FROM sv.maximum_duration)
+                                    ),
+                                    3600
+                                ) / 60
+                                FROM schedule_services ss
+                                INNER JOIN services sv
+                                    ON sv.service_id = ss.service_id
+                                WHERE ss.schedule_id = schedules.schedule_id
+                            ) * INTERVAL \'1 minute\' > ?
+                            ',
+                                        [$targetStart]
+                                    );
+                            }
+                        );
+                },
+            ])
+            ->withExists([
+                'employeeBranch as is_assigned' => function ($query) use (
+                    $branchId,
+                    $allowedRoles,
+                    $serviceIds
+                ) {
+                    $query->where('branch_id', $branchId)
+                        ->whereIn('role_name', $allowedRoles)
+
+                        ->whereHas(
+                            'employeeServices',
+                            function ($q) use ($serviceIds) {
+                                $q->where('is_active', true)
+                                    ->whereIn(
+                                        'service_id',
+                                        $serviceIds
+                                    );
+                            }
+                        );
+                },
+            ])
             ->get();
     }
 }

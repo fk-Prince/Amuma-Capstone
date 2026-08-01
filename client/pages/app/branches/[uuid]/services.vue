@@ -219,7 +219,6 @@ const submitService = async () => {
             services.value.unshift(res.data);
             success(res.message ?? "Service created successfully!");
         }
-
         closeModal();
     } catch (err: any) {
         console.error(err);

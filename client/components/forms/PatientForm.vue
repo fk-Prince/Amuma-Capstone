@@ -75,6 +75,8 @@
                 <BaseInput
                     label="Date of Birth"
                     :model-value="model.date_of_birth"
+                    mode="date"
+                    :max="todayStr"
                     @update:model-value="update('date_of_birth', $event)"
                     placeholder="YYYY-MM-DD"
                     :error="errors?.date_of_birth"
@@ -176,7 +178,7 @@
 import BaseInput from "../ui/BaseInput.vue";
 import Combobox from "../ui/Combobox.vue";
 import type { Patient } from "~/types/patient";
-
+import { getLocalDateStr } from "~/utils/time";
 const props = defineProps<{
     model: Patient;
     errors?: Record<string, string> | null;
@@ -205,4 +207,6 @@ function clearError(field: string) {
 
     emit("update:errors", updated);
 }
+
+const todayStr = new Date().toISOString().split("T")[0];
 </script>

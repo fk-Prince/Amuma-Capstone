@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { Check, ChevronLeft, ChevronRight, Clock, X } from "lucide-vue-next";
-import { stringToDate } from "~/utils/time";
+import { formatDate } from "~/utils/time";
 import {
     ROUTE_LABELS,
     DOSAGE_UNIT_LABELS,
@@ -353,14 +353,14 @@ const emit = defineEmits<{
                     </p>
 
                     <p class="mt-1 text-[11px] text-gray-400">
-                        Prescribed at {{ stringToDate(med.recorded_date) }}
+                        Prescribed at {{ formatDate(med.recorded_date) }}
                     </p>
                 </div>
 
                 <div class="flex flex-col items-end gap-1">
                     <p class="text-xs text-gray-400">
                         This will run through
-                        {{ stringToDate(med.startDate) }}
+                        {{ formatDate(med.startDate) }}
                         -
                         {{ getEndDate(med.startDate, med.durationLabel) }}
                     </p>

@@ -250,7 +250,7 @@
                                 >
                                     {{
                                         form.date
-                                            ? stringToDate(form.date)
+                                            ? formatDate(form.date)
                                             : "Not selected"
                                     }}
                                 </p>
@@ -429,7 +429,7 @@ import {
 } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
-import { stringToDate, getLocalDateStr, getTimeSlots } from "~/utils/time";
+import { formatDate, getLocalDateStr, getTimeSlots } from "~/utils/time";
 
 import { generateAvailableAmPmTimes } from "~/utils/time-slot";
 

@@ -16,38 +16,20 @@ use App\Repository\PatientRepository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Schedule;
+use Illuminate\Support\Facades\Log;
 
 class ScheduleService
 {
-    private ScheduleRepository $scheduleRepository;
-    private BranchRepository $branchRepository;
-    private PatientRepository $patientRepository;
-    private InvoiceRepository $invoiceRepository;
     public function __construct(
-        ScheduleRepository $scheduleRepository,
-        BranchRepository $branchRepository,
-        PatientRepository $patientRepository,
-        InvoiceRepository $invoiceRepository
-    ) {
-        $this->scheduleRepository = $scheduleRepository;
-        $this->branchRepository = $branchRepository;
-        $this->patientRepository = $patientRepository;
-        $this->invoiceRepository = $invoiceRepository;
-    }
+        private ScheduleRepository $scheduleRepository,
+        private PatientRepository $patientRepository,
+        private InvoiceRepository $invoiceRepository
+    ) {}
 
     public function createSchedule(User $user, array $payload)
     {
-        $branch = BranchGuard::resolveBranch(
-            $this->branchRepository,
-            $payload['branch_uuid']
-        );
-
-        AuthGuard::requireModule(
-            $user,
-            $branch->branch_id,
-            ModuleEnum::Schedules,
-            PermissionAction::Create
-        );
+        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
+        AuthGuard::requireModule($user,  $branch->branch_id,   ModuleEnum::Schedules,  PermissionAction::Create);
 
         return DB::transaction(function () use ($payload, $branch) {
 
@@ -99,11 +81,9 @@ class ScheduleService
         });
     }
 
-
-
     public function checkConflictSchedule(User $user, array $payload)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Update);
 
         $result = $this->scheduleRepository->getEmployeesForReassignment(
@@ -173,26 +153,27 @@ class ScheduleService
         ]);
     }
 
-
-
     public function retrieveSchedule(User $user, array $payload)
     {
         return ScheduleResource::collection($this->scheduleRepository->retrievePaginate($payload));
     }
 
-    public function assign(User $user, array $payload)
+    public function availableEmployee(array $payload)
     {
-        $branch = BranchGuard::resolveBranch(
-            $this->branchRepository,
-            $payload['branch_uuid']
+        $serviceIds = $payload['service_ids'] ?? [];
+        $date       = $payload['date'] ?? null;
+        $time       = $payload['time'] ?? null;
+        $timeSpanHours = $payload['time_span_hours'] ?? null;
+        return EmployeeScheduleResource::collection(
+            $this->scheduleRepository->getEmployeeAvailable($serviceIds, $payload['branch_id'], $date, $time, $timeSpanHours)
         );
+    }
 
-        AuthGuard::requireModule(
-            $user,
-            $branch->branch_id,
-            ModuleEnum::Schedules,
-            PermissionAction::Create
-        );
+    public function assignEmployee(User $user, array $payload)
+    {
+        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
+
+        AuthGuard::requireModule($user,  $branch->branch_id,  ModuleEnum::Schedules,   PermissionAction::Create);
 
         $schedule = $this->scheduleRepository->findByUuid([
             ['schedule_id', '=', $payload['schedule_id']]

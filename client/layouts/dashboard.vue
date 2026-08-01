@@ -13,6 +13,27 @@
             />
 
             <main class="flex-1 overflow-auto p-0 m-0">
+                <div
+                    class="pointer-events-none absolute inset-0 overflow-hidden"
+                    aria-hidden="true"
+                >
+                    <div
+                        class="lg:flex hidden absolute -bottom-0 left-42 h-[520px] w-[520px] rounded-full bg-sky-300/25 blur-[140px]"
+                    ></div>
+
+                    <div
+                        class="lg:flex hidden absolute -top-40 -left-42 h-[520px] w-[520px] rounded-full bg-sky-200/25 blur-[140px]"
+                    ></div>
+                    <div
+                        class="lg:flex hidden absolute -top-40 left-1/2 -translate-x-1/2 h-[520px] w-[520px] rounded-full bg-sky-200/25 blur-[140px]"
+                    ></div>
+                    <div
+                        class="lg:flex hidden absolute -top-90 -right-32 h-[520px] w-[520px] rounded-full bg-sky-200/25 blur-[150px]"
+                    ></div>
+                    <!-- <div
+                        class="lg:flex hidden absolute top-1/3 left-1/2 h-[280px] w-[280px] -translate-x-1/2 rounded-full bg-cyan-200/20 blur-[100px]"
+                    ></div> -->
+                </div>
                 <slot />
             </main>
         </div>

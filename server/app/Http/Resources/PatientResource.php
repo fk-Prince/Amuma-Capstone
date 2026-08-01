@@ -100,8 +100,7 @@ class PatientResource extends JsonResource
             //         ],
             //     ],
             // ]),
-            'admission' => $admissions->map(function ($admission) {
-                $contract = $admission->admissionContracts->first();
+            'admissions' => $admissions->map(function ($admission) {
                 return [
                     'patient_admission_id' => $admission->patient_admission_id,
                     'status' => $admission->status,
@@ -121,12 +120,21 @@ class PatientResource extends JsonResource
                         'floor' => $admission->bed?->room?->floor,
                     ],
 
-                    'contract' => $contract ? [
-                        'category' => $contract->branchContract?->category,
-                        'accommodation_type' => $contract->branchContract?->accommodation_type,
-                        'billing_cycle' => $contract->branchContract?->billing_cycle,
-                        'price' => $contract->branchContract?->price,
-                    ] : null,
+                    'invoices' => $admission->invoiceAdmission->map(function ($invoice) {
+                        return [
+                            'invoice_facility_id' => $invoice->invoice_facility_id,
+                            'invoice_id' => $invoice->invoice_id,
+                            'price' => $invoice->price,
+
+                            'contract' => $invoice->branchContract ? [
+                                'branch_contract_id' => $invoice->branchContract->branch_contract_id,
+                                'category' => $invoice->branchContract->category,
+                                'accommodation_type' => $invoice->branchContract->accommodation_type,
+                                'billing_cycle' => $invoice->branchContract->billing_cycle,
+                                'price' => $invoice->branchContract->price,
+                            ] : null,
+                        ];
+                    })->values(),
                 ];
             })->values(),
         ];

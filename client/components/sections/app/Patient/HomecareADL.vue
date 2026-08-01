@@ -1,6 +1,5 @@
 <template>
     <div class="rounded-2xl bg-white">
-        <!-- Header -->
         <div
             class="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between"
         >
@@ -32,7 +31,6 @@
             </div>
         </div>
 
-        <!-- Loading -->
         <div v-if="loading" class="space-y-3 p-5">
             <div
                 v-for="i in 4"
@@ -41,7 +39,6 @@
             />
         </div>
 
-        <!-- Empty -->
         <div
             v-else-if="!filteredLogs.length"
             class="p-12 text-center text-sm text-slate-400"
@@ -49,7 +46,6 @@
             No audit records found
         </div>
 
-        <!-- Cards -->
         <div v-else class="space-y-4 p-5">
             <div
                 v-for="log in filteredLogs"

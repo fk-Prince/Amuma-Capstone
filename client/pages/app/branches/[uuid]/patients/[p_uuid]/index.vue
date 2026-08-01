@@ -40,6 +40,7 @@ const {
     scheduleData,
     employeeData,
     loading,
+    loadingSecond,
     medications,
     vitals,
     fetchData,
@@ -50,6 +51,7 @@ const {
     handleScheduleAction,
     handleAssignment,
     updateSchedule,
+    fetchSchedules,
 } = usePatient();
 
 const uuid = computed(() => route.params.p_uuid as string);
@@ -86,6 +88,7 @@ const savingAssignment = ref(false);
 const updatingAssignment = ref(false);
 
 const isFetchingEmployee = ref(false);
+const isFetchingSchedule = ref(loadingSecond.value);
 
 const selectedVital = ref<Vital | null>(null);
 const selectedSchedule = ref<ScheduleItem | null>(null);
@@ -236,6 +239,11 @@ const filteredScheduleData = computed(() => {
         return schedule.type === "medical";
     });
 });
+async function onScheduleRangeChange(payload: { from: string; to: string }) {
+    isFetchingSchedule.value = true;
+    await fetchSchedules(uuid.value, b_uuid.value, payload.from, payload.to);
+    isFetchingSchedule.value = false;
+}
 </script>
 
 <template>
@@ -406,6 +414,8 @@ const filteredScheduleData = computed(() => {
                                 :schedules="filteredScheduleData"
                                 @view-details="viewSchedule"
                                 @assign="handleAssign"
+                                @update-range="onScheduleRangeChange"
+                                :loading="isFetchingSchedule"
                             />
                             <HomecareADL
                                 v-if="
@@ -417,13 +427,6 @@ const filteredScheduleData = computed(() => {
                         </div>
                     </div>
                 </div>
-
-                <!-- <SchedulePatient
-                    v-if="activeTab === 'Schedule'"
-                    :schedules="scheduleData"
-                    @view-details="viewSchedule"
-                    @assign="handleAssign"
-                /> -->
             </template>
         </div>
 

@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Log;
 
 class SubscriptionService
 {

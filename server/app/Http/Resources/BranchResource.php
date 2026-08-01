@@ -2,9 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Booking;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Log;
 
 class BranchResource extends JsonResource
 {
@@ -52,18 +54,70 @@ class BranchResource extends JsonResource
                     ],
                 ];
             })->values()->all(),
+
             'facility' => $this->contracts
                 ->where('category', 'Facility')
                 ->map(function ($contract) {
+
+                    $reservedBedIds = $this->bookings
+                        ->where('status', Booking::STATUS_AWAITING)
+                        ->map(function ($booking) {
+                            return data_get(
+                                $booking->booking_data,
+                                'reserved.bed.bed_id'
+                            );
+                        })
+                        ->filter()
+                        ->values();
+
+                    $roomsOfType = $this->rooms
+                        ->filter(function ($room) use ($contract) {
+                            return strcasecmp(
+                                $room->room_type,
+                                $contract->accommodation_type
+                            ) === 0;
+                        });
+                    if ($roomsOfType->isEmpty()) {
+                        return null;
+                    }
+
+                    $availableSlots = $this->rooms
+                        ->filter(function ($room) use ($contract) {
+
+                            return strcasecmp(
+                                $room->room_type,
+                                $contract->accommodation_type
+                            ) === 0;
+                        })
+                        // ->flatMap(function ($room) use ($reservedBedIds) {
+
+                        //     return $room->availableBeds
+                        //         ->filter(function ($bed) use ($reservedBedIds) {
+
+                        //             return !in_array($bed->bed_id, $reservedBedIds->toArray())
+                        //                 && !in_array(
+                        //                     strtolower($bed->status),
+                        //                     [
+                        //                         'maintenance',
+                        //                         'occupied'
+                        //                     ]
+                        //                 );
+                        //         });
+                        // })
+                        ->count();
+
+
                     return [
-                        'available_slot' => random_int(5, 10),
+                        'available_slot' => $availableSlots,
                         'accommodation_type' => $contract->accommodation_type,
                         'billing_cycle' => $contract->billing_cycle,
                         'price' => $contract->price,
                         'description' => $contract->description,
                     ];
                 })
-                ->values(),
+                ->filter(fn($item) => !is_null($item))
+                ->values()
+                ->all(),
 
             'homecare' => [
                 'adl_hourly_rate' => $this->contracts
@@ -71,24 +125,31 @@ class BranchResource extends JsonResource
                     ->where('accommodation_type', 'ADL')
                     ->first()?->price,
                 'adl_min_hour' => 8,
+                'description' => $this->contracts
+                    ->where('category', 'Homecare')
+                    ->where('accommodation_type', 'ADL')
+                    ->first()?->description,
             ],
-            // 'services' => $this->whenLoaded('services', function () {
-            //     return $this->services->map(function ($service) {
-            //         return [
-            //             'service_id' => $service->service_id,
-            //             'service_uuid' => $service->service_uuid,
-            //             'service_name' => $service->service_name,
-            //             'price' => $service->price,
-            //             'maximum_duration' => $service->maximum_duration,
-            //             'is_available' => $service->is_available,
-            //             'type' => $service->type,
-            //             'category' => $service->category ? [
-            //                 'category_id' => $service->category->category_id,
-            //                 'category_name' => $service->category->category_name,
-            //             ] : null,
-            //         ];
-            //     });
-            // }),
+            'services' => $this->whenLoaded('services', function () {
+                return $this->services
+                    ->whereIn('type', ['online', 'both'])
+                    ->map(function ($service) {
+                        return [
+                            'service_id' => $service->service_id,
+                            'service_uuid' => $service->service_uuid,
+                            'service_name' => $service->service_name,
+                            'price' => $service->price,
+                            'maximum_duration' => $service->maximum_duration,
+                            'is_available' => $service->is_available,
+                            'type' => $service->type,
+                            'category' => $service->category ? [
+                                'category_id' => $service->category->category_id,
+                                'category_name' => $service->category->category_name,
+                            ] : null,
+                        ];
+                    })
+                    ->values();
+            }),
         ];
     }
 

@@ -10,6 +10,10 @@ class Employee extends Model
 {
     protected $primaryKey = 'employee_id';
 
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_INACTIVE = 'inactive';
+    public const STATUS_ONLEAVE = 'on_leave';
+
 
     protected $fillable = [
         'user_id',
@@ -22,6 +26,7 @@ class Employee extends Model
         'status',
         'avatar',
     ];
+
     protected function fullName()
     {
         return Attribute::make(

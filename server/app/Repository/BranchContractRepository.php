@@ -17,6 +17,11 @@ class BranchContractRepository
         return BranchContract::where($conditions)->first();
     }
 
+    public function findAllByConditions(array $conditions)
+    {
+        return BranchContract::where($conditions)->get();
+    }
+
     public function all(string $branchId)
     {
         return BranchContract::where('branch_id', $branchId)->get();

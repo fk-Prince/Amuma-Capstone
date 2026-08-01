@@ -9,7 +9,7 @@ class ScheduleResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $totalMinutes = $this->scheduleServices->max(
+        $totalMinutes = $this->scheduleServices->sum(
             fn($scheduleService) => $this->resolveDurationMinutes($scheduleService)
         );
 
@@ -33,6 +33,7 @@ class ScheduleResource extends JsonResource
             'start_time' => $startTime?->format('g:i A'),
             'end_time' => $endTime?->format('g:i A'),
 
+            'total_duration_minutes' => $totalMinutes,
             'total_hours' => (float) $totalHours,
 
             'type' => $this->scheduleServices->contains(

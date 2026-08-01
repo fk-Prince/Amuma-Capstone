@@ -35,7 +35,7 @@ const route = useRoute();
 const uuid = route.params.uuid as string;
 
 const roomData = ref<Room[]>([]);
-const isLoading = ref(true);
+const isLoading = ref(false);
 const isFetching = ref(false);
 
 const pagination = usePagination({ pageSize: 20 });
@@ -70,10 +70,8 @@ async function fetchRoom() {
     } catch (err: any) {
         console.error(err);
     } finally {
-        if (thisRequest === requestId) {
-            isFetching.value = false;
-            isLoading.value = false;
-        }
+        isFetching.value = false;
+        isLoading.value = false;
     }
 }
 
@@ -84,7 +82,6 @@ async function fetchOverview() {
         const res: any = await roomService.overview({
             branch_uuid: uuid,
         });
-
         overview.value = res;
     } catch (err: any) {
         console.error(err);
@@ -166,59 +163,13 @@ const submitRoom = async () => {
             ? await roomService.update(editingRoomId.value, roomForm)
             : await roomService.create(roomForm);
 
-        if (!editingRoomId.value && res.data) {
-            const newRoom = res.data;
-
-            const matchesSearch =
-                !searchData.value.trim() ||
-                newRoom.room_no
-                    .toLowerCase()
-                    .includes(searchData.value.trim().toLowerCase());
-
-            const matchesType =
-                !roomTypeParam.value ||
-                newRoom.room_type === roomTypeParam.value;
-
-            if (matchesSearch && matchesType) {
-                roomData.value.unshift(newRoom);
-                pagination.setTotal(pagination.totalItems.value + 1);
-            }
-        }
-
-        if (editingRoomId.value && res.data) {
-            const updatedRoom = res.data;
-
-            const index = roomData.value.findIndex(
-                (room) => room.room_id === updatedRoom.room_id,
-            );
-
-            const matchesSearch =
-                !searchData.value.trim() ||
-                updatedRoom.room_no
-                    .toLowerCase()
-                    .includes(searchData.value.trim().toLowerCase());
-
-            const matchesType =
-                !roomTypeParam.value ||
-                updatedRoom.room_type === roomTypeParam.value;
-
-            if (matchesSearch && matchesType) {
-                if (index !== -1) {
-                    roomData.value[index] = updatedRoom;
-                }
-            } else {
-                if (index !== -1) {
-                    roomData.value.splice(index, 1);
-                    pagination.setTotal(pagination.totalItems.value - 1);
-                }
-            }
-        }
         success(
             res.message ??
                 (editingRoomId.value
                     ? "Room updated successfully!"
                     : "Room added successfully!"),
         );
+        fetchRoom();
         closeModal();
     } catch (err: any) {
         const validationErrors = err?.data?.errors;
@@ -319,6 +270,7 @@ const bedAction = async (
                         v-model="searchData"
                         v-model:activeTab="activeTab"
                         @click="handleClicked"
+                        @addRoom="addRoomClicked"
                     />
                 </div>
 

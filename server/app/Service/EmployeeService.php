@@ -25,18 +25,15 @@ use Illuminate\Support\Str;
 class EmployeeService
 {
     private EmployeeRepository $employeeRepository;
-    private BranchRepository $branchRepository;
     private UserRepository $userRepository;
     private LocationRepository $locationRepository;
 
     public function __construct(
         EmployeeRepository $employeeRepository,
-        BranchRepository $branchRepository,
         UserRepository $userRepository,
         LocationRepository $locationRepository
     ) {
         $this->employeeRepository = $employeeRepository;
-        $this->branchRepository = $branchRepository;
         $this->userRepository = $userRepository;
         $this->locationRepository = $locationRepository;
     }
@@ -46,7 +43,7 @@ class EmployeeService
 
         return DB::transaction(function () use ($payload, $user) {
 
-            $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+            $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
             AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Create);
 
             //INSERT USER
@@ -140,7 +137,7 @@ class EmployeeService
                 throw new Exception('Employee not found.', 404);
             }
 
-            $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+            $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
             AuthGuard::requireModule($user,   $branch->branch_id, ModuleEnum::EmployeeManagement,  PermissionAction::Update);
 
             $user = $this->userRepository->update($employee->user_id, ['email' => $payload['email']]);
@@ -215,7 +212,7 @@ class EmployeeService
 
     public function getEmployees(array $payload, User $user, string $type)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
         if ($type === 'regular') {
             AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Read);
             $result =  $this->employeeRepository->getPaginateEmployee($payload, $branch->branch_id);

@@ -127,6 +127,7 @@ class EmployeeRepository
                     ]);
             },
         ])
+            ->where('status', 'active')
             ->whereHas('employeeBranch', function ($query) use ($branchId, $allowedRoles) {
                 $query->where('branch_id', $branchId)
                     ->whereIn('role_name', $allowedRoles);
@@ -135,7 +136,8 @@ class EmployeeRepository
                 $query->where('branch_id', $branchId)
                     ->whereIn('role_name', $allowedRoles)
                     ->whereHas('scheduleAssignments.scheduleService.schedule', function ($q) use ($targetStart, $targetEnd, $scheduleId) {
-                        $q->where('schedules.schedule_id', '!=', $scheduleId)
+                        $q->whereIn('schedules.status', ['ongoing', 'pending'])
+                            ->where('schedules.schedule_id', '!=', $scheduleId)
                             ->where('schedules.scheduled_at', '<', $targetEnd)
                             ->whereRaw(
                                 'schedules.scheduled_at + (

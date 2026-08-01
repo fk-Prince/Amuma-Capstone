@@ -39,13 +39,14 @@ export function format24To12(time: string | undefined | null) {
 
 // DISPLAY TIME 
 export function getBranchTimeDisplay(
-    availability: BranchRetrieve["settings"]
+    availability: BranchRetrieve["settings"] | undefined
 ): {
     is24Hours: boolean;
     isOpen: boolean;
     label: string;
     time: string | null;
 } {
+
     const isOpen = Boolean(availability?.is_open);
 
     if (!availability?.opening || !availability?.closing) {
@@ -227,12 +228,6 @@ export const filterAvailableSlots = (
 };
 
 
-export const getLocalDateStr = (d: Date): string => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-};
 
 
 //TIME CONVERTER 00:30:00 TO 30 || 30 TO 00:30:00
@@ -270,18 +265,25 @@ export const timeConverter = (
 };
 
 
-export const stringToDate = (
-    date?: string | Date | null,
-): string => {
-    if (!date) return "";
 
-    return new Intl.DateTimeFormat("en-PH", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-    }).format(new Date(date));
+export const getLocalDateStr = (d: Date): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
 };
 
+
+
+
+
+
+
+
+// ----------------- FINAL // 
+
+
+// RESULT 2026-07-31
 export function toLocalDateString(d: Date) {
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -290,3 +292,103 @@ export function toLocalDateString(d: Date) {
     return `${year}-${month}-${day}`;
 }
 
+// RESULT Jan 5, 2026
+export function formatDate(value?: string | Date | null) {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (isNaN(date.getTime())) {
+        return String(value);
+    }
+    return new Intl.DateTimeFormat(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    }).format(date);
+}
+
+// RESULT Jul 31, 2026, 10:30 AM
+export const stringToDateTime = (
+    date?: string | Date | null,
+): string => {
+    if (!date) return "";
+
+    return new Intl.DateTimeFormat(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+    }).format(new Date(date));
+};
+
+
+// RESULT 18:45 -> 6:45 PM
+export function formatTime(time?: string | number | null): string {
+    if (!time) return "";
+
+    // return new Date(`1970-01-01T${time}`).toLocaleTimeString(undefined, {
+    //     hour: "numeric",
+    //     minute: "2-digit",
+    //     hour12: true,
+    // });
+
+
+    const timeString =
+        typeof time === "number"
+            ? `${String(time).padStart(2, "0")}:00`
+            : time;
+
+    return new Date(`1970-01-01T${timeString}`).toLocaleTimeString(
+        undefined,
+        {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+        }
+    );
+}
+
+
+// RESULT 00:00 AM ── 11:59 PM
+export function formatHourLabel(hour24: number): string {
+    const minutes = hour24 === 23 ? 59 : 0;
+    // if (hour24 === 0 || hour24 === 24) {
+    //     return "00:00 AM";
+    // }
+    const date = new Date(1970, 0, 1, hour24, minutes);
+    return date.toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+    });
+}
+
+// RESULT 50hrs -> 2days and 2 hours
+export const formatDuration = (hours: number) => {
+    if (!hours) return "";
+
+    let remainingHours = hours;
+
+    const months = Math.floor(remainingHours / (24 * 30));
+    remainingHours %= 24 * 30;
+
+    const days = Math.floor(remainingHours / 24);
+    remainingHours %= 24;
+
+    const parts = [];
+
+    if (months) {
+        parts.push(`${months} month${months > 1 ? "s" : ""}`);
+    }
+
+    if (days) {
+        parts.push(`${days} day${days > 1 ? "s" : ""}`);
+    }
+
+    if (remainingHours) {
+        parts.push(`${remainingHours} hr${remainingHours > 1 ? "s" : ""}`);
+    }
+
+    return parts.join(" and ");
+};

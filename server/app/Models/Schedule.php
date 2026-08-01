@@ -39,21 +39,28 @@ class Schedule extends Model
         return $this->hasMany(ScheduleService::class, 'schedule_id', 'schedule_id');
     }
 
-
-    protected static function boot()
+    protected static function booted()
     {
-        parent::boot();
+        static::creating(function ($schedule) {
+            if (!$schedule->schedule_code) {
+                $lastSchedule = self::whereNotNull('schedule_code')
+                    ->orderByDesc('schedule_id')
+                    ->first();
 
-        static::created(function ($schedule) {
-            $schedule->schedule_code =
-                'SCH-' . str_pad(
-                    $schedule->schedule_id,
+                $nextNumber = 1;
+
+                if ($lastSchedule && $lastSchedule->schedule_code) {
+                    $lastNumber = (int) substr($lastSchedule->schedule_code, 4);
+                    $nextNumber = $lastNumber + 1;
+                }
+
+                $schedule->schedule_code = 'SCH-' . str_pad(
+                    $nextNumber,
                     6,
                     '0',
                     STR_PAD_LEFT
                 );
-
-            $schedule->saveQuietly();
+            }
         });
     }
 }

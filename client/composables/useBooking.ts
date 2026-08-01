@@ -32,14 +32,15 @@ export function useBookingValidator<T>(schema: ZodType<T>, data: T) {
 }
 
 
-import { computed, type MaybeRefOrGetter, toValue } from "vue";
+import { computed, toValue } from "vue";
 
 
 export function useMedicalServices(
     services: any,
     selectedServices?: any,
     adlRatePerHour?: any,
-    minAdlHours?: any
+    minAdlHours?: any,
+    adlDescription?: string
 ) {
     const medicalRateLabel = computed(() => {
         const list = toValue(services);
@@ -102,13 +103,15 @@ export function useMedicalServices(
             description: medicalDescription.value,
             icon: Stethoscope,
             rateLabel: medicalRateLabel.value,
+            visible: true,
         },
         {
             value: "ADL",
             title: "Caregiver (ADL Services)",
-            description: "Daily assistance like bathing, feeding, dressing",
+            description: adlDescription,
             icon: Users,
-            rateLabel: `₱${toValue(adlRatePerHour).toLocaleString()} / hour • Min ${toValue(minAdlHours)} hrs`,
+            rateLabel: `₱${toValue(adlRatePerHour).toLocaleString()} / hour `,
+            visible: adlRatePerHour !== 0,
         },
     ]);
 

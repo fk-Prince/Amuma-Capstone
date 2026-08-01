@@ -9,13 +9,12 @@ import {
     Eye,
     Pencil,
 } from "lucide-vue-next";
-
-import { stringToDate } from "~/utils/time";
-
-import PageHeader from "~/components/ui/PageHeader.vue";
+import { stringToDateTime } from "~/utils/time";
+import { calculateAge } from "~/utils/user";
 import { patientService } from "~/api/patient/PatientService";
 import { usePagination } from "~/composables/usePagination";
 import type { PatientRetrieve } from "~/types/patient";
+import PageHeader from "~/components/ui/PageHeader.vue";
 
 definePageMeta({
     layout: "dashboard",
@@ -44,18 +43,21 @@ const b_uuid = computed(() => route.params.uuid as string);
 async function fetchPatients() {
     try {
         isLoading.value = true;
+
         const res: any = await patientService.list({
             branch_uuid: b_uuid.value,
             page: pagination.currentPage.value,
             per_page: pagination.pageSize.value,
             search: searchQuery.value.trim() || undefined,
         });
+
         patients.value = res.data ?? [];
+
         const total = res.meta?.total ?? res.total ?? patients.value.length;
+
         pagination.setTotal(total);
     } catch (error) {
         console.error("Failed fetching patients", error);
-
         patients.value = [];
     } finally {
         isLoading.value = false;
@@ -66,6 +68,7 @@ function goToPage(page: number) {
     if (page < 1 || page > pagination.totalPages.value) {
         return;
     }
+
     pagination.currentPage.value = page;
     fetchPatients();
 }
@@ -74,14 +77,14 @@ onMounted(() => {
     fetchPatients();
 });
 
-function closeMenu() {
-    activeMenu.value = null;
-}
-
 const menuPosition = ref({
     x: 0,
     y: 0,
 });
+
+function closeMenu() {
+    activeMenu.value = null;
+}
 
 function toggleMenu(id: number, event: MouseEvent) {
     const button = event.currentTarget as HTMLElement;
@@ -111,67 +114,68 @@ onBeforeUnmount(() => {
     document.removeEventListener("click", handleOutsideClick);
 });
 
-const avatarPalette = [
-    "bg-rose-100 text-rose-600",
-    "bg-sky-100 text-sky-600",
-    "bg-violet-100 text-violet-600",
-    "bg-amber-100 text-amber-600",
-    "bg-emerald-100 text-emerald-600",
-];
+function currentAdmission(patient: PatientRetrieve) {
+    const admissions = patient.admissions ?? [];
 
-function avatarColor(patient: PatientRetrieve) {
-    const key = String(
-        patient.patient_id ?? `${patient.first_name}${patient.last_name}`,
+    if (!admissions.length) {
+        return undefined;
+    }
+
+    const active = admissions.find(
+        (admission) => admission.status === "admitted",
     );
-    let hash = 0;
-    for (let i = 0; i < key.length; i++) {
-        hash = (hash + key.charCodeAt(i)) % avatarPalette.length;
-    }
-    return avatarPalette[hash];
-}
 
-function calculateAge(date?: string) {
-    if (!date) {
-        return "—";
+    if (active) {
+        return active;
     }
-    const birthDate = new Date(date);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const month = today.getMonth() - birthDate.getMonth();
-    if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-    }
-    return `${stringToDate(date)} (${age} years old)`;
+
+    return [...admissions].sort(
+        (a, b) =>
+            new Date(b.admitted_at).getTime() -
+            new Date(a.admitted_at).getTime(),
+    )[0];
 }
 
 function patientStatus(patient: PatientRetrieve) {
     const admission = currentAdmission(patient);
 
-    if (admission) {
+    if (admission?.status === "admitted") {
         return "Admitted";
     }
 
-    if (patient.admission?.length) {
+    if (patient.admissions?.length) {
         return "Discharged";
     }
 
-    return "Homecare";
+    return "Not In Facility";
 }
 
 function statusClass(patient: PatientRetrieve) {
-    switch (patientStatus(patient)) {
+    const status = patientStatus(patient);
+
+    switch (status) {
         case "Admitted":
-            return "bg-emerald-100 text-emerald-700";
-        case "Homecare":
-            return "bg-blue-100 text-blue-700";
+            return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
+
+        case "Not In Facility":
+            return "bg-blue-50 text-blue-700 ring-1 ring-blue-200";
+
+        case "Discharged":
+            return "bg-slate-50 text-slate-700 ring-1 ring-slate-200";
+
         default:
-            return "bg-slate-100 text-slate-600";
+            return "bg-gray-50 text-gray-600 ring-1 ring-gray-200";
     }
 }
 
 function careType(patient: PatientRetrieve) {
+    const admission = currentAdmission(patient);
+
+    const contract = admission?.invoices?.[0]?.contract;
+
     return (
-        currentAdmission(patient)?.contract?.accommodation_type ??
+        contract?.accommodation_type ??
+        contract?.category ??
         "Homecare Services"
     );
 }
@@ -211,30 +215,7 @@ const actionMenuItems = [
         },
     },
 ];
-
-function currentAdmission(patient: PatientRetrieve) {
-    const admissions = patient.admission ?? [];
-
-    if (!admissions.length) {
-        return undefined;
-    }
-
-    const active = admissions.find(
-        (admission) => admission.status === "admitted",
-    );
-
-    if (active) {
-        return active;
-    }
-
-    return [...admissions].sort(
-        (a, b) =>
-            new Date(b.admitted_at).getTime() -
-            new Date(a.admitted_at).getTime(),
-    )[0];
-}
 </script>
-
 <template>
     <div class="flex min-h-[calc(100vh-10vh)] w-full flex-col space-y-5 p-6">
         <div
@@ -305,7 +286,7 @@ function currentAdmission(patient: PatientRetrieve) {
                             <th
                                 class="px-4 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-400"
                             >
-                                Room / Bed
+                                Citizen
                             </th>
 
                             <th
@@ -363,11 +344,13 @@ function currentAdmission(patient: PatientRetrieve) {
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
-                                        :class="avatarColor(patient)"
+                                        class="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-slate-100"
                                     >
-                                        {{ patient.first_name?.[0] }}
-                                        {{ patient.last_name?.[0] }}
+                                        <img
+                                            :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(patient.full_name)}&background=random&color=fff`"
+                                            :alt="patient.full_name"
+                                            class="h-full w-full object-cover"
+                                        />
                                     </div>
 
                                     <div>
@@ -378,9 +361,7 @@ function currentAdmission(patient: PatientRetrieve) {
                                         </p>
 
                                         <p class="text-xs text-slate-400">
-                                            {{
-                                                patient.citizenship ?? "Patient"
-                                            }}
+                                            {{ patient.location?.full_address }}
                                         </p>
                                     </div>
                                 </div>
@@ -395,33 +376,7 @@ function currentAdmission(patient: PatientRetrieve) {
                             </td>
 
                             <td class="px-4 py-4 text-sm text-slate-600">
-                                <template v-if="patient.admission">
-                                    <p>
-                                        Room:
-
-                                        <span class="font-medium">
-                                            {{
-                                                currentAdmission(patient)?.room
-                                                    ?.room_no ?? "—"
-                                            }}
-                                        </span>
-                                    </p>
-
-                                    <p class="text-xs text-slate-400">
-                                        Bed:
-
-                                        {{
-                                            currentAdmission(patient)?.bed
-                                                ?.bed_no ?? "—"
-                                        }}
-                                    </p>
-                                </template>
-
-                                <template v-else>
-                                    <span class="text-slate-400">
-                                        Homecare
-                                    </span>
-                                </template>
+                                {{ patient.citizenship ?? "—" }}
                             </td>
 
                             <td class="px-4 py-4 text-sm text-slate-600">
@@ -430,7 +385,7 @@ function currentAdmission(patient: PatientRetrieve) {
 
                             <td class="px-4 py-4">
                                 <span
-                                    class="rounded-full px-2.5 py-1 text-xs font-medium"
+                                    class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition"
                                     :class="statusClass(patient)"
                                 >
                                     {{ patientStatus(patient) }}

@@ -6,24 +6,21 @@ use App\Guard\BranchGuard;
 use App\Repository\ReviewRepository;
 use App\Http\Resources\ReviewResource;
 use App\Models\User;
-use App\Repository\BranchRepository;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
 class ReviewService
 {
     private ReviewRepository $reviewRepository;
-    private  BranchRepository $branchRepository;
 
-    public function __construct(ReviewRepository $reviewRepository, BranchRepository $branchRepository)
+    public function __construct(ReviewRepository $reviewRepository)
     {
         $this->reviewRepository = $reviewRepository;
-        $this->branchRepository = $branchRepository;
     }
 
     public function createReview(User $user, array $payload)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
         $reviewData = [
             'branch_id' => $branch->branch_id ?? null,
             'user_id' => $user->user_id,
@@ -42,11 +39,7 @@ class ReviewService
 
     public function retrieveReview(array $payload)
     {
-
-        $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
-        if (!$branch) {
-            throw new Exception(__('Branch does not exist'), 404);
-        }
+        $branch =  BranchGuard::resolveBranch($payload['branch_uuid']);
         return $this->reviewRepository->paginate(
             $payload['per_page'],
             $branch->uuid,

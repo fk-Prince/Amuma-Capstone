@@ -22,7 +22,7 @@ class PatientAdmission extends Model
 
     protected $casts = [
         'admitted_at' => 'datetime',
-        'end_date' => 'date',
+        'end_date' => 'datetime',
     ];
 
     public function bed()
@@ -34,9 +34,8 @@ class PatientAdmission extends Model
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
     }
-
-    public function admissionContracts()
+    public function invoiceAdmission()
     {
-        return $this->hasMany(AdmissionContract::class, 'patient_admission_id', 'patient_admission_id');
+        return $this->hasMany(InvoiceFacility::class, 'patient_admission_id', 'patient_admission_id');
     }
 }

@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class InvoiceService extends Model
+class InvoiceServices extends Model
 {
     protected $fillable = [
         'schedule_services_id',

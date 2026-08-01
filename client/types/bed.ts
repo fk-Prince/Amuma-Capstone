@@ -1,5 +1,7 @@
 import { z } from "zod";
 import type { PatientAdmission } from "./admission";
+import type { Patient } from "./patient";
+import type { Reserved } from "./contract";
 
 
 export interface Bed {
@@ -9,7 +11,14 @@ export interface Bed {
     bed_no: string;
     created_at: string;
     updated_at: string;
-    current_admission: PatientAdmission | null;
+    current_admission?: PatientAdmission | null;
+    reserved_booking?: {
+        booking_id: string,
+        reference_id: string,
+        status: string,
+        patient: Patient,
+        reserved: Reserved
+    } | null
 }
 
 

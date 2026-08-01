@@ -28,7 +28,7 @@ export const patientData = reactive<Patient>({
     middle_name: "Dela",
     last_name: "Cruz",
     gender: "Male",
-    citizenship: "Filipino",
+    citizenship: "",
     occupation: "Engineer",
     date_of_birth: "1995-06-15",
     phone_number: "+63 912 345 6789",
@@ -276,20 +276,32 @@ export interface PatientRetrieve {
     phone_number?: string;
     citizenship?: string;
 
-    initial_medication: any,
+    initial_medication: any;
     medication: any;
     vital: any;
+
     location?: {
         location_id: number;
         full_address: string;
     };
-    admission?: {
-        patient_admission_id: number;
-        status: string;
-        admitted_at: string;
-        end_date?: string;
-        bed?: Bed;
-        room?: Room;
-        contract?: Contract;
-    }[];
+
+    admissions: Admission[];
 }
+
+export interface Admission {
+    patient_admission_id: number;
+    status: string;
+    admitted_at: string;
+    end_date?: string | null;
+    bed?: Bed;
+    room?: Room;
+    invoices: InvoiceFacility[];
+}
+
+export interface InvoiceFacility {
+    invoice_facility_id: number;
+    invoice_id: number;
+    price: string;
+    contract?: Contract | null;
+}
+

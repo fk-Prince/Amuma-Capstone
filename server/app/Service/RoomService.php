@@ -16,44 +16,28 @@ use Exception;
 class RoomService
 {
     private RoomRepository $roomRepository;
-    private BranchRepository $branchRepository;
 
-    public function __construct(RoomRepository $roomRepository, BranchRepository $branchRepository)
+    public function __construct(RoomRepository $roomRepository)
     {
-        $this->branchRepository = $branchRepository;
         $this->roomRepository = $roomRepository;
     }
 
     public function overview(User $user, array $payload)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
-        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Read);
-
-        return $this->roomRepository->getRoomStats($branch->branch_id);
+        return $this->roomRepository->getRoomStats($payload['branch_id']);
     }
 
 
     public function createRoom(User $user, array $payload)
     {
-
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
-        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Create);
-
-        if (! $branch->hasFacilitySubscription()) {
-            throw new Exception(__('No active facility subscription.'), 403);
-        }
-
         $existingRoom = $this->roomRepository->findByField([
-            ['branch_id', '=', $branch->branch_id],
+            ['branch_id', '=', $payload['branch_id']],
             ['room_no', '=', $payload['room_no']],
         ]);
-
 
         if ($existingRoom) {
             throw new Exception(__('Room number already exists in this branch.'), 409);
         }
-
-        $payload['branch_id'] = $branch->branch_id;
 
         $model = $this->roomRepository->create($payload);
 
@@ -71,23 +55,14 @@ class RoomService
 
     public function listRoom(User $user, array $payload)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
-        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Read);
-        $model = $this->roomRepository->paginate($branch->branch_id, $payload, $payload['per_page']);
+        $model = $this->roomRepository->paginate($payload['branch_id'], $payload, $payload['per_page']);
         return RoomResource::collection($model);
     }
 
     public function updateRoom(User $user, string $id, array $payload)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
-        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Update);
-
-        if (! $branch->hasFacilitySubscription()) {
-            throw new Exception(__('No active facility subscription.'), 403);
-        }
-
         $existingRoom = $this->roomRepository->findByField([
-            ['branch_id', '=', $branch->branch_id],
+            ['branch_id', '=', $payload['branch_id']],
             ['room_id', '=',  $id],
         ]);
 

@@ -1,5 +1,8 @@
 import { z } from "zod";
 import type { Permissions } from "./permission";
+import { useBranchPlan } from "~/composables/useBranchPlan";
+
+const { hasPlan } = useBranchPlan();
 
 export interface Employee {
     employee_id: string
@@ -101,11 +104,26 @@ export const employeeSchema = z.object({
 
 export type EmployeeFormData = z.infer<typeof employeeSchema>;
 
-export const employeeAssignmentTypes = [
+export const unFilteredEmployeeAssignmentTypes = [
     { label: "All", value: "both", },
     { label: "Homecare", value: "homecare" },
     { label: "Facility", value: "facility" },
 ];
+
+export const employeeAssignmentTypes = computed(() => {
+    return unFilteredEmployeeAssignmentTypes.filter((type) => {
+        switch (type.value) {
+            case "both":
+                return true;
+            case "homecare":
+                return hasPlan("A");
+            case "facility":
+                return hasPlan("B");
+            default:
+                return false;
+        }
+    });
+});
 
 export const employeePositions = [
     { label: "Administrator", value: "administrator" },
@@ -127,3 +145,5 @@ export const formatAssignmentType = (type?: string | null) => {
             return null;
     }
 }
+
+

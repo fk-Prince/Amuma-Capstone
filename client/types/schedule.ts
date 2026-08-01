@@ -26,6 +26,7 @@ export interface ScheduleServiceItem {
     service_name: string | null;
     hours_booked: number | null;
     duration_minutes: number;
+    end_service: string,
     status: string;
     type: string | null;
     assignees?: ScheduleAssignee[];
@@ -40,6 +41,7 @@ export interface ScheduleItem {
     scheduled_at?: string | null;
     start_time?: string | null;
     total_hours: number;
+    total_duration_minutes: number;
     end_time?: string | null;
     patient?: {
         patient_id: number;

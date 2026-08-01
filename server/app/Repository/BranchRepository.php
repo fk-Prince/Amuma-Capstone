@@ -90,6 +90,9 @@ class BranchRepository
             'location',
             'contracts',
             'agencies',
+            'services',
+            'bookings',
+            'rooms'
             // 'services' => function ($query) {
             //     $query->where('is_available', true)
             //         ->with('categories');

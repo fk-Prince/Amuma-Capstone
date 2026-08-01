@@ -209,19 +209,18 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { Pencil, Receipt } from "lucide-vue-next";
+import { Pencil } from "lucide-vue-next";
 import type { HomecareBooking, FacilityBooking } from "~/types/booking";
 import type { Patient, Guardian, Assessment } from "~/types/patient";
 import type { Service } from "~/types/service";
-import type {
-    BranchAvailability,
-    BranchFacility,
-    BranchHomecare,
-} from "~/types/branch";
+import type { BranchFacility, BranchHomecare } from "~/types/branch";
 import { useMedicalServices } from "~/composables/useBooking";
+import { useBranch } from "~/composables/useBranchProvider";
+
+const { branch } = useBranch();
 
 const props = defineProps<{
-    category: "homecare" | "facility";
+    category: "homecare" | "facility" | null;
     homecare: HomecareBooking;
     facility: FacilityBooking;
     patient: Patient;
@@ -271,9 +270,26 @@ const bookingRows = computed<Row[]>(() => {
     if (props.category === "homecare") {
         const hc = props.homecare;
         const rows: Row[] = [
-            { label: "Booking Type", value: hc.type ?? "" },
+            {
+                label: "Booking Type",
+                value:
+                    hc.type === "ADL"
+                        ? "Activites of Daily Living (ADL)"
+                        : hc.type,
+            },
             { label: "Date", value: formatDate(hc.date) },
-            { label: "Preferred Time", value: hc.prefered_time ?? "" },
+            {
+                label: "Preferred Time",
+                value: hc.prefered_time
+                    ? new Date(
+                          `1970-01-01T${hc.prefered_time}`,
+                      ).toLocaleTimeString("en-US", {
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                      })
+                    : "",
+            },
         ];
 
         if (hc.type === "Medical") {
@@ -292,7 +308,9 @@ const bookingRows = computed<Row[]>(() => {
         if (hc.type === "ADL") {
             rows.push({
                 label: "Duration",
-                value: hc.time_span ? `${hc.time_span} hrs` : "",
+                value: hc.time_span
+                    ? `${formatDuration(Number(hc.time_span))} (${hc.time_span} hrs)`
+                    : "",
             });
         }
 
@@ -301,6 +319,19 @@ const bookingRows = computed<Row[]>(() => {
             value: hc.address ?? "",
             span: true,
         });
+        if (hc.type === "ADL") {
+            rows.push({
+                label: "Total",
+                value: `₱${(Number(hc.time_span) * (branch.value?.homecare?.adl_hourly_rate ?? 0)).toFixed(2)}`,
+                span: true,
+            });
+        } else if (hc.type === "Medical") {
+            rows.push({
+                label: "Total",
+                value: `₱${selectedServicesTotal.value.toFixed(2)}`,
+                span: true,
+            });
+        }
         return rows;
     }
 
@@ -422,4 +453,32 @@ const assessmentRows = computed<Row[]>(() => {
 
     return rows.filter((row) => !!row.value);
 });
+
+const formatDuration = (hours: number) => {
+    if (!hours) return "";
+
+    let remainingHours = hours;
+
+    const months = Math.floor(remainingHours / (24 * 30));
+    remainingHours %= 24 * 30;
+
+    const days = Math.floor(remainingHours / 24);
+    remainingHours %= 24;
+
+    const parts = [];
+
+    if (months) {
+        parts.push(`${months} month${months > 1 ? "s" : ""}`);
+    }
+
+    if (days) {
+        parts.push(`${days} day${days > 1 ? "s" : ""}`);
+    }
+
+    if (remainingHours) {
+        parts.push(`${remainingHours} hr${remainingHours > 1 ? "s" : ""}`);
+    }
+
+    return parts.join(" and ");
+};
 </script>

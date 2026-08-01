@@ -246,6 +246,27 @@
                             required
                         />
 
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button
+                                v-for="preset in durationPresets"
+                                :key="preset.label"
+                                type="button"
+                                @click="addDurationPreset(preset.hours)"
+                                class="text-xs font-semibold px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-primary hover:text-primary hover:bg-primary/5 transition"
+                            >
+                                + {{ preset.label }}
+                            </button>
+
+                            <button
+                                v-if="Number(model.time_span) > minAdlHours"
+                                type="button"
+                                @click="resetDuration"
+                                class="text-xs font-medium px-3 py-1.5 rounded-full text-slate-400 hover:text-red-500 transition"
+                            >
+                                Reset
+                            </button>
+                        </div>
+
                         <div
                             class="rounded-lg bg-slate-50 border border-slate-200 p-3 space-y-2"
                         >
@@ -284,7 +305,6 @@
                             </div>
                         </div>
                     </div>
-
                     <BaseInput
                         v-model="model.address"
                         label="Service Location / Patient Location"
@@ -349,6 +369,7 @@ const { selectedServiceLabel, selectedServicesTotal, bookingTypes } =
         () => props.model.services,
         () => adlRatePerHour.value,
         () => minAdlHours.value,
+        props.homecare?.description,
     );
 
 const emit = defineEmits<{
@@ -451,4 +472,21 @@ watch(
         }
     },
 );
+
+const durationPresets = [
+    { label: "1 Day", hours: 24 },
+    { label: "1 Week", hours: 24 * 7 },
+    { label: "1 Month", hours: 24 * 30 },
+];
+
+const addDurationPreset = (hours: number) => {
+    const current = Number(props.model.time_span) || 0;
+    const next = current + hours;
+
+    update("time_span", String(next));
+};
+
+const resetDuration = () => {
+    update("time_span", String(minAdlHours.value));
+};
 </script>

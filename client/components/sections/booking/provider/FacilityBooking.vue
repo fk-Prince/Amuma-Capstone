@@ -1,29 +1,34 @@
 <template>
     <section
-        class="rounded-2xl p-8 md:p-10"
+        class="rounded-2xl bg-white p-6 md:p-8"
         :class="{ 'animate-pulse': loading }"
     >
-        <div class="flex items-baseline gap-3 mb-8">
-            <template v-if="loading">
-                <div class="h-6 w-6 rounded bg-slate-200 shrink-0" />
-                <div class="flex-1 space-y-2">
-                    <div class="h-5 w-40 rounded bg-slate-200" />
-                    <div class="h-3 w-64 rounded bg-slate-200" />
-                </div>
-                <div class="h-6 w-24 rounded-full bg-slate-200 shrink-0" />
-            </template>
-            <template v-else>
-                <span class="text-2xl text-primary">01</span>
-                <div class="flex-1">
-                    <h2 class="text-xl text-primary">Booking Request</h2>
-                    <p class="text-[13px] text-muted">
-                        Select your admission type and schedule.
-                    </p>
-                </div>
+        <div
+            class="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-5"
+        >
+            <div class="flex items-baseline gap-3 mb-8">
+                <template v-if="loading">
+                    <div class="h-6 w-6 rounded bg-slate-200 shrink-0" />
+                    <div class="flex-1 space-y-2">
+                        <div class="h-5 w-40 rounded bg-slate-200" />
+                        <div class="h-3 w-64 rounded bg-slate-200" />
+                    </div>
+                </template>
+                <template v-else>
+                    <span class="text-2xl text-primary">01</span>
+                    <div>
+                        <h2 class="text-xl text-primary">Booking Request</h2>
+                        <p class="text-[13px] text-muted">
+                            Select your admission type and schedule.
+                        </p>
+                    </div>
+                </template>
+            </div>
 
+            <div v-if="!loading" class="shrink-0">
                 <span
                     v-if="maxAvailableSlots > 0"
-                    class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-600/10"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700"
                 >
                     <span
                         class="h-1.5 w-1.5 rounded-full bg-emerald-500"
@@ -35,117 +40,113 @@
                 </span>
                 <span
                     v-else
-                    class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 ring-1 ring-gray-200"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
                     No slots available
                 </span>
-            </template>
+            </div>
         </div>
 
-        <div class="space-y-8">
+        <div class="space-y-6">
+            <!-- Admission Type -->
             <div>
-                <template v-if="loading">
-                    <div class="h-4 w-32 rounded bg-slate-200 mb-3" />
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div
-                            v-for="n in 2"
-                            :key="n"
-                            class="border border-slate-200 rounded-xl p-4"
-                        >
-                            <div class="flex items-center gap-3">
+                <div v-if="loading" class="grid md:grid-cols-2 gap-3">
+                    <div
+                        v-for="i in 2"
+                        :key="i"
+                        class="rounded-xl border p-4 animate-pulse"
+                    >
+                        <div class="flex items-center justify-between">
+                            <div class="space-y-2">
                                 <div
-                                    class="h-10 w-10 rounded-lg bg-slate-200 shrink-0"
-                                />
-                                <div class="flex-1 space-y-2">
-                                    <div
-                                        class="h-4 w-28 rounded bg-slate-200"
-                                    />
-                                    <div
-                                        class="h-3 w-36 rounded bg-slate-200"
-                                    />
-                                </div>
+                                    class="h-4 w-28 bg-slate-200 rounded"
+                                ></div>
+                                <div
+                                    class="h-3 w-40 bg-slate-100 rounded"
+                                ></div>
                             </div>
+                            <div class="h-9 w-9 rounded-lg bg-slate-200"></div>
                         </div>
                     </div>
-                </template>
+                </div>
 
                 <template v-else>
-                    <label
-                        class="text-sm font-semibold text-slate-700 mb-3 block"
-                    >
-                        Admission Type
-                        <span class="text-danger">*</span>
-                    </label>
+                    <h3 class="font-semibold text-sm text-slate-900 mb-3">
+                        Admission Type <span class="text-danger">*</span>
+                    </h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div
+                    <div class="grid md:grid-cols-2 gap-3">
+                        <button
+                            type="button"
                             @click="update('type', 'Pre-Admission')"
-                            class="group relative flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-all duration-200 hover:border-primary hover:bg-primary/5"
+                            class="text-left rounded-xl border p-4 transition hover:border-primary hover:bg-primary/5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             :class="
                                 model.type === 'Pre-Admission'
-                                    ? 'border-primary bg-primary/5 shadow-sm'
-                                    : 'border-slate-200'
+                                    ? 'border-primary ring-1 ring-primary/30 bg-primary/5'
+                                    : ''
                             "
                         >
-                            <span
-                                v-if="model.type === 'Pre-Admission'"
-                                class="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white"
-                            >
-                                <Check class="h-3 w-3" />
-                            </span>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-semibold text-sm">
+                                        Pre-Admission
+                                    </h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">
+                                        Submit requirements only.
+                                    </p>
+                                </div>
 
-                            <div
-                                class="text-primary w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 group-hover:bg-primary/10 transition shrink-0"
-                            >
-                                <ClipboardCheck class="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p
-                                    class="font-semibold group-hover:text-primary"
+                                <div
+                                    class="h-9 w-9 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
                                 >
-                                    Pre-Admission
-                                </p>
-                                <p class="text-[13px] text-muted">
-                                    Submit requirements only.
-                                </p>
+                                    <ClipboardCheck class="h-4 w-4" />
+                                </div>
                             </div>
-                        </div>
 
-                        <div
+                            <p
+                                v-if="model.type === 'Pre-Admission'"
+                                class="mt-3 text-[11px] font-medium text-primary"
+                            >
+                                Currently selected
+                            </p>
+                        </button>
+
+                        <button
+                            type="button"
                             @click="update('type', 'Complete')"
-                            class="group relative flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-all duration-200 hover:border-primary hover:bg-primary/5"
+                            class="text-left rounded-xl border p-4 transition hover:border-primary hover:bg-primary/5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             :class="
                                 model.type === 'Complete'
-                                    ? 'border-primary bg-primary/5 shadow-sm'
-                                    : 'border-slate-200'
+                                    ? 'border-primary ring-1 ring-primary/30 bg-primary/5'
+                                    : ''
                             "
                         >
-                            <span
-                                v-if="model.type === 'Complete'"
-                                class="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white"
-                            >
-                                <Check class="h-3 w-3" />
-                            </span>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-semibold text-sm">
+                                        Complete Admission
+                                    </h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">
+                                        Select room, plan, and complete payment
+                                        in one step
+                                    </p>
+                                </div>
 
-                            <div
-                                class="text-primary w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 group-hover:bg-primary/10 transition shrink-0"
-                            >
-                                <Building2 class="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p
-                                    class="font-semibold group-hover:text-primary"
+                                <div
+                                    class="h-9 w-9 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
                                 >
-                                    Complete Admission
-                                </p>
-                                <p class="text-[13px] text-muted">
-                                    Select room, plan, and complete payment in
-                                    one step
-                                </p>
+                                    <Building2 class="h-4 w-4" />
+                                </div>
                             </div>
-                        </div>
+
+                            <p
+                                v-if="model.type === 'Complete'"
+                                class="mt-3 text-[11px] font-medium text-primary"
+                            >
+                                Currently selected
+                            </p>
+                        </button>
                     </div>
 
                     <p v-if="errors?.type" class="text-xs text-red-500 mt-2">
@@ -154,58 +155,82 @@
                 </template>
             </div>
 
-            <div v-if="loading || model.type === 'Complete'" class="space-y-8">
+            <!-- Accommodation + Plan (only for Complete) -->
+            <div v-if="loading || model.type === 'Complete'" class="space-y-6">
                 <div>
-                    <template v-if="!loading">
-                        <label
-                            class="text-sm font-semibold text-slate-700 mb-3 block"
+                    <div v-if="loading" class="grid md:grid-cols-2 gap-3">
+                        <div
+                            v-for="i in 2"
+                            :key="i"
+                            class="rounded-xl border p-4 animate-pulse"
                         >
+                            <div class="flex items-center justify-between">
+                                <div class="space-y-2">
+                                    <div
+                                        class="h-4 w-28 bg-slate-200 rounded"
+                                    ></div>
+                                    <div
+                                        class="h-3 w-40 bg-slate-100 rounded"
+                                    ></div>
+                                </div>
+                                <div
+                                    class="h-9 w-9 rounded-lg bg-slate-200"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <template v-else>
+                        <h3 class="font-semibold text-sm text-slate-900 mb-3">
                             Accommodation Type
                             <span class="text-danger">*</span>
-                        </label>
+                        </h3>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div
+                        <div class="grid md:grid-cols-2 gap-3">
+                            <button
                                 v-for="room in roomTypes"
                                 :key="room.value"
+                                type="button"
+                                :disabled="room.slots === 0"
                                 @click="update('plan', room.value)"
-                                class="group relative flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-all duration-200 hover:border-primary hover:bg-primary/5"
+                                class="text-left rounded-xl border p-4 transition hover:border-primary hover:bg-primary/5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-inherit disabled:hover:bg-transparent disabled:hover:shadow-none"
                                 :class="
                                     model.plan === room.value
-                                        ? 'border-primary bg-primary/5 shadow-sm'
-                                        : 'border-slate-200'
+                                        ? 'border-primary ring-1 ring-primary/30 bg-primary/5'
+                                        : ''
                                 "
                             >
-                                <span
-                                    v-if="model.plan === room.value"
-                                    class="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white"
-                                >
-                                    <Check class="h-3 w-3" />
-                                </span>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="font-semibold text-sm">
+                                            {{ room.title }}
+                                        </h3>
+                                        <p
+                                            class="text-xs text-slate-500 mt-0.5"
+                                        >
+                                            {{ room.description }}
+                                        </p>
+                                    </div>
+
+                                    <div
+                                        class="h-9 w-9 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
+                                    >
+                                        <component
+                                            :is="room.icon"
+                                            class="h-5 w-5"
+                                        />
+                                    </div>
+                                </div>
 
                                 <div
-                                    class="text-xl text-primary w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 group-hover:bg-primary/10 transition shrink-0"
+                                    class="mt-3 flex items-end justify-between"
                                 >
-                                    <component
-                                        :is="room.icon"
-                                        class="h-6 w-6"
-                                    />
-                                </div>
-                                <div>
-                                    <p
-                                        class="font-semibold group-hover:text-primary"
-                                    >
-                                        {{ room.title }}
-                                    </p>
-                                    <p class="text-[13px] text-muted">
-                                        {{ room.description }}
-                                    </p>
-                                    <p
-                                        class="text-xs font-medium mt-1"
+                                    <span
+                                        class="text-xs"
                                         :class="
-                                            room.slots > 0
-                                                ? 'text-emerald-600'
-                                                : 'text-gray-400'
+                                            room.slots === 0
+                                                ? 'text-rose-500 font-medium'
+                                                : 'text-slate-500'
                                         "
                                     >
                                         {{
@@ -213,9 +238,16 @@
                                                 ? `${room.slots} slot${room.slots === 1 ? "" : "s"} available`
                                                 : "Fully booked"
                                         }}
+                                    </span>
+
+                                    <p
+                                        v-if="model.plan === room.value"
+                                        class="text-[11px] font-medium text-primary"
+                                    >
+                                        Currently selected
                                     </p>
                                 </div>
-                            </div>
+                            </button>
                         </div>
 
                         <p
@@ -228,57 +260,87 @@
                 </div>
 
                 <div>
-                    <template v-if="!loading">
-                        <label
-                            class="text-sm font-semibold text-slate-700 mb-3 block"
+                    <div v-if="loading" class="grid md:grid-cols-2 gap-3">
+                        <div
+                            v-for="i in 2"
+                            :key="i"
+                            class="rounded-xl border p-4 animate-pulse"
                         >
-                            Admission Plan
-                            <span class="text-danger">*</span>
-                        </label>
+                            <div class="flex items-center justify-between">
+                                <div class="space-y-2">
+                                    <div
+                                        class="h-4 w-28 bg-slate-200 rounded"
+                                    ></div>
+                                    <div
+                                        class="h-3 w-40 bg-slate-100 rounded"
+                                    ></div>
+                                </div>
+                                <div
+                                    class="h-9 w-9 rounded-lg bg-slate-200"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div
+                    <template v-else>
+                        <h3 class="font-semibold text-sm text-slate-900 mb-3">
+                            Admission Plan <span class="text-danger">*</span>
+                        </h3>
+
+                        <div class="grid md:grid-cols-2 gap-3">
+                            <button
                                 v-for="plan in availablePlans"
                                 :key="plan.value"
+                                type="button"
                                 @click="update('billing_cycle', plan.value)"
-                                class="group relative flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-all duration-200 hover:border-primary hover:bg-primary/5"
+                                class="text-left rounded-xl border p-4 transition hover:border-primary hover:bg-primary/5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                 :class="
                                     model.billing_cycle === plan.value
-                                        ? 'border-primary bg-primary/5 shadow-sm'
-                                        : 'border-slate-200'
+                                        ? 'border-primary ring-1 ring-primary/30 bg-primary/5'
+                                        : ''
                                 "
                             >
-                                <span
-                                    v-if="model.billing_cycle === plan.value"
-                                    class="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white"
-                                >
-                                    <Check class="h-3 w-3" />
-                                </span>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="font-semibold text-sm">
+                                            {{ plan.title }}
+                                        </h3>
+                                        <p
+                                            class="text-xs text-slate-500 mt-0.5"
+                                        >
+                                            {{ plan.description }}
+                                        </p>
+                                    </div>
+
+                                    <div
+                                        class="h-9 w-9 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
+                                    >
+                                        <component
+                                            :is="plan.icon"
+                                            class="h-5 w-5"
+                                        />
+                                    </div>
+                                </div>
 
                                 <div
-                                    class="text-xl text-primary w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 group-hover:bg-primary/10 transition shrink-0"
+                                    class="mt-3 flex items-end justify-between"
                                 >
-                                    <component
-                                        :is="plan.icon"
-                                        class="h-6 w-6"
-                                    />
-                                </div>
-                                <div>
-                                    <p
-                                        class="font-semibold group-hover:text-primary"
-                                    >
-                                        {{ plan.title }}
-                                    </p>
-                                    <p class="text-[13px] text-muted">
-                                        {{ plan.description }}
-                                    </p>
-                                    <p
-                                        class="text-sm font-semibold text-primary mt-1"
+                                    <span
+                                        class="text-sm font-semibold text-primary"
                                     >
                                         ₱{{ getPrice(plan.value) }}
+                                    </span>
+
+                                    <p
+                                        v-if="
+                                            model.billing_cycle === plan.value
+                                        "
+                                        class="text-[11px] font-medium text-primary"
+                                    >
+                                        Currently selected
                                     </p>
                                 </div>
-                            </div>
+                            </button>
                         </div>
 
                         <p
@@ -299,7 +361,7 @@
                 </div>
             </div>
 
-            <div class="h-px bg-[#E4E0D6]" />
+            <div class="h-px bg-slate-200" />
 
             <div v-if="model.type === 'Complete' && !loading" class="max-w-xs">
                 <BaseInput
@@ -423,16 +485,17 @@ const roomTypeDefs: {
 ];
 
 const roomTypes = computed(() =>
-    roomTypeDefs.map((room) => {
-        const data: RoomTypeStat | undefined =
-            slotsByRoomType.value[room.value.toUpperCase()];
+    roomTypeDefs
+        .filter((room) => slotsByRoomType.value[room.value.toUpperCase()])
+        .map((room) => {
+            const data = slotsByRoomType.value[room.value.toUpperCase()];
 
-        return {
-            ...room,
-            description: data?.description || room.description,
-            slots: data?.slots ?? 0,
-        };
-    }),
+            return {
+                ...room,
+                description: data?.description || room.description,
+                slots: data?.slots ?? 0,
+            };
+        }),
 );
 
 const admissionPlans: {

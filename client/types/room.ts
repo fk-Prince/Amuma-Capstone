@@ -12,6 +12,7 @@ export interface Room {
     created_at: string;
     updated_at: string;
     beds: Bed[];
+    reserved_beds_count?: number
 }
 
 export interface RoomForm {

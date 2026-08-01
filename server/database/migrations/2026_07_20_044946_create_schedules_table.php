@@ -13,13 +13,17 @@ return new class extends Migration
     {
         Schema::create('schedules', function (Blueprint $table) {
             $table->id('schedule_id');
-            $table->string('schedule_code', 20)->unique();
-            $table->foreignId('scheduled_location_id')
-                ->constrained('locations', 'location_id');
+            $table->string('schedule_code')->unique();
             $table->foreignId('patient_id')
                 ->constrained('patients', 'patient_id');
             $table->timestamp('scheduled_at');
-            $table->string('status', 50)->nullable();
+            $table->enum('status', [
+                'pending',
+                'ongoing',
+                'completed',
+                'cancelled',
+                'missed'
+            ])->default('pending');
             $table->enum('category', ['Homecare', 'Facility']);
             $table->timestamps();
         });

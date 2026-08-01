@@ -1,13 +1,13 @@
 <template>
-    <!-- class="lg:h-[90px] h-[150px] lg:flex-none flex-col w-full bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0" -->
+    <!-- class="h-[90px] w-full bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0" -->
     <header
-        class="h-[90px] w-full bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0"
+        class="lg:h-[90px] h-[150px] lg:flex-none flex-col w-full bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0"
     >
         <div class="flex justify-between items-center h-full w-full">
             <div class="flex justify-start items-center gap-4">
                 <NuxtLink
                     to="/"
-                    class="flex items-center border-r border-r-muted pr-5"
+                    class="flex items-center border-none lg:border-r border-r-muted pr-5"
                 >
                     <img
                         :src="logo"
@@ -16,23 +16,21 @@
                     />
                 </NuxtLink>
 
-                <!-- class="items-center lg:flex hidden gap-2.5 cursor-pointer select-none" -->
+                <!-- class="items-center flex gap-2.5 cursor-pointer select-none" -->
                 <div
                     v-if="isMounted"
-                    class="items-center flex gap-2.5 cursor-pointer select-none"
+                    class="items-center lg:flex hidden gap-2.5 cursor-pointer select-none"
                     @click="branchStore.openModal"
                 >
                     <div
                         class="w-9 h-9 rounded-lg overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center"
                     >
                         <img
-                            v-if="
-                                getBranchImage(branchStore.activeBranch?.image)
-                            "
+                            v-if="branchStore.activeBranch?.image"
                             :src="
-                                getBranchImage(branchStore.activeBranch?.image)
+                                getBranchImage(branchStore.activeBranch.image)
                             "
-                            :alt="branchStore.activeBranch?.name"
+                            :alt="branchStore.activeBranch.name"
                             class="w-full h-full object-cover"
                         />
                         <svg
@@ -121,7 +119,7 @@
             </div>
         </div>
 
-        <!-- <div
+        <div
             v-if="isMounted"
             class="flex lg:hidden w-full h-full gap-2.5 mt-3 cursor-pointer"
             @click="branchStore.openModal"
@@ -131,6 +129,8 @@
             >
                 <img
                     v-if="branchStore.activeBranch?.image"
+                    :src="getBranchImage(branchStore.activeBranch.image)"
+                    :alt="branchStore.activeBranch.name"
                     class="w-full h-full object-cover"
                 />
                 <svg
@@ -170,7 +170,7 @@
             >
                 <polyline points="6 9 12 15 18 9" />
             </svg>
-        </div> -->
+        </div>
     </header>
     <Teleport to="body">
         <div
@@ -310,10 +310,6 @@ defineEmits<{ open: [] }>();
 const branchStore = useBranchStore();
 
 const isMounted = ref(false);
-
-const branches = computed(() =>
-    branchStore.branches.filter((branch) => branch != null),
-);
 
 onMounted(() => {
     isMounted.value = true;

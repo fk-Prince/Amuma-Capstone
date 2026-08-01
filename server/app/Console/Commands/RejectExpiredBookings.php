@@ -16,7 +16,7 @@ class RejectExpiredBookings extends Command
     {
         $count = 0;
 
-        Booking::where('status', 'pending')
+        Booking::whereIn('status', [Booking::STATUS_AWAITING, Booking::STATUS_PENDING])
             ->where('valid_until', '<', Carbon::now())
             ->chunkById(200, function ($bookings) use (&$count) {
                 foreach ($bookings as $booking) {

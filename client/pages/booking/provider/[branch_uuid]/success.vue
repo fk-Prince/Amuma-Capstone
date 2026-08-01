@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-screen bg-gray-50 flex items-center justify-center px-5 py-12"
+        class="min-h-[calc(100vh-90px)] bg-slate-200 flex items-center justify-center px-5 py-12"
     >
         <div class="max-w-lg w-full">
             <div
@@ -88,6 +88,7 @@ import { useRoute, useRouter } from "vue-router";
 import { CheckCircle2, BellRing, ShieldCheck } from "lucide-vue-next";
 import BaseButton from "~/components/ui/BaseButton.vue";
 import { useBookingStore } from "~/stores/booking";
+import { fetchAuthUser } from "~/composables/useAuthUser";
 
 useHead({ title: "Booking Submitted" });
 definePageMeta({ navVariant: 1 });
@@ -95,8 +96,6 @@ definePageMeta({ navVariant: 1 });
 const route = useRoute();
 const router = useRouter();
 const bookingStore = useBookingStore();
-
-const uuid = route.params.branch_uuid as string;
 
 const category = computed<"homecare" | "facility">(
     () => bookingStore.category ?? "homecare",
@@ -106,6 +105,7 @@ const referenceId = computed(() => bookingStore.lastSubmittedId ?? "");
 
 onMounted(() => {
     bookingStore.$reset?.();
+    fetchAuthUser();
 });
 
 function goHome() {

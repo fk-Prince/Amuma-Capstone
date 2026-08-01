@@ -3,53 +3,36 @@
 namespace App\Repository;
 
 use App\Models\Invoice;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class InvoiceRepository
 {
-    public function paginate(int $perPage = 15, ?string $companyId = null)
-    {
-        $query = Invoice::latest();
-
-        if ($companyId) {
-            $query->where('company_id', $companyId);
-        }
-
-        return $query->paginate($perPage);
-    }
-
     public function create(array $payload)
     {
         return Invoice::create($payload);
     }
 
-    public function findByUuid(string $uuid)
+    public function getInvoiceBalanceForSchedule(string $scheduleCode)
     {
-        return Invoice::where('uuid', $uuid)->first();
-    }
+        $invoice = Invoice::query()
+            ->whereHas('invoiceServices.scheduleService.schedule.patient', function ($query) use ($scheduleCode) {
+                $query->where('schedule_code', $scheduleCode);
+            })
+            ->with('payments')
+            ->first();
 
-    public function update(string $uuid, array $payload)
-    {
-        $model = $this->findByUuid($uuid);
-        if ($model) {
-            $model->update($payload);
+        if (! $invoice) {
+            return null;
         }
-        return $model;
-    }
 
-    public function delete(string $uuid)
-    {
-        $model = $this->findByUuid($uuid);
-        if ($model) {
-            return $model->delete();
-        }
-        return false;
-    }
-
-    public function restore(string $uuid)
-    {
-        $model = Invoice::withTrashed()->where('uuid', $uuid)->firstOrFail();
-        $model->restore();
-        return $model;
+        return $invoice;
+        // return [
+        //     'invoice_id' => $invoice->invoice_id,
+        //     'invoice_code' => $invoice->invoice_code,
+        //     'invoice_total' => (float) $invoice->total,
+        //     'amount_paid' => $invoice->amount_paid,
+        //     'balance_due' => $invoice->balance_due,
+        //     'status' => $invoice->status,
+        //     'is_collected' => $invoice->is_collected,
+        // ];
     }
 }

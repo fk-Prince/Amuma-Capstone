@@ -217,25 +217,29 @@ import {
 import { useAuthUser } from "~/composables/useAuthUser";
 import { type Service } from "~/types/service";
 import { serviceService } from "~/api/service/ServiceService";
-import type { BranchRetrieve } from "~/types/branch";
-import { branchService } from "~/api/branch/BranchService";
 import { useBookingStore } from "~/stores/booking";
+import { useBranch } from "~/composables/useBranchProvider";
 
 useHead({ title: "Patient Details" });
-definePageMeta({ navVariant: 1 });
+definePageMeta({
+    navVariant: 1,
+    middleware: ["auth-client"],
+    // middleware: ["auth-client", "provider-guard"],
+});
 
 const user = useAuthUser();
 const bookingStore = useBookingStore();
-const loading = ref(true);
 const route = useRoute();
 const router = useRouter();
 const uuid = computed(() => route.params.branch_uuid as string);
+
+const { branch, fetchBranch } = useBranch();
+const loading = ref(true);
 
 const category = computed<"homecare" | "facility">(() =>
     route.query.category === "facility" ? "facility" : "homecare",
 );
 
-const branch = ref<BranchRetrieve | null>(null);
 const serviceData = ref<Service[]>([]);
 
 const homecareSchema = computed(() =>
@@ -250,10 +254,6 @@ const {
     patientErrors,
     guardianErrors,
     assessmentErrors,
-    step1Valid,
-    step2Valid,
-    step3Valid,
-    step4Valid,
     progress,
     completedSteps,
     validateAll,
@@ -273,26 +273,29 @@ const {
 
 onMounted(async () => {
     loading.value = true;
-
     try {
-        const [branchRes, serviceRes]: any = await Promise.all([
-            branchService.get(uuid.value),
-            serviceService.getBranchService(uuid.value),
-        ]);
-
-        branch.value = branchRes?.data ?? branchRes;
-        serviceData.value =
-            serviceRes?.services ?? serviceRes?.data?.services ?? [];
-    } catch (err: any) {
-        console.error(err);
-    } finally {
-        loading.value = false;
-
+        if (
+            !branch.value?.homecare ||
+            !branch.value.facility ||
+            !branch.value
+        ) {
+            await fetchBranch(uuid.value);
+        }
+        await Promise.all([loadServices()]);
         if (route.query.step) {
             scrollTo(route.query.step as string);
         }
+    } catch (err) {
+        console.error(err);
+    } finally {
+        loading.value = false;
     }
 });
+
+const loadServices = async () => {
+    const res: any = await serviceService.getBranchService(uuid.value);
+    serviceData.value = res?.services ?? res?.data?.services ?? [];
+};
 
 async function submit() {
     const firstInvalid = validateAll();

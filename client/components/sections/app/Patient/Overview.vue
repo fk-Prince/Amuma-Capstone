@@ -12,7 +12,7 @@ import {
     BedDouble,
 } from "lucide-vue-next";
 import type { PatientRetrieve } from "~/types/patient";
-import { stringToDate } from "~/utils/time";
+import { formatDate } from "~/utils/time";
 
 defineProps<{
     patient: PatientRetrieve;
@@ -40,7 +40,6 @@ function statusClasses(status?: string) {
 
 <template>
     <div class="space-y-6">
-        <!-- Patient Overview -->
         <section class="rounded-2xl bg-white p-6 shadow-sm">
             <div class="flex items-start gap-4">
                 <div
@@ -90,7 +89,7 @@ function statusClasses(status?: string) {
                     <div>
                         <p class="text-xs text-muted">Birthday</p>
                         <p class="mt-0.5 text-sm font-medium text-[#16302E]">
-                            {{ stringToDate(patient.date_of_birth) }}
+                            {{ formatDate(patient.date_of_birth) }}
                         </p>
                     </div>
                 </div>
@@ -167,29 +166,31 @@ function statusClasses(status?: string) {
         </section>
 
         <section
-            v-if="patient.admission?.length"
+            v-if="patient.admissions?.length"
             class="rounded-2xl bg-white p-6 shadow-sm"
         >
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <Building2 class="h-4 w-4 text-[#0E7C7B]" />
                     <h3 class="font-semibold text-[#16302E]">
-                        Admission{{ patient.admission.length === 1 ? "" : "s" }}
+                        Admission{{
+                            patient.admissions.length === 1 ? "" : "s"
+                        }}
                     </h3>
                 </div>
 
                 <span
                     class="rounded-full bg-[#EAF4F2] px-2.5 py-1 text-xs font-medium text-[#0E7C7B]"
                 >
-                    {{ patient.admission.length }} Record{{
-                        patient.admission.length === 1 ? "" : "s"
+                    {{ patient.admissions.length }} Record{{
+                        patient.admissions.length === 1 ? "" : "s"
                     }}
                 </span>
             </div>
 
             <div class="mt-5 space-y-5">
                 <div
-                    v-for="admission in patient.admission"
+                    v-for="admission in patient.admissions"
                     :key="admission.patient_admission_id"
                     class="rounded-xl bg-[#F7FAF9] p-4 transition hover:bg-[#EAF4F2]/60"
                 >
@@ -201,6 +202,7 @@ function statusClasses(status?: string) {
                                 >
                                     {{ admission.status }}
                                 </p>
+
                                 <p
                                     v-if="
                                         admission.status
@@ -211,14 +213,16 @@ function statusClasses(status?: string) {
                                     class="mt-0.5 text-xs text-muted"
                                 >
                                     at
-                                    {{ stringToDate(admission.end_date) }}
+                                    {{ formatDate(admission.end_date) }}
                                 </p>
                             </div>
+
                             <div class="flex items-center gap-1">
                                 <p class="mt-0.5 text-xs text-muted">
                                     Admitted at
-                                    {{ stringToDate(admission.admitted_at) }}
+                                    {{ formatDate(admission.admitted_at) }}
                                 </p>
+
                                 <p
                                     v-if="
                                         admission.status
@@ -228,14 +232,12 @@ function statusClasses(status?: string) {
                                     "
                                     class="mt-0.5 text-xs text-muted"
                                 >
-                                    till to
-                                    {{
-                                        stringToDate(admission.end_date) ??
-                                        "TBD"
-                                    }}
+                                    till
+                                    {{ formatDate(admission.end_date) }}
                                 </p>
                             </div>
                         </div>
+
                         <span
                             class="shrink-0 rounded-full px-3 py-1 text-xs font-medium capitalize"
                             :class="statusClasses(admission.status)"
@@ -270,9 +272,47 @@ function statusClasses(status?: string) {
                             <div>
                                 <p class="text-[11px] text-muted">Bed</p>
                                 <p class="text-sm font-medium text-[#16302E]">
-                                    {{ admission.bed?.bed_no || "—" }} —
-                                    {{ admission.contract?.accommodation_type }}
+                                    {{ admission.bed?.bed_no || "—" }}
                                 </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Invoices -->
+                    <div
+                        v-if="admission.invoices?.length"
+                        class="mt-4 border-t border-[#E4EFED] pt-4"
+                    >
+                        <p class="mb-2 text-xs font-semibold text-[#16302E]">
+                            Contracts / Invoices
+                        </p>
+
+                        <div class="space-y-2">
+                            <div
+                                v-for="invoice in admission.invoices"
+                                :key="invoice.invoice_facility_id"
+                                class="rounded-lg bg-white px-3 py-2 border border-[#E4EFED]"
+                            >
+                                <div class="flex justify-between">
+                                    <span class="text-xs text-muted">
+                                        {{ invoice.contract?.category || "—" }}
+                                    </span>
+
+                                    <span
+                                        class="text-xs font-semibold text-[#0E7C7B]"
+                                    >
+                                        ₱{{ invoice.price }}
+                                    </span>
+                                </div>
+
+                                <div class="mt-1 text-xs text-[#16302E]">
+                                    {{
+                                        invoice.contract?.accommodation_type ||
+                                        "—"
+                                    }}
+                                    ·
+                                    {{ invoice.contract?.billing_cycle || "—" }}
+                                </div>
                             </div>
                         </div>
                     </div>

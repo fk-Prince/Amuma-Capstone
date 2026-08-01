@@ -8,29 +8,28 @@ use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Repository\BranchContractRepository;
 use App\Http\Resources\BranchContractResource;
+use App\Models\Booking;
+use App\Models\BranchContract;
 use App\Models\User;
+use App\Repository\BookingRepository;
 use App\Repository\BranchRepository;
+use App\Repository\RoomRepository;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class BranchContractService
 {
-    private BranchContractRepository $branchContractRepository;
-    private BranchRepository $branchRepository;
-
-    public function __construct(BranchContractRepository $branchContractRepository, BranchRepository $branchRepository)
-    {
-        $this->branchContractRepository = $branchContractRepository;
-        $this->branchRepository = $branchRepository;
-    }
+    public function __construct(
+        private BranchContractRepository $branchContractRepository,
+        private RoomRepository $roomRepository,
+        private BookingRepository $bookingRepository
+    ) {}
 
 
     public function overview(User $user, array $payload)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
-        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Pricing,  PermissionAction::Read);
-
         return [
-            'total_active_plans' => $this->branchContractRepository->overview($payload, $branch->branch_id),
+            'total_active_plans' => $this->branchContractRepository->overview($payload, $payload['branch_id']),
             'patient_with_plan' => 5,
             'new_monthy_patients' => 10,
             'patient_retention' => '99%',
@@ -41,14 +40,10 @@ class BranchContractService
         ];
     }
 
-
     public function createBranchContract(User $user, array $payload)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
-        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Pricing,  PermissionAction::Create);
-
         $existingContract = $this->branchContractRepository->findByField([
-            ['branch_id', '=', $branch->branch_id],
+            ['branch_id', '=', $payload['branch_id']],
             ['category', '=', $payload['category']],
             ['accommodation_type', '=', $payload['accommodation_type']],
             ['billing_cycle', '=', $payload['billing_cycle']],
@@ -62,7 +57,7 @@ class BranchContractService
         }
 
         $payload = [
-            'branch_id' => $branch->branch_id,
+            'branch_id' => $payload['branch_id'],
             'category' => $payload['category'],
             'accommodation_type' => $payload['accommodation_type'],
             'price' => $payload['price'],
@@ -80,19 +75,12 @@ class BranchContractService
 
     public function list(User $user, array $payload)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
-        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Pricing,  PermissionAction::Read);
-
-        $data = $this->branchContractRepository->all($branch->branch_id);
-
+        $data = $this->branchContractRepository->all($payload['branch_id']);
         return $data;
     }
 
     public function updateBranchContract(User $user, array $payload, string $id)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
-        AuthGuard::requireModule($user,  $branch->branch_id, ModuleEnum::Pricing, PermissionAction::Update);
-
         $contract = $this->branchContractRepository->findByField([
             ['branch_contract_id', '=', $id],
         ]);
@@ -102,7 +90,7 @@ class BranchContractService
         }
 
         $existingContract = $this->branchContractRepository->findByField([
-            ['branch_id', '=', $branch->branch_id],
+            ['branch_id', '=', $payload['branch_id']],
             ['category', '=', $payload['category']],
             ['accommodation_type', '=', $payload['accommodation_type']],
             ['billing_cycle', '=', $payload['billing_cycle']],
@@ -128,5 +116,87 @@ class BranchContractService
             'message' => 'Branch contract updated successfully.',
             'data' => new BranchContractResource($contract->fresh()),
         ];
+    }
+
+    public function roomContract(User $user, array $payload)
+    {
+        $contracts = $this->branchContractRepository->findAllByConditions([
+            ['category', '=', BranchContract::CAREGORY_FACILITY],
+            ['branch_id', '=', $payload['branch_id']],
+            ['is_active', '=', true],
+        ]);
+
+        $rooms = $this->roomRepository->findAllByConditions([
+            ['branch_id', '=', $payload['branch_id']],
+        ]);
+
+        $rooms->load('availableBeds');
+
+        $bookings = $this->bookingRepository->findBookings([
+            ['status', '=', Booking::STATUS_AWAITING],
+            ['branch_id', '=', $payload['branch_id']],
+        ]);
+
+        $reservedBedIds = collect($bookings)->map(function ($booking) {
+            return $booking->booking_data['reserved']['bed']['bed_id'] ?? null;
+        })->filter()->values();
+        $totalReservedBeds = $reservedBedIds->count();
+        return $contracts->map(function ($contract) use ($rooms, $reservedBedIds, $totalReservedBeds) {
+
+            $matchingRooms = $rooms
+                ->filter(
+                    fn($room) =>
+                    strcasecmp($room->room_type, $contract->accommodation_type) === 0
+                )
+                ->map(function ($room) use ($reservedBedIds) {
+
+                    $beds = $room->availableBeds
+                        ->map(fn($bed) => [
+                            'bed_id' => $bed->bed_id,
+                            'bed_no' => $bed->bed_no,
+                            'status' => $reservedBedIds->contains($bed->bed_id)
+                                ? 'Reserved'
+                                : $bed->status,
+                        ])
+                        ->values();
+
+                    $availableBeds = $beds->where('status', 'Available')->values();
+                    $reservedBeds = $beds->where('status', 'Reserved')->values();
+
+                    if ($availableBeds->isEmpty() && $reservedBeds->isEmpty()) {
+                        return null;
+                    }
+
+                    return [
+                        'capacity' => $room->capacity,
+                        'room_id' => $room->room_id,
+                        'room_no' => $room->room_no,
+                        'room_type' => $room->room_type,
+                        'floor' => $room->floor,
+                        'available_beds_count' => $availableBeds->count(),
+                        'reserved_beds_count' => $reservedBeds->count(),
+                        'beds' => $beds,
+                    ];
+                })
+                ->filter()
+                ->values();
+
+            if ($matchingRooms->isEmpty()) {
+                return null;
+            }
+
+            return [
+                'contract_id' => $contract->branch_contract_id,
+                'accommodation_type' => $contract->accommodation_type,
+                'price' => $contract->price,
+                'billing_cycle' => $contract->billing_cycle,
+                'total_reserved_beds' => $totalReservedBeds,
+                'available_beds_count' => $matchingRooms->sum('available_beds_count'),
+                'reserved_beds_count' => $matchingRooms->sum('reserved_beds_count'),
+                'rooms' => $matchingRooms,
+            ];
+        })
+            ->filter()
+            ->values();
     }
 }

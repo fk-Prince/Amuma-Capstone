@@ -10,7 +10,6 @@ use App\Http\Resources\ServiceResource;
 use App\Models\EmployeeBranch;
 use App\Repository\ServiceRepository;
 use App\Models\User;
-use App\Repository\BranchRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\EmployeeRepository;
 
@@ -20,14 +19,12 @@ use Illuminate\Support\Facades\DB;
 class ServiceService
 {
     private ServiceRepository $serviceRepository;
-    private BranchRepository $branchRepository;
     private CategoryRepository $categoryRepository;
     private EmployeeRepository $employeeRepository;
 
-    public function __construct(ServiceRepository $serviceRepository, BranchRepository $branchRepository, CategoryRepository $categoryRepository,  EmployeeRepository $employeeRepository)
+    public function __construct(ServiceRepository $serviceRepository, CategoryRepository $categoryRepository,  EmployeeRepository $employeeRepository)
     {
         $this->serviceRepository = $serviceRepository;
-        $this->branchRepository = $branchRepository;
         $this->categoryRepository = $categoryRepository;
         $this->employeeRepository = $employeeRepository;
     }
@@ -35,7 +32,7 @@ class ServiceService
     public function createService(array $payload, User $user)
     {
 
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
 
         $existingService = $this->serviceRepository->existsInBranch(
@@ -87,10 +84,10 @@ class ServiceService
 
         return DB::transaction(function () use ($payload, $id, $user) {
 
-            $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+            $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
             AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Update);
 
-            $existingService = $this->serviceRepository->findByFields([
+            $existingService = $this->serviceRepository->findOneByFields([
                 ['branch_id', '=', $branch->branch_id],
                 ['service_id', '=', $id],
             ]);
@@ -133,7 +130,7 @@ class ServiceService
 
     public function getBranchService(array $payload)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
 
         $branch->load([
             'services.categories',
@@ -162,7 +159,7 @@ class ServiceService
 
     // public function retrieveService(array $payload, User $user)
     // {
-    //     $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+    //     $branch = BranchGuard::resolveBranch( $payload['branch_uuid']);
     //     AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Read);
 
     //     $branch->load([
@@ -197,7 +194,7 @@ class ServiceService
     public function retrieveService(array $payload, User $user)
     {
         $branch = BranchGuard::resolveBranch(
-            $this->branchRepository,
+
             $payload['branch_uuid']
         );
 
@@ -251,7 +248,7 @@ class ServiceService
 
     // public function assignEmployeeService(User $user, array $payload)
     // {
-    //     $branch = $this->branchRepository->findByField('uuid', $payload['branch_uuid']);
+    //     $branch = >findByField('uuid', $payload['branch_uuid']);
     //     if (!$branch)  throw new Exception(__('Branch does not exist'), 404);
 
     //     AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
@@ -284,7 +281,7 @@ class ServiceService
 
     public function assignEmployeeService(User $user, array $payload)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
         AuthGuard::requireModule($user,  $branch->branch_id,  ModuleEnum::Services, PermissionAction::Create);
 
         foreach ($payload['employee_service'] as $item) {

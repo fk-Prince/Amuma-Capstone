@@ -16,12 +16,12 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
 {
     private string $secretKey;
     private SubscriptionService $subscriptionService;
-    private BookingService $bookingService;
-    public function __construct(SubscriptionService $subscriptionService, BookingService $bookingService)
+    // private BookingService $bookingService; BookingService $bookingService
+    public function __construct(SubscriptionService $subscriptionService,)
     {
         $this->secretKey = config('services.xendit.secret_key');
         $this->subscriptionService = $subscriptionService;
-        $this->bookingService = $bookingService;
+        // $this->bookingService = $bookingService;
     }
 
     public function subscriptionInvoice(array $payload, array $subscription)
@@ -115,7 +115,7 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                 'external_id'       => $charge['external_id'] ?? null,
                 'xendit_invoice_id' => $charge['id'] ?? null,
             ];
-            return $this->bookingService->createPaymentBooking($user, $payload);
+            // return $this->bookingService->createPaymentBooking($user, $payload);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             return response()->json([
                 'message' => 'The external service took too long to respond.'

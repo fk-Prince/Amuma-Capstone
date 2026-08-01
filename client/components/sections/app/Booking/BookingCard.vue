@@ -1,15 +1,21 @@
 <template>
     <tr class="group hover:bg-[#F7FAF9] transition-colors">
         <td class="py-4 pl-6 pr-3 whitespace-nowrap">
-            <span
-                class="inline-flex items-center gap-2 text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B]"
-            >
+            <div class="flex flex-col gap-1">
                 <span
-                    class="w-1.5 h-1.5 rounded-full"
-                    :class="statusDotClasses(booking.status)"
-                />
-                #{{ booking.reference_id }}
-            </span>
+                    class="inline-flex items-center gap-2 text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] w-fit"
+                >
+                    <span
+                        class="w-1.5 h-1.5 rounded-full"
+                        :class="statusDotClasses(booking.status)"
+                    />
+                    #{{ booking.reference_id }}
+                </span>
+
+                <span class="text-[11px] text-gray-400">
+                    {{ stringToDateTime(booking.created_at) }}
+                </span>
+            </div>
         </td>
 
         <td class="py-4 px-3 min-w-[220px]">
@@ -66,12 +72,6 @@
             }}
         </td>
 
-        <!-- <td
-            class="py-4 px-3 text-sm font-medium text-[#16302E] whitespace-nowrap"
-        >
-            {{ formatCurrency(totalPrice(booking)) }}
-        </td> -->
-
         <td class="py-4 px-3 whitespace-nowrap">
             <span
                 class="px-3 py-1 rounded-full text-xs font-medium capitalize"
@@ -120,6 +120,7 @@
 <script lang="ts" setup>
 import { useRoute, useRouter } from "vue-router";
 import { fullName } from "~/utils/user";
+import { stringToDateTime } from "~/utils/time";
 
 const props = defineProps<{
     booking: any;

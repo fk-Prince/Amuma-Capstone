@@ -16,7 +16,7 @@ class BranchContractService extends BaseService {
     }
 
 
-    async list(params: object = {}): Promise<any> {
+    async list(params: object = {}): Promise<any> { // used
         return await this.request(this.resource, 'GET', params);
     }
 

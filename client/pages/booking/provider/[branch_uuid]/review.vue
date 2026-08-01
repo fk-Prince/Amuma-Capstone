@@ -132,12 +132,15 @@ import BookingSteps from "~/components/sections/booking/provider/BookingSteps.vu
 import BaseButton from "~/components/ui/BaseButton.vue";
 import { useBookingStore } from "~/stores/booking";
 import { bookingService } from "~/api/booking/BookingService";
-import PaymentForm from "~/components/forms/PaymentForm.vue";
 import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import type { CardDetails } from "~/types/payment";
 
 useHead({ title: "Review Booking" });
-definePageMeta({ navVariant: 1 });
+definePageMeta({
+    navVariant: 1,
+    // middleware: ["auth-client", "booking-review-guard"],
+    middleware: ["auth-client"],
+});
 
 const route = useRoute();
 const router = useRouter();
@@ -190,78 +193,78 @@ const bookingData = computed(() => ({
     assessment: bookingStore.assessment,
 }));
 
-async function handleCardPay() {
-    if (processingPayment.value) return;
-    processingPayment.value = true;
-    try {
-        await cardPayment({
-            card,
-            amount: 5000, // TODO: to be change
-            onClose: () => {
-                processingPayment.value = false;
-            },
+// async function handleCardPay() {
+//     if (processingPayment.value) return;
+//     processingPayment.value = true;
+//     try {
+//         await cardPayment({
+//             card,
+//             amount: 5000, // TODO: to be change
+//             onClose: () => {
+//                 processingPayment.value = false;
+//             },
 
-            createPayment: ({ token_id, authentication_id }) =>
-                bookingService.facilityBooking({
-                    branch_uuid: uuid,
-                    token_id,
-                    authentication_id,
-                    booking_data: bookingData.value,
-                    payment_method: "CREDIT-CARD",
-                    category: bookingStore.category,
-                }),
+//             createPayment: ({ token_id, authentication_id }) =>
+//                 bookingService.facilityBooking({
+//                     branch_uuid: uuid,
+//                     token_id,
+//                     authentication_id,
+//                     booking_data: bookingData.value,
+//                     payment_method: "CREDIT-CARD",
+//                     category: bookingStore.category,
+//                 }),
 
-            onSuccess: async (result) => {
-                // await navigateTo({
-                //     path: `/booking/provider/${uuid}/success`,
-                //     query: {
-                //         status: result.status,
-                //     },
-                // });
-            },
-        });
-    } catch (err: any) {
-        toast.error(err?.message ?? "Payment failed.");
-    } finally {
-        processingPayment.value = false;
-    }
-}
+//             onSuccess: async (result) => {
+//                 // await navigateTo({
+//                 //     path: `/booking/provider/${uuid}/success`,
+//                 //     query: {
+//                 //         status: result.status,
+//                 //     },
+//                 // });
+//             },
+//         });
+//     } catch (err: any) {
+//         toast.error(err?.message ?? "Payment failed.");
+//     } finally {
+//         processingPayment.value = false;
+//     }
+// }
 
-async function handleGCashPay() {
-    if (processingPayment.value) return;
-    processingPayment.value = true;
-    try {
-        await gcashPayment({
-            closeModal,
+// async function handleGCashPay() {
+//     if (processingPayment.value) return;
+//     processingPayment.value = true;
+//     try {
+//         await gcashPayment({
+//             closeModal,
 
-            createPayment: () =>
-                bookingService.facilityBooking({
-                    branch_uuid: uuid,
-                    booking_data: bookingData.value,
-                    payment_method: "GCASH",
-                    category: bookingStore.category,
-                    payment_type: "BOOKING_FACILITY",
-                }),
+//             createPayment: () =>
+//                 bookingService.facilityBooking({
+//                     branch_uuid: uuid,
+//                     booking_data: bookingData.value,
+//                     payment_method: "GCASH",
+//                     category: bookingStore.category,
+//                     payment_type: "BOOKING_FACILITY",
+//                 }),
 
-            onSuccess: async (result) => {
-                await navigateTo({
-                    path: "/subscription/success",
-                    query: {
-                        status: result.status,
-                    },
-                });
-            },
+//             onSuccess: async (result) => {
+//                 await navigateTo({
+//                     path: "/subscription/success",
+//                     query: {
+//                         status: result.status,
+//                     },
+//                 });
+//             },
 
-            onClose: () => {
-                processingPayment.value = false;
-            },
-        });
-    } catch (err: any) {
-        console.error(err);
-    } finally {
-        processingPayment.value = false;
-    }
-}
+//             onClose: () => {
+//                 processingPayment.value = false;
+//             },
+//         });
+//     } catch (err: any) {
+//         console.error(err);
+//     } finally {
+//         processingPayment.value = false;
+//     }
+// }
 
 async function handleSubmit() {
     if (submitting.value) return;
@@ -278,16 +281,23 @@ async function handleSubmit() {
     };
 
     try {
-        await bookingService.create({
+        const res = await bookingService.create({
             branch_uuid: uuid,
             category: bookingStore.category,
             booking_data,
         });
-        toast.success("Your booking request was submitted successfully!");
-        router.push(`/booking/provider/${uuid}/success`);
+        toast.success(res.message);
+        router.push({
+            path: `/booking/provider/${uuid}/success`,
+            // query: {
+            //     message: res.message,
+            // },
+        });
     } catch (err: any) {
-        console.error(err);
-        toast.error("Something went wrong while submitting your request.");
+        toast.error(
+            err.message ??
+                "Something went wrong while submitting your request.",
+        );
     } finally {
         submitting.value = false;
     }

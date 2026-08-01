@@ -12,118 +12,159 @@ use App\Repository\BranchRepository;
 use App\Repository\LocationRepository;
 use App\Repository\PatientRepository;
 use App\Repository\UserRepository;
+use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class PatientService
 {
     public function __construct(
         private PatientRepository $patientRepository,
         private LocationRepository $locationRepository,
-        private BranchRepository $branchRepository,
         private UserRepository $userRepository,
-        private PatientAdmissionService $patientAdmissionService,
+        private InvoiceService $invoiceService
     ) {}
 
     public function createPatient(array $payload, User $user)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
+        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Bookings,  PermissionAction::Create);
-
         return match (true) {
-            $payload['type'] === 'Medical'
+            $payload['type'] === 'Medical' || $payload['type'] === 'ADL'
             => $this->createMedicalPatient($branch->branch_id, $payload),
-
-            $payload['type'] === 'Complete'
-                && $payload['category'] === 'Facility'
-            => $this->createFacilityPatient($branch->branch_id, $payload),
 
             default => throw new Exception('Unsupported booking type.', 422),
         };
     }
 
+    // DONE MEDICAL
     private function createMedicalPatient(int $branchId, array $payload)
     {
-        $patientData = $payload['patientData'];
-        $serviceData = $payload['serviceData'];
-        $assessment = $payload['assessmentData'];
-
-        if (!empty($patientData['address'])) {
-            $patientLocation = $this->locationRepository->create([
-                'full_address' => $patientData['address'],
-            ]);
-        }
+        $patient = $payload['patient'];
+        $service = $payload['service'];
+        $assessment = $payload['assessment'];
+        $assignments = $payload['assignments'] ?? [];
 
         $scheduledLocation = $this->locationRepository->create([
-            'full_address' => $serviceData['address'],
+            'full_address' => $service['address'],
         ]);
 
 
         $patient = $this->patientRepository->create([
             'branch_id'          => $branchId,
             'location_id'        => $scheduledLocation->location_id,
-            'first_name'         => $patientData['first_name'],
-            'middle_name'        => $patientData['middle_name'],
-            'last_name'          => $patientData['last_name'],
-            'gender'             => $patientData['gender'] ?? null,
-            'height'             => $patientData['height'] ?? null,
-            'weight'             => $patientData['weight'] ?? null,
-            'blood_type'         => $patientData['blood_type'] ?? null,
-            'date_of_birth'      => $patientData['date_of_birth'] ?? null,
-            'phone_number'       => $patientData['phone_number'] ?? null,
-            'citizenship'        => $patientData['citizenship'] ?? null,
+            'first_name'         => $patient['first_name'],
+            'middle_name'        => $patient['middle_name'],
+            'last_name'          => $patient['last_name'],
+            'gender'             => $patient['gender'] ?? null,
+            'height'             => $patient['height'] ?? null,
+            'weight'             => $patient['weight'] ?? null,
+            'blood_type'         => $patient['blood_type'] ?? null,
+            'date_of_birth'      => $patient['date_of_birth'] ?? null,
+            'phone_number'       => $patient['phone_number'] ?? null,
+            'citizenship'        => $patient['citizenship'] ?? null,
             'initial_assessment' => $assessment,
             'medication'         => [],
         ]);
 
+
+        $scheduledAt = Carbon::parse(
+            $service['date'] . ' ' . $service['prefered_time']
+        );
+
         $schedule = $patient->schedules()->create([
-            // 'scheduled_location_id' => $scheduledLocation->location_id,
-            'scheduled_at'          => $serviceData['date'],
+            'scheduled_at'          => $scheduledAt,
             'status'                => 'Pending',
             'category'              => $payload['category'],
         ]);
 
-        foreach ($serviceData['services'] as $service) {
-            $schedule->scheduleServices()->create([
-                'service_id'   => $service['service_id'] ?? null,
-                'hours_booked' => $serviceData['time_span'],
-                'status'       => 'pending',
-                'type'         => $serviceData['type'],
-            ]);
+        $invoiceServices = [];
+        $scheduleServices = [];
+
+
+        // FOR MEDICAL
+        if (!empty($service['services'])) {
+            foreach ($service['services'] as $item) {
+                $scheduleService = $schedule->scheduleServices()->create([
+                    'service_id'   => $item['service_id'] ?? null,
+                    'hours_booked' => $service['time_span'] ?? null,
+                    'status'       => 'pending',
+                    'type'         => $service['type'],
+                ]);
+
+                $scheduleServices[] = $scheduleService;
+
+                $invoiceServices[] = [
+                    'schedule_services_id' => $scheduleService->schedule_services_id,
+                    'price' => $item['price']
+                ];
+            }
         }
 
-        return $patient;
+        // FOR ADL
+        if (empty($service['services'])) {
+            $scheduleService = $schedule->scheduleServices()->create([
+                'hours_booked' => $service['time_span'] ?? null,
+                'status'       => 'pending',
+                'type'         => $service['type'],
+            ]);
+
+            $invoiceServices[] = [
+                'schedule_services_id' => $scheduleService->schedule_services_id,
+                'price' =>  $payload['payment']['total_amount'],
+            ];
+        }
+
+        // FOR ASSIGNEMTN IF THERE IS 
+        if (!empty($assignments)) {
+            foreach ($assignments as $assignment) {
+                foreach ($scheduleServices as $scheduleService) {
+                    $scheduleService->assigned()->create([
+                        'employee_id' => $assignment['employee_id'] ?? null,
+                    ]);
+                }
+            }
+        }
+
+        $invoice = $this->invoiceService->createInvoiceService($invoiceServices, $branchId);
+
+        return [
+            'patient' => $patient,
+            'invoice' =>   $invoice,
+            'message' => 'Homecare booking has been approved successfully.',
+        ];
     }
 
-    private function createFacilityPatient(int $branchId, array $payload)
+    // DONE MEDICAL
+    public function createFacilityPatient(int $branchId, array $payload)
     {
-        $patientData = $payload['patientData'];
-        $guardianData = $payload['guardianData'];
-        $serviceData = $payload['serviceData'];
-        $assessment = $payload['assessmentData'];
+        $patient = $payload['patient'];
+        $guardian = $payload['guardian'];
+        $assessment = $payload['assessment'];
 
 
         $patientLocation = null;
-        if (!empty($patientData['address'])) {
+        if (!empty($patient['address'])) {
             $patientLocation = $this->locationRepository->create([
-                'full_address' => $patientData['address'],
+                'full_address' => $patient['address'],
             ]);
         }
 
         $patient = $this->patientRepository->create([
             'branch_id'          => $branchId,
             'location_id'        => $patientLocation?->location_id ?? null,
-            'first_name'         => $patientData['first_name'],
-            'middle_name'        => $patientData['middle_name'],
-            'last_name'          => $patientData['last_name'],
-            'gender'             => $patientData['gender'] ?? null,
-            'height'             => $patientData['height'] ?? null,
-            'weight'             => $patientData['weight'] ?? null,
-            'blood_type'         => $patientData['blood_type'] ?? null,
-            'date_of_birth'      => $patientData['date_of_birth'] ?? null,
-            'phone_number'       => $patientData['phone_number'] ?? null,
-            'citizenship'        => $patientData['citizenship'] ?? null,
-            'occupation'         => $patientData['occupation'] ?? null,
-            'marital_status'     => $patientData['marital_status'] ?? null,
+            'first_name'         => $patient['first_name'],
+            'middle_name'        => $patient['middle_name'],
+            'last_name'          => $patient['last_name'],
+            'gender'             => $patient['gender'] ?? null,
+            'height'             => $patient['height'] ?? null,
+            'weight'             => $patient['weight'] ?? null,
+            'blood_type'         => $patient['blood_type'] ?? null,
+            'date_of_birth'      => $patient['date_of_birth'] ?? null,
+            'phone_number'       => $patient['phone_number'] ?? null,
+            'citizenship'        => $patient['citizenship'] ?? null,
+            'occupation'         => $patient['occupation'] ?? null,
+            'marital_status'     => $patient['marital_status'] ?? null,
             'initial_assessment' => $assessment,
         ]);
 
@@ -131,48 +172,36 @@ class PatientService
             throw new Exception('Unable to create patient.', 500);
         }
 
-        $admission = $this->patientAdmissionService->registerPatientBed([
-            'branch_id' => $branchId,
-            'bed_id' => 3, // Replace with selected bed later
-            'patient' => [
-                'patient_id' => $patient->patient_id,
-            ],
-            'plan' => $serviceData['plan'],
-            'billing_cycle' => $serviceData['billing_cycle'],
-            'type' => $serviceData['type'],
-            'admission_date' => $serviceData['admission_date'],
-        ]);
 
-        $guardianLocation = $this->locationRepository->create([
-            'full_address' => $guardianData['address'],
-        ]);
 
-        $guardianData['location_id'] = $guardianLocation->location_id;
-
-        $this->patientAccess($guardianData, $patient);
-
+        $patientAccess = $this->patientAccess($guardian, $patient);
         return [
             'patient' => $patient,
-            'patient_admission' => $admission,
+            'patientAccess' => $patientAccess,
         ];
     }
 
-    public function patientAccess(array $guardianData, object $patient)
+    public function patientAccess(array $guardian, object $patient)
     {
+        $guardianLocation = $this->locationRepository->create([
+            'full_address' => $guardian['address'],
+        ]);
+        $guardian['location_id'] = $guardianLocation->location_id;
+
         $client = $this->userRepository->createUpdateTypeUser([
-            'email' => $guardianData['email'],
-            'first_name' => $guardianData['first_name'],
-            'middle_name' => $guardianData['middle_name'],
-            'last_name' => $guardianData['last_name'],
-            'location_id' =>  $guardianData['location_id'],
-            'phone_number' => $guardianData['phone_number'],
-            'occupation' => $guardianData['occupation'],
+            'email' => $guardian['email'],
+            'first_name' => $guardian['first_name'],
+            'middle_name' => $guardian['middle_name'],
+            'last_name' => $guardian['last_name'],
+            'location_id' =>  $guardian['location_id'],
+            'phone_number' => $guardian['phone_number'],
+            'occupation' => $guardian['occupation'],
         ], 'client');
 
         $client->patientAccess()->create([
             'patient_id' => $patient->patient_id,
             'have_access' => true,
-            'relationship_type' => $guardianData['relationship'] ?? 'relative',
+            'relationship_type' => $guardian['relationship'] ?? 'relative',
         ]);
 
         return $client;
@@ -180,9 +209,7 @@ class PatientService
 
     public function retrievePatients(array $payload, User $user)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['branch_uuid']);
-        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Patients, PermissionAction::Read);
-        return PatientResource::collection($this->patientRepository->getPatient($branch->branch_id));
+        return PatientResource::collection($this->patientRepository->getPatient($payload));
     }
 
     public function showPatient(array $payload, User $user, string $uuid)

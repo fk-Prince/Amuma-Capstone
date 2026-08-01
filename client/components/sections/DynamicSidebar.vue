@@ -14,8 +14,8 @@
                 leave-to-class="opacity-0"
             >
                 <div
-                    v-if="open"
-                    class="fixed inset-0 z-[60] lg:hidden bg-black/50 backdrop-blur-sm"
+                    v-if="open && !isDesktop"
+                    class="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm"
                     @click="$emit('close')"
                 />
             </Transition>
@@ -29,7 +29,7 @@
                 leave-to-class="-translate-x-full"
             >
                 <aside
-                    v-if="open"
+                    v-if="open && !isDesktop"
                     class="fixed left-0 top-0 h-full w-72 bg-white shadow-2xl z-[70] flex flex-col lg:hidden"
                 >
                     <div
@@ -62,9 +62,7 @@
                                 :is="item.icon"
                                 class="w-5 h-5 shrink-0"
                             />
-                            <span v-if="!collapsed" class="truncate">{{
-                                item.label
-                            }}</span>
+                            <span class="truncate">{{ item.label }}</span>
                         </NuxtLink>
                     </nav>
 
@@ -157,23 +155,23 @@
     </ClientOnly>
 
     <aside
-        v-if="variant === 2"
+        v-if="variant === 2 && isDesktop"
         :class="[
             'hidden lg:flex h-full relative bg-white shadow-2xl flex-col shrink-0 transition-all duration-300',
-            collapsed ? 'w-20' : 'w-72',
+            desktopCollapsed ? 'w-20' : 'w-72',
         ]"
     >
         <button
-            @click="collapsed = !collapsed"
+            @click="desktopCollapsed = !desktopCollapsed"
             class="absolute bg-white border border-primary w-8 h-8 flex items-center justify-center rounded-full mx-auto"
             :class="
-                collapsed
+                desktopCollapsed
                     ? '-right-[21%] top-[1%] pl-0.5'
                     : '-right-[6%] top-[1%] pr-0.5'
             "
         >
             <component
-                :is="collapsed ? ChevronRight : ChevronLeft"
+                :is="desktopCollapsed ? ChevronRight : ChevronLeft"
                 class="text-primary"
             />
         </button>
@@ -197,14 +195,14 @@
                         v-else
                         :to="item.to"
                         :class="navClass(item.to)"
-                        :title="collapsed ? item.label : undefined"
+                        :title="desktopCollapsed ? item.label : undefined"
                     >
                         <component
                             v-if="item.icon"
                             :is="item.icon"
                             class="w-5 h-5 shrink-0"
                         />
-                        <span v-if="!collapsed" class="truncate">{{
+                        <span v-if="!desktopCollapsed" class="truncate">{{
                             item.label
                         }}</span>
                     </NuxtLink>
@@ -219,7 +217,7 @@
                         <div
                             class="w-9 h-9 rounded-full bg-gray-200 animate-pulse"
                         />
-                        <div v-if="!collapsed" class="flex-1 space-y-2">
+                        <div v-if="!desktopCollapsed" class="flex-1 space-y-2">
                             <div
                                 class="h-3 w-24 bg-gray-200 rounded animate-pulse"
                             />
@@ -229,7 +227,7 @@
                         </div>
                     </div>
                     <div
-                        v-if="!collapsed"
+                        v-if="!desktopCollapsed"
                         class="h-9 w-full bg-gray-200 rounded animate-pulse"
                     />
                 </template>
@@ -237,7 +235,7 @@
                 <template v-if="user">
                     <div
                         class="flex items-center gap-3 mb-3"
-                        :class="collapsed ? 'justify-center' : ''"
+                        :class="desktopCollapsed ? 'justify-center' : ''"
                     >
                         <div class="relative">
                             <img
@@ -249,7 +247,7 @@
                                 class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-white rounded-full"
                             />
                         </div>
-                        <div v-if="!collapsed" class="min-w-0">
+                        <div v-if="!desktopCollapsed" class="min-w-0">
                             <p class="truncate font-medium text-sm">
                                 {{ user.first_name }} {{ user.last_name }}
                             </p>
@@ -275,23 +273,25 @@
                     <button
                         @click="logout"
                         class="w-full flex items-center gap-2 text-red-500 hover:bg-red-50 px-3 py-2 rounded-lg"
-                        :title="collapsed ? 'Log out' : undefined"
+                        :title="desktopCollapsed ? 'Log out' : undefined"
                     >
                         <LogOut class="w-5 h-5 shrink-0" />
-                        <span v-if="!collapsed" class="truncate">Log out</span>
+                        <span v-if="!desktopCollapsed" class="truncate"
+                            >Log out</span
+                        >
                     </button>
                 </template>
 
                 <template v-else>
                     <div class="flex flex-col gap-2">
                         <NuxtLink to="/auth/signin" class="btn">
-                            <span v-if="!collapsed">Sign in</span>
+                            <span v-if="!desktopCollapsed">Sign in</span>
                             <span v-else>→</span>
                         </NuxtLink>
                         <NuxtLink
                             to="/auth/signup"
                             class="btn-secondary"
-                            v-if="!collapsed"
+                            v-if="!desktopCollapsed"
                         >
                             Sign up
                         </NuxtLink>
@@ -301,9 +301,8 @@
         </div>
     </aside>
 </template>
-
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
 import { authService } from "~/api/auth/AuthService";
 import { useToast } from "~/composables/useToast";
@@ -314,11 +313,6 @@ import { ChevronLeft, ChevronRight, LogOut } from "lucide-vue-next";
 import { useBranchStore } from "~/stores/branch";
 import { formatRole, roleMeta } from "~/utils/user";
 
-const branchStore = useBranchStore();
-
-const route = useRoute();
-const { success, error } = useToast();
-const collapsed = ref(false);
 const props = withDefaults(
     defineProps<{
         open: boolean;
@@ -338,16 +332,45 @@ const props = withDefaults(
     },
 );
 
-defineEmits<{
+const emit = defineEmits<{
     close: [];
     logout: [];
 }>();
+
+const branchStore = useBranchStore();
+const route = useRoute();
+
+const { success, error } = useToast();
+
+const desktopCollapsed = ref(false);
 
 const navItems = computed(() => props.authMenu ?? []);
 
 const activeRoleName = computed(
     () => branchStore.activeBranch?.role_name ?? null,
 );
+
+const isDesktop = ref(false);
+
+const checkScreen = () => {
+    isDesktop.value = window.innerWidth >= 1024;
+
+    if (isDesktop.value) {
+        emit("close");
+    } else {
+        desktopCollapsed.value = false;
+    }
+};
+
+onMounted(() => {
+    checkScreen();
+
+    window.addEventListener("resize", checkScreen);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener("resize", checkScreen);
+});
 
 function isActive(to: string) {
     return route.path === to || route.path.startsWith(to + "/");
@@ -356,7 +379,9 @@ function isActive(to: string) {
 function navClass(to: string) {
     return [
         "px-3 py-1.5 rounded-lg transition flex gap-2 items-center",
-        collapsed.value ? "lg:justify-center" : "",
+
+        desktopCollapsed.value ? "lg:justify-center" : "",
+
         isActive(to)
             ? "bg-primary hover:bg-primary/70 font-medium text-white hover:text-black stroke-white"
             : "text-gray-700 hover:bg-gray-200 stroke-black",
@@ -366,8 +391,11 @@ function navClass(to: string) {
 const logout = async () => {
     try {
         const res = await authService.logout();
+
         success(res.message);
+
         resetAuth();
+
         await navigateTo("/auth/signin");
     } catch (err: any) {
         error("Internal Server Error");

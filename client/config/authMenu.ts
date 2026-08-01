@@ -12,6 +12,7 @@ import {
     ClipboardMinus,
     Settings,
     CreditCard,
+    BookOpen
 } from 'lucide-vue-next';
 
 export interface MenuItems {
@@ -31,7 +32,7 @@ export const authMenuList: MenuItems[] = [
     },
     {
         label: "Bookings",
-        icon: LayoutDashboard,
+        icon: BookOpen,
         to: "/app/branches/[uuid]/bookings",
         modules: ["Bookings"],
     },
@@ -40,12 +41,6 @@ export const authMenuList: MenuItems[] = [
         icon: ClipboardList,
         to: "/app/branches/[uuid]/admissions",
         modules: ["Admissions"],
-    },
-    {
-        label: "Homecare Services",
-        icon: Stethoscope,
-        to: "/app/branches/[uuid]/bookings",
-        modules: ["Homecare"],
     },
     {
         label: "Patients",

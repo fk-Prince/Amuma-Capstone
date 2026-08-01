@@ -114,7 +114,8 @@ import type { Notification } from "~/types/notification";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useRoute } from "vue-router";
 import { formatDate } from "~/utils/notification-time";
-
+import { useToast } from "~/composables/useToast";
+const { info } = useToast();
 const route = useRoute();
 const user = useAuthUser();
 const { $echo } = useNuxtApp();
@@ -162,19 +163,33 @@ const loadNotifications = async (branchUuid: string) => {
 const bindChannel = (branchUuid: string) => {
     if (!user.value?.uuid) return;
 
+    console.log("Echo user uuid:", user.value?.uuid);
     if (channel) {
         channel.stopListening(".NotificationEvent");
-        $echo.leave(`Notification.${user.value.uuid}`);
+        $echo.leave(`private-Notification.${user.value.uuid}`);
     }
 
     channel = $echo
         .private(`Notification.${user.value.uuid}`)
         .listen(".NotificationEvent", (e: any) => {
-            if (e.branch_uuid === branchUuid) {
-                alert(e.message);
-            }
+            if (e.branch_uuid !== branchUuid) return;
+            const newNotification: Notification = {
+                id: Date.now(),
+                uuid: crypto.randomUUID(),
+                message: e.message,
+                message_type: e.message_type,
+                created_at: new Date().toISOString(),
+                unread: true,
+                icon: "ti-bell",
+                bg: "#EAF4F2",
+                color: "#0E7C7B",
+            };
 
-            notification.value = e.message;
+            info("New Notification", e.message);
+
+            notifications.value.unshift(newNotification);
+
+            notifications.value = notifications.value.slice(0, 4);
         });
 };
 

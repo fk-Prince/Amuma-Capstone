@@ -143,8 +143,9 @@
                     class="overflow-x-auto"
                 >
                     <div
+                        class="min-w-full"
                         :style="{
-                            width: `${labelWidth + day.hours.length * hourWidth}px`,
+                            width: `max(100%, ${labelWidth + day.hours.length * hourWidth}px)`,
                         }"
                     >
                         <div class="sticky top-0 z-20 flex h-10 bg-white">
@@ -216,7 +217,7 @@
                                                 class="mt-1 text-sm text-slate-800"
                                             >
                                                 {{
-                                                    stringToDate(
+                                                    formatDate(
                                                         schedule.scheduled_at,
                                                     ) || "—"
                                                 }}
@@ -292,11 +293,101 @@
                                     />
                                 </div>
 
+                                <template v-if="schedule.services?.length">
+                                    <div
+                                        v-for="(
+                                            service, sIndex
+                                        ) in schedule.services"
+                                        :key="
+                                            service.schedule_services_id ??
+                                            sIndex
+                                        "
+                                        class="group absolute flex cursor-pointer flex-col rounded-lg border px-3 py-2 text-xs shadow-sm transition hover:z-10 hover:shadow-md"
+                                        :class="
+                                            scheduleStatusTheme(schedule.status)
+                                                .card
+                                        "
+                                        :style="{
+                                            left: `${getServiceLeft(schedule, sIndex, day)}px`,
+                                            width: `${getServiceWidth(service)}px`,
+                                            top: `${8 + sIndex * 110}px`,
+                                            height: '90px',
+                                        }"
+                                        @click="$emit('view-details', schedule)"
+                                    >
+                                        <div
+                                            class="flex items-center justify-between gap-2"
+                                        >
+                                            <span
+                                                class="truncate font-semibold text-slate-800"
+                                            >
+                                                {{ service.service_name }}
+                                            </span>
+
+                                            <span
+                                                class="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                                                :class="
+                                                    scheduleStatusTheme(
+                                                        schedule.status,
+                                                    ).badge
+                                                "
+                                            >
+                                                {{
+                                                    schedule.status?.toLowerCase() ===
+                                                    "completed"
+                                                        ? "Complete"
+                                                        : schedule.status?.toLowerCase() ===
+                                                            "missed"
+                                                          ? "Missed"
+                                                          : "Pending"
+                                                }}
+                                            </span>
+                                        </div>
+                                        <div class="flex gap-2 items-center">
+                                            <span
+                                                v-if="service.assignees?.length"
+                                                class="mt-2 truncate text-slate-600"
+                                            >
+                                                <span
+                                                    class="font-medium text-slate-500"
+                                                    >Assigned:</span
+                                                >
+                                                {{
+                                                    service.assignees[0]
+                                                        ?.full_name
+                                                }}
+                                            </span>
+
+                                            <span
+                                                v-else
+                                                class="mt-2 truncate text-slate-600"
+                                                >Not assigned yet.</span
+                                            >
+                                        </div>
+
+                                        <div
+                                            class="mt-auto flex items-center gap-1 text-[11px] text-slate-400"
+                                        >
+                                            <svg
+                                                width="11"
+                                                height="11"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                            >
+                                                <circle cx="12" cy="12" r="9" />
+                                                <path d="M12 7v5l3 3" />
+                                            </svg>
+
+                                            {{ schedule.start_time }} –
+                                            {{ schedule.end_time }}
+                                        </div>
+                                    </div>
+                                </template>
+
                                 <div
-                                    v-for="(
-                                        service, index
-                                    ) in schedule.services"
-                                    :key="service.service_id"
+                                    v-else
                                     class="group absolute flex cursor-pointer flex-col rounded-lg border px-3 py-2 text-xs shadow-sm transition hover:z-10 hover:shadow-md"
                                     :class="
                                         scheduleStatusTheme(schedule.status)
@@ -305,7 +396,7 @@
                                     :style="{
                                         left: `${getScheduleLeft(schedule, day)}px`,
                                         width: `${getScheduleWidth(schedule)}px`,
-                                        top: `${8 + index * 110}px`,
+                                        top: '8px',
                                         height: '90px',
                                     }"
                                     @click="$emit('view-details', schedule)"
@@ -316,7 +407,11 @@
                                         <span
                                             class="truncate font-semibold text-slate-800"
                                         >
-                                            {{ service.service_name }}
+                                            {{
+                                                schedule.category ||
+                                                schedule.type ||
+                                                "Schedule"
+                                            }}
                                         </span>
 
                                         <span
@@ -338,27 +433,13 @@
                                             }}
                                         </span>
                                     </div>
-                                    <div class="flex gap-2 items-center">
-                                        <span
-                                            v-if="service.assignees?.length"
-                                            class="mt-2 truncate text-slate-600"
-                                        >
-                                            <span
-                                                class="font-medium text-slate-500"
-                                                >Assigned:</span
-                                            >
-                                            {{
-                                                service.assignees[0]
-                                                    ?.employee_name
-                                            }}
-                                        </span>
 
-                                        <span
-                                            v-else
-                                            class="mt-2 truncate text-slate-600"
-                                            >Not assigned yet.</span
-                                        >
-                                    </div>
+                                    <span
+                                        v-if="schedule.patient?.full_name"
+                                        class="mt-2 truncate text-slate-600"
+                                    >
+                                        {{ schedule.patient.full_name }}
+                                    </span>
 
                                     <div
                                         class="mt-auto flex items-center gap-1 text-[11px] text-slate-400"
@@ -390,10 +471,10 @@
 
 <script lang="ts" setup>
 import { ref, computed, nextTick, onMounted, watch } from "vue";
-import type { ScheduleItem } from "~/types/schedule";
+import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import { ChevronRight } from "lucide-vue-next";
-import { stringToDate, formatHour } from "~/utils/time";
+import { formatDate, formatHourLabel } from "~/utils/time";
 
 const props = withDefaults(
     defineProps<{
@@ -414,15 +495,16 @@ const props = withDefaults(
     },
 );
 
-defineEmits<{
+const emit = defineEmits<{
     (e: "view-details", schedule: ScheduleItem): void;
     (e: "assign", schedule: ScheduleItem): void;
+    (e: "update-range", payload: { from: string; to: string }): void;
 }>();
 
 const selectedDate = ref(props.date ?? today());
 const rangeEnd = ref(props.rangeEnd ?? props.date ?? today());
 const labelWidth = computed(() => 220);
-const hourWidth = 200;
+const hourWidth = 280;
 const timelineContainers = ref<HTMLElement[]>([]);
 
 function today() {
@@ -514,24 +596,26 @@ const dayGroups = computed(() => {
             let unassignedCount = 0;
 
             for (const schedule of daySchedules) {
+                const needsAssignment = schedule.services?.some(
+                    (service) => !service.assignees?.length,
+                );
+
+                if (needsAssignment) {
+                    unassignedCount++;
+                }
+
                 const times = getScheduleTimes(schedule);
                 const startMin = parseTimeToMinutes(times.start);
 
                 if (startMin === null) continue;
 
-                const maxServiceDuration = Math.max(
-                    0,
-                    ...(schedule.services ?? []).map(
-                        (s) => s.duration_minutes ?? 0,
-                    ),
-                );
+                const endMin = parseTimeToMinutes(times.end);
 
                 minStart = Math.min(minStart, startMin);
-                maxEnd = Math.max(maxEnd, startMin + maxServiceDuration);
 
-                // unassignedCount += (schedule.services ?? []).filter(
-                //     (s) => !s.assignees?.length,
-                // ).length;
+                if (endMin !== null) {
+                    maxEnd = Math.max(maxEnd, endMin);
+                }
             }
 
             const hasRange =
@@ -553,7 +637,7 @@ const dayGroups = computed(() => {
 
             const hours = [];
 
-            for (let h = visibleStartHour; h <= visibleEndHour; h++) {
+            for (let h = props.startHour; h <= props.endHour; h++) {
                 hours.push({
                     value: h,
                     label: formatHourLabel(h),
@@ -573,20 +657,37 @@ const dayGroups = computed(() => {
         .filter((day): day is NonNullable<typeof day> => Boolean(day));
 });
 
-function nowOffset(day: { hours: { value: number }[] }) {
-    const first = day.hours[0];
-    const last = day.hours[day.hours.length - 1];
-    if (!first || !last) return null;
+function getServiceLeft(
+    schedule: ScheduleItem,
+    serviceIndex: number,
+    day: any,
+) {
+    const scheduleStart = parseTimeToMinutes(schedule.start_time);
 
-    const now = new Date();
-    const nowMin = now.getHours() * 60 + now.getMinutes();
-    const dayStart = first.value * 60;
-    const dayEnd = last.value * 60;
-    if (nowMin < dayStart || nowMin > dayEnd) return null;
+    if (scheduleStart === null) {
+        return 0;
+    }
 
-    return ((nowMin - dayStart) / 60) * hourWidth;
+    const dayStart = day.hours[0].value * 60;
+
+    const serviceStart =
+        schedule.services
+            ?.slice(0, serviceIndex)
+            .reduce(
+                (total, service) => total + (service.duration_minutes ?? 0),
+                scheduleStart,
+            ) ?? scheduleStart;
+
+    return ((serviceStart - dayStart) / 60) * hourWidth;
 }
 
+function getServiceWidth(service: ScheduleServiceItem) {
+    const duration = service.duration_minutes ?? 0;
+    if (!duration) {
+        return hourWidth;
+    }
+    return (duration / 60) * hourWidth;
+}
 function getScheduleLeft(schedule: ScheduleItem, day: any) {
     const start = parseTimeToMinutes(schedule.start_time);
 
@@ -601,6 +702,13 @@ function getScheduleWidth(schedule: ScheduleItem) {
     const start = parseTimeToMinutes(schedule.start_time);
     const end = parseTimeToMinutes(schedule.end_time);
 
+    if (
+        typeof schedule.total_duration_minutes === "number" &&
+        schedule.total_duration_minutes > 0
+    ) {
+        return Math.max((schedule.total_duration_minutes / 60) * hourWidth, 60);
+    }
+
     if (start === null || end === null) {
         return hourWidth;
     }
@@ -610,31 +718,32 @@ function getScheduleWidth(schedule: ScheduleItem) {
     return Math.max((duration / 60) * hourWidth, 60);
 }
 
+function nowOffset(day: { hours: { value: number }[] }) {
+    const first = day.hours[0];
+    const last = day.hours[day.hours.length - 1];
+    if (!first || !last) return null;
+
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const dayStart = first.value * 60;
+    const dayEnd = last.value * 60;
+    if (nowMin < dayStart || nowMin > dayEnd) return null;
+
+    return ((nowMin - dayStart) / 60) * hourWidth;
+}
+
 function getScheduleTimes(schedule: ScheduleItem) {
-    if (schedule.start_time && schedule.end_time) {
-        return { start: schedule.start_time, end: schedule.end_time };
+    if (schedule.start_time) {
+        return {
+            start: schedule.start_time,
+            end: schedule.end_time ?? schedule.start_time,
+        };
     }
-    if (schedule.scheduled_at) {
-        const date = new Date(schedule.scheduled_at);
-        const hour = date.getHours();
-        return { start: formatTime(hour, 0), end: formatTime(hour + 1, 0) };
-    }
-    return { start: "00:00 AM", end: "11:59 PM" };
-}
 
-function formatTime(hour24: number, minute: number) {
-    const period = hour24 >= 12 ? "PM" : "AM";
-    const hour = hour24 % 12 === 0 ? 12 : hour24 % 12;
-    return `${hour}:${String(minute).padStart(2, "0")} ${period}`;
-}
-
-function formatDate(dateStr: string) {
-    const d = new Date(`${dateStr}T00:00:00`);
-    return d.toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-    });
+    return {
+        start: "00:00 AM",
+        end: "11:59 PM",
+    };
 }
 
 onMounted(async () => {
@@ -671,11 +780,11 @@ function parseTimeToMinutes(label: string | null | undefined) {
     return hour * 60 + minute;
 }
 
-function formatHourLabel(hour24: number) {
-    const period = hour24 >= 12 ? "PM" : "AM";
-    const display = hour24 % 12 === 0 ? 12 : hour24 % 12;
-    return `${display} ${period}`;
-}
+// function formatHourLabel(hour24: number) {
+//     const period = hour24 >= 12 ? "PM" : "AM";
+//     const display = hour24 % 12 === 0 ? 12 : hour24 % 12;
+//     return `${display} ${period}`;
+// }
 
 const hasAnySchedules = computed(() => {
     return props.schedules.some((s) => {
@@ -698,5 +807,15 @@ const totalCount = computed(
 
 const unassignedCount = computed(() =>
     dayGroups.value.reduce((sum, day) => sum + day.unassignedCount, 0),
+);
+watch(
+    [selectedDate, rangeEnd],
+    ([from, to]) => {
+        emit("update-range", {
+            from,
+            to,
+        });
+    },
+    { immediate: true },
 );
 </script>

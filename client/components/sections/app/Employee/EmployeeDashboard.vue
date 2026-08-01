@@ -2,7 +2,7 @@
     <div class="w-full">
         <div class="grid grid-cols-3 gap-3">
             <div
-                class="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-blue-400"
+                class="rounded-2xl bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-blue-400"
             >
                 <div
                     class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center"

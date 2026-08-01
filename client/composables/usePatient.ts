@@ -7,7 +7,6 @@ import { serviceService } from "~/api/service/ServiceService";
 import type { Employee } from "~/types/employee";
 import type { MarkDosePayload, Medication, MedicationForm, MedicationSchedule, Vital, VitalFormData } from "~/types/medication";
 import type { PatientRetrieve } from "~/types/patient";
-import type { ScheduleItem } from "~/types/schedule";
 import type { Service } from "~/types/service";
 
 export function usePatient() {
@@ -19,11 +18,15 @@ export function usePatient() {
 
     const medications = ref<Medication[]>([]);
     const vitals = ref<Vital[]>([]);
+    const loadingSecond = ref(true);
 
     async function fetchData(uuid: string, b_uuid: string) {
         try {
             loading.value = true;
-            const patientRes = await patientService.show(uuid);
+            loadingSecond.value = true;
+            const patientRes = await patientService.show({
+                branch_uuid: b_uuid,
+            }, uuid);
             patientData.value = patientRes.data[0];
             loading.value = false;
             const [serviceRes, scheduleRes] = await Promise.all([
@@ -31,7 +34,10 @@ export function usePatient() {
                     branch_uuid: b_uuid,
                     type: "facility",
                 }),
-                scheduleService.list({}),
+                scheduleService.list({
+                    branch_uuid: b_uuid,
+                    patient_uuid: uuid,
+                }),
             ]);
             serviceData.value = serviceRes.services ?? serviceRes.data ?? [];
             scheduleData.value = scheduleRes.data;
@@ -41,6 +47,27 @@ export function usePatient() {
         } catch (error) {
             console.error(error);
             loading.value = false;
+            loadingSecond.value = false;
+        }
+    }
+
+    async function fetchSchedules(
+        p_uuid: string,
+        b_uuid: string,
+        from?: string,
+        to?: string,
+    ) {
+        try {
+            const scheduleRes = await scheduleService.list({
+                branch_uuid: b_uuid,
+                patient_uuid: p_uuid,
+                ...(from && { date_from: from }),
+                ...(to && { date_to: to }),
+            });
+
+            scheduleData.value = scheduleRes.data;
+        } catch (error) {
+            console.error(error);
         }
     }
 
@@ -122,9 +149,16 @@ export function usePatient() {
                     payload,
                 });
                 const item = res.data.data ?? res.data;
-                vitals.value.push({
+                const vital = vitals.value.push({
                     ...item,
                 });
+
+                if (patientData.value) {
+                    patientData.value.medication = [
+                        ...(patientData.value.medication ?? []),
+                        vital,
+                    ];
+                }
                 return res;
             }
 
@@ -161,7 +195,14 @@ export function usePatient() {
                     payload,
                 });
                 const item = res.data.data ?? res.data;
-                medications.value.push(normalizeMedication(item));
+                const medication = normalizeMedication(item);
+                medications.value.push(medication);
+                if (patientData.value) {
+                    patientData.value.medication = [
+                        ...(patientData.value.medication ?? []),
+                        medication,
+                    ];
+                }
                 return res;
             }
 
@@ -237,7 +278,8 @@ export function usePatient() {
 
     async function handleAssignment(payload: any, b_uuid: string) {
         try {
-            const res = await scheduleService.assign({
+            const res = await scheduleService.action({
+                type: "assign",
                 branch_uuid: b_uuid,
                 ...payload
             });
@@ -267,6 +309,7 @@ export function usePatient() {
         scheduleData,
         employeeData,
         loading,
+        loadingSecond,
         medications,
         vitals,
         updateSchedule,
@@ -277,5 +320,6 @@ export function usePatient() {
         handleAssignment,
         fetchData,
         fetchEmployee,
+        fetchSchedules
     };
 }

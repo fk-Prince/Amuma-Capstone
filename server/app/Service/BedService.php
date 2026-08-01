@@ -29,22 +29,11 @@ class BedService
 
     public function createBed(User $user, array $payload)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['uuid']);
 
-        AuthGuard::requireModule(
-            $user,
-            $branch->branch_id,
-            ModuleEnum::RoomsAndBeds,
-            PermissionAction::Create
-        );
-
-        if (! $branch->hasFacilitySubscription()) {
-            throw new Exception(__('No active facility subscription.'), 403);
-        }
 
         $room = $this->roomRepository->findByField([
             ['room_id', '=', $payload['room_id']],
-            ['branch_id', '=', $branch->branch_id],
+            ['branch_id', '=', $payload['branch_id']],
         ]);
 
         if (! $room) {
@@ -66,8 +55,6 @@ class BedService
             throw new Exception(__('Room capacity exceeded. Cannot add more beds.'), 422);
         }
 
-
-
         $createdBed = DB::transaction(function () use ($room, $payload) {
             return  $this->bedRepository->create([
                 'room_id' => $room->room_id,
@@ -85,22 +72,10 @@ class BedService
 
     public function updateBed(User $user, array $payload, string $bedId)
     {
-        $branch = BranchGuard::resolveBranch($this->branchRepository, $payload['uuid']);
-
-        AuthGuard::requireModule(
-            $user,
-            $branch->branch_id,
-            ModuleEnum::RoomsAndBeds,
-            PermissionAction::Update
-        );
-
-        if (! $branch->hasFacilitySubscription()) {
-            throw new Exception(__('No active facility subscription.'), 403);
-        }
 
         $room = $this->roomRepository->findByField([
             ['room_id', '=', $payload['room_id']],
-            ['branch_id', '=', $branch->branch_id],
+            ['branch_id', '=', $payload['branch_id']],
         ]);
 
         if (!$room) {
@@ -109,7 +84,7 @@ class BedService
 
         $bed = $this->bedRepository->findByField([
             ['bed_id', '=', $bedId],
-            ['room_id', '=', $room->room_id], //
+            ['room_id', '=', $room->room_id],
         ]);
 
         if (!$bed) {
