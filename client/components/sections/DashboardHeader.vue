@@ -7,7 +7,7 @@
             <div class="flex justify-start items-center gap-4">
                 <NuxtLink
                     to="/"
-                    class="flex items-center border-none lg:border-r border-r-muted pr-5"
+                    class="flex items-center pr-5 lg:border-r lg:border-muted"
                 >
                     <img
                         :src="logo"

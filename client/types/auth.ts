@@ -20,6 +20,7 @@ export interface User {
     location?: Location,
     phone_number?: string,
     birth_date?: string,
+    has_booking?: string,
     // is_active: boolean,
     // is_verified: boolean
     isEmployee?: false,

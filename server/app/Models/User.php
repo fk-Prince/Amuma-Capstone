@@ -106,10 +106,16 @@ class User extends Authenticatable
         'isEmployee',
         'isClient',
         'isSystemOwner',
+        'hasBooking',
         'first_name',
         'last_name',
         'avatar',
     ];
+
+    public function getHasBookingAttribute(): bool
+    {
+        return $this->bookings()->exists();
+    }
 
     public function employee()
     {
@@ -122,6 +128,11 @@ class User extends Authenticatable
     public function systemOwner()
     {
         return $this->hasOne(PlatformAdmin::class, 'user_id', 'user_id');
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'user_id', 'user_id');
     }
 
     public function getIsEmployeeAttribute(): bool

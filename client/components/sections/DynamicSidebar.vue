@@ -325,7 +325,7 @@ const props = withDefaults(
             divider?: boolean;
         }>;
         user?: any | null;
-        variant?: 1 | 2;
+        variant?: 1 | 2 | 3;
     }>(),
     {
         variant: 1,

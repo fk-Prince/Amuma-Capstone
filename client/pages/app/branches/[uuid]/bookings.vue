@@ -142,7 +142,7 @@
                                         <th
                                             class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide"
                                         >
-                                            Date
+                                            Service Date
                                         </th>
 
                                         <th

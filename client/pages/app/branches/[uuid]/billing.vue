@@ -11,7 +11,10 @@
                         description="Search for a booking by reference ID to view its details and payment."
                     />
 
-                    <p class="font-5xl">BOOKING, SCHEDULE, PATIETN NAME</p>
+                    <p class="font-5xl">FIRST DISPLAY INVOICES</p>
+                    <p class="font-5xl">
+                        THEN CAN BE SEARCH THIS BOOKING, SCHEDULE, PATIETN NAME
+                    </p>
 
                     <div
                         class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end max-w-2xl"

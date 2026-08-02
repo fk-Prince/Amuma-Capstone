@@ -38,8 +38,8 @@ export const profileMenuDropDownList = [
     {
         icon: "Family Portal",
         label: "Family Portal",
-        to: "/",
-        types: ["isClient"],
+        to: "/portal",
+        types: ["hasBooking"],
     },
     {
         icon: "Subscription Management",

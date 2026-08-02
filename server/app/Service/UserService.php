@@ -110,6 +110,7 @@ class UserService
 
         return [
             'user' => $user,
+            'has_booking' => $user->bookings()->exists(),
         ];
     }
 }

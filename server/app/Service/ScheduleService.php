@@ -16,6 +16,7 @@ use App\Repository\PatientRepository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Schedule;
+use Exception;
 use Illuminate\Support\Facades\Log;
 
 class ScheduleService
@@ -179,6 +180,10 @@ class ScheduleService
             ['schedule_id', '=', $payload['schedule_id']]
         ]);
 
+        if (!$schedule) {
+            throw new Exception('Schedule dont exists', 404);
+        }
+
         foreach ($payload['assignments'] as $assignment) {
             $scheduleService = $schedule->scheduleServices()
                 ->where('schedule_services_id', $assignment['schedule_services_id'])
@@ -188,6 +193,10 @@ class ScheduleService
                 ['employee_id' => $assignment['employee_id']],
                 []
             );
+            // $scheduleService->assigned()->delete();
+            // $scheduleService->assigned()->create([
+            //     'employee_id' => $assignment['employee_id'],
+            // ]);
         }
 
         return response()->json([
