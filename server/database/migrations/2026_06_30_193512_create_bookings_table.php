@@ -17,10 +17,11 @@ return new class extends Migration
             $table->string('reference_id')->unique();
             $table->foreignId('user_id')->nullable()->constrained('users', 'user_id');
             $table->foreignId('branch_id')->constrained('branches', 'branch_id');
-            $table->json('booking_data');
-            $table->enum('category', ['homecare', 'facility']);
-            $table->enum('status', ['approved', 'pending', 'rejected', 'expired',  'cancelled'])->default('pending');
-            $table->enum('booking_type', ['walk_in', 'online']);
+            // $table->json('booking_data')->index();
+            $table->jsonb('booking_data');
+            $table->enum('category', ['homecare', 'facility'])->index();
+            $table->enum('status', ['approved', 'pending', 'rejected', 'expired',  'cancelled'])->default('pending')->index();
+            $table->enum('booking_type', ['walk_in', 'online'])->index();
             $table->dateTime('valid_until');
             $table->timestamps();
         });

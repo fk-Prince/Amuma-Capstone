@@ -16,15 +16,15 @@ return new class extends Migration
             $table->string('schedule_code')->unique();
             $table->foreignId('patient_id')
                 ->constrained('patients', 'patient_id');
-            $table->timestamp('scheduled_at');
+            $table->timestamp('scheduled_at')->index();
             $table->enum('status', [
                 'pending',
                 'ongoing',
                 'completed',
                 'cancelled',
                 'missed'
-            ])->default('pending');
-            $table->enum('category', ['Homecare', 'Facility']);
+            ])->default('pending')->index();
+            $table->enum('category', ['Homecare', 'Facility'])->index();
             $table->timestamps();
         });
     }

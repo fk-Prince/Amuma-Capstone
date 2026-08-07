@@ -28,7 +28,7 @@ return new class extends Migration
                 'admitted',
                 'discharged',
                 'cancelled'
-            ])->default('waiting');
+            ])->default('waiting')->index();
 
             $table->string('note')->nullable();
 

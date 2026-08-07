@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->decimal('monthly_price', 10, 2);
             $table->decimal('yearly_price', 10, 2);
-            $table->string('plan_code');
+            $table->string('plan_code')->index();
         });
     }
 

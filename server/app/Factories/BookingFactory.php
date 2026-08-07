@@ -76,7 +76,8 @@ class BookingFactory
         $invoice->invoiceServices()->createMany($invoiceServices);
 
         return [
-            'data' => $data,
+            'invoice' => $invoice,
+            'patient' => $data['patient'],
         ];
     }
 

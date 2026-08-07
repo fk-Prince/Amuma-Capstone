@@ -37,8 +37,8 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
 
 
         settings: {
-            opening: "00:00 AM",
-            closing: "00:00 PM",
+            opening: "00:00",
+            closing: "00:00",
             currency: "PHP",
             time_zone: "Asia/Manila",
             reserved_walkin_slots: 0,
@@ -115,8 +115,8 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
                 location: defaultLocation(),
             } as Agency;
             this.settings = {
-                opening: "00:00 AM",
-                closing: "00:00 PM",
+                opening: "00:00",
+                closing: "00:00",
                 currency: "PHP",
                 time_zone: "Asia/Manila",
                 reserved_walkin_slots: 0,

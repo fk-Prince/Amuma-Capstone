@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('branch_contracts', function (Blueprint $table) {
             $table->id('branch_contract_id');
             $table->foreignId('branch_id')->constrained('branches', 'branch_id');
-            $table->enum('category', ['Homecare', 'Facility',]);
-            $table->enum('accommodation_type', ['ADL', 'VIP', 'COMMON',]);
+            $table->enum('category', ['Homecare', 'Facility',])->index();
+            $table->enum('accommodation_type', ['ADL', 'VIP', 'COMMON',])->index();
             $table->decimal('price', 10, 2);
-            $table->enum('billing_cycle', ['MONTHLY',  'YEARLY',   'HOURLY',]);
+            $table->enum('billing_cycle', ['MONTHLY',  'YEARLY',   'HOURLY',])->index();
             $table->boolean('is_active')->default(true);
             $table->string('description', 500)->nullable();
             $table->timestamps();
