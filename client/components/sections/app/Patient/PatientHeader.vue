@@ -16,10 +16,6 @@ defineProps<{
     patient: PatientRetrieve;
 }>();
 
-const emit = defineEmits<{
-    (e: "record-vital"): void;
-}>();
-
 function fullName(
     firstName?: string | null,
     middleName?: string | null,
@@ -34,7 +30,7 @@ function fullName(
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div class="flex items-center gap-4">
                 <div
-                    class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#0E7C7B] text-xl font-semibold text-white"
+                    class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary text-xl font-semibold text-white"
                 >
                     {{ patient.first_name.charAt(0) }}
                 </div>
@@ -54,21 +50,21 @@ function fullName(
                         class="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-500"
                     >
                         <span class="flex items-center gap-1.5">
-                            <Calendar class="h-4 w-4" />
+                            <Calendar class="h-4 w-4 text-primary" />
                             {{ formatDate(patient.date_of_birth) }}
                         </span>
 
-                        <span>•</span>
+                        <span class="text-gray-300">•</span>
 
                         <span class="flex items-center gap-1.5">
-                            <UserRound class="h-4 w-4" />
+                            <UserRound class="h-4 w-4 text-primary" />
                             {{ patient.age }} years old
                         </span>
 
-                        <span>•</span>
+                        <span class="text-gray-300">•</span>
 
                         <span class="flex items-center gap-1.5">
-                            <MapPin class="h-4 w-4" />
+                            <MapPin class="h-4 w-4 text-primary" />
 
                             {{
                                 patient.location?.full_address ||
@@ -81,24 +77,32 @@ function fullName(
         </div>
 
         <div
-            class="mt-5 flex justify-end gap-5 border-t pt-4 text-sm text-gray-500"
+            class="mt-5 flex justify-end gap-2 border-t border-gray-100 pt-4 text-sm text-gray-500"
         >
-            <button class="flex items-center gap-2 hover:text-gray-800">
+            <button
+                class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary"
+            >
                 <Share2 class="h-4 w-4" />
                 Share
             </button>
 
-            <button class="flex items-center gap-2 hover:text-gray-800">
+            <button
+                class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary"
+            >
                 <Send class="h-4 w-4" />
                 Send
             </button>
 
-            <button class="flex items-center gap-2 hover:text-gray-800">
+            <button
+                class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary"
+            >
                 <Printer class="h-4 w-4" />
                 Print
             </button>
 
-            <button class="flex items-center gap-2 hover:text-gray-800">
+            <button
+                class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary"
+            >
                 <Pencil class="h-4 w-4" />
                 Edit
             </button>

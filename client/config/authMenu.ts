@@ -1,7 +1,6 @@
 import {
     LayoutDashboard,
     ClipboardList,
-    Stethoscope,
     Users,
     CalendarCheck2,
     Building2,
@@ -37,6 +36,12 @@ export const authMenuList: MenuItems[] = [
         modules: ["Bookings"],
     },
     {
+        label: "Schedules",
+        icon: CalendarCheck2,
+        to: "/app/branches/[uuid]/schedules",
+        modules: ["Schedules"],
+    },
+    {
         label: "Admissions",
         icon: ClipboardList,
         to: "/app/branches/[uuid]/admissions",
@@ -47,12 +52,6 @@ export const authMenuList: MenuItems[] = [
         icon: Users,
         to: "/app/branches/[uuid]/patients",
         modules: ["Patients"],
-    },
-    {
-        label: "Schedules",
-        icon: CalendarCheck2,
-        to: "/app/branches/[uuid]/schedules",
-        modules: ["Schedules"],
     },
     {
         label: "Pricing",
@@ -81,9 +80,9 @@ export const authMenuList: MenuItems[] = [
     {
         label: "Billing & Invoices",
         icon: HandCoins,
-        to: "/app/branches/[uuid]/billing",
+        to: "/app/branches/[uuid]/invoices",
         modules: ["Billing & Invoices"],
-        plan: ["A", "B"],
+        plan: ["A", "B", "C"],
     },
     {
         label: "Reports",

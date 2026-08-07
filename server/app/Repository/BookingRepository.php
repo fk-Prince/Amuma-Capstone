@@ -29,6 +29,12 @@ class BookingRepository
                 }
             )
             ->when(
+                !empty($payload['booking_type']),
+                function ($query) use ($payload) {
+                    $query->where('booking_type', $payload['booking_type']);
+                }
+            )
+            ->when(
                 !empty($payload['date_from']),
                 function ($query) use ($payload) {
                     $query->where('created_at', '>=', $payload['date_from'] . ' 00:00:00');
@@ -97,14 +103,6 @@ class BookingRepository
 
                 'approved' => Booking::where('branch_id', $branchId)
                     ->where('status', Booking::STATUS_APPROVED)
-                    ->count(),
-
-                'awaiting' => Booking::where('branch_id', $branchId)
-                    ->where('status', Booking::STATUS_AWAITING)
-                    ->count(),
-
-                'completed' => Booking::where('branch_id', $branchId)
-                    ->where('status', Booking::STATUS_COMPLETED)
                     ->count(),
 
                 'rejected' => Booking::where('branch_id', $branchId)

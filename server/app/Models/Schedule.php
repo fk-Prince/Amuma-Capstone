@@ -10,13 +10,23 @@ class Schedule extends Model
 {
     protected $primaryKey = 'schedule_id';
 
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_ONGOING = 'ongoing'; // on going / on process
+    public const STATUS_COMPLETED = 'completed'; // completed
+    public const STATUS_CANCELLED = 'cancelled'; // cancelled
+    public const STATUS_MISSED = 'missed'; // no show up
+
+
+    public const CATEGORYHOMECARE = 'Homecare';
+    public const CATEGORYFACILITY = 'Facility';
+
 
     protected $fillable = [
         'patient_id',
         'scheduled_at',
         'status',
         'category',
-        'schedule_code'
+        'schedule_code',
     ];
 
     protected $casts = [

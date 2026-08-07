@@ -28,6 +28,14 @@ export interface Employee {
 
     is_busy?: boolean;
     is_assigned?: boolean;
+    conflict_count?: number
+    conflict_schedules?: {
+        schedule_code: string;
+        scheduled_at: string;
+        status: string;
+        category: string;
+        duration_minutes: number | null;
+    }[]
 }
 
 export interface EmployeeService {

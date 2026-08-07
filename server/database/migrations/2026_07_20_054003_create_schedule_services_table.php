@@ -22,8 +22,6 @@ return new class extends Migration
                 ->constrained('services', 'service_id');
             $table->decimal('hours_booked', 10, 2)
                 ->nullable();
-            $table->string('status', 50)
-                ->nullable();
             $table->enum('type', ['Medical', 'ADL']);
             $table->timestamps();
         });

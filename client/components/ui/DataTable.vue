@@ -1,0 +1,361 @@
+<template>
+    <div
+        class="h-full rounded-2xl border border-[#E4EFED] bg-white shadow-sm overflow-hidden flex flex-col"
+    >
+        <div
+            v-if="searchable || $slots.actions"
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-[#E4EFED] shrink-0"
+        >
+            <div v-if="searchable" class="w-full sm:max-w-sm">
+                <BaseInput
+                    v-model="searchInput"
+                    :placeholder="searchPlaceholder"
+                    is-search
+                    @keyup.enter="emitSearchNow"
+                />
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+                <slot name="actions" />
+            </div>
+        </div>
+
+        <div class="flex-1 min-h-0 overflow-auto">
+            <table class="w-full text-sm">
+                <thead class="sticky top-0 z-10">
+                    <tr class="bg-slate-50/70">
+                        <th
+                            v-for="col in columns"
+                            :key="col.key"
+                            class="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 whitespace-nowrap bg-slate-50/70"
+                            :class="[
+                                alignClass(col.align),
+                                col.sortable
+                                    ? 'cursor-pointer select-none hover:text-slate-700'
+                                    : '',
+                            ]"
+                            @click="col.sortable && toggleSort(col.key)"
+                        >
+                            <span class="inline-flex items-center gap-1">
+                                {{ col.label }}
+
+                                <span
+                                    v-if="col.sortable"
+                                    class="text-slate-300"
+                                >
+                                    <span v-if="sortKey === col.key">
+                                        {{ sortDir === "asc" ? "↑" : "↓" }}
+                                    </span>
+
+                                    <span v-else> ↕ </span>
+                                </span>
+                            </span>
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-[#EEF3F1]">
+                    <!-- Loading -->
+                    <template v-if="loading">
+                        <tr v-for="n in pagination.pageSize.value" :key="n">
+                            <td
+                                v-for="col in columns"
+                                :key="col.key"
+                                class="px-5 py-4"
+                            >
+                                <div
+                                    class="h-3 rounded bg-slate-100 animate-pulse"
+                                    :style="{
+                                        width: skeletonWidth(),
+                                    }"
+                                />
+                            </td>
+                        </tr>
+                    </template>
+
+                    <!-- Empty -->
+                    <tr v-else-if="!sortedRows.length">
+                        <td :colspan="columns.length" class="px-5 py-14">
+                            <div class="flex flex-col items-center text-center">
+                                <p class="text-sm font-medium text-slate-600">
+                                    {{ emptyTitle }}
+                                </p>
+
+                                <p
+                                    v-if="emptyDescription"
+                                    class="text-sm text-slate-400 mt-1"
+                                >
+                                    {{ emptyDescription }}
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Rows -->
+                    <template v-else>
+                        <tr
+                            v-for="row in sortedRows"
+                            :key="String(rowKey(row))"
+                            class="hover:bg-slate-50/60 transition"
+                            :class="onRowClick ? 'cursor-pointer' : ''"
+                            @click="onRowClick?.(row)"
+                        >
+                            <td
+                                v-for="col in columns"
+                                :key="col.key"
+                                class="px-5 py-3.5 text-slate-700 whitespace-nowrap"
+                                :class="alignClass(col.align)"
+                            >
+                                <slot
+                                    :name="`cell-${col.key}`"
+                                    :row="row"
+                                    :value="row[col.key]"
+                                >
+                                    {{ row[col.key] ?? "—" }}
+                                </slot>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div
+            v-if="!loading && pagination.totalItems.value > 0"
+            class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-[#E4EFED] shrink-0"
+        >
+            <p class="text-xs text-slate-400">
+                Showing
+                <span class="font-medium text-slate-600">
+                    {{ pagination.rangeStart.value }}
+                </span>
+                –
+                <span class="font-medium text-slate-600">
+                    {{ pagination.rangeEnd.value }}
+                </span>
+                of
+                <span class="font-medium text-slate-600">
+                    {{ pagination.totalItems.value }}
+                </span>
+            </p>
+
+            <div class="flex items-center gap-1">
+                <button
+                    type="button"
+                    class="h-8 w-8 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                    :disabled="!pagination.canGoPrev.value"
+                    @click="goTo(pagination.currentPage.value - 1)"
+                >
+                    ‹
+                </button>
+
+                <button
+                    v-if="firstPageNumber > 1"
+                    class="h-8 min-w-8 px-2 rounded-lg hover:bg-slate-100"
+                    @click="goTo(1)"
+                >
+                    1
+                </button>
+
+                <span v-if="firstPageNumber > 2" class="text-slate-300 px-1">
+                    …
+                </span>
+
+                <button
+                    v-for="page in pagination.pageNumbers.value"
+                    :key="page"
+                    class="h-8 min-w-8 px-2 rounded-lg"
+                    :class="
+                        page === pagination.currentPage.value
+                            ? 'bg-primary text-white'
+                            : 'hover:bg-slate-100'
+                    "
+                    @click="goTo(page)"
+                >
+                    {{ page }}
+                </button>
+
+                <span
+                    v-if="lastPageNumber < pagination.totalPages.value - 1"
+                    class="text-slate-300 px-1"
+                >
+                    …
+                </span>
+
+                <button
+                    v-if="lastPageNumber < pagination.totalPages.value"
+                    class="h-8 min-w-8 px-2 rounded-lg hover:bg-slate-100"
+                    @click="goTo(pagination.totalPages.value)"
+                >
+                    {{ pagination.totalPages.value }}
+                </button>
+
+                <button
+                    type="button"
+                    class="h-8 w-8 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                    :disabled="!pagination.canGoNext.value"
+                    @click="goTo(pagination.currentPage.value + 1)"
+                >
+                    ›
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts" generic="T extends Record<string, any>">
+import { ref, computed, watch } from "vue";
+
+import BaseInput from "~/components/ui/BaseInput.vue";
+import type { usePagination } from "~/composables/usePagination";
+
+export interface DataTableColumn {
+    key: string;
+    label: string;
+    sortable?: boolean;
+    align?: "left" | "center" | "right";
+}
+
+const props = withDefaults(
+    defineProps<{
+        columns: DataTableColumn[];
+        rows: T[];
+        pagination: ReturnType<typeof usePagination>;
+        rowKey?: (row: T) => string | number;
+        loading?: boolean;
+        searchable?: boolean;
+        searchPlaceholder?: string;
+        searchDebounce?: number;
+        emptyTitle?: string;
+        emptyDescription?: string;
+        onRowClick?: (row: T) => void;
+    }>(),
+    {
+        loading: false,
+        searchable: true,
+        searchPlaceholder: "Search…",
+        searchDebounce: 400,
+        emptyTitle: "No results found",
+        emptyDescription: "",
+    },
+);
+
+const emit = defineEmits<{
+    search: [query: string];
+    "page-change": [page: number];
+}>();
+
+const searchInput = ref("");
+
+let debounceHandle: ReturnType<typeof setTimeout> | null = null;
+
+watch(searchInput, (value) => {
+    if (debounceHandle) {
+        clearTimeout(debounceHandle);
+    }
+
+    debounceHandle = setTimeout(() => {
+        props.pagination.reset();
+        emit("search", value.trim());
+    }, props.searchDebounce);
+});
+
+function emitSearchNow() {
+    if (debounceHandle) {
+        clearTimeout(debounceHandle);
+    }
+
+    props.pagination.reset();
+
+    emit("search", searchInput.value.trim());
+}
+
+const sortKey = ref<string | null>(null);
+
+const sortDir = ref<"asc" | "desc">("asc");
+
+function toggleSort(key: string) {
+    if (sortKey.value !== key) {
+        sortKey.value = key;
+        sortDir.value = "asc";
+
+        return;
+    }
+
+    if (sortDir.value === "asc") {
+        sortDir.value = "desc";
+    } else {
+        sortKey.value = null;
+    }
+}
+
+const sortedRows = computed(() => {
+    if (!sortKey.value) {
+        return props.rows;
+    }
+
+    const key = sortKey.value;
+
+    const dir = sortDir.value === "asc" ? 1 : -1;
+
+    return [...props.rows].sort((a, b) => {
+        const av = a[key];
+        const bv = b[key];
+
+        if (av == null) return 1;
+
+        if (bv == null) return -1;
+
+        return String(av).localeCompare(String(bv)) * dir;
+    });
+});
+
+/**
+ * Pagination helpers
+ */
+
+const firstPageNumber = computed(() =>
+    paginationValue(props.pagination.pageNumbers.value[0]),
+);
+
+const lastPageNumber = computed(() =>
+    paginationValue(
+        props.pagination.pageNumbers.value[
+            props.pagination.pageNumbers.value.length - 1
+        ],
+    ),
+);
+
+function paginationValue(value: number | undefined) {
+    return value ?? 0;
+}
+
+function goTo(page: number) {
+    if (page < 1 || page > props.pagination.totalPages.value) {
+        return;
+    }
+
+    props.pagination.currentPage.value = page;
+
+    emit("page-change", page);
+}
+
+function rowKey(row: T) {
+    return props.rowKey ? props.rowKey(row) : (row.id ?? JSON.stringify(row));
+}
+
+function alignClass(align?: "left" | "center" | "right") {
+    if (align === "right") return "text-right";
+
+    if (align === "center") return "text-center";
+
+    return "text-left";
+}
+
+function skeletonWidth() {
+    const widths = ["40%", "60%", "75%", "50%"];
+
+    return widths[Math.floor(Math.random() * widths.length)];
+}
+</script>

@@ -1,75 +1,17 @@
 import { reactive } from "vue";
 import { z } from "zod";
 import { getLocalDateStr } from "~/utils/time";
+import type { Assessment, Guardian, Patient } from "./patient";
+import { reserved, type Reserved } from './contract';
+import type { User } from "./auth";
 
 //FACILITY
 export interface FacilityBooking {
-    type: "Complete" | "Pre-Admission" | "" | "Walk-in Admission";
+    type: "Complete" | "Pre-Admission" | "" | "Walk-in";
     plan: "VIP" | "Common" | "";
     billing_cycle: "Monthly" | "Yearly" | "";
     admission_date: string;
 }
-
-export const facilityData = reactive<FacilityBooking>({
-    type: "Pre-Admission",
-    plan: "",
-    billing_cycle: "",
-    admission_date: "",
-});
-
-
-
-export const facilityBookingSchema = z
-    .object({
-        type: z.enum(["Complete", "Pre-Admission"]),
-        plan: z.preprocess(
-            (val) => (val === "" ? undefined : val),
-            z.enum(["VIP", "Common"]).optional(),
-        ),
-        billing_cycle: z.preprocess(
-            (val) => (val === "" ? undefined : val),
-            z.enum(["Monthly", "Yearly"]).optional(),
-        ),
-        admission_date: z.string().optional(),
-    })
-    .superRefine((data, ctx) => {
-        if (data.type === "Complete") {
-            if (!data.plan) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: ["plan"],
-                    message: "Accommodation is required for Complete Admission",
-                });
-            }
-
-            if (!data.billing_cycle) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: ["billing_cycle"],
-                    message: "Admission plan is required for Complete Admission",
-                });
-            }
-
-            if (!data.admission_date) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: ["admission_date"],
-                    message: "Admission date is required for Complete Admission",
-                });
-            }
-        }
-
-        if (data.type === "Pre-Admission") {
-            if (data.plan || data.billing_cycle) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: ["type"],
-                    message: "Pre-Admission should not include plan or billing interval",
-                });
-            }
-        }
-    });
-
 
 export interface HomecareBooking {
     services?: BookedService[];
@@ -86,99 +28,37 @@ export interface BookedService {
     price: number;
 }
 
+export interface BookingRetrieve {
+    booking_id: number;
+    reference_id: string;
+    category: "facility" | "homecare";
+    booking_type: 'online' | 'walk-in';
+    status: "pending" | "approved" | "cancelled" | "rejected" | "expired";
+    homecare: HomecareBooking;
+    facility: FacilityBooking;
+    patient: Patient;
+    guardian: Guardian;
+    assessment: Assessment;
+    payment: {
+        total_amount: number,
+        paid: boolean,
+        xendit_invoice_id: string,
+        payment_status: string
+    };
+    reserved: Reserved | null;
+    created_at: string;
+    updated_at: string;
+    assignments?: SavedAssignment[];
+}
 
 
-export const homecareData = reactive<HomecareBooking>({
-    type: "Medical",
-    date: getLocalDateStr(new Date()),
-    prefered_time: "",
-    address: "",
-    time_span: "",
-    services: [],
-});
-
-const bookedServiceSchema = z.object({
-    service_id: z.number(),
-    service_name: z.string().min(1),
-    price: z.number().nonnegative(),
-});
-
-const isoDate = z
-    .string()
-    .min(1, "Date is required")
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date")
-    .refine((val) => !Number.isNaN(new Date(val).getTime()), {
-        message: "Enter a valid date",
-    })
-    .refine(
-        (val) => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            return new Date(val) >= today;
-        },
-        {
-            message: "Date cannot be in the past",
-        },
-    );
-
-const baseSchema = z.object({
-    date: isoDate,
-
-    prefered_time: z
-        .string()
-        .min(1, "Preferred time is required"),
-
-    address: z
-        .string()
-        .min(5, "Enter a complete address"),
-});
-
-
-const medicalSchema = baseSchema.extend({
-    type: z.literal("Medical"),
-
-    services: z
-        .array(bookedServiceSchema)
-        .min(1, "Select at least one service"),
-
-    time_span: z.string().optional(),
-});
-
-
-const createAdlSchema = (minAdlHours: number) =>
-    baseSchema.extend({
-        type: z.literal("ADL"),
-
-        time_span: z
-            .union([z.string(), z.number()])
-            .transform((val) => String(val))
-
-            .refine((val) => val.length > 0, {
-                message: "Duration is required",
-            })
-
-            .refine((val) => /^\d+(\.\d+)?$/.test(val), {
-                message: "Enter a valid number of hours",
-            })
-
-            .refine((val) => Number(val) >= minAdlHours, {
-                message: `Minimum duration is ${minAdlHours} hours`,
-            }),
-
-        services: z
-            .array(bookedServiceSchema)
-            .optional(),
-    });
-
-
-export const createHomecareBookingSchema = (
-    minAdlHours: number,
-) =>
-    z.discriminatedUnion("type", [
-        medicalSchema,
-        createAdlSchema(minAdlHours),
-    ]);
+export interface SavedAssignment {
+    employee_id: number;
+    service_id: number | null;
+    employee_name: string;
+    role_name?: string;
+    avatar?: string;
+}
 
 
 
@@ -186,4 +66,101 @@ export const typeFilters = [
     { label: "All Category", value: "all" },
     { label: "Facility", value: "facility" },
     { label: "Homecare", value: "homecare" },
+];
+
+
+export function formatStatus(status?: string) {
+    const s = (status ?? "").toLowerCase();
+
+    return matchStatus(s);
+}
+
+function matchStatus(status: string) {
+    switch (status) {
+        case "in_progress":
+        case "in-progress":
+            return "In-Progress";
+        case "pending":
+            return "Pending";
+        case "approved":
+            return "Approved";
+        case "completed":
+            return "Completed";
+        case "rejected":
+            return "Rejected";
+        case "cancelled":
+            return "Cancelled";
+        case "expired":
+            return "Expired";
+        default:
+            return status;
+    }
+}
+export function statusClasses(status?: string) {
+    const s = (status ?? "").toLowerCase();
+
+    switch (s) {
+        case "approved":
+            return "bg-[#E4F4EE] text-[#1F7A4D]";
+
+        case "in_progress":
+        case "in-progress":
+            return "bg-[#E6F1FA] text-[#2563A6]";
+
+        case "completed":
+            return "bg-[#EAF4F2] text-[#0E7C7B]";
+
+        case "rejected":
+        case "cancelled":
+            return "bg-[#FBE8E6] text-[#B3402F]";
+
+        case "expired":
+            return "bg-gray-100 text-gray-500";
+
+        case "pending":
+        default:
+            return "bg-[#FDF3DE] text-[#966B1F]";
+    }
+}
+
+export function statusDotClasses(status?: string) {
+    const s = (status ?? "").toLowerCase().replace("-", "_");
+    switch (s) {
+        case "approved":
+            return "bg-[#1F7A4D]";
+
+        // case "in_progress":
+        //     return "bg-[#2563A6]";
+
+        // case "completed":
+        //     return "bg-[#0E7C7B]";
+
+        case "rejected":
+        case "cancelled":
+            return "bg-[#B3402F]";
+
+        case "expired":
+            return "bg-gray-400";
+
+        case "pending":
+        default:
+            return "bg-[#966B1F]";
+    }
+}
+
+// ------------------------------------------ CHANGE
+
+
+
+
+
+
+export const statusFilters = [
+    { label: "All", value: "all" },
+    { label: "Pending", value: "pending" },
+    { label: "Confirmed", value: "confirmed" },
+    { label: "Awaiting", value: "awaiting" },
+    { label: "Approved", value: "approved" },
+    { label: "Rejected", value: "rejected" },
+    { label: "Missed", value: "missed" },
 ];

@@ -9,7 +9,6 @@ use App\Guard\BranchGuard;
 use App\Service\Booking\BookingHelper;
 use App\Service\BookingService;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
 class BookingController extends Controller
@@ -24,35 +23,50 @@ class BookingController extends Controller
 
     public function index(Request $request)
     {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Read);
+        $request->merge([
+            'branch_id' => $branch->branch_id,
+        ]);
         return $this->bookingService->listBooking($request->user(), $request->all());
     }
 
     public function store(Request $request)
     {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        $request->merge([
+            'branch' => $branch,
+            'branch_id' => $branch->branch_id
+        ]);
 
-        return $this->bookingService->createBooking($request->user(), $request->all());
+        if ($request->action === 'regular') {
+            return $this->bookingService->createBooking($request->user(), $request->all());
+        } else if ($request->action === 'complete-admission') {
+            return $this->bookingService->completePayment($request->user(), $request->all());
+        }
     }
 
     public function action(Request $request)
     {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        $request->merge([
+            'branch' => $branch,
+            'branch_id' => $branch->branch_id
+        ]);
+
         if ($request->action === 'total') {
             return $this->bookingHelper->getTotal($request->all());
         } else if ($request->action === 'approve') {
-            return $this->bookingService->bookingAction($request->user(), $request->all());
-        } else if ($request->action === 'reject') {
-            $branch = BranchGuard::resolveBranch($request->branch_uuid);
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Create);
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Approve);
             $request->merge([
-                'branch_id' => $branch->branch_id,
+                'user' => $request->user(),
             ]);
-            return $this->bookingService->reject($request->user(), $request->all());
+            return $this->bookingService->bookingAction($request->all());
+        } else if ($request->action === 'reject') {
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Approve);
+            return $this->bookingService->reject($request->all());
         }
     }
-
-    // public function createBooking(Request $request)
-    // {
-    //     return $this->bookingService->makeBooking($request->user(), $request->all());
-    // }
 
     public function show(Request $request, string $id)
     {

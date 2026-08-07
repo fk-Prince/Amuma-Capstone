@@ -121,7 +121,10 @@ class EmployeeService
     public function updateEmployee(array $payload, string $uuid, User $user)
     {
 
+
         return DB::transaction(function () use ($payload, $uuid, $user) {
+            $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
+            AuthGuard::requireModule($user,   $branch->branch_id, ModuleEnum::EmployeeManagement,  PermissionAction::Update);
 
             $user = $this->userRepository->findByField('uuid', $uuid);
 
@@ -136,9 +139,6 @@ class EmployeeService
             if (!$employee) {
                 throw new Exception('Employee not found.', 404);
             }
-
-            $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
-            AuthGuard::requireModule($user,   $branch->branch_id, ModuleEnum::EmployeeManagement,  PermissionAction::Update);
 
             $user = $this->userRepository->update($employee->user_id, ['email' => $payload['email']]);
 
@@ -172,6 +172,7 @@ class EmployeeService
             // UPDATE EMPLOYEE
             $employee->update([
                 'first_name' => Str::title($payload['first_name']),
+                'middle_name' => Str::title($payload['middle_name']),
                 'last_name' => Str::title($payload['last_name']),
                 'phone_number' => $payload['phone_number'],
                 'birth_date' => $payload['birth_date'],
@@ -184,7 +185,7 @@ class EmployeeService
             $employee->employeeBranch()
                 ->where('branch_id', $branch->branch_id)
                 ->update([
-                    'role_name' => $payload['role_name'],
+                    'role_name' => strtolower($payload['role_name']),
                     'assignment_type' => $payload['assignment_type'],
                 ]);
 
@@ -200,6 +201,7 @@ class EmployeeService
                         'can_read'    => $permission['can_read'],
                         'can_create'  => $permission['can_create'],
                         'can_update'  => $permission['can_update'],
+                        'can_approve' => $permission['can_approve']
                     ]);
                 }
             }
@@ -210,28 +212,47 @@ class EmployeeService
         });
     }
 
+    // public function getEmployees(array $payload, User $user, string $type)
+    // {
+    //     $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
+    //     if ($type === 'regular') {
+    //         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Read);
+    //         $result =  $this->employeeRepository->getPaginateEmployee($payload, $branch->branch_id);
+    //         request()->merge([
+    //             'branch_id' => $branch->branch_id
+    //         ]);
+    //         return EmployeeResource::collection($result['users'])
+    //             ->additional([
+    //                 'total_employee' => $result['total_employee'],
+    //                 'status_counts' => $result['status_counts'],
+    //             ]);
+    //     } else if ($type === 'schedule') {
+    //         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Create);
+    //         $result = $this->employeeRepository->getEmployeesWithBusyLabel($payload['schedule_id'], $branch->branch_id);
+    //         return EmployeeScheduleResource::collection($result);
+    //     } else if ($type === 'service') {
+    //         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
+    //         $result = $this->employeeRepository->getEmployeeServices($branch->branch_id, $payload);
+    //         return $result;
+    //     }
+    // }
     public function getEmployees(array $payload, User $user, string $type)
     {
-        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
+        $branchId = $payload['branch_id'];
+
         if ($type === 'regular') {
-            AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Read);
-            $result =  $this->employeeRepository->getPaginateEmployee($payload, $branch->branch_id);
+            $result = $this->employeeRepository->getPaginateEmployee($payload, $branchId);
             request()->merge([
-                'branch_id' => $branch->branch_id
+                'branch_id' => $branchId
             ]);
-            return EmployeeResource::collection($result['users'])
-                ->additional([
-                    'total_employee' => $result['total_employee'],
-                    'status_counts' => $result['status_counts'],
-                ]);
+            return EmployeeResource::collection($result['users'])->additional(['total_employee' => $result['total_employee'],   'status_counts' => $result['status_counts'],]);
         } else if ($type === 'schedule') {
-            AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Create);
-            $result = $this->employeeRepository->getEmployeesWithBusyLabel($payload['schedule_id'], $branch->branch_id);
+            $result = $this->employeeRepository->getEmployeesWithBusyLabel($payload['schedule_id'], $branchId);
             return EmployeeScheduleResource::collection($result);
         } else if ($type === 'service') {
-            AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
-            $result = $this->employeeRepository->getEmployeeServices($branch->branch_id, $payload);
-            return $result;
+            return $this->employeeRepository->getEmployeeServices($branchId, $payload);
         }
+
+        abort(400, 'Invalid employee type');
     }
 }

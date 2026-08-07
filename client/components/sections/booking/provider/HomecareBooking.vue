@@ -63,7 +63,9 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div
-                            v-for="item in bookingTypes"
+                            v-for="item in bookingTypes.filter(
+                                (t) => t.visible,
+                            )"
                             :key="item.value"
                             @click="
                                 update(
@@ -113,7 +115,6 @@
                             </div>
                         </div>
                     </div>
-
                     <p v-if="errors?.type" class="text-xs text-red-500 mt-2">
                         {{ errors.type }}
                     </p>

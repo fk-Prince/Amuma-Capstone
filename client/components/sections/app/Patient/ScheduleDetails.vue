@@ -10,6 +10,7 @@
             />
 
             <div
+                v-if="schedule"
                 class="relative w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl"
             >
                 <div
@@ -29,14 +30,109 @@
 
                     <span
                         v-if="!isEditing"
-                        class="rounded-full px-3 py-1 text-xs font-semibold"
-                        :class="statusTheme(schedule.status)"
+                        class="rounded-full px-3 py-1 text-xs font-semibold capitalize"
+                        :class="scheduleStatusTheme(schedule.status).badge"
                     >
-                        {{ schedule.status }}
+                        {{ scheduleStatusLabel(schedule.status) }}
                     </span>
                 </div>
 
                 <div class="max-h-[70vh] space-y-4 overflow-y-auto p-5">
+                    <div
+                        v-if="
+                            schedule.category?.toLowerCase() === 'facility' &&
+                            schedule.patient?.is_admitted
+                        "
+                        class="rounded-xl border border-emerald-100 bg-emerald-50 p-4"
+                    >
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p
+                                    class="text-xs font-medium uppercase tracking-wide text-emerald-600"
+                                >
+                                    Facility Admission
+                                </p>
+
+                                <p
+                                    class="mt-1 text-sm font-semibold text-slate-800"
+                                >
+                                    Patient is currently admitted
+                                </p>
+                            </div>
+
+                            <span
+                                class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700"
+                            >
+                                Admitted
+                            </span>
+                        </div>
+
+                        <div
+                            v-if="schedule.patient?.admission"
+                            class="mt-3 grid grid-cols-2 gap-3"
+                        >
+                            <div
+                                class="rounded-xl border border-emerald-100 bg-white p-3"
+                            >
+                                <p class="text-xs text-slate-400">Bed</p>
+
+                                <p
+                                    class="mt-1 text-sm font-semibold text-slate-700"
+                                >
+                                    {{
+                                        schedule.patient.admission.bed
+                                            ?.bed_no ?? "No bed assigned"
+                                    }}
+                                </p>
+                            </div>
+
+                            <div
+                                class="rounded-xl border border-emerald-100 bg-white p-3"
+                            >
+                                <p class="text-xs text-slate-400">Room</p>
+
+                                <p
+                                    class="mt-1 text-sm font-semibold text-slate-700"
+                                >
+                                    {{
+                                        schedule.patient.admission.bed?.room
+                                            ?.room_no ?? "No room assigned"
+                                    }}
+                                </p>
+                            </div>
+
+                            <div
+                                class="rounded-xl border border-emerald-100 bg-white p-3"
+                            >
+                                <p class="text-xs text-slate-400">Room Type</p>
+
+                                <p
+                                    class="mt-1 text-sm font-semibold text-slate-700"
+                                >
+                                    {{
+                                        schedule.patient.admission.bed?.room
+                                            ?.room_type ?? "-"
+                                    }}
+                                </p>
+                            </div>
+
+                            <div
+                                class="rounded-xl border border-emerald-100 bg-white p-3"
+                            >
+                                <p class="text-xs text-slate-400">Floor</p>
+
+                                <p
+                                    class="mt-1 text-sm font-semibold text-slate-700"
+                                >
+                                    {{
+                                        schedule.patient.admission.bed?.room
+                                            ?.floor ?? "-"
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div
                         class="flex items-center gap-3 rounded-xl bg-slate-50 p-3"
                     >
@@ -60,6 +156,10 @@
                             <p class="text-xs text-slate-400">Patient</p>
                             <p class="font-semibold text-slate-800">
                                 {{ schedule.patient?.full_name }}
+                            </p>
+
+                            <p class="text-xs text-slate-400">
+                                {{ schedule.patient?.address }}
                             </p>
                         </div>
                     </div>
@@ -198,9 +298,11 @@
 
                                 <div v-else class="mt-3">
                                     <p
+                                        v-if="service.assignees"
                                         class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400"
                                     >
-                                        Assigned Employee<span
+                                        Assigned Employee
+                                        <span
                                             v-if="service.assignees?.length > 1"
                                             >s</span
                                         >
@@ -219,6 +321,7 @@
                                                 class="flex items-center gap-3"
                                             >
                                                 <img
+                                                    v-if="employee.avatar"
                                                     :src="employee.avatar"
                                                     class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white"
                                                 />
@@ -237,12 +340,6 @@
                                                     </p>
                                                 </div>
                                             </div>
-
-                                            <span
-                                                class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700"
-                                            >
-                                                Assigned
-                                            </span>
                                         </div>
                                     </div>
 
@@ -319,11 +416,13 @@ import { getLocalDateStr } from "~/utils/time";
 import { generateAvailableAmPmTimes } from "~/utils/time-slot";
 import { fullName } from "~/utils/user";
 import type { Employee } from "~/types/employee";
+import type { ScheduleItem } from "~/types/schedule";
 import { CalendarCheck2, LoaderCircle } from "lucide-vue-next";
+import { useSchedule } from "~/composables/useSchedule";
 
 const props = defineProps<{
     open: boolean;
-    schedule: any | null;
+    schedule: ScheduleItem | null;
     submitLoading?: boolean;
     employees?: Employee[];
     isFetchingEmployees?: boolean;
@@ -331,6 +430,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: "close"): void;
+
     (
         e: "schedule",
         payload: {
@@ -339,15 +439,19 @@ const emit = defineEmits<{
             date: string;
             preferred_time: string;
             assignments: {
-                employee_id: number;
+                employee_id: number | null;
                 schedule_services_id: number;
             }[];
         },
     ): void;
-    (e: "start-edit", schedule: any): void;
+
+    (e: "start-edit", schedule: ScheduleItem): void;
 }>();
 
+const { scheduleStatusTheme, scheduleStatusLabel, statusItems } = useSchedule();
+
 const isEditing = ref(false);
+
 const todayStr = getLocalDateStr(new Date());
 
 const form = ref({
@@ -356,24 +460,20 @@ const form = ref({
     status: "",
 });
 
-const assignments = ref<Record<string, string>>({});
+const assignments = ref<Record<number, string>>({});
 
 const errors = ref<Record<string, string>>({});
 
-const statusItems = [
-    { label: "Pending", value: "Pending" },
-    { label: "Completed", value: "Completed" },
-    { label: "Missed", value: "Missed" },
-    { label: "Cancelled", value: "Cancelled" },
-    { label: "Ongoing", value: "Ongoing" },
-];
-
-const employeeItems = computed(() => {
-    return (props.employees ?? []).map((employee) => ({
+const employeeItems = computed(() => [
+    {
+        label: "Unassigned",
+        value: "",
+    },
+    ...(props.employees ?? []).map((employee) => ({
         label: fullName(employee.first_name, "", employee.last_name),
         value: String(employee.employee_id),
-    }));
-});
+    })),
+]);
 
 const availableTimeSlots = computed(() =>
     generateAvailableAmPmTimes(form.value.date),
@@ -386,72 +486,82 @@ const displayTime = computed(() =>
 watch(
     () => props.schedule,
     (schedule) => {
-        isEditing.value = false;
-        assignments.value = {};
+        resetForm();
+
         if (!schedule) return;
 
         form.value = {
             date: schedule.scheduled_date ?? "",
             preferred_time: schedule.start_time ?? "",
-            status: schedule.status ?? "pending",
+            status: schedule.status ?? "Pending",
         };
 
-        schedule.services?.forEach((service: any) => {
-            const assignedEmployee = service.assignees?.[0];
-            if (assignedEmployee) {
+        schedule.services?.forEach((service) => {
+            const employee = service.assignees?.[0];
+
+            if (employee) {
                 assignments.value[service.schedule_services_id] = String(
-                    assignedEmployee.employee_id,
+                    employee.employee_id,
                 );
             }
         });
     },
-    { immediate: true },
+    {
+        immediate: true,
+    },
 );
+
+function resetForm() {
+    isEditing.value = false;
+    assignments.value = {};
+    errors.value = {};
+}
 
 function startEdit() {
     if (!props.schedule) return;
 
+    isEditing.value = true;
+
     form.value = {
         date: props.schedule.scheduled_date ?? "",
         preferred_time: props.schedule.start_time ?? "",
-        status: props.schedule.status ?? "pending",
+        status: props.schedule.status ?? "Pending",
     };
 
     assignments.value = {};
-    props.schedule.services?.forEach((service: any) => {
-        const assignedEmployee = service.assignees?.[0];
-        if (assignedEmployee) {
+
+    props.schedule.services?.forEach((service) => {
+        const employee = service.assignees?.[0];
+
+        if (employee) {
             assignments.value[service.schedule_services_id] = String(
-                assignedEmployee.employee_id,
+                employee.employee_id,
             );
         }
     });
-
-    errors.value = {};
-    isEditing.value = true;
 
     emit("start-edit", props.schedule);
 }
 
 function cancelEdit() {
-    isEditing.value = false;
-    errors.value = {};
+    resetForm();
 }
 
 function assign(serviceId: number, employeeId: string) {
-    assignments.value = {
-        ...assignments.value,
-        [serviceId]: employeeId,
-    };
+    const updated = { ...assignments.value };
+
+    if (!employeeId) {
+        delete updated[serviceId];
+    } else {
+        updated[serviceId] = employeeId;
+    }
+
+    assignments.value = updated;
 }
 
 function update(key: keyof typeof form.value, value: string) {
     form.value[key] = value;
-    clearError(key);
-}
-
-function clearError(field: string) {
-    delete errors.value[field];
+    delete errors.value[key];
 }
 
 function validate() {
@@ -465,49 +575,34 @@ function validate() {
         errors.value.preferred_time = "Please select a preferred time.";
     }
 
-    return Object.keys(errors.value).length === 0;
+    return !Object.keys(errors.value).length;
 }
 
 function handleSchedule() {
     if (!props.schedule) return;
-    if (!validate()) return;
 
-    const formattedAssignments = Object.entries(assignments.value).map(
-        ([schedule_services_id, employee_id]) => ({
-            employee_id: Number(employee_id),
-            schedule_services_id: Number(schedule_services_id),
-        }),
-    );
+    if (!validate()) return;
 
     emit("schedule", {
         schedule_id: props.schedule.schedule_id,
         status: form.value.status,
         date: form.value.date,
         preferred_time: form.value.preferred_time,
-        assignments: formattedAssignments,
+
+        assignments: (props.schedule.services ?? []).map((service) => ({
+            schedule_services_id: service.schedule_services_id,
+            employee_id: assignments.value[service.schedule_services_id]
+                ? Number(assignments.value[service.schedule_services_id])
+                : null,
+        })),
     });
 }
 
 function close() {
-    isEditing.value = false;
-    errors.value = {};
+    resetForm();
     emit("close");
 }
-
-function statusTheme(status?: string) {
-    switch (status?.toLowerCase()) {
-        case "completed":
-            return "bg-primary/10 text-primary";
-
-        case "missed":
-            return "bg-rose-100 text-rose-600";
-
-        default:
-            return "bg-amber-100 text-amber-700";
-    }
-}
 </script>
-
 <style scoped>
 .modal-enter-active,
 .modal-leave-active {

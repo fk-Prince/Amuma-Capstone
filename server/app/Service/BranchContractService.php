@@ -2,20 +2,15 @@
 
 namespace App\Service;
 
-use App\Enums\ModuleEnum;
-use App\Enums\PermissionAction;
-use App\Guard\AuthGuard;
-use App\Guard\BranchGuard;
+
 use App\Repository\BranchContractRepository;
 use App\Http\Resources\BranchContractResource;
 use App\Models\Booking;
 use App\Models\BranchContract;
 use App\Models\User;
 use App\Repository\BookingRepository;
-use App\Repository\BranchRepository;
 use App\Repository\RoomRepository;
 use Exception;
-use Illuminate\Support\Facades\Log;
 
 class BranchContractService
 {
@@ -133,7 +128,7 @@ class BranchContractService
         $rooms->load('availableBeds');
 
         $bookings = $this->bookingRepository->findBookings([
-            ['status', '=', Booking::STATUS_AWAITING],
+            ['status', '=', Booking::STATUS_APPROVED],
             ['branch_id', '=', $payload['branch_id']],
         ]);
 
@@ -141,6 +136,8 @@ class BranchContractService
             return $booking->booking_data['reserved']['bed']['bed_id'] ?? null;
         })->filter()->values();
         $totalReservedBeds = $reservedBedIds->count();
+
+
         return $contracts->map(function ($contract) use ($rooms, $reservedBedIds, $totalReservedBeds) {
 
             $matchingRooms = $rooms
@@ -160,12 +157,13 @@ class BranchContractService
                         ])
                         ->values();
 
-                    $availableBeds = $beds->where('status', 'Available')->values();
-                    $reservedBeds = $beds->where('status', 'Reserved')->values();
+                    $availableBeds = $beds
+                        ->filter(fn($bed) => strtolower($bed['status']) === 'available')
+                        ->values();
 
-                    if ($availableBeds->isEmpty() && $reservedBeds->isEmpty()) {
-                        return null;
-                    }
+                    $reservedBeds = $beds
+                        ->filter(fn($bed) => strtolower($bed['status']) === 'reserved')
+                        ->values();
 
                     return [
                         'capacity' => $room->capacity,
@@ -173,12 +171,13 @@ class BranchContractService
                         'room_no' => $room->room_no,
                         'room_type' => $room->room_type,
                         'floor' => $room->floor,
+
                         'available_beds_count' => $availableBeds->count(),
                         'reserved_beds_count' => $reservedBeds->count(),
+
                         'beds' => $beds,
                     ];
                 })
-                ->filter()
                 ->values();
 
             if ($matchingRooms->isEmpty()) {

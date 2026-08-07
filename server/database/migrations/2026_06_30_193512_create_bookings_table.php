@@ -15,12 +15,13 @@ return new class extends Migration
         Schema::create('bookings', function (Blueprint $table) {
             $table->id('booking_id');
             $table->string('reference_id')->unique();
-            $table->foreignId('user_id')->constrained('users', 'user_id');
+            $table->foreignId('user_id')->nullable()->constrained('users', 'user_id');
             $table->foreignId('branch_id')->constrained('branches', 'branch_id');
             $table->json('booking_data');
-            $table->enum('category', ['Homecare', 'Facility']);
-            $table->enum('status', ['approved', 'pending', 'rejected', 'expired', 'awaiting'])->default('pending');
-            $table->date('valid_until');
+            $table->enum('category', ['homecare', 'facility']);
+            $table->enum('status', ['approved', 'pending', 'rejected', 'expired',  'cancelled'])->default('pending');
+            $table->enum('booking_type', ['walk_in', 'online']);
+            $table->dateTime('valid_until');
             $table->timestamps();
         });
     }

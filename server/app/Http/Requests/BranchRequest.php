@@ -25,6 +25,7 @@ class BranchRequest extends FormRequest
     {
         //'unique:branches,name'
         return [
+            'branch_uuid' => ['required', 'string', 'exists:branches,uuid'],
             'name'        => ['required', 'string'],
             'description' => ['required', 'string'],
             'contact_number' => ['nullable', 'string', 'max:20'],
@@ -42,11 +43,11 @@ class BranchRequest extends FormRequest
             'location.country'    => ['required', 'string'],
             'location.longitude'   => ['nullable', 'numeric'],
             'location.latitude'    => ['nullable', 'numeric'],
-            'settings' => ['required', 'array'],
-            'settings.currency' => ['required', 'string'],
-            'settings.opening' => ['required', 'string'],
-            'settings.closing' => ['required', 'string'],
-            'settings.time_zone' => ['required', 'string'],
+            // 'settings' => ['required', 'array'],
+            // 'settings.currency' => ['required', 'string'],
+            // 'settings.opening' => ['required', 'string'],
+            // 'settings.closing' => ['required', 'string'],
+            // 'settings.time_zone' => ['required', 'string'],
         ];
     }
 }

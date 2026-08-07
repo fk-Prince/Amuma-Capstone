@@ -170,13 +170,13 @@
                 </div>
 
                 <div v-if="currentStep === 2">
-                    <h2 class="text-xl font-bold mb-4">
+                    <!-- <h2 class="text-xl font-bold mb-4">
                         Agency Information
                         <p class="text-sm text-gray-500 font-normal">
                             Configure your agency profile, branding, and agency
                             details.
                         </p>
-                    </h2>
+                    </h2> -->
                     <AgencyForm
                         v-model:agency="checkout.agency"
                         v-model:errors="checkout.errors"
@@ -185,7 +185,7 @@
                 </div>
 
                 <div v-if="currentStep === 3">
-                    <h2 class="text-xl font-bold mb-4">Branch Information</h2>
+                    <!-- <h2 class="text-xl font-bold mb-4">Branch Information</h2> -->
                     <BranchForm
                         v-model:branch="checkout.branch"
                         v-model:errors="checkout.errors"

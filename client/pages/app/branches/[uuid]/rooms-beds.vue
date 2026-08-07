@@ -208,6 +208,7 @@ const bedAction = async (
         room_id: room.room_id,
         bed_no: bed.bed_no,
         status: bed.status,
+        bed_id: bed.bed_id ?? null,
     };
 
     try {
@@ -263,7 +264,7 @@ const bedAction = async (
             <RoomDashboard @addRoom="addRoomClicked" :overview="overview" />
 
             <div
-                class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
+                class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
             >
                 <div class="border-b border-slate-100 p-5">
                     <RoomSearch

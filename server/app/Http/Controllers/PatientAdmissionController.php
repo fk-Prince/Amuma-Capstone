@@ -2,50 +2,66 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
+use App\Guard\AuthGuard;
+use App\Guard\BranchGuard;
+use App\Http\Requests\AdmissionRequest;
 use App\Service\PatientAdmissionService;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class PatientAdmissionController extends Controller
 {
-    private PatientAdmissionService $patientAdmissionService;
+    public function __construct(private PatientAdmissionService $patientAdmissionService) {}
 
-    public function __construct(PatientAdmissionService $patientAdmissionService)
+    public function admissionAction(AdmissionRequest $request)
     {
-        $this->patientAdmissionService = $patientAdmissionService;
-    }
-
-    public function index(Request $request)
-    {
-        return $this->patientAdmissionService->listPatientAdmission(
-            $request->user(), 
-            $request->input('per_page', 15)
-        );
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Patients, PermissionAction::Read);
+        $request->merge([
+            'branch_id' => $branch->branch_id,
+        ]);
+        return $this->patientAdmissionService->action($request->all());
     }
 
     public function store(Request $request)
     {
-        return $this->patientAdmissionService->createPatientAdmission($request->user(), $request->all());
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Create);
+        $request->merge([
+            'branch_id' => $branch->branch_id,
+        ]);
+        return $this->patientAdmissionService->storeAdmission($request->user(), $request->all());
     }
 
-    public function show(Request $request, string $uuid)
+    public function admit(Request $request)
     {
-        return $this->patientAdmissionService->getPatientAdmission($request->user(), $uuid);
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Create);
+        $request->merge([
+            'branch_id' => $branch->branch_id,
+        ]);
+        return $this->patientAdmissionService->action($request->all());
     }
 
-    public function update(Request $request, string $uuid)
+    public function show(Request $request, string $id)
     {
-        return $this->patientAdmissionService->updatePatientAdmission($request->user(), $uuid, $request->all());
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Read);
+        $request->merge([
+            'branch_id' => $branch->branch_id,
+        ]);
+        return $this->patientAdmissionService->show($request->all());
     }
 
-    public function destroy(Request $request, string $uuid)
+    public function index(Request $request)
     {
-        $this->patientAdmissionService->deletePatientAdmission($request->user(), $uuid);
-        return response()->json(['message' => 'Deleted successfully'], 200);
-    }
-    
-    public function restore(Request $request, string $uuid)
-    {
-        return $this->patientAdmissionService->restorePatientAdmission($request->user(), $uuid);
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Read);
+        $request->merge([
+            'branch_id' => $branch->branch_id,
+        ]);
+        return $this->patientAdmissionService->list($request->all());
     }
 }

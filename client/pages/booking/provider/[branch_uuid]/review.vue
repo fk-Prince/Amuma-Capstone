@@ -81,8 +81,8 @@
                         />
                     </div>
 
-                    <!-- v-if="!showPayment" -->
                     <div
+                        v-if="!showPayment"
                         class="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-6"
                     >
                         <BaseButton
@@ -100,13 +100,14 @@
                     </div>
                 </div>
 
-                <!-- <div v-if="showPayment" class="xl:sticky xl:top-8">
+                <div v-if="showPayment" class="xl:sticky xl:top-8">
                     <div
                         class="rounded-2xl border border-gray-100 bg-white shadow-sm p-6"
                     >
                         <PaymentForm
                             :card="card"
-                            :processing="processingPayment"
+                            :total-amount="total"
+                            :processing="processingPayment || loadingTotal"
                             title="Complete Your Booking"
                             description="Choose your payment method to confirm your facility reservation."
                             submit-label="Confirm & Pay"
@@ -117,7 +118,7 @@
                             @g-cash-pay="handleGCashPay"
                         />
                     </div>
-                </div> -->
+                </div>
             </div>
         </main>
     </div>
@@ -134,6 +135,7 @@ import { useBookingStore } from "~/stores/booking";
 import { bookingService } from "~/api/booking/BookingService";
 import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import type { CardDetails } from "~/types/payment";
+import PaymentForm from "~/components/forms/PaymentForm.vue";
 
 useHead({ title: "Review Booking" });
 definePageMeta({
@@ -150,12 +152,28 @@ const submitting = ref(false);
 const processingPayment = ref(false);
 const closeModal = ref<(() => void) | null>(null);
 const uuid = route.params.branch_uuid as string;
-
-onMounted(() => {
-    if (!bookingStore.category) {
-        router.replace(
-            `/booking/provider/${uuid}?category=${route.query.category ?? "homecare"}`,
+const total = ref();
+const loadingTotal = ref(true);
+onMounted(async () => {
+    // if (!bookingStore.category) {
+    //     router.replace(
+    //         `/booking/provider/${uuid}?category=${route.query.category ?? "homecare"}`,
+    //     );
+    // }
+    try {
+        const res = await bookingService.actionBooking({
+            action: "total",
+            booking_data: booking_data,
+            category: bookingStore.category,
+            branch_uuid: uuid,
+        });
+        total.value = Number(
+            res ?? res.total ?? res.data.total ?? res.data.total_amount,
         );
+    } catch (err: any) {
+        console.log(err.message ?? err);
+    } finally {
+        loadingTotal.value = false;
     }
 });
 
@@ -183,54 +201,54 @@ function goEditStep(step: string) {
         query: { category: bookingStore.category, step },
     });
 }
-const bookingData = computed(() => ({
-    service:
-        bookingStore.category === "facility"
-            ? bookingStore.facility
-            : bookingStore.homecare,
+const booking_data = {
+    facility:
+        bookingStore.category === "facility" ? bookingStore.facility : null,
+    homecare:
+        bookingStore.category === "homecare" ? bookingStore.homecare : null,
     patient: bookingStore.patient,
     guardian: bookingStore.guardian,
     assessment: bookingStore.assessment,
-}));
+};
 
-// async function handleCardPay() {
-//     if (processingPayment.value) return;
-//     processingPayment.value = true;
-//     try {
-//         await cardPayment({
-//             card,
-//             amount: 5000, // TODO: to be change
-//             onClose: () => {
-//                 processingPayment.value = false;
-//             },
+async function handleCardPay() {
+    if (processingPayment.value) return;
+    processingPayment.value = true;
+    try {
+        await cardPayment({
+            card,
+            amount: total.value,
+            onClose: () => {
+                processingPayment.value = false;
+            },
+            createPayment: ({ token_id, authentication_id }) =>
+                bookingService.create({
+                    action: "complete-admission",
+                    branch_uuid: uuid,
+                    token_id,
+                    authentication_id,
+                    booking_data: booking_data,
+                    payment_method: "CREDIT-CARD",
+                    category: bookingStore.category,
+                    total: total.value,
+                }),
+            onSuccess: async (result) => {
+                await navigateTo({
+                    path: `/booking/provider/${uuid}/success`,
+                    query: {
+                        status: result.status,
+                    },
+                });
+            },
+        });
+    } catch (err: any) {
+        toast.error(err?.message ?? "Payment failed.");
+    } finally {
+        processingPayment.value = false;
+    }
+}
 
-//             createPayment: ({ token_id, authentication_id }) =>
-//                 bookingService.facilityBooking({
-//                     branch_uuid: uuid,
-//                     token_id,
-//                     authentication_id,
-//                     booking_data: bookingData.value,
-//                     payment_method: "CREDIT-CARD",
-//                     category: bookingStore.category,
-//                 }),
-
-//             onSuccess: async (result) => {
-//                 // await navigateTo({
-//                 //     path: `/booking/provider/${uuid}/success`,
-//                 //     query: {
-//                 //         status: result.status,
-//                 //     },
-//                 // });
-//             },
-//         });
-//     } catch (err: any) {
-//         toast.error(err?.message ?? "Payment failed.");
-//     } finally {
-//         processingPayment.value = false;
-//     }
-// }
-
-// async function handleGCashPay() {
+async function handleGCashPay() {}
 //     if (processingPayment.value) return;
 //     processingPayment.value = true;
 //     try {
@@ -270,29 +288,21 @@ async function handleSubmit() {
     if (submitting.value) return;
     submitting.value = true;
 
-    const booking_data = {
-        service:
-            bookingStore.category === "facility"
-                ? bookingStore.facility
-                : bookingStore.homecare,
-        patient: bookingStore.patient,
-        guardian: bookingStore.guardian,
-        assessment: bookingStore.assessment,
-    };
-
     try {
         const res = await bookingService.create({
             branch_uuid: uuid,
             category: bookingStore.category,
             booking_data,
+            action: "regular",
         });
         toast.success(res.message);
-        router.push({
-            path: `/booking/provider/${uuid}/success`,
-            // query: {
-            //     message: res.message,
-            // },
-        });
+        // // window.location.href = `/booking/provider/${uuid}/success`;
+        // router.push({
+        //     path: `/booking/provider/${uuid}/success`,
+        //     // query: {
+        //     //     message: res.message,
+        //     // },
+        // });
     } catch (err: any) {
         toast.error(
             err.message ??

@@ -18,7 +18,7 @@ class NotificationEvent implements ShouldBroadcastNow
         private string $message,
         private string $reference_id,
         private string $message_type,
-        private array $booking
+        private mixed $booking
     ) {}
 
 
@@ -35,7 +35,10 @@ class NotificationEvent implements ShouldBroadcastNow
             'reference_id' => $this->reference_id,
             'branch_uuid' => $this->branch_uuid,
             'message_type' => $this->message_type,
-            'booking' => $this->booking
+            'booking' => [
+                ...$this->booking->toArray(),
+                'status' => $this->booking->status ?? 'Pending',
+            ],
         ];
     }
     public function broadcastAs(): string

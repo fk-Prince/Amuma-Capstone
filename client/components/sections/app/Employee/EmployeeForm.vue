@@ -1,22 +1,14 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { ref } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import {
-    createEmployee,
     employeeAssignmentTypes,
     employeePositions,
     employeeSchema,
     type Employee,
-    type EmployeePayload,
 } from "~/types/employee";
 import Combobox from "~/components/ui/Combobox.vue";
-import { moduleService } from "~/api/module/ModuleService";
-import type { Module } from "~/types/module";
-import { employeeService } from "~/api/employee/EmployeeService";
-import { useBranchStore } from "~/stores/branch";
-import { useToast } from "~/composables/useToast";
-import { useAuthUser } from "~/composables/useAuthUser";
-import { useRoute } from "vue-router";
+import { useEmployeeForm } from "~/composables/useEmployeeForm";
 import {
     MoveLeft,
     Camera,
@@ -29,9 +21,6 @@ import {
     Search,
 } from "lucide-vue-next";
 
-const branchStore = useBranchStore();
-const user = useAuthUser();
-const { success, error } = useToast();
 const props = defineProps<{
     employee?: Employee | null;
     mode?: "view" | "edit";
@@ -42,193 +31,58 @@ const emit = defineEmits<{
     edit: [];
 }>();
 
-const isViewMode = computed(() => props.mode === "view");
-const hasExistingEmployee = computed(() => !!props.employee?.uuid);
-const isEditMode = computed(
-    () => hasExistingEmployee.value && !isViewMode.value,
-);
+const {
+    isViewMode,
+    isEditMode,
+    employee,
+    errors,
+    initialLoading,
+    initialLoadError,
+    saving,
+    modules,
+    modulesLoading,
+    modulesError,
+    moduleSearch,
+    filteredModules,
+    permissions,
+    allPermissionsEnabled,
+    enabledPermissionCount,
+    toggleAllPermissions,
+    toggleModule,
+    toggleAction,
+    loadModules,
+    loadEmployee,
+    onFileSelected,
+    removePhoto: removePhotoState,
+    avatarPreview,
+    initials,
+    validate,
+    saveEmployee,
+    init,
+    pageTitle,
+    pageSubtitle,
+} = useEmployeeForm({
+    employee: () => props.employee,
+    mode: () => props.mode,
+    onSaved: () => emit("back"),
+});
 
+// UI-only state stays in the component.
 const activeTab = ref("information");
-const employee = ref<EmployeePayload>(createEmployee());
 const fileInput = ref<HTMLInputElement | null>(null);
-const errors = ref<Record<string, string>>({});
-
-const initialLoading = ref(false);
-const initialLoadError = ref<string | null>(null);
-const saving = ref(false);
 
 const tabs = [
     { label: "Employee Information", value: "information" },
     { label: "Permissions", value: "permissions" },
 ];
 
-type PermissionSet = {
-    can_read: boolean;
-    can_create: boolean;
-    can_update: boolean;
-    can_approve: boolean;
-};
-
-const modules = ref<Module[]>([]);
-const modulesLoading = ref(false);
-const modulesError = ref<string | null>(null);
-const moduleSearch = ref("");
-
-const permissions = ref<Record<number, PermissionSet>>({});
-
-const filteredModules = computed(() => {
-    const query = moduleSearch.value.trim().toLowerCase();
-    if (!query) return modules.value;
-    return modules.value.filter((m) =>
-        m.module_name.toLowerCase().includes(query),
-    );
-});
-
-const allPermissionsEnabled = computed(
-    () =>
-        modules.value.length > 0 &&
-        modules.value.every((m) => permissions.value[m.module_id]?.can_read),
-);
-
-const enabledPermissionCount = computed(
-    () =>
-        modules.value.filter((m) => permissions.value[m.module_id]?.can_read)
-            .length,
-);
-
-function toggleAllPermissions() {
-    const next = !allPermissionsEnabled.value;
-
-    modules.value.forEach((m) => {
-        permissions.value[m.module_id] = {
-            can_read: next && !!m.has_read,
-            can_create: next && !!m.has_create,
-            can_update: next && !!m.has_update,
-            can_approve: next && !!m.has_approve,
-        };
-    });
-}
-
-function toggleModule(moduleId: number) {
-    const module = modules.value.find((m) => m.module_id === moduleId);
-    const next = !(permissions.value[moduleId]?.can_read ?? false);
-
-    permissions.value[moduleId] = {
-        can_read: next,
-        can_create: next && !!module?.has_create,
-        can_update: next && !!module?.has_update,
-        can_approve: next && !!module?.has_approve,
-    };
-}
-
-function toggleAction(moduleId: number, action: keyof PermissionSet) {
-    if (!permissions.value[moduleId]) {
-        permissions.value[moduleId] = {
-            can_read: false,
-            can_create: false,
-            can_update: false,
-            can_approve: false,
-        };
-    }
-
-    permissions.value[moduleId][action] = !permissions.value[moduleId][action];
-}
-
-async function loadModules() {
-    modulesLoading.value = true;
-    modulesError.value = null;
-
-    try {
-        const res = await moduleService.list();
-        modules.value = res.data ?? res;
-
-        modules.value.forEach((m) => {
-            permissions.value[m.module_id] = {
-                can_read: false,
-                can_create: false,
-                can_update: false,
-                can_approve: false,
-            };
-        });
-    } catch (err) {
-        modulesError.value = "Failed to load modules. Please try again.";
-        console.error(err);
-    } finally {
-        modulesLoading.value = false;
-    }
-}
-
-function loadEmployee() {
-    if (!props.employee) return;
-
-    employee.value = {
-        ...createEmployee(),
-        ...props.employee,
-        phone_number: props.employee.phone_number ?? "",
-        location: {
-            ...createEmployee().location,
-            ...(props.employee.location ?? {}),
-        },
-    };
-
-    props.employee.permissions?.forEach((p) => {
-        const module = modules.value.find(
-            (m) => m.module_name === p.module_name,
-        );
-
-        if (!module) return;
-
-        permissions.value[module.module_id] = {
-            can_read: p.can_read,
-            can_create: p.can_create,
-            can_update: p.can_update,
-            can_approve: p.can_approve ?? false,
-        };
-    });
-}
-
 function openFilePicker() {
     if (isViewMode.value) return;
     fileInput.value?.click();
 }
 
-function onFileSelected(e: Event) {
-    const file = (e.target as HTMLInputElement).files?.[0];
-
-    if (file) {
-        employee.value.avatar = file;
-    }
-}
-
 function removePhoto() {
-    employee.value.avatar = "";
-
-    if (fileInput.value) {
-        fileInput.value.value = "";
-    }
-}
-
-function validate() {
-    const result = employeeSchema.safeParse(employee.value);
-
-    if (result.success) {
-        errors.value = {};
-        return true;
-    }
-
-    const fieldErrors: Record<string, string> = {};
-
-    result.error.issues.forEach((issue) => {
-        const path = issue.path.join(".");
-
-        if (!fieldErrors[path]) {
-            fieldErrors[path] = issue.message;
-        }
-    });
-
-    errors.value = fieldErrors;
-
-    return false;
+    removePhotoState(fileInput.value);
 }
 
 function goToNext() {
@@ -237,91 +91,14 @@ function goToNext() {
     }
 }
 
-const route = useRoute();
-const uuid = route.params.uuid as string;
-
-async function saveEmployee() {
-    if (!validate()) {
+async function handleSave() {
+    const ok = await saveEmployee();
+    if (!ok) {
         activeTab.value = "information";
-        return;
-    }
-
-    const permissionPayload = Object.entries(permissions.value).map(
-        ([moduleId, set]) => ({
-            module_id: Number(moduleId),
-            can_read: set.can_read,
-            can_create: set.can_create,
-            can_update: set.can_update,
-            can_approve: set.can_approve,
-        }),
-    );
-
-    const payload = {
-        ...employee.value,
-        permissions: permissionPayload,
-        type: "employee",
-        branch_uuid: uuid,
-    };
-
-    saving.value = true;
-
-    try {
-        let res: any = null;
-        if (isEditMode.value && props.employee?.uuid) {
-            res = await employeeService.update(props.employee.uuid, payload);
-        } else {
-            res = await employeeService.create(payload);
-        }
-        success(res.message);
-        emit("back");
-        if (user.value?.uuid === props.employee?.uuid) {
-            await branchStore.fetchBranches();
-        }
-    } catch (err: any) {
-        error(err?.data?.message || err?.message || "Internal Server Error");
-        console.error(err);
-    } finally {
-        saving.value = false;
     }
 }
 
-onMounted(async () => {
-    await loadModules();
-
-    if (hasExistingEmployee.value) {
-        loadEmployee();
-    }
-});
-
-const avatarPreview = computed(() => {
-    if (!employee.value.avatar) return "";
-
-    if (employee.value.avatar instanceof File) {
-        return URL.createObjectURL(employee.value.avatar);
-    }
-
-    return employee.value.avatar;
-});
-
-const initials = computed(() => {
-    const first = employee.value.first_name?.[0] ?? "";
-    const last = employee.value.last_name?.[0] ?? "";
-    return (first + last).toUpperCase();
-});
-
-const pageTitle = computed(() => {
-    if (isViewMode.value) return "View Employee";
-    if (isEditMode.value) return "Edit Employee";
-    return "Add Employee";
-});
-
-const pageSubtitle = computed(() => {
-    if (isViewMode.value)
-        return "Review this employee's details and system permissions.";
-    if (isEditMode.value)
-        return "Update the employee details and system permissions.";
-    return "Fill in the employee details and assign system permissions.";
-});
+init();
 </script>
 
 <template>
@@ -952,7 +729,7 @@ const pageSubtitle = computed(() => {
                         v-else
                         type="button"
                         :disabled="saving"
-                        @click="saveEmployee"
+                        @click="handleSave"
                         class="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {{

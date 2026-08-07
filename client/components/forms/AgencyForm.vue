@@ -1,16 +1,29 @@
 <template>
-    <div class="max-w-5xl mx-auto space-y-4">
-        <div class="flex flex-col gap-2">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <div>
+            <h2 class="text-lg font-semibold text-slate-800">
+                Agency Information
+            </h2>
+
+            <p class="text-sm text-slate-500 mt-1">
+                Configure your agency profile, branding, and agency details.
+            </p>
+        </div>
+
+        <div class="flex flex-col gap-4">
             <LabelInput
                 v-model="agency.agency_name"
                 label="Agency Name"
+                placeholder="Enter agency name"
                 :error="errors?.agency_name"
                 @clear-error="clearError('agency_name')"
             />
+
             <LabelInput
                 v-model="agency.agency_description"
                 label="Description"
                 mode="textarea"
+                placeholder="Describe your agency"
                 :allowResize="true"
                 :textMax="1000"
                 :error="errors?.agency_description"
@@ -18,20 +31,24 @@
             />
         </div>
 
-        <div class="flex gap-2 flex-col">
+        <div class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
-                <label class="text-sm font-semibold text-slate-700">
-                    Primary Address
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">
+                        Primary Address
+                    </label>
+
                     <p
                         v-if="locationError && useGeolocation"
-                        class="text-xs font-normal text-red-500"
+                        class="text-xs font-normal text-red-500 mt-1"
                     >
                         {{ locationError }}
                     </p>
-                </label>
+                </div>
 
                 <div class="flex items-center gap-2">
-                    <span class="text-xs text-slate-500">Use map</span>
+                    <span class="text-xs text-slate-500"> Use map </span>
+
                     <button
                         type="button"
                         @click="useGeolocation = !useGeolocation"
@@ -66,7 +83,7 @@
 
                     <template #fallback>
                         <div
-                            class="h-64 w-full rounded-lg border bg-slate-50 flex items-center justify-center text-sm text-gray-400"
+                            class="h-64 w-full rounded-lg bg-slate-50 flex items-center justify-center text-sm text-slate-400"
                         >
                             Loading map...
                         </div>
@@ -74,28 +91,35 @@
                 </ClientOnly>
             </template>
 
-            <div v-else class="grid grid-cols-1 gap-2">
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <LabelInput
                     v-model="agency.location.street"
                     label="Street"
+                    placeholder="Enter street"
                     :error="errors?.['location.street']"
                     @clear-error="clearError('location.street')"
                 />
+
                 <LabelInput
                     v-model="agency.location.city"
                     label="City"
+                    placeholder="Enter city"
                     :error="errors?.['location.city']"
                     @clear-error="clearError('location.city')"
                 />
+
                 <LabelInput
                     v-model="agency.location.province"
                     label="Province"
+                    placeholder="Enter province"
                     :error="errors?.['location.province']"
                     @clear-error="clearError('location.province')"
                 />
+
                 <LabelInput
                     v-model="agency.location.country"
                     label="Country"
+                    placeholder="Enter country"
                     :error="errors?.['location.country']"
                     @clear-error="clearError('location.country')"
                 />
@@ -103,6 +127,7 @@
         </div>
     </div>
 </template>
+
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import LabelInput from "../ui/BaseInput.vue";
@@ -158,7 +183,7 @@ const handleLocation = ({
     province: string;
     country: string;
 }) => {
-    const updatedAgency = {
+    emit("update:agency", {
         ...agency.value,
         location: {
             street: street ?? "",
@@ -168,9 +193,7 @@ const handleLocation = ({
             latitude: lat ?? 0,
             longitude: lng ?? 0,
         },
-    };
-
-    emit("update:agency", updatedAgency);
+    });
 
     const updatedErrors = {
         ...(props.errors || {}),

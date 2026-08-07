@@ -12,13 +12,7 @@ export interface Bed {
     created_at: string;
     updated_at: string;
     current_admission?: PatientAdmission | null;
-    reserved_booking?: {
-        booking_id: string,
-        reference_id: string,
-        status: string,
-        patient: Patient,
-        reserved: Reserved
-    } | null
+    reserved_admission?: PatientAdmission | null
 }
 
 

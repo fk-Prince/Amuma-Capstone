@@ -1,3 +1,5 @@
+
+
 import BaseService from '~/api/BaseService';
 
 class InvoiceService extends BaseService {
@@ -28,16 +30,9 @@ class InvoiceService extends BaseService {
         return await this.request(`${this.resource}/${uuid}`, 'GET', payload);
     }
 
-    async update(uuid: string, payload: object): Promise<any> {
-        return await this.request(`${this.resource}/${uuid}`, 'PUT', payload);
-    }
 
-    async delete(uuid: string): Promise<any> {
-        return await this.request(`${this.resource}/${uuid}`, 'DELETE');
-    }
-
-    async restore(uuid: string): Promise<any> {
-        return await this.request(`${this.resource}/${uuid}/restore`, 'POST');
+    async overview(payload: {}): Promise<any> {
+        return await this.request(`${this.resource}/overview`, 'GET', payload);
     }
 
     private get resource(): string {

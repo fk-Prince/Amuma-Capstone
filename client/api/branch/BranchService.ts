@@ -15,7 +15,6 @@ class BranchService extends BaseService {
         return BranchService.instance;
     }
 
-
     async featured(params: object = {}): Promise<any> {
         return await this.request(this.resource + '/featured', 'GET', params);
     }
@@ -23,7 +22,6 @@ class BranchService extends BaseService {
     async filtered(params: object = {}): Promise<any> {
         return await this.request(this.resource + '/filtered', 'GET', params);
     }
-
 
     async get(uuid: string) {
         return await this.request(`${this.resource}/fetchBranch/${uuid}`, "GET");

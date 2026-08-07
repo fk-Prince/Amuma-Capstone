@@ -1,208 +1,398 @@
 <template>
-    <div v-if="localImages && hasImages" class="space-y-8">
-        <section v-if="localImages.branch.length">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                Branch Images
-            </h3>
+    <div class="w-full space-y-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-semibold text-gray-900">
+                    Branch Images
+                </h2>
 
-            <ImageGrid
-                :images="localImages.branch"
-                @remove="removeImage('branch', $event)"
-            />
-        </section>
-
-        <section
-            v-for="room in localImages.rooms.filter(
-                (room: any) => room.images.length,
-            )"
-            :key="room.id"
-        >
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                {{ room.name }}
-            </h3>
-
-            <ImageGrid
-                :images="room.images"
-                @remove="removeRoomImage(room.id, $event)"
-            />
-        </section>
-
-        <section v-if="localImages.other.length">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                Other Images
-            </h3>
-
-            <ImageGrid
-                :images="localImages.other"
-                @remove="removeImage('other', $event)"
-            />
-        </section>
-
-        <div class="flex justify-end items-center gap-3">
-            <p v-if="error" class="text-sm text-red-600">
-                {{ error }}
-            </p>
-
-            <p v-if="saved" class="text-sm text-green-600">
-                Saved successfully.
-            </p>
+                <p class="text-sm text-gray-500 mt-1">
+                    Upload and manage branch images by category.
+                </p>
+            </div>
 
             <button
                 type="button"
-                :disabled="saving"
-                @click="handleSave"
-                class="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-50"
+                @click="openModal = true"
+                class="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-600 transition"
             >
-                {{ saving ? "Saving..." : "Update Images" }}
+                <Plus class="w-4 h-4" />
+                Add Image
             </button>
         </div>
-    </div>
 
-    <div v-else class="py-12 text-center text-gray-400">
-        No images available.
+        <div
+            v-if="images.length"
+            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5"
+        >
+            <div
+                v-for="image in images"
+                :key="image.branch_image_id"
+                class="relative group rounded-2xl overflow-hidden border border-[#E4EFED] bg-white shadow-sm hover:shadow-xl transition"
+            >
+                <img
+                    :src="image.image_url"
+                    class="w-full aspect-square object-cover"
+                />
+
+                <div
+                    class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-3 pt-10 pb-3"
+                >
+                    <p
+                        class="text-xs font-semibold text-white uppercase tracking-wide"
+                    >
+                        {{ image.type }}
+                    </p>
+
+                    <p
+                        v-if="image.description"
+                        class="mt-1 text-[11px] leading-4 text-white/90 line-clamp-2"
+                    >
+                        {{ image.description }}
+                    </p>
+                </div>
+            </div>
+
+            <button
+                type="button"
+                @click="openModal = true"
+                class="aspect-square rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50 flex flex-col items-center justify-center text-primary hover:bg-primary-100 transition"
+            >
+                <Plus class="w-9 h-9" />
+
+                <span class="mt-2 text-sm font-medium"> Add Image </span>
+            </button>
+        </div>
+
+        <div
+            v-else-if="!loading"
+            class="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 py-16 flex flex-col items-center justify-center"
+        >
+            <div
+                class="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center text-primary"
+            >
+                <ImageIcon class="w-7 h-7" />
+            </div>
+
+            <p class="mt-4 text-sm text-gray-500">No images uploaded yet.</p>
+
+            <button
+                type="button"
+                @click="openModal = true"
+                class="mt-4 flex items-center gap-2 text-sm font-medium text-primary"
+            >
+                <Plus class="w-4 h-4" />
+                Add your first image
+            </button>
+        </div>
+
+        <div
+            v-if="images.length && currentPage < lastPage"
+            class="flex justify-center pt-2"
+        >
+            <button
+                type="button"
+                :disabled="loading"
+                @click="loadMore"
+                class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium hover:bg-gray-50 transition disabled:opacity-50"
+            >
+                {{ loading ? "Loading..." : "Load More" }}
+            </button>
+        </div>
+
+        <Teleport to="body">
+            <div
+                v-if="openModal"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            >
+                <div
+                    class="w-full max-w-lg rounded-2xl bg-white shadow-xl border border-[#E4EFED]"
+                >
+                    <div class="flex items-center justify-between p-5 border-b">
+                        <div>
+                            <h3 class="font-semibold text-gray-900">
+                                Add Image
+                            </h3>
+
+                            <p class="text-sm text-gray-500">
+                                Upload a branch image and provide a description.
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            @click="closeModal"
+                            class="text-gray-400 hover:text-gray-700 text-lg"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    <form class="p-5 space-y-4" @submit.prevent="submit">
+                        <Combobox
+                            v-model="form.type"
+                            @update:modelValue="clearError('type')"
+                            label="Image Type"
+                            placeholder="Select image type"
+                            :items="imageTypes"
+                            :error="errors?.type"
+                            required
+                        />
+
+                        <BaseInput
+                            v-model="form.description"
+                            label="Description"
+                            mode="textarea"
+                            :allowResize="true"
+                            :textMax="1000"
+                            placeholder="Enter a short description"
+                            @update:modelValue="clearError('description')"
+                            :error="errors?.description"
+                        />
+
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 mb-2"
+                            >
+                                Image
+                            </label>
+
+                            <input
+                                ref="fileInputRef"
+                                type="file"
+                                accept="image/*"
+                                @change="handleFile"
+                                class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-4 file:py-2 file:text-white hover:file:opacity-90"
+                            />
+
+                            <p
+                                v-if="errors?.image"
+                                class="text-xs text-red-500 mt-1"
+                            >
+                                {{ errors.image }}
+                            </p>
+                        </div>
+
+                        <div
+                            v-if="preview"
+                            class="rounded-xl overflow-hidden border"
+                        >
+                            <img
+                                :src="preview"
+                                class="w-full h-56 object-cover"
+                            />
+                        </div>
+
+                        <p v-if="submitError" class="text-xs text-red-500">
+                            {{ submitError }}
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <button
+                                type="button"
+                                @click="closeModal"
+                                class="rounded-xl border border-gray-200 px-4 py-3 text-sm hover:bg-gray-50 transition"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="submit"
+                                :disabled="submitting"
+                                class="rounded-xl bg-primary text-white px-4 py-3 text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+                            >
+                                {{ submitting ? "Uploading..." : "Add Image" }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, toRaw, computed, defineComponent, h } from "vue";
-import { useToast } from "~/composables/useToast";
-import { useBranchStore } from "~/stores/branch";
+import { ref, onMounted, onBeforeUnmount } from "vue";
+import { branchSettingService } from "~/api/branch-setting/BranchSettingService";
+import type { BranchImageRetrieve } from "~/types/branch-utils";
+import BaseInput from "~/components/ui/BaseInput.vue";
+import Combobox from "~/components/ui/Combobox.vue";
+import { Plus, ImageIcon } from "lucide-vue-next";
+interface ImageForm {
+    type: string;
+    description: string;
+    image: File | null;
+}
 
-type RoomImage = {
-    id: string;
-    name: string;
-    images: string[];
-};
-
-type ImageData = {
-    branch: string[];
-    rooms: RoomImage[];
-    other: string[];
-};
+interface FormErrors {
+    type?: string;
+    description?: string;
+    image?: string;
+    [key: string]: string | undefined;
+}
 
 const props = defineProps<{
     uuid?: string;
 }>();
 
-const images = defineModel<any>("images", {
-    required: true,
+const images = ref<BranchImageRetrieve[]>([]);
+
+const currentPage = ref(1);
+const lastPage = ref(1);
+const perPage = ref(20);
+const loading = ref(false);
+
+const openModal = ref(false);
+const submitting = ref(false);
+
+const preview = ref<string | null>(null);
+const submitError = ref("");
+const errors = ref<FormErrors>({});
+const fileInputRef = ref<HTMLInputElement | null>(null);
+
+const imageTypes = ref([
+    { label: "Branch", value: "branch" },
+    { label: "Room", value: "room" },
+    { label: "Other", value: "other" },
+]);
+
+const form = ref<ImageForm>({
+    type: "",
+    description: "",
+    image: null,
 });
 
-const branchStore = useBranchStore();
+const fetchImages = async (page = 1) => {
+    if (loading.value) return;
 
-const { success: toastSuccess, error: toastError } = useToast();
-
-const localImages = ref<ImageData | null | any>(null);
-
-const saving = ref(false);
-const error = ref("");
-const saved = ref(false);
-
-const clone = <T,>(data: T): T => {
-    return JSON.parse(JSON.stringify(toRaw(data)));
-};
-
-watch(
-    images,
-    (value) => {
-        if (value) {
-            localImages.value = clone(value);
-        }
-    },
-    {
-        immediate: true,
-        deep: true,
-    },
-);
-
-const hasImages = computed(() => {
-    if (!localImages.value) return false;
-
-    return (
-        localImages.value.branch.length > 0 ||
-        localImages.value.other.length > 0 ||
-        localImages.value.rooms.some((room: any) => room.images.length > 0)
-    );
-});
-
-function removeImage(type: "branch" | "other", index: number) {
-    localImages.value?.[type].splice(index, 1);
-}
-
-function removeRoomImage(roomId: string, index: number) {
-    const room = localImages.value?.rooms.find(
-        (item: any) => item.id === roomId,
-    );
-
-    room?.images.splice(index, 1);
-}
-
-async function handleSave() {
-    if (!localImages.value) return;
-
-    saving.value = true;
-    error.value = "";
-    saved.value = false;
+    loading.value = true;
 
     try {
-        images.value = clone(localImages.value);
+        const res = await branchSettingService.list({
+            action: "image",
+            branch_uuid: props.uuid,
+            per_page: perPage.value,
+            page,
+        });
+        const pagination = res;
 
-        await branchStore.refreshBranch();
+        images.value =
+            page === 1
+                ? pagination.data
+                : [...images.value, ...pagination.data];
 
-        saved.value = true;
-
-        toastSuccess("Images updated successfully");
+        currentPage.value = pagination.current_page;
+        lastPage.value = pagination.last_page;
     } catch (err: any) {
-        error.value = err?.message || "Failed to update images";
-
-        toastError(error.value);
+        console.error("fetchImages failed:", err.response?.data ?? err);
     } finally {
-        saving.value = false;
+        loading.value = false;
     }
-}
+};
 
-const ImageGrid = defineComponent({
-    props: {
-        images: {
-            type: Array,
-            required: true,
-        },
-    },
+const loadMore = () => {
+    if (loading.value || currentPage.value >= lastPage.value) return;
 
-    emits: ["remove"],
+    fetchImages(currentPage.value + 1);
+};
 
-    setup(props, { emit }) {
-        return () =>
-            h(
-                "div",
-                {
-                    class: "grid grid-cols-2 md:grid-cols-4 gap-4",
-                },
-                props.images.map((image, index) =>
-                    h(
-                        "div",
-                        {
-                            class: "relative group",
-                        },
-                        [
-                            h("img", {
-                                src: image,
-                                class: "h-32 w-full object-cover rounded-xl border",
-                            }),
+const handleFile = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const file = target.files?.[0];
 
-                            h(
-                                "button",
-                                {
-                                    type: "button",
-                                    class: "absolute top-2 right-2 bg-black/60 text-white w-7 h-7 rounded-full opacity-0 group-hover:opacity-100 transition",
-                                    onClick: () => emit("remove", index),
-                                },
-                                "×",
-                            ),
-                        ],
-                    ),
-                ),
-            );
-    },
+    if (!file) return;
+
+    if (preview.value) {
+        URL.revokeObjectURL(preview.value);
+    }
+
+    form.value.image = file;
+    preview.value = URL.createObjectURL(file);
+
+    clearError("image");
+};
+
+const clearError = (field: keyof FormErrors) => {
+    delete errors.value[field];
+};
+
+const resetForm = () => {
+    form.value = {
+        type: "",
+        description: "",
+        image: null,
+    };
+
+    if (preview.value) {
+        URL.revokeObjectURL(preview.value);
+    }
+
+    preview.value = null;
+    errors.value = {};
+    submitError.value = "";
+
+    if (fileInputRef.value) {
+        fileInputRef.value.value = "";
+    }
+};
+
+const closeModal = () => {
+    openModal.value = false;
+    resetForm();
+};
+
+const validate = (): boolean => {
+    const nextErrors: FormErrors = {};
+
+    if (!form.value.type) {
+        nextErrors.type = "Please select an image type.";
+    }
+
+    if (!form.value.image) {
+        nextErrors.image = "Please choose an image to upload.";
+    }
+
+    errors.value = nextErrors;
+
+    return Object.keys(nextErrors).length === 0;
+};
+
+const submit = async () => {
+    submitError.value = "";
+
+    if (!validate()) return;
+
+    submitting.value = true;
+
+    try {
+        const payload = {
+            action: "image",
+            branch_uuid: props.uuid,
+            type: form.value.type,
+            description: form.value.description ?? "",
+            image: form.value.image,
+        };
+
+        const res = await branchSettingService.create(payload);
+
+        images.value.unshift(res.data.data);
+
+        closeModal();
+    } catch (err: any) {
+        errors.value = err.response?.data?.errors ?? {};
+        submitError.value = err.response?.data?.message ?? "Upload failed.";
+    } finally {
+        submitting.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchImages(1);
+});
+
+onBeforeUnmount(() => {
+    if (preview.value) {
+        URL.revokeObjectURL(preview.value);
+    }
 });
 </script>

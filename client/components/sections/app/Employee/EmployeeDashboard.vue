@@ -1,125 +1,182 @@
 <template>
     <div class="w-full">
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Total Employees -->
             <div
-                class="rounded-2xl bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-blue-400"
+                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary-200"
             >
                 <div
-                    class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center"
-                >
-                    <svg
-                        class="w-4 h-4 text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        viewBox="0 0 24 24"
+                    class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary-100/40 blur-2xl"
+                />
+
+                <div class="relative">
+                    <div class="flex items-center justify-between">
+                        <div
+                            class="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center"
+                        >
+                            <svg
+                                class="h-5 w-5 text-primary"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+                                />
+                                <circle cx="9" cy="7" r="4" />
+                            </svg>
+                        </div>
+
+                        <span
+                            class="px-2.5 py-1 rounded-full bg-primary-50 text-primary text-xs font-semibold"
+                        >
+                            {{ props.totalEmployee ?? 0 }}/160
+                        </span>
+                    </div>
+
+                    <p
+                        class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
                     >
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                    </svg>
-                </div>
+                        Total Employees
+                    </p>
 
-                <p
-                    class="mt-2 text-[10px] uppercase tracking-wide text-gray-400 font-medium"
-                >
-                    Total Employees
-                </p>
-
-                <div class="flex items-end justify-between">
-                    <p class="text-xl font-bold text-gray-800">
+                    <p
+                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums"
+                    >
                         {{ props.totalEmployee ?? 0 }}
                     </p>
 
-                    <span class="text-[11px] font-medium text-orange-500">
-                        160 max
-                    </span>
-                </div>
-
-                <div class="mt-2">
-                    <div class="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                    <div class="mt-4">
                         <div
-                            class="h-full rounded-full bg-blue-500"
-                            :style="{
-                                width: `${(props.totalEmployee / 160) * 100}%`,
-                            }"
-                        />
+                            class="h-2 rounded-full bg-slate-100 overflow-hidden"
+                        >
+                            <div
+                                class="h-full rounded-full bg-gradient-to-r from-primary to-primary-400 transition-all duration-700"
+                                :style="{
+                                    width: `${Math.min(((props.totalEmployee ?? 0) / 160) * 100, 100)}%`,
+                                }"
+                            />
+                        </div>
+
+                        <div class="mt-2 flex justify-between text-xs">
+                            <span class="text-slate-400"> Capacity </span>
+
+                            <span class="font-medium text-slate-600">
+                                {{ 160 - (props.totalEmployee ?? 0) }} open
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- On Duty -->
+            <div
+                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200"
+            >
+                <div
+                    class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-100/50 blur-2xl"
+                />
+
+                <div class="relative">
+                    <div class="flex items-center justify-between">
+                        <div
+                            class="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center"
+                        >
+                            <svg
+                                class="h-5 w-5 text-emerald-600"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="M20 6L9 17l-5-5" />
+                            </svg>
+                        </div>
+
+                        <span
+                            class="flex items-center gap-2 text-xs font-medium text-emerald-600"
+                        >
+                            <span
+                                class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"
+                            />
+                            Live
+                        </span>
                     </div>
 
-                    <p class="mt-1 text-[11px] text-orange-500">
-                        {{ 160 - (props.totalEmployee ?? 0) }} positions
-                        available
+                    <p
+                        class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                    >
+                        On Duty
+                    </p>
+
+                    <p
+                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums"
+                    >
+                        {{ props.onDuty ?? 0 }}
+                    </p>
+
+                    <div
+                        class="mt-3 flex items-center gap-2 text-xs text-emerald-600"
+                    >
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        Active staff today
+                    </div>
+                </div>
+            </div>
+
+            <!-- On Leave -->
+            <div
+                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200"
+            >
+                <div
+                    class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-rose-100/50 blur-2xl"
+                />
+
+                <div class="relative">
+                    <div class="flex items-center justify-between">
+                        <div
+                            class="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center"
+                        >
+                            <svg
+                                class="h-5 w-5 text-rose-500"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M12 8v4l3 3" />
+                            </svg>
+                        </div>
+
+                        <span
+                            class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-500 text-xs font-semibold"
+                        >
+                            Away
+                        </span>
+                    </div>
+
+                    <p
+                        class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                    >
+                        On Leave
+                    </p>
+
+                    <p
+                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums"
+                    >
+                        {{ props.onLeave ?? 0 }}
+                    </p>
+
+                    <p class="mt-3 text-xs text-rose-500">
+                        Current leave requests
                     </p>
                 </div>
-            </div>
-
-            <div
-                class="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-emerald-400"
-            >
-                <div
-                    class="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center"
-                >
-                    <svg
-                        class="w-4 h-4 text-emerald-600"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        viewBox="0 0 24 24"
-                    >
-                        <path d="M20 6L9 17l-5-5" />
-                    </svg>
-                </div>
-
-                <p
-                    class="mt-2 text-[10px] uppercase tracking-wide text-gray-400 font-medium"
-                >
-                    On Duty
-                </p>
-
-                <p class="text-xl font-bold text-gray-800">
-                    {{ props.onDuty ?? 0 }}
-                </p>
-
-                <p class="mt-1 text-[11px] text-emerald-600">
-                    Active staff today
-                </p>
-            </div>
-
-            <div
-                class="rounded-2xl border border-rose-200 bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-rose-400"
-            >
-                <div
-                    class="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center"
-                >
-                    <svg
-                        class="w-4 h-4 text-rose-600"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        viewBox="0 0 24 24"
-                    >
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 8v4l3 3" />
-                    </svg>
-                </div>
-
-                <p
-                    class="mt-2 text-[10px] uppercase tracking-wide text-gray-400 font-medium"
-                >
-                    On Leave
-                </p>
-
-                <p class="text-xl font-bold text-gray-800">
-                    {{ props.onLeave ?? 0 }}
-                </p>
-
-                <p class="mt-1 text-[11px] text-rose-500">
-                    Current leave requests
-                </p>
             </div>
         </div>
     </div>
 </template>
-
 <script setup lang="ts">
 useHead({ title: "Staff" });
 

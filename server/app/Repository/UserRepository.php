@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Log;
 
 class UserRepository
 {
+    public function __construct(
+        private LocationRepository $locationRepository,
+    ) {}
 
     public function create(array $payload)
     {
@@ -20,10 +23,20 @@ class UserRepository
     public function createUpdateTypeUser(array $payload, string $type)
     {
         if ($type === 'client') {
+            if (!empty($payload['address'])) {
+                $scheduledLocation = $this->locationRepository->create([
+                    'full_address' => $payload['address'],
+                ]);
+
+                $payload['location_id'] = $scheduledLocation->location_id;
+            }
+
+            unset($payload['address']);
+
             $user = User::where('email', $payload['email'])->first();
+
             if (!$user) {
                 $password = strtolower($payload['last_name']) . rand(100000, 999999);
-
                 $user = User::create([
                     'email' => $payload['email'],
                     'first_name' => $payload['first_name'],

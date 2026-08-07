@@ -35,12 +35,17 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             location: defaultLocation(),
         } as Agency,
 
+
         settings: {
-            opening: "00:00",
-            closing: "00:00",
+            opening: "00:00 AM",
+            closing: "00:00 PM",
             currency: "PHP",
-            online_additional_fee: 0,
             time_zone: "Asia/Manila",
+            reserved_walkin_slots: 0,
+            enable_booking_pre_admission: true,
+            enable_booking_complete_admission: true,
+            minimum_adl_hours: 8,
+            is_open: false,
         } as BranchSettings,
 
         errors: {},
@@ -109,15 +114,18 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
                 agency_description: "",
                 location: defaultLocation(),
             } as Agency;
-
             this.settings = {
                 opening: "00:00 AM",
-                closing: "09:00 PM",
+                closing: "00:00 PM",
                 currency: "PHP",
-                online_additional_fee: 0,
                 time_zone: "Asia/Manila",
+                reserved_walkin_slots: 0,
+                enable_booking_pre_admission: true,
+                enable_booking_complete_admission: true,
+                minimum_adl_hours: 8,
+                is_open: false,
+                online_additional_fee: 0,
             } as BranchSettings;
-
             this.errors = {};
             this.subscriptionPayload = null;
         },

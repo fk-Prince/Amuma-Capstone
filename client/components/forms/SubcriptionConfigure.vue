@@ -1,5 +1,5 @@
 <template>
-    <div class="max-w-5xl mx-auto flex flex-col gap-5">
+    <div class="w-full mx-auto flex flex-col gap-5">
         <div class="grid grid-cols-2 gap-4">
             <Combobox
                 v-model="setting.currency"

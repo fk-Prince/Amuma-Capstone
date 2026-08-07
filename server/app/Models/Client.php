@@ -33,4 +33,16 @@ class Client extends Model
     {
         return $this->hasMany(PatientAccess::class,  'client_id', 'client_id');
     }
+
+    public function bookings()
+    {
+        return $this->hasManyThrough(
+            Booking::class,
+            User::class,
+            'user_id',
+            'user_id',
+            'user_id',
+            'user_id'
+        );
+    }
 }

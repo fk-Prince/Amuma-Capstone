@@ -10,24 +10,13 @@ import {
     Layers3,
     ChevronDown,
     Pencil,
-    UserPlus,
     Plus,
-    Phone,
-    Briefcase,
-    Heart,
-    Globe2,
-    Droplet,
-    CalendarClock,
-    StickyNote,
-    Ruler,
-    Weight,
-    MapPin,
-    Bookmark,
 } from "lucide-vue-next";
 import BedCard from "./BedCard.vue";
+import CurrentAdmissionCard from "./CurrentCard.vue";
+import ReservedAdmissionCard from "./ReservedCard.vue";
 import type { Bed, BedForm } from "~/types/bed.js";
 const { canUpdate } = usePermissions();
-import { stringToDateTime } from "~/utils/time";
 
 const props = defineProps<{
     loading: boolean;
@@ -69,93 +58,19 @@ const remainingSlots = (room: Room) => {
     return remaining > 0 ? Array.from({ length: remaining }) : [];
 };
 
-const initials = (first?: string, last?: string) => {
-    return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase();
-};
-
-const age = (dob?: string) => {
-    if (!dob) return null;
-    const birth = new Date(dob);
-    if (Number.isNaN(birth.getTime())) return null;
-    const diffMs = Date.now() - birth.getTime();
-    const years = diffMs / (1000 * 60 * 60 * 24 * 365.25);
-    return Math.floor(years);
-};
-
-const admissionStatusClasses = (status?: string) => {
-    switch (status?.toLowerCase()) {
-        case "admitted":
-            return "bg-sky-100 text-sky-700";
-        case "discharged":
-            return "bg-gray-100 text-gray-500";
-        case "pending":
-            return "bg-amber-100 text-amber-700";
-        default:
-            return "bg-gray-100 text-gray-500";
-    }
-};
-
-type BedState = "occupied" | "reserved" | "available";
+type BedState = "occupied" | "reserved" | "available" | "maintenance";
 
 const bedState = (bed: Bed): BedState => {
+    if (bed.status === "Maintenance") return "maintenance";
     if (bed.current_admission?.patient) return "occupied";
-    if (bed.reserved_booking) return "reserved";
+    if (bed.reserved_admission?.patient) return "reserved";
     return "available";
 };
 
 const isOccupied = (bed: Bed) => bedState(bed) === "occupied";
 const isReserved = (bed: Bed) => bedState(bed) === "reserved";
 const isAvailable = (bed: Bed) => bedState(bed) === "available";
-
-const reservedPatientName = (bed: Bed) => {
-    const p: any = bed.reserved_booking?.patient;
-    if (!p) return "Unnamed patient";
-    if (p.first_name || p.last_name) {
-        return `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim();
-    }
-    if (p.name) return p.name;
-    return "Unnamed patient";
-};
-
-const reservedInitials = (bed: Bed) => {
-    const p: any = bed.reserved_booking?.patient;
-    if (!p) return "?";
-    if (p.first_name || p.last_name) return initials(p.first_name, p.last_name);
-    if (p.name) {
-        const parts = p.name.split(" ");
-        return initials(parts[0], parts[1]);
-    }
-    return "?";
-};
-
-const bookingStatusClasses = (status?: string) => {
-    switch (status?.toLowerCase()) {
-        case "awaiting":
-        case "pending":
-            return "bg-amber-100 text-amber-700";
-        case "approved":
-            return "bg-indigo-100 text-indigo-700";
-        default:
-            return "bg-gray-100 text-gray-500";
-    }
-};
-
-const expandedPatientId = ref<number | null>(null);
-const expandedBookingId = ref<string | null>(null);
-
-const toggleDetails = (patientId?: number) => {
-    if (!patientId) return;
-    expandedPatientId.value =
-        expandedPatientId.value === patientId ? null : patientId;
-};
-
-const toggleBookingDetails = (bookingId?: string) => {
-    if (!bookingId) return;
-    expandedBookingId.value =
-        expandedBookingId.value === bookingId ? null : bookingId;
-};
-
-const addingBedRoomId = ref<number | null>(null);
+const isMaintenance = (bed: Bed) => bedState(bed) === "maintenance";
 const editingBedId = ref<number | null>(null);
 
 const addingSlot = ref<{
@@ -360,7 +275,10 @@ const cancelAddBed = () => {
                                     class="w-2.5 h-2.5 rounded-full shrink-0"
                                     :class="{
                                         'bg-pink-400':
-                                            room.status === 'Maintenance',
+                                            room.status === 'Maintenance' ||
+                                            room.beds.some((bed) =>
+                                                isMaintenance(bed),
+                                            ),
 
                                         'bg-sky-400':
                                             room.status !== 'Maintenance' &&
@@ -418,6 +336,12 @@ const cancelAddBed = () => {
                                             .length
                                     }}
                                     reserved ·
+                                    {{
+                                        room.beds.filter((b) =>
+                                            isMaintenance(b),
+                                        ).length
+                                    }}
+                                    maintenance ·
                                     {{ remainingSlots(room).length }} open
                                     slot{{
                                         remainingSlots(room).length !== 1
@@ -453,6 +377,8 @@ const cancelAddBed = () => {
                                             isReserved(bed),
                                         'border border-dashed border-emerald-200 bg-emerald-50/20':
                                             isAvailable(bed),
+                                        'border border-dashed border-pink-200 bg-pink-50/30':
+                                            isMaintenance(bed),
                                     }"
                                 >
                                     <div
@@ -476,6 +402,8 @@ const cancelAddBed = () => {
                                                     isReserved(bed),
                                                 'bg-emerald-100 text-emerald-600':
                                                     isAvailable(bed),
+                                                'bg-pink-100 text-pink-600':
+                                                    isMaintenance(bed),
                                             }"
                                         >
                                             {{
@@ -483,7 +411,9 @@ const cancelAddBed = () => {
                                                     ? "Occupied"
                                                     : isReserved(bed)
                                                       ? "Reserved"
-                                                      : "Available"
+                                                      : isMaintenance(bed)
+                                                        ? "Maintenance"
+                                                        : "Available"
                                             }}
                                         </span>
                                     </div>
@@ -508,455 +438,19 @@ const cancelAddBed = () => {
                                     />
 
                                     <template v-else>
-                                        <template
+                                        <CurrentAdmissionCard
                                             v-if="
                                                 bed.current_admission?.patient
                                             "
-                                        >
-                                            <div class="space-y-2.5">
-                                                <button
-                                                    type="button"
-                                                    class="w-full flex items-start gap-2.5 text-left"
-                                                    @click="
-                                                        toggleDetails(
-                                                            bed
-                                                                .current_admission
-                                                                .patient
-                                                                .patient_id,
-                                                        )
-                                                    "
-                                                >
-                                                    <div
-                                                        class="w-9 h-9 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center text-[11px] font-semibold shrink-0 ring-2 ring-white shadow-sm"
-                                                    >
-                                                        {{
-                                                            initials(
-                                                                bed
-                                                                    .current_admission
-                                                                    .patient
-                                                                    .first_name,
-                                                                bed
-                                                                    .current_admission
-                                                                    .patient
-                                                                    .last_name,
-                                                            )
-                                                        }}
-                                                    </div>
+                                            :bed="bed"
+                                            @edit-bed="editingBedId = $event"
+                                        />
 
-                                                    <div class="min-w-0 flex-1">
-                                                        <p
-                                                            class="text-xs font-semibold text-gray-800 truncate"
-                                                        >
-                                                            {{
-                                                                bed
-                                                                    .current_admission
-                                                                    .patient
-                                                                    .first_name
-                                                            }}
-                                                            {{
-                                                                bed
-                                                                    .current_admission
-                                                                    .patient
-                                                                    .last_name
-                                                            }}
-                                                        </p>
-
-                                                        <div
-                                                            class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-0.5 text-[11px] text-gray-400"
-                                                        >
-                                                            <span
-                                                                v-if="
-                                                                    bed
-                                                                        .current_admission
-                                                                        .patient
-                                                                        .gender
-                                                                "
-                                                                >{{
-                                                                    bed
-                                                                        .current_admission
-                                                                        .patient
-                                                                        .gender
-                                                                }}</span
-                                                            >
-                                                            <span
-                                                                v-if="
-                                                                    age(
-                                                                        bed
-                                                                            .current_admission
-                                                                            .patient
-                                                                            .date_of_birth,
-                                                                    )
-                                                                "
-                                                                >·
-                                                                {{
-                                                                    age(
-                                                                        bed
-                                                                            .current_admission
-                                                                            .patient
-                                                                            .date_of_birth,
-                                                                    )
-                                                                }}y</span
-                                                            >
-                                                            <span
-                                                                v-if="
-                                                                    bed
-                                                                        .current_admission
-                                                                        .patient
-                                                                        .blood_type
-                                                                "
-                                                                class="inline-flex items-center gap-0.5 font-medium text-rose-500"
-                                                            >
-                                                                <Droplet
-                                                                    class="h-3 w-3"
-                                                                />{{
-                                                                    bed
-                                                                        .current_admission
-                                                                        .patient
-                                                                        .blood_type
-                                                                }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <ChevronDown
-                                                        class="h-3.5 w-3.5 text-gray-300 shrink-0 mt-1 transition-transform duration-200"
-                                                        :class="{
-                                                            'rotate-180':
-                                                                expandedPatientId ===
-                                                                bed
-                                                                    .current_admission
-                                                                    .patient
-                                                                    .patient_id,
-                                                        }"
-                                                    />
-                                                </button>
-
-                                                <div
-                                                    v-if="
-                                                        expandedPatientId ===
-                                                        bed.current_admission
-                                                            ?.patient
-                                                            ?.patient_id
-                                                    "
-                                                    class="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[11px] text-gray-500 rounded-lg border border-dashed border-gray-200 p-2"
-                                                >
-                                                    <div
-                                                        v-if="
-                                                            bed
-                                                                .current_admission
-                                                                .patient
-                                                                .phone_number
-                                                        "
-                                                        class="flex items-center gap-1 truncate"
-                                                    >
-                                                        <Phone
-                                                            class="h-3 w-3 text-gray-400 shrink-0"
-                                                        />
-                                                        {{
-                                                            bed
-                                                                .current_admission
-                                                                .patient
-                                                                .phone_number
-                                                        }}
-                                                    </div>
-
-                                                    <div
-                                                        v-if="
-                                                            bed
-                                                                .current_admission
-                                                                .patient
-                                                                .citizenship
-                                                        "
-                                                        class="flex items-center gap-1 truncate"
-                                                    >
-                                                        <Globe2
-                                                            class="h-3 w-3 text-gray-400 shrink-0"
-                                                        />
-                                                        {{
-                                                            bed
-                                                                .current_admission
-                                                                .patient
-                                                                .citizenship
-                                                        }}
-                                                    </div>
-
-                                                    <div
-                                                        class="flex items-center gap-2"
-                                                    >
-                                                        <div
-                                                            v-if="
-                                                                bed
-                                                                    .current_admission
-                                                                    .patient
-                                                                    .height
-                                                            "
-                                                            class="flex items-center gap-1 truncate"
-                                                        >
-                                                            <Ruler
-                                                                class="h-3 w-3 text-gray-400 shrink-0"
-                                                            />
-                                                            {{
-                                                                bed
-                                                                    .current_admission
-                                                                    .patient
-                                                                    .height
-                                                            }}
-                                                            cm
-                                                        </div>
-                                                        <div
-                                                            v-if="
-                                                                bed
-                                                                    .current_admission
-                                                                    .patient
-                                                                    .weight
-                                                            "
-                                                            class="flex items-center gap-1 truncate"
-                                                        >
-                                                            <Weight
-                                                                class="h-3 w-3 text-gray-400 shrink-0"
-                                                            />
-                                                            {{
-                                                                bed
-                                                                    .current_admission
-                                                                    .patient
-                                                                    .weight
-                                                            }}
-                                                            kg
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div
-                                                    class="flex items-center justify-between text-[11px] pt-1.5 border-t border-gray-100"
-                                                >
-                                                    <span
-                                                        class="flex items-center gap-1 text-gray-400"
-                                                    >
-                                                        <CalendarClock
-                                                            class="h-3 w-3"
-                                                        />
-
-                                                        <span
-                                                            class="font-medium text-gray-500"
-                                                        >
-                                                            Admission Period:
-                                                        </span>
-
-                                                        <span>
-                                                            {{
-                                                                stringToDateTime(
-                                                                    bed
-                                                                        .current_admission
-                                                                        .admitted_at,
-                                                                )
-                                                            }}
-
-                                                            <template
-                                                                v-if="
-                                                                    bed
-                                                                        .current_admission
-                                                                        .end_date
-                                                                "
-                                                            >
-                                                                →
-                                                                {{
-                                                                    stringToDateTime(
-                                                                        bed
-                                                                            .current_admission
-                                                                            .end_date,
-                                                                    )
-                                                                }}
-                                                            </template>
-                                                        </span>
-                                                    </span>
-                                                </div>
-
-                                                <button
-                                                    type="button"
-                                                    @click="
-                                                        editingBedId =
-                                                            bed.bed_id
-                                                    "
-                                                    class="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-blue-600 bg-white border border-blue-200 rounded-lg py-2 hover:bg-blue-50 transition-colors"
-                                                >
-                                                    <Pencil
-                                                        class="h-3.5 w-3.5"
-                                                    />
-                                                    Update Bed
-                                                </button>
-                                            </div>
-                                        </template>
-
-                                        <template
-                                            v-else-if="bed.reserved_booking"
-                                        >
-                                            <div class="space-y-2.5">
-                                                <button
-                                                    type="button"
-                                                    class="w-full flex items-start gap-2.5 text-left"
-                                                    @click="
-                                                        toggleBookingDetails(
-                                                            bed.reserved_booking
-                                                                .booking_id,
-                                                        )
-                                                    "
-                                                >
-                                                    <div
-                                                        class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[11px] font-semibold shrink-0 ring-2 ring-white shadow-sm"
-                                                    >
-                                                        {{
-                                                            reservedInitials(
-                                                                bed,
-                                                            )
-                                                        }}
-                                                    </div>
-
-                                                    <div class="min-w-0 flex-1">
-                                                        <p
-                                                            class="text-xs font-semibold text-gray-800 truncate"
-                                                        >
-                                                            {{
-                                                                reservedPatientName(
-                                                                    bed,
-                                                                )
-                                                            }}
-                                                        </p>
-
-                                                        <div
-                                                            class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-0.5 text-[11px] text-gray-400"
-                                                        >
-                                                            <span
-                                                                v-if="
-                                                                    bed
-                                                                        .reserved_booking
-                                                                        .reference_id
-                                                                "
-                                                                class="flex items-center gap-0.5"
-                                                            >
-                                                                <Bookmark
-                                                                    class="h-3 w-3"
-                                                                />
-                                                                {{
-                                                                    bed
-                                                                        .reserved_booking
-                                                                        .reference_id
-                                                                }}
-                                                            </span>
-
-                                                            <span
-                                                                v-if="
-                                                                    bed
-                                                                        .reserved_booking
-                                                                        .status
-                                                                "
-                                                                class="px-1.5 capitalize py-0.5 rounded-full font-medium"
-                                                                :class="
-                                                                    bookingStatusClasses(
-                                                                        bed
-                                                                            .reserved_booking
-                                                                            .status,
-                                                                    )
-                                                                "
-                                                            >
-                                                                {{
-                                                                    bed
-                                                                        .reserved_booking
-                                                                        .status
-                                                                }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <ChevronDown
-                                                        class="h-3.5 w-3.5 text-gray-300 shrink-0 mt-1 transition-transform duration-200"
-                                                        :class="{
-                                                            'rotate-180':
-                                                                expandedBookingId ===
-                                                                bed
-                                                                    .reserved_booking
-                                                                    ?.booking_id,
-                                                        }"
-                                                    />
-                                                </button>
-
-                                                <div
-                                                    v-if="
-                                                        expandedBookingId ===
-                                                        bed.reserved_booking
-                                                            .booking_id
-                                                    "
-                                                    class="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[11px] text-gray-500 rounded-lg border border-dashed border-gray-200 p-2"
-                                                >
-                                                    <div
-                                                        v-if="
-                                                            bed.reserved_booking
-                                                                .patient
-                                                                ?.phone_number
-                                                        "
-                                                        class="flex items-center gap-1 truncate"
-                                                    >
-                                                        <Phone
-                                                            class="h-3 w-3 text-gray-400 shrink-0"
-                                                        />
-                                                        {{
-                                                            bed.reserved_booking
-                                                                .patient
-                                                                .phone_number
-                                                        }}
-                                                    </div>
-
-                                                    <div
-                                                        v-if="
-                                                            bed.reserved_booking
-                                                                .patient?.gender
-                                                        "
-                                                        class="flex items-center gap-1 truncate"
-                                                    >
-                                                        <Heart
-                                                            class="h-3 w-3 text-gray-400 shrink-0"
-                                                        />
-                                                        {{
-                                                            bed.reserved_booking
-                                                                .patient.gender
-                                                        }}
-                                                    </div>
-
-                                                    <div
-                                                        class="flex items-center gap-1 truncate col-span-2"
-                                                    >
-                                                        <CalendarClock
-                                                            class="h-3 w-3 text-gray-400 shrink-0"
-                                                        />
-                                                        {{
-                                                            bed.reserved_booking
-                                                                ?.reserved
-                                                                ?.admitted_at
-                                                                ? stringToDateTime(
-                                                                      bed
-                                                                          .reserved_booking
-                                                                          .reserved
-                                                                          .admitted_at,
-                                                                  )
-                                                                : "No admission date"
-                                                        }}
-                                                    </div>
-                                                </div>
-
-                                                <button
-                                                    type="button"
-                                                    @click="
-                                                        editingBedId =
-                                                            bed.bed_id
-                                                    "
-                                                    class="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-blue-600 bg-white border border-blue-200 rounded-lg py-2 hover:bg-blue-50 transition-colors"
-                                                >
-                                                    <Pencil
-                                                        class="h-3.5 w-3.5"
-                                                    />
-                                                    Update Bed
-                                                </button>
-                                            </div>
-                                        </template>
+                                        <ReservedAdmissionCard
+                                            v-else-if="bed.reserved_admission"
+                                            :bed="bed"
+                                            @edit-bed="editingBedId = $event"
+                                        />
 
                                         <template v-else>
                                             <button

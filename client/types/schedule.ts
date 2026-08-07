@@ -1,9 +1,3 @@
-
-
-
-
-
-
 export interface OnlineScheduleAssignment {
     qr_in: string | null;
     qr_out: string | null;
@@ -12,13 +6,15 @@ export interface OnlineScheduleAssignment {
     notes: string | null;
 }
 
+
 export interface ScheduleAssignee {
     employee_id: number;
     full_name: string;
     avatar: string | null;
     role: string | null;
-    online: OnlineScheduleAssignment[]
+    online: OnlineScheduleAssignment[];
 }
+
 
 export interface ScheduleServiceItem {
     schedule_services_id: number;
@@ -26,32 +22,67 @@ export interface ScheduleServiceItem {
     service_name: string | null;
     hours_booked: number | null;
     duration_minutes: number;
-    end_service: string,
-    status: string;
+    end_service: string;
     type: string | null;
     assignees?: ScheduleAssignee[];
 }
+
+
+export interface PatientAdmissionBedRoom {
+    room_id: number;
+    room_no: string;
+    floor: string | null;
+    room_type: string | null;
+}
+
+
+export interface PatientAdmissionBed {
+    bed_id: number;
+    bed_no: string;
+    room: PatientAdmissionBedRoom | null;
+}
+
+
+export interface PatientAdmission {
+    status: string;
+    admitted_at: string | null;
+    end_date: string | null;
+    bed: PatientAdmissionBed | null;
+}
+
+
+export interface SchedulePatient {
+    patient_id: number;
+    full_name: string;
+    address: string | null;
+
+    is_admitted: boolean;
+    admission: PatientAdmission | null;
+}
+
 
 export interface ScheduleItem {
     schedule_id: number;
     schedule_code: string;
     status: string;
     category: string | null;
+
     scheduled_date: string | null;
     scheduled_at?: string | null;
+
     start_time?: string | null;
+    end_time?: string | null;
+
     total_hours: number;
     total_duration_minutes: number;
-    end_time?: string | null;
-    patient?: {
-        patient_id: number;
-        full_name: string;
-        address: string,
-    } | null;
+
+    patient?: SchedulePatient | null;
 
     services?: ScheduleServiceItem[];
-    type?: 'adl' | 'medical'
+
+    type?: "adl" | "medical";
 }
+
 
 export interface Block {
     scheduleId: number;
@@ -68,3 +99,24 @@ export interface Block {
     isUnassigned: boolean;
 }
 
+export interface ConflictItem {
+    employee_id: number;
+    employee_name: string;
+    schedule_services_id: number | null;
+    service_name: string | null;
+    conflict_schedule_codes: string[];
+}
+
+export type ConflictSource = "assignment" | "schedule";
+
+export const conflictConfirm = ref<{
+    open: boolean;
+    source: ConflictSource | null;
+    conflicts: ConflictItem[];
+    pendingPayload: any;
+}>({
+    open: false,
+    source: null,
+    conflicts: [],
+    pendingPayload: null,
+});

@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id('invoice_id');
             $table->string('invoice_code')->unique();
             $table->decimal('total', 10, 2)->nullable()->default(0);
-            $table->enum('status', ['pending', 'partial', 'paid'])->default('pending');
+            $table->enum('status', ['pending', 'partial', 'paid', 'void'])->default('pending');
             $table->boolean('is_collected')->default(false);
             $table->foreignId('branch_id')
                 ->constrained('branches', 'branch_id')

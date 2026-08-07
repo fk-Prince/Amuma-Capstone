@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
+use App\Guard\AuthGuard;
+use App\Guard\BranchGuard;
 use App\Http\Requests\Auth\StoreEmployeeRequest;
 use App\Http\Requests\Auth\UpdateEmployeeRequest;
 use App\Service\EmployeeService;
@@ -19,16 +23,43 @@ class EmployeeController extends Controller
 
     public function store(StoreEmployeeRequest $request)
     {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Create);
+        $request->merge([
+            'branch_id' => $branch->branch_id,
+            'branch' => $branch
+        ]);
         return $this->employeeService->createEmployee($request->all(), $request->user());
     }
 
     public function update(UpdateEmployeeRequest $request, string $uuid)
     {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Create);
+        $request->merge([
+            'branch_id' => $branch->branch_id,
+            'branch' => $branch
+        ]);
         return $this->employeeService->updateEmployee($request->all(), $uuid, $request->user());
     }
 
     public function index(Request $request)
     {
-        return $this->employeeService->getEmployees($request->all(), $request->user(),  $request->input('type', 'regular'));
+        $type = $request->input('type', 'regular');
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        $request->merge([
+            'branch_id' => $branch->branch_id,
+            'branch' => $branch
+        ]);
+        if ($type === 'regular') {
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Read);
+        } else if ($type === 'schedule') {
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Create);
+        } else if ($type === 'service') {
+            AuthGuard::requireModule($request->user(),  $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
+        } else {
+            abort(400, 'Invalid employee type');
+        }
+        return $this->employeeService->getEmployees($request->all(), $request->user(),   $type);
     }
 }

@@ -1,24 +1,23 @@
 <template>
-    <div class="w-full max-w-5xl mx-auto space-y-5">
-        <!-- Header -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-6">
-            <div class="flex items-center gap-3">
+    <div class="w-full max-w-5xl mx-auto space-y-6">
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+            <div class="flex items-center gap-4">
                 <div
-                    class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center"
+                    class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"
                 >
                     <img
                         src="/assets/logo/logo.png"
                         alt="Logo"
-                        class="w-6 h-6 object-contain"
+                        class="w-7 h-7 object-contain"
                     />
                 </div>
 
                 <div>
-                    <h2 class="text-xl font-bold text-slate-800">
+                    <h2 class="text-xl font-bold text-slate-900">
                         Review & Confirm
                     </h2>
 
-                    <p class="text-sm text-slate-500">
+                    <p class="text-sm text-slate-500 mt-1">
                         Review your information before activating your
                         subscription.
                     </p>
@@ -26,45 +25,55 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200">
-            <div class="px-5 py-4 border-b flex items-center justify-between">
-                <h3 class="font-semibold text-slate-800">
-                    Subscription Details
-                </h3>
+        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-semibold text-slate-900">
+                        Subscription Details
+                    </h3>
+
+                    <p class="text-sm text-slate-500">
+                        Your selected plan and payment information.
+                    </p>
+                </div>
 
                 <span
-                    class="text-xs font-semibold uppercase px-3 py-1 rounded-full bg-primary/10 text-primary"
+                    class="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold capitalize"
                 >
                     {{ checkout.selectedInterval || "—" }}
                 </span>
             </div>
 
-            <div class="p-5 space-y-3">
+            <div class="space-y-3">
                 <SummaryRow
                     label="Plan"
                     :value="checkout.selectedPlan?.plan_code || '—'"
                 />
 
                 <SummaryRow
-                    label="Billing cycle"
+                    label="Billing Cycle"
                     :value="checkout.selectedInterval || '—'"
                 />
 
                 <SummaryRow
-                    label="Payment method"
+                    label="Payment Method"
                     :value="checkout.payment_method || '—'"
                 />
             </div>
-        </div>
+        </section>
 
-        <div class="bg-white rounded-2xl border border-slate-200">
-            <div class="px-5 py-4 border-b">
-                <h3 class="font-semibold text-slate-800">Agency Information</h3>
+        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5">
+            <div>
+                <h3 class="text-base font-semibold text-slate-900">
+                    Agency Information
+                </h3>
+
+                <p class="text-sm text-slate-500">Registered agency details.</p>
             </div>
 
-            <div class="p-5 space-y-3">
+            <div class="space-y-3">
                 <SummaryRow
-                    label="Name"
+                    label="Agency Name"
                     :value="checkout.agency.agency_name || '—'"
                 />
 
@@ -75,16 +84,22 @@
 
                 <SummaryRow label="Address" :value="agencyAddress || '—'" />
             </div>
-        </div>
+        </section>
 
-        <div class="bg-white rounded-2xl border border-slate-200">
-            <div class="px-5 py-4 border-b">
-                <h3 class="font-semibold text-slate-800">Branch Information</h3>
+        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5">
+            <div>
+                <h3 class="text-base font-semibold text-slate-900">
+                    Branch Information
+                </h3>
+
+                <p class="text-sm text-slate-500">
+                    Branch details and location.
+                </p>
             </div>
 
-            <div class="p-5 flex gap-5">
+            <div class="flex gap-5">
                 <div
-                    class="w-24 h-24 rounded-xl bg-slate-100 overflow-hidden shrink-0"
+                    class="w-28 h-28 rounded-2xl bg-slate-100 overflow-hidden shrink-0"
                 >
                     <img
                         v-if="branchImagePreview"
@@ -94,7 +109,7 @@
 
                     <div
                         v-else
-                        class="w-full h-full flex items-center justify-center text-xs text-slate-400"
+                        class="h-full flex items-center justify-center text-xs text-slate-400"
                     >
                         No Image
                     </div>
@@ -102,12 +117,12 @@
 
                 <div class="flex-1 space-y-3">
                     <SummaryRow
-                        label="Name"
+                        label="Branch Name"
                         :value="checkout.branch.name || '—'"
                     />
 
                     <SummaryRow
-                        label="Contact"
+                        label="Contact Number"
                         :value="checkout.branch.contact_number || '—'"
                     />
 
@@ -119,18 +134,22 @@
                     <SummaryRow label="Address" :value="branchAddress || '—'" />
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="bg-white rounded-2xl border border-slate-200">
-            <div class="px-5 py-4 border-b">
-                <h3 class="font-semibold text-slate-800">
-                    Branch Configuration
+        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5">
+            <div>
+                <h3 class="text-base font-semibold text-slate-900">
+                    Operation Settings
                 </h3>
+
+                <p class="text-sm text-slate-500">
+                    Branch configuration and working preferences.
+                </p>
             </div>
 
-            <div class="p-5 space-y-3">
+            <div class="space-y-3">
                 <SummaryRow
-                    label="Business hours"
+                    label="Business Hours"
                     :value="businessHours || '—'"
                 />
 
@@ -140,15 +159,30 @@
                 />
 
                 <SummaryRow
-                    label="Time zone"
+                    label="Time Zone"
                     :value="checkout.settings?.time_zone || '—'"
                 />
-            </div>
-        </div>
 
-        <div
-            class="flex gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3"
-        >
+                <!-- <SummaryRow
+                    label="Minimum Homecare Hours"
+                    :value="
+                        String(checkout.settings?.minimum_homecare_hours || '—')
+                    "
+                />
+
+                <SummaryRow
+                    label="Billing Due Date"
+                    :value="String(checkout.settings?.billing_due_date || '—')"
+                />
+
+                <SummaryRow
+                    label="Branch Status"
+                    :value="checkout.settings?.is_open ? 'Open' : 'Closed'"
+                /> -->
+            </div>
+        </section>
+
+        <div class="flex gap-3 rounded-2xl bg-blue-50 px-5 py-4">
             <i class="ti ti-info-circle text-blue-500 text-lg mt-0.5" />
 
             <p class="text-sm text-blue-700 leading-relaxed">

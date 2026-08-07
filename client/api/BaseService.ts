@@ -156,6 +156,8 @@
 
 // export default BaseService;
 
+import { RequestManager } from '@/utils/requestManager';
+
 type HttpMethod =
     | 'GET'
     | 'POST'
@@ -234,6 +236,8 @@ export class BaseService {
         method: HttpMethod,
         params: Record<string, any> | FormData = {}
     ): Promise<T> {
+        // const controller = RequestManager.create();
+
         const config = useRuntimeConfig()
 
         const xsrfToken = useCookie('XSRF-TOKEN').value
@@ -299,8 +303,20 @@ export class BaseService {
                 ...(requestMethod === "GET"
                     ? { params }
                     : { body }),
+                // signal: controller.signal,
             });
         } catch (error: any) {
+            if (
+                error?.name === 'AbortError' ||
+                error?.cause?.name === 'AbortError' ||
+                error?.message?.includes('signal is aborted')
+            ) {
+                return {
+                    data: null,
+                    cancelled: true,
+                } as T;
+            }
+
             const status = error?.response?.status
             const data = error?.response?._data
 
@@ -313,6 +329,20 @@ export class BaseService {
                 errors: data?.errors || {},
                 data,
             }
+            // const status = error?.response?.status
+            // const data = error?.response?._data
+
+            // throw {
+            //     status,
+            //     message:
+            //         data?.message ||
+            //         error?.message ||
+            //         'Something went wrong',
+            //     errors: data?.errors || {},
+            //     data,
+            // }
+        } finally {
+            // RequestManager.remove(controller);
         }
     }
 }

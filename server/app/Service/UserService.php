@@ -2,21 +2,12 @@
 
 namespace App\Service;
 
-use App\Enums\ModuleEnum;
-use App\Enums\PermissionAction;
-use App\Http\Resources\UserResource;
+
 use App\Models\User;
 use App\Repository\BranchRepository;
 use App\Repository\LocationRepository;
 use App\Repository\UserRepository;
-use App\Service\Utils\AuthGuard;
-use App\Service\Utils\SupabaseService;
-use Carbon\Carbon;
-use Exception;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+
 
 class UserService
 {

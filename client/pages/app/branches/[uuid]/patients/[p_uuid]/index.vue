@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import PatientHeader from "~/components/sections/app/Patient/PatientHeader.vue";
-
+import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import ActionMedicationModal from "~/components/sections/app/Patient/ActionMedicationModal.vue";
 import MedicationTable from "~/components/sections/app/Patient/MedicationTable.vue";
 import ActionVitalModal from "~/components/sections/app/Patient/ActionVitalModal.vue";
@@ -13,11 +13,12 @@ import AssignEmployeeModal from "~/components/sections/app/Patient/AssignEmploye
 import type { ScheduleItem } from "~/types/schedule";
 import ScheduleDetails from "~/components/sections/app/Patient/ScheduleDetails.vue";
 import HomecareADL from "~/components/sections/app/Patient/HomecareADL.vue";
-
-useHead({
-    title: "Patient Information",
-});
-const { success, error } = useToast();
+import SchedulePatient from "~/components/sections/app/Patient/SchedulePatient.vue";
+import {
+    type ConflictItem,
+    conflictConfirm,
+    type ConflictSource,
+} from "~/types/schedule";
 import type {
     Medication,
     MedicationForm,
@@ -25,7 +26,10 @@ import type {
     Vital,
     VitalFormData,
 } from "~/types/medication";
-import SchedulePatient from "~/components/sections/app/Patient/SchedulePatient.vue";
+
+useHead({ title: "Patient Information" });
+
+const { success, error } = useToast();
 
 definePageMeta({
     layout: "dashboard",
@@ -56,6 +60,7 @@ const {
 
 const uuid = computed(() => route.params.p_uuid as string);
 const b_uuid = computed(() => route.params.uuid as string);
+
 onMounted(() => {
     fetchData(uuid.value, b_uuid.value);
 });
@@ -67,9 +72,7 @@ const tabs = [
     "Medication",
     "Vital Signs",
 ] as const;
-
 type Tab = (typeof tabs)[number];
-
 const activeTab = ref<Tab>("Overview");
 
 function setActiveTab(tab: Tab) {
@@ -94,6 +97,62 @@ const selectedVital = ref<Vital | null>(null);
 const selectedSchedule = ref<ScheduleItem | null>(null);
 const selectedMedication = ref<Medication | null>(null);
 
+const assignModalOpen = ref(false);
+const assigneSchedule = ref<ScheduleItem>();
+const scheduleType = ref<"medical" | "homecare">("medical");
+
+const conflictMessage = computed(() => {
+    const count = conflictConfirm.value.conflicts.length;
+    if (count === 1) {
+        return `${conflictConfirm.value.conflicts[0]?.employee_name} has a scheduling conflict.`;
+    }
+    return `${count} employees have scheduling conflicts.`;
+});
+
+const conflictDescription = computed(() =>
+    conflictConfirm.value.conflicts
+        .map((c) => {
+            const codes = c.conflict_schedule_codes.join(", ");
+            const service = c.service_name ? ` (${c.service_name})` : "";
+            return `${c.employee_name}${service} — conflicts with ${codes}`;
+        })
+        .join("\n"),
+);
+
+function openConflictConfirm(
+    source: ConflictSource,
+    conflicts: ConflictItem[],
+    pendingPayload: any,
+) {
+    conflictConfirm.value = { open: true, source, conflicts, pendingPayload };
+}
+
+function resetConflictConfirm() {
+    conflictConfirm.value = {
+        open: false,
+        source: null,
+        conflicts: [],
+        pendingPayload: null,
+    };
+}
+
+function cancelConflictOverride() {
+    resetConflictConfirm();
+}
+
+async function confirmConflictOverride() {
+    const { source, pendingPayload } = conflictConfirm.value;
+    if (!source || !pendingPayload) return;
+
+    const overridePayload = { ...pendingPayload, confirm_conflicts: true };
+
+    if (source === "assignment") {
+        await runAssignment(overridePayload);
+    } else {
+        await runScheduleUpdate(overridePayload);
+    }
+}
+
 function vitalAction(vital: Vital) {
     selectedVital.value = vital;
     showRecordVital.value = true;
@@ -113,14 +172,12 @@ async function onVitalSubmit(
             id,
         );
         success(res.message);
-        savingVital.value = false;
         showRecordVital.value = false;
         selectedVital.value = null;
     } catch (err: any) {
         error(err.error);
-        console.error(err);
     } finally {
-        savingMedication.value = false;
+        savingVital.value = false;
     }
 }
 
@@ -142,7 +199,6 @@ async function onMedicationSubmit(
         selectedMedication.value = null;
     } catch (err: any) {
         error(err.error);
-        console.error(err);
     } finally {
         savingMedication.value = false;
     }
@@ -150,13 +206,11 @@ async function onMedicationSubmit(
 
 async function onDosageSubmit(payload: MarkDosePayload) {
     savingDosage.value = true;
-
     try {
         const res = await handleDosageAction(payload, uuid.value);
         success(res.message);
     } catch (err: any) {
         error(err.error);
-        console.error(err);
     } finally {
         savingDosage.value = false;
     }
@@ -164,7 +218,6 @@ async function onDosageSubmit(payload: MarkDosePayload) {
 
 async function onScheduleSubmit(payload: any) {
     savingSchedule.value = true;
-
     try {
         const res = await handleScheduleAction(
             payload,
@@ -174,7 +227,6 @@ async function onScheduleSubmit(payload: any) {
         success(res.message);
     } catch (err: any) {
         error(err.error);
-        console.error(err);
     } finally {
         savingSchedule.value = false;
     }
@@ -192,7 +244,6 @@ async function handleAssign(s: ScheduleItem, isModal = true) {
         assignModalOpen.value = true;
     }
     isFetchingEmployee.value = true;
-
     try {
         await fetchEmployee(b_uuid.value, s.schedule_id);
     } catch (err: any) {
@@ -202,11 +253,30 @@ async function handleAssign(s: ScheduleItem, isModal = true) {
     }
 }
 
-async function onAssignSubmit(payload: any) {
+function updateScheduleInList(updated: ScheduleItem | undefined) {
+    if (!updated?.schedule_id) return;
+    const index = scheduleData.value.findIndex(
+        (s: ScheduleItem) => s.schedule_id === updated.schedule_id,
+    );
+    if (index !== -1) {
+        scheduleData.value[index] = updated;
+    }
+}
+
+async function runAssignment(payload: any) {
     savingAssignment.value = true;
     try {
-        const res = await handleAssignment(payload, b_uuid.value);
+        const res: any = await handleAssignment(payload, b_uuid.value);
+
+        if (res?.has_conflicts) {
+            openConflictConfirm("assignment", res.conflicts ?? [], payload);
+            return;
+        }
+
+        updateScheduleInList(res?.data);
         success(res.message);
+        assignModalOpen.value = false;
+        resetConflictConfirm();
     } catch (err: any) {
         error(err.error);
     } finally {
@@ -214,13 +284,24 @@ async function onAssignSubmit(payload: any) {
     }
 }
 
-async function onUpdateSchedule(payload: any) {
+function onAssignSubmit(payload: any) {
+    return runAssignment(payload);
+}
+
+async function runScheduleUpdate(payload: any) {
     updatingAssignment.value = true;
     try {
-        const res = await updateSchedule(payload, b_uuid.value);
-        scheduleData.value = res.data;
+        const res: any = await updateSchedule(payload, b_uuid.value);
+
+        if (res?.has_conflicts) {
+            openConflictConfirm("schedule", res.conflicts ?? [], payload);
+            return;
+        }
+
+        updateScheduleInList(res?.data);
         success(res.message);
         showScheduleModal.value = false;
+        resetConflictConfirm();
     } catch (err: any) {
         error(err.error ?? err.message);
     } finally {
@@ -228,24 +309,26 @@ async function onUpdateSchedule(payload: any) {
     }
 }
 
-const assignModalOpen = ref(false);
-const assigneSchedule = ref<ScheduleItem>();
-const scheduleType = ref<"medical" | "homecare">("medical");
+function onUpdateSchedule(payload: any) {
+    return runScheduleUpdate(payload);
+}
+
 const filteredScheduleData = computed(() => {
+    if (!Array.isArray(scheduleData.value)) return [];
     return scheduleData.value.filter((schedule: ScheduleItem) => {
-        if (scheduleType.value === "homecare") {
-            return schedule.type === "adl";
-        }
-        return schedule.type === "medical";
+        const type = schedule.type?.toLowerCase();
+        return scheduleType.value === "homecare"
+            ? type === "adl"
+            : type === "medical";
     });
 });
+
 async function onScheduleRangeChange(payload: { from: string; to: string }) {
     isFetchingSchedule.value = true;
     await fetchSchedules(uuid.value, b_uuid.value, payload.from, payload.to);
     isFetchingSchedule.value = false;
 }
 </script>
-
 <template>
     <div class="min-h-screen bg-gray-50 p-6">
         <div class="m-full space-y-4">
@@ -352,7 +435,6 @@ async function onScheduleRangeChange(payload: { from: string; to: string }) {
                         "
                         @mark-dose="onDosageSubmit"
                     />
-                    <!-- @edit-vital="handleAddMedication" -->
 
                     <VitalSignsTable
                         v-if="activeTab === 'Vital Signs'"
@@ -467,6 +549,19 @@ async function onScheduleRangeChange(payload: { from: string; to: string }) {
             :vital="selectedVital"
             @close="showRecordVital = false"
             @submit="onVitalSubmit"
+        />
+
+        <ConfirmDialog
+            :open="conflictConfirm.open"
+            title="Assign employee with conflict?"
+            :message="conflictMessage"
+            :description="conflictDescription"
+            confirm-label="Assign Anyway"
+            cancel-label="Cancel"
+            variant="danger"
+            :loading="savingAssignment"
+            @confirm="confirmConflictOverride"
+            @cancel="cancelConflictOverride"
         />
     </div>
 </template>

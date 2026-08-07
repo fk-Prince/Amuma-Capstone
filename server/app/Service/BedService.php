@@ -16,20 +16,14 @@ use Illuminate\Support\Facades\DB;
 
 class BedService
 {
-    private BedRepository $bedRepository;
-    private BranchRepository $branchRepository;
-    private  RoomRepository $roomRepository;
 
-    public function __construct(BedRepository $bedRepository, BranchRepository $branchRepository, RoomRepository $roomRepository)
-    {
-        $this->bedRepository = $bedRepository;
-        $this->branchRepository = $branchRepository;
-        $this->roomRepository = $roomRepository;
-    }
+    public function __construct(
+        private BedRepository $bedRepository,
+        private  RoomRepository $roomRepository
+    ) {}
 
     public function createBed(User $user, array $payload)
     {
-
 
         $room = $this->roomRepository->findByField([
             ['room_id', '=', $payload['room_id']],

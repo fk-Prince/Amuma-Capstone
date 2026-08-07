@@ -17,9 +17,6 @@ return new class extends Migration
 
             $table->foreignId('patient_admission_id')
                 ->constrained('patient_admissions', 'patient_admission_id');
-
-            $table->decimal('balance', 10, 2)->default(0);
-
             $table->timestamps();
         });
     }

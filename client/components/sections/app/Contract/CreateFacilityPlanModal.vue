@@ -152,6 +152,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     close: [];
+    saved: [];
 }>();
 
 const planTypes = [
@@ -169,7 +170,7 @@ const uuid = computed(() => route.params.uuid as string);
 const isEditMode = computed(() => !!props.data?.branch_contract_id);
 
 const form = reactive({
-    ...props.data,
+    ...facilityPlanForm(),
     branch_uuid: uuid.value,
 });
 
@@ -251,6 +252,7 @@ async function submit() {
                     : "Facility plan created successfully"),
         );
 
+        emit("saved");
         close();
     } catch (err: any) {
         const message =
@@ -274,6 +276,7 @@ async function submit() {
         }
     } finally {
         isSubmitting.value = false;
+        emit("close");
     }
 }
 </script>

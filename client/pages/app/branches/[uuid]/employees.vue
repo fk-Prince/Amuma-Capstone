@@ -1,16 +1,10 @@
 <template>
-    <div class="w-full max-w-8xl mx-auto p-4 md:p-6 lg:space-y-5">
+    <div class="w-full h-full max-w-8xl mx-auto p-4 md:p-6 lg:space-y-5">
         <div
             v-if="!addEmployeeTab"
-            class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-4 items-start"
+            class="h-full grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-4 items-stretch"
         >
-            <div>
-                <PageHeader
-                    title="Manage Employees"
-                    subtitle="Human Resources"
-                    description="Add, update, and manage employee information."
-                />
-
+            <div class="flex flex-col min-h-0">
                 <EmployeeDashboard
                     :total-employee="totalEmployee"
                     :on-duty="onDuty"
@@ -24,21 +18,19 @@
                         v-model:activeTab="activeTab"
                     />
                 </ClientOnly>
-                <!-- <EmployeeList
-                    :employees="employees"
-                    :loading="loading"
-                    @select="openEditEmployee"
-                /> -->
 
-                <EmployeeList
-                    :employees="employees"
-                    :loading="loading"
-                    :current-page="currentPage"
-                    :total-pages="totalPages"
-                    :total-items="totalEmployee"
-                    @select="updateEmployee"
-                    @page-change="handlePageChange"
-                />
+                <div class="flex-1 min-h-0 mt-2">
+                    <EmployeeList
+                        class="h-full"
+                        :employees="employees"
+                        :loading="loading"
+                        :current-page="currentPage"
+                        :total-pages="totalPages"
+                        :total-items="totalEmployee"
+                        @select="updateEmployee"
+                        @page-change="handlePageChange"
+                    />
+                </div>
             </div>
 
             <div class="hidden lg:flex flex-col gap-4 w-[280px]">

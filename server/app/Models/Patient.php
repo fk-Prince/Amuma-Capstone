@@ -60,8 +60,15 @@ class Patient extends Model
         return $this->hasMany(PatientAdmission::class, 'patient_id', 'patient_id');
     }
 
-    public function bookings()
+    public function currentAdmission()
     {
-        return $this->hasMany(PatientBooking::class, 'patient_id', 'patient_id');
+        return $this->hasOne(PatientAdmission::class, 'patient_id', 'patient_id')
+            ->where('status', 'admitted');
+    }
+
+    public function latestAdmission()
+    {
+        return $this->hasOne(PatientAdmission::class, 'patient_id', 'patient_id')
+            ->latestOfMany('patient_admission_id');
     }
 }

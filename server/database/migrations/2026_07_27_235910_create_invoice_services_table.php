@@ -22,9 +22,7 @@ return new class extends Migration
                 ->constrained('invoices', 'invoice_id')
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
-
             $table->string('note')->nullable();
-
             $table->timestamps();
         });
     }

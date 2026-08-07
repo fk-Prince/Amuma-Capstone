@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
     <div class="min-h-[calc(100vh-90px)] bg-slate-100 p-6">
         <div
             class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5 mb-6"
@@ -579,4 +579,8 @@ const Field = (props: {
             props.value || "—",
         ),
     ]);
-</script>
+</script> -->
+
+<template>
+    <div></div>
+</template>

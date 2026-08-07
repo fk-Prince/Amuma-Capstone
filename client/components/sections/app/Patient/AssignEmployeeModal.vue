@@ -9,7 +9,7 @@
     >
         <div
             v-if="open"
-            class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            class="fixed inset-0 z-[49] flex items-center justify-center p-4"
         >
             <div
                 class="fixed inset-0 bg-black/40 backdrop-blur-sm"
@@ -142,7 +142,7 @@
                                         "
                                         @update:model-value="
                                             (val) =>
-                                                assign(
+                                                requestAssign(
                                                     service.schedule_services_id,
                                                     String(val),
                                                 )
@@ -229,7 +229,7 @@
                                             : '',
                                     ]"
                                     @click="
-                                        assign(
+                                        requestAssign(
                                             activeService,
                                             String(employee.employee_id),
                                         )
@@ -367,6 +367,22 @@
             </Transition>
         </div>
     </Transition>
+
+    <ConfirmDialog
+        :open="conflictConfirm.open"
+        title="Assign employee with conflict?"
+        :message="`${conflictConfirm.employeeName} already has a conflicting schedule.`"
+        :description="
+            conflictConfirm.conflictCodes.length
+                ? `Conflicts with: ${conflictConfirm.conflictCodes.join(', ')}`
+                : 'Are you sure you want to assign them to this service anyway?'
+        "
+        confirm-label="Assign Anyway"
+        cancel-label="Cancel"
+        variant="danger"
+        @confirm="confirmConflictAssign"
+        @cancel="cancelConflictAssign"
+    />
 </template>
 
 <script setup lang="ts">
@@ -375,6 +391,7 @@ import type { ScheduleItem } from "~/types/schedule";
 import { fullName } from "~/utils/user";
 import { formatDate } from "~/utils/time";
 import Combobox from "~/components/ui/Combobox.vue";
+import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 
 const props = defineProps<{
     open: boolean;
@@ -408,6 +425,20 @@ const employeeItems = computed(() => {
     }));
 });
 const activeService = ref<number | null>(null);
+
+const conflictConfirm = ref<{
+    open: boolean;
+    serviceId: number | null;
+    employeeId: string | null;
+    employeeName: string;
+    conflictCodes: string[];
+}>({
+    open: false,
+    serviceId: null,
+    employeeId: null,
+    employeeName: "",
+    conflictCodes: [],
+});
 
 watch(
     () => props.schedule,
@@ -443,6 +474,57 @@ function assign(serviceId: number | null, employeeId: string) {
     assignments.value = {
         ...assignments.value,
         [serviceId]: employeeId,
+    };
+}
+
+function requestAssign(serviceId: number | null, employeeId: string) {
+    if (!serviceId || !employeeId) return;
+
+    const employee = props.employees?.find(
+        (e) => String(e.employee_id) === employeeId,
+    );
+
+    if (employee?.is_busy) {
+        const codes = Array.from(
+            new Set(
+                (employee.conflict_schedules ?? []).map((s) => s.schedule_code),
+            ),
+        );
+
+        conflictConfirm.value = {
+            open: true,
+            serviceId,
+            employeeId,
+            employeeName: fullName(employee.first_name, "", employee.last_name),
+            conflictCodes: codes,
+        };
+        return;
+    }
+
+    assign(serviceId, employeeId);
+}
+
+function confirmConflictAssign() {
+    const { serviceId, employeeId } = conflictConfirm.value;
+
+    if (serviceId && employeeId) {
+        assign(serviceId, employeeId);
+    }
+
+    resetConflictConfirm();
+}
+
+function cancelConflictAssign() {
+    resetConflictConfirm();
+}
+
+function resetConflictConfirm() {
+    conflictConfirm.value = {
+        open: false,
+        serviceId: null,
+        employeeId: null,
+        employeeName: "",
+        conflictCodes: [],
     };
 }
 

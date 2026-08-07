@@ -3,8 +3,9 @@ import { useBranchStore } from "~/stores/branch";
 
 export const useBranchPlan = () => {
     const branchStore = useBranchStore();
+
     const planCode = computed(
-        () => branchStore.activeBranch?.plan?.[0]?.plan_code ?? null,
+        () => branchStore.activeBranch?.plan?.[0]?.plan_code ?? null
     );
 
     const hasPlan = (code: "A" | "B" | "C") => {

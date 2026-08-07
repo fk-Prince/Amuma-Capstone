@@ -1,15 +1,16 @@
 import { ref, watch, onUnmounted, type Ref } from "vue";
 import { bookingService } from "~/api/booking/BookingService";
 import { usePagination } from "~/composables/usePagination";
+import type { BookingRetrieve } from "~/types/booking";
 
 
 export function useBookingList(branchUuid: Ref<string>) {
-    const bookingData = ref<any[] | null>(null);
+    const bookingData = ref<BookingRetrieve[] | null>(null);
     const isLoading = ref(true);
     const isFetching = ref(false);
 
     const searchQuery = ref("");
-    const statusFilter = ref<string>("pending");
+    const statusFilter = ref<string>("all");
     const typeFilter = ref<string>("all");
 
     function toDateInputValue(date: Date): string {
@@ -43,11 +44,13 @@ export function useBookingList(branchUuid: Ref<string>) {
                     statusFilter.value !== "all" ? statusFilter.value : undefined,
                 date_from: dateFrom.value || undefined,
                 date_to: dateTo.value || undefined,
+                booking_type: "online"
             });
 
             if (thisRequest !== requestId) return;
 
-            bookingData.value = res.data;
+            bookingData.value = res.data ?? res.data.data;
+
             const total = res.meta?.total ?? res.total ?? res.data.length;
             pagination.setTotal(total);
         } catch (err) {

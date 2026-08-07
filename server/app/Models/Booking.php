@@ -10,21 +10,25 @@ class Booking extends Model
     protected $primaryKey = 'booking_id';
     protected $keyType = 'int';
 
-    public const STATUS_PENDING = 'pending'; // booking ismade
-    public const STATUS_APPROVED = 'approved'; // approve waiting for payment 
-    public const STATUS_AWAITING = 'awaiting'; // waiting for patient to be admitted
-    public const STATUS_COMPLETED = 'completed'; // done admitted or service done
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_EXPIRED = 'expired';
+    public const STATUS_REJECTED = 'rejected';
+    public const STATUS_CANCELLED = 'cancelled';
 
-    public const STATUS_EXPIRED = 'expired';  // now > valid until
-    public const STATUS_REJECTED = 'rejected'; // booking is rejeted
 
+    public const CATEGORY_ONLINE = 'homecare';
+    public const CATEGORY_FACILITY = 'facility';
 
-    public const CATEGORY_ONLINE = 'Homecare';
-    public const CATEGORY_FACILITY = 'Facility';
+    public const BOOKINGTYPE_ONLINE = 'online';
+    public const BOOKINGTYPE_WALKIN = 'walk_in';
+
 
     public const TYPE_PREADMISSION = 'Pre-Admission';
     public const TYPE_COMPLETEADMISSION = 'Complete';
     public const TYPE_WALKINADMISSION = 'Walk-in Admission';
+
     public const TYPE_ADL = 'ADL';
     public const TYPE_MEDICAL = 'Medical';
 
@@ -37,6 +41,7 @@ class Booking extends Model
         'status',
         'category',
         'valid_until',
+        'booking_type'
     ];
 
 
@@ -64,6 +69,23 @@ class Booking extends Model
         });
     }
 
+    public function patientsBooking()
+    {
+        return $this->hasManyThrough(
+            Patient::class,
+            PatientBooking::class,
+            'booking_id',
+            'patient_id',
+            'booking_id',
+            'patient_id'
+        );
+    }
+
+    public function patientBookings()
+    {
+        return $this->hasMany(PatientBooking::class, 'booking_id', 'booking_id');
+    }
+
     public function user()
     {
         return $this->hasOne(User::class, 'user_id', 'user_id');
@@ -73,15 +95,21 @@ class Booking extends Model
         return $this->hasOne(Branch::class, 'branch_id', 'branch_id');
     }
 
-    public function patientBooking()
+    public function patientAdmissionBookings()
     {
-        return $this->hasMany(PatientBooking::class, 'booking_id', 'booking_id');
+        return $this->hasMany(PatientAdmission::class, 'booking_id', 'booking_id');
+    }
+
+    public function patientScheduleBookings()
+    {
+        return $this->hasMany(Schedule::class, 'booking_id', 'booking_id');
     }
 
     public function reservedBedId()
     {
         return data_get($this->booking_data, 'reserved.bed.bed_id');
     }
+
     protected $casts = [
         'booking_data' => 'array',
     ];

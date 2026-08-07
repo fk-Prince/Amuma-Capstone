@@ -1,13 +1,9 @@
 <template>
     <div class="min-h-[calc(100vh-90px)] bg-slate-100 p-6">
-        <!-- <div
-            class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 items-stretch max-w-8xl h-[calc(100vh-90px-3rem)]"
-        > -->
         <div
             class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 items-stretch max-w-8xl min-h-[calc(100vh-90px-3rem)] lg:h-[calc(100vh-90px-3rem)]"
         >
             <div class="w-full min-h-0 flex flex-col order-1">
-                <!-- <div class="w-full h-full min-h-0 flex flex-col order-1"> -->
                 <template v-if="!selectedReferenceId">
                     <div
                         class="bg-white rounded-2xl shadow-sm border border-[#E4EFED] overflow-hidden flex-1 min-h-0 flex flex-col"
@@ -219,12 +215,14 @@
                                     </tr>
 
                                     <BookingCard
-                                        v-else
                                         v-for="booking in bookingData"
                                         :key="booking.booking_id"
                                         :booking="booking"
                                         @confirm="confirmBooking"
                                         @reject="rejectBooking"
+                                        @view-details="
+                                            (b) => selectBooking(b.reference_id)
+                                        "
                                     />
                                 </tbody>
                             </table>
@@ -340,13 +338,14 @@
                         Back to bookings
                     </button>
 
+                    <!-- @admit="admitPatient"
+                        @accommodation="openAccommodationModal"
+                        @assign="showAssign = true" -->
                     <BookingDetails
                         :booking="selectedBooking"
                         @reject="rejectBooking"
                         @confirm="confirmBooking"
-                        @assign="showAssign = true"
                         @accommodation="openAccommodationModal"
-                        @admit="admitPatient"
                         :loading="isSubmitting"
                     />
                 </div>
@@ -388,18 +387,22 @@
                 </div>
             </div>
             <div class="w-full min-h-0 order-2">
-                <BookingSidebar class="w-full lg:h-full" :overview="overview" />
+                <BookingSidebar
+                    class="w-full lg:h-full"
+                    :overview="overview"
+                    @newBooking="handleNewBooking"
+                />
             </div>
         </div>
 
-        <BookingServiceAssign
+        <!-- <BookingServiceAssign
             :open="showAssign"
             :booking="selectedBooking"
             :branchUuid="branch_uuid"
             :isSaving="isAssigning"
             @close="showAssign = false"
             @confirm="handleAssignConfirm"
-        />
+        /> -->
 
         <AdmissionDetail
             v-if="showAccommodationModal && selectedBooking"
@@ -409,7 +412,7 @@
             @update:model="reserved = $event"
             @confirm="onAccommodationConfirm"
             @close="showAccommodationModal = false"
-            :accommodation="selectedBooking.booking_data?.service?.plan"
+            :accommodation="selectedBooking.facility?.plan"
             :require-admission-date="false"
         />
     </div>
@@ -426,12 +429,11 @@ import { useRoute, useRouter } from "vue-router";
 import BookingDetails from "~/components/sections/app/Booking/BookingDetails.vue";
 import { useToast } from "~/composables/useToast";
 import { useBookingList } from "~/composables/useBookingList";
-import BookingServiceAssign from "~/components/sections/app/Booking/BookingServiceAssign.vue";
-import { typeFilters } from "~/types/booking";
+import { typeFilters, statusFilters } from "~/types/booking";
 import Combobox from "~/components/ui/Combobox.vue";
-import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
 import type { RoomContract, Reserved } from "~/types/contract";
 import { branchContractService } from "~/api/branch-contract/BranchContractService";
+import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
 
 const { success, error } = useToast();
 const route = useRoute();
@@ -460,33 +462,31 @@ const {
     goToPage,
 } = useBookingList(branch_uuid);
 
-const statusFilters = [
-    { label: "All", value: "all" },
-    { label: "Pending", value: "pending" },
-    { label: "Awaiting", value: "awaiting" },
-    { label: "Approved", value: "approved" },
-    { label: "Rejected", value: "rejected" },
-    { label: "Missed", value: "missed" },
-];
-
-const emptyStateTitle = computed(() =>
-    searchQuery.value || statusFilter.value !== "all"
-        ? "No matching bookings"
-        : "No bookings yet",
-);
-
-const emptyStateSubtitle = computed(() =>
-    searchQuery.value || statusFilter.value !== "all"
-        ? "Try a different search term or filter."
-        : "New bookings for this branch will show up here.",
-);
-
 const isAssigning = ref(false);
 const isSubmitting = ref(false);
 const isLoadingSelected = ref(true);
-
 const selectedBooking = ref<any | null>(null);
 const showAssign = ref(false);
+const showAccommodationModal = ref(false);
+const loadingContract = ref(false);
+const roomContract = ref<RoomContract[]>([]);
+const reserved = ref<Reserved | null>(null);
+
+const handleNewBooking = (booking: any) => {
+    if (!booking?.booking_id) return;
+    const current = bookingData.value ?? [];
+    const exists = current.some(
+        (item: any) => item.booking_id === booking.booking_id,
+    );
+    if (exists) return;
+    const updated = [booking, ...current];
+
+    if (updated.length > pagination.pageSize.value) {
+        updated.pop();
+    }
+    bookingData.value = updated;
+    pagination.totalItems.value++;
+};
 
 const rejectBooking = async (booking: any) => {
     if (!booking?.booking_id) return;
@@ -499,19 +499,7 @@ const rejectBooking = async (booking: any) => {
             branch_uuid: branch_uuid.value,
         });
         success(res.message ?? res);
-        fetchBookings();
-
-        // if (
-        //     selectedBooking.value &&
-        //     String(selectedBooking.value.booking_id) ===
-        //         String(booking.booking_id)
-        // ) {
-        //     selectedBooking.value = {
-        //         ...selectedBooking.value,
-        //         ...booking,
-        //         status: "rejected",
-        //     };
-        // }
+        refresh();
     } catch (err: any) {
         error(err.message);
         console.error(err);
@@ -522,21 +510,43 @@ const rejectBooking = async (booking: any) => {
 
 const confirmBooking = async (booking: any) => {
     isSubmitting.value = true;
+
     const payload = {
+        ...selectedBooking.value,
         reference_id: booking.reference_id,
         action: "approve",
         branch_uuid: branch_uuid.value,
-        assignments: selectedBooking.value?.assignments ?? [],
     };
     try {
         const res = await bookingService.actionBooking(payload);
         success(res.message ?? res);
-        fetchBookings();
+        refresh();
     } catch (err: any) {
         error(err.message);
         console.error(err);
     } finally {
         isSubmitting.value = false;
+    }
+};
+
+const refresh = async () => {
+    if (!selectedReferenceId.value) {
+        await fetchBookings();
+        return;
+    }
+
+    try {
+        const [, res] = await Promise.all([
+            fetchBookings(),
+            bookingService.show(selectedReferenceId.value, {
+                reference_id: selectedReferenceId.value,
+                branch_uuid: branch_uuid.value,
+            }),
+        ]);
+
+        selectedBooking.value = res ?? null;
+    } catch (err) {
+        console.error(err);
     }
 };
 
@@ -544,12 +554,12 @@ const admitPatient = async (e: any) => {
     isSubmitting.value = true;
     try {
         const res = await bookingService.actionBooking({
-            action: "approve",
+            action: "admit",
             branch_uuid: branch_uuid.value,
             ...e,
         });
         success(res.message ?? res);
-        fetchBookings();
+        refresh();
     } catch (err: any) {
         error(err.message);
         console.error(err);
@@ -557,10 +567,6 @@ const admitPatient = async (e: any) => {
         isSubmitting.value = false;
     }
 };
-
-watch(bookingData, () => {
-    resolveSelectedBooking(selectedReferenceId.value);
-});
 
 const handleAssignConfirm = (e: {
     booking: any;
@@ -579,18 +585,6 @@ const handleAssignConfirm = (e: {
     showAssign.value = false;
 };
 
-onMounted(() => {
-    fetchBookings();
-    if (selectedReferenceId.value) {
-        resolveSelectedBooking(selectedReferenceId.value);
-    }
-});
-
-const showAccommodationModal = ref(false);
-const loadingContract = ref(false);
-const roomContract = ref<RoomContract[]>([]);
-const reserved = ref<Reserved | null>(null);
-
 async function openAccommodationModal(booking: any) {
     selectedBooking.value = booking;
     showAccommodationModal.value = true;
@@ -602,7 +596,6 @@ async function openAccommodationModal(booking: any) {
             type: "room_contract",
             branch_uuid: branch_uuid.value,
         });
-
         roomContract.value = response;
     } catch (err) {
         console.error("Failed loading room contracts", err);
@@ -618,16 +611,12 @@ async function onAccommodationConfirm(payload: Reserved) {
 
     selectedBooking.value = {
         ...selectedBooking.value,
-        booking_data: {
-            ...selectedBooking.value.booking_data,
-            reserved: {
-                ...payload,
-                admitted_at:
-                    selectedBooking.value.booking_data?.service
-                        ?.admission_date ?? null,
-            },
+        reserved: {
+            ...payload,
+            admitted_at: selectedBooking.value.facility?.admission_date ?? null,
         },
     };
+    console.log(selectedBooking.value);
     showAccommodationModal.value = false;
 }
 
@@ -648,6 +637,22 @@ const selectedReferenceId = computed<string | null>(() => {
     if (Array.isArray(value)) return value[0] ?? null;
     return typeof value === "string" ? value : null;
 });
+
+function selectBooking(referenceId: string | null) {
+    if (!referenceId) return;
+
+    if (String(selectedReferenceId.value) === String(referenceId)) {
+        return resolveSelectedBooking(referenceId);
+    }
+
+    router.push({
+        path: route.path,
+        query: {
+            ...route.query,
+            reference_id: referenceId,
+        },
+    });
+}
 
 async function resolveSelectedBooking(referenceId: string | null) {
     if (!referenceId) {
@@ -687,6 +692,7 @@ async function resolveSelectedBooking(referenceId: string | null) {
         isLoadingSelected.value = false;
     }
 }
+
 const overview = ref<any>(null);
 
 onMounted(async () => {
@@ -713,4 +719,19 @@ onMounted(async () => {
 watch(selectedReferenceId, (referenceId) => {
     resolveSelectedBooking(referenceId);
 });
+
+watch(bookingData, () => {
+    resolveSelectedBooking(selectedReferenceId.value);
+});
+
+const emptyStateTitle = computed(() =>
+    searchQuery.value || statusFilter.value !== "all"
+        ? "No matching bookings"
+        : "No bookings yet",
+);
+const emptyStateSubtitle = computed(() =>
+    searchQuery.value || statusFilter.value !== "all"
+        ? "Try a different search term or filter."
+        : "New bookings for this branch will show up here.",
+);
 </script>

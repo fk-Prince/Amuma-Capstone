@@ -66,10 +66,16 @@
 <script setup lang="ts">
 import { Check } from "lucide-vue-next";
 
-const props = defineProps<{
-    active?: string;
-    completed?: string[];
-}>();
+const props = withDefaults(
+    defineProps<{
+        active?: string;
+        completed?: string[];
+        hideReview?: boolean;
+    }>(),
+    {
+        hideReview: false,
+    },
+);
 
 defineEmits<{
     (e: "go", step: string): void;
@@ -79,32 +85,38 @@ function isCompleted(key: string) {
     return props.completed?.includes(key) ?? false;
 }
 
-const steps = [
-    {
-        key: "step1",
-        title: "Booking Type & Scheduling",
-        desc: "Select service & schedule",
-    },
-    {
-        key: "step2",
-        title: "Patient Information",
-        desc: "Enter patient information",
-    },
-    {
-        key: "step3",
-        title: "Guardian Information",
-        desc: "Enter guardian information",
-    },
-    {
-        key: "step4",
-        title: "Assessment",
-        desc: "Health assessment",
-        optional: true,
-    },
-    {
-        key: "step5",
-        title: "Review & Submit",
-        desc: "Confirm your details",
-    },
-];
+const steps = computed(() => {
+    const items = [
+        {
+            key: "step1",
+            title: "Booking Type & Scheduling",
+            desc: "Select service & schedule",
+        },
+        {
+            key: "step2",
+            title: "Patient Information",
+            desc: "Enter patient information",
+        },
+        {
+            key: "step3",
+            title: "Guardian Information",
+            desc: "Enter guardian information",
+        },
+        {
+            key: "step4",
+            title: "Assessment",
+            desc: "Health assessment",
+            optional: true,
+        },
+        {
+            key: "step5",
+            title: "Review & Submit",
+            desc: "Confirm your details",
+        },
+    ];
+
+    return props.hideReview
+        ? items.filter((step) => step.key !== "step5")
+        : items;
+});
 </script>

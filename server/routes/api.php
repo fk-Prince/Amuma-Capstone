@@ -7,6 +7,7 @@ use App\Http\Controllers\BedController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BranchContractController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\BranchSettingController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InvoiceController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\NominatimController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtpController;
+use App\Http\Controllers\PatientAdmissionController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ReviewController;
@@ -24,6 +26,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\XenditController;
+use App\Service\AdmissionService;
 use Illuminate\Support\Facades\Route;
 
 
@@ -62,9 +65,12 @@ Route::prefix('branches')->group(function () {
 
 // PRIVATE - CUSTOM
 Route::middleware('auth:sanctum')->group(function () {
+
     // EMPLOYEE / STAFF
     Route::post('/services/assign-employee', [ServiceController::class, 'assignEmployee']);
 
+    Route::post('/admissions/action', [PatientAdmissionController::class, 'admissionAction']);
+    Route::post('/admissions/admit', [PatientAdmissionController::class, 'admit']);
 
     // CUSTOM-BOOKING
     // Route::post('/bookings/facility', [BookingController::class, 'createBooking']);
@@ -73,9 +79,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     Route::post('/bookings/action', [BookingController::class, 'action']);
-    Route::post('/bookings/overview', [BookingController::class, 'overview']);
 
     // OVERVIEW / STATS
+    Route::post('/bookings/overview', [BookingController::class, 'overview']);
+    Route::get('/invoices/overview', [InvoiceController::class, 'overview']);
     Route::post('/contracts/overview', [BranchContractController::class, 'overview']);
     Route::get('/rooms/overview', [RoomController::class, 'overview']);
 
@@ -86,7 +93,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/subscription-validate',  [SubscriptionController::class, 'validateSubscription']);
     Route::get('/users/branches',  [UserController::class, 'getUserBranch']);
     Route::get('/reviews/public',  [ReviewController::class, 'publicReviews']);
-
 
     //MEDICAL ASSIGn
     Route::post('/schedules/action',  [ScheduleController::class, 'action']);
@@ -112,8 +118,9 @@ Route::middleware('auth:sanctum')->group(function () {
         'patients' => PatientController::class,
         'medications' => MedicationController::class,
         'schedules' => ScheduleController::class,
-        'admissions' => AdmissionController::class,
-        'invoices' => InvoiceController::class
+        'admissions' => PatientAdmissionController::class,
+        'invoices' => InvoiceController::class,
+        'settings' => BranchSettingController::class
     ]);
 
     //VALIDATE INPUTS

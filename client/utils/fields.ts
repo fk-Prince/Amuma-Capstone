@@ -23,3 +23,15 @@ export const patientFields = [
     { key: "blood_type", label: "Blood Type", type: "text", tab: 3 },
 ]
 
+
+
+export const Field = (fieldProps: { label: string; value: any }, { slots }: any) =>
+    h("p", { class: "flex flex-col gap-0.5 capitalize" }, [
+        h("span", { class: "text-xs text-[#6B8A87]" }, fieldProps.label),
+        h(
+            "span",
+            { class: "text-[#16302E] font-medium" },
+            slots.value ? slots.value() : (fieldProps.value ?? "—"),
+        ),
+    ]);
+Field.props = ["label", "value"];

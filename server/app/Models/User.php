@@ -93,15 +93,16 @@ class User extends Authenticatable
         )->withPivot('type');
     }
 
-    // public function recipient()
-    // {
-    //     return $this->hasMany(Notifiable::class, 'user_id', 'to_user_id');
-    // }
+    public function recipient()
+    {
+        return $this->hasMany(Notifiable::class, 'user_id', 'to_user_id');
+    }
 
-    // public function sender()
-    // {
-    //     return $this->hasMany(Notifiable::class, 'user_id', 'from_user_id');
-    // }
+    public function sender()
+    {
+        return $this->hasMany(Notifiable::class, 'user_id', 'from_user_id');
+    }
+
     protected $appends = [
         'isEmployee',
         'isClient',

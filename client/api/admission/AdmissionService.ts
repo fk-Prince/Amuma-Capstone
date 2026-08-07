@@ -8,6 +8,7 @@ class AdmissionService extends BaseService {
         const config = useRuntimeConfig();
         return config.public.backendApi;
     }
+
     public static getInstance(): AdmissionService {
         if (!AdmissionService.instance) {
             AdmissionService.instance = new AdmissionService();
@@ -15,29 +16,24 @@ class AdmissionService extends BaseService {
         return AdmissionService.instance;
     }
 
-
-    async list(params: object = {}): Promise<any> {
-        return await this.request(this.resource, 'GET', params);
-    }
-
     async create(payload: object): Promise<any> { // USED
         return await this.request(this.resource, 'POST', payload);
     }
 
-    async show(uuid: string): Promise<any> {
-        return await this.request(`${this.resource}/${uuid}`, 'GET');
+    async list(payload: object): Promise<any> {
+        return await this.request(this.resource, "GET", payload);
     }
 
-    async update(uuid: string, payload: object): Promise<any> {
-        return await this.request(`${this.resource}/${uuid}`, 'PUT', payload);
+    async show(id: string, payload: object): Promise<any> {
+        return await this.request(`${this.resource}/${id}`, "GET", payload);
     }
 
-    async delete(uuid: string): Promise<any> {
-        return await this.request(`${this.resource}/${uuid}`, 'DELETE');
+    async action(payload: object): Promise<any> { // USED
+        return await this.request(this.resource + '/action', 'POST', payload);
     }
 
-    async restore(uuid: string): Promise<any> {
-        return await this.request(`${this.resource}/${uuid}/restore`, 'POST');
+    async admit(payload: object): Promise<any> { // USED
+        return await this.request(this.resource + '/admit', 'POST', payload);
     }
 
     private get resource(): string {

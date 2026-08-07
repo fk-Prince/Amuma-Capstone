@@ -267,7 +267,8 @@ w
                                     <p
                                         class="text-xs text-[#6B8A87] capitalize"
                                     >
-                                        {{ item.category }} · {{ item.status }}
+                                        {{ item.category }} ·
+                                        {{ formatStatus(item.status) }}
                                     </p>
                                 </div>
 
@@ -298,6 +299,7 @@ import { CalendarDays, Clock, CalendarClock, UserCheck } from "lucide-vue-next";
 import { useRoute } from "vue-router";
 import { formatDate } from "~/utils/notification-time";
 import { useAuthUser } from "~/composables/useAuthUser";
+import { formatStatus } from "~/types/booking";
 
 const open = ref(true);
 
@@ -318,15 +320,24 @@ const bindNotification = () => {
     channel = $echo
         .private(`Notification.${user.value.uuid}`)
         .listen(".NotificationEvent", (e: any) => {
-            if (e.branch_uuid !== branchUuid.value) return;
-            if (!props.overview || !e.booking) return;
+            if (e.branch_uuid !== branchUuid.value) {
+                return;
+            }
 
+            console.log("new booking:", e.booking);
+            console.log("recent before:", props.overview.bookings.recent);
             props.overview.bookings.recent = [
                 e.booking,
                 ...(props.overview.bookings.recent ?? []),
             ].slice(0, 5);
+
+            emit("newBooking", e.booking);
         });
 };
+
+const emit = defineEmits<{
+    (e: "newBooking", booking: any): void;
+}>();
 
 const isDesktop = ref(false);
 

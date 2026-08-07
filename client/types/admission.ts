@@ -9,4 +9,5 @@ export interface PatientAdmission {
     admitted_at: string;
     end_date: string | null;
     patient: Patient | null;
+    booking_reference_id?: string
 }

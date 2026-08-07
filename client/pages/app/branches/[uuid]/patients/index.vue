@@ -295,11 +295,11 @@ const actionMenuItems = [
                                 Care Type
                             </th>
 
-                            <th
+                            <!-- <th
                                 class="px-4 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-400"
                             >
                                 Status
-                            </th>
+                            </th> -->
 
                             <th
                                 class="px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-400"
@@ -383,14 +383,14 @@ const actionMenuItems = [
                                 {{ careType(patient) }}
                             </td>
 
-                            <td class="px-4 py-4">
+                            <!-- <td class="px-4 py-4">
                                 <span
                                     class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition"
                                     :class="statusClass(patient)"
                                 >
                                     {{ patientStatus(patient) }}
                                 </span>
-                            </td>
+                            </td> -->
 
                             <td class="px-6 py-4">
                                 <div

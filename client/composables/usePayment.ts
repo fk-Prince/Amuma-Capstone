@@ -1,4 +1,5 @@
 import { use3DS } from "~/composables/use3DS";
+import type { CardDetails } from "~/types/payment";
 
 type CardPaymentOptions = {
     card: CardDetails;

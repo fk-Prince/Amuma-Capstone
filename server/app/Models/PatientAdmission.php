@@ -11,19 +11,31 @@ class PatientAdmission extends Model
 
     protected $primaryKey = 'patient_admission_id';
 
+    public const STATUS_ADMITTED = 'admitted';
+    public const STATUS_DISCHARGED = 'discharged';
+    public const STATUS_WAITING = 'waiting';
+    public const STATUS_CANCELLED = 'cancelled';
+
     protected $fillable = [
+        // 'branch_contract_id',
         'bed_id',
         'patient_id',
         'status',
         'note',
         'admitted_at',
         'end_date',
+        'booking_id'
     ];
 
     protected $casts = [
         'admitted_at' => 'datetime',
         'end_date' => 'datetime',
     ];
+
+    public function admissionContract()
+    {
+        return $this->belongsTo(BranchContract::class, 'branch_contract_id', 'branch_contract_id');
+    }
 
     public function bed()
     {
@@ -33,6 +45,10 @@ class PatientAdmission extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
+    }
+    public function bookings()
+    {
+        return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
     }
     public function invoiceAdmission()
     {

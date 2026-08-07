@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('location_id')->nullable()->constrained('locations', 'location_id');
             $table->string('name');
             $table->boolean('is_verified')->default(false);
-            $table->string('description', 1000)->change();
+            $table->string('description', 1000)->nullable();
             $table->json('settings')->nullable();
             $table->string('contact_number')->nullable();
             $table->string('image')->nullable(true);

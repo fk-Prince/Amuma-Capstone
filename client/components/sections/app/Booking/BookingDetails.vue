@@ -8,24 +8,57 @@
             >
                 <div class="flex items-center gap-4 min-w-0">
                     <div class="min-w-0">
-                        <span
-                            class="w-fit font-mono text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] inline-block mb-2"
-                        >
-                            #{{ booking.reference_id }}
-                        </span>
+                        <div class="flex gap-2 items-center mb-2">
+                            <span
+                                class="w-fit font-mono text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] inline-block"
+                            >
+                                #{{ booking.reference_id }}
+                            </span>
 
-                        <h2
-                            class="text-lg font-semibold text-[#16302E] truncate"
-                        >
-                            {{
-                                fullName(
-                                    patient?.first_name,
-                                    patient?.middle_name,
-                                    patient?.last_name,
-                                )
-                            }}
-                        </h2>
-                        <p class="text-sm text-muted truncate">
+                            <span
+                                class="px-3 py-1 rounded-sm text-xs font-medium capitalize"
+                                :class="statusClasses(status)"
+                            >
+                                {{ formatStatus(booking.status) }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-3 min-w-0">
+                            <h2
+                                class="text-lg font-semibold text-[#16302E] truncate"
+                            >
+                                {{
+                                    fullName(
+                                        booking.patient?.first_name,
+                                        booking.patient?.middle_name,
+                                        booking.patient?.last_name,
+                                    )
+                                }}
+                            </h2>
+                            <button
+                                v-if="hasPatientUuid"
+                                type="button"
+                                class="shrink-0 inline-flex items-center gap-2 px-3 py-1.5 mt-0.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition"
+                                @click="viewPatientInfo"
+                            >
+                                <svg
+                                    class="h-4 w-4"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path d="M20 21a8 8 0 0 0-16 0" />
+                                    <circle cx="12" cy="7" r="4" />
+                                </svg>
+
+                                View Patient Profile
+                            </button>
+                        </div>
+
+                        <p class="text-sm text-muted truncate capitalize">
                             {{ booking.category }}
                         </p>
                     </div>
@@ -46,12 +79,19 @@
 
                     <div class="flex items-center gap-4">
                         <span
-                            class="px-3 py-1 rounded-full text-xs font-medium capitalize"
-                            :class="statusClasses(status)"
+                            v-if="paymentStatus"
+                            class="px-3 py-1 uppercase rounded-sm text-xs font-medium"
+                            :class="{
+                                'bg-emerald-100 text-emerald-700':
+                                    paymentStatus === 'paid',
+                                'bg-red-100 text-red-700':
+                                    paymentStatus === 'refunded',
+                                'bg-amber-100 text-amber-700':
+                                    paymentStatus === 'pending',
+                            }"
                         >
-                            {{ booking.status }}
+                            {{ paymentStatus }}
                         </span>
-
                         <div class="text-right">
                             <p
                                 class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono"
@@ -102,20 +142,27 @@
                         <Field label="Type" :value="serviceTypeLabel" />
 
                         <Field
-                            v-if="isFacility"
+                            v-if="
+                                isFacility &&
+                                booking.facility.type !== 'Pre-Admission'
+                            "
                             label="Admission Date"
                             :value="
                                 formatDate(
-                                    service?.admission_date ||
+                                    booking.facility?.admission_date ||
                                         reserveInfo?.admitted_at,
                                 )
                             "
                         />
 
-                        <template v-else>
+                        <template
+                            v-else-if="
+                                booking.facility?.type !== 'Pre-Admission'
+                            "
+                        >
                             <Field
                                 label="Schedule Date"
-                                :value="formatDate(service?.date)"
+                                :value="formatDate(booking.homecare?.date)"
                             />
 
                             <Field
@@ -124,23 +171,43 @@
                                 :value="preferredTimeLabel"
                             />
 
-                            <Field label="Address" :value="service?.address" />
+                            <Field
+                                v-if="booking.homecare?.time_span"
+                                label="Duration"
+                                :value="
+                                    formatDuration(
+                                        Number(booking.homecare?.time_span),
+                                    )
+                                "
+                            />
+
+                            <Field
+                                label="Address"
+                                :value="booking.homecare?.address"
+                            />
                         </template>
 
                         <Field
-                            v-if="isFacility"
+                            v-if="
+                                isFacility &&
+                                booking.facility?.type !== 'Pre-Admission'
+                            "
                             label="Plan"
                             :value="
-                                service?.plan || reserveInfo?.accommodation_type
+                                booking.facility?.plan ||
+                                reserveInfo?.accommodation_type
                             "
                         />
 
                         <div class="capitalize">
                             <Field
-                                v-if="isFacility"
+                                v-if="
+                                    isFacility &&
+                                    booking.facility?.type !== 'Pre-Admission'
+                                "
                                 label="Billing Cycle"
                                 :value="
-                                    service?.billing_cycle ||
+                                    booking.facility?.billing_cycle ||
                                     reserveInfo?.billing_cycle
                                 "
                             />
@@ -154,7 +221,10 @@
                         </template>
                     </div>
 
-                    <section class="mt-5" v-if="service?.services?.length">
+                    <section
+                        class="mt-5"
+                        v-if="booking.homecare?.services?.length"
+                    >
                         <h3
                             class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
                         >
@@ -167,7 +237,7 @@
 
                         <div class="space-y-3">
                             <div
-                                v-for="item in service.services"
+                                v-for="item in booking.homecare.services"
                                 :key="item.service_id"
                                 class="rounded-xl px-5"
                             >
@@ -187,29 +257,6 @@
                                             {{ item.service_name }}
                                         </p>
                                     </div>
-
-                                    <div>
-                                        <p
-                                            class="text-xs text-[#6B8A87] uppercase tracking-wide"
-                                        >
-                                            Assigned Medical Staff
-                                        </p>
-
-                                        <p
-                                            class="text-sm font-semibold"
-                                            :class="
-                                                getAssignment(item.service_id)
-                                                    ? 'text-[#16302E]'
-                                                    : 'text-amber-600'
-                                            "
-                                        >
-                                            {{
-                                                getAssignment(item.service_id)
-                                                    ?.employee_name ??
-                                                "Unassigned"
-                                            }}
-                                        </p>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -217,10 +264,7 @@
                 </section>
 
                 <section
-                    v-if="
-                        booking.booking_data.service.type?.toLowerCase() ===
-                        'adl'
-                    "
+                    v-if="booking.homecare?.type?.toLowerCase() === 'adl'"
                     class="flex flex-col"
                 >
                     <h3
@@ -298,179 +342,9 @@
                         No medical staff assigned yet
                     </p>
                 </section>
-                <section>
-                    <h3
-                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
-                    >
-                        <svg
-                            class="h-3.5 w-3.5"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-                            <path
-                                d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
-                            />
-                            <circle cx="12" cy="7" r="4" />
-                        </svg>
-                        Patient Information
-                    </h3>
 
-                    <div
-                        class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm"
-                    >
-                        <Field
-                            label="Name"
-                            :value="
-                                fullName(
-                                    patient?.first_name,
-                                    patient?.middle_name,
-                                    patient?.last_name,
-                                )
-                            "
-                        />
-                        <Field label="Gender" :value="patient?.gender" />
-                        <Field
-                            label="Birth Date"
-                            :value="formatDate(patient?.date_of_birth)"
-                        />
-                        <Field
-                            label="Blood Type"
-                            :value="patient?.blood_type"
-                        />
-                        <Field label="Phone" :value="patient?.phone_number" />
-                        <Field
-                            label="Occupation"
-                            :value="patient?.occupation"
-                        />
-                        <Field
-                            label="Address"
-                            :value="patient?.address || service?.address"
-                        />
-                        <Field
-                            label="Height"
-                            :value="
-                                patient?.height ? `${patient.height} cm` : ''
-                            "
-                        />
-                        <Field
-                            label="Weight"
-                            :value="
-                                patient?.weight ? `${patient.weight} kg` : ''
-                            "
-                        />
-                    </div>
-                </section>
-
-                <section v-if="guardian">
-                    <h3
-                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
-                    >
-                        <svg
-                            class="h-3.5 w-3.5"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-                            <path
-                                d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"
-                            />
-                            <circle cx="10" cy="7" r="4" />
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                        </svg>
-                        Guardian
-                    </h3>
-
-                    <div
-                        class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm"
-                    >
-                        <Field
-                            label="Name"
-                            :value="
-                                fullName(
-                                    guardian.first_name,
-                                    guardian.middle_name,
-                                    guardian.last_name,
-                                )
-                            "
-                        />
-                        <Field
-                            label="Relationship"
-                            :value="guardian.relationship"
-                        />
-                        <Field
-                            label="Phone Number"
-                            :value="guardian.phone_number"
-                        />
-                        <Field label="Email" :value="guardian.email" />
-                        <Field
-                            label="Occupation"
-                            :value="guardian.occupation"
-                        />
-                        <Field label="Address" :value="guardian.address" />
-                    </div>
-                </section>
-
-                <section v-if="hasAssessment">
-                    <h3
-                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
-                    >
-                        <svg
-                            class="h-3.5 w-3.5"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-                            <path d="M9 11l3 3L22 4" />
-                            <path
-                                d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
-                            />
-                        </svg>
-                        Assessment
-                    </h3>
-
-                    <div
-                        class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm"
-                    >
-                        <template v-for="(value, key) in assessment" :key="key">
-                            <Field
-                                v-if="String(key) !== 'diagnosis_file'"
-                                :label="formatLabel(String(key))"
-                                :value="
-                                    String(key) === 'diagnosis_file_name'
-                                        ? undefined
-                                        : value
-                                "
-                            >
-                                <template
-                                    v-if="String(key) === 'diagnosis_file_name'"
-                                    #value
-                                >
-                                    <a
-                                        v-if="assessment?.diagnosis_file"
-                                        :href="assessment.diagnosis_file"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="text-primary underline hover:text-primary/70"
-                                    >
-                                        {{ value || "View file" }}
-                                    </a>
-                                    <span v-else>{{ value || "—" }}</span>
-                                </template>
-                            </Field>
-                        </template>
-                    </div>
-                </section>
+                <PatientDetails :booking="booking" />
+                <GuardianAssessmentDetails :booking="booking" />
 
                 <section
                     class="pt-5 border-t border-[#EDF4F3] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
@@ -483,20 +357,20 @@
                         </p>
 
                         <div class="flex gap-2 items-center">
-                            <img
-                                :src="booking.user?.avatar"
+                            <!-- <img
+                                :src="booking.guardian?.avatar"
                                 alt="User Avatar"
                                 class="w-12 h-12 rounded-full object-cover shrink-0"
-                            />
+                            /> -->
 
                             <div>
                                 <p class="text-sm font-medium text-[#16302E]">
-                                    {{ booking.user?.first_name }}
-                                    {{ booking.user?.last_name }}
+                                    {{ booking.guardian?.first_name }}
+                                    {{ booking.guardian?.last_name }}
                                 </p>
 
                                 <p class="text-sm text-[#6B8A87]">
-                                    {{ booking.user?.email }}
+                                    {{ booking.guardian?.email }}
                                 </p>
                                 <p class="text-sm text-[#6B8A87]">
                                     {{ stringToDateTime(booking.created_at) }}
@@ -506,51 +380,55 @@
                     </div>
 
                     <div class="flex gap-3">
-                        <ActionButton
-                            v-if="status === 'pending'"
-                            :loading="loading"
-                            variant="danger"
-                            type="button"
-                            @click="emit('reject', booking)"
-                        >
-                            Reject
-                        </ActionButton>
+                        <div class="flex gap-3">
+                            <ActionButton
+                                v-if="
+                                    showAccommodationButton &&
+                                    !isPreAdmissionFacility
+                                "
+                                :loading="loading"
+                                variant="solid"
+                                @click="handleAccommodation"
+                            >
+                                {{
+                                    booking.reserved
+                                        ? "Change Accommodation"
+                                        : "Choose Accommodation Type"
+                                }}
+                            </ActionButton>
 
-                        <ActionButton
-                            v-if="isPaid && status === 'awaiting'"
-                            :loading="loading"
-                            variant="solid"
-                            @click="emit('admit', booking)"
-                        >
-                            Admit Patient
-                        </ActionButton>
+                            <div
+                                v-if="
+                                    status === 'pending' &&
+                                    !isPreAdmissionFacility
+                                "
+                                class="flex flex-col gap-2"
+                            >
+                                <ActionButton
+                                    :loading="loading"
+                                    variant="solid"
+                                    @click="emit('confirm', booking)"
+                                >
+                                    {{
+                                        isFacility
+                                            ? "Approve Admission Booking"
+                                            : "Approve Homecare Booking"
+                                    }}
+                                </ActionButton>
 
-                        <ActionButton
-                            v-if="isAssignableService && status === 'pending'"
-                            :loading="loading"
-                            variant="outline"
-                            @click="assignBooking"
-                        >
-                            Assign Now
-                        </ActionButton>
-
-                        <ActionButton
-                            v-if="status === 'pending'"
-                            :loading="loading"
-                            variant="solid"
-                            @click="emit('confirm', booking)"
-                        >
-                            {{ confirmButtonLabel }}
-                        </ActionButton>
-
-                        <button
-                            v-if="showAccommodationButton"
-                            type="button"
-                            @click="handleAdmission"
-                            class="px-5 py-2 text-sm font-medium rounded-md bg-primary text-white hover:bg-primary/90 transition"
-                        >
-                            Select Accommodation
-                        </button>
+                                <ActionButton
+                                    :loading="loading"
+                                    variant="danger"
+                                    @click="emit('reject', booking)"
+                                >
+                                    {{
+                                        paymentStatus === "paid"
+                                            ? "Reject & Refund"
+                                            : "Reject Booking"
+                                    }}
+                                </ActionButton>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </div>
@@ -561,40 +439,87 @@
 <script lang="ts" setup>
 import { computed, h } from "vue";
 import { fullName } from "~/utils/user";
-import { stringToDateTime, formatDate } from "~/utils/time";
+import { stringToDateTime, formatDate, formatDuration } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
 import { Stethoscope } from "lucide-vue-next";
+import { Field } from "~/utils/fields";
+import PatientDetails from "./PatientDetails.vue";
+import GuardianAssessmentDetails from "./GuardianAssessmentDetails.vue";
+import { useRouter, useRoute } from "vue-router";
+import {
+    formatStatus,
+    statusClasses,
+    type BookingRetrieve,
+} from "~/types/booking";
+
+const router = useRouter();
+const route = useRoute();
 const props = defineProps<{
-    booking: any;
+    booking: BookingRetrieve;
     loading?: boolean;
 }>();
 
 const emit = defineEmits<{
     (e: "reject", booking: any): void;
     (e: "confirm", booking: any): void;
-    (e: "assign", booking: any): void;
-    (e: "admit", booking: any): void;
     (e: "accommodation", booking: any): void;
 }>();
+
+function handleAccommodation() {
+    emit("accommodation", props.booking);
+}
+
+const showAccommodationButton = computed(() => {
+    const currentStatus = status.value?.toLowerCase() ?? "";
+    return ["pending"].includes(currentStatus) && isFacility.value;
+});
+
+const hasPatientUuid = computed(() => {
+    return !!props.booking?.patient?.uuid;
+});
+
+const patientUuid = computed(() => {
+    return props.booking?.patient?.uuid;
+});
+
+const viewPatientInfo = () => {
+    if (!patientUuid.value) return;
+
+    router.push({
+        path: `/app/branches/${route.params.uuid}/patients/${patientUuid.value}`,
+    });
+};
+
+const isPreAdmissionFacility = computed(() => {
+    return (
+        props.booking.category === "facility" &&
+        props.booking.facility?.type === "Pre-Admission"
+    );
+});
+// const viewInvoice = () => {
+//     if (!props.booking?.reference_id) return;
+
+//     router.push({
+//         path: `/app/branches/${route.params.uuid}/invoices/booking/${props.booking.reference_id}`,
+//         query: { mode: "booking" },
+//     });
+// };
 
 const status = computed(() => (props.booking?.status ?? "").toLowerCase());
 const category = computed(() => (props.booking?.category ?? "").toLowerCase());
 const isFacility = computed(() => category.value === "facility");
-const service = computed(() => props.booking?.booking_data?.service ?? null);
-const serviceType = computed(() => service.value?.type ?? "");
-const patient = computed(() => props.booking?.booking_data?.patient ?? null);
-const guardian = computed(() => props.booking?.booking_data?.guardian ?? null);
-const assessment = computed(
-    () => props.booking?.booking_data?.assessment ?? null,
-);
-const isPaid = computed(() => !!props.booking?.booking_data?.payment?.paid);
-
-const hasAssessment = computed(
-    () => !!assessment.value && Object.keys(assessment.value).length > 0,
-);
+const serviceType = computed(() => {
+    if (props.booking.booking_type !== "online") {
+        return "walk-in";
+    }
+    if (props.booking.category === "facility") {
+        return props.booking.facility.type;
+    }
+    return props.booking.homecare.type;
+});
 
 const reserveInfo = computed(() => {
-    const reserved = props.booking?.booking_data?.reserved;
+    const reserved = props.booking?.reserved;
     if (!reserved) return null;
 
     return {
@@ -608,14 +533,22 @@ const reserveInfo = computed(() => {
 });
 
 const serviceTypeLabel = computed(() => {
-    const type = serviceType.value;
-    if (type === "Medical") return "Medical Services";
-    if (type === "Complete" || type === "Pre-Admission") return "Pre-Admission";
-    return type;
+    switch (serviceType.value) {
+        case "Medical":
+            return "Medical Services";
+        case "Complete":
+            return "Complete Admission";
+        case "Pre-Admission":
+            return "Pre-Admission";
+        case "ADL":
+            return "Activities of Daily Living (ADL)";
+        default:
+            return serviceType.value;
+    }
 });
 
 const preferredTimeLabel = computed(() => {
-    const time = service.value?.prefered_time;
+    const time = props.booking.homecare?.prefered_time;
     if (!time) return "";
     return new Date(`1970-01-01T${time}`).toLocaleTimeString([], {
         hour: "2-digit",
@@ -623,94 +556,32 @@ const preferredTimeLabel = computed(() => {
     });
 });
 
-const isAssignableService = computed(() =>
-    ["Medical", "ADL"].includes(serviceType.value),
-);
-
-const showAccommodationButton = computed(() => {
-    const type = serviceType.value?.toLowerCase() ?? "";
-    const currentStatus = status.value?.toLowerCase() ?? "";
-
-    return (
-        (currentStatus === "pending" ||
-            currentStatus === "awaiting" ||
-            currentStatus === "approved") &&
-        isFacility.value &&
-        (type === "complete" || type === "walk-in admission") &&
-        type !== "medical"
-    );
-});
-
-const confirmButtonLabel = computed(() =>
-    serviceType.value === "Complete" && props.booking?.booking_data?.reserved
-        ? "Approve Admission Request"
-        : "Approve Booking",
-);
-
 const totalPrice = computed(() => {
-    const paymentTotal = props.booking?.booking_data?.payment?.total_amount;
+    const paymentTotal = props.booking?.payment?.total_amount;
     if (paymentTotal !== undefined && paymentTotal !== null) {
         return Number(paymentTotal);
     }
 
-    const services = service.value?.services ?? [];
+    const services = props.booking.homecare.services ?? [];
     return services.reduce(
         (sum: number, s: any) => sum + (Number(s.price) || 0),
         0,
     );
 });
 
-function handleAdmission() {
-    emit("accommodation", props.booking);
-}
+const paymentStatus = computed(() => {
+    return props.booking?.payment?.payment_status ?? null;
+});
 
-function assignBooking() {
-    if (!props.booking) return;
-    emit("assign", props.booking);
-}
+// const isAssignableService = computed(() =>
+//     ["Medical", "ADL"].includes(serviceType.value),
+// );
 
-function formatLabel(key: string) {
-    return String(key)
-        .replace(/_/g, " ")
-        .replace(/([a-z])([A-Z])/g, "$1 $2")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function statusClasses(normalizedStatus: string) {
-    if (
-        normalizedStatus.includes("confirm") ||
-        normalizedStatus.includes("approved")
-    ) {
-        return "bg-[#E4F4EE] text-[#1F7A4D]";
-    }
-    if (normalizedStatus.includes("complete")) {
-        return "bg-[#E6F1FA] text-[#2563A6]";
-    }
-    if (
-        normalizedStatus.includes("reject") ||
-        normalizedStatus.includes("declin") ||
-        normalizedStatus.includes("cancel")
-    ) {
-        return "bg-[#FBE8E6] text-[#B3402F]";
-    }
-    return "bg-[#FDF3DE] text-[#966B1F]";
-}
 function getAssignment(serviceId: number) {
     return props.booking?.assignments?.find(
         (assignment: any) => assignment.service_id === serviceId,
     );
 }
-
-const Field = (fieldProps: { label: string; value: any }, { slots }: any) =>
-    h("p", { class: "flex flex-col gap-0.5" }, [
-        h("span", { class: "text-xs text-[#6B8A87]" }, fieldProps.label),
-        h(
-            "span",
-            { class: "text-[#16302E] font-medium" },
-            slots.value ? slots.value() : (fieldProps.value ?? "—"),
-        ),
-    ]);
-Field.props = ["label", "value"];
 
 const ActionButton = (
     actionProps: {
@@ -731,7 +602,7 @@ const ActionButton = (
         {
             type: "button",
             disabled: actionProps.loading,
-            class: `px-5 py-2 text-sm font-medium rounded-md transition ${variantClass}`,
+            class: `inline-flex items-center justify-center w-64 px-5 py-2 text-sm font-medium rounded-md transition ${variantClass}`,
             ...attrs,
         },
         actionProps.loading

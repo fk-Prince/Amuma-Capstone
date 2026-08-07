@@ -22,7 +22,7 @@ class Payment extends Model
         'created_at' => 'datetime',
     ];
 
-    public function payment()
+    public function invoice()
     {
         return $this->belongsTo(Invoice::class, 'invoice_id', 'invoice_id');
     }

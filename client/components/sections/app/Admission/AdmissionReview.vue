@@ -50,6 +50,38 @@
                                     {{ row.value }}
                                 </span>
                             </div>
+                            <div
+                                v-if="props.payment?.paid"
+                                class="mb-6 mt-1 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 flex items-start gap-3"
+                            >
+                                <div
+                                    class="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600"
+                                >
+                                    <CircleCheck class="h-5 w-5" />
+                                </div>
+
+                                <div>
+                                    <p
+                                        class="text-sm font-semibold text-emerald-800"
+                                    >
+                                        Payment Completed
+                                    </p>
+
+                                    <p class="text-xs text-emerald-700">
+                                        This admission has already been paid.
+                                    </p>
+
+                                    <p
+                                        v-if="props.payment.invoice_code"
+                                        class="mt-1 text-xs font-medium text-emerald-800"
+                                    >
+                                        Invoice Code:
+                                        <span class="font-bold">
+                                            {{ props.payment.invoice_code }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
                             <p class="mt-1.5 text-[11px] text-slate-400">
                                 * Prices are estimates and may change without
                                 further notice.
@@ -203,13 +235,14 @@ import { computed } from "vue";
 import { Pencil } from "lucide-vue-next";
 import type { Patient, Guardian, Assessment } from "~/types/patient";
 import type { RoomContract, Reserved } from "~/types/contract";
-
+import { CircleCheck } from "lucide-vue-next";
 const props = defineProps<{
     reserved: Reserved;
     roomContract?: RoomContract[];
     patient: Patient;
     guardian: Guardian;
     assessment: Assessment;
+    payment?: any;
 }>();
 
 defineEmits<{

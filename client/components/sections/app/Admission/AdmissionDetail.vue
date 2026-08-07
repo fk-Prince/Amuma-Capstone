@@ -319,9 +319,11 @@
                                 "
                             >
                                 {{
-                                    availableBeds(room).length > 0
-                                        ? "Available"
-                                        : "Fully Reserved"
+                                    !room.beds?.length
+                                        ? "No Available Bed"
+                                        : availableBeds(room).length > 0
+                                          ? "Available"
+                                          : "Fully Reserved"
                                 }}
                             </span>
                         </div>
@@ -532,6 +534,7 @@ const props = withDefaults(
     defineProps<{
         loading?: boolean;
         roomContract: RoomContract[] | null | undefined;
+        model?: Reserved | null;
         variant?: "page" | "modal";
         errors?: Record<string, string>;
         accommodation?: string | null;
@@ -540,6 +543,7 @@ const props = withDefaults(
     {
         loading: false,
         roomContract: () => [],
+        model: null,
         variant: "page",
         errors: () => ({}),
         accommodation: null,
@@ -612,31 +616,60 @@ const selectedBed = ref<ApiBed | null>(null);
 const billingCycle = ref<"monthly" | "yearly">("monthly");
 
 watch(
-    () => props.roomContract,
+    [() => props.roomContract, () => props.model],
     () => {
-        viewMode.value = "types";
-        activeType.value = null;
-        selectedRoom.value = null;
-        selectedBed.value = null;
         showBeds.value = false;
+
+        if (!props.model?.room || !props.model?.bed) {
+            viewMode.value = "types";
+            activeType.value = null; // don't show Common selected
+            selectedRoom.value = null;
+            selectedBed.value = null;
+            admittedAt.value = "";
+            return;
+        }
+
+        selectedRoom.value = props.model.room;
+        selectedBed.value = props.model.bed;
+
+        activeType.value = props.model.accommodation_type;
+        admittedAt.value = props.model.admitted_at ?? "";
+
+        billingCycle.value =
+            props.model.billing_cycle?.toLowerCase() === "yearly"
+                ? "yearly"
+                : "monthly";
+
+        viewMode.value = "rooms";
+    },
+    {
+        immediate: true,
+        deep: true,
     },
 );
 
 const accommodationTypes = computed(() => {
     const seen = new Set<string>();
+
     const list: {
-        value: string;
+        value: "Common" | "VIP";
         label: string;
         description: string;
         icon: string;
     }[] = [];
 
     for (const contract of contracts.value) {
-        if (seen.has(contract.accommodation_type)) continue;
-        seen.add(contract.accommodation_type);
+        const normalized = normalizeAccommodationType(
+            contract.accommodation_type,
+        );
+
+        if (seen.has(normalized)) continue;
+
+        seen.add(normalized);
+
         list.push({
-            value: contract.accommodation_type,
-            ...metaFor(contract.accommodation_type),
+            value: normalized,
+            ...metaFor(normalized),
         });
     }
 
@@ -646,8 +679,9 @@ const accommodationTypes = computed(() => {
 function contractFor(type: string, interval: "monthly" | "yearly") {
     return contracts.value.find(
         (c) =>
-            c.accommodation_type === type &&
-            c.billing_cycle.toUpperCase() === interval.toUpperCase(),
+            normalizeAccommodationType(c.accommodation_type) ===
+                normalizeAccommodationType(type) &&
+            c.billing_cycle.toLowerCase() === interval.toLowerCase(),
     );
 }
 
@@ -714,9 +748,12 @@ function isAvailable(bed: ApiBed) {
 }
 
 function availableBeds(room: ApiRoom) {
-    return room.beds.filter((bed) => bed.status.toLowerCase() === "available");
-}
+    if (!room.beds?.length) {
+        return [];
+    }
 
+    return room.beds.filter((bed) => bed.status?.toLowerCase() === "available");
+}
 function reservedBeds(room: ApiRoom) {
     return room.beds.filter((bed) => bed.status.toLowerCase() === "reserved");
 }
@@ -748,7 +785,6 @@ function openBeds(room: ApiRoom) {
     modalRoom.value = room;
     showBeds.value = true;
 }
-
 function emitModel(contract: RoomContract) {
     if (!selectedRoom.value || !selectedBed.value) return;
 
@@ -801,7 +837,9 @@ watch(admittedAt, () => {
 });
 
 function handleDone() {
-    if (!selectedRoom.value || !selectedBed.value || !activeType.value) return;
+    if (!selectedRoom.value || !selectedBed.value || !activeType.value) {
+        return;
+    }
 
     const contract =
         contractFor(activeType.value, billingCycle.value) ??
@@ -818,7 +856,9 @@ function handleDone() {
         contract_id: contract.contract_id,
         billing_cycle: billingCycle.value,
         price: contract.price,
-        accommodation_type: contract.accommodation_type as "Common" | "VIP",
+        accommodation_type: normalizeAccommodationType(
+            contract.accommodation_type,
+        ),
         admitted_at: admittedAt.value,
     };
 
@@ -830,6 +870,6 @@ const todayStr = toLocalDateString(new Date());
 const maxDateStr = toLocalDateString(new Date(Date.now() + 7 * 86400000));
 
 function normalizeAccommodationType(type: string): "Common" | "VIP" {
-    return type.toUpperCase() === "VIP" ? "VIP" : "Common";
+    return type?.toUpperCase() === "VIP" ? "VIP" : "Common";
 }
 </script>

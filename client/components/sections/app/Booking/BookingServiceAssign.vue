@@ -42,13 +42,9 @@
                         </p>
 
                         <p class="mt-1 text-xs text-slate-400">
-                            {{ formatDate(booking?.booking_data.service.date) }}
+                            {{ formatDate(booking?.homecare?.date) }}
                             •
-                            {{
-                                formatTime(
-                                    booking?.booking_data.service.prefered_time,
-                                )
-                            }}
+                            {{ formatTime(booking?.homecare?.prefered_time) }}
                         </p>
                     </div>
 
@@ -74,9 +70,8 @@
                                 </p>
                                 <p class="mt-1 text-xs text-slate-500">
                                     {{
-                                        booking?.booking_data?.service
-                                            ?.time_span
-                                            ? `${formatDuration(Number(booking.booking_data.service.time_span))} (${booking.booking_data.service.time_span} hrs)`
+                                        booking?.homecare?.time_span
+                                            ? `${formatDuration(Number(booking.homecare.time_span))} (${booking.homecare.time_span} hrs)`
                                             : "—"
                                     }}
                                 </p>
@@ -164,8 +159,8 @@
 
                         <template v-else>
                             <div
-                                v-for="service in booking?.booking_data.service
-                                    .services ?? []"
+                                v-for="service in booking?.homecare?.services ??
+                                []"
                                 :key="service.service_id"
                                 class="cursor-pointer rounded-xl border p-4 transition"
                                 :class="
@@ -267,11 +262,10 @@
                                 </p>
                             </div>
 
-                            <button
+                            <div
                                 v-for="employee in employeeData"
                                 :key="employee.employee_id"
-                                type="button"
-                                class="flex w-full items-center gap-3 rounded-xl border bg-white p-3 text-left transition"
+                                class="rounded-xl border bg-white transition"
                                 :class="[
                                     isSelected(employee.employee_id)
                                         ? 'border-primary bg-primary/5'
@@ -281,56 +275,175 @@
                                         ? 'opacity-60'
                                         : '',
                                 ]"
-                                @click="handleEmployeeClick(employee)"
                             >
-                                <div
-                                    class="h-10 w-10 overflow-hidden rounded-full bg-[#EAF4F2] flex items-center justify-center shrink-0"
+                                <button
+                                    type="button"
+                                    class="flex w-full items-center gap-3 p-3 text-left"
+                                    @click="handleEmployeeClick(employee)"
                                 >
-                                    <img
-                                        v-if="employee.avatar"
-                                        :src="employee.avatar"
-                                        class="h-full w-full object-cover"
-                                    />
-                                </div>
-
-                                <div class="flex-1 min-w-0">
-                                    <p
-                                        class="truncate text-sm font-semibold text-slate-700"
+                                    <div
+                                        class="h-10 w-10 overflow-hidden rounded-full bg-[#EAF4F2] flex items-center justify-center shrink-0"
                                     >
-                                        {{
-                                            fullName(
-                                                employee.first_name,
-                                                "",
-                                                employee.last_name,
-                                            )
-                                        }}
-                                    </p>
-                                    <p class="truncate text-xs text-slate-400">
-                                        {{ employee.role_name }}
-                                    </p>
-                                </div>
+                                        <img
+                                            v-if="employee.avatar"
+                                            :src="employee.avatar"
+                                            class="h-full w-full object-cover"
+                                        />
+                                    </div>
 
-                                <span
-                                    v-if="employee.is_busy"
-                                    class="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-700"
-                                >
-                                    Busy
-                                </span>
-                                <span
-                                    v-else-if="
-                                        isTakenElsewhere(employee.employee_id)
+                                    <div class="flex-1 min-w-0">
+                                        <p
+                                            class="truncate text-sm font-semibold text-slate-700"
+                                        >
+                                            {{
+                                                fullName(
+                                                    employee.first_name,
+                                                    "",
+                                                    employee.last_name,
+                                                )
+                                            }}
+                                        </p>
+                                        <p
+                                            class="truncate text-xs text-slate-400"
+                                        >
+                                            {{ employee.role_name }}
+                                        </p>
+                                    </div>
+
+                                    <div
+                                        v-if="employee.is_busy"
+                                        class="flex flex-col items-end gap-1"
+                                    >
+                                        <span
+                                            class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700"
+                                        >
+                                            <span
+                                                class="h-1.5 w-1.5 rounded-full bg-amber-500"
+                                            ></span>
+                                            Busy
+                                        </span>
+
+                                        <span
+                                            class="flex items-center gap-1 text-[11px] font-medium text-amber-600 hover:underline"
+                                            @click.stop="
+                                                toggleConflicts(
+                                                    employee.employee_id,
+                                                )
+                                            "
+                                        >
+                                            {{ employee.conflict_count ?? 0 }}
+                                            {{
+                                                employee.conflict_count === 1
+                                                    ? "schedule conflict"
+                                                    : "schedule conflicts"
+                                            }}
+                                            <span
+                                                class="transition-transform"
+                                                :class="
+                                                    expandedConflicts.has(
+                                                        employee.employee_id,
+                                                    )
+                                                        ? 'rotate-180'
+                                                        : ''
+                                                "
+                                            >
+                                                ▾
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <span
+                                        v-else-if="
+                                            isTakenElsewhere(
+                                                employee.employee_id,
+                                            )
+                                        "
+                                        class="rounded-full bg-slate-200 px-2 py-1 text-xs text-slate-500"
+                                    >
+                                        Already assigned
+                                    </span>
+                                    <span
+                                        v-else
+                                        class="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700"
+                                    >
+                                        Available
+                                    </span>
+                                </button>
+
+                                <div
+                                    v-if="
+                                        employee.is_busy &&
+                                        expandedConflicts.has(
+                                            employee.employee_id,
+                                        ) &&
+                                        employee.conflict_schedules?.length
                                     "
-                                    class="rounded-full bg-slate-200 px-2 py-1 text-xs text-slate-500"
+                                    class="space-y-2 border-t border-slate-100 bg-slate-50/50 p-3"
                                 >
-                                    Already assigned
-                                </span>
-                                <span
-                                    v-else
-                                    class="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700"
-                                >
-                                    Available
-                                </span>
-                            </button>
+                                    <div
+                                        v-for="(
+                                            conflict, idx
+                                        ) in employee.conflict_schedules"
+                                        :key="idx"
+                                        class="rounded-lg border border-amber-100 bg-white p-2.5 text-xs"
+                                    >
+                                        <div
+                                            class="flex items-center justify-between"
+                                        >
+                                            <span
+                                                class="font-semibold text-slate-700"
+                                            >
+                                                {{ conflict.schedule_code }}
+                                            </span>
+                                            <span
+                                                class="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                                                :class="
+                                                    conflict.category ===
+                                                    'medical'
+                                                        ? 'bg-sky-100 text-sky-700'
+                                                        : 'bg-violet-100 text-violet-700'
+                                                "
+                                            >
+                                                {{
+                                                    conflict.category ===
+                                                    "medical"
+                                                        ? "Medical"
+                                                        : "ADL"
+                                                }}
+                                            </span>
+                                        </div>
+
+                                        <p class="mt-1 text-slate-500">
+                                            {{
+                                                formatDate(
+                                                    conflict.scheduled_at,
+                                                )
+                                            }}
+                                            •
+                                            {{
+                                                formatTime(
+                                                    conflict.scheduled_at,
+                                                )
+                                            }}
+                                            <span
+                                                v-if="conflict.duration_minutes"
+                                            >
+                                                ({{
+                                                    formatDuration(
+                                                        conflict.duration_minutes /
+                                                            60,
+                                                    )
+                                                }})
+                                            </span>
+                                        </p>
+
+                                        <p
+                                            class="mt-1 capitalize text-slate-400"
+                                        >
+                                            {{ conflict.status }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -368,35 +481,15 @@ import { formatCurrency } from "~/utils/currency";
 import { formatDate, formatTime, formatDuration } from "~/utils/time";
 import Combobox from "~/components/ui/Combobox.vue";
 import { scheduleService } from "~/api/schedule/ScheduleService";
-import type { HomecareBooking } from "~/types/booking";
-
-interface SavedAssignment {
-    employee_id: number;
-    service_id: number | null;
-    employee_name: string;
-    role_name?: string;
-    avatar?: string;
-}
-
-interface BookingData {
-    booking_id: number;
-    reference_id: string;
-
-    booking_data: {
-        service: HomecareBooking;
-        patient: {
-            first_name: string;
-            middle_name: string | null;
-            last_name: string;
-        };
-    };
-
-    assignments?: SavedAssignment[];
-}
+import type {
+    BookingRetrieve,
+    HomecareBooking,
+    SavedAssignment,
+} from "~/types/booking";
 
 const props = defineProps<{
     open: boolean;
-    booking?: BookingData | null;
+    booking?: BookingRetrieve | null;
     branchUuid: string;
     isSaving?: boolean;
 }>();
@@ -406,7 +499,7 @@ const emit = defineEmits<{
     (
         e: "confirm",
         payload: {
-            booking: BookingData;
+            booking: BookingRetrieve;
             assignments: SavedAssignment[];
         },
     ): void;
@@ -421,12 +514,10 @@ const activeService = ref<number | null>(null);
 const adlEmployeeIds = ref<string[]>([""]);
 const activeAdlSlot = ref(0);
 
-const isAdl = computed(
-    () => props.booking?.booking_data?.service?.type === "ADL",
-);
+const isAdl = computed(() => props.booking?.homecare?.type === "ADL");
 
 const patientName = computed(() => {
-    const patient = props.booking?.booking_data?.patient;
+    const patient = props.booking?.patient;
     if (!patient) return "";
     return fullName(
         patient.first_name,
@@ -443,12 +534,14 @@ const allAssignedIds = computed(() => {
 });
 
 const employeeItems = computed(() => {
-    return employeeData.value.map((employee) => ({
-        label:
-            fullName(employee.first_name, "", employee.last_name) +
-            (employee.is_busy ? " — Schedule conflict" : ""),
-        value: String(employee.employee_id),
-    }));
+    return employeeData.value
+        .filter((employee) => !employee.is_busy)
+        .map((employee) => ({
+            label:
+                fullName(employee.first_name, "", employee.last_name) +
+                (employee.is_busy ? " — Schedule conflict" : ""),
+            value: String(employee.employee_id),
+        }));
 });
 
 function availableEmployeeItemsFor(currentValue: string) {
@@ -457,7 +550,18 @@ function availableEmployeeItemsFor(currentValue: string) {
     );
 
     return employeeData.value
-        .filter((employee) => !takenElsewhere.has(String(employee.employee_id)))
+        .filter((employee) => {
+            const id = String(employee.employee_id);
+
+            // Always allow the currently selected employee to remain visible,
+            // even if they're busy or somehow taken elsewhere (edge case).
+            if (id === currentValue) return true;
+
+            if (takenElsewhere.has(id)) return false;
+            if (employee.is_busy) return false;
+
+            return true;
+        })
         .map((employee) => ({
             label:
                 fullName(employee.first_name, "", employee.last_name) +
@@ -484,11 +588,12 @@ function isTakenElsewhere(employeeId: string | number) {
 
 async function fetchEmployees() {
     if (!props.booking) return;
+    if (props.booking.category.toLowerCase() === "facility") return;
 
     try {
         isFetching.value = true;
 
-        const service = props.booking.booking_data.service;
+        const service = props.booking.homecare;
 
         const payload =
             service.type === "ADL"
@@ -521,10 +626,10 @@ async function fetchEmployees() {
     }
 }
 
-function restoreSavedAssignments(booking: BookingData) {
+function restoreSavedAssignments(booking: BookingRetrieve) {
     const saved = booking.assignments ?? [];
 
-    if (booking.booking_data.service.type === "ADL") {
+    if (booking.homecare?.type === "ADL") {
         const ids = saved
             .filter((a) => a.employee_id != null)
             .map((a) => String(a.employee_id));
@@ -544,6 +649,16 @@ function restoreSavedAssignments(booking: BookingData) {
         activeAdlSlot.value = 0;
     }
 }
+const expandedConflicts = ref<Set<string | number>>(new Set());
+
+function toggleConflicts(employeeId: string | number) {
+    if (expandedConflicts.value.has(employeeId)) {
+        expandedConflicts.value.delete(employeeId);
+    } else {
+        expandedConflicts.value.add(employeeId);
+    }
+    expandedConflicts.value = new Set(expandedConflicts.value);
+}
 
 watch(
     () => props.booking,
@@ -554,13 +669,15 @@ watch(
             activeAdlSlot.value = 0;
             activeService.value = null;
             employeeData.value = [];
+            expandedConflicts.value = new Set();
             return;
         }
 
         restoreSavedAssignments(booking);
+        expandedConflicts.value = new Set();
 
         activeService.value =
-            booking.booking_data.service.services?.[0]?.service_id ?? null;
+            booking.homecare.services?.[0]?.service_id ?? null;
 
         fetchEmployees();
     },

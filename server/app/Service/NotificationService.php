@@ -29,12 +29,7 @@ class NotificationService
     {
 
         $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
-
-        $employees = $this->moduleRepository->getEmployeesModuleWithPermission(
-            [PermissionAction::Read],
-            ModuleEnum::Bookings,
-            $branch->branch_id
-        );
+        $employees = $this->moduleRepository->getEmployeesModuleWithPermission([PermissionAction::Read], ModuleEnum::Bookings, $branch->branch_id);
 
         foreach ($employees as $employee) {
             $this->notificationRepository->create([
@@ -46,18 +41,12 @@ class NotificationService
             ]);
 
             event(new NotificationEvent(
-                $employee['uuid'],          // user_uuid
-                $branch->uuid,              // branch_uuid
-                $payload['message'],        // message
-                $payload['reference_id'],   // reference_id
-                'Booking',                  // message_type
-                [
-                    'booking_id' => $booking->booking_id,
-                    'reference_id' => $booking->reference_id,
-                    'category' => $booking->category,
-                    'status' => $booking->status ?? 'Pending',
-                    'created_at' => $booking->created_at?->toISOString(),
-                ]
+                $employee['uuid'],
+                $branch->uuid,
+                $payload['message'],
+                $payload['reference_id'],
+                'Booking',
+                $booking
             ));
         }
 

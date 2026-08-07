@@ -9,8 +9,8 @@ use App\Guard\BranchGuard;
 use App\Http\Resources\EmployeeScheduleResource;
 use App\Repository\ScheduleRepository;
 use App\Http\Resources\ScheduleResource;
+use App\Models\Invoice;
 use App\Models\User;
-use App\Repository\BranchRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\PatientRepository;
 use Illuminate\Support\Carbon;
@@ -29,10 +29,9 @@ class ScheduleService
 
     public function createSchedule(User $user, array $payload)
     {
-        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
-        AuthGuard::requireModule($user,  $branch->branch_id,   ModuleEnum::Schedules,  PermissionAction::Create);
 
-        return DB::transaction(function () use ($payload, $branch) {
+
+        return DB::transaction(function () use ($payload) {
 
             $patient = $this->patientRepository->findByFields([
                 ['uuid', '=', $payload['patient_uuid']]
@@ -45,14 +44,14 @@ class ScheduleService
             $scheduleData = [
                 'patient_id'   => $patient->patient_id,
                 'scheduled_at' => $scheduledAt,
-                'status'       => 'Pending',
+                'status'       => Schedule::STATUS_PENDING,
                 'category'     => 'Facility',
             ];
 
             $schedule = $this->scheduleRepository->create($scheduleData);
             $invoice = $this->invoiceRepository->create([
-                'branch_id' => $branch->branch_id,
-                'status' => 'pending',
+                'branch_id' => $payload['branch_id'],
+                'status' => Invoice::STATUS_PENDING,
                 'is_collected' => false,
             ]);
 
@@ -62,7 +61,6 @@ class ScheduleService
                 $scheduleService = $schedule->scheduleServices()->create([
                     'service_id' => $service['service_id'],
                     'type' => 'Medical',
-                    'status' => 'pending'
                 ]);
 
                 $scheduleService->invoiceServices()->create([
@@ -76,9 +74,12 @@ class ScheduleService
                 'total' => $total,
             ]);
 
-            return new ScheduleResource($schedule->fresh([
-                'scheduleServices.service',
-            ]));
+            return response()->json([
+                'message' => 'Schedule services have been created successfully.',
+                'data' => new ScheduleResource($schedule->fresh([
+                    'scheduleServices.service',
+                ]))
+            ]);
         });
     }
 
@@ -96,62 +97,87 @@ class ScheduleService
 
         $employees = EmployeeScheduleResource::collection($result);
 
-        $employeeNames = collect($employees)
-            ->mapWithKeys(fn(EmployeeScheduleResource $e) => [(int) $e->employee_id => $e->full_name]);
+        $employeeNames = collect($result)
+            ->mapWithKeys(fn($e) => [(int) $e->employee_id => $e->full_name]);
 
-        $busyIds = collect($employees)
-            ->filter(fn(EmployeeScheduleResource $e) => $e->is_busy)
-            ->map(fn(EmployeeScheduleResource $e) => (int) $e->employee_id)
-            ->all();
+        $busyEmployeeScheduleCodes = collect($result)
+            ->filter(fn($e) => $e->is_busy)
+            ->mapWithKeys(function ($employee) {
+                $scheduleCodes = collect($employee->employeeBranch)
+                    ->flatMap(fn($branch) => $branch->scheduleAssignments ?? collect())
+                    ->map(fn($assignment) => $assignment->scheduleService?->schedule)
+                    ->filter(fn($schedule) => $schedule && in_array($schedule->status, ['ongoing', 'pending'], true))
+                    ->map(fn($schedule) => $schedule->schedule_code)
+                    ->unique()
+                    ->values()
+                    ->all();
 
-        $schedule = $this->scheduleRepository->findByUuid([
+                return [(int) $employee->employee_id => $scheduleCodes];
+            });
+
+        $schedule = $this->scheduleRepository->findByFields([
             ['schedule_id', '=', $payload['schedule_id']]
         ]);
 
         $serviceNames = $schedule->scheduleServices
             ->mapWithKeys(fn($ss) => [$ss->schedule_services_id => $ss->service->service_name ?? 'Unknown Service']);
+
         $conflicts = [];
 
         foreach ($payload['assignments'] ?? [] as $assignment) {
             $employeeId = (int) $assignment['employee_id'];
-            if (in_array($employeeId, $busyIds, true)) {
-                $employeeName = $employeeNames[$employeeId] ?? "Employee #{$employeeId}";
-                $serviceName = $serviceNames[$assignment['schedule_services_id']] ?? 'this service';
 
-                $conflicts[] = "{$employeeName} conflicts with {$serviceName}";
+            if ($busyEmployeeScheduleCodes->has($employeeId)) {
+                $conflictScheduleCodes = $busyEmployeeScheduleCodes[$employeeId] ?? [];
+
+                $conflicts[] = [
+                    'employee_id' => $employeeId,
+                    'employee_name' => $employeeNames[$employeeId] ?? "Employee #{$employeeId}",
+                    'schedule_services_id' => $assignment['schedule_services_id'] ?? null,
+                    'service_name' => $serviceNames[$assignment['schedule_services_id'] ?? null] ?? "ADL Homecare",
+                    'conflict_schedule_codes' => $conflictScheduleCodes,
+                ];
             }
         }
 
-        if (!empty($conflicts)) {
+        if (!empty($conflicts) && empty($payload['confirm_conflicts'])) {
             return response()->json([
-                'message' => implode('; ', $conflicts),
-            ], 422);
+                'has_conflicts' => true,
+                'conflicts' => $conflicts,
+            ], 200);
         }
+
         return $this->updateSchedule($schedule, $payload);
     }
 
+
     public function updateSchedule(Schedule $schedule, array $payload)
     {
-        $schedule->update([
-            'status' => strtolower($payload['status']),
-            'scheduled_at' => Carbon::parse("{$payload['date']} {$payload['preferred_time']}"),
-        ]);
+        return DB::transaction(function () use ($schedule, $payload) {
+            $schedule->update([
+                'status' => strtolower($payload['status']),
+                'scheduled_at' => Carbon::parse("{$payload['date']} {$payload['preferred_time']}"),
+            ]);
 
-        foreach ($payload['assignments'] as $assignment) {
-            $scheduleService = $schedule->scheduleServices()
-                ->where('schedule_services_id', $assignment['schedule_services_id'])
-                ->firstOrFail();
+            foreach ($payload['assignments'] as $assignment) {
+                $scheduleService = $schedule->scheduleServices()
+                    ->where('schedule_services_id', $assignment['schedule_services_id'])
+                    ->firstOrFail();
 
-            $scheduleService->assigned()->updateOrCreate(
-                ['employee_id' => $assignment['employee_id']],
-                []
-            );
-        }
+                $scheduleService->assigned()->delete();
 
-        return response()->json([
-            'message' => 'Schedule updated successfully.',
-            'data' => new ScheduleResource($schedule->fresh(['scheduleServices.assigned', 'scheduleServices.service'])),
-        ]);
+                if (!empty($assignment['employee_id'])) {
+                    $scheduleService->assigned()->create([
+                        'employee_id' => $assignment['employee_id'],
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'message' => 'Schedule updated successfully.',
+                'data' => new ScheduleResource($schedule->fresh(['scheduleServices.assigned', 'scheduleServices.service', 'patient'])),
+            ]);
+        });
     }
 
     public function retrieveSchedule(User $user, array $payload)
@@ -165,6 +191,7 @@ class ScheduleService
         $date       = $payload['date'] ?? null;
         $time       = $payload['time'] ?? null;
         $timeSpanHours = $payload['time_span_hours'] ?? null;
+
         return EmployeeScheduleResource::collection(
             $this->scheduleRepository->getEmployeeAvailable($serviceIds, $payload['branch_id'], $date, $time, $timeSpanHours)
         );
@@ -172,36 +199,34 @@ class ScheduleService
 
     public function assignEmployee(User $user, array $payload)
     {
-        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
+        return DB::transaction(function () use ($user, $payload) {
+            $schedule = $this->scheduleRepository->findByFields([
+                ['schedule_id', '=', $payload['schedule_id']]
+            ]);
 
-        AuthGuard::requireModule($user,  $branch->branch_id,  ModuleEnum::Schedules,   PermissionAction::Create);
+            if (!$schedule) {
+                throw new Exception('Schedule dont exists', 404);
+            }
 
-        $schedule = $this->scheduleRepository->findByUuid([
-            ['schedule_id', '=', $payload['schedule_id']]
-        ]);
 
-        if (!$schedule) {
-            throw new Exception('Schedule dont exists', 404);
-        }
+            foreach ($payload['assignments'] ?? [] as $assignment) {
+                $scheduleService = $schedule->scheduleServices()
+                    ->where('schedule_services_id', $assignment['schedule_services_id'])
+                    ->firstOrFail();
 
-        foreach ($payload['assignments'] as $assignment) {
-            $scheduleService = $schedule->scheduleServices()
-                ->where('schedule_services_id', $assignment['schedule_services_id'])
-                ->firstOrFail();
+                $scheduleService->assigned()->delete();
 
-            $scheduleService->assigned()->updateOrCreate(
-                ['employee_id' => $assignment['employee_id']],
-                []
-            );
-            // $scheduleService->assigned()->delete();
-            // $scheduleService->assigned()->create([
-            //     'employee_id' => $assignment['employee_id'],
-            // ]);
-        }
+                if (!empty($assignment['employee_id'])) {
+                    $scheduleService->assigned()->create([
+                        'employee_id' => $assignment['employee_id'],
+                    ]);
+                }
+            }
 
-        return response()->json([
-            'message' => 'Schedule services have been assigned to employees successfully.',
-            'data' => $this->retrieveSchedule($user, $payload)
-        ]);
+            return response()->json([
+                'message' => 'Schedule services have been assigned to employees successfully.',
+                'data' => $this->retrieveSchedule($user, $payload)
+            ]);
+        });
     }
 }

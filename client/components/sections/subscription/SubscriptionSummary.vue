@@ -1,39 +1,47 @@
 <template>
-    <div class="bg-white rounded-2xl shadow-lg p-6">
-        <h2 class="text-lg font-bold mb-4">Summary</h2>
+    <div class="bg-white rounded-3xl shadow-sm p-6 space-y-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-slate-900">Summary</h2>
 
-        <div class="mb-5">
-            <div class="flex justify-between items-center">
-                <p
-                    class="text-xs text-gray-400 uppercase font-semibold mb-2 flex items-center gap-2"
-                >
-                    Subscription Details
+                <p class="text-sm text-slate-500 mt-1">
+                    Review your subscription details before payment.
                 </p>
-
-                <img
-                    src="/assets/logo/logo.png"
-                    alt="Preview"
-                    class="h-[20px] object-cover rounded-sm"
-                />
             </div>
-            <div class="space-y-2 text-sm ml-3">
+
+            <img
+                src="/assets/logo/logo.png"
+                alt="Logo"
+                class="h-6 object-contain"
+            />
+        </div>
+
+        <section>
+            <h3 class="text-xs uppercase font-semibold text-slate-400 mb-3">
+                Subscription Details
+            </h3>
+
+            <div class="space-y-3 text-sm">
                 <div class="flex justify-between">
-                    <span class="text-gray-500">Plan</span>
-                    <span class="font-semibold">
+                    <span class="text-slate-500"> Plan </span>
+
+                    <span class="font-semibold text-slate-800">
                         {{ checkout.selectedPlan?.name || "—" }}
                     </span>
                 </div>
 
                 <div class="flex justify-between">
-                    <span class="text-gray-500">Billing</span>
+                    <span class="text-slate-500"> Billing </span>
+
                     <span class="font-semibold capitalize">
                         {{ checkout.selectedInterval || "—" }}
                     </span>
                 </div>
 
                 <div class="flex justify-between">
-                    <span class="text-gray-500">Price</span>
-                    <span class="font-bold text-blue-600">
+                    <span class="text-slate-500"> Price </span>
+
+                    <span class="font-bold text-primary">
                         {{
                             checkout.selectedPrice != null
                                 ? `₱${checkout.selectedPrice}`
@@ -42,37 +50,34 @@
                     </span>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="mb-5 border-t pt-4">
-            <p class="text-xs text-gray-400 uppercase font-semibold mb-2">
+        <div class="h-px bg-slate-100" />
+
+        <section>
+            <h3 class="text-xs uppercase font-semibold text-slate-400 mb-3">
                 Agency Information
-            </p>
+            </h3>
 
-            <div class="space-y-2 text-sm ml-3">
+            <div class="space-y-3 text-sm">
                 <div
                     v-for="field in agencyFields"
                     :key="field.key"
-                    class="flex justify-between gap-3"
+                    class="flex justify-between gap-4"
                 >
-                    <span class="text-gray-500">
+                    <span class="text-slate-500">
                         {{ field.label }}
                     </span>
 
                     <span
-                        class="font-semibold text-right max-w-[200px]"
+                        class="font-semibold text-right text-slate-800 max-w-[220px]"
                         :class="
-                            field.type === 'computed'
-                                ? 'whitespace-normal break-words'
+                            field.key === 'address'
+                                ? 'break-words whitespace-normal'
                                 : 'truncate'
                         "
                     >
-                        <template
-                            v-if="
-                                field.type === 'computed' &&
-                                field.key === 'address'
-                            "
-                        >
+                        <template v-if="field.key === 'address'">
                             {{
                                 [
                                     checkout.agency.location.street,
@@ -95,81 +100,69 @@
                     </span>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="mb-5 border-t pt-4">
-            <div class="flex justify-between items-center">
-                <p
-                    class="text-xs text-gray-400 uppercase font-semibold mb-2 flex gap-2 items-center"
-                >
+        <div class="h-px bg-slate-100" />
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xs uppercase font-semibold text-slate-400">
                     Branch Information
-                </p>
+                </h3>
+
                 <img
                     v-if="branchImagePreview"
                     :src="branchImagePreview"
-                    alt="Preview"
-                    class="h-[20px] object-cover rounded-sm"
+                    class="h-7 w-7 rounded-lg object-cover"
                 />
             </div>
 
-            <div class="space-y-2 text-sm ml-3">
-                <div class="space-y-2 text-sm">
-                    <div
-                        v-for="field in branchFields"
-                        :key="field.key"
-                        class="flex justify-between gap-3"
+            <div class="space-y-3 text-sm">
+                <div
+                    v-for="field in branchFields"
+                    :key="field.key"
+                    class="flex justify-between gap-4"
+                >
+                    <span class="text-slate-500">
+                        {{ field.label }}
+                    </span>
+
+                    <span
+                        class="font-semibold text-right text-slate-800 max-w-[220px]"
+                        :class="
+                            field.key === 'address'
+                                ? 'break-words whitespace-normal'
+                                : 'truncate'
+                        "
                     >
-                        <span class="text-gray-500">{{ field.label }}</span>
+                        <template v-if="field.key === 'address'">
+                            {{
+                                [
+                                    checkout.branch.location.street,
+                                    checkout.branch.location.city,
+                                    checkout.branch.location.province,
+                                    checkout.branch.location.country,
+                                ]
+                                    .filter(Boolean)
+                                    .join(", ") || "—"
+                            }}
+                        </template>
 
-                        <span
-                            class="font-semibold text-right max-w-[200px]"
-                            :class="
-                                field.key === 'address'
-                                    ? 'whitespace-normal break-words'
-                                    : 'truncate'
-                            "
-                        >
-                            <template v-if="field.key === 'address'">
-                                {{
-                                    [
-                                        checkout.branch.location.street,
-                                        checkout.branch.location.city,
-                                        checkout.branch.location.province,
-                                        checkout.branch.location.country,
-                                    ]
-                                        .filter(Boolean)
-                                        .join(", ") || "—"
-                                }}
-                            </template>
-
-                            <template v-else-if="field.key === 'hours'">
-                                {{
-                                    checkout.settings?.opening &&
-                                    checkout.settings?.closing
-                                        ? `${checkout.settings.opening} - ${checkout.settings.closing}`
-                                        : "—"
-                                }}
-                            </template>
-
-                            <template v-else-if="field.key === 'currency'">
-                                {{ checkout.settings?.[field.key] || "—" }}
-                            </template>
-
-                            <template v-else>
-                                {{
-                                    checkout.branch[
-                                        field.key as keyof typeof checkout.branch
-                                    ] || "—"
-                                }}
-                            </template>
-                        </span>
-                    </div>
+                        <template v-else>
+                            {{
+                                checkout.branch[
+                                    field.key as keyof typeof checkout.branch
+                                ] || "—"
+                            }}
+                        </template>
+                    </span>
                 </div>
             </div>
 
-            <div class="space-y-2 text-sm ml-3 mt-2">
+            <div class="mt-4 space-y-3 text-sm">
                 <div class="flex justify-between">
-                    <span class="text-gray-500">Business Hours</span>
+                    <span class="text-slate-500"> Business Hours </span>
+
                     <span class="font-semibold">
                         {{
                             checkout.settings?.opening &&
@@ -181,32 +174,29 @@
                 </div>
 
                 <div class="flex justify-between">
-                    <span class="text-gray-500">Currency</span>
+                    <span class="text-slate-500"> Currency </span>
+
                     <span class="font-semibold">
                         {{ checkout.settings?.currency || "—" }}
                     </span>
                 </div>
 
                 <div class="flex justify-between">
-                    <span class="text-gray-500">Time Zone</span>
+                    <span class="text-slate-500"> Time Zone </span>
+
                     <span class="font-semibold">
                         {{ checkout.settings?.time_zone || "—" }}
                     </span>
                 </div>
-
-                <!-- <div class="flex justify-between">
-                    <span class="text-gray-500">Online Fee</span>
-                    <span class="font-semibold">
-                        ₱{{ checkout.settings?.online_additional_fee ?? 0 }}
-                    </span>
-                </div> -->
             </div>
-        </div>
+        </section>
 
-        <div class="border-t pt-4 flex justify-between items-center">
-            <span class="font-bold">Total</span>
+        <div class="h-px bg-slate-100" />
 
-            <span class="text-xl font-bold text-blue-600">
+        <div class="flex items-center justify-between">
+            <span class="text-base font-bold text-slate-800"> Total </span>
+
+            <span class="text-2xl font-bold text-primary">
                 {{
                     checkout.selectedPrice != null
                         ? `₱${checkout.selectedPrice}`
@@ -219,7 +209,7 @@
             v-if="stepCompleted"
             @click="send"
             :disabled="isLoading"
-            class="mt-6 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2"
+            class="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-white py-3 font-semibold transition flex items-center justify-center gap-2"
         >
             <svg
                 v-if="isLoading"
@@ -246,7 +236,6 @@
         </button>
     </div>
 </template>
-
 <script setup lang="ts">
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { branchFields, agencyFields } from "~/utils/fields";

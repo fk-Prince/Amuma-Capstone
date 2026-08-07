@@ -2,20 +2,15 @@
 
 namespace App\Repository;
 
+use App\Models\BranchContract;
 use App\Models\PatientAdmission;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class PatientAdmissionRepository
 {
-    public function paginate(int $perPage = 15, ?string $companyId = null)
+    public function findByFields(array $conditions)
     {
-        $query = PatientAdmission::latest();
-
-        if ($companyId) {
-            $query->where('company_id', $companyId);
-        }
-
-        return $query->paginate($perPage);
+        return PatientAdmission::where($conditions)->first();
     }
 
     public function create(array $payload)
@@ -23,33 +18,15 @@ class PatientAdmissionRepository
         return PatientAdmission::create($payload);
     }
 
-    public function findByUuid(string $uuid)
+    public function getContractsByRoom(string $admissionId)
     {
-        return PatientAdmission::where('uuid', $uuid)->first();
-    }
+        $room = PatientAdmission::with('bed.room')
+            ->find($admissionId)
+            ?->bed
+            ?->room;
 
-    public function update(string $uuid, array $payload)
-    {
-        $model = $this->findByUuid($uuid);
-        if ($model) {
-            $model->update($payload);
-        }
-        return $model;
-    }
-
-    public function delete(string $uuid)
-    {
-        $model = $this->findByUuid($uuid);
-        if ($model) {
-            return $model->delete();
-        }
-        return false;
-    }
-
-    public function restore(string $uuid)
-    {
-        $model = PatientAdmission::withTrashed()->where('uuid', $uuid)->firstOrFail();
-        $model->restore();
-        return $model;
+        return BranchContract::where('branch_id', $room->branch_id)
+            ->where('accommodation_type', $room->room_type)
+            ->get();
     }
 }

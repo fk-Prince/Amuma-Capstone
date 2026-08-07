@@ -8,10 +8,12 @@ use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Repository\BranchRepository;
 use App\Http\Resources\BranchResource;
+use App\Models\BranchImage;
 use App\Models\User;
 use App\Service\External\SupabaseService;
 use App\Service\Geo\NominatimService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class BranchService
@@ -93,9 +95,7 @@ class BranchService
                 'description' => $payload['description'],
                 'contact_number' => $payload['contact_number'] ?? null,
                 'image' => $image['url'] ?? $payload['image'] ?? null,
-                'settings' => $payload['settings'] ?? null,
             ]);
-
 
             $branch->location()->updateOrCreate(
                 [],
@@ -113,5 +113,69 @@ class BranchService
                 'message' => 'Branch Information Successfully Updated.'
             ], 200);
         });
+    }
+
+    public function action(array $payload)
+    {
+
+        if ($payload['action'] === 'image') {
+
+            if (empty($payload['image'])) {
+                throw new \InvalidArgumentException('Image is required.');
+            }
+            $stored = SupabaseService::store($payload['image']);
+
+            if (empty($stored['url'])) {
+                throw new \RuntimeException('Image upload failed.');
+            }
+
+            $data = BranchImage::create([
+                'image_url' => $stored['url'],
+                'branch_id' => $payload['branch_id'],
+                'type' => $payload['type'],
+                'description' => $payload['description'] ?? '',
+            ]);
+
+            return response()->json([
+                'message' => 'Branch Image have been successfully added.',
+                'data' => $data
+            ], 200);
+        }
+    }
+
+    public function retrieveAction(array $payload)
+    {
+        if ($payload['action'] === 'image') {
+            $perPage = $payload['per_page'] ?? 20;
+            return BranchImage::where('branch_id', $payload['branch_id'])
+                ->latest()
+                ->paginate($perPage);
+        }
+    }
+
+
+    public function updateSettings(array $payload)
+    {
+        $branch = $payload['branch'];
+
+        $settingPayload = Arr::only($payload, [
+            'reserved_walkin_slots',
+            'enable_booking_pre_admission',
+            'enable_booking_complete_admission',
+            'minimum_adl_hours',
+            'is_open',
+            'time_zone',
+            'opening',
+            'closing',
+            'currency',
+        ]);
+
+        $branch->update([
+            'settings' => $settingPayload,
+        ]);
+
+        return [
+            'message' => 'Branch settings updated successfully.',
+        ];
     }
 }

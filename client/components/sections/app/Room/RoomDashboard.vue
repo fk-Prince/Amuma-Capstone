@@ -1,10 +1,5 @@
 <script lang="ts" setup>
-import { usePermissions } from "~/composables/usePermission";
-import PageHeader from "~/components/ui/PageHeader.vue";
-import { type Overview } from "~/types/room";
-import { Modules } from "~/types/module";
-
-const { canCreate } = usePermissions();
+import type { Overview } from "~/types/room";
 
 const props = defineProps<{
     overview?: Overview | null;
@@ -13,228 +8,220 @@ const props = defineProps<{
 const overview = computed<Overview>(() => {
     return (
         props.overview ?? {
-            total_rooms: {
-                value: 0,
-                secondary: "",
-                trend: "",
-            },
-            available: {
-                value: 0,
-                secondary: "",
-                trend: "",
-            },
-            occupied: {
-                value: 0,
-                secondary: "",
-                trend: "",
-            },
-            maintenance: {
-                value: 0,
-                secondary: "",
-                trend: "",
-            },
+            total_rooms: { value: 0, secondary: "", trend: "" },
+            available: { value: 0, secondary: "", trend: "" },
+            occupied: { value: 0, secondary: "", trend: "" },
+            maintenance: { value: 0, secondary: "", trend: "" },
         }
     );
 });
-
-const emit = defineEmits<{
-    addRoom: [];
-}>();
 </script>
 
 <template>
-    <div class="flex justify-between items-end">
-        <!-- <PageHeader
-            title="Room and Bed Management"
-            subtitle="Facility Management"
-            description="View and manage available rooms, beds, and occupancy details."
-        /> -->
-
-        <!-- <button
-            v-if="canCreate(Modules.RoomsAndBeds)"
-            @click="emit('addRoom')"
-            class="inline-flex items-center gap-2 rounded-xl border border-primary bg-white px-5 py-2.5 text-sm font-medium text-primary transition-all duration-200 hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/30"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
+    <div class="w-full">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div
+                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-200"
             >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M12 4v16m8-8H4"
+                <div
+                    class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-blue-100/50 blur-2xl"
                 />
-            </svg>
-            <span>Add Room</span>
-        </button> -->
-    </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div
-            class="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-blue-400"
-        >
-            <div
-                class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center"
-            >
-                <svg
-                    viewBox="0 0 24 24"
-                    class="w-5.5 h-5.5 text-blue-600"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
-                    <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
-                    <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
-                    <path d="M10 6h4M10 10h4M10 14h4M10 18h4" />
-                </svg>
+                <div class="relative">
+                    <div class="flex items-center justify-between">
+                        <div
+                            class="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center"
+                        >
+                            <svg
+                                class="h-5 w-5 text-blue-600"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18"
+                                />
+                                <path d="M10 6h4M10 10h4M10 14h4M10 18h4" />
+                            </svg>
+                        </div>
+
+                        <span
+                            class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold"
+                        >
+                            Rooms
+                        </span>
+                    </div>
+
+                    <p
+                        class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                    >
+                        Total Rooms
+                    </p>
+
+                    <p
+                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums"
+                    >
+                        {{ overview.total_rooms.value }}
+                    </p>
+
+                    <p class="mt-3 text-xs text-slate-400">
+                        {{ overview.total_rooms.secondary }}
+                    </p>
+                </div>
             </div>
 
-            <p
-                class="mt-3 text-[11px] uppercase tracking-wide text-gray-400 font-medium"
-            >
-                Total Rooms
-            </p>
-
-            <p class="text-2xl font-bold text-gray-800">
-                {{ overview.total_rooms.value }}
-            </p>
-
-            <p class="mt-1 text-xs text-emerald-600 flex items-center gap-1">
-                <span v-if="overview.total_rooms.trend === 'up'">↑</span>
-                <span class="text-gray-400 font-normal">
-                    {{ overview.total_rooms.secondary }}
-                </span>
-            </p>
-        </div>
-
-        <div
-            class="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-emerald-400"
-        >
             <div
-                class="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center"
+                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200"
             >
-                <svg
-                    viewBox="0 0 24 24"
-                    class="w-5.5 h-5.5 text-emerald-600"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M21.8 10A10 10 0 1 1 17 3.34" />
-                    <path d="m9 11 3 3L22 4" />
-                </svg>
+                <div
+                    class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-100/50 blur-2xl"
+                />
+
+                <div class="relative">
+                    <div class="flex items-center justify-between">
+                        <div
+                            class="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center"
+                        >
+                            <svg
+                                class="h-5 w-5 text-emerald-600"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="M20 6L9 17l-5-5" />
+                            </svg>
+                        </div>
+
+                        <span
+                            class="flex items-center gap-2 text-xs font-medium text-emerald-600"
+                        >
+                            <span
+                                class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"
+                            />
+                            Available
+                        </span>
+                    </div>
+
+                    <p
+                        class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                    >
+                        Available Rooms
+                    </p>
+
+                    <p
+                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums"
+                    >
+                        {{ overview.available.value }}
+                    </p>
+
+                    <p class="mt-3 text-xs text-emerald-600">
+                        Ready for occupancy
+                    </p>
+                </div>
             </div>
 
-            <p
-                class="mt-3 text-[11px] uppercase tracking-wide text-gray-400 font-medium"
-            >
-                Available
-            </p>
-
-            <p class="text-2xl font-bold text-gray-800">
-                {{ overview.available.value }}
-            </p>
-
-            <p class="mt-1 text-xs text-emerald-600 flex items-center gap-1">
-                <span v-if="overview.available.trend === 'up'">↑</span>
-                <span class="text-gray-400 font-normal">
-                    {{ overview.available.secondary }}
-                </span>
-            </p>
-        </div>
-
-        <div
-            class="rounded-2xl border border-violet-200 bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-violet-400"
-        >
+            <!-- Occupied -->
             <div
-                class="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center"
+                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-violet-200"
             >
-                <svg
-                    viewBox="0 0 24 24"
-                    class="w-5.5 h-5.5 text-violet-600"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
+                <div
+                    class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-violet-100/50 blur-2xl"
+                />
+
+                <div class="relative">
+                    <div class="flex items-center justify-between">
+                        <div
+                            class="h-10 w-10 rounded-xl bg-violet-50 flex items-center justify-center"
+                        >
+                            <svg
+                                class="h-5 w-5 text-violet-600"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle cx="9" cy="7" r="4" />
+                                <path
+                                    d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+                                />
+                            </svg>
+                        </div>
+
+                        <span
+                            class="px-2.5 py-1 rounded-full bg-violet-50 text-violet-600 text-xs font-semibold"
+                        >
+                            Active
+                        </span>
+                    </div>
+
+                    <p
+                        class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                    >
+                        Occupied
+                    </p>
+
+                    <p
+                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums"
+                    >
+                        {{ overview.occupied.value }}
+                    </p>
+
+                    <p class="mt-3 text-xs text-violet-600">Currently in use</p>
+                </div>
             </div>
 
-            <p
-                class="mt-3 text-[11px] uppercase tracking-wide text-gray-400 font-medium"
-            >
-                Occupied
-            </p>
-
-            <p class="text-2xl font-bold text-gray-800">
-                {{ overview.occupied.value }}
-            </p>
-
-            <p class="mt-1 text-xs text-emerald-600 flex items-center gap-1">
-                <span v-if="overview.occupied.trend === 'up'">↑</span>
-                <span class="text-gray-400 font-normal">
-                    {{ overview.occupied.secondary }}
-                </span>
-            </p>
-        </div>
-
-        <div
-            class="rounded-2xl border border-rose-200 bg-white p-4 shadow-sm transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1 hover:border-rose-400"
-        >
+            <!-- Maintenance -->
             <div
-                class="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center"
+                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200"
             >
-                <svg
-                    viewBox="0 0 24 24"
-                    class="w-5.5 h-5.5 text-rose-600"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path
-                        d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
-                    />
-                    <path d="M12 9v4" />
-                    <path d="M12 17h.01" />
-                </svg>
+                <div
+                    class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-rose-100/50 blur-2xl"
+                />
+
+                <div class="relative">
+                    <div class="flex items-center justify-between">
+                        <div
+                            class="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center"
+                        >
+                            <svg
+                                class="h-5 w-5 text-rose-500"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="M12 9v4" />
+                                <path d="M12 17h.01" />
+                                <path
+                                    d="M10.3 3.8 2.1 18a2 2 0 0 0 1.7 3h16.4a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0z"
+                                />
+                            </svg>
+                        </div>
+
+                        <span
+                            class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-500 text-xs font-semibold"
+                        >
+                            Attention
+                        </span>
+                    </div>
+
+                    <p
+                        class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                    >
+                        Maintenance
+                    </p>
+
+                    <p
+                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums"
+                    >
+                        {{ overview.maintenance.value }}
+                    </p>
+
+                    <p class="mt-3 text-xs text-rose-500">Needs inspection</p>
+                </div>
             </div>
-
-            <p
-                class="mt-3 text-[11px] uppercase tracking-wide text-gray-400 font-medium"
-            >
-                Maintenance
-            </p>
-
-            <p class="text-2xl font-bold text-gray-800">
-                {{ overview.maintenance.value }}
-            </p>
-
-            <p
-                class="mt-1 text-xs font-medium"
-                :class="
-                    overview.maintenance.trend === 'success'
-                        ? 'text-emerald-500'
-                        : 'text-rose-500'
-                "
-            >
-                {{ overview.maintenance.secondary }}
-            </p>
         </div>
     </div>
 </template>

@@ -9,7 +9,7 @@ use App\Models\Schedule;
 use App\Models\Service;
 use App\Models\User;
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Log;
 
 class EmployeeRepository
 {
@@ -262,7 +262,7 @@ class EmployeeRepository
             ])
             ->get();
 
-        return $employees->map(function ($employeeBranch) use ($payload) {
+        $x =  $employees->map(function ($employeeBranch) use ($payload) {
             $employee = $employeeBranch->employees;
 
             $employee->formatted_assignment_type = match (strtolower($employeeBranch->assignment_type)) {
@@ -284,5 +284,8 @@ class EmployeeRepository
 
             return $employee;
         });
+
+        Log::info($x);
+        return $x;
     }
 }

@@ -48,16 +48,51 @@ export function fullName(
         || "—";
 }
 
-export function calculateAge(date?: string) {
+export function calculateAge(date?: string, ba = true) {
     if (!date) {
         return "—";
     }
+
     const birthDate = new Date(date);
     const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const month = today.getMonth() - birthDate.getMonth();
-    if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
+
+    let years = today.getFullYear() - birthDate.getFullYear();
+    let months = today.getMonth() - birthDate.getMonth();
+
+    if (
+        months < 0 ||
+        (months === 0 && today.getDate() < birthDate.getDate())
+    ) {
+        years--;
+        months += 12;
     }
-    return `${formatDate(date)} (${age} years old)`;
+
+    let ageText = "";
+
+    if (years === 0) {
+        if (months === 0) {
+            const days = Math.floor(
+                (today.getTime() - birthDate.getTime()) /
+                (1000 * 60 * 60 * 24),
+            );
+
+            ageText = `${days} day${days !== 1 ? "s" : ""} old`;
+        } else {
+            ageText = `${months} month${months !== 1 ? "s" : ""} old`;
+        }
+    } else {
+        ageText = `${years} year${years !== 1 ? "s" : ""} old`;
+    }
+
+    if (ba) {
+        return `${formatDate(date)} (${ageText})`;
+    }
+
+    return ageText;
+}
+
+export function initials(name?: string | null) {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
 }

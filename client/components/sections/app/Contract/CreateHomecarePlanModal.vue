@@ -10,11 +10,19 @@
                 <div class="flex justify-between items-center p-5 border-b">
                     <div>
                         <h2 class="text-lg font-semibold text-[#16302E]">
-                            Create Homecare Package
+                            {{
+                                isEditMode
+                                    ? "Update Homecare Package"
+                                    : "Create Homecare Package"
+                            }}
                         </h2>
 
                         <p class="text-sm text-[#9AB3AF]">
-                            Configure a new caregiving service package.
+                            {{
+                                isEditMode
+                                    ? "Update this caregiving package."
+                                    : "Configure a new caregiving service package."
+                            }}
                         </p>
                     </div>
 
@@ -106,7 +114,13 @@
                             </svg>
 
                             {{
-                                isSubmitting ? "Creating..." : "Create Package"
+                                isSubmitting
+                                    ? isEditMode
+                                        ? "Updating..."
+                                        : "Creating..."
+                                    : isEditMode
+                                      ? "Update Package"
+                                      : "Create Package"
                             }}
                         </button>
                     </div>
@@ -117,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, ref } from "vue";
+import { reactive, computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
@@ -133,8 +147,9 @@ const route = useRoute();
 
 const isSubmitting = ref(false);
 
-defineProps<{
+const props = defineProps<{
     open: boolean;
+    data?: any;
 }>();
 
 const emit = defineEmits<{
@@ -156,6 +171,7 @@ const billingIntervals = [
 ];
 
 const uuid = computed(() => route.params.uuid as string);
+const isEditMode = computed(() => !!props.data?.branch_contract_id);
 
 const form = reactive({
     ...homecarePlanForm(),
@@ -192,7 +208,19 @@ function close() {
     clearErrors();
     emit("close");
 }
+watch(
+    () => props.data,
+    (newData) => {
+        Object.assign(form, homecarePlanForm(), newData ?? {}, {
+            branch_uuid: uuid.value,
+        });
 
+        clearErrors();
+    },
+    {
+        immediate: true,
+    },
+);
 async function submit() {
     clearErrors();
 
@@ -217,23 +245,24 @@ async function submit() {
     try {
         isSubmitting.value = true;
 
-        const res = await branchContractService.create(payload);
+        const res = isEditMode.value
+            ? await branchContractService.update(
+                  props.data.branch_contract_id,
+                  payload,
+              )
+            : await branchContractService.create(payload);
 
-        success(res.message ?? "Homecare package created successfully");
-
+        success(
+            res.message ??
+                (isEditMode.value
+                    ? "Homecare package updated successfully"
+                    : "Homecare package created successfully"),
+        );
         close();
     } catch (err: any) {
         const message = err?.data?.message || err?.response?.data?.message;
-        //     ||
-        //     err?.message ||
-        //     (isEditMode.value
-        //         ? "Failed to update facility plan"
-        //         : "Failed to create facility plan");
-
         const apiErrors = err?.data?.errors || err?.response?.data?.errors;
-
         console.error(err);
-
         if (apiErrors && Object.keys(apiErrors).length > 0) {
             Object.entries(apiErrors).forEach(([key, value]: any) => {
                 errors[key] = Array.isArray(value) ? value[0] : value;
@@ -243,6 +272,7 @@ async function submit() {
         }
     } finally {
         isSubmitting.value = false;
+        emit("close");
     }
 }
 </script>

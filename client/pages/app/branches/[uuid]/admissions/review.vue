@@ -1,40 +1,7 @@
 <template>
     <div
-        class="min-h-screen grid grid-cols-1 lg:grid-cols-[280px_1fr] bg-gray-50"
+        class="min-h-screen grid grid-cols-1 lg:grid-cols-[1fr_320px] bg-slate-50"
     >
-        <aside
-            class="hidden lg:flex flex-col bg-white border-r sticky top-0 h-screen"
-        >
-            <div class="px-6 py-6 border-b">
-                <p
-                    class="text-xs font-semibold uppercase tracking-wide text-gray-400"
-                >
-                    Admission Progress
-                </p>
-                <div class="mt-3 flex items-center gap-2">
-                    <div
-                        class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden"
-                    >
-                        <div
-                            class="h-full rounded-full bg-primary transition-all duration-300"
-                            :style="{ width: `${progress}%` }"
-                        ></div>
-                    </div>
-                    <span class="text-xs font-medium text-gray-400 shrink-0">
-                        {{ Math.round(progress) }}%
-                    </span>
-                </div>
-            </div>
-
-            <div class="flex-1 overflow-y-auto px-3 py-4">
-                <BookingSteps
-                    active="step5"
-                    :completed="completedSteps"
-                    @go="goEditStep"
-                />
-            </div>
-        </aside>
-
         <main class="px-5 sm:px-10 py-8 w-full mx-auto lg:mx-0">
             <div class="lg:hidden mb-6">
                 <div class="flex items-center gap-2">
@@ -69,6 +36,7 @@
                             :patient="bookingStore.patient"
                             :guardian="bookingStore.guardian"
                             :assessment="bookingStore.assessment"
+                            :payment="bookingStore.payment"
                         />
                     </div>
 
@@ -111,16 +79,45 @@
                             "
                             @click="handleSubmit"
                         >
-                            {{
-                                submitting
-                                    ? "Submitting..."
-                                    : "Confirm & Submit Admission"
-                            }}
+                            {{ submitting ? "Submitting..." : actionLabel }}
                         </BaseButton>
                     </div>
                 </div>
             </div>
         </main>
+
+        <aside
+            class="hidden lg:flex flex-col bg-white border-r sticky top-0 h-screen"
+        >
+            <div class="px-6 py-6 border-b">
+                <p
+                    class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+                >
+                    Admission Progress
+                </p>
+                <div class="mt-3 flex items-center gap-2">
+                    <div
+                        class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden"
+                    >
+                        <div
+                            class="h-full rounded-full bg-primary transition-all duration-300"
+                            :style="{ width: `${progress}%` }"
+                        ></div>
+                    </div>
+                    <span class="text-xs font-medium text-gray-400 shrink-0">
+                        {{ Math.round(progress) }}%
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto px-3 py-4">
+                <BookingSteps
+                    active="step5"
+                    :completed="completedSteps"
+                    @go="goEditStep"
+                />
+            </div>
+        </aside>
     </div>
 </template>
 
@@ -138,8 +135,19 @@ useHead({ title: "Review Admission" });
 
 definePageMeta({
     navVariant: 1,
+    layout: "dashboard",
     // middleware: ["auth-client", "booking-review-guard"],
     middleware: ["auth-client"],
+});
+
+const actionLabel = computed(() => {
+    // if (
+    //     route.query.reference_id &&
+    //     bookingStore.payment?.payment_status === "paid"
+    // ) {
+    //     return "Admit Patient";
+    // }
+    return "Confirm & Submit Admission";
 });
 
 const route = useRoute();
@@ -151,7 +159,7 @@ const uuid = route.params.uuid as string;
 
 onMounted(() => {
     if (!bookingStore.category || !bookingStore.facility) {
-        router.replace(`/booking/provider/${uuid}?category=facility`);
+        // router.replace(`/booking/provider/${uuid}?category=facility`);
     }
 });
 
@@ -186,13 +194,16 @@ const progress = computed(() => 100);
 
 function goEditStep(step: string) {
     router.push({
-        path: `/booking/provider/${uuid}/details`,
-        query: { category: "facility", step },
+        path: `/app/branches/${uuid}/admissions`,
+        query: {
+            step,
+        },
     });
 }
 
 const bookingData = computed(() => ({
-    service: bookingStore.facility,
+    homecare: bookingStore.homecare,
+    facility: bookingStore.facility,
     patient: bookingStore.patient,
     guardian: bookingStore.guardian,
     assessment: bookingStore.assessment,
@@ -216,12 +227,12 @@ async function handleSubmit() {
         const res = await admissionService.create({
             reference_id: route.query.reference_id ?? "",
             branch_uuid: uuid,
-            booking_data: bookingData.value,
+            ...bookingData.value,
         });
-
         toast.success(
             res.message ?? "Your admission request was submitted successfully!",
         );
+        bookingStore.$reset();
         router.push(`/app/branches/${uuid}/admissions/`);
     } catch (err: any) {
         console.error(err);

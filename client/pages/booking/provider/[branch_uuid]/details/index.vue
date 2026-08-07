@@ -205,14 +205,14 @@ import {
     createPatientSchema,
     assessmentData,
     assessmentSchema,
-} from "~/types/patient";
-import { guardianData, guardianSchema } from "~/types/patient";
+} from "~/schema/patient-schema";
+import { guardianData, guardianSchema } from "~/schema/patient-schema";
 import {
     homecareData,
     createHomecareBookingSchema,
     facilityData,
     facilityBookingSchema,
-} from "~/types/booking";
+} from "~/schema/booking-schema";
 
 import { useAuthUser } from "~/composables/useAuthUser";
 import { type Service } from "~/types/service";
@@ -245,7 +245,7 @@ const serviceData = ref<Service[]>([]);
 const homecareSchema = computed(() =>
     createHomecareBookingSchema(branch.value?.homecare.adl_min_hour ?? 0),
 );
-
+const validationMode = ref<"facility" | "reserved">("facility");
 const patientSchema = computed(() => createPatientSchema(category.value));
 
 const {
@@ -259,6 +259,7 @@ const {
     validateAll,
 } = useBookingFlowValidation({
     category,
+    validationMode,
     homecareSchema,
     facilityBookingSchema,
     patientSchema,
@@ -273,6 +274,7 @@ const {
 
 onMounted(async () => {
     loading.value = true;
+    bookingStore.clear();
     try {
         if (
             !branch.value?.homecare ||
@@ -285,6 +287,7 @@ onMounted(async () => {
         if (route.query.step) {
             scrollTo(route.query.step as string);
         }
+        bookingStore.clear();
     } catch (err) {
         console.error(err);
     } finally {

@@ -13,7 +13,13 @@ class MarkMissedSchedules extends Command
     protected $description = 'Mark schedules as Missed if their scheduled_at date has passed and they were never completed or cancelled';
 
 
-    protected array $excludedStatuses = ['completed', 'ongoing', 'cancelled', 'missed'];
+    protected array $excludedStatuses = [
+        Schedule::STATUS_COMPLETED,
+        Schedule::STATUS_ONGOING,
+        Schedule::STATUS_CANCELLED,
+        Schedule::STATUS_MISSED
+    ];
+
     public function handle(): int
     {
         $now = Carbon::now();

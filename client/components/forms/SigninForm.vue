@@ -54,7 +54,7 @@ async function handleSignIn() {
         setTimeout(async () => {
             loading.value = true;
             user.value = res.user;
-            await navigateTo((route.query.redirect as string) || "/");
+            await navigateTo("/");
         }, 1500);
     } catch (err: any) {
         showAlert(

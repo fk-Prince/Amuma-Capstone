@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('beds', function (Blueprint $table) {
             $table->id('bed_id');
             $table->foreignId('room_id')->constrained('rooms', 'room_id');
-            $table->enum('status', ['Available', 'Occupied', 'Maintenance'])->default('Available');
+            $table->enum('status', ['Available', 'Occupied', 'Maintenance', 'Reserved'])->default('Available');
             $table->string('bed_no');
             $table->timestamps();
         });

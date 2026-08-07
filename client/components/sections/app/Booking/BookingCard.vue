@@ -6,7 +6,7 @@
                     class="inline-flex items-center gap-2 text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] w-fit"
                 >
                     <span
-                        class="w-1.5 h-1.5 rounded-full"
+                        class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
                         :class="statusDotClasses(booking.status)"
                     />
                     #{{ booking.reference_id }}
@@ -20,54 +20,53 @@
 
         <td class="py-4 px-3 min-w-[220px]">
             <div class="flex items-center gap-3 min-w-0">
-                <!-- <img
-                    :src="booking.user.avatar"
-                    alt="User Avatar"
-                    class="w-9 h-9 rounded-full object-cover shrink-0"
-                /> -->
-
                 <div class="min-w-0">
                     <p class="font-semibold text-[#16302E] truncate text-sm">
                         {{
                             fullName(
-                                booking.booking_data.patient?.first_name,
-                                booking.booking_data.patient?.middle_name,
-                                booking.booking_data.patient?.last_name,
+                                booking.patient?.first_name,
+                                booking.patient?.middle_name,
+                                booking.patient?.last_name,
                             )
                         }}
                     </p>
                     <p class="text-xs text-muted truncate">
-                        {{ booking.booking_data.service.address }}
+                        {{
+                            booking.homecare?.address ||
+                            booking.patient?.address ||
+                            ""
+                        }}
                     </p>
                 </div>
             </div>
         </td>
 
-        <td class="py-4 px-3 text-sm text-muted whitespace-nowrap">
+        <td class="py-4 px-3 text-sm text-muted whitespace-nowrap capitalize">
             {{ booking.category ?? "—" }}
         </td>
 
         <td class="py-4 px-3 text-sm text-muted whitespace-nowrap">
             {{
-                booking.booking_data?.service?.type === "Medical"
+                booking.homecare?.type === "Medical"
                     ? "Medical Services"
-                    : booking.booking_data?.service?.type === "Complete" ||
-                        booking.booking_data?.service?.type === "Pre"
+                    : booking.facility?.type === "Complete"
                       ? "Complete Admission"
-                      : (booking.booking_data?.service?.type ?? "—")
+                      : booking.facility?.type === "Pre-Admission"
+                        ? booking.facility?.type
+                        : booking.homecare?.type === "ADL"
+                          ? "Activity of Daily Living (ADL)"
+                          : "—"
             }}
         </td>
 
         <td class="py-4 px-3 text-sm text-muted whitespace-nowrap">
             {{
-                booking.category === "Facility"
-                    ? booking.booking_data?.service?.admission_date
-                        ? formatDate(
-                              booking.booking_data.service.admission_date,
-                          )
+                booking.category === "facility"
+                    ? booking.facility.admission_date
+                        ? formatDate(booking.facility.admission_date)
                         : "—"
-                    : booking.booking_data?.service?.date
-                      ? formatDate(booking.booking_data.service.date)
+                    : booking.homecare.date
+                      ? formatDate(booking.homecare.date)
                       : "—"
             }}
         </td>
@@ -77,7 +76,7 @@
                 class="px-3 py-1 rounded-full text-xs font-medium capitalize"
                 :class="statusClasses(booking.status)"
             >
-                {{ booking.status }}
+                {{ formatStatus(booking.status) }}
             </span>
         </td>
 
@@ -121,9 +120,14 @@
 import { useRoute, useRouter } from "vue-router";
 import { fullName } from "~/utils/user";
 import { stringToDateTime } from "~/utils/time";
+import {
+    formatStatus,
+    statusClasses,
+    type BookingRetrieve,
+} from "~/types/booking";
 
 const props = defineProps<{
-    booking: any;
+    booking: BookingRetrieve;
 }>();
 
 const emit = defineEmits<{
@@ -139,22 +143,6 @@ async function viewDetails() {
     if (!props.booking?.reference_id) return;
 
     emit("view-details", props.booking);
-
-    await router.push({
-        path: route.path,
-        query: {
-            ...route.query,
-            reference_id: String(props.booking.reference_id),
-        },
-    });
-}
-
-function totalPrice(booking: any) {
-    const services = booking.booking_data?.service?.services ?? [];
-    return services.reduce(
-        (sum: number, s: any) => sum + (Number(s.price) || 0),
-        0,
-    );
 }
 
 function formatDate(value?: string) {
@@ -167,39 +155,28 @@ function formatDate(value?: string) {
         day: "numeric",
     });
 }
-
-function formatCurrency(value?: number) {
-    if (value === undefined || value === null || isNaN(Number(value)))
-        return "—";
-    return `₱${Number(value).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`;
-}
-
-function statusClasses(status?: string) {
-    const s = (status ?? "").toLowerCase();
-
-    if (s.includes("confirm") || s.includes("approved")) {
-        return "bg-[#E4F4EE] text-[#1F7A4D]";
-    }
-
-    if (s.includes("complete")) {
-        return "bg-[#E6F1FA] text-[#2563A6]";
-    }
-
-    if (s.includes("reject") || s.includes("declin") || s.includes("cancel")) {
-        return "bg-[#FBE8E6] text-[#B3402F]";
-    }
-
-    return "bg-[#FDF3DE] text-[#966B1F]";
-}
-
 function statusDotClasses(status?: string) {
-    const s = (status ?? "").toLowerCase();
+    const s = (status ?? "").toLowerCase().replace("-", "_");
+    switch (s) {
+        case "approved":
+            return "bg-[#1F7A4D]";
 
-    if (s.includes("confirm") || s.includes("approved")) return "bg-[#1F7A4D]";
-    if (s.includes("complete")) return "bg-[#2563A6]";
-    if (s.includes("reject") || s.includes("declin") || s.includes("cancel"))
-        return "bg-[#B3402F]";
+        // case "in_progress":
+        //     return "bg-[#2563A6]";
 
-    return "bg-[#966B1F]";
+        // case "completed":
+        //     return "bg-[#0E7C7B]";
+
+        case "rejected":
+        case "cancelled":
+            return "bg-[#B3402F]";
+
+        case "expired":
+            return "bg-gray-400";
+
+        case "pending":
+        default:
+            return "bg-[#966B1F]";
+    }
 }
 </script>

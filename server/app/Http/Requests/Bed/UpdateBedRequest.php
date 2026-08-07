@@ -14,6 +14,8 @@ class UpdateBedRequest extends FormRequest
 
     public function rules(): array
     {
+        $bedId = $this->route('bed');
+
         return [
             'branch_uuid' => [
                 'required',
@@ -30,12 +32,9 @@ class UpdateBedRequest extends FormRequest
                 'max:50',
                 Rule::unique('beds', 'bed_no')
                     ->where(function ($query) {
-                        return $query->where(
-                            'room_id',
-                            $this->room_id
-                        );
+                        return $query->where('room_id', $this->room_id);
                     })
-                    ->ignore($this->id, 'bed_id'),
+                    ->ignore($bedId, 'bed_id'),
             ],
 
             'status' => [

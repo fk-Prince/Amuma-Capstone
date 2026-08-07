@@ -28,6 +28,7 @@ class RoomRepository
     {
         $query = Room::with([
             'beds.currentAdmission.patient',
+            'beds.reservedAdmission.bookings',
         ])->where('branch_id', $branch_id);
 
         if (!empty($payload['room_type'])) {
@@ -38,8 +39,21 @@ class RoomRepository
             $search = trim($payload['search']);
 
             $query->where(function ($q) use ($search) {
+
                 $q->where('room_no', 'LIKE', "%{$search}%")
+
                     ->orWhereHas('beds.currentAdmission.patient', function ($patientQuery) use ($search) {
+                        $patientQuery->where(function ($p) use ($search) {
+                            $p->where('first_name', 'LIKE', "%{$search}%")
+                                ->orWhere('last_name', 'LIKE', "%{$search}%")
+                                ->orWhereRaw(
+                                    "CONCAT(first_name, ' ', last_name) LIKE ?",
+                                    ["%{$search}%"]
+                                );
+                        });
+                    })
+
+                    ->orWhereHas('beds.reservedAdmission.patient', function ($patientQuery) use ($search) {
                         $patientQuery->where(function ($p) use ($search) {
                             $p->where('first_name', 'LIKE', "%{$search}%")
                                 ->orWhere('last_name', 'LIKE', "%{$search}%")
@@ -55,6 +69,7 @@ class RoomRepository
         return $query->paginate($perPage);
     }
 
+
     public function getRoomStats(int $branchId): array
     {
         $rooms = Room::where('branch_id', $branchId);
@@ -65,35 +80,22 @@ class RoomRepository
 
         $totalRooms = (clone $rooms)->count();
 
-        $branchBedIds = (clone $beds)->pluck('bed_id');
-
-        $reservedBedIds = Booking::query()
-            ->whereIn('status', [
-                Booking::STATUS_AWAITING,
-            ])
-            ->get()
-            ->pluck('booking_data.reserved.bed.bed_id')
-            ->filter()
-            ->unique()
-            ->intersect($branchBedIds)
-            ->values();
-
-        $reservedBeds = $reservedBedIds->count();
-
-        $availableBeds = (clone $beds)
-            ->where('status', 'Available')
-            ->whereNotIn('bed_id', $reservedBedIds)
+        $occupiedBeds = (clone $beds)
+            ->whereHas('currentAdmission')
             ->count();
 
-        $occupiedBeds = (clone $beds)
-            ->where(function ($query) use ($reservedBedIds) {
-                $query->where('status', 'Occupied')
-                    ->orWhereIn('bed_id', $reservedBedIds);
-            })
+        $reservedBeds = (clone $beds)
+            ->whereHas('reservedAdmission')
+            ->count();
+
+        $availableBeds = (clone $beds)
+            ->whereDoesntHave('currentAdmission')
+            ->whereDoesntHave('reservedAdmission')
+            ->where('status', '!=', Bed::STATUS_MAINTENANCE)
             ->count();
 
         $maintenanceBeds = (clone $beds)
-            ->where('status', 'Maintenance')
+            ->where('status', Bed::STATUS_MAINTENANCE)
             ->count();
 
         $newThisMonth = (clone $rooms)

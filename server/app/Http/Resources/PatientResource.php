@@ -46,61 +46,61 @@ class PatientResource extends JsonResource
             'vital' => $records
                 ->where('category', 'Vital Signs')
                 ->values(),
-            // 'admission' => collect([
-            //     [
-            //         'patient_admission_id' => 1,
-            //         'status' => 'Admitted',
-            //         'admitted_at' => now()->subDays(3),
-            //         'end_date' => now()->subDays(5),
+            'admissions' => $this->whenLoaded('admissions', function () {
+                return $this->admissions->map(function ($admission) {
+                    return [
+                        'patient_admission_id' => $admission->patient_admission_id,
+                        'status' => $admission->status,
+                        'admitted_at' => $admission->admitted_at,
+                        'end_date' => $admission->end_date,
 
-            //         'bed' => [
-            //             'bed_id' => 1,
-            //             'bed_no' => 'A-101',
-            //             'status' => 'occupied',
-            //         ],
+                        'bed' => [
+                            'bed_id' => $admission->bed?->bed_id,
+                            'bed_no' => $admission->bed?->bed_no,
+                            'status' => $admission->bed?->status,
+                        ],
 
-            //         'room' => [
-            //             'room_id' => 1,
-            //             'room_no' => '101',
-            //             'room_type' => 'Private',
-            //             'floor' => '1',
-            //         ],
+                        'room' => [
+                            'room_id' => $admission->bed?->room?->room_id,
+                            'room_no' => $admission->bed?->room?->room_no,
+                            'room_type' => $admission->bed?->room?->room_type,
+                            'floor' => $admission->bed?->room?->floor,
+                        ],
 
-            //         'contract' => [
-            //             'category' => 'Standard',
-            //             'accommodation_type' => 'Private Room',
-            //             'billing_cycle' => 'Monthly',
-            //             'price' => 2500,
-            //         ],
-            //     ],
-            //     [
-            //         'patient_admission_id' => 2,
-            //         'status' => 'discharged',
-            //         'admitted_at' => now()->subDays(30),
-            //         'end_date' => now()->subDays(5),
+                        'current_contract' => $admission->admissionContract ? [
+                            'branch_contract_id' => $admission->admissionContract->branch_contract_id,
+                            'category' => $admission->admissionContract->category,
+                            'accommodation_type' => $admission->admissionContract->accommodation_type,
+                            'billing_cycle' => $admission->admissionContract->billing_cycle,
+                            'price' => $admission->admissionContract->price,
+                        ] : null,
 
-            //         'bed' => [
-            //             'bed_id' => 2,
-            //             'bed_no' => 'B-202',
-            //             'status' => 'available',
-            //         ],
+                        'invoices' => $admission->invoiceAdmission->map(function ($invoice) {
+                            return [
+                                'invoice_facility_id' => $invoice->invoice_facility_id,
+                                'invoice_id' => $invoice->invoice_id,
+                                'price' => $invoice->price,
 
-            //         'room' => [
-            //             'room_id' => 2,
-            //             'room_no' => '202',
-            //             'room_type' => 'Semi Private',
-            //             'floor' => '2',
-            //         ],
+                                'contract' => $invoice->branchContract ? [
+                                    'branch_contract_id' => $invoice->branchContract->branch_contract_id,
+                                    'category' => $invoice->branchContract->category,
+                                    'accommodation_type' => $invoice->branchContract->accommodation_type,
+                                    'billing_cycle' => $invoice->branchContract->billing_cycle,
+                                    'price' => $invoice->branchContract->price,
+                                ] : null,
+                            ];
+                        })->values(),
+                    ];
+                })->values();
+            }),
 
-            //         'contract' => [
-            //             'category' => 'Premium',
-            //             'accommodation_type' => 'Semi Private Room',
-            //             'billing_cycle' => 'Monthly',
-            //             'price' => 3500,
-            //         ],
-            //     ],
-            // ]),
-            'admissions' => $admissions->map(function ($admission) {
+            'latest_admission' => $this->whenLoaded('latestAdmission', function () {
+                $admission = $this->latestAdmission;
+
+                if (!$admission) {
+                    return null;
+                }
+
                 return [
                     'patient_admission_id' => $admission->patient_admission_id,
                     'status' => $admission->status,
@@ -109,16 +109,24 @@ class PatientResource extends JsonResource
 
                     'bed' => [
                         'bed_id' => $admission->bed?->bed_id,
-                        'bed_no' => $admission->bed?->bed_no,
+                        'bed_no' => $admission->bed?->bed_no ?? 'N/A',
                         'status' => $admission->bed?->status,
                     ],
 
                     'room' => [
                         'room_id' => $admission->bed?->room?->room_id,
-                        'room_no' => $admission->bed?->room?->room_no,
+                        'room_no' => $admission->bed?->room?->room_no ?? 'N/A',
                         'room_type' => $admission->bed?->room?->room_type,
                         'floor' => $admission->bed?->room?->floor,
                     ],
+
+                    'current_contract' => $admission->admissionContract ? [
+                        'branch_contract_id' => $admission->admissionContract->branch_contract_id,
+                        'category' => $admission->admissionContract->category,
+                        'accommodation_type' => $admission->admissionContract->accommodation_type,
+                        'billing_cycle' => $admission->admissionContract->billing_cycle,
+                        'price' => $admission->admissionContract->price,
+                    ] : null,
 
                     'invoices' => $admission->invoiceAdmission->map(function ($invoice) {
                         return [
@@ -136,7 +144,7 @@ class PatientResource extends JsonResource
                         ];
                     })->values(),
                 ];
-            })->values(),
+            }),
         ];
     }
 }

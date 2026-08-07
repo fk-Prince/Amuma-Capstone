@@ -57,4 +57,16 @@ class Employee extends Model
     {
         return $this->hasMany(EmployeeBranch::class, 'employee_id', 'employee_id');
     }
+
+    public function conflictingSchedules()
+    {
+        return $this->hasManyThrough(
+            Schedule::class,
+            ScheduleAssigned::class,
+            'employee_id',
+            'schedule_id',
+            'employee_id',
+            'schedule_id'
+        );
+    }
 }

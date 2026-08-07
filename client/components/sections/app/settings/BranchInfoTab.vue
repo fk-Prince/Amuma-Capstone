@@ -2,11 +2,6 @@
     <div v-if="localValue" class="space-y-6 w-full">
         <ClientOnly>
             <BranchForm v-model:branch="localValue" v-model:errors="errors" />
-
-            <BranchHoursTab
-                v-if="localValue.settings"
-                v-model:setting="localValue.settings"
-            />
         </ClientOnly>
 
         <div class="flex justify-end">
@@ -28,7 +23,6 @@
 
 <script setup lang="ts">
 import { ref, watch, toRaw } from "vue";
-import BranchHoursTab from "~/components/sections/app/settings/BranchHoursTab.vue";
 import BranchForm from "~/components/forms/BranchForm.vue";
 import { branchService } from "~/api/branch/BranchService";
 import { branchSchema } from "~/types/branch";
@@ -93,6 +87,7 @@ const handleSave = async (): Promise<boolean> => {
 
     try {
         const payload = {
+            branch_uuid: branch?.value?.uuid,
             name: localValue.value.name,
             description: localValue.value.description,
             contact_number: localValue.value.contact_number,
@@ -105,7 +100,7 @@ const handleSave = async (): Promise<boolean> => {
                 longitude: localValue.value.location.longitude,
                 latitude: localValue.value.location.latitude,
             },
-            settings: localValue.value.settings,
+            // settings: localValue.value.settings,
         };
 
         const res = await branchService.update(

@@ -1,20 +1,26 @@
 ﻿<template>
-    <div class="h-screen flex flex-col bg-[#EEF3FB]">
-        <DashboardHeader @open="isOpen = true" />
+    <div
+        class="h-screen flex flex-col bg-[#EEF3FB] print:bg-white print:h-auto print:overflow-visible"
+    >
+        <div class="print:hidden">
+            <DashboardHeader @open="isOpen = true" />
+        </div>
 
         <div class="flex flex-1 min-h-0">
-            <DynamicSidebar
-                :open="isOpen"
-                :logo="logoAmuma"
-                :authMenu="menus"
-                :user="user"
-                @close="isOpen = false"
-                :variant="2"
-            />
+            <div class="print:hidden">
+                <DynamicSidebar
+                    :open="isOpen"
+                    :logo="logoAmuma"
+                    :authMenu="menus"
+                    :user="user"
+                    @close="isOpen = false"
+                    :variant="2"
+                />
+            </div>
 
             <main class="flex-1 overflow-auto p-0 m-0">
                 <div
-                    class="pointer-events-none absolute inset-0 overflow-hidden"
+                    class="pointer-events-none absolute inset-0 overflow-hidden print:hidden"
                     aria-hidden="true"
                 >
                     <div

@@ -96,6 +96,7 @@ class MedicationService
             $id = (string) Str::uuid();
         } while (collect($medications)->contains('id', $id));
 
+
         $newMedication = [
             'id' => $id,
             'category' => $payload['category'],
@@ -103,11 +104,14 @@ class MedicationService
             ...($payload['payload'] ?? []),
         ];
 
+        Log::info("xd");
         $medications[] = $newMedication;
 
+        Log::info("xd1");
         $patient->update([
             'medication' => $medications,
         ]);
+        Log::info("xd12");
 
         return response()->json([
             'message' => 'Successfully saved ' . $payload['category'] . '.',
@@ -149,40 +153,4 @@ class MedicationService
             'data' => $medications[$index],
         ], 200);
     }
-    // public function updateMedication(User $user, array $payload, string $id)
-    // {
-    //     $patient = $this->patientRepository->findByFields([
-    //         ['uuid', '=', $payload['patient_uuid']]
-    //     ]);
-
-    //     if (!$patient) {
-    //         throw new \Exception('Patient not found');
-    //     }
-
-    //     $medications = $patient->medication ?? [];
-
-    //     $index = collect($medications)->search(function ($item) use ($id) {
-    //         return $item['id'] === $id;
-    //     });
-
-    //     if ($index === false) {
-    //         throw new \Exception('Medication record not found');
-    //     }
-
-    //     $medications[$index] = [
-    //         ...$medications[$index],
-    //         'data' => collect($payload)
-    //             ->except(['patient_id', 'id'])
-    //             ->toArray(),
-    //     ];
-
-    //     $patient->update([
-    //         'medication' => array_values($medications),
-    //     ]);
-
-    //     return response()->json([
-    //         'message' => 'Successfully updated medication.',
-    //         'data' => $medications[$index],
-    //     ], 200);
-    // }
 }

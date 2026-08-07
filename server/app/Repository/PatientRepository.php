@@ -8,11 +8,20 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 class PatientRepository
 {
 
+    public function __construct(
+        private LocationRepository $locationRepository,
+    ) {}
+
     public function create(array $payload)
     {
+        if (!empty($payload['address'])) {
+            $scheduledLocation = $this->locationRepository->create([
+                'full_address' => $payload['address'],
+            ]);
+            $payload['location_id'] = $scheduledLocation->location_id;
+        }
         return Patient::create($payload);
     }
-
     public function findByFields(array $conditions)
     {
         return Patient::where($conditions)->first();
@@ -20,13 +29,36 @@ class PatientRepository
 
     public function getPatient(array $payload)
     {
+        if (!empty($payload['type']) && $payload['type'] === 'admission') {
+            return Patient::with([
+                'location',
+                'latestAdmission.bed.room',
+                'latestAdmission.admissionContract',
+                'latestAdmission.invoiceAdmission.branchContract',
+                'schedules.location',
+            ])
+                ->where('branch_id', $payload['branch_id'])
+                ->whereHas('latestAdmission')
+                ->when(!empty($payload['search']), function ($query) use ($payload) {
+                    $search = $payload['search'];
+
+                    $query->where(function ($q) use ($search) {
+                        $q->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('middle_name', 'like', "%{$search}%")
+                            ->orWhere('uuid', '=', $search);
+                    });
+                })
+                ->paginate($payload['per_page'] ?? 10);
+        }
+
         return Patient::with([
             'location',
             'admissions' => function ($query) {
                 $query->where('status', 'admitted');
             },
             'admissions.bed.room',
-            'admissions.invoiceAdmission.branchContract',
+            'admissions.admissionContract',
             'schedules.location',
             'schedules.scheduleServices.service',
         ])
@@ -44,13 +76,14 @@ class PatientRepository
                 $payload['per_page'] ?? 10,
             );;
     }
+
     public function showPatient(string $uuid)
     {
         return Patient::with([
             'location',
             'admissions',
             'admissions.bed.room',
-            'admissions.admissionContracts.branchContract',
+            'admissions.invoiceAdmission.branchContract',
             'schedules.location',
             'schedules.scheduleServices.service',
         ])

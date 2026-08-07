@@ -53,7 +53,7 @@ class XenditService
     public static function refundXenditPayment(string $referenceId, float $amount): void
     {
         try {
-            Http::withBasicAuth(config('services.xendit.secret_key'), '')
+            Http::withOptions(['verify' => false])->withBasicAuth(config('services.xendit.secret_key'), '')
                 ->post('https://api.xendit.co/refunds', [
                     'invoice_id'   => $referenceId,
                     'reference_id' => (string) Str::uuid(),

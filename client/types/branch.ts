@@ -27,8 +27,14 @@ export interface BranchSettings {
     opening: string | null;
     closing: string | null;
     currency: string | null;
-    online_additional_fee: number;
     time_zone: string | null;
+    reserved_walkin_slots: number | null;
+    enable_booking_pre_admission: boolean;
+    enable_booking_complete_admission: boolean;
+    minimum_adl_hours: number | null;
+    // billing_due_date: number | null;
+    is_open: boolean;
+    status?: 'OPEN' | 'CLOSED';
 }
 
 export const getBranchImage = (image: File | string | null | undefined) => {
@@ -47,7 +53,7 @@ export interface BranchRetrieve {
     description: string | null;
     image: string | undefined;
     secondaryImage: string[] | undefined;
-    settings: BranchAvailability;
+    settings: BranchSettings;
     averageRating: number | null;
     reviewCount: number;
     reviews: Review[];
@@ -71,13 +77,13 @@ export interface BranchFacility {
     description?: string;
 }
 
-export interface BranchAvailability {
-    status: 'OPEN' | 'CLOSED' | 'AUTO';
-    is_open: boolean;
-    timezone: string;
-    opening: string | null;
-    closing: string | null;
-}
+// export interface BranchAvailability {
+//     status: 'OPEN' | 'CLOSED' | 'AUTO';
+//     is_open: boolean;
+//     timezone: string;
+//     opening: string | null;
+//     closing: string | null;
+// }
 
 interface BranchSubscription {
     subscription_id: number;

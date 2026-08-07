@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->foreignId('location_id')->nullable()->constrained('locations', 'location_id');
             $table->foreignId('registered_by')->constrained('users', 'user_id');
-            $table->string('description', 1000)->change();
+            $table->string('description', 1000)->nullable();
             $table->timestamps();
         });
     }

@@ -93,7 +93,6 @@ import { fetchAuthUser } from "~/composables/useAuthUser";
 useHead({ title: "Booking Submitted" });
 definePageMeta({ navVariant: 1 });
 
-const route = useRoute();
 const router = useRouter();
 const bookingStore = useBookingStore();
 

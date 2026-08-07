@@ -96,7 +96,7 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                     'descriptor'        => 'subscription',
                     'currency'          => 'PHP',
                     'external_id'       => $reference,
-                    'amount'            => 5000,
+                    'amount'            => $payload['total'],
                     'payer_email'       => $user->email,
                     'payment_methods'   => ['CREDIT-CARD'],
                     'metadata'          => $payload
@@ -110,10 +110,11 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                 ], $response->status());
             }
             $charge = $response->json();
-            $payload =  [
+            return  [
                 'metadata'          => $charge['metadata'] ?? [],
                 'external_id'       => $charge['external_id'] ?? null,
                 'xendit_invoice_id' => $charge['id'] ?? null,
+                'total'             => $payload['total']
             ];
             // return $this->bookingService->createPaymentBooking($user, $payload);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {

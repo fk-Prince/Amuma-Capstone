@@ -12,6 +12,7 @@ class Invoice extends Model
     public const STATUS_PENDING = 'pending';
     public const STATUS_PARTIAL = 'partial';
     public const STATUS_PAID = 'paid';
+    public const STATUS_VOID = 'void';
 
     protected $primaryKey = 'invoice_id';
 

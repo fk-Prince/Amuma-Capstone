@@ -16,16 +16,32 @@ class RejectExpiredBookings extends Command
     {
         $count = 0;
 
-        Booking::whereIn('status', [Booking::STATUS_AWAITING, Booking::STATUS_PENDING])
-            ->where('valid_until', '<', Carbon::now())
+        Booking::whereIn('status', [
+            Booking::STATUS_PENDING,
+        ])
+            ->whereHas('service', function ($query) {
+                $query->where('type', 'Medical');
+            })
+            ->with('service')
             ->chunkById(200, function ($bookings) use (&$count) {
                 foreach ($bookings as $booking) {
-                    $booking->update(['status' => 'expired']);
-                    $count++;
+                    $service = $booking->service;
+
+                    $scheduledAt = Carbon::parse(
+                        "{$service->date} {$service->preferred_time}"
+                    );
+
+                    if (now()->greaterThan($scheduledAt)) {
+                        $booking->update([
+                            'status' => Booking::STATUS_EXPIRED,
+                        ]);
+
+                        $count++;
+                    }
                 }
             });
 
-        $this->info("Expired {$count} expired bookings.");
+        $this->info("Marked {$count} bookings as missed.");
 
         return self::SUCCESS;
     }
