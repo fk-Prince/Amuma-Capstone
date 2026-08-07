@@ -328,6 +328,14 @@ async function onScheduleRangeChange(payload: { from: string; to: string }) {
     await fetchSchedules(uuid.value, b_uuid.value, payload.from, payload.to);
     isFetchingSchedule.value = false;
 }
+
+const visibleTabs = computed(() => {
+    if (!patientData.value?.latest_admission) {
+        return tabs.filter((tab) => tab !== "Service");
+    }
+
+    return tabs;
+});
 </script>
 <template>
     <div class="min-h-screen bg-gray-50 p-6">
@@ -406,7 +414,7 @@ async function onScheduleRangeChange(payload: { from: string; to: string }) {
                 >
                     <nav class="flex gap-7">
                         <button
-                            v-for="tab in tabs"
+                            v-for="tab in visibleTabs"
                             :key="tab"
                             class="relative py-4 text-sm font-medium"
                             :class="

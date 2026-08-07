@@ -52,66 +52,111 @@
                 :key="`${log.schedule_id}-${log.employee_id}`"
                 class="rounded-xl border border-slate-200 bg-white p-5"
             >
-                <!-- Schedule Header -->
                 <div
                     class="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between"
                 >
                     <div>
-                        <h4 class="text-sm font-semibold text-slate-800">
+                        <h4 class="text-xl font-semibold text-slate-800">
                             {{ log.schedule_code }}
                         </h4>
 
-                        <p class="text-xs text-slate-400">
-                            {{ formatScheduleDate(log.scheduled_at) }}
+                        <p class="text-[14px] text-slate-400">
+                            {{ formatDateTime(log.scheduled_at) }}
+                        </p>
+                        <p class="text-[13px] text-slate-400">
+                            {{ log.address }}
                         </p>
                     </div>
+                    <div class="flex flex-col gap-2 sm:flex-row">
+                        <div
+                            class="rounded-xl border border-primary/20 bg-primary/5 px-4 py-2"
+                        >
+                            <p class="text-[10px] uppercase text-primary/60">
+                                Scheduled Hours
+                            </p>
 
-                    <div
-                        class="rounded-xl border border-primary/20 bg-primary/5 px-4 py-2"
-                    >
-                        <p class="text-[10px] uppercase text-primary/60">
-                            Scheduled Hours
-                        </p>
+                            <p class="text-sm font-bold text-primary">
+                                {{ formatBookedHours(log.total_hours) }}
+                            </p>
+                        </div>
 
-                        <p class="text-sm font-bold text-primary">
-                            {{ formatBookedHours(log.total_hours) }}
-                        </p>
+                        <div
+                            class="rounded-xl border px-4 py-2"
+                            :class="{
+                                'border-amber-200 bg-amber-50':
+                                    log.status === 'pending',
+                                'border-blue-200 bg-blue-50':
+                                    log.status === 'ongoing',
+                                'border-green-200 bg-green-50':
+                                    log.status === 'completed',
+                                'border-red-200 bg-red-50':
+                                    log.status === 'cancelled',
+                            }"
+                        >
+                            <p class="text-[10px] uppercase text-slate-400">
+                                Status
+                            </p>
+
+                            <p
+                                class="text-sm font-bold capitalize"
+                                :class="{
+                                    'text-amber-700': log.status === 'pending',
+                                    'text-blue-700': log.status === 'ongoing',
+                                    'text-green-700':
+                                        log.status === 'completed',
+                                    'text-red-700': log.status === 'cancelled',
+                                }"
+                            >
+                                {{ log.status }}
+                            </p>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Employee -->
                 <div
                     class="mt-4 flex items-center gap-3 border-b border-slate-100 pb-4"
                 >
-                    <img
-                        v-if="log.avatar"
-                        :src="log.avatar"
-                        class="h-10 w-10 rounded-full object-cover"
-                    />
+                    <template v-if="log.full_name">
+                        <img
+                            v-if="log.avatar"
+                            :src="log.avatar"
+                            class="h-10 w-10 rounded-full object-cover"
+                        />
 
-                    <div
-                        v-else
-                        class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary"
-                    >
-                        {{ initials(log.full_name) }}
-                    </div>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">
+                                {{ log.full_name }}
+                            </p>
 
-                    <div>
-                        <p class="text-sm font-semibold text-slate-800">
-                            {{ log.full_name }}
-                        </p>
+                            <p class="text-xs text-slate-400">
+                                {{ log.address ?? "—" }}
+                            </p>
+                        </div>
+                    </template>
 
-                        <p class="text-xs text-slate-400">
-                            {{ log.address ?? "—" }}
-                        </p>
-                    </div>
+                    <template v-else>
+                        <div
+                            class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-700"
+                        >
+                            !
+                        </div>
+
+                        <div>
+                            <p class="text-sm font-semibold text-amber-700">
+                                Service is unassigned
+                            </p>
+
+                            <p class="text-xs text-slate-400">
+                                No employee has been assigned yet
+                            </p>
+                        </div>
+                    </template>
                 </div>
 
                 <div
                     class="mt-4 flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-3"
                 >
                     <div>
-                        <p class="text-[11px] uppercase text-primary/60">
+                        <p class="text-[11px] uppercase text-black">
                             Currently Total Hours Worked
                         </p>
 
@@ -125,14 +170,20 @@
                     <p class="text-xs font-semibold uppercase text-slate-400">
                         QR Scan History
                     </p>
+                    <div
+                        v-if="!log.online_logs.length"
+                        class="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-400"
+                    >
+                        No scan history available
+                    </div>
 
                     <div
+                        v-else
                         v-for="(scan, index) in log.online_logs"
                         :key="index"
                         class="rounded-lg border border-slate-100 bg-slate-50 p-4"
                     >
                         <div class="grid gap-4 lg:grid-cols-4">
-                            <!-- In -->
                             <div>
                                 <p class="text-[11px] uppercase text-slate-400">
                                     Check-in
@@ -231,13 +282,14 @@ interface AuditRow {
     schedule_code: string;
     scheduled_at?: string | null;
     total_hours: number;
+    status: string;
 
-    employee_id: number;
-    full_name: string;
+    employee_id: number | null;
+    full_name: string | null;
     avatar: string | null;
     role: string | null;
     address: string | null;
-
+    patient_full_name: string;
     total_worked_minutes: number;
 
     online_logs: {
@@ -263,39 +315,73 @@ const props = withDefaults(
 const search = ref("");
 const selectedDate = ref(new Date().toISOString().slice(0, 10));
 const filteredLogs = computed<AuditRow[]>(() => {
-    const rows = props.logs.flatMap((schedule) =>
-        (schedule.services ?? []).flatMap((service) =>
-            (service.assignees ?? []).map((assignee) => {
-                const online_logs = (assignee.online ?? []).map((scan) => ({
-                    qr_in: scan.qr_in ?? null,
-                    qr_out: scan.qr_out ?? null,
-                    in_timestamp: scan.in_timestamp ?? null,
-                    out_timestamp: scan.out_timestamp ?? null,
-                    notes: scan.notes ?? null,
-                }));
+    const rows: AuditRow[] = props.logs.flatMap((schedule) =>
+        (schedule.services ?? []).flatMap((service): AuditRow[] => {
+            const assignees = service.assignees ?? [];
 
-                const total_worked_minutes = online_logs.reduce(
-                    (total, scan) => total + workedMinutes(scan),
-                    0,
-                );
-                return {
+            if (assignees.length) {
+                return assignees.map((assignee): AuditRow => {
+                    const online_logs = (assignee.online ?? []).map((scan) => ({
+                        qr_in: scan.qr_in ?? null,
+                        qr_out: scan.qr_out ?? null,
+                        in_timestamp: scan.in_timestamp ?? null,
+                        out_timestamp: scan.out_timestamp ?? null,
+                        notes: scan.notes ?? null,
+                    }));
+
+                    return {
+                        status: schedule.status,
+                        schedule_id: schedule.schedule_id,
+                        schedule_code: schedule.schedule_code,
+                        scheduled_at: schedule.scheduled_at ?? null,
+
+                        total_hours:
+                            service.hours_booked ?? schedule.total_hours ?? 0,
+
+                        employee_id: assignee.employee_id,
+
+                        full_name: assignee.full_name ?? null,
+                        avatar: assignee.avatar ?? null,
+                        role: assignee.role ?? null,
+
+                        address: schedule.patient?.address ?? null,
+                        patient_full_name: schedule.patient?.full_name ?? "",
+
+                        online_logs,
+
+                        total_worked_minutes: online_logs.reduce(
+                            (total, scan) => total + workedMinutes(scan),
+                            0,
+                        ),
+                    };
+                });
+            }
+
+            return [
+                {
+                    status: schedule.status,
+
                     schedule_id: schedule.schedule_id,
                     schedule_code: schedule.schedule_code,
                     scheduled_at: schedule.scheduled_at ?? null,
+
                     total_hours:
                         service.hours_booked ?? schedule.total_hours ?? 0,
-                    employee_id: assignee.employee_id,
-                    full_name: assignee.full_name ?? "Unknown",
-                    avatar: assignee.avatar ?? null,
-                    role: assignee.role ?? null,
+
+                    employee_id: null,
+                    patient_full_name: schedule.patient?.full_name ?? "",
+
+                    full_name: null,
+                    avatar: null,
+                    role: null,
                     address: schedule.patient?.address ?? null,
 
-                    online_logs,
+                    online_logs: [],
 
-                    total_worked_minutes,
-                };
-            }),
-        ),
+                    total_worked_minutes: 0,
+                } satisfies AuditRow,
+            ];
+        }),
     );
 
     const query = search.value.trim().toLowerCase();
@@ -304,7 +390,7 @@ const filteredLogs = computed<AuditRow[]>(() => {
         const searchMatch =
             !query ||
             row.schedule_code.toLowerCase().includes(query) ||
-            row.full_name.toLowerCase().includes(query);
+            row.full_name?.toLowerCase().includes(query);
 
         const dateMatch =
             !selectedDate.value ||
