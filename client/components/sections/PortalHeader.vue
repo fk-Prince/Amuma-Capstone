@@ -1,6 +1,6 @@
 <template>
     <header
-        class="h-[90px] w-full bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0"
+        class="h-[90px] w-full bg-white border-b border-primary-100/80 shadow-[0_0_40px_rgba(10,40,87,0.06)] flex items-center justify-between px-6 shrink-0"
     >
         <NuxtLink to="/" class="flex items-center pr-5">
             <img
@@ -13,16 +13,10 @@
         <div class="flex gap-2 items-center">
             <div class="flex items-center gap-3">
                 <div v-if="!isMounted" class="flex items-center gap-3">
-                    <div
-                        class="w-9 h-9 bg-gray-200 rounded-full animate-pulse"
-                    />
+                    <div class="w-9 h-9 rounded-full skeleton-shimmer" />
                     <div class="flex flex-col gap-2">
-                        <div
-                            class="w-24 h-3 bg-gray-200 rounded animate-pulse"
-                        />
-                        <div
-                            class="w-14 h-3 bg-gray-200 rounded animate-pulse"
-                        />
+                        <div class="w-24 h-3 rounded-md skeleton-shimmer" />
+                        <div class="w-14 h-3 rounded-md skeleton-shimmer" />
                     </div>
                 </div>
 
@@ -34,7 +28,7 @@
 
             <button
                 @click="$emit('open')"
-                class="flex lg:hidden items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100"
+                class="flex lg:hidden items-center justify-center w-10 h-10 rounded-lg text-primary-600 transition-colors duration-200 hover:bg-primary-50"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -71,3 +65,25 @@ onMounted(() => {
     isMounted.value = true;
 });
 </script>
+
+<style scoped>
+.skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        theme("colors.primary.50") 25%,
+        theme("colors.primary.100") 50%,
+        theme("colors.primary.50") 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+</style>
