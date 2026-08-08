@@ -32,16 +32,15 @@ export const createPatientSchema = (
                 },
             ),
         marital_status: z.string().min(1, "Marital status is required"),
-        height: z.string()
-            .optional()
-            .refine((val) => !val || /^\d+(\.\d+)?$/.test(val), {
-                message: "Must be a height number",
-            }),
-        weight: z.string()
-            .optional()
-            .refine((val) => !val || /^\d+(\.\d+)?$/.test(val), {
-                message: "Must be a weight number",
-            }),
+        height: z.coerce
+            .number()
+            .positive("Height must be greater than 0")
+            .optional(),
+
+        weight: z.coerce
+            .number()
+            .positive("Weight must be greater than 0")
+            .optional(),
         blood_type: z.string().optional(),
 
         address:
@@ -151,32 +150,59 @@ export type DiagnosisInput = z.infer<typeof assessmentSchema>;
 
 
 export const patientData = reactive<Patient>({
-    first_name: "Juan",
-    middle_name: "Dela",
-    last_name: "Cruz",
-    gender: "Male",
-    citizenship: "vasd",
-    occupation: "Engineer",
-    date_of_birth: "1995-06-15",
-    phone_number: "+63 912 345 6789",
-    marital_status: "Single",
-    height: "175",
-    weight: "70",
-    blood_type: "O+",
+    first_name: "",
+    middle_name: "",
+    last_name: "",
+    gender: "",
+    citizenship: "",
+    occupation: "",
+    date_of_birth: "",
+    phone_number: "",
+    marital_status: "",
+    height: "",
+    weight: "",
+    blood_type: "",
     address: ""
 });
 
 
 export const guardianData = reactive<Guardian>({
-    first_name: "Maria",
-    middle_name: "Santos",
-    last_name: "Cruz",
-    phone_number: "09771171913",
-    email: "maria.cruz@example.com",
-    relationship: "Mother",
-    occupation: "Engineer",
-    address: "dfg",
+    first_name: "",
+    middle_name: "",
+    last_name: "",
+    phone_number: "",
+    email: "",
+    relationship: "",
+    occupation: "",
+    address: "",
 });
+// export const patientData = reactive<Patient>({
+//     first_name: "Juan",
+//     middle_name: "Dela",
+//     last_name: "Cruz",
+//     gender: "Male",
+//     citizenship: "vasd",
+//     occupation: "Engineer",
+//     date_of_birth: "1995-06-15",
+//     phone_number: "+63 912 345 6789",
+//     marital_status: "Single",
+//     height: "175",
+//     weight: "70",
+//     blood_type: "O+",
+//     address: ""
+// });
+
+
+// export const guardianData = reactive<Guardian>({
+//     first_name: "Maria",
+//     middle_name: "Santos",
+//     last_name: "Cruz",
+//     phone_number: "09771171913",
+//     email: "maria.cruz@example.com",
+//     relationship: "Mother",
+//     occupation: "Engineer",
+//     address: "dfg",
+// });
 
 
 

@@ -69,8 +69,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // EMPLOYEE / STAFF
     Route::post('/services/assign-employee', [ServiceController::class, 'assignEmployee']);
 
-    Route::post('/admissions/action', [PatientAdmissionController::class, 'admissionAction']);
-    Route::post('/admissions/admit', [PatientAdmissionController::class, 'admit']);
+    Route::post('/admissions/action', [PatientAdmissionController::class, 'action']);
+    // Route::post('/admissions/admit', [PatientAdmissionController::class, 'action']);
 
     // CUSTOM-BOOKING
     // Route::post('/bookings/facility', [BookingController::class, 'createBooking']);

@@ -145,6 +145,10 @@ export interface InvoicePatient {
     citizenship: string | null;
 }
 
+export interface Invoice {
+
+}
+
 export interface InvoiceDetail {
     invoice_id: number;
     invoice_code: string;
@@ -304,3 +308,11 @@ export interface BookingDetail {
         total_amount: number;
     } | null;
 }
+
+
+export const INVOICE_STATUS: Record<string, string> = {
+    pending: "bg-amber-50 text-amber-700 border-amber-200",
+    partial: "bg-blue-50 text-blue-700 border-blue-200",
+    paid: "bg-green-50 text-green-700 border-green-200",
+    void: "bg-red-50 text-red-700 border-red-200",
+};

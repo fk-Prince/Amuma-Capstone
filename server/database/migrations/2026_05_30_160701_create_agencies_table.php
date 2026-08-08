@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id('agency_id')->index();
             $table->uuid('uuid')->unique();
             $table->string('name');
+            $table->string('email');
+            $table->string('image')->nullable();
             $table->foreignId('location_id')->nullable()->constrained('locations', 'location_id');
             $table->foreignId('registered_by')->constrained('users', 'user_id');
             $table->string('description', 1000)->nullable();

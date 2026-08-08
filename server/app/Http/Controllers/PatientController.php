@@ -37,10 +37,6 @@ class PatientController extends Controller
         $request->merge([
             'branch_id' => $branch->branch_id,
         ]);
-        return $this->patientService->showPatient($request->all(), $request->user(), $uuid);
+        return $this->patientService->showPatient($uuid);
     }
-    // public function medication(Request $request)
-    // {
-    //     return $this->patientService->saveMedication($request->all(), $request->user());
-    // }
 }

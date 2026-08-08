@@ -255,7 +255,6 @@ const branchImagePreview = computed(() =>
 const send = async () => {
     try {
         isLoading.value = true;
-        const hasImageFile = checkout.branch.image instanceof File;
         const payload: SubscriptionRequest = {
             plan_code: checkout.selectedPlan.plan_code,
             payment_method: checkout.payment_method,
@@ -273,17 +272,20 @@ const send = async () => {
             branch_country: checkout.branch.location.country,
             branch_latitude: checkout.branch.location.latitude,
             branch_longitude: checkout.branch.location.longitude,
+            branch_email: checkout.branch.email ?? "",
 
             // AGENCY DATA
-            agency_id: checkout.agency.id,
-            agency_name: checkout.agency.agency_name,
-            agency_description: checkout.agency.agency_description,
+            agency_id: checkout.agency.agency_id,
+            agency_name: checkout.agency.name,
+            agency_description: checkout.agency.description,
             agency_street: checkout.agency.location.street ?? "",
             agency_city: checkout.agency.location.city ?? "",
             agency_province: checkout.agency.location.province ?? "",
             agency_country: checkout.agency.location.country ?? "",
             agency_latitude: checkout.agency.location.latitude ?? undefined,
             agency_longitude: checkout.agency.location.longitude ?? undefined,
+            agency_email: checkout.agency.email ?? "",
+            agency_image: checkout.agency.image,
         };
         await subscriptionService.validateSubscription(payload);
         checkout.subscriptionPayload = payload;

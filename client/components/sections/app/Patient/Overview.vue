@@ -2,6 +2,7 @@
 import { ref, computed, watch } from "vue";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import {
+    Droplet,
     Calendar,
     Phone,
     Globe2,
@@ -289,10 +290,21 @@ async function handleExtend(contract: Contract) {
                         </span>
 
                         <span
+                            v-if="patient.latest_admission"
+                            class="rounded-full bg-[#F7FAF9] px-3 py-1 text-xs font-medium text-[#16302E]"
+                        >
+                            {{
+                                patient.latest_admission?.status.toLowerCase() ===
+                                "admitted"
+                                    ? "Currently Admitted"
+                                    : patient.latest_admission?.status
+                            }}
+                        </span>
+                        <!-- <span
                             class="rounded-full bg-[#F7FAF9] px-3 py-1 text-xs font-medium text-[#16302E]"
                         >
                             {{ patient.blood_type || "No blood type on file" }}
-                        </span>
+                        </span> -->
                     </div>
                 </div>
             </div>
@@ -364,19 +376,30 @@ async function handleExtend(contract: Contract) {
                     </div>
                 </div>
             </div>
-
             <div
-                class="mt-6 flex items-start gap-3 border-t border-[#F0F4F3] pt-6"
+                class="mt-6 grid gap-6 border-t border-[#F0F4F3] pt-6 sm:grid-cols-3"
             >
-                <MapPin class="h-4 w-4 shrink-0 text-primary" />
-                <div>
-                    <p class="text-xs text-muted">Location</p>
-                    <p class="mt-0.5 text-sm font-medium text-[#16302E]">
-                        {{
-                            patient.location?.full_address ||
-                            "No address recorded."
-                        }}
-                    </p>
+                <div class="flex items-center gap-3">
+                    <MapPin class="h-4 w-4 shrink-0 text-primary" />
+                    <div>
+                        <p class="text-xs text-muted">Location</p>
+                        <p class="mt-0.5 text-sm font-medium text-[#16302E]">
+                            {{
+                                patient.location?.full_address ||
+                                "No address recorded."
+                            }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <Droplet class="h-4 w-4 shrink-0 text-primary" />
+                    <div>
+                        <p class="text-xs text-muted">Blood Type</p>
+                        <p class="mt-0.5 text-sm font-medium text-[#16302E]">
+                            {{ patient.blood_type || "No blood type on file" }}
+                        </p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -454,6 +477,7 @@ async function handleExtend(contract: Contract) {
 
                         <div class="flex shrink-0 items-center gap-2">
                             <span
+                                v-if="!isWaiting(admission.status)"
                                 class="rounded-full px-3 py-1 text-xs font-medium capitalize"
                                 :class="statusClasses(admission.status)"
                             >
@@ -610,10 +634,10 @@ async function handleExtend(contract: Contract) {
         @cancel="closeDialog"
     />
 
-    <BillingCycleModal
+    <!-- <BillingCycleModal
         :open="billingModalOpen"
         :admission="selectedAdmission"
         @close="billingModalOpen = false"
         @select="handleExtend"
-    />
+    /> -->
 </template>

@@ -46,6 +46,7 @@ class UserService
                 return [
                     'uuid' => $branch?->uuid,
                     'name' => $branch?->name,
+                    'email' => $branch?->email,
                     'description' => $branch?->description,
                     'contact_number' => $branch?->contact_number,
                     'role_name' => $employeeBranch?->role_name,
@@ -61,8 +62,9 @@ class UserService
                         'address' => $location->full_address,
                     ] : null,
                     'agency' => [
-                        'agency_name' => $branch?->agencies->name,
-                        'agency_description' => $branch?->agencies->description,
+                        'name' => $branch?->agencies->name,
+                        'email' => $branch?->agencies->name,
+                        'description' => $branch?->agencies->description,
                         'location' => $branch?->agencies->locations,
                     ],
                     'settings' => $branch->settings,
@@ -81,6 +83,7 @@ class UserService
                             'can_read'   => $permission->can_read,
                             'can_update' => $permission->can_update,
                             'can_create' => $permission->can_create,
+                            'can_approve' => $permission->can_approve
                         ];
                     })->values(),
                 ];

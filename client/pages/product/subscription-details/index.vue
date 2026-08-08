@@ -13,32 +13,38 @@ const stepCompleted = ref(false);
 </script>
 <template>
     <ClientOnly>
-        <div class="min-h-screen">
+        <div class="min-h-screen bg-slate-50">
             <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                <div
-                    class="grid grid-cols-1 xl:grid-cols-[2fr_480px] gap-8 items-start"
-                >
-                    <div class="space-y-10">
-                        <div>
-                            <h1
-                                class="text-3xl md:text-4xl font-extrabold text-gray-900"
-                            >
-                                Subscription Details
-                            </h1>
+                <div class="grid grid-cols-1 gap-8 items-start">
+                    <div class="max-w-2xl">
+                        <span
+                            class="inline-block text-xs font-semibold tracking-wide uppercase text-primary bg-primary-50 px-3 py-1 rounded-full mb-3"
+                        >
+                            Subscription setup
+                        </span>
 
-                            <p class="mt-3 text-gray-500 max-w-2xl">
-                                Complete your subscription by reviewing your
-                                plan, branch and agency information, billing
-                                cycle, and payment details.
-                            </p>
-                        </div>
+                        <h1
+                            class="text-3xl md:text-4xl font-extrabold text-secondary"
+                        >
+                            Subscription details
+                        </h1>
 
+                        <p class="mt-3 text-muted">
+                            Complete your subscription by reviewing your plan,
+                            branch and agency information, billing cycle, and
+                            payment details.
+                        </p>
+                    </div>
+
+                    <div
+                        class="w-full flex justify-center items-center flex-col"
+                    >
                         <Subscription v-model:stepCompleted="stepCompleted" />
                     </div>
 
-                    <aside class="xl:sticky xl:top-6">
+                    <!-- <aside class="xl:sticky xl:top-6">
                         <SubscriptionSummary :stepCompleted="stepCompleted" />
-                    </aside>
+                    </aside> -->
                 </div>
             </div>
         </div>

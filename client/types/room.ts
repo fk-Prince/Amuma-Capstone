@@ -124,3 +124,16 @@ export type Overview = {
         trend: string;
     };
 };
+
+
+
+export interface RoomTransfer {
+    room_transfer_id: number;
+    patient_admission_id: number;
+    from_room?: { room_id: number; room_no: string } | null;
+    from_bed?: { bed_id: number; bed_no: string } | null;
+    to_room?: { room_id: number; room_no: string } | null;
+    to_bed?: { bed_id: number; bed_no: string } | null;
+    reason?: string | null;
+    created_at: string;
+}

@@ -84,16 +84,16 @@ export const authMenuList: MenuItems[] = [
         modules: ["Billing & Invoices"],
         plan: ["A", "B", "C"],
     },
-    {
-        label: "Reports",
-        icon: ClipboardMinus,
-        to: "/app/branches/[uuid]/reports",
-        modules: ["Reports"],
-    },
+    // {
+    //     label: "Reports",
+    //     icon: ClipboardMinus,
+    //     to: "/app/branches/[uuid]/reports",
+    //     modules: ["Reports"],
+    // },
     {
         label: "Manage Branches",
         icon: Building2,
-        to: "/app/branches/[uuid]/dashboard",
+        to: "/app/branches/[uuid]/manage-branches",
         modules: ["Manage Branches"],
     },
     {

@@ -13,15 +13,12 @@ return new class extends Migration
     {
         Schema::create('patient_admissions', function (Blueprint $table) {
             $table->id('patient_admission_id');
-
+            $table->foreignId('branch_contract_id')
+                ->constrained('branch_contracts', 'branch_contract_id');
             $table->foreignId('bed_id')
-                ->nullable()
-                ->constrained('beds', 'bed_id')
-                ->nullOnDelete();
-
+                ->constrained('beds', 'bed_id');
             $table->foreignId('patient_id')
-                ->constrained('patients', 'patient_id')
-                ->cascadeOnDelete();
+                ->constrained('patients', 'patient_id');
 
             $table->enum('status', [
                 'waiting',

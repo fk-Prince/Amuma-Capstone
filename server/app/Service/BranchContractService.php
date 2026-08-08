@@ -5,6 +5,7 @@ namespace App\Service;
 
 use App\Repository\BranchContractRepository;
 use App\Http\Resources\BranchContractResource;
+use App\Models\Bed;
 use App\Models\Booking;
 use App\Models\BranchContract;
 use App\Models\User;
@@ -124,45 +125,31 @@ class BranchContractService
         $rooms = $this->roomRepository->findAllByConditions([
             ['branch_id', '=', $payload['branch_id']],
         ]);
-
         $rooms->load('availableBeds');
 
-        $bookings = $this->bookingRepository->findBookings([
-            ['status', '=', Booking::STATUS_APPROVED],
-            ['branch_id', '=', $payload['branch_id']],
-        ]);
-
-        $reservedBedIds = collect($bookings)->map(function ($booking) {
-            return $booking->booking_data['reserved']['bed']['bed_id'] ?? null;
-        })->filter()->values();
-        $totalReservedBeds = $reservedBedIds->count();
-
-
-        return $contracts->map(function ($contract) use ($rooms, $reservedBedIds, $totalReservedBeds) {
+        return $contracts->map(function ($contract) use ($rooms) {
 
             $matchingRooms = $rooms
                 ->filter(
                     fn($room) =>
                     strcasecmp($room->room_type, $contract->accommodation_type) === 0
                 )
-                ->map(function ($room) use ($reservedBedIds) {
+                ->map(function ($room) {
 
                     $beds = $room->availableBeds
                         ->map(fn($bed) => [
                             'bed_id' => $bed->bed_id,
                             'bed_no' => $bed->bed_no,
-                            'status' => $reservedBedIds->contains($bed->bed_id)
-                                ? 'Reserved'
-                                : $bed->status,
+                            'status' => $bed->status,
                         ])
                         ->values();
 
                     $availableBeds = $beds
-                        ->filter(fn($bed) => strtolower($bed['status']) === 'available')
+                        ->filter(fn($bed) => $bed['status'] === Bed::STATUS_AVAILABLE)
                         ->values();
 
                     $reservedBeds = $beds
-                        ->filter(fn($bed) => strtolower($bed['status']) === 'reserved')
+                        ->filter(fn($bed) => $bed['status'] === Bed::STATUS_RESERVED)
                         ->values();
 
                     return [
@@ -171,10 +158,8 @@ class BranchContractService
                         'room_no' => $room->room_no,
                         'room_type' => $room->room_type,
                         'floor' => $room->floor,
-
                         'available_beds_count' => $availableBeds->count(),
                         'reserved_beds_count' => $reservedBeds->count(),
-
                         'beds' => $beds,
                     ];
                 })
@@ -183,6 +168,8 @@ class BranchContractService
             if ($matchingRooms->isEmpty()) {
                 return null;
             }
+
+            $totalReservedBeds = $matchingRooms->sum('reserved_beds_count');
 
             return [
                 'contract_id' => $contract->branch_contract_id,
@@ -197,5 +184,13 @@ class BranchContractService
         })
             ->filter()
             ->values();
+    }
+
+    public function show(array $payload)
+    {
+        $contractId = $payload['contract_id'] ?? $payload['branch_contract_id'];
+        return $this->branchContractRepository->findByField([
+            ['branch_contract_id', '=', $contractId]
+        ]);
     }
 }

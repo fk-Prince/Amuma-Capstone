@@ -84,22 +84,13 @@
                     </template>
 
                     <template #cell-actions="{ row }">
-                        <div class="flex items-center gap-3">
+                        <div class="flex justify-end">
                             <button
                                 type="button"
                                 class="font-medium text-primary hover:underline"
                                 @click="viewAdmission(row)"
                             >
                                 View
-                            </button>
-
-                            <button
-                                v-if="row.status?.toLowerCase() === 'waiting'"
-                                type="button"
-                                class="font-medium text-primary hover:underline"
-                                @click="openAdmitDialog(row)"
-                            >
-                                Admit
                             </button>
                         </div>
                     </template>
@@ -129,19 +120,60 @@
                     </template>
 
                     <template #cell-actions="{ row }">
-                        <button
-                            type="button"
-                            class="text-primary font-medium hover:underline"
-                            @click="openBooking(row)"
-                        >
-                            Process
-                        </button>
+                        <div class="flex justify-end">
+                            <button
+                                v-if="
+                                    row.status?.toLowerCase() === 'approved' &&
+                                    row.admission_type?.toLowerCase() ===
+                                        'pre-admission'
+                                "
+                                type="button"
+                                class="text-primary font-medium hover:underline"
+                                @click="openBooking(row)"
+                            >
+                                Process
+                            </button>
+                            <button
+                                v-if="row.status?.toLowerCase() === 'pending'"
+                                type="button"
+                                class="text-primary font-medium hover:underline"
+                                @click="
+                                    router.push({
+                                        path: `/app/branches/${uuid}/bookings`,
+                                        query: {
+                                            reference_id: row.reference_id,
+                                        },
+                                    })
+                                "
+                            >
+                                View Booking
+                            </button>
+                            <button
+                                v-if="
+                                    row.status?.toLowerCase() !== 'pending' &&
+                                    row.status?.toLowerCase() !== 'rejected' &&
+                                    row.status?.toLowerCase() !== 'missed'
+                                "
+                                type="button"
+                                class="text-primary font-medium hover:underline"
+                                @click="
+                                    router.push({
+                                        path: `/app/branches/${uuid}/patients/${row.p_uuid}`,
+                                    })
+                                "
+                            >
+                                View Patient
+                            </button>
+                        </div>
                     </template>
                 </DataTable>
             </div>
 
-            <div v-else class="grid lg:grid-cols-[1fr_320px] gap-8">
-                <main class="border border-slate-200 bg-white rounded-2xl">
+            <div
+                v-if="viewMode === 'form'"
+                class="grid lg:grid-cols-[1fr_320px] gap-8"
+            >
+                <main class="bg-white rounded-2xl">
                     <div class="px-[3rem] md:px-[3.5rem] py-[1.5rem]">
                         <p
                             class="text-sm font-semibold text-primary uppercase tracking-wider"
@@ -171,7 +203,6 @@
                             placeholder="BKN-000001"
                             :model-value="referenceInput"
                             @update:model-value="referenceInput = $event"
-                            :error="referenceError"
                         />
 
                         <button
@@ -188,7 +219,7 @@
                         </button>
                     </div>
 
-                    <section class="px-6" ref="step1">
+                    <section class="px-6" id="step1" ref="step1">
                         <AdmissionDetail
                             variant="page"
                             :loading="loadingContract"
@@ -200,7 +231,7 @@
                         />
                     </section>
 
-                    <section class="px-6" ref="step2">
+                    <section class="px-6" id="step2" ref="step2">
                         <PatientForm
                             category="facility"
                             :model="patientData"
@@ -210,7 +241,7 @@
                         />
                     </section>
 
-                    <section class="px-6" ref="step3">
+                    <section class="px-6" id="step1" ref="step2">
                         <GuardianForm
                             :isAdmission="true"
                             :model="guardianData"
@@ -220,7 +251,7 @@
                         />
                     </section>
 
-                    <section class="px-6" ref="step4">
+                    <section class="px-6" id="step1" ref="step4">
                         <AssessmentForm
                             :model="assessmentData"
                             :errors="assessmentErrors"
@@ -283,17 +314,6 @@
             </div>
         </div>
     </div>
-    <ConfirmDialog
-        :open="admitDialogOpen"
-        title="Admit Patient"
-        message="Are you sure you want to admit this patient?"
-        description="This will move the patient admission into the admitted status."
-        confirm-label="Admit"
-        variant="default"
-        :loading="admitDialogLoading"
-        @confirm="confirmAdmit"
-        @cancel="closeAdmitDialog"
-    />
 </template>
 
 <script lang="ts" setup>
@@ -301,10 +321,8 @@ import { computed, ref, onMounted, toRaw, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useBookingFlowValidation } from "~/composables/useBookingFlowValidation";
 
-import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
 import BookingSteps from "~/components/sections/booking/provider/BookingSteps.vue";
 import DataTable, { type DataTableColumn } from "~/components/ui/DataTable.vue";
-import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import GuardianForm from "~/components/forms/GuardianForm.vue";
 import PatientForm from "~/components/forms/PatientForm.vue";
 import BaseButton from "~/components/ui/BaseButton.vue";
@@ -334,10 +352,11 @@ import { usePagination } from "~/composables/usePagination";
 import type { RoomContract } from "~/types/contract";
 import { reserved } from "~/types/contract";
 import type { BookingRetrieve } from "~/types/booking";
-import { stringToDateTime } from "~/utils/time";
+import { stringToDateTime, formatDate } from "~/utils/time";
 import type { PatientRetrieve } from "~/types/patient";
 import { patientService } from "~/api/patient/PatientService";
 import { admissionService } from "~/api/admission/AdmissionService";
+import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
 import { useToast } from "~/composables/useToast";
 
 useHead({ title: "Admission" });
@@ -347,10 +366,10 @@ definePageMeta({
     middleware: ["auth-client"],
 });
 
+const { success, error } = useToast();
 const bookingStore = useBookingStore();
 const route = useRoute();
 const router = useRouter();
-const { success, error } = useToast();
 const uuid = computed(() => route.params.uuid as string);
 const { branch } = useBranch();
 const loading = ref(true);
@@ -360,9 +379,13 @@ const patientSchema = computed(() => createPatientSchema(category.value));
 const homecareSchema = computed(() =>
     createHomecareBookingSchema(branch.value?.homecare.adl_min_hour ?? 0),
 );
-const admitDialogOpen = ref(false);
-const admitDialogLoading = ref(false);
-const selectedAdmissionRow = ref<any>(null);
+
+function viewAdmission(row: any) {
+    router.push({
+        path: `/app/branches/${uuid.value}/admissions/${row.p_uuid}`,
+    });
+}
+
 const {
     facilityErrors,
     reservedErrors,
@@ -473,6 +496,7 @@ async function loadByReference() {
             },
         });
     } catch (err: any) {
+        error(err.message ?? "Internal Server Error.");
         referenceError.value =
             err.message ?? "Couldn't find an admission with that reference ID.";
     } finally {
@@ -497,7 +521,6 @@ async function loadRoomContracts() {
             type: "room_contract",
             branch_uuid: uuid.value,
         });
-
         roomContract.value = response;
     } catch (err) {
         console.error("Failed loading room contracts", err);
@@ -508,23 +531,23 @@ async function loadRoomContracts() {
 }
 
 const admissionColumns: DataTableColumn[] = [
-    { key: "p_uuid", label: "Patient ID", sortable: true },
+    { key: "p_uuid", label: "Patient ID" },
     { key: "patient_name", label: "Patient", sortable: true },
-    { key: "accommodation", label: "Accommodation", sortable: true },
+    { key: "accommodation", label: "Accommodation" },
     { key: "room_bed", label: "Room & Bed" },
     { key: "status", label: "Status" },
     { key: "admission_date", label: "Admission Date", sortable: true },
-    { key: "actions", label: "Action" },
+    { key: "actions", label: "Action", align: "right" },
 ];
 
 const bookingColumns: DataTableColumn[] = [
     { key: "reference_id", label: "Reference ID" },
     { key: "patient_name", label: "Patient" },
-    { key: "booking_type", label: "Booking Type" },
-    { key: "category", label: "Category" },
+    { key: "accommodation", label: "Accommodation" },
+    { key: "room_bed", label: "Room / Bed" },
     { key: "status", label: "Status" },
     { key: "created_at", label: "Created Date", sortable: true },
-    { key: "actions", label: "Action" },
+    { key: "actions", label: "Action", align: "right" },
 ];
 const bookingRows = ref<any[]>([]);
 const loadingBookings = ref(false);
@@ -548,6 +571,7 @@ async function fetchBookings() {
         });
         bookingRows.value = (response.data ?? []).map(
             (booking: BookingRetrieve) => ({
+                p_uuid: booking.patient.uuid,
                 reference_id: booking.reference_id,
                 patient_name: [
                     booking.patient.first_name,
@@ -555,8 +579,13 @@ async function fetchBookings() {
                 ]
                     .filter(Boolean)
                     .join(" "),
-                booking_type: formatBookingType(booking.booking_type),
-                category: formatBookingType(booking.category),
+                accommodation: booking.reserved?.accommodation_type ?? "N / A",
+                room_bed: [
+                    booking.reserved?.room?.room_no ?? "N / A",
+                    booking.reserved?.bed?.bed_no ?? "N / A",
+                ]
+                    .filter(Boolean)
+                    .join(" "),
                 status: booking.status,
                 created_at: stringToDateTime(booking.created_at) ?? "—",
             }),
@@ -568,12 +597,6 @@ async function fetchBookings() {
     } finally {
         loadingBookings.value = false;
     }
-}
-
-function formatBookingType(type?: string) {
-    return (type ?? "")
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function onBookingSearch(query: string) {
@@ -617,17 +640,25 @@ async function fetchAdmissions() {
                     data.latest_admission.patient_admission_id,
 
                 patient_name: data.full_name,
-                accommodation:
-                    data.latest_admission.current_contract?.accommodation_type,
-                room_bed: [
-                    data.latest_admission.room?.room_no ?? "N/A",
-                    data.latest_admission.bed?.bed_no ?? "N/A",
-                ]
-                    .filter(Boolean)
-                    .join(" / "),
+                accommodation: ["waiting", "admitted"].includes(
+                    data.latest_admission?.status,
+                )
+                    ? data.latest_admission?.current_contract
+                          ?.accommodation_type
+                    : "—",
+                room_bed: ["waiting", "admitted"].includes(
+                    data.latest_admission?.status,
+                )
+                    ? [
+                          data.latest_admission?.room?.room_no,
+                          data.latest_admission?.bed?.bed_no,
+                      ]
+                          .filter(Boolean)
+                          .join(" / ") || "N/A"
+                    : "—",
                 status: data.latest_admission.status,
                 admission_date:
-                    stringToDateTime(data.latest_admission.admitted_at) ?? "—",
+                    formatDate(data.latest_admission.admitted_at) ?? "—",
             }),
         );
         admissionPagination.totalItems.value = response.meta?.total ?? 0;
@@ -647,57 +678,6 @@ function onAdmissionSearch(query: string) {
 
 function onAdmissionPageChange(_page: number) {
     fetchAdmissions();
-}
-
-function viewAdmission(row: any) {
-    navigateTo({
-        path: `/app/branches/${uuid.value}/patients/${row.p_uuid}`,
-    });
-}
-
-function openAdmitDialog(row: any) {
-    selectedAdmissionRow.value = row;
-    admitDialogOpen.value = true;
-}
-
-function closeAdmitDialog() {
-    if (admitDialogLoading.value) return;
-
-    admitDialogOpen.value = false;
-    selectedAdmissionRow.value = null;
-}
-
-async function confirmAdmit() {
-    if (!selectedAdmissionRow.value) return;
-
-    admitDialogLoading.value = true;
-
-    try {
-        const row = selectedAdmissionRow.value;
-
-        const res = await admissionService.action({
-            branch_uuid: route.params.uuid,
-            p_uuid: row.p_uuid,
-            admission_id: row.patient_admission_id,
-            action: "admit",
-        });
-        success(res.message);
-        const index = admissionRows.value.findIndex(
-            (item) => item.p_uuid === row.p_uuid,
-        );
-        if (index !== -1) {
-            admissionRows.value[index].status = "admitted";
-        }
-        closeAdmitDialog();
-    } catch (err: any) {
-        error(
-            err?.data?.message ??
-                "Something went wrong admitting this patient.",
-        );
-    } finally {
-        admitDialogLoading.value = false;
-        selectedAdmissionRow.value = null;
-    }
 }
 
 function statusBadgeClass(status: string) {
@@ -720,12 +700,6 @@ function statusBadgeClass(status: string) {
     }
 
     return "bg-slate-100 text-slate-600";
-}
-
-function selectAdmissionRow(row: any) {
-    router.push({
-        path: `/app/branches/${uuid.value}/patients/${row.p_uuid}`,
-    });
 }
 
 function startNewAdmission() {
@@ -755,10 +729,8 @@ onMounted(async () => {
         }
         await nextTick();
 
-        const step = route.query.step as string;
-
-        if (step) {
-            scrollTo(step);
+        if (route.query.step) {
+            scrollTo(route.query.step as string);
         }
     } finally {
         loading.value = false;
@@ -776,8 +748,6 @@ async function submit() {
     bookingStore.reserved = deepToRaw(reserved.value);
     bookingStore.category = "facility";
     bookingStore.booking_type = "walk-in";
-    //    bookingStore."Walk-in Admission";
-
     bookingStore.payment.total_amount = reserved.value.price;
     facilityData.plan = reserved.value.accommodation_type;
     facilityData.admission_date = new Date().toISOString();

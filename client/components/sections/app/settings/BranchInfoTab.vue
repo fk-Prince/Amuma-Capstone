@@ -25,7 +25,7 @@
 import { ref, watch, toRaw } from "vue";
 import BranchForm from "~/components/forms/BranchForm.vue";
 import { branchService } from "~/api/branch/BranchService";
-import { branchSchema } from "~/types/branch";
+import { branchSchema } from "~/schema/branch-schema";
 import type { Branch } from "~/types/branch";
 import { useToast } from "~/composables/useToast";
 import { useBranchStore } from "~/stores/branch";
@@ -63,6 +63,7 @@ const fieldKeyMap: Record<string, string> = {
     description: "branch_description",
     contact_number: "branch_contact_number",
     image: "branch_image",
+    email: "branch_email",
 };
 
 const handleSave = async (): Promise<boolean> => {
@@ -92,6 +93,7 @@ const handleSave = async (): Promise<boolean> => {
             description: localValue.value.description,
             contact_number: localValue.value.contact_number,
             image: localValue.value.image,
+            email: localValue.value.email,
             location: {
                 street: localValue.value.location.street,
                 city: localValue.value.location.city,

@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class RoomTransfer extends Model
 {
-    protected $primary = 'room_transfer_id';
+    protected $table = 'room_transfers';
+    protected $primaryKey = 'room_transfer_id';
+
     protected $fillable = [
         'patient_admission_id',
         'from_room_id',
@@ -16,10 +18,10 @@ class RoomTransfer extends Model
         'reason',
     ];
 
-    // public function admissions()
-    // {
-    //     return $this->belongsTo(PatientAdmission::class, 'patient_admission_id', 'patient_admission_id');
-    // }
+    public function admission()
+    {
+        return $this->belongsTo(PatientAdmission::class, 'patient_admission_id', 'patient_admission_id');
+    }
 
     public function fromBed()
     {

@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Models\BranchContract;
 use App\Models\PatientAdmission;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Log;
 
 class PatientAdmissionRepository
 {
@@ -18,15 +19,10 @@ class PatientAdmissionRepository
         return PatientAdmission::create($payload);
     }
 
-    public function getContractsByRoom(string $admissionId)
+    public function getContracts(string $branchId)
     {
-        $room = PatientAdmission::with('bed.room')
-            ->find($admissionId)
-            ?->bed
-            ?->room;
-
-        return BranchContract::where('branch_id', $room->branch_id)
-            ->where('accommodation_type', $room->room_type)
+        return BranchContract::where('branch_id', $branchId)
+            ->where('category', 'Facility')
             ->get();
     }
 }

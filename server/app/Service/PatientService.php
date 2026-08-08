@@ -167,8 +167,16 @@ class PatientService
     }
 
     // DONE SHOW SPECIFIC PATIENT 
-    public function showPatient(array $payload, User $user, string $uuid)
+    public function showPatient(string $uuid)
     {
-        return PatientResource::collection($this->patientRepository->showPatient($uuid));
+        $patient = $this->patientRepository->showPatient($uuid);
+
+        if (!$patient) {
+            return response()->json([
+                'message' => 'Patient not found.',
+            ], 404);
+        }
+
+        return new PatientResource($patient);
     }
 }

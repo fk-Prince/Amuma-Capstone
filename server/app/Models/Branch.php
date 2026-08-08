@@ -23,6 +23,8 @@ class Branch extends Model
         'contact_number',
         'settings',
         'image',
+        'status',
+        'email'
     ];
 
     public function hasFacilitySubscription(): bool

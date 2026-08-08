@@ -85,9 +85,13 @@ class SubscriptionService
 
         $endDate = $billing_interval->addTo(Carbon::now())->toDateTimeString();
 
-        $image = null;
+        $branchImage = null;
         if (!empty($payload['branch_image']) && $payload['branch_image'] instanceof UploadedFile) {
-            $image = SupabaseService::store($payload['branch_image']);
+            $branchImage = SupabaseService::store($payload['branch_image']);
+        }
+        $agencyImage = null;
+        if (!empty($payload['agency_image']) && $payload['agency_image'] instanceof UploadedFile) {
+            $agencyImage = SupabaseService::store($payload['agency_image']);
         }
 
         return [
@@ -100,8 +104,9 @@ class SubscriptionService
                 'city'           => $payload['branch_city'] ?? null,
                 'province'       => $payload['branch_province'] ?? null,
                 'country'        => $payload['branch_country'] ?? null,
+                'email'          => $payload['branch_email'] ?? null,
                 'contact_number' => $payload['branch_contact_number'] ?? null,
-                'image'          => is_array($image) ? ($image['url'] ?? null) : null,
+                'image'          => is_array($branchImage) ? ($branchImage['url'] ?? null) : null,
                 'setting'        => $payload['branch_settings'] ?? null,
                 'latitude'       => $payload['branch_latitude'] ?? null,
                 'longitude'      => $payload['branch_longitude'] ?? null,
@@ -110,6 +115,8 @@ class SubscriptionService
                 'id'             => $payload['agency_id'] ?? null,
                 'name'           => $payload['agency_name'] ?? null,
                 'description'    => $payload['agency_description'] ?? null,
+                'email'          => $payload['agency_email'] ?? null,
+                'image'          => is_array($agencyImage) ? ($agencyImage['url'] ?? null) : null,
                 'street'         => $payload['agency_street'] ?? null,
                 'city'           => $payload['agency_city'] ?? null,
                 'province'       => $payload['agency_province'] ?? null,
@@ -186,6 +193,8 @@ class SubscriptionService
                         'country' => $agency['country'] ?? null,
                         'latitude' => $agencyLatitude,
                         'longitude' => $agencyLongitude,
+                        'email' => $agency['email'],
+                        'image' => $agency['image']
                     ]);
 
                     $agencyData = $this->agencyRepository->createAgency([
@@ -231,6 +240,7 @@ class SubscriptionService
                     'contact_number' => $branch['contact_number'] ?? null,
                     'image' => $branch['image'] ?? null,
                     'settings' => $branch['setting'] ?? null,
+                    'email' => $branch['email']
                 ]);
 
                 if (empty($plan['plan_code'])) {

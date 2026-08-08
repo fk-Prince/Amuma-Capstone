@@ -26,13 +26,17 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             image: undefined as any,
             description: "",
             location: defaultLocation(),
+            email: "",
+            status: "active"
         } as Branch,
 
         agency: {
             id: undefined,
-            agency_name: "",
-            agency_description: "",
+            name: "",
+            description: "",
             location: defaultLocation(),
+            email: "",
+            image: ""
         } as Agency,
 
 
@@ -85,10 +89,12 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
 
         clearAgency() {
             this.agency = {
-                id: undefined,
-                agency_name: "",
-                agency_description: "",
+                agency_id: undefined,
+                name: "",
+                description: "",
                 location: defaultLocation(),
+                email: "",
+                image: ""
             } as Agency;
         },
 
@@ -106,13 +112,17 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
                 image: undefined as any,
                 description: "",
                 location: defaultLocation(),
+                email: "",
+                status: "active"
             } as Branch;
 
             this.agency = {
                 id: undefined,
-                agency_name: "",
-                agency_description: "",
+                name: "",
+                description: "",
                 location: defaultLocation(),
+                email: "",
+                image: ""
             } as Agency;
             this.settings = {
                 opening: "00:00",

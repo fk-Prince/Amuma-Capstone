@@ -20,6 +20,8 @@ export interface Branch {
     permissions?: Permissions[];
     agency: Agency
     images: any[];
+    email: string;
+    status: string;
 };
 
 
@@ -130,38 +132,7 @@ export const locationSchema = z.object({
     longitude: z.coerce.number().optional(),
 });
 
-export const branchSchema = z.object({
-    name: z
-        .string()
-        .trim()
-        .min(1, "Branch name is required")
-        .max(255),
 
-    description: z
-        .string()
-        .trim()
-        .min(1, "Description is required")
-        .max(1000),
-
-    contact_number: z
-        .string()
-        .trim()
-        .min(1, "Contact number is required")
-        .regex(
-            /^\+?[0-9]{10,15}$/,
-            "Enter a valid contact number"
-        ),
-
-    image: z
-        .union([
-            z.instanceof(File),
-            z.string(),
-            z.null(),
-        ])
-        .optional(),
-
-    location: locationSchema,
-});
 
 
 

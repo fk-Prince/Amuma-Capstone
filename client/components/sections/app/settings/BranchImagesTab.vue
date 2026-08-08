@@ -374,8 +374,7 @@ const submit = async () => {
         };
 
         const res = await branchSettingService.create(payload);
-
-        images.value.unshift(res.data.data);
+        images.value.unshift(res.data ?? res.data.data);
 
         closeModal();
     } catch (err: any) {

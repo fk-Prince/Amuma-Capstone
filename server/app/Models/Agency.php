@@ -19,6 +19,8 @@ class Agency extends Model
         'description',
         'location_id',
         'registered_by',
+        'email',
+        'image'
     ];
 
     public function uniqueIds()

@@ -84,10 +84,29 @@ class PatientRepository
             'admissions',
             'admissions.bed.room',
             'admissions.invoiceAdmission.branchContract',
+            'admissions.invoiceAdmission.invoice',
+            'latestAdmission.admissionContract',
+            'latestAdmission.invoiceAdmission.branchContract',
+            'latestAdmission.invoiceAdmission.invoice',
+            'latestAdmission.bed.room',
             'schedules.location',
             'schedules.scheduleServices.service',
         ])
             ->where('uuid', $uuid)
-            ->get();
+            ->first();
+        // return Patient::with([
+        //     'location',
+        //     'admissions',
+        //     'admissions.bed.room',
+        //     'admissions.invoiceAdmission.branchContract',
+        //     'admissions.invoiceAdmission.invoice',
+        //     'latestAdmission.admissionContract',
+        //     'latestAdmission.admissionContract.invoiceAdmission.invoice',
+        //     'latestAdmission.bed.room',
+        //     'schedules.location',
+        //     'schedules.scheduleServices.service',
+        // ])
+        //     ->where('uuid', $uuid)
+        //     ->first();
     }
 }

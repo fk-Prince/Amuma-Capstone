@@ -31,6 +31,7 @@
                 v-model="value"
                 :maxlength="textMax"
                 :placeholder="placeholder"
+                :rows="rows"
                 :disabled="disabled"
                 :readonly="readonly"
                 :class="[
@@ -155,6 +156,10 @@ const props = defineProps({
     allowResize: {
         type: Boolean,
         default: false,
+    },
+    rows: {
+        type: Number,
+        default: 0,
     },
 });
 

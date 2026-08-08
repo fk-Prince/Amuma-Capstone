@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('room_transfers', function (Blueprint $table) {
             $table->id('room_transfer_id');
-            // $table->foreignId('patient_admission_id')->constrained('patient_admissions', 'patient_admission_id');
+            $table->foreignId('patient_admission_id')->constrained('patient_admissions', 'patient_admission_id');
             $table->foreignId('from_room_id')->constrained('rooms', 'room_id');
             $table->foreignId('to_room_id')->constrained('rooms', 'room_id');
             $table->foreignId('from_bed_id')->constrained('beds', 'bed_id');

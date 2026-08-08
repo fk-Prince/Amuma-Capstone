@@ -55,10 +55,20 @@
                 </div>
             </div>
         </div>
+        <div
+            class="flex items-center gap-2 rounded-lg bg-primary/5 border border-primary/10 px-4 py-2.5 text-[13px] text-primary mb-8"
+        >
+            <Settings class="h-3.5 w-3.5 shrink-0" />
+            <span>
+                Some fields below are managed through your branch settings. You
+                can update them anytime in Branch Settings.
+            </span>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import { Settings } from "lucide-vue-next";
 import { ref, computed } from "vue";
 import Combobox from "../ui/Combobox.vue";
 import { Currency } from "~/utils/currency";

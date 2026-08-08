@@ -1,6 +1,6 @@
 import type { Location } from "./location";
 import type { Bed } from "./bed";
-import type { Room } from "./room";
+import type { Room, RoomTransfer } from "./room";
 import type { Contract } from "./contract";
 
 
@@ -110,12 +110,15 @@ export interface Admission {
     invoices: InvoiceFacility[];
     current_contract: Contract
     latest_invoice: InvoiceFacility,
+    room_transfers: RoomTransfer[]
 }
 
 export interface InvoiceFacility {
     invoice_facility_id: number;
+    invoice_code: string;
     invoice_id: number;
     price: string;
     contract?: Contract | null;
+    status: string;
 }
 

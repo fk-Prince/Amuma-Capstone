@@ -37,6 +37,7 @@
                             :guardian="bookingStore.guardian"
                             :assessment="bookingStore.assessment"
                             :payment="bookingStore.payment"
+                            @edit-step="goEditStep"
                         />
                     </div>
 
@@ -157,12 +158,6 @@ const toast = useToast();
 const submitting = ref(false);
 const uuid = route.params.uuid as string;
 
-onMounted(() => {
-    if (!bookingStore.category || !bookingStore.facility) {
-        // router.replace(`/booking/provider/${uuid}?category=facility`);
-    }
-});
-
 const card = reactive<CardDetails>({
     number: "4000000000002503",
     expMonth: "04",
@@ -196,6 +191,7 @@ function goEditStep(step: string) {
     router.push({
         path: `/app/branches/${uuid}/admissions`,
         query: {
+            ...route.query,
             step,
         },
     });

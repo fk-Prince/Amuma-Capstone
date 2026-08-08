@@ -35,12 +35,13 @@ class PatientAdmissionController extends Controller
         return $this->patientAdmissionService->storeAdmission($request->user(), $request->all());
     }
 
-    public function admit(Request $request)
+    public function action(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Create);
         $request->merge([
             'branch_id' => $branch->branch_id,
+            'user' => $request->user()
         ]);
         return $this->patientAdmissionService->action($request->all());
     }

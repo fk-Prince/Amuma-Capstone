@@ -1,100 +1,199 @@
 <template>
-    <div class="max-w-6xl mx-auto p-6">
-        <div
-            v-if="loading"
-            class="min-h-[500px] flex items-center justify-center"
-        >
-            <div
-                class="rounded-2xl bg-white px-10 py-12 flex flex-col items-center gap-5"
-            >
-                <div class="relative">
-                    <div
-                        class="h-12 w-12 rounded-full border-4 border-gray-200"
-                    ></div>
-                    <div
-                        class="absolute inset-0 h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin"
-                    ></div>
-                </div>
+    <div
+        class="w-[95%] sm:w-[92%] lg:w-[90%] xl:w-[88%] 2xl:w-[70%] mx-auto py-6"
+    >
+        <div v-if="loading" class="min-h-[500px]">
+            <div class="animate-pulse space-y-8">
+                <ol class="flex items-start w-full">
+                    <li
+                        v-for="index in 4"
+                        :key="index"
+                        class="flex items-start flex-1"
+                    >
+                        <div class="flex flex-col items-center shrink-0">
+                            <div
+                                class="h-9 w-9 rounded-full"
+                                :class="
+                                    index === 1
+                                        ? 'bg-primary-200'
+                                        : 'bg-muted-light'
+                                "
+                            ></div>
+                            <div
+                                class="h-3 w-16 rounded bg-muted-light mt-2"
+                            ></div>
+                        </div>
 
-                <div class="text-center">
-                    <p class="text-sm font-semibold text-gray-700">
-                        Loading subscription setup
-                    </p>
-                    <p class="text-xs text-gray-400 mt-1">
-                        Preparing plans and configuration options...
-                    </p>
+                        <div
+                            v-if="index < 4"
+                            class="flex-1 h-px bg-muted-light mx-3 mt-[18px]"
+                        ></div>
+                    </li>
+                </ol>
+
+                <div class="rounded-2xl p-6 space-y-8">
+                    <div class="space-y-3">
+                        <div class="h-6 w-48 rounded-lg bg-primary-100"></div>
+                        <div
+                            class="h-4 w-80 max-w-full rounded bg-muted-light/60"
+                        ></div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div
+                            v-for="index in 3"
+                            :key="index"
+                            class="flex items-center justify-between rounded-xl border p-4"
+                            :class="
+                                index === 1
+                                    ? 'border-primary-100 bg-primary-50'
+                                    : 'border-muted-light'
+                            "
+                        >
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="h-4 w-4 rounded-full"
+                                    :class="
+                                        index === 1
+                                            ? 'bg-primary-100'
+                                            : 'bg-muted-light'
+                                    "
+                                ></div>
+
+                                <div class="space-y-2">
+                                    <div
+                                        class="h-4 w-28 rounded bg-muted-light"
+                                    ></div>
+                                    <div
+                                        class="h-3 w-56 max-w-[40vw] rounded bg-muted-light/60"
+                                    ></div>
+                                </div>
+                            </div>
+
+                            <div
+                                class="h-5 w-20 rounded"
+                                :class="
+                                    index === 1
+                                        ? 'bg-primary-200'
+                                        : 'bg-muted-light'
+                                "
+                            ></div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="h-4 w-28 rounded bg-muted-light"></div>
+                        <div
+                            class="h-3 w-72 max-w-full rounded bg-muted-light/60"
+                        ></div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div
+                                v-for="index in 2"
+                                :key="index"
+                                class="h-24 rounded-xl border"
+                                :class="
+                                    index === 1
+                                        ? 'border-primary-200 bg-primary-50'
+                                        : 'border-muted-light bg-muted-light/40'
+                                "
+                            ></div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex justify-between border-t border-muted-light pt-6"
+                    >
+                        <div
+                            class="h-10 w-24 rounded-xl bg-muted-light/60"
+                        ></div>
+                        <div class="h-10 w-28 rounded-xl bg-accent-200"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <template v-else>
-            <div class="mb-8">
-                <div class="flex items-center justify-between">
+            <ol class="flex justify-center items-center w-full">
+                <li
+                    v-for="(step, index) in STEPS"
+                    :key="step"
+                    class="flex items-start flex-1"
+                >
                     <div
-                        v-for="(step, index) in STEPS"
-                        :key="step"
-                        class="flex items-center flex-1"
+                        class="flex flex-col justify-center items-center shrink-0"
                     >
-                        <div class="flex items-center">
-                            <div
-                                class="w-10 h-10 rounded-full flex items-center justify-center font-semibold"
-                                :class="
-                                    currentStep > index + 1
-                                        ? 'bg-green-500 text-white'
-                                        : currentStep === index + 1
-                                          ? 'bg-primary text-white'
-                                          : 'bg-gray-200 text-gray-500'
-                                "
-                            >
-                                {{ index + 1 }}
-                            </div>
+                        <div
+                            class="flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold transition-all duration-200"
+                            :class="
+                                currentStep > index + 1
+                                    ? 'border-primary bg-primary text-white'
+                                    : currentStep === index + 1
+                                      ? 'border-primary bg-white text-primary shadow-sm ring-4 ring-primary/10'
+                                      : 'border-slate-200 bg-white text-slate-400'
+                            "
+                        >
+                            <Check
+                                v-if="currentStep > index + 1"
+                                class="w-4 h-4 stroke-[2.5]"
+                            />
 
-                            <span
-                                class="ml-3 text-sm font-medium hidden md:block"
-                            >
-                                {{ step }}
+                            <span v-else>
+                                {{ index + 1 }}
                             </span>
                         </div>
 
-                        <div
-                            v-if="index !== STEPS.length - 1"
-                            class="flex-1 h-[2px] mx-4"
+                        <span
+                            class="mt-2 text-xs font-medium text-center max-w-[6.5rem] leading-tight transition-colors"
                             :class="
-                                currentStep > index + 1
-                                    ? 'bg-green-500'
-                                    : 'bg-gray-200'
+                                currentStep >= index + 1
+                                    ? 'text-slate-800'
+                                    : 'text-slate-400'
                             "
-                        />
+                        >
+                            {{ step }}
+                        </span>
                     </div>
-                </div>
-            </div>
 
+                    <div
+                        v-if="index !== STEPS.length - 1"
+                        class="flex-1 h-px mx-3 mt-[18px] transition-colors duration-200"
+                        :class="
+                            currentStep > index + 1
+                                ? 'bg-primary'
+                                : 'bg-slate-200'
+                        "
+                    />
+                </li>
+            </ol>
             <div class="rounded-2xl p-6 space-y-8">
                 <div v-if="currentStep === 1">
-                    <h2 class="text-xl font-bold mb-4">
-                        Subscription Details
-                        <p class="text-sm text-slate-500 font-normal mt-1">
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold text-secondary">
+                            Subscription details
+                        </h2>
+                        <p class="text-sm text-muted mt-1">
                             Manage your AMUMA subscription plan and billing
                             preferences.
                         </p>
-                    </h2>
+                    </div>
 
                     <p
                         v-if="stepError"
-                        class="text-sm text-red-500 bg-red-50 border border-red-200 px-4 py-2 rounded-lg mb-4"
+                        class="text-sm text-danger bg-danger-50 border border-danger-100 px-4 py-2 rounded-lg mb-4"
                     >
                         {{ stepError }}
                     </p>
 
-                    <div class="space-y-3 mb-6">
+                    <div class="space-y-3 mb-8">
                         <label
                             v-for="plan in checkout.plans"
                             :key="plan.plan_id"
-                            class="flex items-center justify-between border p-4 rounded-xl cursor-pointer"
+                            class="flex items-center justify-between border p-4 rounded-xl cursor-pointer transition-colors"
                             :class="
                                 checkout.selectedPlan?.plan_id === plan.plan_id
-                                    ? 'border-primary bg-blue-50'
-                                    : 'border-gray-200'
+                                    ? 'border-primary bg-primary-50'
+                                    : 'border-muted-light hover:border-primary-200'
                             "
                         >
                             <div class="flex items-center gap-3">
@@ -108,18 +207,18 @@
                                     @change="checkout.selectedPlan = plan"
                                 />
                                 <div>
-                                    <p class="font-semibold">
+                                    <p class="font-semibold text-secondary">
                                         {{ plan.name }}
                                     </p>
-                                    <p
-                                        class="text-sm text-gray-500 max-w-[80%]"
-                                    >
+                                    <p class="text-sm text-muted max-w-[80%]">
                                         {{ plan.description }}
                                     </p>
                                 </div>
                             </div>
 
-                            <div class="font-bold text-primary">
+                            <div
+                                class="font-bold text-primary whitespace-nowrap"
+                            >
                                 ₱{{
                                     checkout.selectedInterval === "yearly"
                                         ? plan.yearly_price
@@ -130,23 +229,23 @@
                     </div>
 
                     <div>
-                        <h3 class="font-semibold mb-3">
-                            Billing Cycle
-                            <p class="text-sm text-slate-500 font-normal mt-1">
-                                Choose how your subscription is billed (monthly
-                                or yearly).
-                            </p>
+                        <h3 class="font-semibold text-secondary mb-1">
+                            Billing cycle
                         </h3>
+                        <p class="text-sm text-muted mb-3">
+                            Choose how your subscription is billed, monthly or
+                            yearly.
+                        </p>
 
                         <div class="grid grid-cols-2 gap-3">
                             <label
                                 v-for="opt in intervalOptions"
                                 :key="opt.value"
-                                class="border rounded-xl p-4 cursor-pointer"
+                                class="border rounded-xl p-4 cursor-pointer transition-colors"
                                 :class="
                                     checkout.selectedInterval === opt.value
-                                        ? 'border-primary bg-blue-50'
-                                        : 'border-gray-200'
+                                        ? 'border-primary bg-primary-50'
+                                        : 'border-muted-light hover:border-primary-200'
                                 "
                             >
                                 <input
@@ -157,10 +256,12 @@
                                 />
 
                                 <div class="mt-2">
-                                    <p class="font-semibold text-sm">
+                                    <p
+                                        class="font-semibold text-sm text-secondary"
+                                    >
                                         {{ opt.label }}
                                     </p>
-                                    <p class="text-xs text-gray-500">
+                                    <p class="text-xs text-muted">
                                         {{ opt.description }}
                                     </p>
                                 </div>
@@ -170,13 +271,6 @@
                 </div>
 
                 <div v-if="currentStep === 2">
-                    <!-- <h2 class="text-xl font-bold mb-4">
-                        Agency Information
-                        <p class="text-sm text-gray-500 font-normal">
-                            Configure your agency profile, branding, and agency
-                            details.
-                        </p>
-                    </h2> -->
                     <AgencyForm
                         v-model:agency="checkout.agency"
                         v-model:errors="checkout.errors"
@@ -185,7 +279,6 @@
                 </div>
 
                 <div v-if="currentStep === 3">
-                    <!-- <h2 class="text-xl font-bold mb-4">Branch Information</h2> -->
                     <BranchForm
                         v-model:branch="checkout.branch"
                         v-model:errors="checkout.errors"
@@ -193,22 +286,34 @@
                 </div>
 
                 <div v-if="currentStep === 4">
-                    <h2 class="text-xl font-bold mb-4">Branch Configuration</h2>
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold text-secondary">
+                            Branch configuration
+                        </h2>
+                        <p class="text-sm text-muted mt-1">
+                            Set up the operational preferences for this branch.
+                        </p>
+                    </div>
+
                     <SubcriptionConfigure
                         :setting="checkout.settings"
                         :errors="checkout.errors"
                     />
                 </div>
 
-                <div class="flex justify-between border-t pt-6">
+                <div
+                    class="flex items-center justify-between border-t border-slate-200 pt-6"
+                >
                     <button
                         v-if="currentStep > 1"
+                        type="button"
                         @click="
                             currentStep--;
                             emit('update:stepCompleted', false);
                         "
-                        class="px-5 py-2 border rounded-xl"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]"
                     >
+                        <ChevronLeft class="h-4 w-4" />
                         Previous
                     </button>
 
@@ -216,30 +321,61 @@
 
                     <button
                         v-if="currentStep < STEPS.length"
+                        type="button"
                         @click="nextStep"
                         :disabled="
                             currentStep === 1 &&
                             (!checkout.selectedPlan ||
                                 !checkout.selectedInterval)
                         "
-                        class="px-6 py-2 bg-primary text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition-all hover:bg-primary-600 hover:shadow-md hover:shadow-primary/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                     >
-                        Next
+                        Continue
+                        <ChevronRight class="h-4 w-4" />
                     </button>
                 </div>
+                <button
+                    v-if="stepCompleted"
+                    @click="send"
+                    :disabled="isLoading"
+                    class="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-white py-3 font-semibold transition flex items-center justify-center gap-2"
+                >
+                    <svg
+                        v-if="isLoading"
+                        class="w-5 h-5 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            class="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            stroke-width="4"
+                        />
+                        <path
+                            class="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        />
+                    </svg>
+
+                    {{ isLoading ? "Validating..." : "Confirm & Pay" }}
+                </button>
             </div>
         </template>
     </div>
 </template>
 
 <script setup lang="ts">
+import { Check, ChevronLeft, ChevronRight } from "lucide-vue-next";
 import { ref, onMounted } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { planService } from "@/api/plan/PlanService";
-import { agencyService } from "~/api/agency/AgencyService";
-import { agencySchema, agencySchema2 } from "~/types/agency";
-import { branchService } from "~/api/branch/BranchService";
-
+import { agencySchema } from "~/schema/agency-schema";
+import { subscriptionService } from "~/api/subscription/SubscriptionService";
+import { type SubscriptionRequest } from "~/types/subscription";
 import BranchForm from "~/components/forms/BranchForm.vue";
 import AgencyForm from "~/components/forms/AgencyForm.vue";
 import SubcriptionConfigure from "~/components/forms/SubcriptionConfigure.vue";
@@ -247,7 +383,7 @@ const props = defineProps<{
     stepCompleted: boolean;
 }>();
 const emit = defineEmits(["update:stepCompleted"]);
-import { branchSchema } from "~/types/branch";
+import { branchSchema } from "~/schema/branch-schema";
 const checkout = useSubscriptionCheckout();
 
 const loading = ref(true);
@@ -267,6 +403,7 @@ const intervalOptions = [
 ];
 const nextStep = async () => {
     stepError.value = null;
+    checkout.clearAllErrors();
 
     if (currentStep.value === 1) {
         if (!checkout.selectedPlan || !checkout.selectedInterval) {
@@ -289,92 +426,111 @@ const nextStep = async () => {
         currentStep.value++;
     }
 };
-const fieldKeyMap: Record<string, string> = {
-    agency_name: "agency_name",
-    agency_description: "agency_description",
-};
 
 const validateAgency = async (): Promise<boolean> => {
-    // try {
-    const result = agencySchema2.safeParse(checkout.agency);
+    const result = agencySchema.safeParse(checkout.agency);
 
     if (!result.success) {
-        const validationErrors: Record<string, string> = {};
-
+        const errors: Record<string, string> = {};
+        const keyMap: Record<string, string> = {
+            name: "agency_name",
+            description: "agency_description",
+            email: "agency_email",
+            image: "agency_image",
+        };
         result.error.issues.forEach((issue: any) => {
             const path = issue.path.join(".");
-            validationErrors[fieldKeyMap[path] ?? path] = issue.message;
+            errors[keyMap[path] ?? path] = issue.message;
         });
-
-        checkout.errors = validationErrors;
+        checkout.errors = errors;
         return false;
     }
-    // await agencyService.validate(checkout.agency);
     return true;
-    // } catch (err: any) {
-    //     const errors = err?.errors || err?.response?.data?.errors;
-    //     console.error(err);
-    //     if (errors) {
-    //         checkout.errors = Object.fromEntries(
-    //             Object.entries(errors).map(([key, value]: any) => [
-    //                 key,
-    //                 Array.isArray(value) ? value[0] : value,
-    //             ]),
-    //         );
-    //     }
-    //     return false;
-    // }
 };
 
 const validateBranch = async (): Promise<boolean> => {
     const result = branchSchema.safeParse(checkout.branch);
 
     if (!result.success) {
+        const errors: Record<string, string> = {};
         const keyMap: Record<string, string> = {
             name: "branch_name",
             description: "branch_description",
             contact_number: "branch_contact_number",
             image: "branch_image",
+            email: "branch_email",
         };
-
-        const errors: Record<string, string> = {};
 
         result.error.issues.forEach((issue) => {
             const path = issue.path.join(".");
 
             errors[keyMap[path] ?? path] = issue.message;
         });
-
         checkout.setErrors(errors);
         return false;
     }
     return true;
-    // try {
-    //     // await branchService.validate(checkout.branch);
-    //     return true;
-    // } catch (err: any) {
-    //     const errors = err?.errors || err?.response?.data?.errors;
+};
 
-    //     const keyMap: Record<string, string> = {
-    //         name: "branch_name",
-    //         description: "branch_description",
-    //         contact_number: "branch_contact_number",
-    //         image: "branch_image",
-    //     };
+const isLoading = ref(false);
+const send = async () => {
+    try {
+        isLoading.value = true;
+        const payload: SubscriptionRequest = {
+            plan_code: checkout.selectedPlan.plan_code,
+            payment_method: checkout.payment_method,
+            billing_interval: checkout.selectedInterval,
 
-    //     if (errors) {
-    //         checkout.setErrors(
-    //             Object.fromEntries(
-    //                 Object.entries(errors).map(([key, value]: any) => [
-    //                     keyMap[key] ?? key,
-    //                     Array.isArray(value) ? value[0] : value,
-    //                 ]),
-    //             ),
-    //         );
-    //     }
+            //BRANCH DATA
+            branch_name: checkout.branch.name,
+            branch_contact_number: checkout.branch.contact_number,
+            branch_image: checkout.branch.image,
+            branch_description: checkout.branch.description,
+            branch_settings: checkout.settings,
+            branch_street: checkout.branch.location.street,
+            branch_city: checkout.branch.location.city,
+            branch_province: checkout.branch.location.province,
+            branch_country: checkout.branch.location.country,
+            branch_latitude: checkout.branch.location.latitude,
+            branch_longitude: checkout.branch.location.longitude,
+            branch_email: checkout.branch.email ?? "",
 
-    //     return false;
-    // }
+            // AGENCY DATA
+            agency_id: checkout.agency.agency_id,
+            agency_name: checkout.agency.name,
+            agency_description: checkout.agency.description,
+            agency_street: checkout.agency.location.street ?? "",
+            agency_city: checkout.agency.location.city ?? "",
+            agency_province: checkout.agency.location.province ?? "",
+            agency_country: checkout.agency.location.country ?? "",
+            agency_latitude: checkout.agency.location.latitude ?? undefined,
+            agency_longitude: checkout.agency.location.longitude ?? undefined,
+            agency_email: checkout.agency.email ?? "",
+            agency_image: checkout.agency.image,
+        };
+        await subscriptionService.validateSubscription(payload);
+        checkout.subscriptionPayload = payload;
+        await navigateTo({
+            path: "/product/subscription-details/checkout",
+            query: {
+                code: checkout.selectedPlan?.plan_id,
+                interval: checkout.selectedInterval,
+            },
+        });
+    } catch (err: any) {
+        const errors = err?.errors || err?.response?.data?.errors;
+        console.log(err);
+        if (errors) {
+            checkout.errors = Object.fromEntries(
+                Object.entries(errors).map(([key, value]: any) => [
+                    key,
+                    Array.isArray(value) ? value[0] : value,
+                ]),
+            );
+        }
+    } finally {
+        isLoading.value = false;
+    }
 };
 
 onMounted(async () => {

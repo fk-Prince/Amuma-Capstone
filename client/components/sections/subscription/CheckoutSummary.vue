@@ -1,27 +1,50 @@
 <template>
     <div class="w-full max-w-5xl mx-auto space-y-6">
         <div class="bg-white rounded-2xl shadow-sm p-6">
-            <div class="flex items-center gap-4">
-                <div
-                    class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"
+                    >
+                        <img
+                            src="/assets/logo/logo.png"
+                            alt="Logo"
+                            class="w-7 h-7 object-contain"
+                        />
+                    </div>
+
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">
+                            Review & Confirm
+                        </h2>
+
+                        <p class="text-sm text-slate-500 mt-1">
+                            Review your information before activating your
+                            subscription.
+                        </p>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    @click="router.back()"
+                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shrink-0"
                 >
-                    <img
-                        src="/assets/logo/logo.png"
-                        alt="Logo"
-                        class="w-7 h-7 object-contain"
-                    />
-                </div>
-
-                <div>
-                    <h2 class="text-xl font-bold text-slate-900">
-                        Review & Confirm
-                    </h2>
-
-                    <p class="text-sm text-slate-500 mt-1">
-                        Review your information before activating your
-                        subscription.
-                    </p>
-                </div>
+                    <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+                        />
+                    </svg>
+                    Back
+                </button>
             </div>
         </div>
 
@@ -70,19 +93,41 @@
 
                 <p class="text-sm text-slate-500">Registered agency details.</p>
             </div>
+            <div class="flex gap-5">
+                <div
+                    class="w-28 h-28 rounded-2xl bg-slate-100 overflow-hidden shrink-0"
+                >
+                    <img
+                        v-if="agencyImagePrevieiw"
+                        :src="agencyImagePrevieiw"
+                        class="w-full h-full object-cover"
+                    />
 
-            <div class="space-y-3">
-                <SummaryRow
-                    label="Agency Name"
-                    :value="checkout.agency.agency_name || '—'"
-                />
+                    <div
+                        v-else
+                        class="h-full flex items-center justify-center text-xs text-slate-400"
+                    >
+                        No Image
+                    </div>
+                </div>
+                <div class="space-y-3 flex-1">
+                    <SummaryRow
+                        label="Agency Name"
+                        :value="checkout.agency.name || '—'"
+                    />
 
-                <SummaryRow
-                    label="Description"
-                    :value="checkout.agency.agency_description || '—'"
-                />
+                    <SummaryRow
+                        label="Email Address"
+                        :value="checkout.agency.email || '—'"
+                    />
 
-                <SummaryRow label="Address" :value="agencyAddress || '—'" />
+                    <SummaryRow
+                        label="Description"
+                        :value="checkout.agency.description || '—'"
+                    />
+
+                    <SummaryRow label="Address" :value="agencyAddress || '—'" />
+                </div>
             </div>
         </section>
 
@@ -119,6 +164,11 @@
                     <SummaryRow
                         label="Branch Name"
                         :value="checkout.branch.name || '—'"
+                    />
+
+                    <SummaryRow
+                        label="Email Address"
+                        :value="checkout.branch.email || '—'"
                     />
 
                     <SummaryRow
@@ -197,7 +247,9 @@
 import { computed } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import SummaryRow from "~/components/ui/SummaryRow.vue";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const checkout = useSubscriptionCheckout();
 
 const branchImagePreview = computed(() =>
@@ -205,6 +257,14 @@ const branchImagePreview = computed(() =>
         ? URL.createObjectURL(checkout.branch.image)
         : typeof checkout.branch.image === "string"
           ? checkout.branch.image
+          : null,
+);
+
+const agencyImagePrevieiw = computed(() =>
+    checkout.agency.image instanceof File
+        ? URL.createObjectURL(checkout.agency.image)
+        : typeof checkout.agency.image === "string"
+          ? checkout.agency.image
           : null,
 );
 

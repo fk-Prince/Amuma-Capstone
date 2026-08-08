@@ -20,30 +20,28 @@
                 <div class="lg:sticky lg:top-6">
                     <PaymentForm
                         v-model:card="card"
-                        :processing="processing"
+                        :total-amount="total"
+                        :processing="processing || loadingTotal"
                         :onCardPay="payCard"
-                        :onGCashPay="payGCash"
+                        :enableGCash="false"
                     />
                 </div>
             </div>
         </div>
     </div>
 </template>
+
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import CheckoutSummary from "~/components/sections/subscription/CheckoutSummary.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
-// import {
-//     gcashPayment,
-//     cardPayment,
-// } from "~/composables/useSubscriptionPayment";
-
-import { cardPayment, gcashPayment } from "~/composables/usePayment";
+import { cardPayment } from "~/composables/usePayment";
 import { type SubscriptionRequest } from "~/types/subscription";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { useToast } from "~/composables/useToast";
 import { fetchAuthUser } from "~/composables/useAuthUser";
+import type { CardDetails } from "~/types/payment";
 
 const checkout = useSubscriptionCheckout();
 useHead({ title: "Subscription Checkout" });
@@ -52,7 +50,8 @@ definePageMeta({
     middleware: ["auth-client", "subscription-guard"],
     navVariant: 1,
 });
-// const card = reactive({
+
+// const card = reactive<CardDetails>({
 //     number: "",
 //     expMonth: "",
 //     expYear: "",
@@ -61,7 +60,8 @@ definePageMeta({
 //     lastName: "",
 //     email: "",
 // });
-const card = reactive({
+
+const card = reactive<CardDetails>({
     number: "4000000000002503",
     expMonth: "04",
     expYear: "29",
@@ -70,55 +70,54 @@ const card = reactive({
     lastName: "sestoso",
     email: "prince.sestoso@gmail.com",
 });
-
 const processing = ref(false);
-const isModalOpen = ref(false);
-const closeModal = ref<(() => void) | null>(null);
-closeModal.value = () => {
-    isModalOpen.value = false;
-};
+const loadingTotal = ref(true);
+const total = ref(0);
 
 const { success, error } = useToast();
 
 const buildSubscriptionPayload = (): SubscriptionRequest => ({
-    plan_code: checkout.selectedPlan?.plan_code,
+    plan_code: checkout.selectedPlan.plan_code,
     payment_method: checkout.payment_method,
     billing_interval: checkout.selectedInterval,
 
-    branch_name: checkout.branch?.name,
-    branch_street: checkout.branch?.location?.street,
-    branch_city: checkout.branch?.location?.city,
-    branch_province: checkout.branch?.location?.province,
-    branch_country: checkout.branch?.location?.country,
-    branch_contact_number: checkout.branch?.contact_number,
-    branch_image: checkout.branch?.image,
-    branch_description: checkout.branch?.description,
+    // BRANCH DATA
+    branch_name: checkout.branch.name,
+    branch_contact_number: checkout.branch.contact_number,
+    branch_image: checkout.branch.image,
+    branch_description: checkout.branch.description,
     branch_settings: checkout.settings,
-    branch_latitude: checkout.branch?.location?.latitude,
-    branch_longitude: checkout.branch?.location?.longitude,
+    branch_street: checkout.branch.location.street,
+    branch_city: checkout.branch.location.city,
+    branch_province: checkout.branch.location.province,
+    branch_country: checkout.branch.location.country,
+    branch_latitude: checkout.branch.location.latitude,
+    branch_longitude: checkout.branch.location.longitude,
+    branch_email: checkout.branch.email ?? "",
 
-    agency_id: checkout.agency?.id,
-    agency_name: checkout.agency?.agency_name,
-    agency_description: checkout.agency?.agency_description,
-    agency_street: checkout.agency?.location?.street,
-    agency_city: checkout.agency?.location?.city,
-    agency_province: checkout.agency?.location?.province,
-    agency_country: checkout.agency?.location?.country,
-    agency_latitude: checkout.agency?.location?.latitude,
-    agency_longitude: checkout.agency?.location?.longitude,
+    // AGENCY DATA
+    agency_id: checkout.agency.agency_id,
+    agency_name: checkout.agency.name,
+    agency_description: checkout.agency.description,
+    agency_street: checkout.agency.location.street ?? "",
+    agency_city: checkout.agency.location.city ?? "",
+    agency_province: checkout.agency.location.province ?? "",
+    agency_country: checkout.agency.location.country ?? "",
+    agency_latitude: checkout.agency.location.latitude ?? undefined,
+    agency_longitude: checkout.agency.location.longitude ?? undefined,
+    agency_email: checkout.agency.email ?? "",
+    agency_image: checkout.agency.image,
 });
 
 const payCard = async () => {
-    if (processing.value) return;
+    if (processing.value || loadingTotal.value) return;
     processing.value = true;
     try {
         const payload = buildSubscriptionPayload();
-        const res =
-            await subscriptionService.retrieveSubscriptionDetail(payload);
 
         await cardPayment({
             card,
-            amount: Number(res.total_amount),
+            amount: total.value,
             onClose: () => {
                 processing.value = false;
             },
@@ -151,38 +150,16 @@ const payCard = async () => {
     }
 };
 
-const payGCash = async () => {
-    const payload = buildSubscriptionPayload();
-    if (processing.value) return;
-    processing.value = true;
+onMounted(async () => {
     try {
-        await gcashPayment({
-            closeModal,
-            createPayment: () =>
-                subscriptionService.createSubscription({
-                    ...payload,
-                    payment_method: "GCASH",
-                    payment_type: "SUBSCRIPTION",
-                }),
-
-            onSuccess: async (result) => {
-                success(result.message);
-                await fetchAuthUser();
-                await navigateTo({
-                    path: `/product/subscription-summary`,
-                    query: {
-                        status: result.status,
-                    },
-                });
-            },
-            onClose: () => {
-                processing.value = false;
-            },
-        });
+        const payload = buildSubscriptionPayload();
+        const res =
+            await subscriptionService.retrieveSubscriptionDetail(payload);
+        total.value = Number(res.total_amount);
     } catch (err: any) {
-        console.error(err);
+        error(err.message ?? "Failed to load subscription total.");
     } finally {
-        processing.value = false;
+        loadingTotal.value = false;
     }
-};
+});
 </script>

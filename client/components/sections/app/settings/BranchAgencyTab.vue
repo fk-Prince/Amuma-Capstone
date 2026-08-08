@@ -26,7 +26,7 @@ import { ref, watch, toRaw } from "vue";
 import { agencyService } from "~/api/agency/AgencyService";
 import AgencyForm from "~/components/forms/AgencyForm.vue";
 import type { Agency } from "~/types/agency";
-import { agencySchema2 } from "~/types/agency";
+import { agencySchema } from "~/schema/agency-schema";
 import { useToast } from "~/composables/useToast";
 import { useBranchStore } from "~/stores/branch";
 
@@ -70,7 +70,7 @@ const fieldKeyMap: Record<string, string> = {
 const handleSave = async (): Promise<boolean> => {
     if (!localValue.value) return false;
 
-    const result = agencySchema2.safeParse(localValue.value);
+    const result = agencySchema.safeParse(localValue.value);
 
     if (!result.success) {
         const validationErrors: Record<string, string> = {};
@@ -91,8 +91,10 @@ const handleSave = async (): Promise<boolean> => {
 
     try {
         const payload = {
-            agency_name: localValue.value.agency_name,
-            agency_description: localValue.value.agency_description,
+            agency_name: localValue.value.name,
+            agency_description: localValue.value.description,
+            agency_email: localValue.value.email,
+            agency_image: localValue.value.image,
             location: {
                 street: localValue.value.location.street,
                 city: localValue.value.location.city,

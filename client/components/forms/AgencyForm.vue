@@ -1,65 +1,142 @@
 <template>
-    <div class="max-w-7xl mx-auto space-y-6">
-        <div>
-            <h2 class="text-lg font-semibold text-slate-800">
-                Agency Information
-            </h2>
+    <div class="max-w-7xl mx-auto space-y-8">
+        <div class="space-y-6">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-900">
+                    Agency Information
+                </h2>
 
-            <p class="text-sm text-slate-500 mt-1">
-                Configure your agency profile, branding, and agency details.
-            </p>
+                <p class="text-sm text-slate-500 mt-1">
+                    Configure your agency profile, branding, and agency details.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-8">
+                <div class="space-y-5">
+                    <LabelInput
+                        v-model="agency.name"
+                        label="Agency Name"
+                        placeholder="Enter agency name"
+                        :error="errors?.agency_name"
+                        @clear-error="clearError('agency_name')"
+                    />
+
+                    <LabelInput
+                        v-model="agency.email"
+                        label="Email Address"
+                        type="email"
+                        placeholder="Enter agency email address"
+                        @update:modelValue="clearError('agency_email')"
+                        :error="errors?.agency_email"
+                    />
+
+                    <LabelInput
+                        v-model="agency.description"
+                        label="Description"
+                        mode="textarea"
+                        :rows="4"
+                        placeholder="Describe your agency"
+                        :allowResize="true"
+                        :textMax="1000"
+                        :error="errors?.agency_description"
+                        @clear-error="clearError('agency_description')"
+                    />
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-semibold text-slate-700">
+                            Agency Image
+                        </label>
+
+                        <button
+                            v-if="agency.image"
+                            type="button"
+                            @click="removeAgencyImage"
+                            class="text-xs font-medium text-red-500 hover:text-red-600"
+                        >
+                            Remove
+                        </button>
+                    </div>
+                    <div
+                        class="relative h-52 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group"
+                        @click="agencyImageInput?.click()"
+                    >
+                        <img
+                            v-if="agencyImagePreview"
+                            :src="agencyImagePreview"
+                            class="h-full w-full object-cover"
+                        />
+
+                        <div
+                            v-else
+                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400"
+                        >
+                            <div
+                                class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-2xl mb-3"
+                            >
+                                +
+                            </div>
+
+                            <p class="text-sm font-medium">Upload Image</p>
+
+                            <span class="text-xs"> PNG, JPG up to 5MB </span>
+                        </div>
+
+                        <div
+                            v-if="agencyImagePreview"
+                            class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition"
+                        />
+                    </div>
+
+                    <input
+                        ref="agencyImageInput"
+                        type="file"
+                        accept="image/*"
+                        class="hidden"
+                        @change="handleAgencyImage"
+                    />
+
+                    <p v-if="errors?.agency_image" class="text-xs text-red-500">
+                        {{ errors.agency_image }}
+                    </p>
+                </div>
+            </div>
         </div>
 
-        <div class="flex flex-col gap-4">
-            <LabelInput
-                v-model="agency.agency_name"
-                label="Agency Name"
-                placeholder="Enter agency name"
-                :error="errors?.agency_name"
-                @clear-error="clearError('agency_name')"
-            />
-
-            <LabelInput
-                v-model="agency.agency_description"
-                label="Description"
-                mode="textarea"
-                placeholder="Describe your agency"
-                :allowResize="true"
-                :textMax="1000"
-                :error="errors?.agency_description"
-                @clear-error="clearError('agency_description')"
-            />
-        </div>
-
-        <div class="flex flex-col gap-3">
+        <div class="space-y-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <label class="text-sm font-semibold text-slate-700">
+                    <h2 class="text-lg font-semibold text-slate-900">
                         Primary Address
-                    </label>
+                    </h2>
+
+                    <p class="text-sm text-slate-500 mt-1">
+                        Choose between map location or manual address.
+                    </p>
 
                     <p
                         v-if="locationError && useGeolocation"
-                        class="text-xs font-normal text-red-500 mt-1"
+                        class="text-xs text-red-500 mt-1"
                     >
                         {{ locationError }}
                     </p>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-3">
                     <span class="text-xs text-slate-500"> Use map </span>
 
                     <button
                         type="button"
                         @click="useGeolocation = !useGeolocation"
-                        class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors"
+                        class="relative inline-flex h-6 w-11 items-center rounded-full transition"
                         :class="useGeolocation ? 'bg-primary' : 'bg-slate-200'"
                     >
                         <span
-                            class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform"
+                            class="h-4 w-4 rounded-full bg-white shadow transition-transform"
                             :class="
                                 useGeolocation
-                                    ? 'translate-x-4'
+                                    ? 'translate-x-6'
                                     : 'translate-x-1'
                             "
                         />
@@ -83,7 +160,7 @@
 
                     <template #fallback>
                         <div
-                            class="h-64 w-full rounded-lg bg-slate-50 flex items-center justify-center text-sm text-slate-400"
+                            class="h-64 rounded-xl bg-slate-50 flex items-center justify-center text-sm text-gray-400"
                         >
                             Loading map...
                         </div>
@@ -91,37 +168,33 @@
                 </ClientOnly>
             </template>
 
-            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <LabelInput
                     v-model="agency.location.street"
                     label="Street"
-                    placeholder="Enter street"
+                    @update:modelValue="clearError('location.street')"
                     :error="errors?.['location.street']"
-                    @clear-error="clearError('location.street')"
                 />
 
                 <LabelInput
                     v-model="agency.location.city"
                     label="City"
-                    placeholder="Enter city"
+                    @update:modelValue="clearError('location.city')"
                     :error="errors?.['location.city']"
-                    @clear-error="clearError('location.city')"
                 />
 
                 <LabelInput
                     v-model="agency.location.province"
                     label="Province"
-                    placeholder="Enter province"
+                    @update:modelValue="clearError('location.province')"
                     :error="errors?.['location.province']"
-                    @clear-error="clearError('location.province')"
                 />
 
                 <LabelInput
                     v-model="agency.location.country"
                     label="Country"
-                    placeholder="Enter country"
+                    @update:modelValue="clearError('location.country')"
                     :error="errors?.['location.country']"
-                    @clear-error="clearError('location.country')"
                 />
             </div>
         </div>
@@ -129,9 +202,10 @@
 </template>
 
 <script setup lang="ts">
+import { Check } from "lucide-vue-next";
 import { ref, computed } from "vue";
-import LabelInput from "../ui/BaseInput.vue";
 import LocationSelector from "../ui/LocationSelector.vue";
+import LabelInput from "../ui/BaseInput.vue";
 import type { Agency } from "~/types/agency";
 
 const props = defineProps<{
@@ -152,6 +226,10 @@ const agency = computed({
 
 const errors = computed(() => props.errors);
 
+const agencyImagePreview = ref<string | null>(
+    typeof props.agency.image === "string" ? props.agency.image : null,
+);
+const agencyImageInput = ref<HTMLInputElement | null>(null);
 const useGeolocation = ref(true);
 
 const locationError = computed(() => {
@@ -233,15 +311,32 @@ const handleLocation = ({
     emit("update:errors", updatedErrors);
 };
 
+const handleAgencyImage = (event: Event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    emit("update:agency", { ...agency.value, image: file });
+    agencyImagePreview.value = URL.createObjectURL(file);
+    clearError("agency_image");
+};
+
+const removeAgencyImage = () => {
+    emit("update:agency", { ...agency.value, image: null });
+    agencyImagePreview.value = null;
+
+    if (agencyImageInput.value) {
+        agencyImageInput.value.value = "";
+    }
+};
+
 function clearError(field: string) {
     if (!props.errors) return;
 
-    const updatedErrors = {
+    const updated = {
         ...props.errors,
     };
 
-    delete updatedErrors[field];
+    delete updated[field];
 
-    emit("update:errors", updatedErrors);
+    emit("update:errors", updated);
 }
 </script>

@@ -17,7 +17,7 @@ class PatientAdmission extends Model
     public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
-        // 'branch_contract_id',
+        'branch_contract_id',
         'bed_id',
         'patient_id',
         'status',
@@ -36,7 +36,6 @@ class PatientAdmission extends Model
     {
         return $this->belongsTo(BranchContract::class, 'branch_contract_id', 'branch_contract_id');
     }
-
     public function bed()
     {
         return $this->belongsTo(Bed::class, 'bed_id', 'bed_id');
