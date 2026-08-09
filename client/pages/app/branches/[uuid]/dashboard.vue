@@ -1,12 +1,12 @@
 <template>
     <div class="min-h-screen bg-light flex items-center justify-center p-8">
-        <ScheduleCard
+        <!-- <ScheduleCard
             date-label="Today, May 2, 2026"
             :now-hour="12.75"
             :branches="branches"
             @change-day="onChangeDay"
         />
-        <RoomOccupancyCard :rooms="roomData" />
+        <RoomOccupancyCard :rooms="roomData" /> -->
     </div>
 </template>
 
