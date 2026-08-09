@@ -34,10 +34,11 @@ class Subscription extends Model
         return $this->belongsTo(Plan::class, 'plan_id', 'plan_id',);
     }
 
-    public function branches()
+    public function branch()
     {
-        return $this->belongsToMany(Branch::class, 'branch_id', 'branch_id');
+        return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
     }
+
 
     public function subscription_payments()
     {

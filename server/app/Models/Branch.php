@@ -82,10 +82,19 @@ class Branch extends Model
         return $this->hasMany(Notification::class, 'branch_id', 'branch_id');
     }
 
+    public function patients()
+    {
+        return $this->hasMany(Patient::class, 'branch_id', 'branch_id');
+    }
 
     public function reviews()
     {
         return $this->hasMany(Review::class, 'branch_id', 'branch_id');
+    }
+
+    public function employees()
+    {
+        return $this->hasMany(EmployeeBranch::class, 'branch_id', 'branch_id');
     }
 
     public function bookings()

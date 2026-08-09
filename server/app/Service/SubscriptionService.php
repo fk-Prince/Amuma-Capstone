@@ -193,8 +193,6 @@ class SubscriptionService
                         'country' => $agency['country'] ?? null,
                         'latitude' => $agencyLatitude,
                         'longitude' => $agencyLongitude,
-                        'email' => $agency['email'],
-                        'image' => $agency['image']
                     ]);
 
                     $agencyData = $this->agencyRepository->createAgency([
@@ -202,6 +200,8 @@ class SubscriptionService
                         'description' => $agency['description'] ?? null,
                         'location_id' => $agencyLocation->location_id,
                         'registered_by' => $user['user_id'],
+                        'email' => $agency['email'],
+                        'image' => $agency['image']
                     ]);
                 }
 

@@ -21,6 +21,7 @@ class BranchController extends Controller
         $this->branchService = $branchService;
     }
 
+
     public function fetchBranch(string $uuid)
     {
         return $this->branchService->getBranch($uuid);
@@ -45,13 +46,14 @@ class BranchController extends Controller
         ]);
     }
 
-    public function update(BranchRequest $request, string $uuid)
+    public function update(BranchRequest $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Update);
         $request->merge([
             'branch_id' => $branch->branch_id,
+            'branch' => $branch
         ]);
-        return $this->branchService->updateBranch($request->all(), $request->user(), $uuid);
+        return $this->branchService->updateBranch($request->all());
     }
 }

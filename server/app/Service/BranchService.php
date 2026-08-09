@@ -78,12 +78,13 @@ class BranchService
         return BranchResource::collection($branch);
     }
 
-    public function updateBranch(array $payload, User $user, string $branchUuid)
-    {
-        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
-        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Update);
 
-        return DB::transaction(function () use ($branch, $payload) {
+
+    public function updateBranch(array $payload)
+    {
+
+        return DB::transaction(function () use ($payload) {
+            $branch = $payload['branch'];
             if (
                 isset($payload['image']) &&
                 $payload['image'] instanceof UploadedFile

@@ -62,8 +62,9 @@ class UserService
                         'address' => $location->full_address,
                     ] : null,
                     'agency' => [
+                        'agency_id'  => $branch?->agencies->agency_id,
                         'name' => $branch?->agencies->name,
-                        'email' => $branch?->agencies->name,
+                        'email' => $branch?->agencies->email,
                         'description' => $branch?->agencies->description,
                         'location' => $branch?->agencies->locations,
                     ],

@@ -1,7 +1,6 @@
 <template>
     <div class="w-full">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <!-- Total Employees -->
             <div
                 class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary-200"
             >

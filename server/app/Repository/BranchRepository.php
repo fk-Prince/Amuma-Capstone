@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Models\Branch;
 use App\Models\BranchImage;
+use App\Models\Subscription;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class BranchRepository

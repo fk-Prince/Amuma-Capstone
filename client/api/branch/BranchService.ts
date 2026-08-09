@@ -34,6 +34,10 @@ class BranchService extends BaseService {
         return await this.request(`${this.resource}/${uuid}`, 'PUT', params);
     }
 
+    async list(params: object = {}): Promise<any> {
+        return await this.request(this.resource, 'GET', params);
+    }
+
 
     private get resource(): string {
         return `${this.getBackendApi}/api/branches`;
