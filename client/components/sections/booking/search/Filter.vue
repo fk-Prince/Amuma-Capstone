@@ -1,69 +1,81 @@
 <template>
     <header
-        class="hidden md:block sticky top-0 z-100 p-5 border-b bg-white shadow-sm"
+        class="hidden md:block sticky top-0 z-50 border-b border-muted-light bg-white/95 backdrop-blur shadow-sm"
     >
-        <div class="relative">
+        <div class="relative px-6 lg:px-10 py-5">
             <button
                 @click="isHide = !isHide"
-                class="absolute z-100 left-0 rotate-180 -bottom-9 w-9 h-9 rounded-full border bg-white flex items-center justify-center shadow-md transition-transform duration-300"
-                :class="isHide ? '-bottom-6' : '-bottom-4'"
+                aria-label="Toggle search filters"
+                class="absolute z-20 left-6 lg:left-10 w-9 h-9 rounded-full border border-muted-light bg-white flex items-center justify-center shadow-md hover:border-primary hover:text-primary transition-all duration-300"
+                :style="{ bottom: isHide ? '-14px' : '-18px' }"
             >
-                <Dropdown :isOpen="isHide" />
+                <Dropdown :isOpen="!isHide" />
             </button>
 
             <Transition name="collapse">
                 <div
                     v-show="!isHide"
-                    class="w-full lg:max-w-[80rem] grid grid-cols-[1fr_1fr_1fr_50px] lg:ml-10 items-end gap-5 relative"
+                    class="w-full max-w-[80rem] grid grid-cols-[1.2fr_1fr_1fr_auto] items-end gap-4"
                 >
                     <div>
                         <label
-                            class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                            class="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wide"
                             >Search</label
                         >
                         <BaseInput
                             v-model="searchName"
                             :is-search="true"
                             placeholder="Provider name or service"
-                            input-class="px-4 py-3"
+                            input-class="px-4 py-3 rounded-xl"
+                            @keyup.enter="handleSearch"
                         />
                     </div>
 
                     <div>
                         <label
-                            class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                            class="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wide"
                             >Location</label
                         >
                         <BaseInput
-                            v-model="searchLocation"
-                            placeholder="Search by City"
-                            input-class="px-4 py-3 w-full"
+                            :model-value="searchLocation"
+                            @update:model-value="onLocationInput"
+                            :placeholder="
+                                locating ? 'Locating...' : 'Enter your city'
+                            "
+                            input-class="px-4 py-3 rounded-xl w-full"
+                            :readonly="locating"
+                            @keyup.enter="handleSearch"
                         >
                             <template #suffix>
-                                <Location
-                                    clickable
-                                    @get-location="handleLocation"
-                                />
+                                <span class="pr-4 flex items-center">
+                                    <Location
+                                        clickable
+                                        @get-location="handleLocation"
+                                        @loading="locating = $event"
+                                    />
+                                </span>
                             </template>
                         </BaseInput>
                     </div>
 
                     <div>
                         <label
-                            class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                            class="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wide"
                             >Care Type</label
                         >
                         <Combobox
                             v-model="planCodeType"
                             :items="planCodeList"
-                            input-class="px-4 py-2.5"
+                            input-class="px-4 py-3 rounded-xl"
                             :searchBar="false"
+                            @update:modelValue="updateQuery"
                         />
                     </div>
 
                     <button
-                        class="w-12 h-12 bg-primary flex items-center justify-center rounded-full border"
+                        class="w-12 h-12 bg-primary hover:bg-primary-600 active:scale-95 flex items-center justify-center rounded-full border border-primary shadow-sm transition-all duration-150"
                         @click="handleSearch"
+                        aria-label="Search"
                     >
                         <Search extraClass="text-white" />
                     </button>
@@ -72,9 +84,17 @@
 
             <Transition name="collapse">
                 <div
-                    class="ml-10 max-w-5xl flex gap-2 flex-wrap"
-                    :class="isHide ? 'mt-0 delay-200' : 'mt-4'"
+                    class="flex items-center gap-3 flex-wrap"
+                    :class="
+                        isHide
+                            ? 'mt-0'
+                            : 'mt-5 pt-4 border-t border-muted-light'
+                    "
                 >
+                    <span
+                        class="text-xs font-semibold text-muted uppercase tracking-wide shrink-0"
+                        >Sort</span
+                    >
                     <button
                         v-for="sort in sortOptions"
                         :key="sort.value"
@@ -82,8 +102,8 @@
                         :class="[
                             'px-4 py-1.5 rounded-full text-sm font-medium border transition-colors',
                             activeSortOption === sort.value
-                                ? 'bg-secondary  text-white border-muted'
-                                : 'bg-white text-slate-600 border-slate-200 hover:border-secondary hover:text-secondary',
+                                ? 'bg-primary text-white border-primary shadow-sm'
+                                : 'bg-white text-muted border-muted-light hover:border-primary hover:text-primary',
                         ]"
                     >
                         {{ sort.label }}
@@ -93,77 +113,93 @@
         </div>
     </header>
 
-    <header class="md:hidden border-b bg-white shadow-sm relative">
-        <button
-            @click="isHide = !isHide"
-            class="absolute z-[1000] rotate-180 left-9 -translate-x-1/2 w-9 h-9 rounded-full border bg-white flex items-center justify-center shadow-md transition-transform duration-300"
-            :class="isHide ? '-bottom-6' : '-bottom-5'"
+    <header
+        class="md:hidden border-b border-muted-light bg-white shadow-sm relative"
+    >
+        <div
+            class="flex items-center justify-between px-4 py-3 absolute -top-[10px] right-0"
         >
-            <Dropdown :isOpen="isHide" />
-        </button>
+            <button
+                @click="isHide = !isHide"
+                aria-label="Toggle search filters"
+                class="shrink-0 w-9 h-9 rounded-full border border-primary bg-white flex items-center justify-center shadow-sm transition-transform duration-300"
+            >
+                <Dropdown :isOpen="!isHide" />
+            </button>
+        </div>
 
         <Transition name="dropdown">
-            <div v-show="!isHide" class="p-4 space-y-4 bg-white">
+            <div v-show="!isHide" class="p-4 pt-1 space-y-4 bg-white">
                 <div>
                     <label
-                        class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                        class="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wide"
                         >Search</label
                     >
                     <BaseInput
                         v-model="searchName"
                         :is-search="true"
                         placeholder="Provider name or service"
-                        input-class="px-4 py-2.5"
+                        input-class="px-4 py-2.5 rounded-xl"
+                        @keyup.enter="handleSearch"
                     />
                 </div>
 
                 <div>
                     <label
-                        class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                        class="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wide"
                         >Location</label
                     >
+
                     <BaseInput
                         v-model="searchLocation"
-                        placeholder="Search by City"
-                        input-class="px-4 py-2.5"
+                        :placeholder="
+                            locating ? 'Locating...' : 'Enter your city'
+                        "
+                        input-class="px-4 py-3 rounded-xl w-full"
+                        :readonly="locating"
+                        @keyup.enter="handleSearch"
                     >
                         <template #suffix>
-                            <Location
-                                clickable
-                                @get-location="handleLocation"
-                            />
+                            <span class="pr-3 flex items-center">
+                                <Location
+                                    clickable
+                                    @get-location="handleLocation"
+                                    @loading="locating = $event"
+                                />
+                            </span>
                         </template>
                     </BaseInput>
                 </div>
 
                 <div>
                     <label
-                        class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                        class="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wide"
                         >Care Type</label
                     >
                     <Combobox
                         v-model="planCodeType"
                         :items="planCodeList"
-                        input-class="px-4 py-2.5"
+                        input-class="px-4 py-2.5 rounded-xl"
                         :searchBar="false"
+                        @update:modelValue="updateQuery"
                     />
                 </div>
 
                 <div>
                     <label
-                        class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
-                        >Sort By</label
+                        class="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wide"
+                        >Sort by</label
                     >
                     <div class="flex gap-2 flex-wrap">
                         <button
                             v-for="sort in sortOptions"
                             :key="sort.value"
                             @click="handleSortChange(sort.value)"
-                            class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all"
+                            class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
                             :class="
                                 activeSortOption === sort.value
-                                    ? 'bg-secondary text-white border-muted'
-                                    : 'bg-white text-slate-600 border-slate-200'
+                                    ? 'bg-primary text-white border-primary'
+                                    : 'bg-white text-muted border-muted-light'
                             "
                         >
                             {{ sort.label }}
@@ -172,17 +208,19 @@
                 </div>
 
                 <button
-                    class="w-full py-2.5 bg-primary flex items-center justify-center gap-2 rounded-full border"
+                    class="w-full py-3 bg-primary hover:bg-primary-600 active:scale-[0.99] flex items-center justify-center gap-2 rounded-xl border border-primary shadow-sm transition-all duration-150"
                     @click="handleSearch"
                 >
-                    <Search class="text-white" />
-                    <span class="text-white text-sm font-medium">Search</span>
+                    <Search extraClass="text-white" />
+                    <span class="text-white text-sm font-semibold">Search</span>
                 </button>
             </div>
         </Transition>
     </header>
 </template>
+
 <script setup lang="ts">
+import { ref } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import Location from "~/components/icons/location.vue";
@@ -193,6 +231,7 @@ const route = useRoute();
 const router = useRouter();
 
 const isHide = ref(false);
+const locating = ref(false);
 
 const props = defineProps<{
     searchName?: string;
@@ -246,27 +285,46 @@ const long = ref<string | number>(
     (route.query.long as string) ?? props.long ?? DEFAULT_LOCATION.long,
 );
 
+function buildQuery() {
+    return {
+        provider_name: String(searchName.value ?? ""),
+        location: String(searchLocation.value || DEFAULT_LOCATION.label),
+        lat: String(lat.value ?? ""),
+        long: String(long.value ?? ""),
+        plan_code: String(planCodeType.value ?? "C"),
+        sort: String(activeSortOption.value ?? "recommended"),
+    };
+}
+
 const updateQuery = () => {
-    const query = {
-        provider_name: searchName.value,
-        location: searchLocation.value || DEFAULT_LOCATION.label,
-        lat: lat.value || DEFAULT_LOCATION.lat,
-        long: long.value || DEFAULT_LOCATION.long,
-        plan_code: planCodeType.value,
-        // sort: activeSortOption.value,
+    const query = buildQuery();
+    const current = {
+        provider_name: String(route.query.provider_name ?? ""),
+        location: String(route.query.location ?? DEFAULT_LOCATION.label),
+        lat: String(route.query.lat ?? ""),
+        long: String(route.query.long ?? ""),
+        plan_code: String(route.query.plan_code ?? "C"),
+        sort: String(route.query.sort ?? "recommended"),
     };
 
-    if (JSON.stringify(route.query) === JSON.stringify(query)) {
+    if (JSON.stringify(current) === JSON.stringify(query)) {
         return;
     }
 
     router.replace({ query });
 };
 
+const onLocationInput = (value: string) => {
+    searchLocation.value = value;
+    lat.value = "";
+    long.value = "";
+};
+
 const handleLocation = (data: any) => {
     searchLocation.value = data.label || DEFAULT_LOCATION.label;
     lat.value = data.lat ?? DEFAULT_LOCATION.lat;
     long.value = data.lng ?? DEFAULT_LOCATION.long;
+    locating.value = false;
     updateQuery();
 };
 
@@ -280,6 +338,9 @@ const handleSearch = () => {
         searchLocation.value = DEFAULT_LOCATION.label;
         lat.value = DEFAULT_LOCATION.lat;
         long.value = DEFAULT_LOCATION.long;
+    } else if (!lat.value || !long.value) {
+        lat.value = "";
+        long.value = "";
     }
 
     updateQuery();

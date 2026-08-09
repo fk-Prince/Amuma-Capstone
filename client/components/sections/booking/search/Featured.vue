@@ -1,18 +1,21 @@
 <template>
-    <section class="py-16">
+    <section class="py-16 font-sans">
         <div class="max-w-6xl mx-auto px-6">
             <div class="mb-10">
-                <span
-                    class="text-xs font-semibold uppercase tracking-widest text-slate-400"
-                >
-                    Featured
-                </span>
+                <div class="flex items-center gap-2.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+                    <span
+                        class="text-xs font-medium tracking-[0.16em] uppercase text-muted"
+                    >
+                        Featured
+                    </span>
+                </div>
                 <h2
-                    class="mt-2 text-3xl md:text-4xl font-bold text-slate-900 leading-tight"
+                    class="mt-3 text-3xl md:text-4xl font-medium text-secondary leading-tight"
                 >
                     Most trusted homecare
                 </h2>
-                <p class="mt-2 text-slate-500 text-sm leading-relaxed max-w-md">
+                <p class="mt-2 text-muted text-sm leading-relaxed max-w-md">
                     Explore highly rated caregiving branches based on reviews,
                     availability, and service quality.
                 </p>
@@ -25,17 +28,17 @@
                 <div
                     v-for="n in 3"
                     :key="n"
-                    class="border rounded-2xl overflow-hidden animate-pulse"
+                    class="border border-muted-light rounded-2xl overflow-hidden animate-pulse"
                 >
-                    <div class="h-32 bg-slate-100"></div>
+                    <div class="h-32 bg-muted-light"></div>
                     <div class="p-4 space-y-3">
-                        <div class="h-4 bg-slate-100 rounded w-3/4"></div>
-                        <div class="h-3 bg-slate-100 rounded w-1/2"></div>
+                        <div class="h-4 bg-muted-light rounded w-3/4"></div>
+                        <div class="h-3 bg-muted-light rounded w-1/2"></div>
                         <div class="flex justify-between mt-4">
                             <div
-                                class="h-6 w-16 bg-slate-100 rounded-full"
+                                class="h-6 w-16 bg-muted-light rounded-full"
                             ></div>
-                            <div class="h-3 w-20 bg-slate-100 rounded"></div>
+                            <div class="h-3 w-20 bg-muted-light rounded"></div>
                         </div>
                     </div>
                 </div>
@@ -53,9 +56,9 @@
 
             <div
                 v-if="!loading && branches && branches.length === 0"
-                class="text-center py-16 text-slate-400"
+                class="text-center py-16"
             >
-                No branches available.
+                <p class="text-sm text-muted">No branches available.</p>
             </div>
         </div>
     </section>
@@ -70,7 +73,7 @@ import type { BranchRetrieve } from "~/types/branch";
 defineEmits(["select"]);
 
 const branches = ref<BranchRetrieve[]>([]);
-const loading = ref(false);
+const loading = ref(true);
 
 const handleSelect = (branch: BranchRetrieve) => {
     navigateTo({
@@ -78,6 +81,7 @@ const handleSelect = (branch: BranchRetrieve) => {
     });
 };
 onMounted(async () => {
+    loading.value = true;
     try {
         const res = await branchService.featured({ per_page: 9 });
         branches.value = res?.data ?? [];

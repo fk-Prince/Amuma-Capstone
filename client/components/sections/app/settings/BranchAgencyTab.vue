@@ -29,10 +29,11 @@ import type { Agency } from "~/types/agency";
 import { agencySchema } from "~/schema/agency-schema";
 import { useToast } from "~/composables/useToast";
 import { useBranchStore } from "~/stores/branch";
+import { useRoute } from "vue-router";
 
 const branchStore = useBranchStore();
 const { success, error } = useToast();
-
+const route = useRoute();
 const props = defineProps<{
     uuid?: string;
 }>();
@@ -65,6 +66,7 @@ const saving = ref(false);
 const fieldKeyMap: Record<string, string> = {
     agency_name: "agency_name",
     agency_description: "agency_description",
+    agency_email: "agency_email",
 };
 
 const handleSave = async (): Promise<boolean> => {
@@ -91,6 +93,7 @@ const handleSave = async (): Promise<boolean> => {
 
     try {
         const payload = {
+            branch_uuid: route.params.uuid as string,
             agency_name: localValue.value.name,
             agency_description: localValue.value.description,
             agency_email: localValue.value.email,
@@ -106,10 +109,9 @@ const handleSave = async (): Promise<boolean> => {
         };
 
         const res = await agencyService.update(props.uuid as string, payload);
-
-        agency.value = structuredClone(toRaw(localValue.value));
-
         await branchStore.refreshBranch();
+        agency.value = branchStore.activeBranch?.agency ?? null;
+        localValue.value = agency.value;
 
         success(res.message);
 

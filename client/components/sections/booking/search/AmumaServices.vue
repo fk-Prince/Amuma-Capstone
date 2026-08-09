@@ -1,21 +1,24 @@
 <template>
-    <section class="py-20">
+    <section class="py-20 font-sans">
         <div class="max-w-6xl mx-auto px-6">
             <div class="text-center mb-14">
-                <span
-                    class="text-xs font-semibold tracking-widest uppercase text-gray-500"
-                >
-                    Care Services
-                </span>
+                <div class="flex items-center justify-center gap-2.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+                    <span
+                        class="text-xs font-medium tracking-[0.16em] uppercase text-muted"
+                    >
+                        Care services
+                    </span>
+                </div>
 
                 <h2
-                    class="mt-2 text-2xl md:text-3xl font-semibold text-gray-900"
+                    class="mt-3 text-2xl md:text-3xl font-medium text-secondary"
                 >
                     Everything you need for quality homecare
                 </h2>
 
                 <p
-                    class="mt-4 text-sm text-gray-600 max-w-xl mx-auto leading-relaxed"
+                    class="mt-4 text-sm text-muted max-w-xl mx-auto leading-relaxed"
                 >
                     Easily find caregivers, book services, monitor care
                     activities, and manage payments all in one simple and secure
@@ -27,27 +30,25 @@
                 <div
                     v-for="module in modules"
                     :key="module.title"
-                    class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition bg-white"
+                    class="group border border-muted-light rounded-2xl p-5 bg-white hover:border-primary-200 hover:shadow-md hover:-translate-y-1 transition-all"
                 >
-                    <div class="flex items-center justify-between">
-                        <div
-                            class="w-10 h-10 rounded-lg flex items-center justify-center"
-                            :class="module.iconBg"
-                        >
-                            <component
-                                :is="module.icon"
-                                class="w-5 h-5"
-                                :class="module.iconColor"
-                            />
-                        </div>
+                    <div
+                        class="w-10 h-10 rounded-lg flex items-center justify-center"
+                        :class="module.iconBg"
+                    >
+                        <component
+                            :is="module.icon"
+                            class="w-5 h-5"
+                            :class="module.iconColor"
+                        />
                     </div>
 
                     <div class="mt-4">
-                        <h3 class="text-sm font-semibold text-gray-900">
+                        <h3 class="text-sm font-medium text-secondary">
                             {{ module.title }}
                         </h3>
 
-                        <p class="text-xs text-gray-600 mt-1 leading-relaxed">
+                        <p class="text-xs text-muted mt-1.5 leading-relaxed">
                             {{ module.description }}
                         </p>
                     </div>
@@ -63,32 +64,32 @@ import { Search, CalendarCheck, Bell, CreditCard } from "lucide-vue-next";
 const modules = [
     {
         icon: Search,
-        iconBg: "bg-indigo-100",
-        iconColor: "text-indigo-600",
-        title: "Find Care Services",
+        iconBg: "bg-primary-50",
+        iconColor: "text-primary-600",
+        title: "Find care services",
         description:
             "Search for caregivers, agencies, and nearby care facilities based on your needs.",
     },
     {
         icon: CalendarCheck,
-        iconBg: "bg-emerald-100",
-        iconColor: "text-emerald-600",
-        title: "Book Appointments",
+        iconBg: "bg-accent-50",
+        iconColor: "text-accent-600",
+        title: "Book appointments",
         description:
             "Schedule homecare visits or reserve available care services quickly and easily.",
     },
     {
         icon: Bell,
-        iconBg: "bg-amber-100",
-        iconColor: "text-amber-600",
-        title: "Stay Updated",
+        iconBg: "bg-primary-50",
+        iconColor: "text-primary-600",
+        title: "Stay updated",
         description:
             "Receive updates about care activities, schedules, and patient information.",
     },
     {
         icon: CreditCard,
-        iconBg: "bg-blue-100",
-        iconColor: "text-blue-600",
+        iconBg: "bg-accent-50",
+        iconColor: "text-accent-600",
         title: "Payments",
         description:
             "View invoices and manage secure payments for care services.",

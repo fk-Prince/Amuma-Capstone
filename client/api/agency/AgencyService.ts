@@ -20,9 +20,9 @@ class AgencyService extends BaseService {
         return await this.request(this.resource, 'GET', params);
     }
 
-    // async update(uuid: string, payload: object = {}): Promise<any> {
-    //     return await this.request(`${this.resource}/${uuid}`, 'PUT', payload);
-    // }
+    async update(uuid: string, payload: object = {}): Promise<any> {
+        return await this.request(`${this.resource}/${uuid}`, 'PUT', payload);
+    }
 
     // async validate(params: Agency): Promise<any> {
     //     const errors: Record<string, string> = {};

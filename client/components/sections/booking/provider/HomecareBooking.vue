@@ -351,7 +351,7 @@ import {
 } from "~/utils/time";
 import type { HomecareBooking } from "~/types/booking";
 import type { Service } from "~/types/service";
-import type { BranchAvailability, BranchHomecare } from "~/types/branch";
+import type { BranchSettings, BranchHomecare } from "~/types/branch";
 import { useMedicalServices } from "~/composables/useBooking";
 import { generateAvailableAmPmTimesBySchedule } from "~/utils/time-slot";
 
@@ -361,7 +361,7 @@ const props = defineProps<{
     loading?: boolean;
     errors?: Record<string, string> | null;
     homecare?: BranchHomecare;
-    settings?: BranchAvailability;
+    settings?: BranchSettings;
 }>();
 
 const { selectedServiceLabel, selectedServicesTotal, bookingTypes } =

@@ -2,7 +2,7 @@
     <div class="w-full mx-auto px-6">
         <div v-if="!isMounted || props.loading" class="flex flex-col gap-4">
             <div
-                v-for="n in 3"
+                v-for="n in 2"
                 :key="n"
                 class="border rounded-2xl overflow-hidden animate-pulse"
             >

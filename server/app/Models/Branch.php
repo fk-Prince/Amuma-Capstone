@@ -102,6 +102,11 @@ class Branch extends Model
         return $this->hasMany(Booking::class, 'branch_id', 'branch_id');
     }
 
+    public function images()
+    {
+        return $this->hasMany(BranchImage::class, 'branch_id', 'branch_id');
+    }
+
     public function availableBeds()
     {
         return $this->hasMany(Bed::class, 'room_id', 'room_id')

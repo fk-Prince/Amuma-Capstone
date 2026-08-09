@@ -208,6 +208,7 @@ namespace App\Http\Resources;
 
 use App\Models\Bed;
 use App\Models\Booking;
+use App\Models\BranchImage;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -231,6 +232,9 @@ class BranchResource extends JsonResource
             $openingTime,
             $closingTime
         );
+
+        $reservedWalkinSlots = $settings['reserved_walkin_slots'] ?? 0;
+        $remainingReserved = $reservedWalkinSlots;
 
         return [
             'branch_id' => $this->branch_id,
@@ -272,7 +276,7 @@ class BranchResource extends JsonResource
 
             'facility' => $this->contracts
                 ->where('category', 'Facility')
-                ->map(function ($contract) use ($settings) {
+                ->map(function ($contract) use (&$remainingReserved) {
 
                     $roomsOfType = $this->rooms
                         ->filter(function ($room) use ($contract) {
@@ -295,8 +299,11 @@ class BranchResource extends JsonResource
                         })
                         ->count();
 
-                    $reservedWalkinSlots = $settings['reserved_walkin_slots'] ?? 0;
-                    $availableSlots = max(0, $availableBeds - $reservedWalkinSlots);
+                    $deduction = min($availableBeds, $remainingReserved);
+                    $remainingReserved -= $deduction;
+
+                    $availableSlots = max(0, $availableBeds - $deduction);
+
                     return [
                         'available_slot' => $availableSlots,
                         'accommodation_type' => $contract->accommodation_type,
@@ -309,6 +316,19 @@ class BranchResource extends JsonResource
                 ->values()
                 ->all(),
 
+            'images' => $this->whenLoaded('images', function () {
+                return $this->images
+                    ->whereIn('type', [BranchImage::IMAGE_BRANCH, BranchImage::IMAGE_COMMON_ROOM, BranchImage::IMAGE_VIP_ROOM])
+                    ->map(function ($image) {
+                        return [
+                            'branch_image_id' => $image->branch_image_id,
+                            'image_url' => $image->image_url,
+                            'type' => $image->type,
+                            'description' => $image->description,
+                        ];
+                    })
+                    ->values();
+            }),
 
 
             'homecare' => [

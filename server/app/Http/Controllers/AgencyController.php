@@ -29,4 +29,15 @@ class AgencyController extends Controller
         ]);
         return $this->agencyService->listAgency($request->all());
     }
+
+    public function update(Request $request, string $uuid)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::ManageBranches, PermissionAction::Update);
+        $request->merge([
+            'branch_id' => $branch->branch_id,
+            'agency_id' => $branch->agency_id
+        ]);
+        return $this->agencyService->update($request->all());
+    }
 }

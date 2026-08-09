@@ -1,10 +1,10 @@
 <template>
     <div
         v-if="variant === 1"
-        class="rounded-2xl border bg-white overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300"
+        class="rounded-2xl border border-muted-light bg-white overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary-200"
         @click="$emit('select', branch)"
     >
-        <div class="relative h-32 bg-slate-100">
+        <div class="relative h-32 bg-muted-light">
             <img
                 v-if="branch?.image"
                 :src="branch.image"
@@ -19,7 +19,7 @@
                 alt="default logo"
             />
             <span
-                class="absolute left-3 top-3 rounded-md bg-white/90 px-2.5 py-1 text-xs font-semibold text-emerald-700 shadow-sm backdrop-blur-sm"
+                class="absolute left-3 top-3 rounded-md bg-white/90 px-2.5 py-1 text-xs font-semibold text-accent-700 shadow-sm backdrop-blur-sm"
             >
                 {{ getTime(branch.settings).label }}
             </span>
@@ -29,25 +29,22 @@
             >
                 <Star class="h-3 w-3 text-orange-400 fill-orange-400" />
 
-                <span class="text-xs font-semibold text-slate-700">
+                <span class="text-xs font-semibold text-secondary">
                     {{ branch.averageRating ?? "0.0" }}
                 </span>
 
-                <span
-                    v-if="branch.reviewCount > 0"
-                    class="text-xs text-slate-500"
-                >
+                <span v-if="branch.reviewCount > 0" class="text-xs text-muted">
                     ({{ branch.reviewCount }})
                 </span>
             </div>
         </div>
 
         <div class="p-4">
-            <h3 class="font-semibold text-slate-900">
+            <h3 class="font-semibold text-secondary">
                 {{ branch.name }}
             </h3>
 
-            <p class="text-xs text-slate-500 mt-1 flex gap-1">
+            <p class="text-xs text-muted mt-1 flex gap-1">
                 <Location />
                 {{ branch.location.street }}, {{ branch.location.city }}
             </p>
@@ -59,13 +56,13 @@
                 >
                     <template v-if="subscription.plans.name === 'Hybrid'">
                         <span
-                            class="text-xs px-2 py-1 rounded-full font-semibold bg-slate-100 text-slate-700"
+                            class="text-xs px-2 py-1 rounded-full font-semibold bg-primary-50 text-primary-700"
                         >
                             Homecare Services
                         </span>
 
                         <span
-                            class="text-xs px-2 py-1 rounded-full font-semibold bg-slate-100 text-slate-700"
+                            class="text-xs px-2 py-1 rounded-full font-semibold bg-primary-50 text-primary-700"
                         >
                             In-House Facility
                         </span>
@@ -73,7 +70,7 @@
 
                     <span
                         v-else
-                        class="text-xs px-2 py-1 rounded-full font-semibold bg-slate-100 text-slate-700"
+                        class="text-xs px-2 py-1 rounded-full font-semibold bg-primary-50 text-primary-700"
                     >
                         {{ subscription.plans.name }}
                     </span>
@@ -81,20 +78,22 @@
             </div>
         </div>
 
-        <div class="p-4 border-t bg-slate-50 flex justify-between items-center">
+        <div
+            class="p-4 border-t border-muted-light bg-light flex justify-between items-center"
+        >
             <span
                 class="text-xs px-4 uppercase py-1 rounded-full font-semibold"
                 :class="
                     branch.settings.is_open
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-red-100 text-red-600'
+                        ? 'bg-accent-50 text-accent-700'
+                        : 'bg-danger/10 text-danger'
                 "
             >
                 {{ branch.settings.is_open ? "Open" : "Closed" }}
             </span>
             <button
                 @click="$emit('select', branch)"
-                class="text-xs font-semibold text-white bg-primary px-5 py-1.5 rounded-lg hover:bg-blue-700"
+                class="text-xs font-semibold text-white bg-primary px-5 py-1.5 rounded-lg hover:bg-primary-600"
             >
                 Book Now
             </button>

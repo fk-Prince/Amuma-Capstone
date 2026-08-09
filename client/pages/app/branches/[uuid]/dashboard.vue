@@ -1,9 +1,22 @@
 <template>
-    <div>HELLO FROM GENERAL DASHBOARD</div>
+    <div class="min-h-screen bg-light flex items-center justify-center p-8">
+        <ScheduleCard
+            date-label="Today, May 2, 2026"
+            :now-hour="12.75"
+            :branches="branches"
+            @change-day="onChangeDay"
+        />
+        <RoomOccupancyCard :rooms="roomData" />
+    </div>
 </template>
 
 <script setup lang="ts">
-import { useRoute } from "vue-router";
+import RoomOccupancyCard, {
+    type RoomOccupancy,
+} from "~/components/sections/app/Dashboard/RoomOccupancyCard.vue";
+import ScheduleCard, {
+    type Branch,
+} from "~/components/sections/app/Dashboard/ScheduleCard.vue";
 
 definePageMeta({
     layout: "dashboard",
@@ -12,5 +25,56 @@ definePageMeta({
 
 useHead({ title: "Dashboard" });
 
-const route = useRoute();
+const roomData: RoomOccupancy[] = [
+    { label: "VIP", occupied: 2, available: 1, reserved: 1 },
+    { label: "Common", occupied: 1, available: 3, reserved: 5 },
+];
+
+const branches: Branch[] = [
+    {
+        staffInitials: ["SR", "AP", "JA"],
+        extraStaff: 3,
+        shifts: [
+            {
+                name: "Dr. Strange Revillame",
+                role: "doctor",
+                start: 8,
+                end: 12,
+            },
+            {
+                name: "Dr. Apple Pie Macutesy",
+                role: "doctor",
+                start: 14,
+                end: 18,
+            },
+        ],
+    },
+    {
+        staffInitials: ["LW", "JA"],
+        extraStaff: 2,
+        shifts: [
+            { name: "Linda Walker", role: "nurse", start: 8, end: 15 },
+            { name: "Jung Ahyeon", role: "doctor", start: 15, end: 18 },
+        ],
+    },
+    {
+        staffInitials: ["TS", "EA"],
+        extraStaff: 1,
+        shifts: [
+            { name: "Taylor Swift", role: "caregiver", start: 8, end: 16 },
+            { name: "Enami Asa", role: "nurse", start: 16, end: 18.5 },
+        ],
+    },
+    {
+        staffInitials: ["KM", "WK"],
+        extraStaff: 2,
+        shifts: [
+            { name: "Kim Matanglawin", role: "doctor", start: 10, end: 14 },
+            { name: "Wala nako kabalo", role: "caregiver", start: 14, end: 18 },
+        ],
+    },
+];
+function onChangeDay(direction: 1 | -1) {
+    console.log("change day", direction);
+}
 </script>

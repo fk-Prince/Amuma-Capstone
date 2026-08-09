@@ -9,7 +9,7 @@
                 <ProviderImage
                     :loading="loading"
                     :primaryImage="branch?.image"
-                    :secondaryImage="branch?.secondaryImage"
+                    :secondaryImage="branch?.images"
                     @favorite="toggleFavorite"
                 />
             </div>
@@ -74,13 +74,13 @@
                                 </div>
                             </div>
                         </div>
-                        <div
+                        <!-- <div
                             class="py-8 scroll-mt-20"
                             v-if="!loading"
                             ref="servicesRef"
                         >
                             <ServiceSection />
-                        </div>
+                        </div> -->
 
                         <div
                             class="py-8 scroll-mt-20"
@@ -111,7 +111,6 @@ import ProviderImage from "~/components/sections/booking/provider/ProviderImage.
 import Navbar from "~/components/sections/booking/provider/Navbar.vue";
 import HeroSection from "~/components/sections/booking/provider/HeroSection.vue";
 import BookingCard from "~/components/sections/booking/provider/BookingCard.vue";
-import ServiceSection from "~/components/sections/booking/provider/ServiceSection.vue";
 import ReviewSection from "~/components/sections/booking/provider/Review.vue";
 import LocationPin from "~/components/ui/LocationPin.vue";
 import Location from "~/components/icons/location.vue";

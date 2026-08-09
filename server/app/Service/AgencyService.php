@@ -9,17 +9,16 @@ use App\Repository\AgencyRepository;
 use App\Http\Resources\AgencyResource;
 use App\Models\User;
 use App\Repository\BranchRepository;
+use App\Service\External\SupabaseService;
 use Exception;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AgencyService
 {
-    private AgencyRepository $agencyRepository;
 
-    public function __construct(AgencyRepository $agencyRepository, BranchRepository $branchRepository)
-    {
-        $this->agencyRepository = $agencyRepository;
-    }
+    public function __construct(private AgencyRepository $agencyRepository, private BranchRepository $branchRepository) {}
 
     public function listAgency(array $payload)
     {
@@ -34,45 +33,48 @@ class AgencyService
         // return AgencyResource::collection($collection);
     }
 
-    // public function update(array $payload, User $user, string $uuid)
-    // {
-    //     $branch = $this->branchRepository->findByField('uuid', $uuid);
+    public function update(array $payload)
+    {
 
-    //     if (!$branch) {
-    //         throw new Exception(__('Branch does not exist'), 404);
-    //     }
+        $agency = $this->agencyRepository->findAgencyByField('agency_id', $payload['agency_id']);
 
-    //     $agency = $this->agencyRepository->findAgencyByField('agency_id', $branch->agency_id);
+        if (!$agency) {
+            throw new Exception(__('Agency does not exist'), 404);
+        }
 
-    //     if (!$agency) {
-    //         throw new Exception(__('Agency does not exist'), 404);
-    //     }
+        return DB::transaction(function () use ($agency, $payload) {
 
-    //     AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Update);
+            Log::info($payload);
+            if (
+                isset($payload['agency_image']) &&
+                $payload['agency_image'] instanceof UploadedFile
+            ) {
+                $image = SupabaseService::store($payload['agency_image']);
+            }
 
-    //     return DB::transaction(function () use ($agency, $payload) {
+            $agency->update([
+                'name' => $payload['agency_name'],
+                'description' => $payload['agency_description'],
+                'email' => $payload['agency_email'] ?? null,
+                'image' => $image['url'] ?? $payload['agency_image'] ?? null,
+            ]);
 
-    //         $agency->update([
-    //             'name' => $payload['agency_name'],
-    //             'description' => $payload['agency_description'],
-    //         ]);
 
+            $agency->locations()->updateOrCreate(
+                [],
+                [
+                    'street' => $payload['location']['street'],
+                    'city' => $payload['location']['city'],
+                    'province' => $payload['location']['province'],
+                    'country' => $payload['location']['country'],
+                    'longitude' => $payload['location']['longitude'] ?? null,
+                    'latitude' => $payload['location']['latitude'] ?? null,
+                ]
+            );
 
-    //         $agency->locations()->updateOrCreate(
-    //             [],
-    //             [
-    //                 'street' => $payload['location']['street'],
-    //                 'city' => $payload['location']['city'],
-    //                 'province' => $payload['location']['province'],
-    //                 'country' => $payload['location']['country'],
-    //                 'longitude' => $payload['location']['longitude'] ?? null,
-    //                 'latitude' => $payload['location']['latitude'] ?? null,
-    //             ]
-    //         );
-
-    //         return response()->json([
-    //             'message' => 'Agency Information Successfully Updated.'
-    //         ], 200);
-    //     });
-    // }
+            return response()->json([
+                'message' => 'Agency Information Successfully Updated.'
+            ], 200);
+        });
+    }
 }

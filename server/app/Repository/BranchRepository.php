@@ -65,10 +65,9 @@ class BranchRepository
 
             ->when(!empty($filters['city']), function ($query) use ($filters) {
                 $query->whereHas('location', function ($q) use ($filters) {
-                    $q->where('city', 'ILIKE', $filters['city']);
+                    $q->where('city', 'ILIKE', '%' . $filters['city'] . '%');
                 });
             })
-
             ->when(!empty($filters['provider_name']), function ($query) use ($filters) {
                 $query->where('branch_name', 'ilike', $filters['provider_name']);
             })
@@ -94,11 +93,14 @@ class BranchRepository
             'agencies',
             'services',
             'bookings',
-            'rooms'
-            // 'services' => function ($query) {
-            //     $query->where('is_available', true)
-            //         ->with('categories');
-            // },
+            'rooms',
+            'images' => function ($query) {
+                $query->whereIn('type', [
+                    BranchImage::IMAGE_BRANCH,
+                    BranchImage::IMAGE_COMMON_ROOM,
+                    BranchImage::IMAGE_VIP_ROOM,
+                ]);
+            },
         ])
             ->withAvg('reviews', 'rate')
             ->withCount('reviews')

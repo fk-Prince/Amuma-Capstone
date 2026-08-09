@@ -1,131 +1,151 @@
 <template>
-    <section class="relative min-h-screen overflow-hidden">
+    <section class="relative overflow-hidden bg-secondary">
         <img
-            :src="Logo"
-            class="absolute inset-0 w-full h-full object-cover opacity-60 object-center"
+            :src="logo"
+            class="pointer-events-none select-none absolute inset-0 w-full h-full object-cover"
             alt=""
         />
-        <div class="absolute inset-0 bg-black/50"></div>
         <div
-            class="relative z-10 max-w-[85rem] mx-auto px-6 py-16 h-full flex items-center"
-        >
-            <div
-                class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center w-full"
-            >
-                <div class="max-w-2xl">
-                    <span
-                        class="inline-flex items-center rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 text-sm font-medium text-white"
-                    >
-                        Trusted Home Care Services
-                    </span>
+            class="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/90 to-secondary/70"
+        ></div>
+
+        <div class="relative z-10 max-w-[90rem] mx-auto px-6 py-20 lg:py-28">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div class="max-w-xl">
+                    <div class="flex items-center gap-2.5">
+                        <span
+                            class="w-1.5 h-1.5 rounded-full bg-accent-400"
+                        ></span>
+                        <span
+                            class="text-xs font-medium tracking-[0.16em] uppercase text-white/60"
+                        >
+                            Trusted home care services
+                        </span>
+                    </div>
+
                     <h1
-                        class="mt-6 text-4xl md:text-6xl font-extrabold text-white leading-tight"
+                        class="mt-5 text-4xl md:text-5xl lg:text-6xl font-medium text-white leading-[1.08] tracking-tight"
                     >
-                        Find Quality
-                        <span class="text-primary">Care Near You</span>
+                        Find quality
+                        <br />
+                        <span class="text-primary-300">care near you</span>
                     </h1>
+
                     <p
-                        class="mt-6 text-lg text-white/80 leading-relaxed max-w-xl"
+                        class="mt-6 text-base md:text-lg text-white/60 leading-relaxed max-w-md"
                     >
-                        Easily book professional caregivers, home-care services,
-                        and trusted care facilities. Compare options, check
-                        availability, and schedule care with confidence all in
+                        Book professional caregivers, home-care services, and
+                        trusted care facilities. Compare options, check
+                        availability, and schedule care with confidence, all in
                         one place.
                     </p>
-                    <div class="mt-8 flex flex-wrap gap-4">
-                        <div
-                            class="px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm text-white"
+
+                    <!-- feature strip: a label pattern, not badge chips -->
+                    <ul
+                        class="mt-9 flex flex-wrap gap-x-6 gap-y-4 text-sm text-white/70"
+                    >
+                        <li
+                            v-for="feature in features"
+                            :key="feature.label"
+                            class="flex items-center gap-2"
                         >
-                            Home Care Services
-                        </div>
+                            <span
+                                class="text-primary-300"
+                                v-html="feature.icon"
+                            ></span>
+                            {{ feature.label }}
+                        </li>
+                    </ul>
+
+                    <!-- stats -->
+                    <div class="mt-10 flex divide-x divide-white/10">
                         <div
-                            class="px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm text-white"
+                            v-for="stat in stats"
+                            :key="stat.label"
+                            class="px-6 first:pl-0"
                         >
-                            Verified Caregivers
-                        </div>
-                        <div
-                            class="px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm text-white"
-                        >
-                            Facility Booking
-                        </div>
-                        <div
-                            class="px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm text-white"
-                        >
-                            Real-Time Availability
-                        </div>
-                    </div>
-                    <div class="mt-10 flex gap-10">
-                        <div>
-                            <p class="text-3xl font-bold text-white">500+</p>
-                            <p class="text-sm text-white/70">
-                                Bookings Managed
+                            <p
+                                class="text-2xl md:text-3xl font-medium text-white tabular-nums"
+                            >
+                                {{ stat.value }}
                             </p>
-                        </div>
-                        <div>
-                            <p class="text-3xl font-bold text-white">50+</p>
-                            <p class="text-sm text-white/70">Care Providers</p>
-                        </div>
-                        <div>
-                            <p class="text-3xl font-bold text-white">99.9%</p>
-                            <p class="text-sm text-white/70">Platform Uptime</p>
+                            <p class="mt-1 text-xs text-white/50">
+                                {{ stat.label }}
+                            </p>
                         </div>
                     </div>
                 </div>
+
+                <!-- search card -->
                 <div
-                    class="bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 md:p-8 w-full max-w-lg lg:ml-auto"
+                    class="bg-white rounded-3xl shadow-xl border border-black/5 p-6 md:p-8 w-full max-w-lg lg:ml-auto"
                 >
                     <div class="mb-6">
-                        <span
-                            class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700"
-                        >
-                            Trusted Care Services
-                        </span>
-                        <h2 class="mt-3 text-2xl font-bold text-slate-900">
-                            Find Care Near You
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="w-1.5 h-1.5 rounded-full bg-accent"
+                            ></span>
+                            <span
+                                class="text-xs font-medium tracking-[0.14em] uppercase text-muted"
+                            >
+                                Trusted care services
+                            </span>
+                        </div>
+                        <h2 class="mt-3 text-2xl font-medium text-secondary">
+                            Find care near you
                         </h2>
-                        <p class="mt-2 text-sm text-slate-500">
+                        <p class="mt-2 text-sm text-muted">
                             Search verified caregivers, home-care services, and
                             residential care facilities tailored to your needs.
                         </p>
                     </div>
+
                     <div class="grid gap-5">
                         <div>
                             <label
-                                class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                                class="mb-2 block text-xs font-medium text-muted uppercase tracking-wide"
                             >
                                 Search
                             </label>
                             <BaseInput
                                 v-model="searchName"
                                 :is-search="true"
-                                placeholder="Provider name or service"
+                                placeholder="Provider name"
                                 input-class="px-4 py-3"
                             />
                         </div>
                         <div>
                             <label
-                                class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                                class="mb-2 block text-xs font-medium text-muted uppercase tracking-wide"
                             >
                                 Location
                             </label>
                             <BaseInput
                                 v-model="searchLocation"
-                                placeholder="City"
+                                :placeholder="
+                                    locating
+                                        ? 'Locating...'
+                                        : 'Enter your city.'
+                                "
                                 input-class="px-4 py-3"
+                                :readonly="locating"
                             >
                                 <template #suffix>
-                                    <Location
-                                        clickable
-                                        @get-location="handleLocation"
-                                    />
+                                    <span class="pr-3 flex items-center">
+                                        <Location
+                                            clickable
+                                            @get-location="handleLocation"
+                                            @loading="locating = $event"
+                                        />
+                                    </span>
                                 </template>
                             </BaseInput>
                         </div>
                         <div>
                             <label
-                                class="mb-2 block text-xs font-semibold text-slate-500 uppercase"
+                                class="mb-2 block text-xs font-medium text-muted uppercase tracking-wide"
                             >
-                                Care Type
+                                Care type
                             </label>
                             <Combobox
                                 v-model="planCode"
@@ -135,18 +155,49 @@
                             />
                         </div>
                     </div>
+
                     <BaseButton
                         @click="searchClick"
-                        class="mt-6 w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg transition-all"
+                        class="mt-6 w-full py-3 rounded-xl bg-primary hover:bg-primary-600 text-white font-medium shadow-sm transition-colors flex items-center justify-center gap-2"
                     >
-                        Search Available Homecare
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        >
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="M21 21l-4.35-4.35" />
+                        </svg>
+                        Search available homecare
                     </BaseButton>
+
                     <div
-                        class="mt-6 border-t border-slate-100 pt-5 flex flex-wrap gap-4 text-xs text-slate-500"
+                        class="mt-6 border-t border-muted-light pt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted"
                     >
-                        <span>✓ Verified Care Providers</span>
-                        <span>✓ Easy Online Booking</span>
-                        <span>✓ Safe & Secure Service</span>
+                        <span
+                            v-for="trust in trustPoints"
+                            :key="trust"
+                            class="flex items-center gap-1.5"
+                        >
+                            <svg
+                                width="13"
+                                height="13"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.5"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="text-accent shrink-0"
+                            >
+                                <path d="M20 6L9 17l-5-5" />
+                            </svg>
+                            {{ trust }}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -158,7 +209,7 @@ import { ref } from "vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Location from "~/components/icons/location.vue";
-import Logo from "~/assets/images/Booking_Logo.png";
+import logo from "~/assets/images/Booking_Logo.png";
 import BaseButton from "~/components/ui/BaseButton.vue";
 
 useHead({ title: "Bookings" });
@@ -168,6 +219,7 @@ const searchName = ref("");
 const searchLocation = ref("");
 const lat = ref("");
 const long = ref("");
+const locating = ref(false);
 
 const DEFAULT_LOCATION = {
     label: "Davao City",
@@ -199,5 +251,36 @@ const planCodeList = [
     { label: "All (Homecare & Inhouse Facility)", value: "C" },
     { label: "Homecare Services", value: "A" },
     { label: "In-house Facility", value: "B" },
+];
+
+const features = [
+    {
+        label: "Home care services",
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>',
+    },
+    {
+        label: "Verified caregivers",
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>',
+    },
+    {
+        label: "Facility booking",
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+    },
+    {
+        label: "Real-time availability",
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+    },
+];
+
+const stats = [
+    { value: "500+", label: "Bookings managed" },
+    { value: "50+", label: "Care providers" },
+    { value: "99.9%", label: "Platform uptime" },
+];
+
+const trustPoints = [
+    "Verified care providers",
+    "Easy online booking",
+    "Safe and secure service",
 ];
 </script>

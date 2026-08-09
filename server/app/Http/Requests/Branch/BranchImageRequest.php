@@ -16,7 +16,7 @@ class StoreBranchImageRequest extends FormRequest
         return [
             'image' => ['required', 'image', 'max:5120'],
             'branch_uuid' => ['required', 'string', 'exists:branches,uuid'],
-            'type' => ['required', 'string', 'in:BRANCH,ROOM,FACILITY,OTHER'],
+            'type' => ['required', 'string', 'in:BRANCH,COMMON_ROOM,VIP_ROOM,FACILITY,OTHER'],
             'description' => ['nullable', 'string', 'max:1000'],
         ];
     }

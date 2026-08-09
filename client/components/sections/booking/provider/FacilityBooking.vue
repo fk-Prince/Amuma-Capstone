@@ -49,7 +49,6 @@
         </div>
 
         <div class="space-y-6">
-            <!-- Admission Type -->
             <div>
                 <div v-if="loading" class="grid md:grid-cols-2 gap-3">
                     <div
@@ -212,12 +211,19 @@
                                         </p>
                                     </div>
 
+                                    <img
+                                        v-if="room.image"
+                                        :src="room.image"
+                                        :alt="room.title"
+                                        class="h-16 w-16 shrink-0 rounded-lg object-cover"
+                                    />
                                     <div
+                                        v-else
                                         class="h-9 w-9 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
                                     >
                                         <component
                                             :is="room.icon"
-                                            class="h-5 w-5"
+                                            class="h-7 w-7"
                                         />
                                     </div>
                                 </div>
@@ -249,7 +255,6 @@
                                 </div>
                             </button>
                         </div>
-
                         <p
                             v-if="errors?.plan"
                             class="text-xs text-red-500 mt-2"
@@ -384,7 +389,7 @@ import { computed, watch } from "vue";
 import type { Component } from "vue";
 import { getLocalDateStr } from "~/utils/time";
 import type { FacilityBooking } from "~/types/booking";
-import type { BranchRetrieve } from "~/types/branch";
+import type { BranchImage, BranchRetrieve } from "~/types/branch";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import {
     Star,
@@ -399,6 +404,19 @@ import {
 interface RoomTypeStat {
     slots: number;
     description: string | null;
+}
+
+function getRoomImage(roomValue: "VIP" | "Common"): string | null {
+    const typeMap: Record<"VIP" | "Common", BranchImage["type"]> = {
+        VIP: "vip_room",
+        Common: "common_room",
+    };
+
+    const match = (props.branch?.images ?? []).find(
+        (img) => img.type === typeMap[roomValue],
+    );
+
+    return match?.image_url ?? null;
 }
 
 const props = defineProps<{
@@ -494,6 +512,7 @@ const roomTypes = computed(() =>
                 ...room,
                 description: data?.description || room.description,
                 slots: data?.slots ?? 0,
+                image: getRoomImage(room.value),
             };
         }),
 );

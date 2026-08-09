@@ -19,11 +19,17 @@ export interface Branch {
     role_name?: string;
     permissions?: Permissions[];
     agency: Agency
-    images: any[];
+    images?: BranchImage[];
     email: string;
     status: string;
 };
 
+export interface BranchImage {
+    branch_image_id: number;
+    image_url: string;
+    type: "branch" | "vip_room" | 'common_room' | "other";
+    description: string | null;
+}
 
 export interface BranchSettings {
     opening: string | null;
@@ -54,7 +60,6 @@ export interface BranchRetrieve {
     name: string;
     description: string | null;
     image: string | undefined;
-    secondaryImage: string[] | undefined;
     settings: BranchSettings;
     averageRating: number | null;
     reviewCount: number;
@@ -64,6 +69,7 @@ export interface BranchRetrieve {
     homecare: BranchHomecare,
     facility: BranchFacility[]
     services: Service[];
+    images?: BranchImage[];
 }
 
 export interface BranchHomecare {

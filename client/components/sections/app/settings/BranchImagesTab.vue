@@ -218,6 +218,7 @@ import type { BranchImageRetrieve } from "~/types/branch-utils";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import { Plus, ImageIcon } from "lucide-vue-next";
+import { useToast } from "~/composables/useToast";
 interface ImageForm {
     type: string;
     description: string;
@@ -231,6 +232,7 @@ interface FormErrors {
     [key: string]: string | undefined;
 }
 
+const { success, error } = useToast();
 const props = defineProps<{
     uuid?: string;
 }>();
@@ -252,7 +254,8 @@ const fileInputRef = ref<HTMLInputElement | null>(null);
 
 const imageTypes = ref([
     { label: "Branch", value: "branch" },
-    { label: "Room", value: "room" },
+    { label: "VIP Room", value: "vip_room" },
+    { label: "Common Room", value: "common_room" },
     { label: "Other", value: "other" },
 ]);
 
@@ -374,6 +377,7 @@ const submit = async () => {
         };
 
         const res = await branchSettingService.create(payload);
+        success(res.message);
         images.value.unshift(res.data ?? res.data.data);
 
         closeModal();

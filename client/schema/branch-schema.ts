@@ -81,27 +81,41 @@ export const branchSchema = z.object({
             .min(1, "Email is required")
             .email("Invalid email address")
             .max(255, "Email must not exceed 255 characters"),
+    // image: z
+    //     .instanceof(File, {
+    //         message: "Please select an image.",
+    //     })
+    //     .refine(
+    //         (file) =>
+    //             [
+    //                 "image/jpeg",
+    //                 "image/jpg",
+    //                 "image/png",
+    //             ].includes(file.type),
+    //         {
+    //             message: "Only JPG and PNG images are allowed.",
+    //         },
+    //     )
+    //     .refine(
+    //         (file) => file.size <= 5 * 1024 * 1024,
+    //         {
+    //             message: "Image size must be less than 5MB.",
+    //         },
+    //     )
+    //     .optional()
+    //     .nullable(),
     image: z
-        .instanceof(File, {
-            message: "Please select an image.",
-        })
-        .refine(
-            (file) =>
-                [
-                    "image/jpeg",
-                    "image/jpg",
-                    "image/png",
-                ].includes(file.type),
-            {
-                message: "Only JPG and PNG images are allowed.",
-            },
-        )
-        .refine(
-            (file) => file.size <= 5 * 1024 * 1024,
-            {
-                message: "Image size must be less than 5MB.",
-            },
-        )
+        .union([
+            z.instanceof(File).refine(
+                (file) =>
+                    ["image/jpeg", "image/jpg", "image/png"].includes(file.type),
+                { message: "Only JPG and PNG images are allowed." },
+            ).refine(
+                (file) => file.size <= 5 * 1024 * 1024,
+                { message: "Image size must be less than 5MB." },
+            ),
+            z.string(),
+        ])
         .optional()
         .nullable(),
 });

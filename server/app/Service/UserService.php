@@ -67,6 +67,7 @@ class UserService
                         'email' => $branch?->agencies->email,
                         'description' => $branch?->agencies->description,
                         'location' => $branch?->agencies->locations,
+                        'image' => $branch->agencies->image,
                     ],
                     'settings' => $branch->settings,
                     'plan' => $branch?->subscriptions

@@ -97,6 +97,7 @@ class BranchService
                 'description' => $payload['description'],
                 'contact_number' => $payload['contact_number'] ?? null,
                 'image' => $image['url'] ?? $payload['image'] ?? null,
+                'email' => $payload['email'] ?? null
             ]);
 
             $branch->location()->updateOrCreate(

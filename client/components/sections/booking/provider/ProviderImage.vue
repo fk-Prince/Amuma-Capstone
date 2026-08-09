@@ -12,12 +12,12 @@
                 <button
                     type="button"
                     class="group relative flex-1 overflow-hidden"
-                    @click="openImage(images[0])"
+                    @click="openImage(0)"
                 >
                     <img
-                        :src="images[0]"
+                        :src="images[0]?.image_url"
+                        :alt="images[0]?.description ?? ''"
                         class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        alt=""
                     />
                     <div
                         class="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10"
@@ -27,24 +27,24 @@
                 <div class="flex w-40 flex-col gap-[3px]">
                     <button
                         v-for="(img, i) in sideImages"
-                        :key="i"
+                        :key="img.branch_image_id"
                         type="button"
                         class="group relative flex-1 overflow-hidden"
                         :class="[
                             i === 0 ? 'rounded-tr-2xl' : '',
                             i === sideImages.length - 1 ? 'rounded-br-2xl' : '',
                         ]"
-                        @click="openImage(img)"
+                        @click="openImage(i + 1)"
                     >
                         <img
-                            :src="img"
+                            :src="img.image_url"
+                            :alt="img.description ?? ''"
                             class="h-full w-full object-cover transition-transform duration-500"
                             :class="
                                 i === sideImages.length - 1 && overflowCount > 0
                                     ? 'blur-sm scale-110'
                                     : 'group-hover:scale-105'
                             "
-                            alt=""
                         />
                         <div
                             v-if="
@@ -64,7 +64,7 @@
 
             <button
                 type="button"
-                @click="openImage(images[0])"
+                @click="openImage(0)"
                 class="hidden sm:inline-flex absolute bottom-8 right-3 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50"
             >
                 <LayoutGrid class="h-4 w-4" />
@@ -74,13 +74,13 @@
             <div class="sm:hidden">
                 <button
                     type="button"
-                    @click="openImage(heroImage)"
+                    @click="openImage(selectedIndex)"
                     class="relative block h-[240px] w-full overflow-hidden rounded-2xl bg-gray-100"
                 >
                     <img
-                        :src="heroImage"
+                        :src="heroImage?.image_url"
+                        :alt="heroImage?.description ?? ''"
                         class="h-full w-full object-cover"
-                        alt=""
                     />
                     <span
                         class="absolute bottom-3 left-3 rounded-full bg-black/50 px-2.5 py-1 text-xs font-medium text-white"
@@ -91,7 +91,7 @@
                 <div class="mt-2 flex gap-2 overflow-x-auto">
                     <button
                         v-for="(img, i) in images"
-                        :key="i"
+                        :key="img.branch_image_id"
                         type="button"
                         @click="selectedIndex = i"
                         class="h-16 w-16 shrink-0 overflow-hidden rounded-lg"
@@ -102,9 +102,9 @@
                         "
                     >
                         <img
-                            :src="img"
+                            :src="img.image_url"
+                            :alt="img.description ?? ''"
                             class="h-full w-full object-cover"
-                            alt=""
                         />
                     </button>
                 </div>
@@ -131,17 +131,21 @@
         </div>
     </div>
 
-    <ImagePopup :image="lightboxImage" @close="lightboxImage = null" />
+    <ImagePopup
+        v-model="lightboxIndex"
+        :images="images"
+        @close="lightboxIndex = null"
+    />
 </template>
-
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { Heart, Share2, LayoutGrid } from "lucide-vue-next";
 import ImagePopup from "~/components/ui/ImagePopup.vue";
+import type { BranchImage } from "~/types/branch";
 
 const props = defineProps<{
-    primaryImage?: string;
-    secondaryImage?: string[];
+    primaryImage?: string | null;
+    secondaryImage?: BranchImage[];
     loading?: boolean;
 }>();
 
@@ -150,18 +154,19 @@ const emit = defineEmits<{
     (e: "share"): void;
 }>();
 
-const images = computed<string[]>(() => {
-    return [
-        props.primaryImage,
-        ...(props.secondaryImage ?? []),
-        "https://picsum.photos/id/1019/800/500",
-        "https://picsum.photos/id/1020/800/500",
-        "https://picsum.photos/id/1021/800/500",
-        "https://picsum.photos/id/1022/800/500",
-        "https://picsum.photos/id/1023/800/500",
-        "https://picsum.photos/id/1023/800/500",
-        "https://picsum.photos/id/1023/800/500",
-    ].filter((i): i is string => typeof i === "string");
+const images = computed<BranchImage[]>(() => {
+    const primary: BranchImage[] = props.primaryImage
+        ? [
+              {
+                  branch_image_id: -1,
+                  image_url: props.primaryImage,
+                  type: "branch",
+                  description: null,
+              },
+          ]
+        : [];
+
+    return [...primary, ...(props.secondaryImage ?? [])];
 });
 
 const sideImages = computed(() => images.value.slice(1, 5));
@@ -171,9 +176,9 @@ const selectedIndex = ref(0);
 watch(images, () => (selectedIndex.value = 0));
 const heroImage = computed(() => images.value[selectedIndex.value]);
 
-const lightboxImage = ref<string | null>(null);
-const openImage = (src?: string) => {
-    if (!src) return;
-    lightboxImage.value = src;
+const lightboxIndex = ref<number | null>(null);
+const openImage = (index: number) => {
+    if (!images.value[index]) return;
+    lightboxIndex.value = index;
 };
 </script>
