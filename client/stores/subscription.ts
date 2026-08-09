@@ -45,11 +45,11 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             closing: "00:00",
             currency: "PHP",
             time_zone: "Asia/Manila",
-            reserved_walkin_slots: 0,
+            reserved_walkin_slots: 3,
             enable_booking_pre_admission: true,
             enable_booking_complete_admission: true,
             minimum_adl_hours: 8,
-            is_open: false,
+            is_open: true,
         } as BranchSettings,
 
         errors: {},
@@ -133,7 +133,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
                 enable_booking_pre_admission: true,
                 enable_booking_complete_admission: true,
                 minimum_adl_hours: 8,
-                is_open: false,
+                is_open: true,
                 online_additional_fee: 0,
             } as BranchSettings;
             this.errors = {};

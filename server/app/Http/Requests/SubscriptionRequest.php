@@ -52,6 +52,11 @@ class SubscriptionRequest extends FormRequest
             'branch_settings.opening' => ['required', 'string'],
             'branch_settings.closing' => ['required', 'string'],
             'branch_settings.time_zone' => ['required', 'string'],
+            'branch_settings.reserved_walkin_slots' => ['required', 'integer'],
+            'branch_settings.enable_booking_pre_admission' => ['required', 'boolean'],
+            'branch_settings.enable_booking_complete_admission' => ['required', 'boolean'],
+            'branch_settings.minimum_adl_hours' => ['required', 'integer'],
+            'branch_settings.is_open' => ['required', 'boolean'],
         ];
     }
 }
