@@ -112,7 +112,7 @@ const loadingMore = ref(false);
 const page = ref(1);
 const lastPage = ref(1);
 
-const PER_PAGE = 1;
+const PER_PAGE = 6;
 
 const DEFAULT_LOCATION = {
     label: "Davao City",
