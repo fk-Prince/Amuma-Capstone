@@ -2,21 +2,14 @@
 
 namespace App\Service;
 
-use App\Enums\ModuleEnum;
-use App\Enums\PermissionAction;
-use App\Guard\AuthGuard;
-use App\Guard\BranchGuard;
+
 use App\Http\Resources\PatientResource;
-use App\Models\Booking;
 use App\Models\Schedule;
 use App\Models\User;
-use App\Repository\BranchRepository;
-use App\Repository\LocationRepository;
 use App\Repository\PatientRepository;
 use App\Repository\UserRepository;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Log;
 
 class PatientService
 {

@@ -9,7 +9,6 @@ use App\Guard\BranchGuard;
 use App\Http\Requests\AdmissionRequest;
 use App\Service\PatientAdmissionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class PatientAdmissionController extends Controller
 {

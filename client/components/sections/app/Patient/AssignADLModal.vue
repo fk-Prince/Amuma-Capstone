@@ -30,11 +30,7 @@
                         </p>
 
                         <h2 class="mt-1 text-lg font-semibold text-slate-800">
-                            {{
-                                isAdl
-                                    ? "Activities of Daily Living (ADL) Booking"
-                                    : "New Booking"
-                            }}
+                            Activities of Daily Living (ADL) Booking
                         </h2>
 
                         <p class="mt-1 text-sm text-slate-500">
@@ -42,9 +38,9 @@
                         </p>
 
                         <p class="mt-1 text-xs text-slate-400">
-                            {{ formatDate(booking?.homecare?.date) }}
+                            {{ formatDate(schedule?.scheduled_at) }}
                             •
-                            {{ formatTime(booking?.homecare?.prefered_time) }}
+                            {{ formatTime(schedule?.scheduled_at) }}
                         </p>
                     </div>
 
@@ -61,175 +57,91 @@
                     class="grid flex-1 overflow-hidden lg:grid-cols-[1fr_320px]"
                 >
                     <div class="overflow-y-auto p-6 space-y-4">
-                        <template v-if="isAdl">
+                        <div
+                            class="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                        >
+                            <p class="text-sm font-semibold text-slate-800">
+                                Hours Booked
+                            </p>
+                            <p class="mt-1 text-xs text-slate-500">
+                                {{
+                                    schedule?.total_hours
+                                        ? `${formatDuration(Number(schedule.total_hours))} (${schedule.total_hours} hrs)`
+                                        : "—"
+                                }}
+                            </p>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <p
+                                class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                            >
+                                Assigned Medical Staff
+                            </p>
+                            <button
+                                type="button"
+                                class="text-xs font-medium text-primary hover:underline"
+                                @click="addAdlSlot"
+                            >
+                                + Add Staff
+                            </button>
+                        </div>
+
+                        <div
+                            v-for="(slotId, index) in adlEmployeeIds"
+                            :key="index"
+                            class="cursor-pointer rounded-xl border p-4 transition"
+                            :class="
+                                activeAdlSlot === index
+                                    ? 'border-primary bg-primary/5 shadow-sm'
+                                    : 'border-slate-200 bg-white hover:border-primary/30'
+                            "
+                            @click="activeAdlSlot = index"
+                        >
                             <div
-                                class="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                                class="flex items-center justify-between gap-3"
                             >
                                 <p class="text-sm font-semibold text-slate-800">
-                                    Hours Booked
+                                    Staff #{{ index + 1 }}
                                 </p>
-                                <p class="mt-1 text-xs text-slate-500">
-                                    {{
-                                        booking?.homecare?.time_span
-                                            ? `${formatDuration(Number(booking.homecare.time_span))} (${booking.homecare.time_span} hrs)`
-                                            : "—"
-                                    }}
-                                </p>
-                            </div>
 
-                            <div class="flex items-center justify-between">
-                                <p
-                                    class="text-xs font-semibold uppercase tracking-wide text-slate-400"
-                                >
-                                    Assigned Medical Staff
-                                </p>
-                                <button
-                                    type="button"
-                                    class="text-xs font-medium text-primary hover:underline"
-                                    @click="addAdlSlot"
-                                >
-                                    + Add Staff
-                                </button>
-                            </div>
-
-                            <div
-                                v-for="(slotId, index) in adlEmployeeIds"
-                                :key="index"
-                                class="cursor-pointer rounded-xl border p-4 transition"
-                                :class="
-                                    activeAdlSlot === index
-                                        ? 'border-primary bg-primary/5 shadow-sm'
-                                        : 'border-slate-200 bg-white hover:border-primary/30'
-                                "
-                                @click="activeAdlSlot = index"
-                            >
-                                <div
-                                    class="flex items-center justify-between gap-3"
-                                >
-                                    <p
-                                        class="text-sm font-semibold text-slate-800"
-                                    >
-                                        Staff #{{ index + 1 }}
-                                    </p>
-
-                                    <div class="flex items-center gap-2">
-                                        <span
-                                            class="rounded-full px-2 py-1 text-[11px] font-semibold"
-                                            :class="
-                                                slotId
-                                                    ? 'bg-emerald-100 text-emerald-700'
-                                                    : 'bg-rose-100 text-rose-600'
-                                            "
-                                        >
-                                            {{
-                                                slotId
-                                                    ? "Assigned"
-                                                    : "Need Assign"
-                                            }}
-                                        </span>
-
-                                        <button
-                                            v-if="adlEmployeeIds.length > 1"
-                                            type="button"
-                                            class="text-slate-400 hover:text-rose-500"
-                                            @click.stop="removeAdlSlot(index)"
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="mt-4" @click.stop>
-                                    <Combobox
-                                        label="Assign Staff"
-                                        placeholder="Select staff"
-                                        search-bar
-                                        :items="
-                                            availableEmployeeItemsFor(slotId)
-                                        "
-                                        :model-value="slotId"
-                                        @update:model-value="
-                                            (value) =>
-                                                assignAdl(index, String(value))
-                                        "
-                                    />
-                                </div>
-                            </div>
-                        </template>
-
-                        <template v-else>
-                            <div
-                                v-for="service in booking?.homecare?.services ??
-                                []"
-                                :key="service.service_id"
-                                class="cursor-pointer rounded-xl border p-4 transition"
-                                :class="
-                                    activeService === service.service_id
-                                        ? 'border-primary bg-primary/5 shadow-sm'
-                                        : 'border-slate-200 bg-white hover:border-primary/30'
-                                "
-                                @click="activeService = service.service_id"
-                            >
-                                <div
-                                    class="flex items-start justify-between gap-3"
-                                >
-                                    <div>
-                                        <p
-                                            class="text-sm font-semibold text-slate-800"
-                                        >
-                                            {{ service.service_name }}
-                                        </p>
-                                        <div
-                                            class="mt-2 flex gap-2 text-xs text-slate-400"
-                                        >
-                                            <span>{{
-                                                formatCurrency(service.price)
-                                            }}</span>
-                                        </div>
-                                    </div>
+                                <div class="flex items-center gap-2">
                                     <span
                                         class="rounded-full px-2 py-1 text-[11px] font-semibold"
                                         :class="
-                                            assignments[service.service_id]
+                                            slotId
                                                 ? 'bg-emerald-100 text-emerald-700'
                                                 : 'bg-rose-100 text-rose-600'
                                         "
                                     >
-                                        {{
-                                            assignments[service.service_id]
-                                                ? "Assigned"
-                                                : "Need Assign"
-                                        }}
+                                        {{ slotId ? "Assigned" : "Unassigned" }}
                                     </span>
-                                </div>
 
-                                <div class="mt-4">
-                                    <Combobox
-                                        label="Assigned Employee"
-                                        placeholder="Select employee"
-                                        search-bar
-                                        :items="
-                                            availableEmployeeItemsFor(
-                                                assignments[
-                                                    service.service_id
-                                                ] ?? '',
-                                            )
-                                        "
-                                        :model-value="
-                                            assignments[service.service_id] ??
-                                            ''
-                                        "
-                                        @update:model-value="
-                                            (value) =>
-                                                assign(
-                                                    service.service_id,
-                                                    String(value),
-                                                )
-                                        "
-                                    />
+                                    <button
+                                        v-if="adlEmployeeIds.length > 1"
+                                        type="button"
+                                        class="text-slate-400 hover:text-rose-500"
+                                        @click.stop="removeAdlSlot(index)"
+                                    >
+                                        ✕
+                                    </button>
                                 </div>
                             </div>
-                        </template>
+
+                            <div class="mt-4" @click.stop>
+                                <Combobox
+                                    label="Assign Staff"
+                                    placeholder="Select staff"
+                                    search-bar
+                                    :items="availableEmployeeItemsFor(slotId)"
+                                    :model-value="slotId"
+                                    @update:model-value="
+                                        (value) =>
+                                            assignAdl(index, String(value))
+                                    "
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     <div
@@ -477,19 +389,14 @@
 import { ref, computed, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import { fullName } from "~/utils/user";
-import { formatCurrency } from "~/utils/currency";
 import { formatDate, formatTime, formatDuration } from "~/utils/time";
 import Combobox from "~/components/ui/Combobox.vue";
-import { scheduleService } from "~/api/schedule/ScheduleService";
-import type {
-    BookingRetrieve,
-    HomecareBooking,
-    SavedAssignment,
-} from "~/types/booking";
+import { employeeService } from "~/api/employee/EmployeeService";
+import type { AuditRow } from "~/types/schedule";
 
 const props = defineProps<{
     open: boolean;
-    booking?: BookingRetrieve | null;
+    schedule?: AuditRow;
     branchUuid: string;
     isSaving?: boolean;
 }>();
@@ -499,8 +406,8 @@ const emit = defineEmits<{
     (
         e: "confirm",
         payload: {
-            booking: BookingRetrieve;
-            assignments: SavedAssignment[];
+            schedule_service_id: number | null;
+            assignments: any[];
         },
     ): void;
 }>();
@@ -508,40 +415,13 @@ const emit = defineEmits<{
 const employeeData = ref<Employee[]>([]);
 const isFetching = ref(false);
 
-const assignments = ref<Record<number, string>>({});
-const activeService = ref<number | null>(null);
-
 const adlEmployeeIds = ref<string[]>([""]);
 const activeAdlSlot = ref(0);
 
-const isAdl = computed(() => props.booking?.homecare?.type === "ADL");
-
-const patientName = computed(() => {
-    const patient = props.booking?.patient;
-    if (!patient) return "";
-    return fullName(
-        patient.first_name,
-        patient.middle_name ?? "",
-        patient.last_name,
-    );
-});
+const patientName = computed(() => props.schedule?.patient_full_name ?? "");
 
 const allAssignedIds = computed(() => {
-    return [
-        ...Object.values(assignments.value),
-        ...adlEmployeeIds.value,
-    ].filter((id): id is string => !!id);
-});
-
-const employeeItems = computed(() => {
-    return employeeData.value
-        .filter((employee) => !employee.is_busy)
-        .map((employee) => ({
-            label:
-                fullName(employee.first_name, "", employee.last_name) +
-                (employee.is_busy ? " — Schedule conflict" : ""),
-            value: String(employee.employee_id),
-        }));
+    return adlEmployeeIds.value.filter((id): id is string => !!id);
 });
 
 function availableEmployeeItemsFor(currentValue: string) {
@@ -549,12 +429,10 @@ function availableEmployeeItemsFor(currentValue: string) {
         allAssignedIds.value.filter((id) => id !== currentValue),
     );
 
-    return employeeData.value
+    const items = employeeData.value
         .filter((employee) => {
             const id = String(employee.employee_id);
 
-            // Always allow the currently selected employee to remain visible,
-            // even if they're busy or somehow taken elsewhere (edge case).
             if (id === currentValue) return true;
 
             if (takenElsewhere.has(id)) return false;
@@ -568,53 +446,29 @@ function availableEmployeeItemsFor(currentValue: string) {
                 (employee.is_busy ? " — Schedule conflict" : ""),
             value: String(employee.employee_id),
         }));
+
+    return [{ label: "Unassigned", value: "" }, ...items];
 }
 
 function isTakenElsewhere(employeeId: string | number) {
     const id = String(employeeId);
 
-    if (isAdl.value) {
-        return adlEmployeeIds.value.some(
-            (assignedId, index) =>
-                assignedId === id && index !== activeAdlSlot.value,
-        );
-    }
-
-    return Object.entries(assignments.value).some(
-        ([serviceId, assignedId]) =>
-            assignedId === id && Number(serviceId) !== activeService.value,
+    return adlEmployeeIds.value.some(
+        (assignedId, index) =>
+            assignedId === id && index !== activeAdlSlot.value,
     );
 }
 
 async function fetchEmployees() {
-    if (!props.booking) return;
-    if (props.booking.category.toLowerCase() === "facility") return;
+    if (!props.schedule) return;
 
     try {
         isFetching.value = true;
 
-        const service = props.booking.homecare;
-
-        const payload =
-            service.type === "ADL"
-                ? {
-                      service_ids: [] as number[],
-                      date: service.date,
-                      time: service.prefered_time,
-                      time_span_hours: service.time_span ?? null,
-                      branch_uuid: props.branchUuid,
-                  }
-                : {
-                      service_ids:
-                          service.services?.map((s) => s.service_id) ?? [],
-                      date: service.date,
-                      time: service.prefered_time,
-                      branch_uuid: props.branchUuid,
-                  };
-
-        const response = await scheduleService.action({
-            type: "available_employee",
-            ...payload,
+        const response = await employeeService.list({
+            schedule_id: props.schedule.schedule_id,
+            branch_uuid: props.branchUuid,
+            type: "schedule",
         });
 
         employeeData.value = response.data ?? [];
@@ -626,28 +480,18 @@ async function fetchEmployees() {
     }
 }
 
-function restoreSavedAssignments(booking: BookingRetrieve) {
-    const saved = booking.assignments ?? [];
+function restoreSavedAssignments(schedule: AuditRow) {
+    const activeAssignments = (schedule.assigned ?? []).filter(
+        (a) => a.is_active,
+    );
 
-    if (booking.homecare?.type === "ADL") {
-        const ids = saved
-            .filter((a) => a.employee_id != null)
-            .map((a) => String(a.employee_id));
+    adlEmployeeIds.value = activeAssignments.length
+        ? activeAssignments.map((a) => String(a.employee_id))
+        : schedule.employee_id
+          ? [String(schedule.employee_id)]
+          : [""];
 
-        adlEmployeeIds.value = ids.length ? ids : [""];
-        activeAdlSlot.value = 0;
-        assignments.value = {};
-    } else {
-        const restored: Record<number, string> = {};
-        for (const a of saved) {
-            if (a.service_id != null) {
-                restored[a.service_id] = String(a.employee_id);
-            }
-        }
-        assignments.value = restored;
-        adlEmployeeIds.value = [""];
-        activeAdlSlot.value = 0;
-    }
+    activeAdlSlot.value = 0;
 }
 
 const expandedConflicts = ref<Set<string | number>>(new Set());
@@ -662,33 +506,23 @@ function toggleConflicts(employeeId: string | number) {
 }
 
 watch(
-    () => props.booking,
-    (booking) => {
-        if (!booking) {
-            assignments.value = {};
+    () => props.schedule,
+    (schedule) => {
+        if (!schedule) {
             adlEmployeeIds.value = [""];
             activeAdlSlot.value = 0;
-            activeService.value = null;
             employeeData.value = [];
             expandedConflicts.value = new Set();
             return;
         }
 
-        restoreSavedAssignments(booking);
+        restoreSavedAssignments(schedule);
         expandedConflicts.value = new Set();
-
-        activeService.value =
-            booking.homecare.services?.[0]?.service_id ?? null;
 
         fetchEmployees();
     },
     { immediate: true },
 );
-
-function assign(serviceId: number | null, employeeId: string) {
-    if (!serviceId) return;
-    assignments.value = { ...assignments.value, [serviceId]: employeeId };
-}
 
 function addAdlSlot() {
     adlEmployeeIds.value.push("");
@@ -708,69 +542,48 @@ function assignAdl(index: number, employeeId: string) {
 }
 
 function isSelected(employeeId: string | number) {
-    const inMedical = Object.values(assignments.value).includes(
-        String(employeeId),
-    );
-    const inAdl = adlEmployeeIds.value.includes(String(employeeId));
-    return inMedical || inAdl;
+    return adlEmployeeIds.value.includes(String(employeeId));
 }
 
 function handleEmployeeClick(employee: Employee) {
     if (employee.is_busy) return;
     if (isTakenElsewhere(employee.employee_id)) return;
 
-    const employeeId = String(employee.employee_id);
-
-    if (isAdl.value) {
-        assignAdl(activeAdlSlot.value, employeeId);
-    } else {
-        assign(activeService.value, employeeId);
-    }
+    assignAdl(activeAdlSlot.value, String(employee.employee_id));
 }
 
 function confirm() {
-    if (!props.booking || props.isSaving) return;
+    if (!props.schedule || props.isSaving) return;
 
-    const formattedAssignments = isAdl.value
-        ? adlEmployeeIds.value
-              .filter((id) => id)
-              .map((employee_id) => {
-                  const employee = employeeData.value.find(
-                      (e) => String(e.employee_id) === employee_id,
-                  );
+    const scheduleServiceId = props.schedule.schedule_services_id ?? null;
 
-                  return {
-                      employee_id: Number(employee_id),
-                      service_id: null,
-                      avatar: employee?.avatar,
-                      role_name: employee?.role_name,
-                      employee_name: employee
-                          ? fullName(
-                                employee.first_name,
-                                "",
-                                employee.last_name,
-                            )
-                          : "",
-                  };
-              })
-        : Object.entries(assignments.value).map(([service_id, employee_id]) => {
+    const assignedIds = adlEmployeeIds.value.filter((id) => id);
+
+    const formattedAssignments = assignedIds.length
+        ? assignedIds.map((employee_id) => {
               const employee = employeeData.value.find(
                   (e) => String(e.employee_id) === employee_id,
               );
+
               return {
-                  service_id: Number(service_id),
                   employee_id: Number(employee_id),
+                  schedule_services_id: scheduleServiceId,
                   avatar: employee?.avatar,
                   role_name: employee?.role_name,
-
                   employee_name: employee
                       ? fullName(employee.first_name, "", employee.last_name)
                       : "",
               };
-          });
+          })
+        : [
+              {
+                  employee_id: null,
+                  schedule_services_id: scheduleServiceId,
+              },
+          ];
 
     emit("confirm", {
-        booking: props.booking,
+        schedule_service_id: scheduleServiceId,
         assignments: formattedAssignments,
     });
 }

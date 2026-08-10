@@ -19,6 +19,7 @@ return new class extends Migration
                 ->constrained('employees', 'employee_id')
                 ->cascadeOnDelete();
 
+            $table->boolean('is_active')->default(true);
             $table->string('role', 50)->nullable();
 
             $table->timestamps();

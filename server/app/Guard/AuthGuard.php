@@ -18,7 +18,7 @@ class AuthGuard
         return $user;
     }
 
-    public static function requireModule(?User $user,  string|bool $branchId = false, ModuleEnum $module, PermissionAction $action)
+    public static function requireModule(?User $user,  string|bool $branchId = false, ModuleEnum|array $module, PermissionAction $action)
     {
         $user = self::requireUser($user);
 
@@ -32,8 +32,15 @@ class AuthGuard
             throw new Exception('Insufficient permissionsa', 403);
         }
 
-        $hasPermission = $employee->permissions->contains(function ($permission) use ($module, $action, $branchId) {
-            return $permission->modules?->module_name === $module->value
+        $moduleNames = collect($module)
+            ->map(fn(ModuleEnum $module) => $module->value)
+            ->values();
+
+        $hasPermission = $employee->permissions->contains(function ($permission) use ($moduleNames, $action, $branchId) {
+            // return $permission->modules?->module_name === $module->value
+            //     && ($permission->{$action->value} ?? false)
+            //     && ($branchId === false || $permission->branch_id == $branchId);
+            return $moduleNames->contains($permission->modules?->module_name)
                 && ($permission->{$action->value} ?? false)
                 && ($branchId === false || $permission->branch_id == $branchId);
         });

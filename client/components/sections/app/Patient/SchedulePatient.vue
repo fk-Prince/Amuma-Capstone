@@ -1,59 +1,5 @@
 <template>
     <div class="flex flex-col gap-5">
-        <div
-            class="flex flex-col items-center gap-4 rounded-2xl bg-white p-4 sm:flex-row sm:items-end sm:justify-between"
-        >
-            <div class="flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
-                <BaseInput
-                    v-model="selectedDate"
-                    mode="date"
-                    label="From"
-                    class-name="w-full sm:max-w-[180px]"
-                />
-
-                <div
-                    class="mt-6 hidden h-10 w-10 items-center justify-center text-slate-500 sm:flex"
-                >
-                    <ChevronRight class="h-5 w-5" />
-                </div>
-
-                <BaseInput
-                    v-model="rangeEnd"
-                    mode="date"
-                    label="To"
-                    class-name="w-full sm:max-w-[180px]"
-                />
-
-                <button
-                    type="button"
-                    class="h-11 self-end rounded-lg bg-primary/80 px-10 text-sm font-medium uppercase text-white transition hover:bg-primary"
-                    @click="jumpToToday"
-                >
-                    Today
-                </button>
-            </div>
-
-            <div
-                v-if="!loading"
-                class="flex items-center gap-4 text-sm text-slate-500"
-            >
-                <span class="font-medium text-slate-700">{{ totalCount }}</span>
-                total schedule{{ totalCount !== 1 ? "s" : "" }}
-                <template v-if="unassignedCount > 0">
-                    <span class="h-1 w-1 rounded-full bg-slate-300" />
-                    <span
-                        class="flex items-center gap-1.5 font-medium text-rose-600"
-                    >
-                        <span class="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                        {{ unassignedCount }} need{{
-                            unassignedCount === 1 ? "s" : ""
-                        }}
-                        assignment
-                    </span>
-                </template>
-            </div>
-        </div>
-
         <div v-if="loading" class="space-y-4">
             <div
                 v-for="i in 3"
@@ -546,8 +492,6 @@
 <script lang="ts" setup>
 import { ref, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
 import type { ScheduleItem } from "~/types/schedule";
-import BaseInput from "~/components/ui/BaseInput.vue";
-import { ChevronRight } from "lucide-vue-next";
 import { initials } from "~/utils/user";
 import { useSchedule } from "~/composables/useSchedule";
 
@@ -570,10 +514,9 @@ const props = withDefaults(
     },
 );
 
-const emit = defineEmits<{
+defineEmits<{
     (e: "view-details", schedule: ScheduleItem): void;
     (e: "assign", schedule: ScheduleItem): void;
-    (e: "update-range", payload: { from: string; to: string }): void;
 }>();
 
 const {
@@ -581,11 +524,8 @@ const {
     hourWidth,
     dayGroups,
     hasAnySchedules,
-    totalCount,
-    unassignedCount,
     selectedDate,
     rangeEnd,
-    jumpToToday,
     formatDate,
     schedulesForDay,
     getServiceLeft,
@@ -599,6 +539,22 @@ const {
     scheduleStatusTheme,
     scheduleStatusLabel,
 } = useSchedule(props);
+
+watch(
+    () => props.date,
+    (value) => {
+        if (value) selectedDate.value = value;
+    },
+    { immediate: true },
+);
+
+watch(
+    () => props.rangeEnd,
+    (value) => {
+        if (value) rangeEnd.value = value;
+    },
+    { immediate: true },
+);
 
 const timelineContainers = ref<HTMLElement[]>([]);
 
@@ -618,14 +574,6 @@ function scrollToCurrentTime() {
     container.scrollLeft =
         labelWidth.value + offset - container.clientWidth / 2;
 }
-
-watch(
-    [selectedDate, rangeEnd],
-    ([from, to]) => {
-        emit("update-range", { from, to });
-    },
-    { immediate: true },
-);
 
 watch(dayGroups, async () => {
     await nextTick();

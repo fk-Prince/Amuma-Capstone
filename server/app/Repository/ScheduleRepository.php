@@ -120,7 +120,6 @@ class ScheduleRepository
     }
 
 
-
     public function getEmployeesForReassignment(
         string $scheduleId,
         string $branchId,
@@ -153,8 +152,36 @@ class ScheduleRepository
 
         $allowedRoles = ['nurse', 'caregiver'];
 
+        // Only ACTIVE assignments should count toward "busy" — a deactivated
+        // (reassigned-off) assignment no longer reflects the employee's real
+        // schedule.
+        $activeScheduleAssignments = function ($query) use ($targetStart, $targetEnd, $scheduleId) {
+            $query->where('schedule_assigned.is_active', true)
+                ->whereHas('scheduleService.schedule', function ($q) use ($targetStart, $targetEnd, $scheduleId) {
+                    $q->where('schedules.schedule_id', '!=', $scheduleId)
+                        ->whereIn('schedules.status', [Schedule::STATUS_ONGOING, Schedule::STATUS_PENDING])
+                        ->where('schedules.scheduled_at', '<', $targetEnd)
+                        ->whereRaw(
+                            'schedules.scheduled_at + (
+                        SELECT COALESCE(SUM(EXTRACT(EPOCH FROM sv.maximum_duration)), 3600) / 60
+                        FROM schedule_services ss
+                        INNER JOIN services sv ON sv.service_id = ss.service_id
+                        WHERE ss.schedule_id = schedules.schedule_id
+                    ) * INTERVAL \'1 minute\' > ?',
+                            [$targetStart]
+                        )->select([
+                            'schedule_id',
+                            'schedule_code',
+                            'scheduled_at'
+                        ]);
+                });
+        };
+
         return Employee::with([
             'locations',
+            'employeeBranch.scheduleAssignments' => function ($query) use ($activeScheduleAssignments) {
+                $activeScheduleAssignments($query);
+            },
             'employeeBranch.scheduleAssignments.scheduleService.schedule',
             'employeeBranch' => function ($query) use ($branchId, $allowedRoles) {
                 $query->where('branch_id', $branchId)
@@ -172,27 +199,10 @@ class ScheduleRepository
                 $query->where('branch_id', $branchId)
                     ->whereIn('role_name', $allowedRoles);
             })
-            ->withExists(['employeeBranch as is_busy' => function ($query) use ($targetStart, $targetEnd, $scheduleId, $branchId, $allowedRoles) {
+            ->withExists(['employeeBranch as is_busy' => function ($query) use ($branchId, $allowedRoles, $activeScheduleAssignments) {
                 $query->where('branch_id', $branchId)
                     ->whereIn('role_name', $allowedRoles)
-                    ->whereHas('scheduleAssignments.scheduleService.schedule', function ($q) use ($targetStart, $targetEnd, $scheduleId) {
-                        $q->where('schedules.schedule_id', '!=', $scheduleId)
-                            ->whereIn('schedules.status', [Schedule::STATUS_ONGOING, Schedule::STATUS_PENDING])
-                            ->where('schedules.scheduled_at', '<', $targetEnd)
-                            ->whereRaw(
-                                'schedules.scheduled_at + (
-                                SELECT COALESCE(SUM(EXTRACT(EPOCH FROM sv.maximum_duration)), 3600) / 60
-                                FROM schedule_services ss
-                                INNER JOIN services sv ON sv.service_id = ss.service_id
-                                WHERE ss.schedule_id = schedules.schedule_id
-                            ) * INTERVAL \'1 minute\' > ?',
-                                [$targetStart]
-                            )->select([
-                                'schedule_id',
-                                'schedule_code',
-                                'scheduled_at'
-                            ]);
-                    });
+                    ->whereHas('scheduleAssignments', $activeScheduleAssignments);
             }])
             ->withExists(['employeeBranch as is_assigned' => function ($query) use ($branchId, $scheduleServiceIds, $allowedRoles) {
                 $query->where('branch_id', $branchId)
@@ -238,37 +248,43 @@ class ScheduleRepository
                 });
         }
         $targetEnd = $targetStart->copy()->addMinutes($targetDurationMinutes);
-        $conflictRawSql = 'schedules.scheduled_at + (
-                    SELECT COALESCE(
-                        SUM(
-                            CASE
-                                WHEN ss.service_id IS NOT NULL THEN EXTRACT(EPOCH FROM sv.maximum_duration) / 60
-                                WHEN ss.hours_booked IS NOT NULL THEN ss.hours_booked * 60
-                                ELSE 60
-                            END
-                        ),
-                        60
-                    )
-                    FROM schedule_services ss
-                    LEFT JOIN services sv ON sv.service_id = ss.service_id
-                    WHERE ss.schedule_id = schedules.schedule_id
-                ) * INTERVAL \'1 minute\' > ?';
-        $conflictScheduleConstraint = function ($q) use ($targetStart, $targetEnd, $conflictRawSql) {
+        $conflict = 'schedules.scheduled_at + (
+            SELECT COALESCE(
+                SUM(
+                    CASE
+                        WHEN ss.service_id IS NOT NULL THEN EXTRACT(EPOCH FROM sv.maximum_duration) / 60
+                        WHEN ss.hours_booked IS NOT NULL THEN ss.hours_booked * 60
+                        ELSE 60
+                    END
+                ),
+                60
+            )
+            FROM schedule_services ss
+            LEFT JOIN services sv ON sv.service_id = ss.service_id
+            WHERE ss.schedule_id = schedules.schedule_id
+        ) * INTERVAL \'1 minute\' > ?';
+
+        $scheduleConflict = function ($q) use ($targetStart, $targetEnd, $conflict) {
             $q->whereIn('schedules.status', [Schedule::STATUS_ONGOING, Schedule::STATUS_PENDING])
                 ->where('schedules.scheduled_at', '<', $targetEnd)
-                ->whereRaw($conflictRawSql, [$targetStart]);
+                ->whereRaw($conflict, [$targetStart]);
         };
 
-        $busyClosure = function ($query) use ($branchId, $allowedRoles, $conflictScheduleConstraint) {
-            $query->where('branch_id', $branchId)
-                ->whereIn('role_name', $allowedRoles)
-                ->whereHas('scheduleAssignments.scheduleService.schedule', $conflictScheduleConstraint);
+        $activeScheduleAssignments = function ($query) use ($scheduleConflict) {
+            $query->where('schedule_assigned.is_active', true)
+                ->whereHas('scheduleService.schedule', $scheduleConflict);
         };
 
-        $conflictCountClosure = function ($query) use ($branchId, $allowedRoles, $conflictScheduleConstraint) {
+        $busy = function ($query) use ($branchId, $allowedRoles, $activeScheduleAssignments) {
             $query->where('branch_id', $branchId)
                 ->whereIn('role_name', $allowedRoles)
-                ->whereHas('scheduleAssignments.scheduleService.schedule', $conflictScheduleConstraint);
+                ->whereHas('scheduleAssignments', $activeScheduleAssignments);
+        };
+
+        $conflictCountClosure = function ($query) use ($branchId, $allowedRoles, $activeScheduleAssignments) {
+            $query->where('branch_id', $branchId)
+                ->whereIn('role_name', $allowedRoles)
+                ->whereHas('scheduleAssignments', $activeScheduleAssignments);
         };
 
         return Employee::with([
@@ -283,11 +299,11 @@ class ScheduleRepository
                         },
                     ]);
             },
-            'employeeBranch.scheduleAssignments' => function ($query) use ($conflictScheduleConstraint) {
-                $query->whereHas('scheduleService.schedule', $conflictScheduleConstraint);
+            'employeeBranch.scheduleAssignments' => function ($query) use ($activeScheduleAssignments) {
+                $activeScheduleAssignments($query);
             },
-            'employeeBranch.scheduleAssignments.scheduleService.schedule' => function ($query) use ($conflictScheduleConstraint) {
-                $conflictScheduleConstraint($query);
+            'employeeBranch.scheduleAssignments.scheduleService.schedule' => function ($query) use ($scheduleConflict) {
+                $scheduleConflict($query);
             },
             'employeeBranch.scheduleAssignments.scheduleService.schedule.patient',
         ])
@@ -296,7 +312,7 @@ class ScheduleRepository
                 $query->where('branch_id', $branchId)
                     ->whereIn('role_name', $allowedRoles);
             })
-            ->withExists(['employeeBranch as is_busy' => $busyClosure])
+            ->withExists(['employeeBranch as is_busy' => $busy])
             ->withCount(['employeeBranch as conflict_count' => $conflictCountClosure])
             ->withExists(['employeeBranch as is_assigned' => function ($query) use ($branchId, $allowedRoles, $serviceIds) {
                 $query->where('branch_id', $branchId)

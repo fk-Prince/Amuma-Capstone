@@ -10,12 +10,13 @@ class OnlineSchedule extends Model
     public $timestamps = false;
     protected $fillable = [
         'schedule_assigned_id',
-        'qr_in',
-        'qr_out',
+        'qr_in_token',
+        'qr_out_token',
         'in_timestamp',
         'out_timestamp',
         'notes',
     ];
+
     protected $casts = [
         'in_timestamp' => 'datetime',
         'out_timestamp' => 'datetime',

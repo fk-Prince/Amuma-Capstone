@@ -4,11 +4,12 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "artisan": "cd server && php artisan serve",
+        "artisan": "cd server && php artisan serve --host=0.0.0.0 --port=8000",
         "reverb": "cd server && php artisan reverb:start",
         "schedule": "cd server && php artisan schedule:work",
-        "client": "pnpm --prefix client run dev",
-        "dev": "concurrently \"npm run artisan\" \"npm run reverb\" \"npm run schedule\" \"npm run client\""
+        "queue": "cd server && php artisan queue:work",
+        "client": "pnpm --prefix client exec nuxt dev --host 0.0.0.0 --port 3000 --strictPort",
+        "dev": "concurrently \"npm run artisan\" \"npm run reverb\" \"npm run schedule\" \"npm run client\" "
     },
     "keywords": [],
     "author": "",

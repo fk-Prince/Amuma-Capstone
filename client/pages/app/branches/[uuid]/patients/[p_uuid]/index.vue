@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import PatientHeader from "~/components/sections/app/Patient/PatientHeader.vue";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import ActionMedicationModal from "~/components/sections/app/Patient/ActionMedicationModal.vue";
@@ -14,6 +14,8 @@ import type { ScheduleItem } from "~/types/schedule";
 import ScheduleDetails from "~/components/sections/app/Patient/ScheduleDetails.vue";
 import HomecareADL from "~/components/sections/app/Patient/HomecareADL.vue";
 import SchedulePatient from "~/components/sections/app/Patient/SchedulePatient.vue";
+import BaseInput from "~/components/ui/BaseInput.vue";
+import { ChevronRight, ArrowLeft } from "lucide-vue-next";
 import {
     type ConflictItem,
     conflictConfirm,
@@ -37,6 +39,7 @@ definePageMeta({
 });
 
 const route = useRoute();
+const router = useRouter();
 
 const {
     patientData,
@@ -61,9 +64,14 @@ const {
 const uuid = computed(() => route.params.p_uuid as string);
 const b_uuid = computed(() => route.params.uuid as string);
 
-onMounted(() => {
-    fetchData(uuid.value, b_uuid.value);
-});
+function goBack() {
+    if (window.history.state?.back) {
+        router.back();
+        return;
+    }
+
+    router.push(`/app/branches/${b_uuid.value}/patients`);
+}
 
 const tabs = [
     "Overview",
@@ -73,11 +81,46 @@ const tabs = [
     "Vital Signs",
 ] as const;
 type Tab = (typeof tabs)[number];
-const activeTab = ref<Tab>("Overview");
+
+const tabSlugMap: Record<Tab, string> = {
+    Overview: "overview",
+    Schedule: "schedule",
+    Service: "service",
+    Medication: "medication",
+    "Vital Signs": "vitals",
+};
+
+const slugToTab: Record<string, Tab> = Object.fromEntries(
+    Object.entries(tabSlugMap).map(([tab, slug]) => [slug, tab]),
+) as Record<string, Tab>;
+
+function resolveTabFromQuery(): Tab {
+    const q = route.query.tab;
+    const slug = Array.isArray(q) ? q[0] : q;
+    if (slug && slugToTab[slug]) {
+        return slugToTab[slug];
+    }
+    return "Overview";
+}
+
+const activeTab = ref<Tab>(resolveTabFromQuery());
 
 function setActiveTab(tab: Tab) {
     activeTab.value = tab;
+    router.replace({
+        query: { ...route.query, tab: tabSlugMap[tab] },
+    });
 }
+
+onMounted(() => {
+    fetchData(uuid.value, b_uuid.value);
+
+    if (route.query.tab !== tabSlugMap[activeTab.value]) {
+        router.replace({
+            query: { ...route.query, tab: tabSlugMap[activeTab.value] },
+        });
+    }
+});
 
 const showAddMedication = ref(false);
 const savingMedication = ref(false);
@@ -100,6 +143,29 @@ const selectedMedication = ref<Medication | null>(null);
 const assignModalOpen = ref(false);
 const assigneSchedule = ref<ScheduleItem>();
 const scheduleType = ref<"medical" | "homecare">("medical");
+
+const todayStr = new Date().toISOString().slice(0, 10);
+const scheduleFrom = ref(todayStr);
+const scheduleTo = ref(todayStr);
+
+function jumpToScheduleToday() {
+    scheduleFrom.value = todayStr;
+    scheduleTo.value = todayStr;
+}
+
+watch(
+    [scheduleFrom, scheduleTo, activeTab],
+    async ([from, to, tab]) => {
+        if (tab !== "Schedule") return;
+        isFetchingSchedule.value = true;
+        try {
+            await fetchSchedules(uuid.value, b_uuid.value, from, to);
+        } finally {
+            isFetchingSchedule.value = false;
+        }
+    },
+    { immediate: true },
+);
 
 const conflictMessage = computed(() => {
     const count = conflictConfirm.value.conflicts.length;
@@ -253,6 +319,10 @@ async function handleAssign(s: ScheduleItem, isModal = true) {
     }
 }
 
+function reloadSchedule(updated: ScheduleItem | undefined) {
+    updateScheduleInList(updated);
+}
+
 function updateScheduleInList(updated: ScheduleItem | undefined) {
     if (!updated?.schedule_id) return;
     const index = scheduleData.value.findIndex(
@@ -323,12 +393,6 @@ const filteredScheduleData = computed(() => {
     });
 });
 
-async function onScheduleRangeChange(payload: { from: string; to: string }) {
-    isFetchingSchedule.value = true;
-    await fetchSchedules(uuid.value, b_uuid.value, payload.from, payload.to);
-    isFetchingSchedule.value = false;
-}
-
 const visibleTabs = computed(() => {
     if (!patientData.value?.latest_admission) {
         return tabs.filter((tab) => tab !== "Service");
@@ -336,10 +400,23 @@ const visibleTabs = computed(() => {
 
     return tabs;
 });
+
+function resetSchedule(s: ScheduleItem[]) {
+    scheduleData.value = s;
+}
 </script>
 <template>
     <div class="min-h-screen bg-gray-50 p-6">
         <div class="m-full space-y-4">
+            <button
+                type="button"
+                class="flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-800"
+                @click="goBack"
+            >
+                <ArrowLeft class="h-4 w-4" />
+                Back
+            </button>
+
             <div v-if="loading" class="space-y-4 animate-pulse">
                 <div
                     class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
@@ -467,6 +544,42 @@ const visibleTabs = computed(() => {
                     />
 
                     <div v-if="activeTab === 'Schedule'">
+                        <div
+                            class="flex flex-col items-center gap-4 rounded-2xl bg-white p-4 sm:flex-row sm:items-end sm:justify-between mb-5"
+                        >
+                            <div
+                                class="flex flex-col items-center gap-3 sm:flex-row sm:gap-4"
+                            >
+                                <BaseInput
+                                    v-model="scheduleFrom"
+                                    mode="date"
+                                    label="From"
+                                    class-name="w-full sm:max-w-[180px]"
+                                />
+
+                                <div
+                                    class="mt-6 hidden h-10 w-10 items-center justify-center text-slate-500 sm:flex"
+                                >
+                                    <ChevronRight class="h-5 w-5" />
+                                </div>
+
+                                <BaseInput
+                                    v-model="scheduleTo"
+                                    mode="date"
+                                    label="To"
+                                    class-name="w-full sm:max-w-[180px]"
+                                />
+
+                                <button
+                                    type="button"
+                                    class="h-11 self-end rounded-lg bg-primary/80 px-10 text-sm font-medium uppercase text-white transition hover:bg-primary"
+                                    @click="jumpToScheduleToday"
+                                >
+                                    Today
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="inline-flex rounded-xl bg-slate-100 p-1">
                             <button
                                 type="button"
@@ -502,9 +615,10 @@ const visibleTabs = computed(() => {
                                     scheduleType === 'medical'
                                 "
                                 :schedules="filteredScheduleData"
+                                :date="scheduleFrom"
+                                :range-end="scheduleTo"
                                 @view-details="viewSchedule"
                                 @assign="handleAssign"
-                                @update-range="onScheduleRangeChange"
                                 :loading="isFetchingSchedule"
                             />
                             <HomecareADL
@@ -513,6 +627,10 @@ const visibleTabs = computed(() => {
                                     scheduleType === 'homecare'
                                 "
                                 :logs="filteredScheduleData"
+                                :date="scheduleFrom"
+                                :range-end="scheduleTo"
+                                :loading="isFetchingSchedule"
+                                @update="resetSchedule"
                             />
                         </div>
                     </div>

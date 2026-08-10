@@ -28,39 +28,18 @@
                 </div>
             </div>
 
-            <div class="action-menu relative shrink-0">
+            <div class="flex shrink-0 items-center gap-1">
                 <button
+                    v-for="item in actionMenuItems"
+                    :key="item.label"
                     type="button"
-                    class="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                    @click.stop="
-                        $emit('toggle-menu', patient.patient_id, $event)
-                    "
+                    :title="item.label"
+                    class="flex h-8 w-8 items-center justify-center rounded-md transition"
+                    :class="item.class"
+                    @click.stop="item.action(patient)"
                 >
-                    <MoreVertical class="h-4 w-4" />
+                    <component :is="item.icon" class="h-4 w-4" />
                 </button>
-
-                <Teleport to="body">
-                    <div
-                        v-if="isMenuOpen"
-                        class="fixed z-[9999] w-40 rounded-lg border bg-white shadow-lg"
-                        :style="{
-                            top: `${menuPosition.y}px`,
-                            left: `${menuPosition.x}px`,
-                        }"
-                    >
-                        <button
-                            v-for="item in actionMenuItems"
-                            :key="item.label"
-                            type="button"
-                            class="flex w-full items-center gap-2 px-4 py-2 text-sm"
-                            :class="item.class"
-                            @click="item.action(patient)"
-                        >
-                            <component :is="item.icon" class="h-4 w-4" />
-                            {{ item.label }}
-                        </button>
-                    </div>
-                </Teleport>
             </div>
         </div>
 
@@ -99,24 +78,18 @@
 </template>
 
 <script setup lang="ts">
-import { MapPin, MoreVertical } from "lucide-vue-next";
+import { MapPin } from "lucide-vue-next";
 import { calculateAge } from "~/utils/user";
 import type { PatientRetrieve } from "~/types/patient";
 
 defineProps<{
     patient: PatientRetrieve;
     careType: string;
-    isMenuOpen: boolean;
-    menuPosition: { x: number; y: number };
     actionMenuItems: {
         label: string;
         icon: any;
         class: string;
         action: (patient: PatientRetrieve) => void;
     }[];
-}>();
-
-defineEmits<{
-    "toggle-menu": [id: number, event: MouseEvent];
 }>();
 </script>

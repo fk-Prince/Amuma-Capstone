@@ -123,7 +123,7 @@
         <!-- Pagination -->
         <div
             v-if="!loading && pagination.totalItems.value > 0"
-            class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-[#E4EFED] shrink-0"
+            class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-[#E4EFED] bg-white shrink-0"
         >
             <p class="text-xs text-slate-400">
                 Showing

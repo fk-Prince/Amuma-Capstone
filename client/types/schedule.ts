@@ -13,6 +13,8 @@ export interface ScheduleAssignee {
     avatar: string | null;
     role: string | null;
     online: OnlineScheduleAssignment[];
+    is_active: boolean
+    employee_role: string | null;
 }
 
 
@@ -120,3 +122,44 @@ export const conflictConfirm = ref<{
     conflicts: [],
     pendingPayload: null,
 });
+
+export interface AuditRow {
+    schedule_id: number;
+    schedule_code: string;
+    scheduled_at?: string | null;
+    total_hours: number;
+    status: string;
+
+    is_active: boolean;
+    employee_id: number | null;
+    full_name: string | null;
+    avatar: string | null;
+    role: string | null;
+    address: string | null;
+    patient_full_name: string;
+    total_worked_minutes: number;
+
+    schedule_services_id: number;
+
+    assignees: {
+        employee_role: string | null;
+        employee_id: number;
+        full_name: string | null;
+        avatar: string | null;
+        role: string | null;
+    }[];
+
+    assigned?: {
+        employee_id: number;
+        is_active: boolean;
+    }[];
+
+    online_logs: {
+        employee_id?: number | null;
+        employee_name?: string | null;
+        employee_avatar?: string | null;
+        in_timestamp: string | null;
+        out_timestamp: string | null;
+        notes: string | null;
+    }[];
+}

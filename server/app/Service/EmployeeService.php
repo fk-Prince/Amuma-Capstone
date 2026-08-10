@@ -253,6 +253,6 @@ class EmployeeService
             return $this->employeeRepository->getEmployeeServices($branchId, $payload);
         }
 
-        abort(400, 'Invalid employee type');
+        return null;
     }
 }

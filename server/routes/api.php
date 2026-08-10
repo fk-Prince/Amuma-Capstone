@@ -15,6 +15,7 @@ use App\Http\Controllers\MedicationController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\NominatimController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OnlineScheduleController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PatientAdmissionController;
 use App\Http\Controllers\PatientController;
@@ -26,7 +27,6 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\XenditController;
-use App\Service\AdmissionService;
 use Illuminate\Support\Facades\Route;
 
 
@@ -63,6 +63,9 @@ Route::prefix('branches')->group(function () {
     });
 });
 
+
+Route::middleware('auth:sanctum')->post('/qr/verify', [OnlineScheduleController::class, 'verifyQr']);
+
 // PRIVATE - CUSTOM
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -72,11 +75,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admissions/action', [PatientAdmissionController::class, 'action']);
     // Route::post('/admissions/admit', [PatientAdmissionController::class, 'action']);
 
+    //SCHEDULES
+    Route::get('/online-schedules/qr', [OnlineScheduleController::class, 'generateQr']);
+    Route::post('/schedules/action',  [ScheduleController::class, 'action']);
+
     // CUSTOM-BOOKING
     // Route::post('/bookings/facility', [BookingController::class, 'createBooking']);
     // Route::post('/bookings/facility-admission', [BookingController::class, 'admission']);
     // Route::post('/total', [BookingController::class, 'getTotal']);
-
 
     Route::post('/bookings/action', [BookingController::class, 'action']);
 
@@ -91,11 +97,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/subscription', [SubscriptionController::class, 'newSubscription']);
     Route::get('/subscription-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
     Route::post('/subscription-validate',  [SubscriptionController::class, 'validateSubscription']);
+
     Route::get('/users/branches',  [UserController::class, 'getUserBranch']);
     Route::get('/reviews/public',  [ReviewController::class, 'publicReviews']);
-
-    //MEDICAL ASSIGn
-    Route::post('/schedules/action',  [ScheduleController::class, 'action']);
 });
 
 
@@ -120,7 +124,8 @@ Route::middleware('auth:sanctum')->group(function () {
         'schedules' => ScheduleController::class,
         'admissions' => PatientAdmissionController::class,
         'invoices' => InvoiceController::class,
-        'settings' => BranchSettingController::class
+        'settings' => BranchSettingController::class,
+        'online-schedules' => OnlineScheduleController::class
     ]);
 
     //VALIDATE INPUTS

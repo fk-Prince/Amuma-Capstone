@@ -1,4 +1,6 @@
 <script setup>
+import { watch, onBeforeUnmount } from "vue";
+
 const props = defineProps({
     variant: {
         type: String,
@@ -16,6 +18,10 @@ const props = defineProps({
     type: {
         type: String,
         default: "button",
+    },
+    loading: {
+        type: Boolean,
+        default: false,
     },
 });
 
@@ -37,24 +43,41 @@ const variantClasses = {
     },
 };
 
+const isBlocked = computed(() => props.disabled || props.loading);
+
 const handleClick = (event) => {
-    if (!props.disabled) {
+    if (!isBlocked.value) {
         emit("click", event);
     }
 };
+
+watch(
+    () => props.loading,
+    (isLoading) => {
+        document.body.classList.toggle("cursor-wait", isLoading);
+    },
+);
+
+onBeforeUnmount(() => {
+    if (props.loading) {
+        document.body.classList.remove("cursor-wait");
+    }
+});
 </script>
 
 <template>
     <div class="relative inline-block group">
         <button
             :type="type"
-            :disabled="disabled"
+            :disabled="isBlocked"
             class="rounded-lg border px-4 py-2 text-sm font-medium transition"
             :class="[
                 disabled
                     ? variantClasses[variant].disabled
                     : variantClasses[variant].enabled,
-                disabled && 'cursor-not-allowed opacity-60',
+                loading
+                    ? 'cursor-wait opacity-60'
+                    : disabled && 'cursor-not-allowed opacity-60',
             ]"
             @click="handleClick"
         >

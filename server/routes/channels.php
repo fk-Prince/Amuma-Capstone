@@ -9,10 +9,13 @@ Broadcast::routes([
 ]);
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
-    Log::info($user);
     return (string) $user->uuid === (string) $id;
 });
 
 Broadcast::channel('Notification.{uuid}', function ($user, $uuid) {
     return (string) $user->uuid === (string) $uuid;
+});
+
+Broadcast::channel('qr.{token}', function ($user, string $token) {
+    return $user !== null;
 });

@@ -113,7 +113,7 @@ import { notificationService } from "~/api/notification/NotificationService";
 import type { Notification } from "~/types/notification";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useRoute } from "vue-router";
-import { formatDate } from "~/utils/notification-time";
+import { notifcationFormatDate } from "~/utils/notification-time";
 import { useToast } from "~/composables/useToast";
 const { info } = useToast();
 const route = useRoute();
@@ -125,7 +125,6 @@ const open = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
 
 const notifications = ref<Notification[]>([]);
-const notification = ref<string | null>(null);
 
 let channel: any = null;
 
@@ -163,7 +162,6 @@ const loadNotifications = async (branchUuid: string) => {
 const bindChannel = (branchUuid: string) => {
     if (!user.value?.uuid) return;
 
-    console.log("Echo user uuid:", user.value?.uuid);
     if (channel) {
         channel.stopListening(".NotificationEvent");
         $echo.leave(`private-Notification.${user.value.uuid}`);

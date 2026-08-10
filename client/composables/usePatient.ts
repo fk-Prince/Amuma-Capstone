@@ -369,7 +369,7 @@ export function usePatient() {
             const patientRes = await patientService.show({
                 branch_uuid: b_uuid,
             }, uuid);
-            patientData.value = patientRes.data[0];
+            patientData.value = patientRes.data;
             loading.value = false;
             const [serviceRes] = await Promise.all([
                 serviceService.list({

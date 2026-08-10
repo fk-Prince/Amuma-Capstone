@@ -193,7 +193,6 @@ class ScheduleResource extends JsonResource
 
             'start_time' => $startTime?->format('g:i A'),
             'end_time' => $endTime?->format('g:i A'),
-
             'total_duration_minutes' => $totalMinutes,
             'total_hours' => (float) $totalHours,
 
@@ -254,27 +253,26 @@ class ScheduleResource extends JsonResource
 
                                 return [
                                     'employee_id' => $assignment->employee_id,
-
-                                    'full_name' => $employee
-                                        ? trim(
-                                            "{$employee->first_name} {$employee->last_name}"
-                                        )
-                                        : null,
+                                    'is_active' => $assignment->is_active,
+                                    'full_name' => $employee->fullName ?? '',
+                                    'employee_role' => $employee?->employeeBranch
+                                        ?->firstWhere('branch_id', $this->patient->branch_id)
+                                        ?->role_name,
 
                                     'avatar' => $employee?->avatar,
-
                                     'role' => $assignment->role,
 
                                     'online' => $assignment->relationLoaded('onlineSchedules')
-                                        ? $assignment->onlineSchedules->map(function ($online) {
+                                        ? $assignment->onlineSchedules
+                                        ->filter(fn($online) => $online->in_timestamp !== null)
+                                        ->map(function ($online) {
                                             return [
-                                                'qr_in' => $online->qr_in,
-                                                'qr_out' => $online->qr_out,
                                                 'in_timestamp' => $online->in_timestamp?->toISOString(),
                                                 'out_timestamp' => $online->out_timestamp?->toISOString(),
                                                 'notes' => $online->notes,
                                             ];
-                                        })->values()
+                                        })
+                                        ->values()
                                         : [],
                                 ];
                             })->values()
@@ -285,7 +283,7 @@ class ScheduleResource extends JsonResource
         ];
     }
 
-    private function resolveDurationMinutes($scheduleService): int
+    private function resolveDurationMinutes(mixed $scheduleService): int
     {
         if ($scheduleService->hours_booked !== null) {
             return (int) round(

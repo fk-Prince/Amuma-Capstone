@@ -12,6 +12,7 @@ class ScheduleAssigned extends Model
         'schedule_services_id',
         'employee_id',
         'role',
+        'is_active'
     ];
 
     public function scheduleService()
@@ -27,5 +28,10 @@ class ScheduleAssigned extends Model
     public function employee()
     {
         return $this->belongsTo(EmployeeBranch::class, 'employee_id', 'employee_id');
+    }
+
+    public function scopeActive(mixed $query)
+    {
+        return $query->where('is_active', true);
     }
 }

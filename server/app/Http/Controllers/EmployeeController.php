@@ -54,11 +54,9 @@ class EmployeeController extends Controller
         if ($type === 'regular') {
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Read);
         } else if ($type === 'schedule') {
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Create);
+            // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Patients, PermissionAction::Create); // assign
         } else if ($type === 'service') {
             AuthGuard::requireModule($request->user(),  $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
-        } else {
-            abort(400, 'Invalid employee type');
         }
         return $this->employeeService->getEmployees($request->all(), $request->user(),   $type);
     }

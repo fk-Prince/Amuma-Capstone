@@ -1,6 +1,6 @@
 // NOTIFIOCTION TIME 12hrs ago etc.
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-export const formatDate = (date: string | Date) => {
+export const notifcationFormatDate = (date: string | Date) => {
     const now = new Date();
     const target = new Date(date);
 

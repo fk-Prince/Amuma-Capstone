@@ -14,11 +14,9 @@
             </div>
 
             <div class="flex w-full gap-2 sm:w-auto">
-                <input
-                    v-model="selectedDate"
-                    type="date"
-                    class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700"
-                />
+                <ActionButton variant="primary" @click="showScanner = true">
+                    Scan QR
+                </ActionButton>
 
                 <div class="relative w-full sm:w-64">
                     <input
@@ -49,7 +47,7 @@
         <div v-else class="space-y-4 p-5">
             <div
                 v-for="log in filteredLogs"
-                :key="`${log.schedule_id}-${log.employee_id}`"
+                :key="`${log.schedule_id}-${log.schedule_services_id}`"
                 class="rounded-xl border border-slate-200 bg-white p-5"
             >
                 <div
@@ -68,11 +66,32 @@
                         </p>
                     </div>
                     <div class="flex flex-col gap-2 sm:flex-row">
+                        <ActionButton
+                            @click="openAssignModal(log)"
+                            variant="primary"
+                        >
+                            Assign
+                        </ActionButton>
+                        <ActionButton
+                            :loading="generatingQr"
+                            @click="generateQr('in', log)"
+                            variant="primary"
+                        >
+                            CLOCK-IN
+                        </ActionButton>
+                        <ActionButton
+                            :loading="generatingQr"
+                            @click="generateQr('out', log)"
+                            variant="primary"
+                        >
+                            CLOCK-OUT
+                        </ActionButton>
+
                         <div
                             class="rounded-xl border border-primary/20 bg-primary/5 px-4 py-2"
                         >
                             <p class="text-[10px] uppercase text-primary/60">
-                                Scheduled Hours
+                                Scheduled Duration
                             </p>
 
                             <p class="text-sm font-bold text-primary">
@@ -112,28 +131,42 @@
                         </div>
                     </div>
                 </div>
-                <div
-                    class="mt-4 flex items-center gap-3 border-b border-slate-100 pb-4"
-                >
-                    <template v-if="log.full_name">
-                        <img
-                            v-if="log.avatar"
-                            :src="log.avatar"
-                            class="h-10 w-10 rounded-full object-cover"
-                        />
 
-                        <div>
-                            <p class="text-sm font-semibold text-slate-800">
-                                {{ log.full_name }}
-                            </p>
+                <div class="mt-4 space-y-3 border-b border-slate-100 pb-4">
+                    <template v-if="log.assignees.length">
+                        <div
+                            v-for="assignee in log.assignees"
+                            :key="assignee.employee_id"
+                            class="flex items-center gap-3"
+                        >
+                            <img
+                                v-if="assignee.avatar"
+                                :src="assignee.avatar"
+                                class="h-10 w-10 rounded-full object-cover"
+                            />
+                            <div
+                                v-else
+                                class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-500"
+                            >
+                                {{ initials(assignee.full_name) }}
+                            </div>
 
-                            <p class="text-xs text-slate-400">
-                                {{ log.address ?? "—" }}
-                            </p>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-800">
+                                    {{ assignee.full_name }}
+                                </p>
+
+                                <p
+                                    v-if="assignee.employee_role"
+                                    class="text-xs text-slate-400 capitalize"
+                                >
+                                    {{ assignee.employee_role ?? "—" }}
+                                </p>
+                            </div>
                         </div>
                     </template>
 
-                    <template v-else>
+                    <div v-else class="flex items-center gap-3">
                         <div
                             class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-700"
                         >
@@ -149,7 +182,7 @@
                                 No employee has been assigned yet
                             </p>
                         </div>
-                    </template>
+                    </div>
                 </div>
 
                 <div
@@ -183,6 +216,27 @@
                         :key="index"
                         class="rounded-lg border border-slate-100 bg-slate-50 p-4"
                     >
+                        <div
+                            v-if="scan.employee_name"
+                            class="mb-3 flex items-center gap-2"
+                        >
+                            <img
+                                v-if="scan.employee_avatar"
+                                :src="scan.employee_avatar"
+                                class="h-6 w-6 rounded-full object-cover"
+                            />
+                            <div
+                                v-else
+                                class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[10px] font-semibold text-slate-500"
+                            >
+                                {{ initials(scan.employee_name) }}
+                            </div>
+
+                            <p class="text-xs font-medium text-slate-600">
+                                {{ scan.employee_name }}
+                            </p>
+                        </div>
+
                         <div class="grid gap-4 lg:grid-cols-4">
                             <div>
                                 <p class="text-[11px] uppercase text-slate-400">
@@ -198,14 +252,13 @@
                                 </p>
 
                                 <p
-                                    v-if="scan.qr_in"
+                                    v-if="scan.in_timestamp"
                                     class="text-[11px] text-emerald-600"
                                 >
                                     QR scanned
                                 </p>
                             </div>
 
-                            <!-- Out -->
                             <div>
                                 <p class="text-[11px] uppercase text-slate-400">
                                     Check-out
@@ -220,14 +273,13 @@
                                 </p>
 
                                 <p
-                                    v-if="scan.qr_out"
+                                    v-if="scan.out_timestamp"
                                     class="text-[11px] text-emerald-600"
                                 >
                                     QR scanned
                                 </p>
                             </div>
 
-                            <!-- Duration -->
                             <div>
                                 <p class="text-[11px] uppercase text-slate-400">
                                     Worked
@@ -238,7 +290,6 @@
                                 </p>
                             </div>
 
-                            <!-- Status -->
                             <div>
                                 <p class="text-[11px] uppercase text-slate-400">
                                     Status
@@ -271,116 +322,202 @@
                 </div>
             </div>
         </div>
+        <QrCodeModal
+            :show="showQrModal"
+            :token="qrToken"
+            :mode="qrMode"
+            @close="closeQrModal"
+        />
+        <AssignADLModal
+            :open="showAssignModal"
+            :schedule="selectedSchedule"
+            :branch-uuid="String(route.params.uuid)"
+            :is-saving="isAssigning"
+            @close="closeAssignModal"
+            @confirm="handleAssignConfirm"
+        />
+
+        <QrScanner v-if="showScanner" @close="showScanner = false" />
     </div>
 </template>
+
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import type { ScheduleItem } from "~/types/schedule";
+import type { ScheduleItem, AuditRow } from "~/types/schedule";
+import ActionButton from "~/components/ui/ActionButton.vue";
+import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
+import { useRoute } from "vue-router";
+import { useToast } from "~/composables/useToast";
+import AssignADLModal from "./AssignADLModal.vue";
+import QrCodeModal from "~/components/ui/QrCodeModal.vue";
+import QrScanner from "~/components/ui/QrScanner.vue";
+import { scheduleService } from "~/api/schedule/ScheduleService.js";
 
-interface AuditRow {
-    schedule_id: number;
-    schedule_code: string;
-    scheduled_at?: string | null;
-    total_hours: number;
-    status: string;
+const { success, error } = useToast();
 
-    employee_id: number | null;
-    full_name: string | null;
-    avatar: string | null;
-    role: string | null;
-    address: string | null;
-    patient_full_name: string;
-    total_worked_minutes: number;
-
-    online_logs: {
-        qr_in: string | null;
-        qr_out: string | null;
-        in_timestamp: string | null;
-        out_timestamp: string | null;
-        notes: string | null;
-    }[];
-}
+const route = useRoute();
 
 const props = withDefaults(
     defineProps<{
         logs?: ScheduleItem[];
         loading?: boolean;
+        date?: string;
+        rangeEnd?: string;
     }>(),
     {
         logs: () => [],
         loading: false,
     },
 );
+const emit = defineEmits<{
+    (e: "update", schedule: ScheduleItem[]): void;
+}>();
+const selectedSchedule = ref<AuditRow>();
+const showAssignModal = ref(false);
+const isAssigning = ref(false);
+const showScanner = ref(false);
+
+function openAssignModal(log: AuditRow) {
+    selectedSchedule.value = log;
+    showAssignModal.value = true;
+}
+
+function closeAssignModal() {
+    showAssignModal.value = false;
+    selectedSchedule.value = undefined;
+}
+
+async function handleAssignConfirm(payload: {
+    schedule_service_id: number | null;
+    assignments: unknown[];
+}) {
+    isAssigning.value = true;
+    try {
+        const res = await scheduleService.action({
+            type: "assign",
+            branch_uuid: route.params.uuid,
+            schedule_id: selectedSchedule.value?.schedule_id,
+            ...payload,
+        });
+        success(res.message ?? "Succesfully assigned employee");
+        emit("update", res.data);
+        closeAssignModal();
+    } catch (err: any) {
+        error(
+            err?.response?.data?.message ??
+                err?.message ??
+                "Failed to assign staff.",
+        );
+        console.error(err);
+    } finally {
+        isAssigning.value = false;
+    }
+}
+
+const generatingQr = ref(false);
+const qrToken = ref<string | null>(null);
+const showQrModal = ref(false);
+const qrMode = ref<"clock-in" | "clock-out">("clock-in");
+
+async function generateQr(type: "in" | "out", schedule: AuditRow) {
+    generatingQr.value = true;
+    qrToken.value = null;
+    qrMode.value = type === "in" ? "clock-in" : "clock-out";
+    showQrModal.value = true;
+
+    try {
+        const res = await onlineScheduleService.generateQr({
+            type,
+            branch_uuid: route.params.uuid,
+            schedule_services_id: schedule.schedule_services_id,
+        });
+        qrToken.value = res.data?.token ?? res.token ?? res;
+    } catch (err: any) {
+        error(
+            err?.response?.data?.message ??
+                err?.message ??
+                "Internal Server Error",
+        );
+        showQrModal.value = false;
+        console.error(err);
+    } finally {
+        generatingQr.value = false;
+    }
+}
+
+function closeQrModal() {
+    showQrModal.value = false;
+    qrToken.value = null;
+}
 
 const search = ref("");
-const selectedDate = ref(new Date().toISOString().slice(0, 10));
+
 const filteredLogs = computed<AuditRow[]>(() => {
     const rows: AuditRow[] = props.logs.flatMap((schedule) =>
-        (schedule.services ?? []).flatMap((service): AuditRow[] => {
-            const assignees = service.assignees ?? [];
+        (schedule.services ?? []).map((service): AuditRow => {
+            const activeAssignees = (service.assignees ?? []).filter(
+                (assignee) => assignee.is_active,
+            );
 
-            if (assignees.length) {
-                return assignees.map((assignee): AuditRow => {
-                    const online_logs = (assignee.online ?? []).map((scan) => ({
-                        qr_in: scan.qr_in ?? null,
-                        qr_out: scan.qr_out ?? null,
-                        in_timestamp: scan.in_timestamp ?? null,
-                        out_timestamp: scan.out_timestamp ?? null,
-                        notes: scan.notes ?? null,
-                    }));
+            const assignees = activeAssignees.map((assignee) => ({
+                employee_id: assignee.employee_id,
+                full_name: assignee.full_name ?? null,
+                avatar: assignee.avatar ?? null,
+                role: assignee.role ?? null,
+                employee_role: assignee.employee_role ?? null,
+            }));
 
-                    return {
-                        status: schedule.status,
-                        schedule_id: schedule.schedule_id,
-                        schedule_code: schedule.schedule_code,
-                        scheduled_at: schedule.scheduled_at ?? null,
+            const online_logs = activeAssignees.flatMap((assignee) =>
+                (assignee.online ?? []).map((scan) => ({
+                    qr_in: scan.qr_in ?? null,
+                    qr_out: scan.qr_out ?? null,
+                    in_timestamp: scan.in_timestamp ?? null,
+                    out_timestamp: scan.out_timestamp ?? null,
+                    notes: scan.notes ?? null,
+                    employee_id: assignee.employee_id,
+                    employee_name: assignee.full_name ?? null,
+                    employee_avatar: assignee.avatar ?? null,
+                })),
+            );
 
-                        total_hours:
-                            service.hours_booked ?? schedule.total_hours ?? 0,
+            online_logs.sort((a, b) => {
+                const aTime = a.in_timestamp
+                    ? new Date(a.in_timestamp).getTime()
+                    : 0;
+                const bTime = b.in_timestamp
+                    ? new Date(b.in_timestamp).getTime()
+                    : 0;
+                return aTime - bTime;
+            });
 
-                        employee_id: assignee.employee_id,
+            const firstAssignee = assignees[0];
 
-                        full_name: assignee.full_name ?? null,
-                        avatar: assignee.avatar ?? null,
-                        role: assignee.role ?? null,
+            return {
+                status: schedule.status,
+                schedule_id: schedule.schedule_id,
+                schedule_code: schedule.schedule_code,
+                scheduled_at: schedule.scheduled_at ?? null,
+                schedule_services_id: service.schedule_services_id,
+                total_hours: service.hours_booked ?? schedule.total_hours ?? 0,
 
-                        address: schedule.patient?.address ?? null,
-                        patient_full_name: schedule.patient?.full_name ?? "",
+                is_active: !!firstAssignee,
+                employee_id: firstAssignee?.employee_id ?? null,
+                full_name: firstAssignee?.full_name ?? null,
+                avatar: firstAssignee?.avatar ?? null,
+                role: firstAssignee?.role ?? null,
 
-                        online_logs,
+                assignees,
 
-                        total_worked_minutes: online_logs.reduce(
-                            (total, scan) => total + workedMinutes(scan),
-                            0,
-                        ),
-                    };
-                });
-            }
+                address: schedule.patient?.address ?? null,
+                patient_full_name: schedule.patient?.full_name ?? "",
 
-            return [
-                {
-                    status: schedule.status,
+                online_logs,
 
-                    schedule_id: schedule.schedule_id,
-                    schedule_code: schedule.schedule_code,
-                    scheduled_at: schedule.scheduled_at ?? null,
-
-                    total_hours:
-                        service.hours_booked ?? schedule.total_hours ?? 0,
-
-                    employee_id: null,
-                    patient_full_name: schedule.patient?.full_name ?? "",
-
-                    full_name: null,
-                    avatar: null,
-                    role: null,
-                    address: schedule.patient?.address ?? null,
-
-                    online_logs: [],
-
-                    total_worked_minutes: 0,
-                } satisfies AuditRow,
-            ];
+                total_worked_minutes: online_logs.reduce(
+                    (total, scan) => total + workedMinutes(scan),
+                    0,
+                ),
+            };
         }),
     );
 
@@ -390,18 +527,25 @@ const filteredLogs = computed<AuditRow[]>(() => {
         const searchMatch =
             !query ||
             row.schedule_code.toLowerCase().includes(query) ||
-            row.full_name?.toLowerCase().includes(query);
+            row.assignees.some((a) =>
+                a.full_name?.toLowerCase().includes(query),
+            );
+
+        const rowDate = row.scheduled_at
+            ? new Date(row.scheduled_at).toISOString().slice(0, 10)
+            : null;
 
         const dateMatch =
-            !selectedDate.value ||
-            (row.scheduled_at &&
-                new Date(row.scheduled_at).toISOString().slice(0, 10) ===
-                    selectedDate.value);
+            (!props.date && !props.rangeEnd) ||
+            (rowDate !== null &&
+                (!props.date || rowDate >= props.date) &&
+                (!props.rangeEnd || rowDate <= props.rangeEnd));
 
         return searchMatch && dateMatch;
     });
 });
-function initials(name?: string) {
+
+function initials(name?: string | null) {
     if (!name) return "?";
 
     return name
@@ -424,15 +568,6 @@ function formatDateTime(value?: string | null) {
     });
 }
 
-function formatScheduleDate(value?: string | null) {
-    if (!value) return "—";
-
-    return new Date(value).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-    });
-}
 function workedMinutes(scan: {
     in_timestamp: string | null;
     out_timestamp: string | null;

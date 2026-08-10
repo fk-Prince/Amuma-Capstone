@@ -9,17 +9,28 @@ export default defineNuxtConfig({
     'nuxt-auth-utils',
     '@nuxt/icon',
   ],
+  // runtimeConfig: {
+  //   public: {
+  //     backendApi: 'http://localhost:8000',
+  //     xenditPublicKey: ''
+  //   }
+  // },
   runtimeConfig: {
     public: {
-      backendApi: 'http://localhost:8000',
+      backendApi: '',
       xenditPublicKey: ''
     }
   },
 
-  routeRules: {
-    '/api/**': {
-      proxy: 'http://127.0.0.1:8000/api/**'
-    }
+  // routeRules: {
+  //   '/api/**': {
+  //     proxy: 'http://127.0.0.1:8000/api/**'
+  //   }
+  // },
+
+  devServer: {
+    host: '0.0.0.0',
+    port: 3000,
   },
 
   app: {

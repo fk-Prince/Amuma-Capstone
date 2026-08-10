@@ -30,7 +30,6 @@ class ScheduleService
     public function createSchedule(User $user, array $payload)
     {
 
-
         return DB::transaction(function () use ($payload) {
 
             $patient = $this->patientRepository->findByFields([
@@ -197,6 +196,73 @@ class ScheduleService
         );
     }
 
+    // public function assignEmployee(User $user, array $payload)
+    // {
+    //     return DB::transaction(function () use ($user, $payload) {
+    //         $schedule = $this->scheduleRepository->findByFields([
+    //             ['schedule_id', '=', $payload['schedule_id']]
+    //         ]);
+
+    //         if (!$schedule) {
+    //             throw new Exception('Schedule dont exists', 404);
+    //         }
+
+    //         foreach ($payload['assignments'] ?? [] as $assignment) {
+    //             $scheduleService = $schedule->scheduleServices()
+    //                 ->where('schedule_services_id', $assignment['schedule_service_id'])
+    //                 ->first();
+
+    //             if (!$scheduleService) {
+    //                 throw new Exception("Schedule service {$assignment['schedule_service_id']} not found for this schedule.", 404);
+    //             }
+
+    //             $existingAssigned = $scheduleService->assigned()
+    //                 ->with('online')
+    //                 ->first();
+
+    //             $newEmployeeId = !empty($assignment['employee_id'])
+    //                 ? (int) $assignment['employee_id']
+    //                 : null;
+
+    //             if (!$existingAssigned) {
+    //                 if ($newEmployeeId) {
+    //                     $scheduleService->assigned()->create([
+    //                         'employee_id' => $newEmployeeId,
+    //                     ]);
+    //                 }
+    //                 continue;
+    //             }
+
+    //             $hasScanHistory = $existingAssigned->online->isNotEmpty();
+    //             $employeeUnchanged = $existingAssigned->employee_id === $newEmployeeId;
+
+    //             if ($employeeUnchanged) {
+    //                 continue;
+    //             }
+
+    //             if ($hasScanHistory) {
+    //                 throw new Exception(
+    //                     "Cannot reassign {$scheduleService->schedule_services_id}: employee already has check-in/out records for this service.",
+    //                     409
+    //                 );
+    //             }
+
+    //             if ($newEmployeeId === null) {
+    //                 $existingAssigned->delete();
+    //             } else {
+    //                 $existingAssigned->update([
+    //                     'employee_id' => $newEmployeeId,
+    //                 ]);
+    //             }
+    //         }
+
+    //         return response()->json([
+    //             'message' => 'Schedule services have been assigned to employees successfully.',
+    //             'data' => $this->retrieveSchedule($user, $payload)
+    //         ]);
+    //     });
+    // }
+
     public function assignEmployee(User $user, array $payload)
     {
         return DB::transaction(function () use ($user, $payload) {
@@ -209,22 +275,71 @@ class ScheduleService
             }
 
 
-            foreach ($payload['assignments'] ?? [] as $assignment) {
+            $assignmentsByService = collect($payload['assignments'] ?? [])
+                ->groupBy('schedule_services_id');
+
+            foreach ($assignmentsByService as $scheduleServicesId => $assignments) {
                 $scheduleService = $schedule->scheduleServices()
-                    ->where('schedule_services_id', $assignment['schedule_services_id'])
-                    ->firstOrFail();
+                    ->where('schedule_services_id', $scheduleServicesId)
+                    ->first();
 
-                $scheduleService->assigned()->delete();
+                if (!$scheduleService) {
+                    throw new Exception("Schedule service {$scheduleServicesId} not found for this schedule.", 404);
+                }
 
-                if (!empty($assignment['employee_id'])) {
-                    $scheduleService->assigned()->create([
-                        'employee_id' => $assignment['employee_id'],
-                    ]);
+                $desiredEmployeeIds = $assignments
+                    ->pluck('employee_id')
+                    ->filter()
+                    ->map(fn($id) => (int) $id)
+                    ->unique()
+                    ->values();
+
+                $currentlyActive = $scheduleService->assigned()
+                    ->where('is_active', true)
+                    ->get();
+
+                // Deactivate/delete anyone active who's no longer in the desired set
+                foreach ($currentlyActive as $currentAssigned) {
+                    if ($desiredEmployeeIds->contains((int) $currentAssigned->employee_id)) {
+                        continue;
+                    }
+
+                    $hasOnlineLog = $currentAssigned->onlineSchedules()->exists();
+
+                    if ($hasOnlineLog) {
+                        $currentAssigned->update(['is_active' => false]);
+                    } else {
+                        $currentAssigned->delete();
+                    }
+                }
+
+                $currentlyActiveIds = $currentlyActive
+                    ->pluck('employee_id')
+                    ->map(fn($id) => (int) $id);
+
+                // Activate/create anyone in the desired set who isn't already active
+                foreach ($desiredEmployeeIds as $employeeId) {
+                    if ($currentlyActiveIds->contains($employeeId)) {
+                        continue;
+                    }
+
+                    $existingRow = $scheduleService->assigned()
+                        ->where('employee_id', $employeeId)
+                        ->first();
+
+                    if ($existingRow) {
+                        $existingRow->update(['is_active' => true]);
+                    } else {
+                        $scheduleService->assigned()->create([
+                            'employee_id' => $employeeId,
+                            'is_active' => true,
+                        ]);
+                    }
                 }
             }
 
             return response()->json([
-                'message' => 'Schedule services have been assigned to employees successfully.',
+                'message' => 'Schedule services have been updated successfully.',
                 'data' => $this->retrieveSchedule($user, $payload)
             ]);
         });
