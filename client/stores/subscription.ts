@@ -20,25 +20,59 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
         selectedInterval: "",
         payment_method: "CREDIT-CARD",
 
+        // branch: {
+        //     name: "",
+        //     contact_number: "",
+        //     image: undefined as any,
+        //     description: "",
+        //     location: defaultLocation(),
+        //     email: "",
+        //     status: "active"
+        // } as Branch,
+
+        // agency: {
+        //     id: undefined,
+        //     name: "",
+        //     description: "",
+        //     location: defaultLocation(),
+        //     email: "",
+        //     image: ""
+        // } as Agency,
+
         branch: {
-            name: "",
-            contact_number: "",
+            name: "AMUMA Davao City",
+            contact_number: "+63 900 000 0000",
             image: undefined as any,
-            description: "",
-            location: defaultLocation(),
-            email: "",
-            status: "active"
+            description:
+                "AMUMA Davao City provides compassionate and dependable caregiving services, offering personalized support for daily living, personal care, companionship, and other essential needs.",
+            location: {
+                street: "J.P. Laurel Avenue",
+                city: "Davao City",
+                province: "Davao del Sur",
+                country: "Philippines",
+                latitude: 7.1907,
+                longitude: 125.4553,
+            },
+            email: "davao@amuma.com",
+            status: "active",
         } as Branch,
 
         agency: {
             id: undefined,
-            name: "",
-            description: "",
-            location: defaultLocation(),
-            email: "",
-            image: ""
+            name: "AMUMA Incorporation",
+            description:
+                "AMUMA Incorporation is a compassionate caregiving agency providing personalized, reliable, and respectful care to individuals and families while promoting dignity, comfort, safety, and independence.",
+            location: {
+                street: "J.P. Laurel Avenue",
+                city: "Davao City",
+                province: "Davao del Sur",
+                country: "Philippines",
+                latitude: 7.1907,
+                longitude: 125.4553,
+            },
+            email: "info@amuma.com",
+            image: "",
         } as Agency,
-
 
         settings: {
             opening: "00:00",

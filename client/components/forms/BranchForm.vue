@@ -34,6 +34,7 @@
                         mode="textarea"
                         :textMax="1000"
                         :allowResize="true"
+                        :rows="3"
                         @update:modelValue="clearError('branch_description')"
                         :error="errors?.branch_description"
                     />

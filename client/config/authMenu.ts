@@ -54,10 +54,10 @@ export const authMenuList: MenuItems[] = [
         modules: ["Patients"],
     },
     {
-        label: "Pricing",
+        label: "Contracts",
         icon: Building2,
-        to: "/app/branches/[uuid]/pricing",
-        modules: ["Pricing"],
+        to: "/app/branches/[uuid]/contracts",
+        modules: ["Contracts"],
     },
     {
         label: "Rooms & Beds",

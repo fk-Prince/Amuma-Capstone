@@ -70,10 +70,19 @@
             <div class="space-y-3">
                 <SummaryRow
                     label="Plan"
-                    :value="checkout.selectedPlan?.plan_code || '—'"
+                    :value="
+                        checkout.selectedPlan?.plan_code === 'C'
+                            ? 'Hybrid Plan'
+                            : checkout.selectedPlan?.plan_code === 'A'
+                              ? 'Homecare Services'
+                              : checkout.selectedPlan?.plan_code === 'B'
+                                ? 'Inhouse Facility'
+                                : '—'
+                    "
                 />
 
                 <SummaryRow
+                    class="capitalize"
                     label="Billing Cycle"
                     :value="checkout.selectedInterval || '—'"
                 />

@@ -53,8 +53,8 @@
                             </p>
 
                             <p class="text-xs text-slate-400">
-                                Allow customers to fill up required details
-                                before admission.
+                                Allow client to fill up required details before
+                                admission online.
                             </p>
                         </div>
                     </label>
@@ -76,7 +76,7 @@
 
                             <p class="text-xs text-slate-400">
                                 Allow bookings with payment and room reservation
-                                after admission approval.
+                                before admission approval online.
                             </p>
                         </div>
                     </label>

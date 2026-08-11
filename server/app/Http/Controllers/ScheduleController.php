@@ -57,6 +57,12 @@ class ScheduleController extends Controller
                 'branch_id' => $branch->branch_id,
             ]);
             return $this->scheduleService->availableEmployee($request->all());
+        } else if ($request->type === 'overview') {
+            $branch = BranchGuard::resolveBranch($request->branch_uuid);
+            $request->merge([
+                'branch_id' => $branch->branch_id,
+            ]);
+            return $this->scheduleService->overview($request->all());
         }
     }
 

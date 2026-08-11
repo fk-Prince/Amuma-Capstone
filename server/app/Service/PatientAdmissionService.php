@@ -118,7 +118,7 @@ class PatientAdmissionService
                 ['status', '=', PatientAdmission::STATUS_WAITING],
             ]);
 
-            if (!$waiting) {
+            if ($waiting) {
                 throw new Exception('Patient already has an waiting admission.', 400);
             }
 

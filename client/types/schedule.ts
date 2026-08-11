@@ -54,6 +54,7 @@ export interface PatientAdmission {
 
 
 export interface SchedulePatient {
+    patient_uuid: string;
     patient_id: number;
     full_name: string;
     address: string | null;
@@ -136,6 +137,7 @@ export interface AuditRow {
     avatar: string | null;
     role: string | null;
     address: string | null;
+    patient_uuid: string;
     patient_full_name: string;
     total_worked_minutes: number;
 

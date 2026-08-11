@@ -17,7 +17,7 @@ return new class extends Migration
                 ->constrained('schedule_assigned', 'schedule_assigned_id')
                 ->cascadeOnDelete();
             $table->string('qr_in_token')->nullable();
-            $table->string('qr__token')->nullable();
+            $table->string('qr_out_token')->nullable();
             $table->string('notes')->nullable();
             $table->timestamp('in_timestamp')->nullable();
             $table->timestamp('out_timestamp')->nullable();

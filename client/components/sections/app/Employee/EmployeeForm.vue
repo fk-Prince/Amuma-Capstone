@@ -67,7 +67,6 @@ const {
     onSaved: () => emit("back"),
 });
 
-// UI-only state stays in the component.
 const activeTab = ref("information");
 const fileInput = ref<HTMLInputElement | null>(null);
 

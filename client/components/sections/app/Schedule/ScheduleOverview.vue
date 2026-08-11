@@ -305,7 +305,7 @@
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { CalendarDays, Clock, CalendarClock, UserCheck } from "lucide-vue-next";
 import { useRoute } from "vue-router";
-import { formatDate } from "~/utils/notification-time";
+import { notifcationFormatDate } from "~/utils/notification-time";
 import { useAuthUser } from "~/composables/useAuthUser";
 
 const open = ref(true);
@@ -325,7 +325,7 @@ const formatTime = (value?: string) => {
     if (!value) return "--:--";
 
     const date = new Date(value);
-    if (isNaN(date.getTime())) return formatDate(value);
+    if (isNaN(date.getTime())) return notifcationFormatDate(value);
 
     return date.toLocaleTimeString([], {
         hour: "2-digit",

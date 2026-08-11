@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('agency_id')->nullable()->constrained('agencies', 'agency_id');
             $table->foreignId('location_id')->nullable()->constrained('locations', 'location_id');
             $table->string('name');
+            $table->string('email')->unique();
             $table->boolean('is_verified')->default(false);
             $table->string('description', 1000)->nullable();
             $table->json('settings')->nullable();

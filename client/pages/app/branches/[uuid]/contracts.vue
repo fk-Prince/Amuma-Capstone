@@ -98,6 +98,7 @@ import CreateFacilityPlanModal from "~/components/sections/app/Contract/CreateFa
 import ViewModal from "~/components/sections/app/Contract/ViewModal.vue";
 
 import { branchContractService } from "~/api/branch-contract/BranchContractService";
+useHead({ title: "Contracts" });
 
 definePageMeta({
     layout: "dashboard",

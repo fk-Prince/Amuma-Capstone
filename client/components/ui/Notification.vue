@@ -82,7 +82,7 @@
                                 {{ notif.message }}
                             </p>
                             <p class="text-[11px] text-gray-400 mt-0.5">
-                                {{ formatDate(notif.created_at) }}
+                                {{ notifcationFormatDate(notif.created_at) }}
                             </p>
                         </div>
 

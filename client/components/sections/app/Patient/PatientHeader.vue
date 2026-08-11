@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { calculateAge } from "~/utils/user";
 import {
     Calendar,
     MapPin,
@@ -51,25 +52,33 @@ function fullName(
                     >
                         <span class="flex items-center gap-1.5">
                             <Calendar class="h-4 w-4 text-primary" />
-                            {{ formatDate(patient.date_of_birth) }}
+                            <div>
+                                <p class="text-xs text-muted">Date of birth</p>
+                                {{ formatDate(patient.date_of_birth) }}
+                            </div>
                         </span>
 
                         <span class="text-gray-300">•</span>
 
                         <span class="flex items-center gap-1.5">
                             <UserRound class="h-4 w-4 text-primary" />
-                            {{ patient.age }} years old
+                            <div>
+                                <p class="text-xs text-muted">Age</p>
+                                {{ calculateAge(patient.date_of_birth, false) }}
+                            </div>
                         </span>
 
                         <span class="text-gray-300">•</span>
 
                         <span class="flex items-center gap-1.5">
                             <MapPin class="h-4 w-4 text-primary" />
-
-                            {{
-                                patient.location?.full_address ||
-                                "No address provided"
-                            }}
+                            <div>
+                                <p class="text-xs text-muted">Address</p>
+                                {{
+                                    patient.location?.full_address ||
+                                    "No address provided"
+                                }}
+                            </div>
                         </span>
                     </div>
                 </div>

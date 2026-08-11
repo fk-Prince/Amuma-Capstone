@@ -23,7 +23,7 @@
                         :total-amount="total"
                         :processing="processing || loadingTotal"
                         :onCardPay="payCard"
-                        :enableGCash="false"
+                        :enableGCash="true"
                     />
                 </div>
             </div>
@@ -108,35 +108,49 @@ const buildSubscriptionPayload = (): SubscriptionRequest => ({
     agency_email: checkout.agency.email ?? "",
     agency_image: checkout.agency.image,
 });
+const xenditProcessing = ref(false);
 
 const payCard = async () => {
-    if (processing.value || loadingTotal.value) return;
+    if (processing.value || loadingTotal.value || xenditProcessing.value) {
+        return;
+    }
+
     processing.value = true;
+
     try {
         const payload = buildSubscriptionPayload();
 
         await cardPayment({
             card,
             amount: total.value,
+
             onClose: () => {
+                xenditProcessing.value = false;
                 processing.value = false;
+            },
+
+            on3DSProcessingChange: (value: any) => {
+                xenditProcessing.value = value;
             },
 
             createPayment: ({ token_id, authentication_id }) =>
                 subscriptionService.createSubscription({
                     ...payload,
-                    token_id: token_id,
-                    authentication_id: authentication_id,
+                    token_id,
+                    authentication_id,
                     payment_method: "CREDIT-CARD",
                     payment_type: "SUBSCRIPTION",
                 }),
 
             onSuccess: async (result) => {
+                xenditProcessing.value = false;
+
                 success(result.message);
+
                 await fetchAuthUser();
 
                 await navigateTo({
-                    path: `/product/subscription-summary?status=success`,
+                    path: "/product/subscription-summary?status=success",
                     query: {
                         status: result.status,
                     },
@@ -144,6 +158,7 @@ const payCard = async () => {
             },
         });
     } catch (err: any) {
+        xenditProcessing.value = false;
         error(err.message);
     } finally {
         processing.value = false;

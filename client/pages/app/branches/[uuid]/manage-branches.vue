@@ -1,8 +1,8 @@
 <template>
-    <div class="min-h-screen bg-slate-50 px-4 lg:px-8 py-8">
+    <div class="min-h-screen bg-slate-50 px-4 py-8 lg:px-8">
         <BranchDashboard :stats-data="statsData" />
 
-        <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+        <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
             <div class="relative flex-1">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -10,22 +10,23 @@
                     fill="none"
                     stroke="currentColor"
                     stroke-width="2"
-                    class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
                 >
                     <circle cx="11" cy="11" r="7" />
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
+
                 <input
                     v-model="search"
                     type="text"
                     placeholder="Search branches, location, manager..."
-                    class="w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 py-2.5 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                    class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-11 pr-4 text-sm placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
             </div>
 
             <button
                 type="button"
-                class="shrink-0 h-[42px] w-[42px] rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -33,7 +34,7 @@
                     fill="none"
                     stroke="currentColor"
                     stroke-width="2"
-                    class="w-4 h-4"
+                    class="h-4 w-4"
                 >
                     <line x1="4" y1="6" x2="20" y2="6" />
                     <line x1="8" y1="12" x2="20" y2="12" />
@@ -52,7 +53,7 @@
 
             <button
                 type="button"
-                class="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 transition"
+                class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -60,32 +61,35 @@
                     fill="none"
                     stroke="currentColor"
                     stroke-width="2.5"
-                    class="w-4 h-4"
+                    class="h-4 w-4"
                 >
                     <line x1="12" y1="5" x2="12" y2="19" />
                     <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
+
                 Add New Branch
             </button>
         </div>
 
-        <div class="rounded-2xl bg-white border border-slate-100 shadow-sm p-6">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center gap-3">
-                    <div
+        <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div
+                class="mb-6 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between"
+            >
+                <div class="flex min-w-0 items-start gap-4">
+                    <!-- <div
+                        class="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50"
+                    > -->
+                    <img
                         v-if="agency?.image"
-                        class="h-9 w-9 rounded-xl overflow-hidden shrink-0"
-                    >
-                        <img
-                            :src="agency.image"
-                            :alt="agency.name"
-                            class="h-full w-full object-cover"
-                        />
-                    </div>
+                        :src="agency.image"
+                        :alt="agency.name"
+                        class="h-14 w-14 object-cover"
+                    />
+                    <!-- </div> -->
 
                     <div
                         v-else
-                        class="h-9 w-9 rounded-xl bg-primary-50 flex items-center justify-center text-primary shrink-0"
+                        class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-50 text-primary"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -93,7 +97,7 @@
                             fill="none"
                             stroke="currentColor"
                             stroke-width="2"
-                            class="w-4.5 h-4.5"
+                            class="h-6 w-6"
                         >
                             <circle cx="6" cy="6" r="2.5" />
                             <circle cx="18" cy="6" r="2.5" />
@@ -102,21 +106,26 @@
                         </svg>
                     </div>
 
-                    <div>
-                        <h2 class="text-base font-semibold text-slate-900">
-                            Branch Directory
-                        </h2>
-                        <p
-                            v-if="agency"
-                            class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5"
+                    <div v-if="agency" class="min-w-0">
+                        <h1
+                            class="truncate text-xl font-semibold text-slate-800"
+                        >
+                            {{ agency.name }}
+                        </h1>
+
+                        <!-- <p
+                            v-if="agency.description"
+                            class="mt-1 max-w-2xl text-sm leading-6 text-slate-500"
+                        >
+                            {{ agency.description }}
+                        </p> -->
+
+                        <div
+                            class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2"
                         >
                             <span
-                                class="text-sm font-semibold text-slate-700"
-                                >{{ agency.name }}</span
-                            >
-                            <span
                                 v-if="agency.email"
-                                class="flex items-center gap-1 text-xs text-slate-400"
+                                class="flex items-center gap-2 text-sm text-slate-500"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -124,7 +133,7 @@
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="2"
-                                    class="w-3 h-3"
+                                    class="h-4 w-4 shrink-0 text-slate-400"
                                 >
                                     <rect
                                         x="2"
@@ -135,11 +144,13 @@
                                     />
                                     <path d="m22 6-10 7L2 6" />
                                 </svg>
-                                {{ agency.email }}
+
+                                <span>{{ agency.email }}</span>
                             </span>
+
                             <span
                                 v-if="agency.location"
-                                class="flex items-center gap-1 text-xs text-slate-400"
+                                class="flex items-center gap-2 text-sm text-slate-500"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -147,28 +158,30 @@
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="2"
-                                    class="w-3 h-3"
+                                    class="h-4 w-4 shrink-0 text-slate-400"
                                 >
                                     <path
                                         d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11Z"
                                     />
                                     <circle cx="12" cy="10" r="2.5" />
                                 </svg>
-                                {{ agency.location }}
+
+                                <span>{{ agency.location }}</span>
                             </span>
-                        </p>
+                        </div>
                     </div>
                 </div>
 
                 <div
-                    class="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1"
+                    class="inline-flex w-fit shrink-0 items-center rounded-xl border border-slate-200 bg-slate-50 p-1"
                 >
                     <button
                         type="button"
-                        class="h-8 w-8 rounded-lg flex items-center justify-center transition"
+                        aria-label="List view"
+                        class="flex h-8 w-8 items-center justify-center rounded-lg transition"
                         :class="
                             viewMode === 'list'
-                                ? 'bg-white shadow-sm text-slate-700'
+                                ? 'bg-white text-slate-700 shadow-sm'
                                 : 'text-slate-400 hover:text-slate-600'
                         "
                         @click="viewMode = 'list'"
@@ -179,7 +192,7 @@
                             fill="none"
                             stroke="currentColor"
                             stroke-width="2"
-                            class="w-4 h-4"
+                            class="h-4 w-4"
                         >
                             <line x1="4" y1="6" x2="20" y2="6" />
                             <line x1="4" y1="12" x2="20" y2="12" />
@@ -189,7 +202,8 @@
 
                     <button
                         type="button"
-                        class="h-8 w-8 rounded-lg flex items-center justify-center transition"
+                        aria-label="Grid view"
+                        class="flex h-8 w-8 items-center justify-center rounded-lg transition"
                         :class="
                             viewMode === 'grid'
                                 ? 'bg-primary text-white shadow-sm'
@@ -203,7 +217,7 @@
                             fill="none"
                             stroke="currentColor"
                             stroke-width="2"
-                            class="w-4 h-4"
+                            class="h-4 w-4"
                         >
                             <rect x="3" y="3" width="7" height="7" rx="1.5" />
                             <rect x="14" y="3" width="7" height="7" rx="1.5" />
@@ -214,39 +228,54 @@
                 </div>
             </div>
 
+            <div class="mb-6 border-t border-slate-100 pt-5">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-900">
+                        Branch Directory
+                    </h2>
+
+                    <p class="mt-1 text-sm text-slate-500">
+                        Manage and view branches under this agency.
+                    </p>
+                </div>
+            </div>
+
             <div
                 v-if="loading"
-                class="grid gap-5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4"
+                class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4"
             >
                 <div
                     v-for="n in 4"
                     :key="n"
-                    class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 animate-pulse space-y-4"
+                    class="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 animate-pulse"
                 >
                     <div class="flex items-start gap-3">
                         <div
-                            class="h-14 w-14 rounded-xl bg-slate-200 shrink-0"
+                            class="h-14 w-14 shrink-0 rounded-xl bg-slate-200"
                         ></div>
+
                         <div class="flex-1 space-y-2">
                             <div class="h-4 w-2/3 rounded bg-slate-200"></div>
                             <div class="h-3 w-1/3 rounded bg-slate-200"></div>
                         </div>
                     </div>
+
                     <div class="space-y-2">
                         <div class="h-3 w-full rounded bg-slate-200"></div>
                         <div class="h-3 w-4/5 rounded bg-slate-200"></div>
                         <div class="h-3 w-3/5 rounded bg-slate-200"></div>
                     </div>
+
                     <div class="h-9 rounded-lg bg-slate-200"></div>
                 </div>
             </div>
 
             <div
                 v-else-if="!filteredBranches.length"
-                class="py-16 flex flex-col items-center justify-center text-center"
+                class="flex flex-col items-center justify-center py-16 text-center"
             >
                 <div
-                    class="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3"
+                    class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -254,16 +283,18 @@
                         fill="none"
                         stroke="currentColor"
                         stroke-width="2"
-                        class="w-6 h-6"
+                        class="h-6 w-6"
                     >
                         <circle cx="11" cy="11" r="7" />
                         <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
                 </div>
+
                 <p class="text-sm font-medium text-slate-600">
                     No branches found
                 </p>
-                <p class="text-xs text-slate-400 mt-1">
+
+                <p class="mt-1 text-xs text-slate-400">
                     Try adjusting your search or filters.
                 </p>
             </div>
@@ -298,7 +329,7 @@
                 <button
                     type="button"
                     :disabled="loadingMore"
-                    class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium hover:bg-slate-50 transition disabled:opacity-50"
+                    class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                     @click="fetchBranches(currentPage + 1)"
                 >
                     {{ loadingMore ? "Loading..." : "Load More" }}
@@ -315,11 +346,13 @@ import { computed, ref, h, onMounted } from "vue";
 import { agencyService } from "~/api/agency/AgencyService";
 import { useBranchStore } from "~/stores/branch";
 import { useRoute } from "vue-router";
+import logo from "~/assets/logo/logo.png";
 
 definePageMeta({
     layout: "dashboard",
     middleware: "auth-client",
 });
+useHead({ title: "Branches" });
 
 function onEditBranch(branch: Branch) {}
 
@@ -398,7 +431,7 @@ const mapBranch = (b: any): Branch => ({
     rooms: b.rooms_count ?? 0,
     staffs: b.staff_count ?? 0,
     patients: b.patients_count ?? 0,
-    image: b.image ?? "/assets/placeholder-branch.png",
+    image: b.image ?? logo,
 });
 
 const fetchStats = async () => {
@@ -419,10 +452,11 @@ const agency = computed(() => {
     return {
         name: a.name ?? "",
         email: a.email ?? "",
+        description: a.description ?? "",
         image:
             a.image instanceof File
                 ? URL.createObjectURL(a.image)
-                : (a.image ?? null),
+                : (a.image ?? logo),
         location: [a.location?.city, a.location?.province]
             .filter(Boolean)
             .join(", "),

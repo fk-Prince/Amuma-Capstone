@@ -273,7 +273,7 @@ w
                                 </div>
 
                                 <p class="text-xs text-[#6B8A87]">
-                                    {{ formatDate(item.created_at) }}
+                                    {{ notifcationFormatDate(item.created_at) }}
                                 </p>
                             </div>
 
@@ -297,7 +297,7 @@ w
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { CalendarDays, Clock, CalendarClock, UserCheck } from "lucide-vue-next";
 import { useRoute } from "vue-router";
-import { formatDate } from "~/utils/notification-time";
+import { notifcationFormatDate } from "~/utils/notification-time";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { formatStatus } from "~/types/booking";
 

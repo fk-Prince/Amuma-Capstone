@@ -1,55 +1,77 @@
 <template>
-    <div class="w-full bg-white p-5 rounded-t-xl">
+    <div
+        class="w-full bg-white p-5 rounded-t-2xl border border-muted-light/70 shadow-sm shadow-secondary/[0.03] font-sans"
+    >
         <div
-            class="flex items-center justify-between"
+            class="flex items-center justify-between gap-3"
             :class="expanded ? 'mb-4' : ''"
         >
             <button
                 type="button"
-                class="flex items-center gap-3 text-left flex-1 min-w-0"
+                class="flex items-center gap-3 text-left flex-1 min-w-0 group"
                 @click="expanded = !expanded"
             >
                 <div
-                    class="h-10 w-10 shrink-0 rounded-xl bg-[#EAF4F2] flex items-center justify-center text-primary"
+                    class="h-10 w-10 shrink-0 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600 transition-colors group-hover:bg-primary-100"
                 >
                     <SlidersHorizontal class="h-5 w-5" />
                 </div>
 
                 <div class="min-w-0">
                     <div class="flex items-center gap-2">
-                        <h3 class="font-semibold text-[#16302E]">
+                        <h3 class="font-semibold text-secondary tracking-tight">
                             Filter Schedule
                         </h3>
 
                         <span
                             v-if="!expanded && activeFilterCount > 0"
-                            class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1 rounded-full bg-primary text-white text-[10px] font-semibold"
+                            class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-primary text-white text-[10px] font-semibold"
                         >
                             {{ activeFilterCount }}
                         </span>
                     </div>
 
-                    <p class="text-xs text-[#6B8A87] mt-1 truncate">
+                    <p class="text-xs text-muted mt-0.5 truncate">
                         Refine appointments by date, status or provider
                     </p>
                 </div>
             </button>
 
-            <div class="flex items-center gap-3 shrink-0 pl-3">
-                <div class="grid grid-cols-2 gap-2">
+            <div class="flex items-center gap-2 shrink-0 pl-2">
+                <div
+                    class="flex items-center gap-1 rounded-xl bg-muted-light p-1"
+                >
                     <button
                         v-for="option in viewOptions"
                         :key="option.value"
                         type="button"
-                        class="flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors"
+                        :aria-label="option.label"
+                        :aria-pressed="filters.view === option.value"
+                        class="flex items-center justify-center h-8 w-8 rounded-lg transition-colors"
+                        :class="
+                            filters.view === option.value
+                                ? 'bg-white text-primary-600 shadow-sm'
+                                : 'text-muted hover:text-secondary'
+                        "
                         @click="setView(option.value)"
                     >
-                        <component :is="option.icon" class="h-6 w-6" />
+                        <component :is="option.icon" class="h-4 w-4" />
                     </button>
                 </div>
+
+                <button
+                    v-if="activeFilterCount > 0"
+                    type="button"
+                    class="hidden sm:flex items-center gap-1 h-8 px-2.5 rounded-lg text-xs font-medium text-muted hover:text-danger hover:bg-danger/10 transition-colors"
+                    @click="resetFilters"
+                >
+                    <X class="h-3.5 w-3.5" />
+                    Clear
+                </button>
+
                 <button
                     type="button"
-                    class="h-8 w-8 rounded-lg flex items-center justify-center text-[#6B8A87] hover:bg-[#EAF4F2] hover:text-primary transition-colors"
+                    class="h-9 w-9 rounded-lg flex items-center justify-center text-muted hover:bg-primary-50 hover:text-primary-600 transition-colors"
                     :aria-expanded="expanded"
                     aria-label="Toggle filters"
                     @click="expanded = !expanded"
@@ -69,37 +91,37 @@
             @leave="onLeave"
         >
             <div v-show="expanded" ref="panelRef" class="overflow-hidden">
-                <div class="relative mb-4">
+                <div class="relative flex-1 mb-4">
                     <Search
-                        class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B8A87]"
+                        class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
                     />
-
-                    <input
+                    <BaseInput
                         v-model="filters.search"
-                        type="text"
-                        placeholder="Search patient, reference ID..."
-                        class="w-full rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] pl-9 pr-3 py-2.5 text-sm text-[#16302E] placeholder:text-[#9BB3B0] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                        @input="emitChange()"
+                        :allowResize="true"
+                        :textMax="1000"
+                        input-class="pl-11"
+                        placeholder="Search patient, assigned nurse, schedule..."
+                        @update:modelValue="emitChange()"
                     />
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 mb-4">
                     <div>
                         <label
-                            class="text-xs uppercase tracking-wide text-[#6B8A87] mb-1.5 block"
+                            class="text-[11px] font-medium uppercase tracking-wide text-muted mb-1.5 block"
                         >
                             From
                         </label>
 
                         <div class="relative">
                             <CalendarDays
-                                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B8A87]"
+                                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none"
                             />
 
                             <input
                                 v-model="filters.date_from"
                                 type="date"
-                                class="w-full rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] pl-9 pr-2 py-2.5 text-sm text-[#16302E] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                                class="w-full rounded-xl border border-muted-light bg-muted-light/40 pl-9 pr-2 py-2.5 text-sm text-secondary focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary focus:bg-white transition-colors"
                                 @change="emitChange(true)"
                             />
                         </div>
@@ -107,20 +129,20 @@
 
                     <div>
                         <label
-                            class="text-xs uppercase tracking-wide text-[#6B8A87] mb-1.5 block"
+                            class="text-[11px] font-medium uppercase tracking-wide text-muted mb-1.5 block"
                         >
                             To
                         </label>
 
                         <div class="relative">
                             <CalendarDays
-                                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B8A87]"
+                                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none"
                             />
 
                             <input
                                 v-model="filters.date_to"
                                 type="date"
-                                class="w-full rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] pl-9 pr-2 py-2.5 text-sm text-[#16302E] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                                class="w-full rounded-xl border border-muted-light bg-muted-light/40 pl-9 pr-2 py-2.5 text-sm text-secondary focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary focus:bg-white transition-colors"
                                 @change="emitChange(true)"
                             />
                         </div>
@@ -129,7 +151,7 @@
 
                 <div class="mb-4">
                     <p
-                        class="text-xs uppercase tracking-wide text-[#6B8A87] mb-2"
+                        class="text-[11px] font-medium uppercase tracking-wide text-muted mb-2"
                     >
                         Status
                     </p>
@@ -141,9 +163,15 @@
                             type="button"
                             class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
                             :class="
-                                filters.statuses.includes(status.value)
+                                (
+                                    status.value === ''
+                                        ? filters.statuses.length === 0
+                                        : filters.statuses.includes(
+                                              status.value,
+                                          )
+                                )
                                     ? 'bg-primary border-primary text-white'
-                                    : 'bg-[#FAFCFB] border-[#EDF4F3] text-[#6B8A87] hover:border-primary/40'
+                                    : 'bg-white border-muted-light text-muted hover:border-primary/40 hover:text-primary-600'
                             "
                             @click="toggleStatus(status.value)"
                         >
@@ -152,9 +180,9 @@
                     </div>
                 </div>
 
-                <div class="mb-4">
+                <div>
                     <p
-                        class="text-xs uppercase tracking-wide text-[#6B8A87] mb-2"
+                        class="text-[11px] font-medium uppercase tracking-wide text-muted mb-2"
                     >
                         Type
                     </p>
@@ -167,8 +195,8 @@
                             class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
                             :class="
                                 filters.type.includes(type.value)
-                                    ? 'bg-[#0E7C7B] border-[#0E7C7B] text-white'
-                                    : 'bg-[#FAFCFB] border-[#EDF4F3] text-[#6B8A87] hover:border-[#0E7C7B]/40'
+                                    ? 'bg-primary border-primary text-white'
+                                    : 'bg-white border-muted-light text-muted hover:border-primary/40 hover:text-primary-600'
                             "
                             @click="toggleType(type.value)"
                         >
@@ -181,7 +209,8 @@
     </div>
 </template>
 <script setup lang="ts">
-import { reactive, computed, watch, ref } from "vue";
+import { reactive, computed, watch, ref, onMounted } from "vue";
+import BaseInput from "~/components/ui/BaseInput.vue";
 import { useRoute, useRouter } from "vue-router";
 import {
     Search,
@@ -222,8 +251,10 @@ const route = useRoute();
 const router = useRouter();
 
 const expanded = ref(props.defaultExpanded);
+const panelRef = ref<HTMLElement | null>(null);
 
-const today = new Date().toISOString().slice(0, 10);
+const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
 
 function toArray(value: unknown): string[] {
     if (Array.isArray(value)) {
@@ -249,9 +280,9 @@ function filtersFromQuery(): ScheduleFilters {
     return {
         search: toStr(route.query.search),
 
-        date_from: toStr(route.query.date_from) || today,
+        date_from: toStr(route.query.date_from) || yesterday,
 
-        date_to: toStr(route.query.date_to) || today,
+        date_to: toStr(route.query.date_to) || nextWeek,
 
         statuses: toArray(route.query.statuses),
 
@@ -264,6 +295,7 @@ function filtersFromQuery(): ScheduleFilters {
 }
 
 const filters = reactive<ScheduleFilters>(filtersFromQuery());
+
 onMounted(() => {
     const needsDefaultQuery =
         !route.query.date_from || !route.query.date_to || !route.query.type;
@@ -275,6 +307,7 @@ onMounted(() => {
         syncQuery();
     }
 });
+
 watch(
     () => route.query,
     () => {
@@ -288,12 +321,12 @@ const viewOptions: {
     icon: unknown;
 }[] = [
     {
-        label: "Card",
+        label: "Card view",
         value: "card",
         icon: LayoutGrid,
     },
     {
-        label: "Table",
+        label: "Table view",
         value: "table",
         icon: Table,
     },
@@ -301,11 +334,15 @@ const viewOptions: {
 
 const statusOptions = [
     {
-        label: "Upcoming",
-        value: "upcoming",
+        label: "All",
+        value: "",
     },
     {
-        label: "In Progress",
+        label: "Pending",
+        value: "pending",
+    },
+    {
+        label: "On going",
         value: "in_progress",
     },
     {
@@ -328,7 +365,7 @@ const typeOptions = [
         value: "medical",
     },
     {
-        label: "Activities of Daily Living",
+        label: "Activities of Daily Living (ADL)",
         value: "adl",
     },
 ];
@@ -353,6 +390,12 @@ const setView = (value: ScheduleView) => {
 };
 
 const toggleStatus = (value: string) => {
+    if (value === "") {
+        filters.statuses = [];
+        emitChange(true);
+        return;
+    }
+
     const index = filters.statuses.indexOf(value);
 
     if (index === -1) {
@@ -371,10 +414,10 @@ const toggleType = (value: string) => {
 
 const resetFilters = () => {
     filters.search = "";
-    filters.date_from = today;
-    filters.date_to = today;
+    filters.date_from = yesterday;
+    filters.date_to = nextWeek;
     filters.statuses = [];
-    filters.type = [];
+    filters.type = ["medical"];
     emitChange(true);
 };
 

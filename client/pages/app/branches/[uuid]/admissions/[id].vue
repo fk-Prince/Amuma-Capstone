@@ -554,12 +554,12 @@
                             v-model="admitDate"
                             :min="todayStr"
                         />
-                        <BaseInput
+                        <!-- <BaseInput
                             label="Deposit"
                             mode="number"
                             v-model="admitDeposit"
                             placeholder="0.00"
-                        />
+                        /> -->
                     </div>
 
                     <div class="mt-5 flex justify-end gap-2">

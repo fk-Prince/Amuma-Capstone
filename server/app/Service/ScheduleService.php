@@ -179,6 +179,10 @@ class ScheduleService
         });
     }
 
+    public function overview(array $payload)
+    {
+        return $this->scheduleRepository->getOverview($payload);
+    }
     public function retrieveSchedule(User $user, array $payload)
     {
         return ScheduleResource::collection($this->scheduleRepository->retrievePaginate($payload));

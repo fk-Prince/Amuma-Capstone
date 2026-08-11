@@ -39,16 +39,50 @@
 
                 <div class="max-h-[70vh] space-y-4 overflow-y-auto p-5">
                     <div
-                        v-if="
-                            schedule.category?.toLowerCase() === 'facility' &&
+                        class="flex items-center gap-3 rounded-xl bg-slate-50 p-3"
+                    >
+                        <div
+                            class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary"
+                        >
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <circle cx="12" cy="8" r="4" />
+                                <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" />
+                            </svg>
+                        </div>
+
+                        <div>
+                            <p class="text-xs text-slate-400">Patient</p>
+                            <p class="font-semibold text-slate-800">
+                                {{ schedule.patient?.full_name }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        v-if="isFacilitySchedule"
+                        class="rounded-xl border p-4"
+                        :class="
                             schedule.patient?.is_admitted
+                                ? 'border-emerald-100 bg-emerald-50'
+                                : 'border-amber-100 bg-amber-50'
                         "
-                        class="rounded-xl border border-emerald-100 bg-emerald-50 p-4"
                     >
                         <div class="flex items-center justify-between">
                             <div>
                                 <p
-                                    class="text-xs font-medium uppercase tracking-wide text-emerald-600"
+                                    class="text-xs font-medium uppercase tracking-wide"
+                                    :class="
+                                        schedule.patient?.is_admitted
+                                            ? 'text-emerald-600'
+                                            : 'text-amber-600'
+                                    "
                                 >
                                     Facility Admission
                                 </p>
@@ -56,19 +90,35 @@
                                 <p
                                     class="mt-1 text-sm font-semibold text-slate-800"
                                 >
-                                    Patient is currently admitted
+                                    {{
+                                        schedule.patient?.is_admitted
+                                            ? "Patient is currently admitted"
+                                            : "Patient is not currently admitted"
+                                    }}
                                 </p>
                             </div>
 
                             <span
-                                class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700"
+                                class="rounded-full px-3 py-1 text-xs font-semibold"
+                                :class="
+                                    schedule.patient?.is_admitted
+                                        ? 'bg-emerald-100 text-emerald-700'
+                                        : 'bg-amber-100 text-amber-700'
+                                "
                             >
-                                Admitted
+                                {{
+                                    schedule.patient?.is_admitted
+                                        ? "Admitted"
+                                        : "Not Admitted"
+                                }}
                             </span>
                         </div>
 
                         <div
-                            v-if="schedule.patient?.admission"
+                            v-if="
+                                schedule.patient?.is_admitted &&
+                                schedule.patient?.admission
+                            "
                             class="mt-3 grid grid-cols-2 gap-3"
                         >
                             <div
@@ -131,36 +181,54 @@
                                 </p>
                             </div>
                         </div>
+
+                        <p
+                            v-else-if="schedule.patient?.is_admitted"
+                            class="mt-3 rounded-xl border border-dashed border-emerald-200 bg-white p-3 text-sm text-slate-500"
+                        >
+                            No bed or room details available.
+                        </p>
                     </div>
 
                     <div
-                        class="flex items-center gap-3 rounded-xl bg-slate-50 p-3"
+                        v-else
+                        class="rounded-xl border border-sky-100 bg-sky-50 p-4"
                     >
-                        <div
-                            class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary"
-                        >
-                            <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
+                        <div class="flex items-start gap-3">
+                            <div
+                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600"
                             >
-                                <circle cx="12" cy="8" r="4" />
-                                <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" />
-                            </svg>
-                        </div>
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path
+                                        d="M12 21s-7-5.686-7-11a7 7 0 1 1 14 0c0 5.314-7 11-7 11z"
+                                    />
+                                    <circle cx="12" cy="10" r="2.5" />
+                                </svg>
+                            </div>
 
-                        <div>
-                            <p class="text-xs text-slate-400">Patient</p>
-                            <p class="font-semibold text-slate-800">
-                                {{ schedule.patient?.full_name }}
-                            </p>
+                            <div class="min-w-0">
+                                <p
+                                    class="text-xs font-medium uppercase tracking-wide text-sky-600"
+                                >
+                                    Homecare Address
+                                </p>
 
-                            <p class="text-xs text-slate-400">
-                                {{ schedule.patient?.address }}
-                            </p>
+                                <p
+                                    class="mt-1 text-sm font-semibold text-slate-800"
+                                >
+                                    {{
+                                        schedule.patient?.address ??
+                                        "No address on file"
+                                    }}
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -463,6 +531,10 @@ const form = ref({
 const assignments = ref<Record<number, string>>({});
 
 const errors = ref<Record<string, string>>({});
+
+const isFacilitySchedule = computed(
+    () => props.schedule?.category?.toLowerCase() === "facility",
+);
 
 const employeeItems = computed(() => [
     {

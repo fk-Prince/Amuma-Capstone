@@ -192,8 +192,8 @@ const isSuccess = computed(() => route.query.status === "success");
             </div>
 
             <NuxtLink
-                v-if="isSuccess && dashboardUrl"
-                :to="dashboardUrl"
+                v-if="isSuccess"
+                @click="handleMenuClick"
                 class="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
             >
                 View Dashboard
@@ -214,6 +214,7 @@ const isSuccess = computed(() => route.query.status === "success");
 import { computed, onMounted } from "vue";
 import { useBranchStore } from "~/stores/branch";
 import { fetchAuthUser } from "~/composables/useAuthUser";
+import { handleMenuClick } from "~/config/profileMenu";
 
 const branchStore = useBranchStore();
 const route = useRoute();

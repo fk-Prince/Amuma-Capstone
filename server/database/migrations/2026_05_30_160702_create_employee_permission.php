@@ -24,6 +24,7 @@ return new class extends Migration
             $table->boolean('can_create')->default(true);
             $table->boolean('can_update')->default(true);
             $table->boolean('can_approve')->default(true);
+            $table->boolean('can_assign')->default(true);
         });
     }
 

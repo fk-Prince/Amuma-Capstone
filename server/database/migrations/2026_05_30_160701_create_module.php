@@ -19,6 +19,7 @@ return new class extends Migration
             $table->boolean('has_read')->default(true);
             $table->boolean('has_update')->default(true);
             $table->boolean('has_approve')->default(true);
+            $table->boolean('has_assign')->default(true);
         });
     }
 

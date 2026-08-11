@@ -1,10 +1,11 @@
 <template>
     <div
         :class="[
-            'relative rounded-2xl flex flex-col transition-all duration-300  hover:-translate-y-1',
+            'group relative rounded-2xl flex flex-col transition-all duration-300 ease-out',
+            'hover:-translate-y-2 hover:scale-[1.015]',
             featured
-                ? 'bg-primary text-white shadow-2xl pt-10 pb-8 px-8'
-                : 'bg-white text-secondary shadow-sm border border-muted-light p-8',
+                ? 'bg-primary text-white shadow-2xl pt-10 pb-8 px-8 border border-primary hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.45)]'
+                : 'bg-white text-secondary shadow-sm border border-muted-light p-8 hover:border-primary hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)]',
         ]"
     >
         <div
@@ -21,10 +22,10 @@
         <div class="mb-4">
             <span
                 :class="[
-                    'text-xs font-semibold px-3 py-1 rounded-full',
+                    'text-xs font-semibold px-3 py-1 rounded-full transition-colors duration-300',
                     featured
                         ? 'bg-white/20 text-white'
-                        : 'bg-light text-primary',
+                        : 'bg-light text-primary group-hover:bg-primary group-hover:text-white',
                 ]"
             >
                 {{ planLabel }}
@@ -48,7 +49,7 @@
         <div class="flex items-baseline gap-1 mb-5">
             <span
                 :class="[
-                    'font-display font-extrabold text-4xl',
+                    'font-display font-extrabold text-4xl transition-transform duration-300 group-hover:scale-105 origin-left inline-block',
                     featured ? 'text-white' : 'text-secondary',
                 ]"
             >
@@ -77,11 +78,17 @@
                 'w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 mb-6',
                 featured
                     ? 'bg-white text-primary hover:bg-light border border-white'
-                    : 'bg-white text-secondary border border-secondary hover:bg-muted-light',
+                    : 'bg-white text-secondary border border-secondary hover:bg-secondary hover:text-white',
             ]"
         >
             {{ ctaText }}
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                class="transition-transform duration-300 group-hover:translate-x-1"
+            >
                 <path
                     d="M3 8h10M9 4l4 4-4 4"
                     stroke="currentColor"
@@ -94,19 +101,23 @@
 
         <div
             :class="[
-                'w-full h-px mb-5',
-                featured ? 'bg-white/10' : 'bg-muted-light',
+                'w-full h-px mb-5 transition-colors duration-300',
+                featured
+                    ? 'bg-white/10'
+                    : 'bg-muted-light group-hover:bg-primary/20',
             ]"
         />
 
         <ul class="flex flex-col gap-3 flex-1">
             <li
-                v-for="feature in features"
+                v-for="(feature, i) in features"
                 :key="feature"
-                class="flex items-center gap-2.5 text-sm"
+                class="flex items-center gap-2.5 text-sm transition-transform duration-300"
+                :style="{ transitionDelay: `${i * 30}ms` }"
             >
                 <svg
-                    class="w-4 h-4 flex-shrink-0 text-accent"
+                    class="w-4 h-4 flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                    :class="featured ? 'text-white' : 'text-accent'"
                     viewBox="0 0 16 16"
                     fill="none"
                 >
@@ -118,6 +129,7 @@
                         stroke-linejoin="round"
                     />
                 </svg>
+
                 <span :class="featured ? 'text-white/85' : 'text-muted-dark'">
                     {{ feature }}
                 </span>

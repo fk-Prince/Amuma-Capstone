@@ -112,16 +112,6 @@ function setActiveTab(tab: Tab) {
     });
 }
 
-onMounted(() => {
-    fetchData(uuid.value, b_uuid.value);
-
-    if (route.query.tab !== tabSlugMap[activeTab.value]) {
-        router.replace({
-            query: { ...route.query, tab: tabSlugMap[activeTab.value] },
-        });
-    }
-});
-
 const showAddMedication = ref(false);
 const savingMedication = ref(false);
 const showRecordVital = ref(false);
@@ -144,28 +134,13 @@ const assignModalOpen = ref(false);
 const assigneSchedule = ref<ScheduleItem>();
 const scheduleType = ref<"medical" | "homecare">("medical");
 
-const todayStr = new Date().toISOString().slice(0, 10);
-const scheduleFrom = ref(todayStr);
-const scheduleTo = ref(todayStr);
+const yesterdayStr = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+const nextWeekStr = new Date(Date.now() + 7 * 86400000)
+    .toISOString()
+    .slice(0, 10);
 
-function jumpToScheduleToday() {
-    scheduleFrom.value = todayStr;
-    scheduleTo.value = todayStr;
-}
-
-watch(
-    [scheduleFrom, scheduleTo, activeTab],
-    async ([from, to, tab]) => {
-        if (tab !== "Schedule") return;
-        isFetchingSchedule.value = true;
-        try {
-            await fetchSchedules(uuid.value, b_uuid.value, from, to);
-        } finally {
-            isFetchingSchedule.value = false;
-        }
-    },
-    { immediate: true },
-);
+const scheduleFrom = ref(yesterdayStr);
+const scheduleTo = ref(nextWeekStr);
 
 const conflictMessage = computed(() => {
     const count = conflictConfirm.value.conflicts.length;
@@ -319,10 +294,6 @@ async function handleAssign(s: ScheduleItem, isModal = true) {
     }
 }
 
-function reloadSchedule(updated: ScheduleItem | undefined) {
-    updateScheduleInList(updated);
-}
-
 function updateScheduleInList(updated: ScheduleItem | undefined) {
     if (!updated?.schedule_id) return;
     const index = scheduleData.value.findIndex(
@@ -385,12 +356,21 @@ function onUpdateSchedule(payload: any) {
 
 const filteredScheduleData = computed(() => {
     if (!Array.isArray(scheduleData.value)) return [];
-    return scheduleData.value.filter((schedule: ScheduleItem) => {
-        const type = schedule.type?.toLowerCase();
-        return scheduleType.value === "homecare"
-            ? type === "adl"
-            : type === "medical";
-    });
+
+    return scheduleData.value
+        .map((schedule: ScheduleItem) => {
+            const services = (schedule.services ?? []).filter(
+                (service: any) => {
+                    if (scheduleType.value === "homecare") {
+                        return service.hours_booked != null;
+                    }
+                    return service.service_id != null;
+                },
+            );
+
+            return { ...schedule, services };
+        })
+        .filter((schedule) => schedule.services.length > 0);
 });
 
 const visibleTabs = computed(() => {
@@ -404,6 +384,58 @@ const visibleTabs = computed(() => {
 function resetSchedule(s: ScheduleItem[]) {
     scheduleData.value = s;
 }
+
+async function loadSchedulesIfNeeded(from: string, to: string, tab: Tab) {
+    if (tab !== "Schedule") return;
+    isFetchingSchedule.value = true;
+    try {
+        await fetchSchedules(uuid.value, b_uuid.value, from, to);
+    } finally {
+        isFetchingSchedule.value = false;
+    }
+}
+watch([scheduleFrom, scheduleTo, activeTab], ([from, to, tab]) => {
+    loadSchedulesIfNeeded(from, to, tab);
+});
+onMounted(async () => {
+    await fetchData(uuid.value, b_uuid.value);
+
+    if (route.query.tab !== tabSlugMap[activeTab.value]) {
+        router.replace({
+            query: { ...route.query, tab: tabSlugMap[activeTab.value] },
+        });
+    }
+
+    await loadSchedulesIfNeeded(
+        scheduleFrom.value,
+        scheduleTo.value,
+        activeTab.value,
+    );
+});
+
+// onMounted(() => {
+//     fetchData(uuid.value, b_uuid.value);
+
+//     if (route.query.tab !== tabSlugMap[activeTab.value]) {
+//         router.replace({
+//             query: { ...route.query, tab: tabSlugMap[activeTab.value] },
+//         });
+//     }
+// });
+
+// watch(
+//     [scheduleFrom, scheduleTo, activeTab],
+//     async ([from, to, tab]) => {
+//         if (tab !== "Schedule") return;
+//         isFetchingSchedule.value = true;
+//         try {
+//             await fetchSchedules(uuid.value, b_uuid.value, from, to);
+//         } finally {
+//             isFetchingSchedule.value = false;
+//         }
+//     },
+//     { immediate: true },
+// );
 </script>
 <template>
     <div class="min-h-screen bg-gray-50 p-6">
@@ -569,14 +601,6 @@ function resetSchedule(s: ScheduleItem[]) {
                                     label="To"
                                     class-name="w-full sm:max-w-[180px]"
                                 />
-
-                                <button
-                                    type="button"
-                                    class="h-11 self-end rounded-lg bg-primary/80 px-10 text-sm font-medium uppercase text-white transition hover:bg-primary"
-                                    @click="jumpToScheduleToday"
-                                >
-                                    Today
-                                </button>
                             </div>
                         </div>
 

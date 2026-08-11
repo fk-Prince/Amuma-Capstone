@@ -5,28 +5,42 @@
         class="overflow-hidden bg-white"
     >
         <div
-            class="flex cursor-pointer select-none items-center justify-between border-b border-slate-100 px-5 py-4"
+            class="flex cursor-pointer select-none items-center justify-between border-b border-slate-100 px-5 py-4 transition-colors hover:bg-slate-50/60"
             @click="toggleDay(day.date)"
         >
-            <div class="flex items-center gap-3">
+            <div class="flex flex-wrap items-center gap-2">
                 <h3 class="font-semibold text-slate-800">
                     {{ day.dateLabel }}
                 </h3>
+
                 <span
                     v-if="day.isToday"
-                    class="rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-teal-600"
+                    class="flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-teal-600"
                 >
+                    <span class="h-1.5 w-1.5 rounded-full bg-teal-500" />
                     Today
                 </span>
+
                 <span
                     class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500"
                 >
-                    {{ day.count }}
+                    {{ day.count }} {{ day.count === 1 ? "visit" : "visits" }}
                 </span>
+
                 <span
                     v-if="day.unassignedCount"
-                    class="rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-600"
+                    class="flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-600"
                 >
+                    <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                    >
+                        <path
+                            d="M12 2 1 21h22L12 2Zm0 15a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Zm-1-2v-5h2v5h-2Z"
+                        />
+                    </svg>
                     {{ day.unassignedCount }} unassigned
                 </span>
             </div>
@@ -55,6 +69,7 @@
                 </svg>
             </button>
         </div>
+
         <Transition
             name="collapse"
             @before-enter="onBeforeEnter"
@@ -73,12 +88,40 @@
                 class="overflow-x-auto"
             >
                 <div
-                    class="min-w-full"
+                    v-if="!schedulesForDay(day.date).length"
+                    class="flex flex-col items-center justify-center gap-2 px-5 py-10 text-center"
+                >
+                    <div
+                        class="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-400"
+                    >
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <rect x="3" y="5" width="18" height="16" rx="2" />
+                            <path d="M3 10h18M8 3v4M16 3v4" />
+                        </svg>
+                    </div>
+
+                    <p class="text-sm font-medium text-slate-500">
+                        No visits scheduled for this day
+                    </p>
+                </div>
+
+                <div
+                    v-else
+                    class="min-w-full border border-secondary/20"
                     :style="{
                         width: `max(100%, ${labelWidth + day.hours.length * hourWidth}px)`,
                     }"
                 >
-                    <div class="sticky top-0 z-20 flex h-10 bg-white">
+                    <div
+                        class="sticky top-0 z-20 flex h-10 bg-white shadow-[0_1px_0_0_rgba(0,0,0,0.04)]"
+                    >
                         <div
                             class="sticky left-0 z-30 shrink-0 border-b border-r border-slate-100 bg-white"
                             :style="{ width: `${labelWidth}px` }"
@@ -88,7 +131,7 @@
                             <div
                                 v-for="hour in day.hours"
                                 :key="hour.value"
-                                class="flex h-10 shrink-0 items-center justify-center border-r border-slate-100 text-xs font-medium text-slate-400"
+                                class="flex h-10 shrink-0 items-center justify-center border-r border-secondary/20 text-xs font-medium text-slate-400"
                                 :style="{ width: `${hourWidth}px` }"
                             >
                                 {{ hour.label }}
@@ -101,49 +144,89 @@
                             day.date,
                         )"
                         :key="schedule.schedule_id"
-                        class="relative flex border-b border-slate-100 last:border-b-0 transition"
+                        class="relative flex border-b last:border-b-0 transition"
                         :class="rowTheme(rowIndex)"
                         :style="{
                             minHeight: '72px',
                         }"
                     >
                         <div
-                            class="sticky left-0 z-10 shrink-0 px-2 py-1.5"
+                            class="sticky left-0 z-21 shrink-0 border-r border-slate-100/80 px-3 py-2"
                             :style="{ width: `${labelWidth}px` }"
                             :class="rowTheme(rowIndex)"
                         >
                             <div
-                                class="flex h-full flex-col justify-between gap-1"
+                                class="flex h-full flex-col justify-between gap-1.5"
                             >
-                                <div>
+                                <div class="min-w-0">
                                     <p
-                                        class="text-[14px] font-medium text-black"
+                                        class="truncate text-[13.5px] font-semibold text-slate-800"
                                     >
                                         {{ schedule.schedule_code }}
                                     </p>
 
                                     <p
-                                        class="text-[14px] font-medium text-black"
+                                        class="truncate text-[12px] font-medium text-slate-500"
                                     >
                                         {{
                                             schedule.category === "Facility"
                                                 ? "Inhouse Facility"
                                                 : "Homecare"
                                         }}
-                                        {{ schedule.patient?.admission?.bed }}
+                                        <span
+                                            v-if="
+                                                schedule.patient?.admission?.bed
+                                            "
+                                        >
+                                            •
+                                            {{ schedule.patient.admission.bed }}
+                                        </span>
                                     </p>
                                 </div>
+
                                 <div>
                                     <p
-                                        class="text-[12px] font-medium text-slate-500"
+                                        class="flex items-center gap-1 text-[12px] font-medium text-slate-600"
                                     >
+                                        <svg
+                                            width="11"
+                                            height="11"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            class="shrink-0 opacity-50"
+                                        >
+                                            <rect
+                                                x="3"
+                                                y="5"
+                                                width="18"
+                                                height="16"
+                                                rx="2"
+                                            />
+                                            <path d="M3 10h18M8 3v4M16 3v4" />
+                                        </svg>
                                         {{
                                             formatDate(schedule.scheduled_at) ||
                                             "—"
                                         }}
                                     </p>
 
-                                    <p class="text-[12px] text-slate-400">
+                                    <p
+                                        class="flex items-center gap-1 text-[12px] text-slate-400"
+                                    >
+                                        <svg
+                                            width="11"
+                                            height="11"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            class="shrink-0 opacity-50"
+                                        >
+                                            <circle cx="12" cy="12" r="9" />
+                                            <path d="M12 7v5l3 3" />
+                                        </svg>
                                         {{ schedule.start_time }}
                                         <span v-if="schedule.end_time">
                                             – {{ schedule.end_time }}
@@ -151,9 +234,9 @@
                                     </p>
                                 </div>
 
-                                <div class="flex gap-1">
+                                <div class="flex gap-1.5">
                                     <button
-                                        class="flex-1 rounded border border-primary/20 px-2 py-1 text-[10px] text-primary"
+                                        class="flex-1 rounded-md border border-primary/20 bg-primary/[0.03] px-2 py-1 text-[10.5px] font-medium text-primary transition hover:bg-primary/10"
                                         @click="$emit('view-details', schedule)"
                                     >
                                         Details
@@ -173,7 +256,7 @@
                                                 (s) => !s.assignees?.length,
                                             )
                                         "
-                                        class="flex-1 rounded bg-rose-50 px-2 py-1 text-[10px] font-medium text-rose-600"
+                                        class="flex-1 rounded-md bg-rose-50 px-2 py-1 text-[10.5px] font-semibold text-rose-600 border-rose-600/20 border transition hover:bg-rose-100"
                                         @click="$emit('assign', schedule)"
                                     >
                                         Assign
@@ -181,8 +264,9 @@
                                 </div>
                             </div>
                         </div>
+
                         <div
-                            class="relative flex-1"
+                            class="relative flex-1 border border-secondary/20"
                             :style="{
                                 width: `${day.hourColumnCount * hourWidth}px`,
                             }"
@@ -191,19 +275,25 @@
                                 <div
                                     v-for="hour in day.hours"
                                     :key="hour.value"
-                                    class="h-full shrink-0"
+                                    class="h-full shrink-0 border-r border-secondary/20 last:border-b-0"
                                     :style="{ width: `${hourWidth}px` }"
                                 />
                             </div>
 
                             <div
                                 v-if="day.isToday && nowOffset(day) !== null"
-                                class="absolute top-0 z-10 h-full w-px bg-teal-400"
+                                class="absolute top-0 z-20 h-full w-0.5 bg-teal-500 shadow-[0_0_6px_rgba(20,184,166,0.5)]"
                                 :style="{ left: `${nowOffset(day)}px` }"
                             >
                                 <div
-                                    class="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-teal-500"
+                                    class="absolute -left-[5px] -top-1 h-2.5 w-2.5 rounded-full bg-teal-500 ring-2 ring-white"
                                 />
+
+                                <div
+                                    class="absolute -left-5 -top-6 whitespace-nowrap rounded-full bg-teal-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm"
+                                >
+                                    Now
+                                </div>
                             </div>
 
                             <template v-if="schedule.services?.length">
@@ -214,7 +304,7 @@
                                     :key="
                                         service.schedule_services_id ?? sIndex
                                     "
-                                    class="group absolute flex cursor-pointer flex-col justify-center gap-0.5 rounded-lg border border-slate-200 px-2 py-1.5 text-[11px] shadow-sm"
+                                    class="group absolute flex cursor-pointer flex-col justify-center gap-1 rounded-lg border border-slate-200/80 px-2.5 py-1.5 text-[11px] shadow-sm transition-all duration-150 hover:z-10 hover:-translate-y-0.5 hover:shadow-md"
                                     :class="
                                         scheduleStatusTheme(schedule.status)
                                             .card
@@ -230,10 +320,12 @@
                                     <div
                                         class="flex items-center justify-between gap-2"
                                     >
-                                        <div class="flex items-center gap-1.5">
+                                        <div
+                                            class="flex min-w-0 items-center gap-1.5"
+                                        >
                                             <span
                                                 v-if="service.assignees?.length"
-                                                class="flex items-center -space-x-1.5"
+                                                class="flex shrink-0 items-center -space-x-1.5"
                                             >
                                                 <span
                                                     v-for="(
@@ -243,7 +335,7 @@
                                                         3,
                                                     )"
                                                     :key="assignee.employee_id"
-                                                    class="flex h-4.5 w-4.5 items-center justify-center overflow-hidden rounded-full border-2 border-white text-[8px] font-bold text-white"
+                                                    class="flex h-4.5 w-4.5 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-primary text-[8px] font-bold text-white"
                                                     :title="assignee.full_name"
                                                 >
                                                     <img
@@ -252,7 +344,7 @@
                                                         :alt="
                                                             assignee.full_name
                                                         "
-                                                        class="h-6 w-6 object-cover"
+                                                        class="h-full w-full object-cover"
                                                     />
                                                     <template v-else>
                                                         {{
@@ -267,7 +359,7 @@
                                                         (service.assignees
                                                             ?.length ?? 0) > 3
                                                     "
-                                                    class="flex items-center justify-center rounded-full border border-white bg-slate-200 px-2 py-0.5 text-[12px] font-semibold text-slate-600"
+                                                    class="flex items-center justify-center rounded-full border-2 border-white bg-slate-200 px-1.5 py-0.5 text-[9px] font-semibold text-slate-600"
                                                     :title="
                                                         service.assignees
                                                             .slice(3)
@@ -278,7 +370,10 @@
                                                             .join(', ')
                                                     "
                                                 >
-                                                    Medical Staff assigned
+                                                    +{{
+                                                        (service.assignees
+                                                            ?.length ?? 0) - 3
+                                                    }}
                                                 </span>
                                             </span>
 
@@ -295,7 +390,6 @@
                                                     service.assignees[0]
                                                         ?.full_name
                                                 }}
-                                                assigned
                                                 <span
                                                     v-if="
                                                         (service.assignees
@@ -310,15 +404,17 @@
                                                     more
                                                 </span>
                                             </span>
+
                                             <span
                                                 v-if="
                                                     !service.assignees?.length
                                                 "
-                                                class="italic text-[11px] text-slate-400"
+                                                class="truncate italic text-[11px] text-slate-400"
                                             >
                                                 Not assigned yet
                                             </span>
                                         </div>
+
                                         <span
                                             class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium"
                                             :class="
@@ -360,7 +456,7 @@
 
                             <div
                                 v-else
-                                class="group absolute flex cursor-pointer flex-col justify-center gap-1 rounded-xl border-r border-t border-b border-slate-200/60 px-4 py-2.5 text-xs shadow-sm transition-all duration-150 hover:z-10 hover:-translate-y-0.5 hover:shadow-md"
+                                class="group absolute flex cursor-pointer flex-col justify-center gap-1 rounded-xl border border-slate-200/60 px-4 py-2.5 text-xs shadow-sm transition-all duration-150 hover:z-10 hover:-translate-y-0.5 hover:shadow-md"
                                 :class="
                                     scheduleStatusTheme(schedule.status).card
                                 "
@@ -466,11 +562,6 @@ const emit = defineEmits<{
     (e: "update-range", payload: { from: string; to: string }): void;
 }>();
 
-// IMPORTANT: pass the reactive `props` object straight through. Building a
-// new plain object here (e.g. `{ schedules: props.schedules, ... }`) takes a
-// one-time snapshot of the values at setup time and is NOT reactive — the
-// composable would never see later prop updates (like schedules arriving
-// after an async fetch), so nothing would ever render.
 const {
     labelWidth,
     hourWidth,
@@ -518,7 +609,7 @@ function toggleDay(date: string) {
     expandedDays.value = next;
 }
 
-function scrollToCurrentTime() {
+function scrollToCurrentTime(smooth = true) {
     const todayIndex = dayGroups.value.findIndex((d) => d.isToday);
 
     if (todayIndex === -1) return;
@@ -535,9 +626,15 @@ function scrollToCurrentTime() {
 
     if (!container) return;
 
-    container.scrollLeft =
-        labelWidth.value + offset - container.clientWidth / 2;
+    const target = labelWidth.value + offset - container.clientWidth / 2;
+
+    container.scrollTo({
+        left: Math.max(0, target),
+        behavior: smooth ? "smooth" : "auto",
+    });
 }
+
+const handleResize = () => scrollToCurrentTime(false);
 
 function onBeforeEnter(el: Element) {
     const e = el as HTMLElement;
@@ -606,7 +703,7 @@ watch(
 
 watch(dayGroups, async () => {
     await nextTick();
-    scrollToCurrentTime();
+    scrollToCurrentTime(false);
 });
 
 watch(
@@ -615,7 +712,7 @@ watch(
         if (loading) return;
 
         await nextTick();
-        scrollToCurrentTime();
+        scrollToCurrentTime(false);
     },
 );
 
@@ -623,7 +720,7 @@ watch(
     () => props.schedules,
     async () => {
         await nextTick();
-        scrollToCurrentTime();
+        scrollToCurrentTime(false);
     },
     { deep: true },
 );
@@ -631,15 +728,19 @@ watch(
 onMounted(async () => {
     await nextTick();
 
-    scrollToCurrentTime();
+    scrollToCurrentTime(false);
 
-    window.addEventListener("resize", scrollToCurrentTime);
+    requestAnimationFrame(() => {
+        setTimeout(() => scrollToCurrentTime(true), 150);
+    });
+
+    window.addEventListener("resize", handleResize);
 
     startNowTicker();
 });
 
 onBeforeUnmount(() => {
-    window.removeEventListener("resize", scrollToCurrentTime);
+    window.removeEventListener("resize", handleResize);
 
     stopNowTicker();
 });

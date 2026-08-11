@@ -18,6 +18,7 @@ export type PermissionSet = {
     can_create: boolean;
     can_update: boolean;
     can_approve: boolean;
+    can_assign: boolean
 };
 
 export interface UseEmployeeFormOptions {
@@ -87,6 +88,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 can_create: next && !!m.has_create,
                 can_update: next && !!m.has_update,
                 can_approve: next && !!m.has_approve,
+                can_assign: next && !!m.has_assign
             };
         });
     }
@@ -100,6 +102,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             can_create: next && !!module?.has_create,
             can_update: next && !!module?.has_update,
             can_approve: next && !!module?.has_approve,
+            can_assign: next && !!module?.has_assign
         };
     }
 
@@ -110,6 +113,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 can_create: false,
                 can_update: false,
                 can_approve: false,
+                can_assign: false
             };
         }
 
@@ -131,6 +135,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                     can_create: false,
                     can_update: false,
                     can_approve: false,
+                    can_assign: false,
                 };
             });
         } catch (err) {
@@ -168,6 +173,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 can_create: p.can_create,
                 can_update: p.can_update,
                 can_approve: p.can_approve ?? false,
+                can_assign: p.can_assign ?? false
             };
         });
     }
@@ -240,6 +246,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 can_create: set.can_create,
                 can_update: set.can_update,
                 can_approve: set.can_approve,
+                can_assign: set.can_assign
             }),
         );
 

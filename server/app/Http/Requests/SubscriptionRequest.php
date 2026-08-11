@@ -34,7 +34,7 @@ class SubscriptionRequest extends FormRequest
             'agency_city'        => ['nullable', 'string', 'required_with:agency_name'],
             'agency_province'    => ['nullable', 'string', 'required_with:agency_name'],
             'agency_country'     => ['nullable', 'string', 'required_with:agency_name'],
-            'agency_email'       => ['nullable', 'string', 'required_with:agency_name'],
+            'agency_email'       => ['nullable', 'string', 'required_with:agency_name', 'unique:agencies,email'],
             'agency_image'       => ['nullable', 'file', 'image', 'max:5120'],
 
             // Branch data
@@ -44,7 +44,7 @@ class SubscriptionRequest extends FormRequest
             'branch_city' => ['required', 'string'],
             'branch_province' => ['required', 'string'],
             'branch_country' => ['required', 'string'],
-            'branch_email' => ['required', 'string'],
+            'branch_email' => ['required', 'string', 'unique:branches,email'],
             'branch_contact_number' => ['required', 'string'],
             'branch_image' => ['nullable', 'file', 'image', 'max:5120'],
             'branch_settings' => ['required', 'array'],

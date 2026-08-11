@@ -114,61 +114,65 @@
         </div>
 
         <template v-else>
-            <ol class="flex justify-center items-center w-full">
-                <li
-                    v-for="(step, index) in STEPS"
-                    :key="step"
-                    class="flex items-start flex-1"
-                >
-                    <div
-                        class="flex flex-col justify-center items-center shrink-0"
+            <div class="flex w-full justify-center">
+                <ol class="flex w-full max-w-6xl items-start justify-center">
+                    <li
+                        v-for="(step, index) in STEPS"
+                        :key="step"
+                        :class="[
+                            'flex items-start',
+                            index < STEPS.length - 1 ? 'flex-1' : 'shrink-0',
+                        ]"
                     >
-                        <div
-                            class="flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold transition-all duration-200"
-                            :class="
-                                currentStep > index + 1
-                                    ? 'border-primary bg-primary text-white'
-                                    : currentStep === index + 1
-                                      ? 'border-primary bg-white text-primary shadow-sm ring-4 ring-primary/10'
-                                      : 'border-slate-200 bg-white text-slate-400'
-                            "
-                        >
-                            <Check
-                                v-if="currentStep > index + 1"
-                                class="w-4 h-4 stroke-[2.5]"
-                            />
+                        <div class="flex shrink-0 flex-col items-center">
+                            <div
+                                class="flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold transition-all duration-200"
+                                :class="
+                                    currentStep > index + 1
+                                        ? 'border-primary bg-primary text-white'
+                                        : currentStep === index + 1
+                                          ? 'border-primary bg-white text-primary shadow-sm ring-4 ring-primary/10'
+                                          : 'border-slate-200 bg-white text-slate-400'
+                                "
+                            >
+                                <Check
+                                    v-if="currentStep > index + 1"
+                                    class="h-4 w-4 stroke-[2.5]"
+                                />
 
-                            <span v-else>
-                                {{ index + 1 }}
+                                <span v-else>
+                                    {{ index + 1 }}
+                                </span>
+                            </div>
+
+                            <span
+                                class="mt-2 max-w-[7rem] text-center text-xs font-medium leading-tight transition-colors"
+                                :class="
+                                    currentStep >= index + 1
+                                        ? 'text-slate-800'
+                                        : 'text-slate-400'
+                                "
+                            >
+                                {{ step }}
                             </span>
                         </div>
 
-                        <span
-                            class="mt-2 text-xs font-medium text-center max-w-[6.5rem] leading-tight transition-colors"
+                        <!-- Connector -->
+                        <div
+                            v-if="index < STEPS.length - 1"
+                            class="mx-4 mt-[18px] h-px flex-1 transition-colors duration-200"
                             :class="
-                                currentStep >= index + 1
-                                    ? 'text-slate-800'
-                                    : 'text-slate-400'
+                                currentStep > index + 1
+                                    ? 'bg-primary'
+                                    : 'bg-slate-200'
                             "
-                        >
-                            {{ step }}
-                        </span>
-                    </div>
-
-                    <div
-                        v-if="index !== STEPS.length - 1"
-                        class="flex-1 h-px mx-3 mt-[18px] transition-colors duration-200"
-                        :class="
-                            currentStep > index + 1
-                                ? 'bg-primary'
-                                : 'bg-slate-200'
-                        "
-                    />
-                </li>
-            </ol>
-            <div class="rounded-2xl p-6 space-y-8">
+                        ></div>
+                    </li>
+                </ol>
+            </div>
+            <div class="rounded-2xl p-6 space-y-3">
                 <div v-if="currentStep === 1">
-                    <div class="mb-6">
+                    <!-- <div class="mb-6">
                         <h2 class="text-xl font-bold text-secondary">
                             Subscription details
                         </h2>
@@ -176,7 +180,7 @@
                             Manage your AMUMA subscription plan and billing
                             preferences.
                         </p>
-                    </div>
+                    </div> -->
 
                     <p
                         v-if="stepError"
@@ -185,49 +189,178 @@
                         {{ stepError }}
                     </p>
 
-                    <div class="space-y-3 mb-8">
+                    <div class="mb-8">
+                        <div class="flex flex-col items-center justify-center">
+                            <div
+                                class="relative inline-flex border border-primary-200 items-center rounded-full bg-muted-light/40 py-1"
+                            >
+                                <span
+                                    class="absolute top-1 bottom-1 left-1 w-[calc(50%-6px)] rounded-full bg-primary shadow-sm transition-all duration-300 ease-in-out"
+                                    :class="
+                                        checkout.selectedInterval === 'yearly'
+                                            ? 'translate-x-[calc(100%+3px)]'
+                                            : 'translate-x-0'
+                                    "
+                                />
+
+                                <button
+                                    type="button"
+                                    class="relative z-10 min-w-[110px] rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-300"
+                                    :class="
+                                        checkout.selectedInterval === 'monthly'
+                                            ? 'text-white'
+                                            : 'text-muted hover:text-secondary'
+                                    "
+                                    @click="
+                                        checkout.selectedInterval = 'monthly'
+                                    "
+                                >
+                                    Monthly
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="relative z-10 flex min-w-[130px] items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-300"
+                                    :class="
+                                        checkout.selectedInterval === 'yearly'
+                                            ? 'text-white'
+                                            : 'text-muted hover:text-secondary'
+                                    "
+                                    @click="
+                                        checkout.selectedInterval = 'yearly'
+                                    "
+                                >
+                                    Yearly
+                                </button>
+                            </div>
+
+                            <p class="mt-2 text-xs text-muted">
+                                {{
+                                    checkout.selectedInterval === "yearly"
+                                        ? "Billed annually — save more compared to monthly billing."
+                                        : "Billed monthly. Switch to yearly to save more."
+                                }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 items-stretch"
+                    >
                         <label
                             v-for="plan in checkout.plans"
                             :key="plan.plan_id"
-                            class="flex items-center justify-between border p-4 rounded-xl cursor-pointer transition-colors"
+                            class="relative flex flex-col h-full gap-3 border border-primary/20 p-8 rounded-xl cursor-pointer transition-all"
                             :class="
                                 checkout.selectedPlan?.plan_id === plan.plan_id
-                                    ? 'border-primary bg-primary-50'
+                                    ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20'
                                     : 'border-muted-light hover:border-primary-200'
                             "
                         >
-                            <div class="flex items-center gap-3">
-                                <input
-                                    type="radio"
-                                    class="accent-primary"
-                                    :checked="
+                            <input
+                                type="radio"
+                                class="absolute opacity-0 w-0 h-0 pointer-events-none"
+                                :checked="
+                                    checkout.selectedPlan?.plan_id ===
+                                    plan.plan_id
+                                "
+                                @change="checkout.selectedPlan = plan"
+                            />
+
+                            <!-- Radio -->
+                            <span
+                                class="absolute top-4 right-4 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors"
+                                :class="
+                                    checkout.selectedPlan?.plan_id ===
+                                    plan.plan_id
+                                        ? 'border-primary'
+                                        : 'border-slate-300'
+                                "
+                            >
+                                <span
+                                    v-if="
                                         checkout.selectedPlan?.plan_id ===
                                         plan.plan_id
                                     "
-                                    @change="checkout.selectedPlan = plan"
+                                    class="h-2.5 w-2.5 rounded-full bg-primary"
                                 />
-                                <div>
-                                    <p class="font-semibold text-secondary">
-                                        {{ plan.name }}
-                                    </p>
-                                    <p class="text-sm text-muted max-w-[80%]">
-                                        {{ plan.description }}
-                                    </p>
-                                </div>
+                            </span>
+
+                            <!-- Icon -->
+                            <div
+                                class="h-10 w-10 rounded-lg bg-primary-50 border border-primary-100 flex items-center justify-center shrink-0"
+                            >
+                                <component
+                                    :is="plan.icon ?? Home"
+                                    class="h-5 w-5 text-primary"
+                                />
                             </div>
 
+                            <!-- Plan information -->
+                            <div class="pr-6">
+                                <p
+                                    class="font-semibold text-base text-secondary leading-tight"
+                                >
+                                    {{ plan.name }}
+                                </p>
+
+                                <p
+                                    class="text-sm text-muted mt-1.5 leading-relaxed"
+                                >
+                                    {{ plan.description }}
+                                </p>
+                            </div>
+
+                            <!-- Pricing -->
                             <div
-                                class="font-bold text-primary whitespace-nowrap"
+                                class="flex items-center justify-between pt-4 mt-auto border-t border-muted-light/70"
                             >
-                                ₱{{
-                                    checkout.selectedInterval === "yearly"
-                                        ? plan.yearly_price
-                                        : plan.monthly_price
-                                }}
+                                <span class="text-sm font-medium text-muted">
+                                    {{
+                                        checkout.selectedInterval === "yearly"
+                                            ? "/ year"
+                                            : "/ month"
+                                    }}
+                                </span>
+
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        v-if="
+                                            checkout.selectedInterval ===
+                                            'yearly'
+                                        "
+                                        class="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-700"
+                                    >
+                                        Save
+                                        {{
+                                            Math.round(
+                                                ((Number(plan.monthly_price) *
+                                                    12 -
+                                                    Number(plan.yearly_price)) /
+                                                    (Number(
+                                                        plan.monthly_price,
+                                                    ) *
+                                                        12)) *
+                                                    100,
+                                            )
+                                        }}%
+                                    </span>
+
+                                    <span
+                                        class="font-bold text-lg text-primary whitespace-nowrap"
+                                    >
+                                        ₱{{
+                                            checkout.selectedInterval ===
+                                            "yearly"
+                                                ? plan.yearly_price
+                                                : plan.monthly_price
+                                        }}
+                                    </span>
+                                </div>
                             </div>
                         </label>
                     </div>
-
+                    <!-- 
                     <div>
                         <h3 class="font-semibold text-secondary mb-1">
                             Billing cycle
@@ -267,7 +400,7 @@
                                 </div>
                             </label>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
 
                 <div v-if="currentStep === 2">
@@ -369,7 +502,7 @@
 </template>
 
 <script setup lang="ts">
-import { Check, ChevronLeft, ChevronRight } from "lucide-vue-next";
+import { Check, ChevronLeft, ChevronRight, Home } from "lucide-vue-next";
 import { ref, onMounted } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { planService } from "@/api/plan/PlanService";
@@ -401,6 +534,7 @@ const intervalOptions = [
     { value: "monthly", label: "Monthly", description: "Billed monthly" },
     { value: "yearly", label: "Yearly", description: "Save more yearly" },
 ];
+
 const nextStep = async () => {
     stepError.value = null;
     checkout.clearAllErrors();
@@ -474,6 +608,7 @@ const validateBranch = async (): Promise<boolean> => {
 
 const isLoading = ref(false);
 const send = async () => {
+    console.log(checkout.settings);
     try {
         isLoading.value = true;
         const payload: SubscriptionRequest = {
@@ -481,7 +616,6 @@ const send = async () => {
             payment_method: checkout.payment_method,
             billing_interval: checkout.selectedInterval,
 
-            //BRANCH DATA
             branch_name: checkout.branch.name,
             branch_contact_number: checkout.branch.contact_number,
             branch_image: checkout.branch.image,
@@ -495,7 +629,6 @@ const send = async () => {
             branch_longitude: checkout.branch.location.longitude,
             branch_email: checkout.branch.email ?? "",
 
-            // AGENCY DATA
             agency_id: checkout.agency.agency_id,
             agency_name: checkout.agency.name,
             agency_description: checkout.agency.description,

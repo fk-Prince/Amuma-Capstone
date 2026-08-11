@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Subscription from "~/components/sections/subscription/Subscription.vue";
-import SubscriptionSummary from "~/components/sections/subscription/SubscriptionSummary.vue";
 
 definePageMeta({
     middleware: "auth-client",
@@ -14,11 +13,11 @@ const stepCompleted = ref(false);
 <template>
     <ClientOnly>
         <div class="min-h-screen bg-slate-50">
-            <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                <div class="grid grid-cols-1 gap-8 items-start">
+            <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="grid grid-cols-1 gap-3 items-start">
                     <div class="max-w-2xl">
                         <span
-                            class="inline-block text-xs font-semibold tracking-wide uppercase text-primary bg-primary-50 px-3 py-1 rounded-full mb-3"
+                            class="inline-block text-xs font-semibold tracking-wide uppercase text-primary bg-primary-50 px-3 py-1 rounded-full mb-2 mt-2"
                         >
                             Subscription setup
                         </span>

@@ -45,6 +45,11 @@ const buildFormData = (
             return;
         }
 
+        if (typeof value === "boolean") {
+            formData.append(fieldName, value ? "1" : "0");
+            return;
+        }
+
         if (Array.isArray(value)) {
             value.forEach((item, index) => {
                 if (item === null || item === undefined) {
@@ -188,16 +193,30 @@ export class BaseService {
 
             const status = error?.response?.status;
             const data = error?.response?._data;
+            const rawMessage =
+                data?.message || error?.message || 'Something went wrong';
+
+            const isSqlError = /sqlstate|syntax error|pdoexception|sql:\s/i.test(
+                rawMessage,
+            );
+
 
             throw {
                 status,
-                message:
-                    data?.message ||
-                    error?.message ||
-                    'Something went wrong',
+                message: isSqlError ? 'Internal Server Error' : rawMessage,
                 errors: data?.errors || {},
                 data,
             };
+
+            // throw {
+            //     status,
+            //     message:
+            //         data?.message ||
+            //         error?.message ||
+            //         'Something went wrong',
+            //     errors: data?.errors || {},
+            //     data,
+            // };
         }
     }
 }

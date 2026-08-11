@@ -1,6 +1,6 @@
 <template>
     <div
-        class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 hover:border-primary-200 hover:shadow-sm transition"
+        class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 transition-all duration-200 ease-out hover:-translate-y-1 hover:border-primary-200 hover:bg-white hover:shadow-md transform-gpu"
     >
         <div class="flex items-start gap-3">
             <img

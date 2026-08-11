@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionService
 {
@@ -201,7 +202,7 @@ class SubscriptionService
                         'location_id' => $agencyLocation->location_id,
                         'registered_by' => $user['user_id'],
                         'email' => $agency['email'],
-                        'image' => $agency['image']
+                        'image' => $agency['image'] ?? null
                     ]);
                 }
 

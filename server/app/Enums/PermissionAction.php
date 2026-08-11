@@ -8,4 +8,5 @@ enum PermissionAction: string
     case Create = 'can_create';
     case Update = 'can_update';
     case Approve = 'can_approve';
+    case Assign = 'can_assign';
 }

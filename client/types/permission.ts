@@ -4,4 +4,5 @@ export interface Permissions {
     can_create: boolean,
     can_update: boolean,
     can_approve: boolean
+    can_assign: boolean
 }

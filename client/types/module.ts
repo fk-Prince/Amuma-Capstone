@@ -7,20 +7,20 @@ export interface Module {
     has_create: string,
     has_update: string,
     has_read: string,
+    has_assign: string
     description: string,
 }
 
 export enum Modules {
-    Admissions = "Admissions",
-    HomecareBookings = "Homecare Bookings",
-    Patients = "Patients",
+    Bookings = "Bookings",
     Schedules = "Schedules",
-    Pricing = "Pricing",
+    Admissions = "Admissions",
+    Patients = "Patients",
+    Contracts = "Contracts",
     RoomsAndBeds = "Rooms & Beds",
     Services = "Services",
     EmployeeManagement = "Employee Management",
     BillingAndInvoices = "Billing & Invoices",
-    Reports = "Reports",
     BranchSettings = "Branch Settings",
     ManageBranches = "Manage Branches",
 }

@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-white">
+    <div class="min-h-screen">
         <main class="max-w-6xl mx-auto px-6 py-16">
             <div class="text-center mb-10">
                 <p
@@ -85,6 +85,7 @@ import { useSubscriptionCheckout } from "~/stores/subscription";
 useHead({ title: "Product" });
 
 definePageMeta({
+    layout: "default",
     navVariant: 1,
 });
 
