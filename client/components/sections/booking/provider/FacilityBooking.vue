@@ -75,79 +75,155 @@
                         Admission Type <span class="text-danger">*</span>
                     </h3>
 
-                    <div class="grid md:grid-cols-2 gap-3">
+                    <div class="grid gap-4 md:grid-cols-2">
                         <button
                             type="button"
                             @click="update('type', 'Pre-Admission')"
-                            class="text-left rounded-xl border p-4 transition hover:border-primary hover:bg-primary/5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            class="group relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             :class="
                                 model.type === 'Pre-Admission'
-                                    ? 'border-primary ring-1 ring-primary/30 bg-primary/5'
-                                    : ''
+                                    ? 'border-primary-300 bg-primary-50/60 shadow-sm ring-2 ring-primary-100'
+                                    : 'border-slate-200 bg-white hover:border-primary-200 hover:bg-primary-50/30 hover:shadow-sm'
                             "
                         >
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h3 class="font-semibold text-sm">
-                                        Pre-Admission
-                                    </h3>
-                                    <p class="text-xs text-slate-500 mt-0.5">
-                                        Submit requirements only.
-                                    </p>
+                            <div class="flex items-start justify-between gap-4">
+                                <div
+                                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors"
+                                    :class="
+                                        model.type === 'Pre-Admission'
+                                            ? 'bg-primary-500 text-white shadow-sm'
+                                            : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100 group-hover:bg-primary-100'
+                                    "
+                                >
+                                    <ClipboardCheck class="h-5 w-5" />
                                 </div>
 
                                 <div
-                                    class="h-9 w-9 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
+                                    v-if="model.type === 'Pre-Admission'"
+                                    class="rounded-full bg-primary-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
                                 >
-                                    <ClipboardCheck class="h-4 w-4" />
+                                    Selected
                                 </div>
                             </div>
 
-                            <p
-                                v-if="model.type === 'Pre-Admission'"
-                                class="mt-3 text-[11px] font-medium text-primary"
+                            <div class="mt-4">
+                                <h3 class="text-sm font-bold text-slate-900">
+                                    Pre-Admission
+                                </h3>
+
+                                <p
+                                    class="mt-1 text-xs leading-5 text-slate-500"
+                                >
+                                    Submit your requirements and patient
+                                    information before admission is finalized.
+                                </p>
+                            </div>
+
+                            <div
+                                class="mt-5 flex items-center gap-2 border-t pt-4"
+                                :class="
+                                    model.type === 'Pre-Admission'
+                                        ? 'border-primary-100'
+                                        : 'border-slate-100'
+                                "
                             >
-                                Currently selected
-                            </p>
+                                <span
+                                    class="flex h-5 w-5 items-center justify-center rounded-full"
+                                    :class="
+                                        model.type === 'Pre-Admission'
+                                            ? 'bg-primary-100 text-primary-600'
+                                            : 'bg-slate-100 text-slate-400'
+                                    "
+                                >
+                                    <Check class="h-3 w-3" />
+                                </span>
+
+                                <span
+                                    class="text-[11px] font-medium text-slate-500"
+                                >
+                                    Complete the patient information now and
+                                    continue the admission process when you
+                                    arrive at the facility.
+                                </span>
+                            </div>
                         </button>
 
                         <button
                             type="button"
                             @click="update('type', 'Complete')"
-                            class="text-left rounded-xl border p-4 transition hover:border-primary hover:bg-primary/5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            class="group relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             :class="
                                 model.type === 'Complete'
-                                    ? 'border-primary ring-1 ring-primary/30 bg-primary/5'
-                                    : ''
+                                    ? 'border-primary-300 bg-primary-50/60 shadow-sm ring-2 ring-primary-100'
+                                    : 'border-slate-200 bg-white hover:border-primary-200 hover:bg-primary-50/30 hover:shadow-sm'
                             "
                         >
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h3 class="font-semibold text-sm">
-                                        Complete Admission
-                                    </h3>
-                                    <p class="text-xs text-slate-500 mt-0.5">
-                                        Select room, plan, and complete payment
-                                        in one step
-                                    </p>
+                            <div class="flex items-start justify-between gap-4">
+                                <div
+                                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors"
+                                    :class="
+                                        model.type === 'Complete'
+                                            ? 'bg-primary-500 text-white shadow-sm'
+                                            : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100 group-hover:bg-primary-100'
+                                    "
+                                >
+                                    <Building2 class="h-5 w-5" />
                                 </div>
 
                                 <div
-                                    class="h-9 w-9 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
+                                    v-if="model.type === 'Complete'"
+                                    class="rounded-full bg-primary-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
                                 >
-                                    <Building2 class="h-4 w-4" />
+                                    Selected
                                 </div>
                             </div>
 
-                            <p
-                                v-if="model.type === 'Complete'"
-                                class="mt-3 text-[11px] font-medium text-primary"
+                            <div class="mt-4">
+                                <div class="flex items-center gap-2">
+                                    <h3
+                                        class="text-sm font-bold text-slate-900"
+                                    >
+                                        Complete Admission
+                                    </h3>
+                                </div>
+
+                                <p
+                                    class="mt-1 text-xs leading-5 text-slate-500"
+                                >
+                                    Complete the admission process in one step,
+                                    including accommodation and payment.
+                                </p>
+                            </div>
+
+                            <div
+                                class="mt-5 flex items-center gap-2 border-t pt-4"
+                                :class="
+                                    model.type === 'Complete'
+                                        ? 'border-primary-100'
+                                        : 'border-slate-100'
+                                "
                             >
-                                Currently selected
-                            </p>
+                                <span
+                                    class="flex h-5 w-5 items-center justify-center rounded-full"
+                                    :class="
+                                        model.type === 'Complete'
+                                            ? 'bg-primary-100 text-primary-600'
+                                            : 'bg-slate-100 text-slate-400'
+                                    "
+                                >
+                                    <Check class="h-3 w-3" />
+                                </span>
+
+                                <span
+                                    class="text-[11px] font-medium text-slate-500"
+                                >
+                                    Choose your accommodation, billing cycle,
+                                    and admission details to complete your
+                                    booking in one step.
+                                </span>
+                            </div>
                         </button>
                     </div>
-
                     <p v-if="errors?.type" class="text-xs text-red-500 mt-2">
                         {{ errors.type }}
                     </p>
@@ -155,7 +231,7 @@
             </div>
 
             <!-- Accommodation + Plan (only for Complete) -->
-            <div v-if="loading || model.type === 'Complete'" class="space-y-6">
+            <!-- <div v-if="loading || model.type === 'Complete'" class="space-y-6">
                 <div>
                     <div v-if="loading" class="grid md:grid-cols-2 gap-3">
                         <div
@@ -364,9 +440,239 @@
                         </p>
                     </template>
                 </div>
-            </div>
+            </div> -->
+            <div v-if="loading || model.type === 'Complete'" class="space-y-6">
+                <!-- Billing Cycle -->
+                <div>
+                    <div class="mb-3">
+                        <h3 class="text-sm font-semibold text-slate-900">
+                            Billing Cycle
+                        </h3>
 
-            <div class="h-px bg-slate-200" />
+                        <p class="mt-0.5 text-xs text-slate-500">
+                            Choose how often you would like to be billed.
+                        </p>
+                    </div>
+
+                    <div
+                        class="relative inline-flex items-center rounded-full border border-primary-200 bg-muted-light/40 p-1"
+                    >
+                        <span
+                            class="absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-full bg-primary shadow-sm transition-all duration-300 ease-in-out"
+                            :class="
+                                model.billing_cycle === 'Yearly'
+                                    ? 'translate-x-[calc(100%+2px)]'
+                                    : 'translate-x-0'
+                            "
+                        />
+
+                        <button
+                            type="button"
+                            class="relative z-10 min-w-[110px] rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-300"
+                            :class="
+                                model.billing_cycle === 'Monthly'
+                                    ? 'text-white'
+                                    : 'text-muted hover:text-secondary'
+                            "
+                            @click="update('billing_cycle', 'Monthly')"
+                        >
+                            Monthly
+                        </button>
+
+                        <button
+                            type="button"
+                            class="relative z-10 min-w-[110px] rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-300"
+                            :class="
+                                model.billing_cycle === 'Yearly'
+                                    ? 'text-white'
+                                    : 'text-muted hover:text-secondary'
+                            "
+                            @click="update('billing_cycle', 'Yearly')"
+                        >
+                            Yearly
+                        </button>
+                    </div>
+
+                    <p class="mt-2 text-xs text-muted">
+                        {{
+                            model.billing_cycle === "Yearly"
+                                ? "Billed annually — save more compared to monthly billing."
+                                : "Billed monthly. Switch to yearly to save more."
+                        }}
+                    </p>
+                </div>
+                <!-- Accommodation -->
+                <div v-if="model.billing_cycle">
+                    <div class="mb-3">
+                        <h3 class="text-sm font-semibold text-slate-900">
+                            Accommodation Type
+                            <span class="text-danger">*</span>
+                        </h3>
+
+                        <p class="mt-0.5 text-xs text-slate-500">
+                            Select the accommodation that best suits your needs.
+                        </p>
+                    </div>
+
+                    <div v-if="loading" class="grid gap-3 md:grid-cols-2">
+                        <div
+                            v-for="i in 2"
+                            :key="i"
+                            class="h-40 animate-pulse rounded-2xl border border-slate-200 bg-slate-50"
+                        />
+                    </div>
+
+                    <div v-else class="grid gap-4 md:grid-cols-2">
+                        <button
+                            v-for="room in roomTypes"
+                            :key="room.value"
+                            type="button"
+                            :disabled="room.slots === 0"
+                            @click="update('plan', room.value)"
+                            class="group relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            :class="
+                                model.plan === room.value
+                                    ? 'border-primary-300 bg-primary-50/60 shadow-sm ring-2 ring-primary-100'
+                                    : 'border-slate-200 bg-white hover:border-primary-200 hover:bg-primary-50/30 hover:shadow-sm'
+                            "
+                        >
+                            <div class="flex items-start justify-between gap-4">
+                                <img
+                                    v-if="room.image"
+                                    :src="room.image"
+                                    :alt="room.title"
+                                    class="h-24 w-1/4 shrink-0 rounded-lg object-cover"
+                                />
+
+                                <div
+                                    v-else
+                                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                                >
+                                    <component
+                                        :is="room.icon"
+                                        class="h-7 w-7"
+                                    />
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        v-if="
+                                            model.billing_cycle !== 'Monthly' &&
+                                            getAnnualDiscount(
+                                                facilityList,
+                                                room.value,
+                                            ) > 0
+                                        "
+                                        class="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-600"
+                                    >
+                                        Save
+                                        {{
+                                            getAnnualDiscount(
+                                                facilityList,
+                                                room.value,
+                                            )
+                                        }}%
+                                    </span>
+
+                                    <div
+                                        v-if="model.plan === room.value"
+                                        class="rounded-full bg-primary-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
+                                    >
+                                        Selected
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <h4 class="text-sm font-bold text-slate-900">
+                                    {{ room.title }}
+                                </h4>
+
+                                <p
+                                    class="mt-1 text-xs leading-5 text-slate-500"
+                                >
+                                    {{ getRoomDescription(room.value) }}
+                                </p>
+                            </div>
+
+                            <div
+                                class="mt-5 flex items-end justify-between border-t border-slate-100 pt-4"
+                            >
+                                <div>
+                                    <p
+                                        class="text-[10px] font-medium uppercase tracking-wide text-slate-400"
+                                    >
+                                        {{
+                                            model.billing_cycle.toLowerCase() ===
+                                            "yearly"
+                                                ? "Yearly"
+                                                : "Monthly"
+                                        }}
+                                    </p>
+
+                                    <p
+                                        class="mt-0.5 text-lg font-bold text-primary-600"
+                                    >
+                                        ₱{{
+                                            getFacilityPrice(
+                                                facilityList,
+                                                model.billing_cycle as
+                                                    | "Monthly"
+                                                    | "Yearly",
+                                                room.value,
+                                            ).toLocaleString()
+                                        }}
+                                    </p>
+                                </div>
+
+                                <span
+                                    class="text-[11px] font-medium"
+                                    :class="
+                                        room.slots === 0
+                                            ? 'text-rose-500'
+                                            : 'text-slate-400'
+                                    "
+                                >
+                                    {{
+                                        room.slots > 0
+                                            ? `${room.slots} slot${room.slots === 1 ? "" : "s"} available`
+                                            : "Fully booked"
+                                    }}
+                                </span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <p v-if="errors?.plan" class="mt-2 text-xs text-red-500">
+                        {{ errors.plan }}
+                    </p>
+                </div>
+
+                <div v-else>
+                    <div
+                        class="flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-4"
+                    >
+                        <div
+                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-500"
+                        >
+                            <CalendarRange class="h-4 w-4" />
+                        </div>
+
+                        <div>
+                            <p class="text-xs font-semibold text-slate-700">
+                                Select a billing interval first
+                            </p>
+
+                            <p
+                                class="mt-0.5 text-[11px] leading-4 text-slate-500"
+                            >
+                                Choose Monthly or Yearly to view the available
+                                accommodation options and pricing.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div v-if="model.type === 'Complete' && !loading" class="max-w-xs">
                 <BaseInput
@@ -388,6 +694,7 @@
 import { computed, watch } from "vue";
 import type { Component } from "vue";
 import { getLocalDateStr } from "~/utils/time";
+import { getFacilityPrice, getAnnualDiscount } from "~/utils/calculation";
 import type { FacilityBooking } from "~/types/booking";
 import type { BranchImage, BranchRetrieve } from "~/types/branch";
 import BaseInput from "~/components/ui/BaseInput.vue";
@@ -584,4 +891,15 @@ watch(
 
 const todayStr = getLocalDateStr(new Date());
 const maxDateStr = getLocalDateStr(new Date(Date.now() + 7 * 86400000));
+function getRoomDescription(room: "Common" | "VIP") {
+    const facility = facilityList.value.find(
+        (item) =>
+            (item.accommodation_type || "").toUpperCase() ===
+                room.toUpperCase() &&
+            (item.billing_cycle || "").toUpperCase() ===
+                (props.model.billing_cycle || "").toUpperCase(),
+    );
+
+    return facility?.description || "";
+}
 </script>

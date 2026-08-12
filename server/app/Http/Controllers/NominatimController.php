@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Service\Geo\GeoNamesService;
 use App\Service\Geo\NominatimService;
 use App\Service\Geo\OverpassService;
 use Illuminate\Http\Request;
@@ -12,12 +13,16 @@ class NominatimController extends Controller
     private NominatimService $nominatimService;
     private OverpassService $overpassService;
 
-    public function __construct(NominatimService $nominatimService, OverpassService $overpassService)
+    public function __construct(private GeoNamesService $geoNames, NominatimService $nominatimService, OverpassService $overpassService)
     {
         $this->nominatimService = $nominatimService;
         $this->overpassService = $overpassService;
     }
 
+    public function searchLocation(Request $request)
+    {
+        return $this->geoNames->search($request->all());
+    }
     public function geocode(Request $request)
     {
         $q = $request->query('q');

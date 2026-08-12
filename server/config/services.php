@@ -45,4 +45,8 @@ return [
         'public_key'     => env('XENDIT_PUBLIC_KEY'),
         'webhook_token'  => env('XENDIT_WEBHOOK_TOKEN'),
     ],
+
+    'geonames' => [
+        'username' => env('GEONAMES_USERNAME'),
+    ],
 ];

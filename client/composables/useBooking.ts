@@ -103,15 +103,17 @@ export function useMedicalServices(
             description: medicalDescription.value,
             icon: Stethoscope,
             rateLabel: medicalRateLabel.value,
-            visible: true,
+            visible: services.length > 0,
         },
         {
             value: "ADL",
             title: "Caregiver (ADL Services)",
-            description: adlDescription,
+            description: adlDescription || "Assistance with daily living activities",
             icon: Users,
-            rateLabel: `₱${toValue(adlRatePerHour).toLocaleString()} / hour `,
-            visible: adlRatePerHour !== 0,
+            rateLabel: `₱${Number(
+                toValue(adlRatePerHour) || 0,
+            ).toLocaleString()} / hour`,
+            visible: Number(toValue(adlRatePerHour) || 0) > 0,
         },
     ]);
 
