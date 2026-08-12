@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SignupForm from "../forms/SignupForm.vue";
+import SignupForm from "~/components/forms/SignupForm.vue";
 import signinLogo from "~/assets/logo/signinLogo.png";
 </script>
 

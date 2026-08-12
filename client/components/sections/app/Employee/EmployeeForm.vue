@@ -685,6 +685,27 @@ init();
                                     />
                                     Approve
                                 </label>
+                                <label
+                                    v-if="module.has_assign"
+                                    class="flex items-center gap-2 text-sm text-gray-600"
+                                >
+                                    <input
+                                        :disabled="isViewMode"
+                                        type="checkbox"
+                                        :checked="
+                                            permissions[module.module_id]
+                                                ?.can_assign
+                                        "
+                                        @change="
+                                            toggleAction(
+                                                module.module_id,
+                                                'can_assign',
+                                            )
+                                        "
+                                        class="rounded border-slate-300 text-primary focus:ring-primary"
+                                    />
+                                    Assign
+                                </label>
                             </div>
                         </div>
                     </div>

@@ -9,7 +9,6 @@ import {
 import { moduleService } from "~/api/module/ModuleService";
 import type { Module } from "~/types/module";
 import { employeeService } from "~/api/employee/EmployeeService";
-import { useBranchStore } from "~/stores/branch";
 import { useToast } from "~/composables/useToast";
 import { fetchAuthUser } from "~/composables/useAuthUser";
 
@@ -18,7 +17,7 @@ export type PermissionSet = {
     can_create: boolean;
     can_update: boolean;
     can_approve: boolean;
-    can_assign: boolean
+    can_assign: boolean;
 };
 
 export interface UseEmployeeFormOptions {
@@ -27,9 +26,7 @@ export interface UseEmployeeFormOptions {
     onSaved?: () => void;
 }
 
-
 export function useEmployeeForm(options: UseEmployeeFormOptions) {
-    // const branchStore = useBranchStore();
     const user = useAuthUser();
     const { success, error } = useToast();
     const route = useRoute();
@@ -47,7 +44,6 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
     const initialLoading = ref(false);
     const initialLoadError = ref<string | null>(null);
     const saving = ref(false);
-
 
     const modules = ref<Module[]>([]);
     const modulesLoading = ref(false);
@@ -88,7 +84,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 can_create: next && !!m.has_create,
                 can_update: next && !!m.has_update,
                 can_approve: next && !!m.has_approve,
-                can_assign: next && !!m.has_assign
+                can_assign: next && !!m.has_assign,
             };
         });
     }
@@ -102,7 +98,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             can_create: next && !!module?.has_create,
             can_update: next && !!module?.has_update,
             can_approve: next && !!module?.has_approve,
-            can_assign: next && !!module?.has_assign
+            can_assign: next && !!module?.has_assign,
         };
     }
 
@@ -113,7 +109,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 can_create: false,
                 can_update: false,
                 can_approve: false,
-                can_assign: false
+                can_assign: false,
             };
         }
 
@@ -146,7 +142,6 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         }
     }
 
-
     function loadEmployee() {
         const current = options.employee();
         if (!current) return;
@@ -173,7 +168,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 can_create: p.can_create,
                 can_update: p.can_update,
                 can_approve: p.can_approve ?? false,
-                can_assign: p.can_assign ?? false
+                can_assign: p.can_assign ?? false,
             };
         });
     }
@@ -210,7 +205,6 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         return (first + last).toUpperCase();
     });
 
-
     function validate() {
         const result = employeeSchema.safeParse(employee.value);
 
@@ -246,7 +240,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 can_create: set.can_create,
                 can_update: set.can_update,
                 can_approve: set.can_approve,
-                can_assign: set.can_assign
+                can_assign: set.can_assign,
             }),
         );
 
@@ -273,7 +267,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             options.onSaved?.();
 
             if (user.value?.uuid === current?.uuid) {
-                fetchAuthUser();
+                await fetchAuthUser();
             }
             return true;
         } catch (err: any) {
@@ -293,7 +287,6 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         }
     }
 
-
     const pageTitle = computed(() => {
         if (isViewMode.value) return "View Employee";
         if (isEditMode.value) return "Edit Employee";
@@ -309,19 +302,14 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
     });
 
     return {
-        // mode flags
         isViewMode,
         isEditMode,
         hasExistingEmployee,
-
-        // form state
         employee,
         errors,
         initialLoading,
         initialLoadError,
         saving,
-
-        // modules / permissions
         modules,
         modulesLoading,
         modulesError,
@@ -334,20 +322,14 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         toggleModule,
         toggleAction,
         loadModules,
-
-        // employee / avatar
         loadEmployee,
         onFileSelected,
         removePhoto,
         avatarPreview,
         initials,
-
-        // validation / persistence
         validate,
         saveEmployee,
         init,
-
-        // copy
         pageTitle,
         pageSubtitle,
     };

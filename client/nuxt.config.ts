@@ -21,7 +21,18 @@ export default defineNuxtConfig({
       xenditPublicKey: ''
     }
   },
-
+  nitro: {
+    devProxy: {
+      '/api': {
+        target: `${process.env.NUXT_PUBLIC_BACKEND_API}/api`,
+        changeOrigin: true,
+      },
+      '/sanctum': {
+        target: `${process.env.NUXT_PUBLIC_BACKEND_API}/sanctum`,
+        changeOrigin: true,
+      },
+    },
+  },
   // routeRules: {
   //   '/api/**': {
   //     proxy: 'http://127.0.0.1:8000/api/**'

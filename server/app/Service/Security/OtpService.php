@@ -29,7 +29,6 @@ class OtpService
 
         Mail::to('prince.sestoso@gmail.com')->send(new OtpMailer($otp, 'prince.sestoso@gmail.com'));
         // Mail::to($payload['email'])->send(new OtpMailer($otp, $payload['email']));
-
         return response()->json([
             'status' => true,
             'message' => __('OTP sent to your email.'),
@@ -51,7 +50,7 @@ class OtpService
 
         Cache::forget("otp:{$payload['otp_key']}");
 
-        $user = $this->authService->register($payload['user']);
+        $user = $this->authService->signup($payload['user']);
 
         return response()->json([
             'status'  => true,

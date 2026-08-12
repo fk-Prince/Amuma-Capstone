@@ -46,4 +46,9 @@ class AuthController extends Controller
     {
         return $this->authService->googleCallback();
     }
+
+    public function signup(Request $request)
+    {
+        return $this->authService->signup($request->all());
+    }
 }

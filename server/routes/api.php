@@ -33,8 +33,9 @@ use Illuminate\Support\Facades\Route;
 
 // PUBLIC 
 Route::prefix('auth')->group(function () {
-    Route::middleware('auth:sanctum')->get('/me', [UserController::class, 'fetchMe']);
+    Route::get('/me', [UserController::class, 'fetchMe']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/signup', [AuthController::class, 'signup']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::post('/webhook/xendit', [XenditController::class, 'xenditWebhook']);

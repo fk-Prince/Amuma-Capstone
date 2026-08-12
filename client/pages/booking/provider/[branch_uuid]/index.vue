@@ -1,6 +1,6 @@
 <template>
     <div class="min-h-screen flex flex-col bg-slate-50 relative">
-        <div class="w-full md:max-w-[70%] max-w-[90%] mx-auto bg-white">
+        <div class="w-full md:max-w-[80%] max-w-[90%] mx-auto bg-white">
             <div class="px-6 sm:px-12">
                 <Navbar @change="scrollToSection" />
             </div>

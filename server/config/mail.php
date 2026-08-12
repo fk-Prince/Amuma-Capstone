@@ -61,8 +61,16 @@ return [
             // ],
         ],
 
+        // 'resend' => [
+        //     'transport' => 'resend',
+        // ],
         'resend' => [
             'transport' => 'resend',
+            'key' => env('RESEND_API_KEY'),
+            'options' => [
+                'verify_peer' => false,
+                'verify_host' => false,
+            ],
         ],
 
         'sendmail' => [

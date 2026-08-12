@@ -87,10 +87,10 @@ async function googleUrl() {
             v-if="alert.show"
             :type="alert.type"
             :message="alert.message"
-            class="mb-5"
+            class="mb-3"
         />
 
-        <form class="flex flex-col gap-5">
+        <form class="flex flex-col gap-3 sm:gap-4">
             <BaseInput
                 v-model="signinData.email"
                 label="Email"
@@ -177,7 +177,7 @@ async function googleUrl() {
                 </template>
             </BaseInput>
 
-            <div class="flex justify-end -mt-2">
+            <div class="flex justify-end -mt-1">
                 <NuxtLink
                     to="/forgot-password"
                     class="text-xs font-medium text-blue-600 hover:underline"
@@ -194,7 +194,6 @@ async function googleUrl() {
                 :loading="loading"
                 :disabled="loading || redirecting"
                 @click="handleSignIn"
-                class="mt-5"
             >
                 <svg
                     v-if="loading"
@@ -209,7 +208,7 @@ async function googleUrl() {
                 <span>{{ loading ? "Signing in…" : "Sign In" }}</span>
             </BaseButton>
 
-            <div class="flex items-center gap-3 my-1">
+            <div class="flex items-center gap-3">
                 <span class="flex-1 h-px bg-slate-200" />
                 <span
                     class="text-xs text-slate-400 font-medium uppercase tracking-widest"
@@ -233,7 +232,7 @@ async function googleUrl() {
                 Continue with Google
             </BaseButton>
 
-            <p class="text-center text-sm text-slate-500 mt-1">
+            <p class="text-center text-sm text-slate-500">
                 Dont have an account?
                 <NuxtLink
                     to="/auth/signup"

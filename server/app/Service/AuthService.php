@@ -56,7 +56,7 @@ class AuthService
         ], 200);
     }
 
-    public function register(array $payload)
+    public function signup(array $payload)
     {
         $exists = $this->userRepository->findByField('email', $payload['email']);
 

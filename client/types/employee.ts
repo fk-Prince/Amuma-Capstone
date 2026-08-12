@@ -2,7 +2,6 @@ import { z } from "zod";
 import type { Permissions } from "./permission";
 import { useBranchPlan } from "~/composables/useBranchPlan";
 
-const { hasPlan } = useBranchPlan();
 
 export interface Employee {
     employee_id: string
@@ -119,6 +118,7 @@ export const unFilteredEmployeeAssignmentTypes = [
 ];
 
 export const employeeAssignmentTypes = computed(() => {
+    const { hasPlan } = useBranchPlan();
     return unFilteredEmployeeAssignmentTypes.filter((type) => {
         switch (type.value) {
             case "both":

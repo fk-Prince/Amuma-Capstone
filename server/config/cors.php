@@ -15,14 +15,25 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'broadcasting/auth',],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'broadcasting/auth'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000', 'http://192.168.1.2:3000'],
+    'allowed_origins' => [],
+    // 'allowed_origins' => ['http://localhost:3000', 'http://192.168.1.2:3000'],
+    // 'allowed_origins' => [
+    //     'http://localhost:3000',
+    //     'http://192.168.1.2:3000',
+    //     'http://192.168.1.10:3000',
+    // ],
 
     'allowed_origins_patterns' => [
-        '#^http://192\.168\.\d{1,3}\.\d{1,3}:3000$#',
+        '#^http://localhost:\d+$#',
+        '#^http://127\.0\.0\.1:\d+$#',
+        '#^http://\[::1\]:\d+$#',
+        '#^http://192\.168\.\d{1,3}\.\d{1,3}:\d+$#',
+        '#^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$#',
+        '#^http://172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}:\d+$#',
     ],
 
     'allowed_headers' => ['*'],

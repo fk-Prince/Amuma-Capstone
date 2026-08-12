@@ -20,6 +20,9 @@ class UserController extends Controller
 
     public function fetchMe(Request $request)
     {
+        if (!$request->user()) {
+            return [];
+        }
         return $this->userService->fetchMe($request->user());
     }
 
