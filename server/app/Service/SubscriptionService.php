@@ -263,6 +263,7 @@ class SubscriptionService
                     'payment_reference_id' => $reference_id,
                     'price' => $totalAmount,
                 ]);
+
                 $employee = $this->employeeRepository->findEmployeeByFields([
                     ['user_id', '=', $user['user_id']],
                 ]);
