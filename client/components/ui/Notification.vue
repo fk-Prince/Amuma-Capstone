@@ -173,7 +173,7 @@ const bindChannel = (branchUuid: string) => {
             if (e.branch_uuid !== branchUuid) return;
             const newNotification: Notification = {
                 id: Date.now(),
-                uuid: crypto.randomUUID(),
+                uuid: generateId(),
                 message: e.message,
                 message_type: e.message_type,
                 created_at: new Date().toISOString(),
@@ -201,7 +201,9 @@ watch(
     },
     { immediate: true },
 );
-
+function generateId(): string {
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
 onMounted(() => {
     isMounted.value = true;
 });

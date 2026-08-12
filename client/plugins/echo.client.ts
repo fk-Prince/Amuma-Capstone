@@ -7,7 +7,10 @@ function getCookie(name: string): string | null {
     return match ? decodeURIComponent(match[2]!) : null
 }
 
+
 export default defineNuxtPlugin(() => {
+    const config = useRuntimeConfig();
+
     const echo = new Echo({
         broadcaster: 'reverb',
         key: 'lbcswwvuj6gh7s5cmwza',
@@ -19,7 +22,7 @@ export default defineNuxtPlugin(() => {
         authorizer: (channel: any) => {
             return {
                 authorize: (socketId: string, callback: Function) => {
-                    fetch('http://localhost:8000/broadcasting/auth', {
+                    fetch(`${config.public.backendApi}/broadcasting/auth`, {
                         method: 'POST',
                         credentials: 'include',
                         headers: {
