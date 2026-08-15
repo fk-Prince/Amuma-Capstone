@@ -12,7 +12,7 @@ useHead({
 });
 definePageMeta({
     layout: "default",
-    navVariant: 2,
+    navVariant: 3,
 });
 </script>
 

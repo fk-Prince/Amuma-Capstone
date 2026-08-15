@@ -59,7 +59,14 @@
                                     {{ row.value }}
                                 </span>
                             </div>
-                            <p class="mt-1.5 text-[11px] text-slate-400">
+                            <p
+                                v-if="showPayment"
+                                class="mt-1.5 text-[11px] text-slate-400"
+                            >
+                                * Your payment will be fully refunded once it is
+                                rejected.
+                            </p>
+                            <p v-else class="mt-1.5 text-[11px] text-slate-400">
                                 * Prices are estimates and may change without
                                 further notice.
                             </p>
@@ -229,6 +236,7 @@ const props = defineProps<{
     services: Service[];
     branchHomecare?: BranchHomecare;
     branchFacility?: BranchFacility[];
+    showPayment?: boolean;
 }>();
 
 defineEmits<{

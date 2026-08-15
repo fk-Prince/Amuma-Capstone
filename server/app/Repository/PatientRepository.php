@@ -52,6 +52,7 @@ class PatientRepository
                 ->paginate($payload['per_page'] ?? 10);
         }
 
+
         return Patient::with([
             'location',
             'admissions' => function ($query) {
@@ -69,12 +70,35 @@ class PatientRepository
                 $query->where(function ($q) use ($search) {
                     $q->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('middle_name', 'like', "%{$search}%");
+                        ->orWhere('middle_name', 'like', "%{$search}%")
+                        ->orWhereRaw(
+                            "LOWER(CONCAT(first_name, ' ', last_name)) LIKE ?",
+                            ['%' . strtolower($search) . '%']
+                        );
                 });
             })
-            ->paginate(
-                $payload['per_page'] ?? 10,
-            );;
+
+            ->when(!empty($payload['category']) && $payload['category'] !== 'all', function ($query) use ($payload) {
+                if ($payload['category'] === 'Homecare') {
+                    $query->whereHas('schedules', function ($subQuery) use ($payload) {
+                        $subQuery->where('category', ucfirst($payload['category']));
+                    });
+                } elseif ($payload['category'] === 'Facility') {
+                    $query->whereHas('admissions');
+                }
+            })
+            // ->when(!empty($payload['category']) && $payload['category'] !== 'all', function ($query) use ($payload) {
+            //     $query->whereHas('admissions.admissionContract', function ($q) use ($payload) {
+            //         $q->where('category', $payload['category']);
+            //     });
+            // })
+            ->when(!empty($payload['date_from']), function ($query) use ($payload) {
+                $query->where('created_at', '>=', $payload['date_from'] . ' 00:00:00');
+            })
+            ->when(!empty($payload['date_to']), function ($query) use ($payload) {
+                $query->where('created_at', '<=', $payload['date_to'] . ' 23:59:59');
+            })
+            ->paginate($payload['per_page'] ?? 10);
     }
 
     public function showPatient(string $uuid)

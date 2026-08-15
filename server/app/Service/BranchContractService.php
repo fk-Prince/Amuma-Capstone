@@ -110,7 +110,7 @@ class BranchContractService
 
         return [
             'message' => 'Branch contract updated successfully.',
-            'data' => new BranchContractResource($contract->fresh()),
+            'data' => $contract->fresh(),
         ];
     }
 

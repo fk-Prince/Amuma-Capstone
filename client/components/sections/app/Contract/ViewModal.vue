@@ -2,184 +2,162 @@
     <Teleport to="body">
         <div
             v-if="open"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/40 backdrop-blur-sm p-4 font-sans"
         >
             <div
-                class="w-full max-w-5xl h-[80vh] bg-white rounded-2xl shadow-xl border border-[#E4EFED] overflow-hidden flex flex-col"
+                class="w-full max-w-3xl h-[80vh] bg-white rounded-3xl shadow-xl border border-muted-light overflow-hidden flex flex-col"
             >
-                <div
-                    class="flex justify-between items-start gap-3 px-6 py-4 border-b border-[#E4EFED]"
-                >
-                    <div class="flex flex-col gap-3">
+                <div class="border-b border-muted-light">
+                    <div
+                        class="flex items-start justify-between gap-3 px-6 pt-5 pb-3"
+                    >
                         <div>
-                            <h2 class="text-lg font-semibold text-[#16302E]">
+                            <h2 class="text-lg font-semibold text-secondary">
                                 Facility Plans
                             </h2>
 
-                            <p class="text-sm text-[#9AB3AF]">
+                            <p class="text-sm text-muted mt-0.5">
                                 Manage all active and inactive branch contract
                                 plans.
                             </p>
                         </div>
 
+                        <button
+                            type="button"
+                            @click="close"
+                            class="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-secondary hover:bg-light shrink-0"
+                        >
+                            <X class="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <div class="px-6 pb-4">
                         <BaseInput
                             v-model="search"
                             placeholder="Search plans..."
-                            inputClass="w-[350px]"
+                            inputClass="w-full"
                             :isSearch="true"
                         />
                     </div>
-
-                    <button
-                        accommodation_type="button"
-                        @click="close"
-                        class="text-gray-400 hover:text-gray-700 text-lg shrink-0"
-                    >
-                        ✕
-                    </button>
                 </div>
 
                 <div class="relative overflow-auto flex-1">
+                    <div v-if="loading" class="divide-y divide-muted-light">
+                        <div v-for="n in 5" :key="n" class="px-6 py-4">
+                            <div
+                                class="h-14 bg-light/60 rounded-2xl animate-pulse"
+                            />
+                        </div>
+                    </div>
+
                     <div
-                        v-if="isFetching"
-                        class="absolute inset-0 bg-white/50 z-10"
-                    />
+                        v-else-if="filteredPlans.length === 0"
+                        class="py-20 text-center text-sm text-muted"
+                    >
+                        No plans found
+                    </div>
 
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-[#F7FAF9] sticky top-0">
-                            <tr class="border-b border-[#E4EFED]">
-                                <th
-                                    class="py-3 px-3 text-xs uppercase text-muted"
-                                >
-                                    Category
-                                </th>
-                                <th
-                                    class="py-3 px-6 text-xs uppercase text-muted"
-                                >
-                                    accommodation_type
-                                </th>
-
-                                <th
-                                    class="py-3 px-3 text-xs uppercase text-muted"
-                                >
-                                    Price
-                                </th>
-
-                                <th
-                                    class="py-3 px-3 text-xs uppercase text-muted"
-                                >
-                                    Billing
-                                </th>
-
-                                <th
-                                    class="py-3 px-3 text-xs uppercase text-muted"
-                                >
-                                    Status
-                                </th>
-
-                                <th
-                                    class="py-3 px-6 text-xs uppercase text-muted"
-                                >
-                                    Description
-                                </th>
-
-                                <th
-                                    class="py-3 px-6 text-xs uppercase text-muted text-right"
-                                >
-                                    Action
-                                </th>
-                            </tr>
-                        </thead>
-
-                        <tbody class="divide-y divide-[#E4EFED]">
-                            <template v-if="isLoading">
-                                <tr v-for="n in 5" :key="n">
-                                    <td colspan="7" class="px-6 py-4">
-                                        <div
-                                            class="h-6 bg-slate-100 rounded animate-pulse"
-                                        />
-                                    </td>
-                                </tr>
-                            </template>
-
-                            <tr v-else-if="filteredPlans.length === 0">
-                                <td
-                                    colspan="7"
-                                    class="py-16 text-center text-sm text-gray-400"
-                                >
-                                    No plans found
-                                </td>
-                            </tr>
-
-                            <tr
-                                v-for="plan in filteredPlans"
-                                :key="plan.branch_contract_id"
-                                class="hover:bg-slate-50"
+                    <div v-else class="divide-y divide-muted-light">
+                        <div
+                            v-for="group in groupedPlans"
+                            :key="group.category"
+                        >
+                            <p
+                                class="sticky top-0 z-[5] px-6 py-2 text-[11px] font-semibold uppercase tracking-wide text-primary-600 bg-primary-50"
                             >
-                                <td class="px-3 py-4 text-sm">
-                                    {{ plan.category }}
-                                </td>
+                                {{ group.category }}
+                            </p>
 
-                                <td
-                                    class="px-6 py-4 text-sm font-medium text-[#16302E]"
+                            <div class="divide-y divide-muted-light">
+                                <div
+                                    v-for="plan in group.items"
+                                    :key="plan.branch_contract_id"
+                                    class="flex items-start gap-4 px-6 py-4 transition-colors hover:bg-light/40"
                                 >
-                                    {{ plan.accommodation_type }}
-                                </td>
-
-                                <td class="px-3 py-4 text-sm font-semibold">
-                                    ₱{{ Number(plan.price).toLocaleString() }}
-                                </td>
-
-                                <td class="px-3 py-4 text-sm">
-                                    {{ plan.billing_cycle }}
-                                </td>
-
-                                <td class="px-3 py-4">
-                                    <span
-                                        class="px-2 py-1 rounded-full text-xs font-medium"
-                                        :class="
-                                            plan.is_active
-                                                ? 'bg-green-50 text-green-600'
-                                                : 'bg-red-50 text-red-600'
-                                        "
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center shrink-0 mt-0.5"
                                     >
-                                        {{
-                                            plan.is_active
-                                                ? "Active"
-                                                : "Inactive"
-                                        }}
-                                    </span>
-                                </td>
+                                        <Building2
+                                            class="w-4.5 h-4.5 text-primary"
+                                        />
+                                    </div>
 
-                                <td class="px-6 py-4 text-sm text-gray-500">
-                                    {{ plan.description || "-" }}
-                                </td>
+                                    <div class="flex-1 min-w-0">
+                                        <div
+                                            class="flex flex-wrap items-center gap-2"
+                                        >
+                                            <p
+                                                class="text-sm font-semibold text-secondary"
+                                            >
+                                                {{ plan.accommodation_type }}
+                                            </p>
 
-                                <td class="px-6 py-4 text-right">
-                                    <button
-                                        accommodation_type="button"
-                                        class="text-sm font-medium text-primary hover:underline"
-                                        @click="onUpdate(plan)"
+                                            <span
+                                                class="px-2 py-0.5 rounded-full text-[11px] font-medium"
+                                                :class="
+                                                    plan.is_active
+                                                        ? 'bg-accent-50 text-accent-600'
+                                                        : 'bg-danger/10 text-danger'
+                                                "
+                                            >
+                                                {{
+                                                    plan.is_active
+                                                        ? "Active"
+                                                        : "Inactive"
+                                                }}
+                                            </span>
+                                        </div>
+
+                                        <p class="text-xs text-muted mt-0.5">
+                                            {{ plan.billing_cycle }}
+                                        </p>
+
+                                        <p
+                                            v-if="plan.description"
+                                            class="text-xs text-muted leading-relaxed mt-2 line-clamp-2"
+                                        >
+                                            {{ plan.description }}
+                                        </p>
+                                    </div>
+
+                                    <div
+                                        class="flex flex-col items-end gap-2 shrink-0"
                                     >
-                                        Update
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                        <p
+                                            class="text-sm font-bold text-secondary"
+                                        >
+                                            ₱{{
+                                                Number(
+                                                    plan.price,
+                                                ).toLocaleString()
+                                            }}
+                                        </p>
+
+                                        <button
+                                            type="button"
+                                            class="text-xs font-semibold text-primary hover:text-primary-700"
+                                            @click="onUpdate(plan)"
+                                        >
+                                            Update
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div
-                    v-if="!isLoading && filteredPlans.length"
-                    class="flex justify-between items-center px-6 py-4 border-t border-[#E4EFED] bg-white"
+                    v-if="!loading && filteredPlans.length"
+                    class="flex justify-between items-center px-6 py-4 border-t border-muted-light bg-white"
                 >
                     <p class="text-xs text-muted">
                         Showing {{ filteredPlans.length }} plans
                     </p>
 
                     <button
-                        accommodation_type="button"
-                        class="rounded-xl border px-4 py-2 text-sm"
+                        type="button"
+                        class="rounded-xl border border-muted-light px-4 py-2 text-sm text-secondary hover:bg-light"
                         @click="close"
                     >
                         Close
@@ -191,14 +169,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { ref, computed } from "vue";
+import { X, Building2 } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
-import { branchContractService } from "~/api/branch-contract/BranchContractService";
 
 const props = defineProps<{
     open: boolean;
+    plans: any[];
+    loading: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -206,23 +185,16 @@ const emit = defineEmits<{
     update: [plan: any];
 }>();
 
-const route = useRoute();
-
-const plans = ref<any[]>([]);
-const isLoading = ref(true);
-const isFetching = ref(false);
 const search = ref("");
-
-const branch_uuid = computed(() => route.params.uuid as string);
 
 const filteredPlans = computed(() => {
     if (!search.value.trim()) {
-        return plans.value;
+        return props.plans;
     }
 
     const keyword = search.value.toLowerCase();
 
-    return plans.value.filter((plan) => {
+    return props.plans.filter((plan) => {
         return (
             plan.accommodation_type?.toLowerCase().includes(keyword) ||
             plan.category?.toLowerCase().includes(keyword) ||
@@ -232,24 +204,26 @@ const filteredPlans = computed(() => {
     });
 });
 
-async function fetchPlans() {
-    if (!branch_uuid.value) return;
+const groupedPlans = computed(() => {
+    const groups: Record<string, any[]> = {};
 
-    isFetching.value = true;
+    for (const plan of filteredPlans.value) {
+        const key = plan.category || "Uncategorized";
 
-    try {
-        const res = await branchContractService.list({
-            branch_uuid: branch_uuid.value,
-        });
+        if (!groups[key]) {
+            groups[key] = [];
+        }
 
-        plans.value = res.data ?? res;
-    } catch (err) {
-        console.error(err);
-    } finally {
-        isFetching.value = false;
-        isLoading.value = false;
+        groups[key].push(plan);
     }
-}
+
+    return Object.keys(groups)
+        .sort((a, b) => a.localeCompare(b))
+        .map((category) => ({
+            category,
+            items: groups[category],
+        }));
+});
 
 function close() {
     emit("close");
@@ -258,17 +232,4 @@ function close() {
 function onUpdate(plan: any) {
     emit("update", plan);
 }
-
-watch(
-    () => props.open,
-    (value) => {
-        fetchPlans();
-    },
-);
-
-onMounted(() => {
-    if (props.open) {
-        fetchPlans();
-    }
-});
 </script>

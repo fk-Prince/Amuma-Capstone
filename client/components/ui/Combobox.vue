@@ -422,7 +422,9 @@ onBeforeUnmount(() => {
                             ref="searchInput"
                             v-model="search"
                             type="text"
-                            :placeholder="searchPlaceholder"
+                            :placeholder="
+                                searchBarPlaceHolder || searchPlaceholder
+                            "
                             class="w-full pl-9 pr-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
 
@@ -508,6 +510,7 @@ const props = withDefaults(
         searchPlaceholder?: string;
         required?: boolean;
         searchBar?: boolean;
+        searchBarPlaceHolder?: string;
         inputClass?: string;
         allowCustom?: boolean;
         error?: string;

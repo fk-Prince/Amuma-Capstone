@@ -1,14 +1,10 @@
 <template>
-    <div class="min-h-screen bg-slate-50">
-        <div class="mx-auto max-w-[1700px] space-y-6 p-4 md:p-6">
-            <PageHeader
-                title="Medical Services"
-                subtitle="Healthcare"
-                description="View and manage available medical services."
-            />
-
+    <div class="flex min-h-[calc(100vh-90px)] flex-col bg-slate-50">
+        <div
+            class="mx-auto flex w-full max-w-[1700px] flex-1 flex-col space-y-6 p-4"
+        >
             <div
-                class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
+                class="flex flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
             >
                 <div class="border-b border-slate-100 p-5">
                     <ServiceSearch
@@ -18,7 +14,7 @@
                     />
                 </div>
 
-                <div class="p-5">
+                <div class="flex flex-1 flex-col p-5">
                     <div class="mb-5 flex justify-end">
                         <span
                             class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600"
@@ -33,6 +29,7 @@
                     </div>
 
                     <ServiceList
+                        class="flex-1"
                         :loading="loading"
                         :services="filteredServices"
                         @edit="editServiceClicked"
@@ -63,7 +60,6 @@
         </div>
     </div>
 </template>
-
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
@@ -75,8 +71,8 @@ import ServiceSearch from "~/components/sections/app/Service/ServiceSearch.vue";
 import ServiceList from "~/components/sections/app/Service/ServiceList.vue";
 import ServiceModal from "~/components/sections/app/Service/ServiceModal.vue";
 import ServiceEmployeeModal from "~/components/sections/app/Service/ServiceEmployeeModal.vue";
+import ServiceDashboard from "~/components/sections/app/Service/ServiceDashboard.vue";
 
-import PageHeader from "~/components/ui/PageHeader.vue";
 import { useToast } from "~/composables/useToast";
 
 const { success, error } = useToast();

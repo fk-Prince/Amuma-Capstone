@@ -1,5 +1,6 @@
 <script setup>
 import { watch, onBeforeUnmount } from "vue";
+import { string } from "zod";
 
 const props = defineProps({
     variant: {
@@ -22,6 +23,10 @@ const props = defineProps({
     loading: {
         type: Boolean,
         default: false,
+    },
+    extraClass: {
+        type: String,
+        default: "",
     },
 });
 
@@ -78,6 +83,7 @@ onBeforeUnmount(() => {
                 loading
                     ? 'cursor-wait opacity-60'
                     : disabled && 'cursor-not-allowed opacity-60',
+                extraClass,
             ]"
             @click="handleClick"
         >

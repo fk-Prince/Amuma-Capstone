@@ -278,7 +278,8 @@ import { useBranch } from "~/composables/useBranchProvider";
 
 useHead({ title: "Patient Details" });
 definePageMeta({
-    navVariant: 1,
+    navVariant: 4,
+    navTheme: "dark",
     middleware: ["auth-client"],
     // middleware: ["auth-client", "provider-guard"],
 });

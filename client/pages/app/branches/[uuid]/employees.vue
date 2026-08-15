@@ -1,5 +1,5 @@
 <template>
-    <div class="w-full h-full max-w-8xl mx-auto p-4 md:p-6 lg:space-y-5">
+    <div class="w-full h-full max-w-8xl mx-auto p-4 bg-slate-50 lg:space-y-5">
         <div
             v-if="!addEmployeeTab"
             class="h-full grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-4 items-stretch"

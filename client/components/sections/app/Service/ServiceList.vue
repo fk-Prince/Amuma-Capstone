@@ -28,22 +28,6 @@ const emit = defineEmits<{
     assign: [service: Service];
 }>();
 
-// const expandedServices = ref<number[]>([]);
-
-// const isExpanded = (service_id: number | undefined) => {
-//     if (service_id === undefined) return false;
-//     return expandedServices.value.includes(service_id);
-// };
-
-// const toggleService = (service_id: number | undefined) => {
-//     if (service_id === undefined) return false;
-//     expandedServices.value.includes(service_id)
-//         ? (expandedServices.value = expandedServices.value.filter(
-//               (x) => x !== service_id,
-//           ))
-//         : expandedServices.value.push(service_id);
-// };
-
 const expandedService = ref<number | null>(null);
 
 const isExpanded = (service_id: number | undefined) => {
@@ -83,6 +67,32 @@ const formatPrice = (price: number | string) => {
     const num = Number(price);
     return isNaN(num) ? price : `₱${num.toFixed(2)}`;
 };
+
+type CategoryStyle = { bg: string; text: string; dot: string };
+
+const categoryPalette: CategoryStyle[] = [
+    { bg: "bg-primary-50", text: "text-primary-600", dot: "bg-primary-500" },
+    { bg: "bg-accent-50", text: "text-accent-600", dot: "bg-accent-500" },
+    { bg: "bg-primary-100", text: "text-primary-700", dot: "bg-primary-600" },
+    { bg: "bg-accent-100", text: "text-accent-700", dot: "bg-accent-600" },
+    { bg: "bg-light", text: "text-primary-700", dot: "bg-primary-400" },
+    { bg: "bg-muted-light", text: "text-muted-dark", dot: "bg-muted" },
+];
+
+const defaultCategoryStyle: CategoryStyle = categoryPalette[0]!;
+
+const categoryStyle = (name: string | undefined | null): CategoryStyle => {
+    if (!name) return defaultCategoryStyle;
+
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+    }
+
+    return (
+        categoryPalette[hash % categoryPalette.length] ?? defaultCategoryStyle
+    );
+};
 </script>
 
 <template>
@@ -119,7 +129,7 @@ const formatPrice = (price: number | string) => {
                     class="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[#E4EFED] bg-[#F7FAF9]/40"
                 >
                     <div
-                        class="w-14 h-14 rounded-full bg-[#EAF4F2] flex items-center justify-center mb-3"
+                        class="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center mb-3"
                     >
                         <svg
                             viewBox="0 0 24 24"
@@ -179,8 +189,24 @@ const formatPrice = (price: number | string) => {
 
                                         <span
                                             v-if="service.category_name"
-                                            class="px-2 py-0.5 rounded-full text-[11px] bg-violet-50 text-violet-600"
+                                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 ring-inset ring-black/5"
+                                            :class="[
+                                                categoryStyle(
+                                                    service.category_name,
+                                                ).bg,
+                                                categoryStyle(
+                                                    service.category_name,
+                                                ).text,
+                                            ]"
                                         >
+                                            <span
+                                                class="h-1.5 w-1.5 rounded-full"
+                                                :class="
+                                                    categoryStyle(
+                                                        service.category_name,
+                                                    ).dot
+                                                "
+                                            />
                                             {{ service.category_name }}
                                         </span>
                                     </div>
@@ -217,8 +243,8 @@ const formatPrice = (price: number | string) => {
                                     class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium"
                                     :class="
                                         service.is_available
-                                            ? 'bg-green-50 text-green-600'
-                                            : 'bg-gray-100 text-gray-500'
+                                            ? 'bg-accent-50 text-accent-600'
+                                            : 'bg-muted-light text-muted-dark'
                                     "
                                 >
                                     <CheckCircle2
@@ -236,7 +262,7 @@ const formatPrice = (price: number | string) => {
                                 </span>
 
                                 <ChevronDown
-                                    class="w-4 h-4 text-[#9AB3AF] transition-transform"
+                                    class="w-4 h-4 text-muted transition-transform"
                                     :class="{
                                         'rotate-180': isExpanded(
                                             service.service_id,
@@ -333,12 +359,34 @@ const formatPrice = (price: number | string) => {
                                                 </span>
                                             </div>
 
+                                            <span
+                                                v-if="service.category_name"
+                                                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ring-black/5"
+                                                :class="[
+                                                    categoryStyle(
+                                                        service.category_name,
+                                                    ).bg,
+                                                    categoryStyle(
+                                                        service.category_name,
+                                                    ).text,
+                                                ]"
+                                            >
+                                                <span
+                                                    class="h-1.5 w-1.5 rounded-full"
+                                                    :class="
+                                                        categoryStyle(
+                                                            service.category_name,
+                                                        ).dot
+                                                    "
+                                                />
+                                                {{ service.category_name }}
+                                            </span>
+
                                             <p
+                                                v-else
                                                 class="text-sm font-semibold text-[#16302E]"
                                             >
-                                                {{
-                                                    service.category_name || "-"
-                                                }}
+                                                —
                                             </p>
                                         </div>
 
@@ -425,17 +473,11 @@ const formatPrice = (price: number | string) => {
                                         class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4EFED] text-xs text-[#6B8A87]"
                                     >
                                         <span
-                                            class="w-2 h-2 rounded-full bg-green-500"
+                                            class="w-2 h-2 rounded-full bg-accent"
                                         />
 
                                         Available for booking
                                     </div>
-
-                                    <!-- <div
-                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4EFED] text-xs text-[#6B8A87]"
-                                    >
-                                        Updated recently
-                                    </div> -->
                                 </div>
                             </div>
                         </Transition>

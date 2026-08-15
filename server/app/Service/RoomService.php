@@ -48,7 +48,6 @@ class RoomService
         return response()->json([
             'data' => new RoomResource($model),
             'message' => __('Successfully created a room.'),
-            'status' => true,
         ], 201);
     }
 

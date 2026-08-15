@@ -78,6 +78,7 @@
                                 bookingStore.branchFacility ?? undefined
                             "
                             @edit-step="goEditStep"
+                            :showPayment="showPayment"
                         />
                     </div>
 
@@ -139,7 +140,8 @@ import PaymentForm from "~/components/forms/PaymentForm.vue";
 
 useHead({ title: "Review Booking" });
 definePageMeta({
-    navVariant: 1,
+    navVariant: 4,
+    navTheme: "dark",
     // middleware: ["auth-client", "booking-review-guard"],
     middleware: ["auth-client"],
 });

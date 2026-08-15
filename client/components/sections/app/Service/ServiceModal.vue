@@ -37,9 +37,6 @@ const { errors, validate, clearError, reset } = useSchemaValidation(
     props.form,
 );
 
-// Keep form.durationType in sync with the toggle — the schema validates
-// it directly, so without this it stays undefined and submit fails with
-// "Invalid option: expected one of \"minutes\"|\"time\"".
 watch(
     durationType,
     (value) => {
@@ -68,8 +65,6 @@ const onKeydown = (e: KeyboardEvent) => {
 };
 
 onMounted(async () => {
-    // Register this immediately — it must not depend on the category
-    // request below finishing (or succeeding) to work.
     document.addEventListener("keydown", onKeydown, true);
 
     try {
@@ -189,8 +184,9 @@ watch(
                                         :items="categoryData"
                                         v-model="form.category_name"
                                         label="Service Category"
-                                        placeholder="Select category"
+                                        placeholder="Search service category..."
                                         searchBar
+                                        searchBarPlaceHolder="Select category or Add Service"
                                         :allowCustom="true"
                                         :error="errors?.category_name"
                                         @update:modelValue="

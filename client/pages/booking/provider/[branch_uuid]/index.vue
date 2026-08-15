@@ -116,7 +116,10 @@ import LocationPin from "~/components/ui/LocationPin.vue";
 import Location from "~/components/icons/location.vue";
 import { useBranch } from "~/composables/useBranchProvider";
 useHead({ title: "Search Homecare" });
-definePageMeta({ navVariant: 1 });
+definePageMeta({
+    navVariant: 4,
+    navTheme: "dark",
+});
 
 const route = useRoute();
 const uuid = computed(() => route.params.branch_uuid as string);

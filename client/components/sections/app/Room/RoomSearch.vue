@@ -73,7 +73,7 @@ const { canCreate } = usePermissions();
                     />
                 </svg>
 
-                Add Room<
+                Add Room
             </button>
         </div>
 

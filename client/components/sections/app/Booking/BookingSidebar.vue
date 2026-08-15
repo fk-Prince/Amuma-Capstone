@@ -1,8 +1,7 @@
-w
 <template>
     <div class="w-full lg:h-full flex flex-col min-h-0">
         <div
-            class="lg:h-full rounded-2xl bg-white border border-[#E4EFED] p-5 flex flex-col overflow-hidden"
+            class="lg:h-full rounded-lg bg-white border border-[#E4EFED] p-5 flex flex-col overflow-hidden"
         >
             <button
                 type="button"
@@ -20,7 +19,7 @@ w
                 </div>
 
                 <svg
-                    class="h-5 w-5 text-[#16302E] transition-transform duration-300"
+                    class="h-5 w-5 text-primary transition-transform duration-300"
                     :class="{ 'rotate-180': open }"
                     viewBox="0 0 20 20"
                     fill="none"
@@ -47,7 +46,7 @@ w
                 </div>
 
                 <div
-                    class="h-10 w-10 rounded-xl bg-[#EAF4F2] flex items-center justify-center text-[#0E7C7B]"
+                    class="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center text-primary"
                 >
                     <CalendarDays class="h-5 w-5" />
                 </div>
@@ -122,26 +121,6 @@ w
                                 <p
                                     class="text-xs uppercase tracking-wide text-[#6B8A87]"
                                 >
-                                    Awaiting
-                                </p>
-                                <Clock class="h-4 w-4 text-orange-500" />
-                            </div>
-
-                            <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
-                            >
-                                {{ overview?.bookings?.awaiting ?? 0 }}
-                            </p>
-
-                            <p class="text-xs text-[#6B8A87]">Need admission</p>
-                        </div>
-                        <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
-                        >
-                            <div class="flex items-center justify-between">
-                                <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
-                                >
                                     Completed
                                 </p>
                                 <UserCheck class="h-4 w-4 text-emerald-600" />
@@ -155,6 +134,52 @@ w
 
                             <p class="text-xs text-[#6B8A87]">
                                 Finished bookings
+                            </p>
+                        </div>
+
+                        <div
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                        >
+                            <div class="flex items-center justify-between">
+                                <p
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                >
+                                    Cancelled
+                                </p>
+                                <XCircle class="h-4 w-4 text-red-400" />
+                            </div>
+
+                            <p
+                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                            >
+                                {{ overview?.bookings?.cancelled ?? 0 }}
+                            </p>
+
+                            <p class="text-xs text-[#6B8A87]">
+                                Cancelled bookings
+                            </p>
+                        </div>
+
+                        <div
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                        >
+                            <div class="flex items-center justify-between">
+                                <p
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                >
+                                    Rejected
+                                </p>
+                                <UserX class="h-4 w-4 text-rose-500" />
+                            </div>
+
+                            <p
+                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                            >
+                                {{ overview?.bookings?.rejected ?? 0 }}
+                            </p>
+
+                            <p class="text-xs text-[#6B8A87]">
+                                Rejected bookings
                             </p>
                         </div>
 
@@ -180,7 +205,9 @@ w
                                 Within 24 hours
                             </p>
                         </div>
+                    </div>
 
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
                         <div
                             class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
                         >
@@ -201,9 +228,6 @@ w
 
                             <p class="text-xs text-[#6B8A87]">New bookings</p>
                         </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
                         <div
                             class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
                         >
@@ -295,7 +319,14 @@ w
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
-import { CalendarDays, Clock, CalendarClock, UserCheck } from "lucide-vue-next";
+import {
+    CalendarDays,
+    Clock,
+    CalendarClock,
+    UserCheck,
+    XCircle,
+    UserX,
+} from "lucide-vue-next";
 import { useRoute } from "vue-router";
 import { notifcationFormatDate } from "~/utils/notification-time";
 import { useAuthUser } from "~/composables/useAuthUser";

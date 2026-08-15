@@ -2,14 +2,22 @@
     <div class="min-h-screen bg-slate-50">
         <div class="w-full mx-auto px-4 lg:px-8 py-8">
             <div
-                class="mb-6 inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm"
+                class="relative mb-6 inline-grid grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm"
             >
+                <div
+                    class="absolute inset-y-1 left-1 rounded-lg bg-primary transition-transform duration-300 ease-out"
+                    :style="{
+                        width: 'calc((100% - 0.45rem) / 3)',
+                        transform: `translateX(${sliderOffset})`,
+                    }"
+                />
+
                 <button
                     type="button"
-                    class="rounded-lg px-4 py-2 text-sm font-medium transition"
+                    class="relative z-10 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                     :class="
                         viewMode === 'form'
-                            ? 'bg-primary text-white'
+                            ? 'text-white'
                             : 'text-slate-500 hover:text-slate-700'
                     "
                     @click="viewMode = 'form'"
@@ -19,10 +27,10 @@
 
                 <button
                     type="button"
-                    class="rounded-lg px-4 py-2 text-sm font-medium transition"
+                    class="relative z-10 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                     :class="
                         viewMode === 'table'
-                            ? 'bg-primary text-white'
+                            ? 'text-white'
                             : 'text-slate-500 hover:text-slate-700'
                     "
                     @click="viewMode = 'table'"
@@ -32,10 +40,10 @@
 
                 <button
                     type="button"
-                    class="rounded-lg px-4 py-2 text-sm font-medium transition"
+                    class="relative z-10 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                     :class="
                         viewMode === 'bookings'
-                            ? 'bg-primary text-white'
+                            ? 'text-white'
                             : 'text-slate-500 hover:text-slate-700'
                     "
                     @click="viewMode = 'bookings'"
@@ -133,8 +141,8 @@
                             >
                                 Process
                             </button>
+                            <!-- v-if="row.status?.toLowerCase() === 'pending'" -->
                             <button
-                                v-if="row.status?.toLowerCase() === 'pending'"
                                 type="button"
                                 class="text-primary font-medium hover:underline"
                                 @click="
@@ -209,7 +217,7 @@
                             type="button"
                             :disabled="loadingReference || !referenceInput"
                             @click="loadByReference"
-                            class="flex items-center mt-6 gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                            class="flex items-center cursor-pointer mt-6 gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
                         >
                             {{
                                 loadingReference
@@ -580,12 +588,17 @@ async function fetchBookings() {
                     .filter(Boolean)
                     .join(" "),
                 accommodation: booking.reserved?.accommodation_type ?? "N / A",
-                room_bed: [
-                    booking.reserved?.room?.room_no ?? "N / A",
-                    booking.reserved?.bed?.bed_no ?? "N / A",
-                ]
-                    .filter(Boolean)
-                    .join(" "),
+
+                room_bed:
+                    booking.reserved?.room?.room_no ||
+                    booking.reserved?.bed?.bed_no
+                        ? [
+                              booking.reserved?.room?.room_no,
+                              booking.reserved?.bed?.bed_no,
+                          ]
+                              .filter(Boolean)
+                              .join(" / ")
+                        : "N / A",
                 status: booking.status,
                 created_at: stringToDateTime(booking.created_at) ?? "—",
             }),
@@ -634,32 +647,36 @@ async function fetchAdmissions() {
             per_page: admissionPagination.pageSize.value,
         });
         admissionRows.value = (response.data ?? []).map(
-            (data: PatientRetrieve) => ({
-                p_uuid: data.uuid,
-                patient_admission_id:
-                    data.latest_admission.patient_admission_id,
+            (data: PatientRetrieve) => {
+                const admission = data.latest_admission;
+                const isActiveAdmission = ["waiting", "admitted"].includes(
+                    admission?.status,
+                );
 
-                patient_name: data.full_name,
-                accommodation: ["waiting", "admitted"].includes(
-                    data.latest_admission?.status,
-                )
-                    ? data.latest_admission?.current_contract
-                          ?.accommodation_type
-                    : "—",
-                room_bed: ["waiting", "admitted"].includes(
-                    data.latest_admission?.status,
-                )
-                    ? [
-                          data.latest_admission?.room?.room_no,
-                          data.latest_admission?.bed?.bed_no,
-                      ]
-                          .filter(Boolean)
-                          .join(" / ") || "N/A"
-                    : "—",
-                status: data.latest_admission.status,
-                admission_date:
-                    formatDate(data.latest_admission.admitted_at) ?? "—",
-            }),
+                return {
+                    p_uuid: data.uuid,
+                    patient_admission_id: admission?.patient_admission_id,
+
+                    patient_name: data.full_name,
+
+                    accommodation: isActiveAdmission
+                        ? (admission?.current_contract?.accommodation_type ??
+                          "—")
+                        : "—",
+
+                    room_bed: isActiveAdmission
+                        ? [admission?.room?.room_no, admission?.bed?.bed_no]
+                              .filter(Boolean)
+                              .join(" / ") || "N/A"
+                        : "—",
+
+                    status: admission?.status ?? "—",
+
+                    admission_date: admission?.admitted_at
+                        ? formatDate(admission.admitted_at)
+                        : "—",
+                };
+            },
         );
         admissionPagination.totalItems.value = response.meta?.total ?? 0;
     } catch (err) {
@@ -807,4 +824,12 @@ const scrollTo = (step: string) => {
         });
     });
 };
+const viewModes = ["form", "table", "bookings"] as const;
+const sliderOffset = computed(() => {
+    const index = viewModes.indexOf(
+        viewMode.value as (typeof viewModes)[number],
+    );
+
+    return `${index * 100}%`;
+});
 </script>

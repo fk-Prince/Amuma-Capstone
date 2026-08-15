@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { Search, Stethoscope, Globe2, Building2, Plus } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import { Modules } from "~/types/module";
@@ -6,7 +7,7 @@ import { usePermissions } from "~/composables/usePermission";
 
 const { canCreate } = usePermissions();
 
-defineProps<{
+const props = defineProps<{
     modelValue: string;
     activeTab: string;
 }>();
@@ -31,6 +32,15 @@ const tabs = [
         icon: Building2,
     },
 ];
+
+const activeIndex = computed(() =>
+    Math.max(
+        0,
+        tabs.findIndex((t) => t.label === props.activeTab),
+    ),
+);
+
+const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
 </script>
 
 <template>
@@ -44,7 +54,7 @@ const tabs = [
                 <BaseInput
                     :model-value="modelValue"
                     @update:model-value="emit('update:modelValue', $event)"
-                    placeholder="Search services..."
+                    placeholder="Search service..."
                     input-class="pl-11 rounded-xl border-[#E4EFED] focus:border-primary focus:ring-primary/20"
                 />
             </div>
@@ -65,19 +75,27 @@ const tabs = [
             class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
         >
             <div
-                class="inline-flex w-full lg:w-fit overflow-x-auto rounded-xl bg-slate-100 p-1"
+                class="relative inline-grid w-full grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm lg:w-auto"
             >
+                <div
+                    class="absolute inset-y-1 left-1 rounded-lg bg-primary transition-transform duration-300 ease-out"
+                    :style="{
+                        width: 'calc((100% - 0.45rem) / 3)',
+                        transform: `translateX(${sliderOffset})`,
+                    }"
+                />
+
                 <button
                     v-for="tab in tabs"
                     :key="tab.label"
                     type="button"
-                    @click="emit('update:activeTab', tab.label)"
-                    class="flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
+                    class="relative z-10 flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200"
                     :class="
                         activeTab === tab.label
-                            ? 'bg-white text-slate-900 shadow-sm'
+                            ? 'text-white'
                             : 'text-slate-500 hover:text-slate-700'
                     "
+                    @click="emit('update:activeTab', tab.label)"
                 >
                     <component :is="tab.icon" class="h-4 w-4" />
 

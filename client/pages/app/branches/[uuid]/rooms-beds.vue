@@ -163,13 +163,33 @@ const submitRoom = async () => {
             ? await roomService.update(editingRoomId.value, roomForm)
             : await roomService.create(roomForm);
 
+        const savedRoom = res.data;
+        if (savedRoom && roomMatchesCurrentFilter(savedRoom)) {
+            const index = roomData.value.findIndex(
+                (room) => room.room_id === savedRoom.room_id,
+            );
+
+            if (index !== -1) {
+                roomData.value[index] = {
+                    ...roomData.value[index],
+                    ...savedRoom,
+                    beds: savedRoom.beds ?? roomData.value[index]?.beds ?? [],
+                };
+            } else {
+                roomData.value.unshift({
+                    ...savedRoom,
+                    beds: savedRoom.beds ?? [],
+                });
+            }
+        }
+
         success(
             res.message ??
                 (editingRoomId.value
                     ? "Room updated successfully!"
                     : "Room added successfully!"),
         );
-        fetchRoom();
+        // fetchRoom();
         closeModal();
     } catch (err: any) {
         const validationErrors = err?.data?.errors;
@@ -256,6 +276,29 @@ const bedAction = async (
         done();
     }
 };
+
+const roomMatchesCurrentFilter = (room: Room) => {
+    const search = searchData.value.trim().toLowerCase();
+
+    const matchesSearch =
+        !search ||
+        String(room.room_no ?? "")
+            .toLowerCase()
+            .includes(search) ||
+        String(room.floor ?? "")
+            .toLowerCase()
+            .includes(search) ||
+        String(room.room_type ?? "")
+            .toLowerCase()
+            .includes(search);
+
+    const matchesType =
+        !roomTypeParam.value ||
+        String(room.room_type ?? "").toLowerCase() ===
+            roomTypeParam.value.toLowerCase();
+
+    return matchesSearch && matchesType;
+};
 </script>
 
 <template>
@@ -270,7 +313,7 @@ const bedAction = async (
                     <RoomSearch
                         v-model="searchData"
                         v-model:activeTab="activeTab"
-                        @click="handleClicked"
+                        @search="handleClicked"
                         @addRoom="addRoomClicked"
                     />
                 </div>

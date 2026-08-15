@@ -1,18 +1,19 @@
 <template>
-    <div class="min-h-[calc(100vh-90px)] bg-slate-100 p-6">
+    <div class="min-h-[calc(100vh-90px)] bg-slate-100 p-2">
+        <!-- min-h-[calc(100vh-90px)]  -->
         <div
-            class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 items-stretch max-w-8xl min-h-[calc(100vh-90px-3rem)] lg:h-[calc(100vh-90px-3rem)]"
+            class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 items-stretch max-w-8xl h-[calc(100vh-110px)]"
         >
             <div class="w-full min-h-0 flex flex-col order-1">
                 <template v-if="!selectedReferenceId">
                     <div
-                        class="bg-white rounded-2xl shadow-sm border border-[#E4EFED] overflow-hidden flex-1 min-h-0 flex flex-col"
+                        class="bg-white rounded-lg shadow-sm border border-[#E4EFED] overflow-hidden flex-1 min-h-0 flex flex-col"
                     >
                         <div
                             class="flex flex-col gap-3 px-6 py-4 border-b border-[#E4EFED]"
                         >
                             <div class="flex gap-3 items-center">
-                                <div class="relative flex-1">
+                                <!-- <div class="relative flex-1">
                                     <svg
                                         class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted"
                                         viewBox="0 0 20 20"
@@ -51,49 +52,20 @@
                                             <path d="M5 5l10 10M15 5 5 15" />
                                         </svg>
                                     </button>
-                                </div>
+                                </div> -->
 
-                                <Combobox
-                                    v-model="typeFilter"
-                                    :items="typeFilters"
-                                    placeholder="Categories"
-                                    :searchBar="false"
-                                    inputClass="px-4 py-2 font-medium rounded-full min-w-[140px]"
+                                <BookingFilter
+                                    :search="searchQuery"
+                                    :type="typeFilter"
+                                    :status="statusFilter"
+                                    :date-from="dateFrom"
+                                    :date-to="dateTo"
+                                    @update:search="searchQuery = $event"
+                                    @update:type="typeFilter = $event"
+                                    @update:status="statusFilter = $event"
+                                    @update:dateFrom="dateFrom = $event"
+                                    @update:dateTo="dateTo = $event"
                                 />
-
-                                <Combobox
-                                    v-model="statusFilter"
-                                    :items="statusFilters"
-                                    placeholder="Status"
-                                    :searchBar="false"
-                                    inputClass="px-4 py-2 font-medium rounded-full min-w-[140px]"
-                                />
-                            </div>
-
-                            <div class="flex flex-wrap gap-2 items-center">
-                                <div class="flex gap-3 items-center">
-                                    <p class="text-sm">From</p>
-                                    <BaseInput
-                                        v-model="dateFrom"
-                                        mode="date"
-                                        class-name="w-full sm:max-w-[150px]"
-                                    />
-                                </div>
-
-                                <div
-                                    class="hidden h-10 w-6 items-center justify-center text-slate-400 sm:flex"
-                                >
-                                    <ChevronRight class="h-4 w-4" />
-                                </div>
-
-                                <div class="flex gap-3 items-center">
-                                    <p class="text-sm">To</p>
-                                    <BaseInput
-                                        v-model="dateTo"
-                                        mode="date"
-                                        class-name="w-full sm:max-w-[150px]"
-                                    />
-                                </div>
                             </div>
                         </div>
 
@@ -123,7 +95,14 @@
                                         <th
                                             class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide"
                                         >
-                                            Patient
+                                            <div class="flex flex-col">
+                                                <span>Patient</span>
+                                                <span
+                                                    class="text-[11px] font-normal text-gray-400 normal-case"
+                                                >
+                                                    Address
+                                                </span>
+                                            </div>
                                         </th>
                                         <th
                                             class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide"
@@ -338,9 +317,6 @@
                         Back to bookings
                     </button>
 
-                    <!-- @admit="admitPatient"
-                        @accommodation="openAccommodationModal"
-                        @assign="showAssign = true" -->
                     <BookingDetails
                         :booking="selectedBooking"
                         @reject="rejectBooking"
@@ -395,15 +371,6 @@
             </div>
         </div>
 
-        <!-- <BookingServiceAssign
-            :open="showAssign"
-            :booking="selectedBooking"
-            :branchUuid="branch_uuid"
-            :isSaving="isAssigning"
-            @close="showAssign = false"
-            @confirm="handleAssignConfirm"
-        /> -->
-
         <AdmissionDetail
             v-if="showAccommodationModal && selectedBooking"
             variant="modal"
@@ -420,17 +387,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from "vue";
-import { ChevronRight } from "lucide-vue-next";
 import { bookingService } from "~/api/booking/BookingService";
-import BaseInput from "~/components/ui/BaseInput.vue";
 import BookingCard from "~/components/sections/app/Booking/BookingCard.vue";
 import BookingSidebar from "~/components/sections/app/Booking/BookingSidebar.vue";
+import BookingFilter from "~/components/sections/app/Booking/BookingFilter.vue";
 import { useRoute, useRouter } from "vue-router";
 import BookingDetails from "~/components/sections/app/Booking/BookingDetails.vue";
 import { useToast } from "~/composables/useToast";
 import { useBookingList } from "~/composables/useBookingList";
-import { typeFilters, statusFilters } from "~/types/booking";
-import Combobox from "~/components/ui/Combobox.vue";
 import type { RoomContract, Reserved } from "~/types/contract";
 import { branchContractService } from "~/api/branch-contract/BranchContractService";
 import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";

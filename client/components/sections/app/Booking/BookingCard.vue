@@ -62,10 +62,10 @@
         <td class="py-4 px-3 text-sm text-muted whitespace-nowrap">
             {{
                 booking.category === "facility"
-                    ? booking.facility.admission_date
+                    ? booking.facility?.admission_date
                         ? formatDate(booking.facility.admission_date)
                         : "—"
-                    : booking.homecare.date
+                    : booking.homecare?.date
                       ? formatDate(booking.homecare.date)
                       : "—"
             }}
@@ -83,7 +83,10 @@
         <td class="py-4 pl-3 pr-6 whitespace-nowrap">
             <div class="flex items-center justify-end gap-2">
                 <button
-                    v-if="booking.status.toLowerCase() === 'pending'"
+                    v-if="
+                        booking.status.toLowerCase() === 'pending' &&
+                        booking.facility?.type !== 'Pre-Admission'
+                    "
                     type="button"
                     @click.stop="emit('reject', booking)"
                     class="px-3 py-1.5 text-xs font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 transition"

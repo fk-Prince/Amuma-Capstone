@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen">
+    <div class="min-h-screen pt-[50px]">
         <main class="max-w-6xl mx-auto px-6 py-16">
             <div class="text-center mb-10">
                 <p
@@ -87,6 +87,7 @@ useHead({ title: "Product" });
 definePageMeta({
     layout: "default",
     navVariant: 1,
+    navTheme: "light",
 });
 
 const billingCycle = ref<"monthly" | "yearly">("monthly");

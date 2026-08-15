@@ -1,5 +1,5 @@
 <template>
-    <section class="relative overflow-hidden bg-secondary">
+    <section class="pt-[50px] relative overflow-hidden bg-secondary">
         <img
             :src="logo"
             class="pointer-events-none select-none absolute inset-0 w-full h-full object-cover"

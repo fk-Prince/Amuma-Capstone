@@ -64,7 +64,7 @@ export interface SavedAssignment {
 
 export const typeFilters = [
     { label: "All Category", value: "all" },
-    { label: "Facility", value: "facility" },
+    { label: "In-house Facility", value: "facility" },
     { label: "Homecare", value: "homecare" },
 ];
 
@@ -158,9 +158,10 @@ export function statusDotClasses(status?: string) {
 export const statusFilters = [
     { label: "All", value: "all" },
     { label: "Pending", value: "pending" },
-    { label: "Confirmed", value: "confirmed" },
-    { label: "Awaiting", value: "awaiting" },
     { label: "Approved", value: "approved" },
     { label: "Rejected", value: "rejected" },
     { label: "Missed", value: "missed" },
+    { label: "Expired", value: "expired" },
+    { label: "Cancelled", value: "cancelled" },
 ];
+
