@@ -14,7 +14,11 @@ class BranchContract extends Model
 
     public const ACCOMMODATION_TYPE_ADL = 'ADL';
     public const ACCOMMODATION_TYPE_VIP = 'VIP';
-    public const ACCOMMODATION_TYPE_COMMON = 'Common';
+    public const ACCOMMODATION_TYPE_COMMON = 'COMMON';
+
+    public const BILLING_CYCLE_MONTHLY = 'MONTHLY';
+    public const BILLING_CYCLE_YEARLY = 'YEARLY';
+    public const BILLING_CYCLE_HOURLY = 'HOURLY';
 
     protected $primaryKey = 'branch_contract_id';
 

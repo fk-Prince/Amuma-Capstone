@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 class Invoice extends Model
 {
@@ -22,7 +21,9 @@ class Invoice extends Model
         'total',
         'is_collected',
         'branch_id',
-        'invoice_code'
+        'invoice_code',
+        'status',
+        'original_total',
     ];
 
     protected $casts = [
@@ -41,13 +42,12 @@ class Invoice extends Model
         return $this->hasMany(InvoiceServices::class, 'invoice_id', 'invoice_id');
     }
 
-    public function payments()
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class, 'invoice_id', 'invoice_id');
     }
 
-
-    public function invoiceFacility()
+    public function invoiceFacility(): HasMany
     {
         return $this->hasMany(InvoiceFacility::class, 'invoice_id', 'invoice_id');
     }
@@ -79,21 +79,49 @@ class Invoice extends Model
 
     public function getAmountPaidAttribute(): float
     {
-        return (float) $this->payments()->sum('amount');
+        return (float) $this->payments->sum('amount');
+    }
+
+    public function getRefundedAmountAttribute(): float
+    {
+        return (float) $this->payments
+            ->flatMap(fn(Payment $payment) => $payment->refunds)
+            ->whereIn('status', [Refund::STATUS_COMPLETED, Refund::STATUS_PROCESSING])
+            ->sum('amount');
+    }
+
+    public function getRefundedCompletedAmountAttribute(): float
+    {
+        return (float) $this->payments
+            ->flatMap(fn(Payment $payment) => $payment->refunds)
+            ->where('status', Refund::STATUS_COMPLETED)
+            ->sum('amount');
+    }
+
+    public function getRefundedProcessingAmountAttribute(): float
+    {
+        return (float) $this->payments
+            ->flatMap(fn(Payment $payment) => $payment->refunds)
+            ->where('status', Refund::STATUS_PROCESSING)
+            ->sum('amount');
+    }
+
+    public function getNetPaidAmountAttribute(): float
+    {
+        return $this->amount_paid - $this->refunded_amount;
     }
 
     public function getBalanceDueAttribute(): float
     {
-        return max((float) $this->total - $this->amount_paid, 0);
+        return max((float) $this->total - $this->net_paid_amount, 0);
     }
 
-    // protected static function boot()
-    // {
-    //     parent::boot();
+    public function getRefundStatusAttribute(): string
+    {
+        if ($this->refunded_amount <= 0) {
+            return 'none';
+        }
 
-    //     static::creating(function ($invoice) {
-    //         $invoice->invoice_code =
-    //             'INV-' . strtoupper(Str::random(8));
-    //     });
-    // }
+        return $this->net_paid_amount <= 0 ? 'full refunded' : 'partially refunded';
+    }
 }

@@ -19,7 +19,8 @@ return new class extends Migration
                 ->constrained('patient_admissions', 'patient_admission_id');
             $table->foreignId('invoice_id')
                 ->constrained('invoices', 'invoice_id');
-            $table->decimal('price', 10, 2);
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
             $table->timestamps();
         });
     }

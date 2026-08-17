@@ -132,7 +132,7 @@
                                 @click="selectedType = type.value"
                             >
                                 <div class="flex items-center justify-between">
-                                    <p class="font-semibold capitalize">
+                                    <p class="font-semibold uppercase">
                                         {{ type.value.toLowerCase() }}
                                     </p>
                                     <span
@@ -183,78 +183,141 @@
                             </span>
                         </div>
 
-                        <!-- Room/bed: pick new when switching accommodation type -->
                         <div v-else class="mt-5 space-y-4">
-                            <p
-                                class="text-xs font-semibold uppercase tracking-wide text-muted"
-                            >
-                                Select a room for
-                                {{ selectedType?.toLowerCase() }}
-                            </p>
-
-                            <div
-                                v-if="!roomsForSelection.length"
-                                class="rounded-xl border border-dashed py-8 text-center text-sm text-slate-500"
-                            >
-                                No rooms currently available for this type.
-                            </div>
-
-                            <div v-else class="grid sm:grid-cols-2 gap-4">
-                                <div
-                                    v-for="room in roomsForSelection"
-                                    :key="room.room_id"
-                                    class="rounded-xl border p-4 transition"
-                                    :class="
-                                        selectedRoom?.room_id === room.room_id
-                                            ? 'border-primary ring-1 ring-primary/30'
-                                            : ''
-                                    "
-                                >
-                                    <div class="flex justify-between">
-                                        <div>
-                                            <p class="font-semibold">
-                                                Room {{ room.room_no }}
-                                            </p>
-                                            <p class="text-xs text-slate-500">
-                                                {{ room.floor }} Floor
-                                            </p>
-                                        </div>
-                                        <span
-                                            class="text-xs h-fit rounded-full px-2.5 py-1 font-medium"
-                                            :class="
-                                                availableBeds(room).length > 0
-                                                    ? 'bg-emerald-50 text-emerald-700'
-                                                    : 'bg-rose-50 text-rose-700'
-                                            "
-                                        >
+                            <div class="rounded-xl border p-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs text-slate-500">
+                                            Room & Bed
+                                        </p>
+                                        <p class="font-semibold">
+                                            Room
                                             {{
-                                                availableBeds(room).length > 0
-                                                    ? "Available"
-                                                    : "Fully Reserved"
+                                                admission?.room?.room_no ?? "—"
                                             }}
-                                        </span>
+                                            <span
+                                                v-if="admission?.bed?.bed_no"
+                                                class="text-slate-400 font-normal"
+                                            >
+                                                · Bed
+                                                {{ admission.bed.bed_no }}
+                                            </span>
+                                        </p>
                                     </div>
 
-                                    <button
-                                        type="button"
-                                        :disabled="
-                                            availableBeds(room).length === 0
-                                        "
-                                        class="mt-4 w-full rounded-lg bg-primary text-white py-2 text-sm font-medium transition hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-                                        @click="openBeds(room)"
-                                    >
-                                        {{
-                                            selectedRoom?.room_id ===
-                                                room.room_id && selectedBed
-                                                ? `Bed ${selectedBed.bed_no} selected`
-                                                : "Select Bed"
-                                        }}
-                                    </button>
+                                    <div class="flex rounded-lg border p-0.5">
+                                        <button
+                                            type="button"
+                                            class="rounded-md px-3 py-1.5 text-xs font-medium transition"
+                                            :class="
+                                                keepSameRoomBed
+                                                    ? 'bg-primary text-white'
+                                                    : 'text-slate-500 hover:text-slate-700'
+                                            "
+                                            @click="keepSameRoomBed = true"
+                                        >
+                                            Keep same
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="rounded-md px-3 py-1.5 text-xs font-medium transition"
+                                            :class="
+                                                !keepSameRoomBed
+                                                    ? 'bg-primary text-white'
+                                                    : 'text-slate-500 hover:text-slate-700'
+                                            "
+                                            @click="keepSameRoomBed = false"
+                                        >
+                                            Change room
+                                        </button>
+                                    </div>
                                 </div>
+
+                                <p
+                                    v-if="keepSameRoomBed"
+                                    class="mt-3 text-xs text-slate-500"
+                                >
+                                    The patient will stay in the same room and
+                                    bed under the new accommodation type.
+                                </p>
                             </div>
+
+                            <template v-if="!keepSameRoomBed">
+                                <p
+                                    class="text-xs font-semibold uppercase tracking-wide text-muted"
+                                >
+                                    Select a room for
+                                    {{ selectedType?.toLowerCase() }}
+                                </p>
+
+                                <div
+                                    v-if="!roomsForSelection.length"
+                                    class="rounded-xl border border-dashed py-8 text-center text-sm text-slate-500"
+                                >
+                                    No rooms currently available for this type.
+                                </div>
+
+                                <div v-else class="grid sm:grid-cols-2 gap-4">
+                                    <div
+                                        v-for="room in roomsForSelection"
+                                        :key="room.room_id"
+                                        class="rounded-xl border p-4 transition"
+                                        :class="
+                                            selectedRoom?.room_id ===
+                                            room.room_id
+                                                ? 'border-primary ring-1 ring-primary/30'
+                                                : ''
+                                        "
+                                    >
+                                        <div class="flex justify-between">
+                                            <div>
+                                                <p class="font-semibold">
+                                                    Room {{ room.room_no }}
+                                                </p>
+                                                <p
+                                                    class="text-xs text-slate-500"
+                                                >
+                                                    {{ room.floor }} Floor
+                                                </p>
+                                            </div>
+                                            <span
+                                                class="text-xs h-fit rounded-full px-2.5 py-1 font-medium"
+                                                :class="
+                                                    availableBeds(room).length >
+                                                    0
+                                                        ? 'bg-emerald-50 text-emerald-700'
+                                                        : 'bg-rose-50 text-rose-700'
+                                                "
+                                            >
+                                                {{
+                                                    availableBeds(room).length >
+                                                    0
+                                                        ? "Available"
+                                                        : "Fully Reserved"
+                                                }}
+                                            </span>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            :disabled="
+                                                availableBeds(room).length === 0
+                                            "
+                                            class="mt-4 w-full rounded-lg bg-primary text-white py-2 text-sm font-medium transition hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                                            @click="openBeds(room)"
+                                        >
+                                            {{
+                                                selectedRoom?.room_id ===
+                                                    room.room_id && selectedBed
+                                                    ? `Bed ${selectedBed.bed_no} selected`
+                                                    : "Select Bed"
+                                            }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
 
-                        <!-- Summary -->
                         <div
                             v-if="selectedContract"
                             class="mt-5 rounded-xl bg-primary/5 border border-primary/20 p-4 text-sm"
@@ -326,7 +389,6 @@
                     </button>
                 </div>
 
-                <!-- Bed picker sub-modal -->
                 <transition
                     enter-active-class="transition duration-150 ease-out"
                     enter-from-class="opacity-0"
@@ -442,6 +504,8 @@ const selectedBed = ref<Bed | null>(null);
 const modalRoom = ref<Room | null>(null);
 const showBeds = ref(false);
 
+const keepSameRoomBed = ref(true);
+
 function normalizeType(type?: string | null) {
     return (type ?? "").trim().toUpperCase();
 }
@@ -454,18 +518,28 @@ const typeChanged = computed(
     () => !!selectedType.value && selectedType.value !== currentType.value,
 );
 
-const accommodationTypes = computed(() => {
-    const seen = new Set<string>();
-    const list: { value: string }[] = [];
-    for (const c of contracts.value) {
-        const t = normalizeType(c.accommodation_type);
-        if (seen.has(t)) continue;
-        seen.add(t);
-        list.push({ value: t });
-    }
-    return list;
-});
+// const accommodationTypes = computed(() => {
+//     const seen = new Set<string>();
+//     const list: { value: string }[] = [];
+//     for (const c of contracts.value) {
+//         const t = normalizeType(c.accommodation_type);
+//         if (seen.has(t)) continue;
+//         seen.add(t);
+//         list.push({ value: t });
+//     }
+//     return list;
+// });
 
+const accommodationTypes = computed(() => {
+    if (!currentType.value) return [];
+
+    const currentContracts = contracts.value.filter(
+        (contract) =>
+            normalizeType(contract.accommodation_type) === currentType.value,
+    );
+
+    return currentContracts.length ? [{ value: currentType.value }] : [];
+});
 function contractFor(type: string | null, interval: "monthly" | "yearly") {
     if (!type) return undefined;
     return contracts.value.find(
@@ -568,15 +642,14 @@ const canConfirm = computed(() => {
     ) {
         return false;
     }
-    if (typeChanged.value) {
+    if (typeChanged.value && !keepSameRoomBed.value) {
         return !!selectedRoom.value && !!selectedBed.value;
     }
     return true;
 });
 
-// Reset room/bed pick whenever the accommodation type selection changes,
-// since a bed in the old type isn't valid for the new one.
 watch(selectedType, () => {
+    keepSameRoomBed.value = true;
     selectedRoom.value = null;
     selectedBed.value = null;
 });
@@ -596,6 +669,7 @@ watch(
                 : "monthly";
         selectedRoom.value = null;
         selectedBed.value = null;
+        keepSameRoomBed.value = true;
 
         loading.value = true;
 
@@ -626,11 +700,13 @@ function confirmSelection() {
     }
     submitting.value = true;
 
+    const useNewRoomBed = typeChanged.value && !keepSameRoomBed.value;
+
     emit("select", {
         contract: selectedContract.value,
         end_date: calculatedDischargeDate.value,
-        room: typeChanged.value ? (selectedRoom.value ?? undefined) : undefined,
-        bed: typeChanged.value ? (selectedBed.value ?? undefined) : undefined,
+        room: useNewRoomBed ? (selectedRoom.value ?? undefined) : undefined,
+        bed: useNewRoomBed ? (selectedBed.value ?? undefined) : undefined,
     });
 }
 

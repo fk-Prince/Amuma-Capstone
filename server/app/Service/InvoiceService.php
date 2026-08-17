@@ -198,13 +198,13 @@ class InvoiceService
             }
             return new InvoiceResource($invoice);
         } else if ($payload['mode'] === 'booking') {
-            $booking = $this->invoiceRepository->getBookingDetail($payload);
-            if (!$booking) {
-                return response()->json([
-                    'message' => 'Booking not found.',
-                ], 404);
-            };
-            return $booking;
+            // $booking = $this->invoiceRepository->getBookingDetail($payload);
+            // if (!$booking) {
+            //     return response()->json([
+            //         'message' => 'Booking not found.',
+            //     ], 404);
+            // };
+            // return $booking;
         } else if ($payload['mode'] === 'patient') {
             $patient = $this->invoiceRepository->getPatientWithUuid($payload);
             if (! $patient) {

@@ -15,6 +15,7 @@ import ScheduleDetails from "~/components/sections/app/Patient/ScheduleDetails.v
 import HomecareADL from "~/components/sections/app/Patient/HomecareADL.vue";
 import SchedulePatient from "~/components/sections/app/Patient/SchedulePatient.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
+import PatientAdmission from "~/components/sections/app/Patient/PatientAdmission.vue";
 import { ChevronRight, ArrowLeft } from "lucide-vue-next";
 import {
     type ConflictItem,
@@ -75,6 +76,7 @@ function goBack() {
 
 const tabs = [
     "Overview",
+    "Admission",
     "Schedule",
     "Service",
     "Medication",
@@ -88,6 +90,7 @@ const tabSlugMap: Record<Tab, string> = {
     Service: "service",
     Medication: "medication",
     "Vital Signs": "vitals",
+    Admission: "admissions",
 };
 
 const slugToTab: Record<string, Tab> = Object.fromEntries(
@@ -565,6 +568,10 @@ onMounted(async () => {
 
                     <Overview
                         v-if="activeTab === 'Overview' && patientData"
+                        :patient="patientData"
+                    />
+                    <PatientAdmission
+                        v-if="activeTab === 'Admission' && patientData"
                         :patient="patientData"
                     />
                     <ServicePatient

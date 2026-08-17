@@ -103,7 +103,9 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2.5 shrink-0">
+                 <div
+                        class="flex flex-wrap items-center gap-2 sm:gap-2.5 sm:flex-nowrap sm:shrink-0"
+                    >
                         <ActionButton
                             variant="primary"
                             :disabled="isWaiting || isAdmitted"
@@ -156,7 +158,6 @@
                         >
                             Discharge
                         </ActionButton>
-
                         <ActionButton
                             variant="danger"
                             :disabled="!isWaiting"
@@ -186,6 +187,7 @@
                                 "
                                 type="button"
                                 class="w-full text-left rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 hover:bg-primary-50/40 transition"
+                                @click="admissionTimelineModalOpen = true"
                             >
                                 <div
                                     class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
@@ -282,7 +284,7 @@
                                     </p>
                                 </div>
 
-                                <div
+                                <!-- <div
                                     v-if="latestInvoice"
                                     class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between"
                                 >
@@ -313,7 +315,7 @@
                                             formatCurrency(latestInvoice.price)
                                         }}
                                     </p>
-                                </div>
+                                </div> -->
                             </button>
 
                             <div
@@ -324,7 +326,66 @@
                             </div>
                         </section>
 
-                        <section>
+                        <AdmissionTimeline
+                            :admissions="patient?.admissions"
+                        />
+                    </div>
+
+                  <aside class="space-y-6">
+                        <div
+                            class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-5"
+                        >
+                            <div class="grid grid-cols-2 gap-3">
+                                <div
+                                    class="rounded-xl bg-primary-50/60 border border-primary-100 p-4"
+                                >
+                                    <p
+                                        class="text-[10px] uppercase tracking-wide text-muted font-semibold"
+                                    >
+                                        Current Stay
+                                    </p>
+
+                                    <p
+                                        class="text-xl font-semibold text-primary-900 mt-1"
+                                    >
+                                        {{ dayOfStay ?? 0 }}
+                                        <span class="text-xs font-medium text-muted">
+                                            day{{ dayOfStay === 1 ? "" : "s" }}
+                                        </span>
+                                    </p>
+
+                                    <p class="text-[10px] text-muted mt-1">
+                                        {{
+                                            latestAdmission?.status === "admitted"
+                                                ? "Currently admitted"
+                                                : "No active stay"
+                                        }}
+                                    </p>
+                            </div>
+
+                            <div
+                                class="rounded-xl bg-slate-50 border border-slate-100 p-4"
+                            >
+                                <p
+                                    class="text-[10px] uppercase tracking-wide text-muted font-semibold"
+                                >
+                                    Total Admissions
+                                </p>
+
+                                <p
+                                    class="text-xl font-semibold text-primary-900 mt-1"
+                                >
+                                    {{ patient.admissions?.length ?? 0 }}
+                                </p>
+
+                                <p class="text-[10px] text-muted mt-1">
+                                    Lifetime admissions
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                   
+                      <section>
                             <h2
                                 class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2.5"
                             >
@@ -420,113 +481,11 @@
                                             </span>
                                         </div>
                                     </div>
-
-                                    <div
-                                        v-if="admission.latest_invoice"
-                                        class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between"
-                                    >
-                                        <p class="text-xs text-muted">
-                                            Latest invoice
-                                            <span
-                                                class="text-primary-900 font-medium"
-                                            >
-                                                #{{
-                                                    admission.latest_invoice
-                                                        .invoice_code
-                                                }}
-                                            </span>
-                                        </p>
-
-                                        <p
-                                            class="text-sm font-semibold text-primary-900"
-                                        >
-                                            {{
-                                                formatCurrency(
-                                                    admission.latest_invoice
-                                                        .price,
-                                                )
-                                            }}
-                                        </p>
-                                    </div>
+                                 
                                 </div>
                             </div>
                         </section>
-                    </div>
-
-                    <aside class="space-y-6">
-                        <div
-                            class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6"
-                        >
-                            <h3
-                                class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-4"
-                            >
-                                Quick facts
-                            </h3>
-
-                            <dl class="space-y-3.5">
-                                <div class="flex items-center justify-between">
-                                    <dt class="text-xs text-muted">
-                                        Total admissions
-                                    </dt>
-                                    <dd
-                                        class="text-sm font-semibold text-primary-900"
-                                    >
-                                        {{ patient.admissions?.length ?? 0 }}
-                                    </dd>
-                                </div>
-                                <div
-                                    v-if="dayOfStay !== null"
-                                    class="flex items-center justify-between"
-                                >
-                                    <dt class="text-xs text-muted">
-                                        Current stay
-                                    </dt>
-                                    <dd
-                                        class="text-sm font-semibold text-primary-900"
-                                    >
-                                        {{ dayOfStay }} day{{
-                                            dayOfStay === 1 ? "" : "s"
-                                        }}
-                                    </dd>
-                                </div>
-                                <div
-                                    v-if="patient.height"
-                                    class="flex items-center justify-between"
-                                >
-                                    <dt class="text-xs text-muted">Height</dt>
-                                    <dd
-                                        class="text-sm font-semibold text-primary-900"
-                                    >
-                                        {{ patient.height }} cm
-                                    </dd>
-                                </div>
-                                <div
-                                    v-if="patient.weight"
-                                    class="flex items-center justify-between"
-                                >
-                                    <dt class="text-xs text-muted">Weight</dt>
-                                    <dd
-                                        class="text-sm font-semibold text-primary-900"
-                                    >
-                                        {{ patient.weight }} kg
-                                    </dd>
-                                </div>
-                                <div
-                                    v-if="patient.citizenship"
-                                    class="flex items-center justify-between"
-                                >
-                                    <dt class="text-xs text-muted">
-                                        Citizenship
-                                    </dt>
-                                    <dd
-                                        class="text-sm font-semibold text-primary-900"
-                                    >
-                                        {{ patient.citizenship }}
-                                    </dd>
-                                </div>
-                            </dl>
-                        </div>
-                    </aside>
+                 </aside>
                 </div>
             </template>
         </div>
@@ -554,12 +513,6 @@
                             v-model="admitDate"
                             :min="todayStr"
                         />
-                        <!-- <BaseInput
-                            label="Deposit"
-                            mode="number"
-                            v-model="admitDeposit"
-                            placeholder="0.00"
-                        /> -->
                     </div>
 
                     <div class="mt-5 flex justify-end gap-2">
@@ -598,7 +551,7 @@
             />
         </Teleport>
 
-        <ConfirmDialog
+        <!-- <ConfirmDialog
             :open="dischargeDialogOpen"
             title="Discharge Patient"
             message="Are you sure you want to discharge this patient?"
@@ -608,7 +561,24 @@
             :loading="actionLoading"
             @confirm="confirmDischarge"
             @cancel="dischargeDialogOpen = false"
+        /> -->
+       <!-- <AdmissionDischarge
+            :open="dischargeDialogOpen"
+            :admission="latestAdmission ?? null"
+            :loading="actionLoading"
+            @confirm="confirmDischarge"
+            @cancel="dischargeDialogOpen = false"
+        /> -->
+
+        <AdmissionDischarge
+            :open="dischargeDialogOpen"
+            :admission="latestAdmission ?? null"
+            :future-invoices="notStartedInvoices"
+            :loading="actionLoading"
+            @confirm="confirmDischarge"
+            @cancel="dischargeDialogOpen = false"
         />
+
         <ConfirmDialog
             :open="cancelAdmissionDialogOpen"
             title="Cancel Admission"
@@ -620,6 +590,13 @@
             @confirm="confirmCancelAdmission"
             @cancel="cancelAdmissionDialogOpen = false"
         />
+
+        <!-- <AdmissionCancel
+            :open="cancelAdmissionDialogOpen"
+            :loading="actionLoading"
+            @confirm="confirmCancelAdmission"
+            @cancel="cancelAdmissionDialogOpen = false"
+        /> -->
 
         <ConfirmDialog
             :open="newAdmissionDialogOpen"
@@ -678,7 +655,7 @@
         />
     </div>
 </template>
-<script setup lang="ts">
+<script setup lang="ts"">
 import { computed, ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { PatientRetrieve, Admission } from "~/types/patient";
@@ -694,9 +671,11 @@ import type { Room } from "~/types/room";
 import type { Bed } from "~/types/bed";
 import ChangeRoomModal from "~/components/sections/app/Admission/ChangeRoomModal.vue";
 import TransferHistoryModal from "~/components/sections/app/Admission/TransferHistoryModal.vue";
+import AdmissionTimeline from "~/components/sections/app/Admission/AdmissionTimeline.vue";
 import ActionButton from "~/components/ui/ActionButton.vue";
 import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
-import { INVOICE_STATUS } from "~/types/invoice";
+import AdmissionDischarge from "~/components/sections/app/Admission/AdmissionDischarge.vue";
+import AdmissionCancel from "~/components/sections/app/Admission/AdmissionCancel.vue";
 
 definePageMeta({
     layout: "dashboard",
@@ -773,9 +752,9 @@ const unpaidAdmitDialogOpen = ref(false);
 const unpaidExtendDialogOpen = ref(false);
 const cancelAdmissionDialogOpen = ref(false);
 const todayStr = toLocalDateString(new Date());
-
 const changeRoomModalOpen = ref(false);
 const transferHistoryModalOpen = ref(false);
+const admissionTimelineModalOpen = ref(false);
 
 const newAdmissionModalOpen = ref(false);
 const newAdmissionDialogOpen = ref(false);
@@ -787,6 +766,27 @@ const pendingAdmission = ref<Reserved | null>(null);
 
 function openChangeRoomModal() {
     changeRoomModalOpen.value = true;
+}
+const notStartedInvoices = computed(() => {
+    const now = Date.now();
+
+    return (patient.value?.latest_admission?.invoices ?? []).filter(
+        (invoice) => {
+            if (!invoice.start_date) return false;
+
+            const start = new Date(invoice.start_date).getTime();
+
+            return !Number.isNaN(start) && start > now;
+        },
+    );
+});
+
+
+function confirmDischarge(payload: { refund: boolean; currentRefundAmount: number | null }) {
+    runAction("discharge", {
+        refund: payload.refund,
+        current_refund_amount: payload.currentRefundAmount,
+    });
 }
 
 function openAdmitModal() {
@@ -894,9 +894,6 @@ function confirmAdmit() {
     });
 }
 
-function confirmDischarge() {
-    runAction("discharge");
-}
 
 async function handleExtendSelect(payload: {
     contract: RoomContract;

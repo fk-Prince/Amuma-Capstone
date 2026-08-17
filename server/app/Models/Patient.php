@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Patient extends Model
 {
     use HasUuids;
+
     protected $primaryKey = 'patient_id';
 
     protected $fillable = [
@@ -62,8 +63,19 @@ class Patient extends Model
 
     public function currentAdmission()
     {
+        $now = now();
+
         return $this->hasOne(PatientAdmission::class, 'patient_id', 'patient_id')
-            ->where('status', 'admitted');
+            ->where('status', 'admitted')
+            ->whereHas('invoiceAdmission', function ($query) use ($now) {
+                $query
+                    ->where('start_date', '<=', $now)
+                    ->where(function ($q) use ($now) {
+                        $q->whereNull('end_date')
+                            ->orWhere('end_date', '>=', $now);
+                    });
+            })
+            ->latestOfMany('patient_admission_id');
     }
 
     public function latestAdmission()

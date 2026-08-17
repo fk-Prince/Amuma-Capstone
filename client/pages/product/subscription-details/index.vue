@@ -12,7 +12,7 @@ const stepCompleted = ref(false);
 </script>
 <template>
     <ClientOnly>
-        <div class="min-h-screen bg-slate-50">
+        <div class="min-h-screen bg-slate-50 pt-[100px]">
             <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <div class="grid grid-cols-1 gap-3 items-start">
                     <div class="max-w-2xl">

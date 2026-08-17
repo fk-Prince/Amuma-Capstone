@@ -18,7 +18,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PlatformAdminSeeder::class,
             ModuleSeeder::class,
-            PlanSeeder::class
+            PlanSeeder::class,
+            RoomSeeder::class,
+            BedSeeder::class,
+            BranchContractSeeder::class
         ]);
     }
 }

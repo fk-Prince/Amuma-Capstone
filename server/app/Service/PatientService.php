@@ -10,6 +10,7 @@ use App\Repository\PatientRepository;
 use App\Repository\UserRepository;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class PatientService
 {

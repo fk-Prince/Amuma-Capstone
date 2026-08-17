@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Payment extends Model
 {
@@ -22,23 +24,29 @@ class Payment extends Model
         'created_at' => 'datetime',
     ];
 
-    public function invoice()
+    public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class, 'invoice_id', 'invoice_id');
+    }
+
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(Refund::class, 'payment_id', 'payment_id');
     }
 
     protected static function booted()
     {
         static::creating(function ($payment) {
-
             if (!$payment->reference_id) {
                 $lastPayment = self::lockForUpdate()
                     ->whereNotNull('reference_id')
                     ->orderByDesc('payment_id')
                     ->first();
+
                 $nextNumber = $lastPayment
                     ? ((int) substr($lastPayment->reference_id, 8)) + 1
                     : 1;
+
                 $payment->reference_id = 'PAYMENT-' . str_pad(
                     $nextNumber,
                     6,

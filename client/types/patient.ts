@@ -65,39 +65,31 @@ export interface Assessment {
 
 
 
-
 export interface PatientRetrieve {
     patient_id: number;
     uuid: string;
-
     full_name: string;
-
     first_name: string;
     middle_name?: string;
     last_name: string;
-
     gender: string;
     date_of_birth: string;
     age: string;
-
     blood_type?: string;
     height?: string;
     weight?: string;
-
     phone_number?: string;
     citizenship?: string;
-
     initial_medication: any;
     medication: any;
     vital: any;
-
     location?: {
         location_id: number;
         full_address: string;
     };
-
     admissions: Admission[];
-    latest_admission: Admission;
+    current_admission?: Admission;
+    latest_admission?: Admission;
 }
 
 export interface Admission {
@@ -108,9 +100,9 @@ export interface Admission {
     bed?: Bed;
     room?: Room;
     invoices: InvoiceFacility[];
-    current_contract: Contract
-    latest_invoice: InvoiceFacility,
-    room_transfers: RoomTransfer[]
+    current_contract?: Contract | null;
+    current_invoice?: InvoiceFacility | null;
+    room_transfers?: RoomTransfer[];
 }
 
 export interface InvoiceFacility {
@@ -118,6 +110,14 @@ export interface InvoiceFacility {
     invoice_code: string;
     invoice_id: number;
     price: string;
+
+    paid_amount: string;
+    refunded_amount: string;
+    net_paid_amount: string;
+    refund_status: string;
+
+    start_date?: string;
+    end_date?: string | null;
     contract?: Contract | null;
     status: string;
 }

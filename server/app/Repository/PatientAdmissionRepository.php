@@ -4,8 +4,6 @@ namespace App\Repository;
 
 use App\Models\BranchContract;
 use App\Models\PatientAdmission;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Log;
 
 class PatientAdmissionRepository
 {

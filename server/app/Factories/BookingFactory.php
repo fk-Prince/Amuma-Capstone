@@ -43,13 +43,14 @@ class BookingFactory
 
         $invoice = $this->invoiceRepository->create([
             'total' => $payload['payment']['total_amount'],
+            'original_total' => $payload['payment']['total_amount'],
             'branch_id' => $payload['branch_id'],
             'status' => Invoice::STATUS_PAID,
         ]);
 
 
         $invoice->invoiceFacility()->create([
-            'price' =>  $payload['payment']['total_amount'],
+            // 'price' =>  $payload['payment']['total_amount'],
             'patient_admission_id' => $admission['patient_admission_id'],
             'branch_contract_id' => $payload['reserved']['contract_id']
         ]);

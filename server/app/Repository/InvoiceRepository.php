@@ -3,12 +3,10 @@
 namespace App\Repository;
 
 use App\Http\Resources\PatientInvoiceSummaryResource;
-use App\Models\Booking;
 use App\Models\Invoice;
-use App\Models\PatientBooking;
 use App\Models\Payment;
+use App\Models\Refund;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class InvoiceRepository
 {
@@ -30,7 +28,6 @@ class InvoiceRepository
     public function getInvoices(array $payload)
     {
         return match ($payload['search_type']) {
-            // 'booking' => $this->getBookingInvoice($payload),
             'patient' => $this->getPatientInvoiceSummary($payload),
             'invoice' => $this->getInvoiceSearch($payload),
             default => null,
@@ -43,227 +40,21 @@ class InvoiceRepository
             'branch',
             'invoiceServices.scheduleService.service',
             'invoiceFacility.patientAdmission.patient',
-            'payments',
+            'payments.refunds',
         ])->where('invoice_code', $payload['invoice_code'])
             ->where('branch_id', $payload['branch_id'])->first();
     }
 
-
-    // GET TABLE DISPLAY INVOICE
-    public function getBookingInvoice(array $payload)
-    {
-        $perPage = $payload['per_page'] ?? 10;
-
-        $bookings = Booking::with([
-            'invoices',
-        ])
-            ->when(
-                !empty($payload['branch_uuid']),
-                function ($query) use ($payload) {
-                    $query->whereHas('branch', function ($q) use ($payload) {
-                        $q->where('uuid', $payload['branch_uuid']);
-                    });
-                }
-            )
-            ->when(
-                !empty($payload['search']) &&
-                    ($payload['search_type'] ?? null) === 'booking',
-                function ($query) use ($payload) {
-                    $query->where(
-                        'reference_id',
-                        'ilike',
-                        '%' . $payload['search'] . '%'
-                    );
-                }
-            )
-            ->orderByDesc('created_at')
-            ->paginate($perPage);
-
-
-        $bookings->getCollection()->transform(function ($booking) {
-
-            $invoice = $booking->invoices->first();
-
-            $bookingData = $booking->booking_data ?? [];
-
-            $bookingTotal = data_get(
-                $bookingData,
-                'payment.total_amount',
-                0
-            );
-
-            $bookingPaid = data_get(
-                $bookingData,
-                'payment.paid',
-                false
-            );
-
-            return [
-                'reference_id' => $booking->reference_id,
-
-                'invoice_code' => $invoice?->invoice_code,
-
-                'status' => $invoice?->status
-                    ?? ($bookingPaid ? 'paid' : 'pending'),
-
-                'patient' => trim(
-                    data_get($bookingData, 'patient.first_name', '') .
-                        ' ' .
-                        data_get($bookingData, 'patient.last_name', '')
-                ),
-
-                'category' => $booking->category,
-
-                'booking_status' => $booking->status,
-
-                'total' => $invoice
-                    ? $invoice->total
-                    : $bookingTotal,
-
-                'amount_paid' => $invoice
-                    ? $invoice->amount_paid
-                    : ($bookingPaid ? $bookingTotal : 0),
-
-                'balance_due' => $invoice
-                    ? $invoice->balance_due
-                    : ($bookingPaid ? 0 : $bookingTotal),
-
-                'created_at' => $booking->created_at,
-            ];
-        });
-
-        return $bookings;
-    }
-
-    // GET SPECIFIC BOOKING REF ID
-    public function getBookingDetail(array $payload)
-    {
-        $branchId = $payload['branch_id'] ?? null;
-
-        $query = Booking::where('reference_id', $payload['reference_id']);
-
-        if ($branchId) {
-            $query->where('branch_id', $branchId);
-        }
-
-        $booking = $query->first();
-
-        if (!$booking) {
-            return null;
-        }
-
-        // booking_data is already cast to array in Booking model
-        $data = $booking->booking_data ?? [];
-
-        $service = $data['service'] ?? [];
-        $patient = $data['patient'] ?? [];
-        $payment = $data['payment'] ?? [];
-        $reserved = $data['reserved'] ?? null;
-
-        // Correct boolean handling
-        $isPaid = filter_var(
-            $payment['paid'] ?? false,
-            FILTER_VALIDATE_BOOLEAN
-        );
-
-        $status = strtolower($booking->status ?? '');
-        $isPending = $status === 'pending';
-
-        $total = (float) ($payment['total_amount'] ?? 0);
-
-        // A pending booking hasn't been approved yet, so there is nothing
-        // to collect on it until it's approved — balance due shows as 0
-        // and the payment form stays hidden regardless of the raw total.
-        $amountPaid = $isPaid ? $total : 0;
-        $balanceDue = ($isPaid || $isPending) ? 0 : $total;
-
-        return [
-            'reference_id' => $booking->reference_id,
-            'category' => $booking->category,
-            'status' => $booking->status,
-            'valid_until' => $booking->valid_until,
-
-            'total' => $total,
-            'amount_paid' => $amountPaid,
-            'balance_due' => $balanceDue,
-
-            'created_at' => $booking->created_at,
-
-            'service' => [
-                'type' => $service['type'] ?? null,
-                'date' => $service['date'] ?? null,
-                'preferred_time' => $service['prefered_time'] ?? null,
-                'address' => $service['address'] ?? null,
-                'time_span' => $service['time_span'] ?? null,
-                'plan' => $service['plan'] ?? null,
-                'billing_cycle' => $service['billing_cycle'] ?? null,
-                'admission_date' => $service['admission_date'] ?? null,
-
-                'services' => collect($service['services'] ?? [])
-                    ->map(fn($s) => [
-                        'service_id' => $s['service_id'] ?? null,
-                        'service_name' => $s['service_name'] ?? null,
-                        'price' => (float) ($s['price'] ?? 0),
-                    ])
-                    ->values(),
-            ],
-
-            'patient' => [
-                'full_name' => trim(
-                    ($patient['first_name'] ?? '') . ' ' .
-                        ($patient['middle_name'] ?? '') . ' ' .
-                        ($patient['last_name'] ?? '')
-                ) ?: null,
-
-                'first_name' => $patient['first_name'] ?? null,
-                'middle_name' => $patient['middle_name'] ?? null,
-                'last_name' => $patient['last_name'] ?? null,
-                'gender' => $patient['gender'] ?? null,
-                'citizenship' => $patient['citizenship'] ?? null,
-                'date_of_birth' => $patient['date_of_birth'] ?? null,
-                'phone_number' => $patient['phone_number'] ?? null,
-                'blood_type' => $patient['blood_type'] ?? null,
-            ],
-
-            'reserved' => $reserved ? [
-                'room' => [
-                    'room_id' => data_get($reserved, 'room.room_id'),
-                    'room_no' => data_get($reserved, 'room.room_no'),
-                    'room_type' => data_get($reserved, 'room.room_type'),
-                    'floor' => data_get($reserved, 'room.floor'),
-                ],
-
-                'bed' => [
-                    'bed_id' => data_get($reserved, 'bed.bed_id'),
-                    'bed_no' => data_get($reserved, 'bed.bed_no'),
-                    'status' => data_get($reserved, 'bed.status'),
-                ],
-
-                'billing_cycle' => $reserved['billing_cycle'] ?? null,
-                'price' => (float) ($reserved['price'] ?? 0),
-                'accommodation_type' => $reserved['accommodation_type'] ?? null,
-            ] : null,
-
-            'payment' => [
-                'paid' => $isPaid,
-                'total_amount' => $total,
-            ],
-        ];
-    }
-
-
-    // SEARCH INVOICE CODCE
     public function getInvoiceSearch(array $payload)
     {
         $perPage = $payload['per_page'] ?? 10;
         $branchId = $payload['branch_id'];
         $search = $payload['search'];
 
-
-
         $query = Invoice::where('branch_id', $branchId)
+            ->where('status', '!=', Invoice::STATUS_VOID)
             ->with([
-                'payments',
+                'payments.refunds',
                 'invoiceServices.scheduleService.schedule.patient',
                 'invoiceServices.scheduleService',
                 'invoiceFacility.patientAdmission.patient',
@@ -300,7 +91,6 @@ class InvoiceRepository
         return $invoices;
     }
 
-    // GET SPECIIFCI PATIENT INVOICE
     public function getPatientWithUuid(array $payload)
     {
         $branchId = $payload['branch_id'];
@@ -314,7 +104,7 @@ class InvoiceRepository
                 'invoiceFacility.patientAdmission.patient',
                 fn($p) => $p->where('uuid', $patientUuid)
             );
-        });
+        })->where('status', '!=', Invoice::STATUS_VOID);
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -322,7 +112,7 @@ class InvoiceRepository
 
         $query->with([
             'branch',
-            'payments',
+            'payments.refunds',
             'invoiceServices.scheduleService.schedule.patient',
             'invoiceServices.scheduleService.service',
             'invoiceFacility.patientAdmission.patient',
@@ -339,7 +129,6 @@ class InvoiceRepository
         return new PatientInvoiceSummaryResource($summary);
     }
 
-    // GET ALL PATIENT INVOCIE P1
     public function getPatientInvoiceSummary(array $payload)
     {
         $search   = $payload['search'];
@@ -355,7 +144,7 @@ class InvoiceRepository
                 fn($p) => $p->whereRaw('LOWER(first_name) LIKE ?', ["%" . strtolower($search) . "%"])
                     ->orWhereRaw('LOWER(last_name) LIKE ?', ["%" . strtolower($search) . "%"])
             );
-        });
+        })->where('status', '!=', Invoice::STATUS_VOID);
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -363,7 +152,7 @@ class InvoiceRepository
 
         $query->with([
             'branch',
-            'payments',
+            'payments.refunds',
             'invoiceServices.scheduleService.schedule.patient',
             'invoiceServices.scheduleService.service',
             'invoiceFacility.patientAdmission.patient',
@@ -388,18 +177,32 @@ class InvoiceRepository
 
         return PatientInvoiceSummaryResource::collection($summaries);
     }
-    // GET ALL PATIENT INVOCIE P2
+
     private function patientInvoice(mixed $patientInvoices)
     {
+        $patientInvoices = $patientInvoices
+            ->where('status', '!=', Invoice::STATUS_VOID)
+            ->values();
+
         $patientModel = $patientInvoices
             ->map(fn($inv) => $inv->invoiceServices->first()?->scheduleService?->schedule?->patient
                 ?? $inv->invoiceFacility->first()?->patientAdmission?->patient)
             ->filter()
             ->first();
 
-        $overallTotal   = (float) $patientInvoices->sum('total');
-        $overallPaid    = (float) $patientInvoices->sum(fn($inv) => $inv->payments->sum('amount'));
-        $overallBalance = max($overallTotal - $overallPaid, 0);
+        $overallTotal            = (float) $patientInvoices->sum('total');
+        $overallPaid             = (float) $patientInvoices->sum(fn($inv) => $inv->net_paid_amount);
+        $overallRefunded         = (float) $patientInvoices->sum(fn($inv) => $inv->refunded_completed_amount);
+        $overallRefundProcessing = (float) $patientInvoices->sum(fn($inv) => $inv->refunded_processing_amount);
+        $overallBalance          = max($overallTotal - $overallPaid, 0);
+
+        $totalRefundedAny = $overallRefunded + $overallRefundProcessing;
+
+        $refundStatus = match (true) {
+            $totalRefundedAny <= 0 => 'none',
+            $overallPaid <= 0      => 'full refunded',
+            default                => 'partially refunded',
+        };
 
         $formattedInvoices = $patientInvoices
             ->map(fn($inv) => $this->formatInvoiceDetail($inv))
@@ -423,12 +226,15 @@ class InvoiceRepository
                 'citizenship'   => $patientModel->citizenship,
             ] : null,
 
-            'total_amount'  => $overallTotal,
-            'total_paid'    => $overallPaid,
-            'total_balance' => $overallBalance,
+            'total_amount'            => $overallTotal,
+            'total_paid'              => $overallPaid,
+            'total_refunded'          => $overallRefunded,
+            'total_refund_processing' => $overallRefundProcessing,
+            'refund_status'           => $refundStatus,
+            'total_balance'           => $overallBalance,
 
             'status' => match (true) {
-                $overallBalance <= 0 => 'Paid',
+                $overallBalance <= 0 && $overallPaid > 0 => 'Paid',
                 $overallPaid > 0     => 'Partial',
                 default               => 'Pending',
             },
@@ -439,7 +245,6 @@ class InvoiceRepository
         ];
     }
 
-    // FORMAT TABLE DISPLAY
     private function formatInvoice(object $invoice)
     {
         $patient =
@@ -450,8 +255,8 @@ class InvoiceRepository
             ->first()?->patientAdmission?->patient;
 
         $total = (float) $invoice->total;
-        $paid = (float) $invoice->payments->sum('amount');
-        $balance = max($total - $paid, 0);
+        $paid = $invoice->net_paid_amount;
+        $balance = $invoice->balance_due;
 
         $category = [];
 
@@ -471,35 +276,40 @@ class InvoiceRepository
             'schedule' => 'Not Applicable',
             'category' => implode(' + ', $category),
             'status' => match (true) {
-                $balance <= 0 => 'Paid',
+                $balance <= 0 && $paid > 0 => 'Paid',
                 $paid > 0 => 'Partial',
                 default => 'Pending',
             },
+            'refund_status' => $invoice->refund_status,
             'total' => $total,
             'amount' => $balance,
             'created_at' => $invoice->created_at,
         ];
     }
 
-    // FORMAT CARD DISPLAY
     private function formatInvoiceDetail(object $invoice): array
     {
         $total = (float) $invoice->total;
-        $paid = (float) $invoice->payments->sum('amount');
-        $balance = max($total - $paid, 0);
+        $paid = $invoice->net_paid_amount;
+        $refunded = $invoice->refunded_completed_amount;
+        $refundProcessing = $invoice->refunded_processing_amount;
+        $balance = $invoice->balance_due;
 
         return [
             'invoice_id'   => $invoice->invoice_id,
             'invoice_code' => $invoice->invoice_code,
             'total'        => $total,
             'amount_paid'  => $paid,
-            'balance_due'  => $balance,
+            'refunded_amount' => $refunded,
+            'refund_processing_amount' => $refundProcessing,
+            'balance_due'  => $balance -  $refundProcessing,
             'is_collected' => $balance <= 0,
             'status' => match (true) {
-                $balance <= 0 => 'Paid',
+                $balance <= 0 && $paid > 0 => 'Paid',
                 $paid > 0     => 'Partial',
                 default        => 'Pending',
             },
+            'refund_status' => $invoice->refund_status,
             'created_at' => $invoice->created_at,
 
             'branch' => $invoice->branch ? [
@@ -532,13 +342,21 @@ class InvoiceRepository
                 'amount'         => (float) $p->amount,
                 'payment_method' => $p->payment_method,
                 'created_at'     => $p->created_at,
+                'refunds' => $p->refunds->map(fn($r) => [
+                    'refund_id'     => $r->refund_id,
+                    'reference_id'  => $r->reference_id,
+                    'amount'        => (float) $r->amount,
+                    'refund_method' => $r->refund_method,
+                    'status'        => $r->status,
+                    'reason'        => $r->reason,
+                ])->values(),
             ])->values(),
         ];
     }
 
     public function getUnpaidInvoiceByPatient(string $patientUuid, string $branchId)
     {
-        return  Invoice::where(function ($q) use ($patientUuid) {
+        $invoices = Invoice::where(function ($q) use ($patientUuid) {
             $q->whereHas(
                 'invoiceServices.scheduleService.schedule.patient',
                 fn($p) => $p->where('uuid', $patientUuid)
@@ -551,8 +369,14 @@ class InvoiceRepository
             ->whereIn('status', [Invoice::STATUS_PENDING, Invoice::STATUS_PARTIAL])
             ->orderBy('created_at')
             ->get();
-    }
 
+        $totalRefunded = (float) $invoices->sum(fn($invoice) => $invoice->refunded_amount);
+
+        return [
+            'invoices'       => $invoices,
+            'total_refunded' => $totalRefunded,
+        ];
+    }
 
     public function overview(array $payload): array
     {
@@ -568,23 +392,15 @@ class InvoiceRepository
         $lastMonthStart = $currentDate->copy()->subMonth()->startOfMonth();
         $lastMonthEnd = $currentDate->copy()->subMonth()->endOfMonth();
 
-
         $invoiceQuery = Invoice::query()
-            ->where('branch_id', $branchId);
-
+            ->where('branch_id', $branchId)
+            ->where('status', '!=', Invoice::STATUS_VOID);
 
         $paymentQuery = Payment::query()
             ->whereHas('invoice', function ($query) use ($branchId) {
-                $query->where('branch_id', $branchId);
+                $query->where('branch_id', $branchId)
+                    ->where('status', '!=', Invoice::STATUS_VOID);
             });
-
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | Current Month Data
-    |--------------------------------------------------------------------------
-    */
 
         $totalRevenue = (clone $invoiceQuery)
             ->whereBetween('created_at', [
@@ -593,7 +409,6 @@ class InvoiceRepository
             ])
             ->sum('total');
 
-
         $paymentsReceived = (clone $paymentQuery)
             ->whereBetween('created_at', [
                 $currentMonthStart,
@@ -601,6 +416,19 @@ class InvoiceRepository
             ])
             ->sum('amount');
 
+        $refundsIssued = (clone $paymentQuery)
+            ->whereHas('refunds', function ($query) use ($currentMonthStart, $currentMonthEnd) {
+                $query->where('status', Refund::STATUS_COMPLETED)
+                    ->whereBetween('created_at', [
+                        $currentMonthStart,
+                        $currentMonthEnd
+                    ]);
+            })
+            ->get()
+            ->flatMap->refunds
+            ->where('status', Refund::STATUS_COMPLETED)
+            ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
+            ->sum('amount');
 
         $outstandingBalance = (clone $invoiceQuery)
             ->whereBetween('created_at', [
@@ -610,21 +438,12 @@ class InvoiceRepository
             ->get()
             ->sum->balance_due;
 
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | Last Month Data For Percentage
-    |--------------------------------------------------------------------------
-    */
-
         $lastRevenue = (clone $invoiceQuery)
             ->whereBetween('created_at', [
                 $lastMonthStart,
                 $lastMonthEnd
             ])
             ->sum('total');
-
 
         $lastPayments = (clone $paymentQuery)
             ->whereBetween('created_at', [
@@ -633,6 +452,19 @@ class InvoiceRepository
             ])
             ->sum('amount');
 
+        $lastRefunds = (clone $paymentQuery)
+            ->whereHas('refunds', function ($query) use ($lastMonthStart, $lastMonthEnd) {
+                $query->where('status', Refund::STATUS_COMPLETED)
+                    ->whereBetween('created_at', [
+                        $lastMonthStart,
+                        $lastMonthEnd
+                    ]);
+            })
+            ->get()
+            ->flatMap->refunds
+            ->where('status', Refund::STATUS_COMPLETED)
+            ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
+            ->sum('amount');
 
         $lastOutstanding = (clone $invoiceQuery)
             ->whereBetween('created_at', [
@@ -641,40 +473,6 @@ class InvoiceRepository
             ])
             ->get()
             ->sum->balance_due;
-
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | No due_date available
-    |--------------------------------------------------------------------------
-    |
-    | Overdue and upcoming payments cannot use dates.
-    | Using unpaid balances instead.
-    |
-    */
-
-
-        // $overdueInvoices = (clone $invoiceQuery)
-        //     ->whereNotNull('due_date')
-        //     ->whereDate('due_date', '<', now())
-        //     ->get()
-        //     ->filter(fn($invoice) => $invoice->balance_due > 0)
-        //     ->count();
-
-
-        // $lastOverdue = (clone $invoiceQuery)
-        //     ->whereNotNull('due_date')
-        //     ->whereDate('due_date', '<', $lastMonthEnd)
-        //     ->whereBetween('created_at', [
-        //         $lastMonthStart,
-        //         $lastMonthEnd
-        //     ])
-        //     ->get()
-        //     ->filter(fn($invoice) => $invoice->balance_due > 0)
-        //     ->count();
-
-
 
         $upcomingPayments = (clone $invoiceQuery)
             ->whereBetween('created_at', [
@@ -685,7 +483,6 @@ class InvoiceRepository
             ->filter(fn($invoice) => $invoice->balance_due > 0)
             ->sum('balance_due');
 
-
         $lastUpcoming = (clone $invoiceQuery)
             ->whereBetween('created_at', [
                 $lastMonthStart,
@@ -694,8 +491,6 @@ class InvoiceRepository
             ->get()
             ->filter(fn($invoice) => $invoice->balance_due > 0)
             ->sum('balance_due');
-
-
 
         return [
             'total_revenue' => [
@@ -712,7 +507,6 @@ class InvoiceRepository
                     : 'down',
             ],
 
-
             'payments_received' => [
                 'value' => $paymentsReceived,
                 'secondary' => $this->formatChange(
@@ -727,6 +521,19 @@ class InvoiceRepository
                     : 'down',
             ],
 
+            'refunds_issued' => [
+                'value' => $refundsIssued,
+                'secondary' => $this->formatChange(
+                    $this->percentageChange(
+                        $refundsIssued,
+                        $lastRefunds
+                    ),
+                    'vs last month'
+                ),
+                'trend' => $refundsIssued <= $lastRefunds
+                    ? 'up'
+                    : 'warning',
+            ],
 
             'outstanding_balance' => [
                 'value' => $outstandingBalance,
@@ -741,22 +548,6 @@ class InvoiceRepository
                     ? 'up'
                     : 'down',
             ],
-
-
-            // 'overdue_invoices' => [
-            //     'value' => $overdueInvoices,
-            //     'secondary' => $this->formatChange(
-            //         $this->percentageChange(
-            //             $overdueInvoices,
-            //             $lastOverdue
-            //         ),
-            //         'vs last month'
-            //     ),
-            //     'trend' => $overdueInvoices <= $lastOverdue
-            //         ? 'up'
-            //         : 'warning',
-            // ],
-
 
             'upcoming_payments' => [
                 'value' => $upcomingPayments,

@@ -19,7 +19,7 @@
                     <p class="mt-1 text-sm text-slate-500">
                         Move this patient to a different room or bed within
                         {{
-                            currentType ? currentType.toLowerCase() : "the same"
+                            currentType ? currentType.toUpperCase() : "the same"
                         }}
                         accommodation.
                     </p>
@@ -38,6 +38,12 @@
                                     class="text-slate-400 font-normal"
                                 >
                                     · Bed {{ admission.bed.bed_no }}
+                                </span>
+                                <span
+                                    v-if="currentType"
+                                    class="text-slate-400 font-normal"
+                                >
+                                    · {{ currentType.toUpperCase() }}
                                 </span>
                             </p>
                         </div>
@@ -98,7 +104,7 @@
                                     {{
                                         availableBeds(room).length > 0
                                             ? "Available"
-                                            : "Fully Reserved"
+                                            : "No Available Bed"
                                     }}
                                 </span>
                             </div>
@@ -163,7 +169,7 @@
 
                     <button
                         class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-medium text-white disabled:opacity-50"
-                        :disabled="submitting || !selectedRoom || !selectedBed"
+                        :disabled="!canConfirm"
                         @click="confirmSelection"
                     >
                         <svg
@@ -231,7 +237,10 @@
                                 </button>
                             </div>
 
-                            <div class="space-y-3">
+                            <div
+                                class="space-y-3"
+                                v-if="modalRoom?.beds?.length"
+                            >
                                 <button
                                     v-for="bed in modalRoom?.beds"
                                     :key="bed.bed_id"
@@ -275,6 +284,13 @@
                                         }}
                                     </span>
                                 </button>
+                            </div>
+
+                            <div v-else class="py-8 text-center text-slate-500">
+                                <p class="font-medium">No beds available</p>
+                                <p class="text-sm mt-1">
+                                    This room currently has no available beds.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -331,7 +347,9 @@ const roomsForType = computed<Room[]>(() => {
 
     for (const c of contracts.value) {
         if (normalizeType(c.accommodation_type) !== currentType.value) continue;
+
         for (const room of c.rooms ?? []) {
+            if (normalizeType(room.room_type) !== currentType.value) continue;
             if (seen.has(room.room_id)) continue;
             seen.add(room.room_id);
             rooms.push(room);
@@ -369,6 +387,10 @@ function chooseBed(bed: Bed) {
     showBeds.value = false;
 }
 
+const canConfirm = computed(
+    () => !submitting.value && !!selectedRoom.value && !!selectedBed.value,
+);
+
 watch(
     [() => props.open, () => props.admission],
     async ([open, admission]) => {
@@ -398,7 +420,7 @@ watch(
 );
 
 function confirmSelection() {
-    if (!selectedRoom.value || !selectedBed.value) return;
+    if (!canConfirm.value || !selectedRoom.value || !selectedBed.value) return;
     submitting.value = true;
 
     emit("select", {

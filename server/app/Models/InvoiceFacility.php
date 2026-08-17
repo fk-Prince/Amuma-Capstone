@@ -15,11 +15,13 @@ class InvoiceFacility extends Model
         'branch_contract_id',
         'patient_admission_id',
         'invoice_id',
-        'price',
+        'start_date',
+        'end_date',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
     ];
 
     public function branchContract(): BelongsTo

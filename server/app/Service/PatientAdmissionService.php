@@ -15,9 +15,11 @@ use App\Models\User;
 use App\Repository\BookingRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\PatientAdmissionRepository;
+use App\Utils\AdmissionHelper;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class PatientAdmissionService
 {
@@ -27,7 +29,8 @@ class PatientAdmissionService
         private InvoiceRepository $invoiceRepository,
         private PatientService $patientService,
         private BookingRepository $bookingRepository,
-        private BranchContractService $branchContractService
+        private BranchContractService $branchContractService,
+        private RefundService $refundService,
     ) {}
 
     public function registerPatientBed(array $payload)
@@ -52,10 +55,12 @@ class PatientAdmissionService
             'status'             => PatientAdmission::STATUS_WAITING,
             'note'               => $reserved['note'] ?? null,
             'admitted_at'        => $admissionAt,
-            'end_date'           => $this->calculateEndDate($admissionAt, $reserved['billing_cycle']),
+            'end_date'           => AdmissionHelper::calculateEndDate($admissionAt, $reserved['billing_cycle']),
         ]);
 
-        if (!$admission) throw new Exception('Unable to create patient admission.', 500);
+        if (!$admission) {
+            throw new Exception('Unable to create patient admission.', 500);
+        }
 
         $bed->update([
             'status' => Bed::STATUS_RESERVED,
@@ -64,29 +69,22 @@ class PatientAdmissionService
         return $admission;
     }
 
-    public function calculateEndDate(Carbon $admissionDate, string $billingCycle)
-    {
-        return match (strtolower($billingCycle)) {
-            'monthly' => $admissionDate->copy()->addMonth(),
-            'yearly',
-            'annual' => $admissionDate->copy()->addYear(),
-            default => throw new Exception('Invalid billing cycle.', 422),
-        };
-    }
-
     public function action(array $payload)
     {
         return match ($payload['action']) {
-            'cancel' => $this->cancelAdmission($payload),
             'admit' => $this->admitAdmission($payload),
-            'discharge' => $this->dischargeAdmission($payload),
-            'extend' => $this->extendDischarge($payload),
-            'change_room' => $this->changeRoom($payload),
-            'branch_contract' =>  $this->branchContractService->roomContract($payload['user'], $payload),
             'new_admission' => $this->newAdmission($payload),
+            'extend' => $this->extendAdmission($payload),
+            'change_room' => $this->changeRoom($payload),
+            'discharge' => $this->dischargeAdmission($payload),
+            'cancel' => $this->cancelAdmission($payload),
+            'branch_contract' => $this->branchContractService->roomContract($payload['user'], $payload),
             default => throw new Exception('Invalid admission action.'),
         };
     }
+    /*
+        FOR NEW ADMISSION RECORD
+    */
     public function newAdmission(array $payload)
     {
         if (empty($payload['room_id']) || empty($payload['bed_id']) || empty($payload['contract_id'])) {
@@ -122,7 +120,6 @@ class PatientAdmissionService
                 throw new Exception('Patient already has an waiting admission.', 400);
             }
 
-
             $bed = Bed::query()
                 ->where('bed_id', $payload['bed_id'])
                 ->where('room_id', $payload['room_id'])
@@ -144,8 +141,7 @@ class PatientAdmissionService
             }
 
             $admittedAt = Carbon::parse($payload['admitted_at']);
-            $endDate = $this->calculateEndDate($admittedAt, $contract['billing_cycle']);
-
+            $endDate =  AdmissionHelper::calculateEndDate($admittedAt, $contract['billing_cycle']);
             $admission = $this->patientAdmissionRepository->create([
                 'branch_contract_id' => $contract['branch_contract_id'],
                 'patient_id'         => $patient->patient_id,
@@ -164,16 +160,18 @@ class PatientAdmissionService
             ]);
 
             $invoice = Invoice::create([
-                'branch_id' => $payload['branch_id'],
-                'total'     => $contract['price'],
-                'status'    => Invoice::STATUS_PENDING,
+                'branch_id'      => $payload['branch_id'],
+                'total'          => $contract['price'],
+                'original_total' => $contract['price'],
+                'status'         => Invoice::STATUS_PENDING,
             ]);
 
             InvoiceFacility::create([
-                'invoice_id'            => $invoice->invoice_id,
-                'patient_admission_id'  => $admission->patient_admission_id,
-                'branch_contract_id'    => $contract['branch_contract_id'],
-                'price'                 => $contract['price'],
+                'invoice_id'           => $invoice->invoice_id,
+                'patient_admission_id' => $admission->patient_admission_id,
+                'branch_contract_id'   => $contract['branch_contract_id'],
+                'start_date'           => $admittedAt,
+                'end_date'             => $endDate,
             ]);
 
             return [
@@ -183,10 +181,201 @@ class PatientAdmissionService
         });
     }
 
-    public function extendDischarge(array $payload)
+    /*
+        FOR ADMITTING PATIENT 
+    */
+    public function admitAdmission(array $payload)
+    {
+        try {
+            return DB::transaction(function () use ($payload) {
+                $admission = $this->patientAdmissionRepository->findByFields([
+                    ['patient_admission_id', '=', $payload['admission_id']]
+                ]);
+
+                if (!$admission) {
+                    throw new Exception('Admission not found.', 404);
+                }
+
+                $admission->load('admissionContract');
+
+                if (!$admission->admissionContract) {
+                    throw new Exception('Admission contract not found.', 400);
+                }
+
+                $admittedAt = isset($payload['admitted_at'])
+                    ? Carbon::parse($payload['admitted_at'])
+                    : now();
+
+                $endDate = AdmissionHelper::calculateEndDate($admittedAt, $admission->admissionContract->billing_cycle);
+
+                $admission->update([
+                    'status'      => PatientAdmission::STATUS_ADMITTED,
+                    'admitted_at' => $admittedAt,
+                    'end_date'    => $endDate,
+                ]);
+
+                if ($admission->bed) {
+                    $admission->bed->update([
+                        'status' => Bed::STATUS_OCCUPIED,
+                    ]);
+                }
+
+                $admission->load('invoiceAdmission');
+
+                $initialFacility = $admission->invoiceAdmission()
+                    ->where('branch_contract_id', $admission->branch_contract_id)
+                    ->latest('invoice_facility_id')
+                    ->first();
+
+                if (!$initialFacility) {
+                    throw new Exception('No invoice facility record found to activate for this admission.', 400);
+                }
+
+                $initialFacility->update([
+                    'start_date' => $admittedAt,
+                    'end_date'   => $endDate,
+                ]);
+
+                return [
+                    'message' => 'Patient admitted successfully.',
+                    'data'    => $this->patientService->showPatient($payload['p_uuid']),
+                ];
+            });
+        } catch (Throwable $e) {
+            throw new Exception(
+                $e->getMessage() ?: 'Failed to admit patient.',
+                $e->getCode() ?: 500
+            );
+        }
+    }
+
+    /*
+        FOR DISCHARGE ADMISSION
+    */
+    public function dischargeAdmission(array $payload)
+    {
+        $admission = $this->patientAdmissionRepository->findByFields([
+            ['patient_admission_id', '=', $payload['admission_id']]
+        ]);
+
+        if (!$admission) {
+            throw new Exception('Admission not found.', 404);
+        }
+
+        return DB::transaction(function () use ($admission, $payload) {
+            $dischargedAt = now();
+
+            $admission->update([
+                'end_date' => $dischargedAt,
+                'status' => PatientAdmission::STATUS_DISCHARGED,
+            ]);
+
+            if ($admission->bed_id) {
+                $admission->bed()->update([
+                    'status' => Bed::STATUS_AVAILABLE,
+                ]);
+            }
+
+            // $invoiceIds = $admission->invoiceAdmission()
+            //     ->pluck('invoice_id')
+            //     ->unique()
+            //     ->filter();
+
+            // if ($invoiceIds->isNotEmpty()) {
+            //     $invoices = Invoice::with(['payments.refunds'])
+            //         ->whereIn('invoice_id', $invoiceIds)
+            //         ->get();
+
+            //     $currentInvoiceId = $admission->currentInvoiceFacility()
+            //         ->first()?->invoice_id;
+
+            //     foreach ($invoices as $invoice) {
+            //         if ($currentInvoiceId !== null && $invoice->invoice_id === $currentInvoiceId) {
+            //             $this->refundService->refundCurrentInvoice($invoice, $payload);
+            //             continue;
+            //         }
+
+            //         $this->refundService->refundFutureInvoice($invoice, $payload);
+            //     }
+            // }
+
+            return response()->json([
+                'message' => 'Admission discharged successfully.',
+                'data' => $this->patientService->showPatient($payload['p_uuid']),
+            ]);
+        });
+    }
+
+    /*
+        FOR CANCEL ADMISSION
+    */
+    public function cancelAdmission(array $payload)
+    {
+        $admission = $this->patientAdmissionRepository->findByFields([
+            ['patient_admission_id', '=', $payload['admission_id']]
+        ]);
+
+        if (!$admission) {
+            throw new Exception('Admission not found.', 404);
+        }
+
+        DB::transaction(function () use ($admission) {
+            $admission->update([
+                'status' => PatientAdmission::STATUS_CANCELLED,
+            ]);
+
+            if ($admission->bed_id) {
+                $admission->bed()->update([
+                    'status' => Bed::STATUS_AVAILABLE,
+                ]);
+            }
+
+            $invoiceIds = $admission->invoiceAdmission()
+                ->pluck('invoice_id')
+                ->unique()
+                ->filter();
+
+            if ($invoiceIds->isEmpty()) {
+                return;
+            }
+
+            $invoices = Invoice::with([
+                'payments.refunds',
+            ])
+                ->whereIn('invoice_id', $invoiceIds)
+                ->get();
+
+            foreach ($invoices as $invoice) {
+                $refundableAmount = $this->refundService->getRefundableAmount($invoice);
+
+                if ($refundableAmount > 0) {
+                    $this->refundService->createRefundsForInvoice(
+                        $invoice,
+                        $refundableAmount,
+                        'Invoice refunded due to admission cancellation.'
+                    );
+                }
+
+                if ($this->refundService->getPaidAmount($invoice) <= 0) {
+                    $invoice->update([
+                        'status' => Invoice::STATUS_VOID,
+                    ]);
+                }
+            }
+        });
+
+        return response()->json([
+            'message' => 'Admission cancelled successfully.',
+            'data' => $this->patientService->showPatient($payload['uuid']),
+        ]);
+    }
+
+    /*
+        FOR EXTENSION ENDDATE ADMISSION
+    */
+    public function extendAdmission(array $payload)
     {
         return DB::transaction(function () use ($payload) {
-
             $admission = $this->patientAdmissionRepository->findByFields([
                 ['patient_admission_id', '=', $payload['admission_id']]
             ]);
@@ -201,39 +390,36 @@ class PatientAdmissionService
                 throw new Exception('Contract is required.');
             }
 
-            $date = Carbon::parse($admission->end_date ?? now());
+            $today = Carbon::today();
 
-            switch (strtolower($contract['billing_cycle'])) {
-                case 'monthly':
-                    $date->addMonth();
-                    break;
-                case 'quarterly':
-                    $date->addMonths(3);
-                    break;
-                case 'semi annual':
-                case 'semi-annually':
-                case 'semiannual':
-                    $date->addMonths(6);
-                    break;
+            $currentInvoiceFacility = $admission
+                ->invoiceAdmission()
+                ->orderByDesc('end_date')
+                ->first();
 
-                case 'annual':
-                case 'yearly':
-                    $date->addYear();
-                    break;
+            $invoiceEndDate = $currentInvoiceFacility->end_date
+                ? Carbon::parse($currentInvoiceFacility->end_date)
+                : null;
 
-                default:
-                    throw new Exception('Invalid billing cycle.');
+            $isDue = $invoiceEndDate
+                ? $invoiceEndDate->lte($today)
+                : false;
+
+            $startDate = $invoiceEndDate
+                ? $invoiceEndDate->copy()
+                : $today->copy();
+
+            $endDate = $startDate->copy()->addMonths(AdmissionHelper::billingCycle($contract['billing_cycle']));
+
+            $admissionData = [
+                'end_date' => $endDate->format('Y-m-d'),
+            ];
+
+            if ($isDue) {
+                $admissionData['branch_contract_id'] = $contract['branch_contract_id'];
             }
 
-            $admission->update([
-                'end_date' => $date->format('Y-m-d'),
-            ]);
-
-            if ($admission->branch_contract_id != $contract['branch_contract_id']) {
-                $admission->update([
-                    'branch_contract_id' => $contract['branch_contract_id']
-                ]);
-            }
+            $admission->update($admissionData);
 
             if (!empty($payload['bed_id'])) {
                 $newBedId = $payload['bed_id'];
@@ -261,7 +447,7 @@ class PatientAdmissionService
                     }
 
                     $newBed->update([
-                        'status' => Bed::STATUS_OCCUPIED,
+                        'status'  => Bed::STATUS_OCCUPIED,
                         'room_id' => $payload['room_id'] ?? $newBed->room_id,
                     ]);
 
@@ -272,16 +458,18 @@ class PatientAdmissionService
             }
 
             $invoice = Invoice::create([
-                'branch_id' => $payload['branch_id'],
-                'total' => $contract['price'],
-                'is_collected' => false,
+                'branch_id'      => $payload['branch_id'],
+                'total'          => $contract['price'],
+                'original_total' => $contract['price'],
+                'is_collected'   => false,
             ]);
 
             InvoiceFacility::create([
-                'invoice_id' => $invoice->invoice_id,
+                'invoice_id'           => $invoice->invoice_id,
                 'patient_admission_id' => $admission->patient_admission_id,
-                'branch_contract_id' => $contract['branch_contract_id'],
-                'price' => $contract['price'],
+                'branch_contract_id'   => $contract['branch_contract_id'],
+                'start_date'           => $startDate->format('Y-m-d'),
+                'end_date'             => $endDate->format('Y-m-d'),
             ]);
 
             return [
@@ -291,48 +479,9 @@ class PatientAdmissionService
         });
     }
 
-    public function admitAdmission(array $payload)
-    {
-        return DB::transaction(function () use ($payload) {
-            $admission = $this->patientAdmissionRepository->findByFields([
-                ['patient_admission_id', '=', $payload['admission_id']]
-            ]);
-
-
-            $admission->load('admissionContract');
-
-            if (!$admission->admissionContract) {
-                throw new \Exception('Admission contract not found.');
-            }
-
-            $admittedAt = isset($payload['admitted_at'])
-                ? Carbon::parse($payload['admitted_at'])
-                : now();
-
-            $endDate = $this->calculateEndDate(
-                $admittedAt,
-                $admission->admissionContract->billing_cycle
-            );
-
-            $admission->update([
-                'status' => PatientAdmission::STATUS_ADMITTED,
-                'admitted_at' => $admittedAt,
-                'end_date' => $endDate,
-            ]);
-
-            if ($admission->bed) {
-                $admission->bed->update([
-                    'status' => Bed::STATUS_OCCUPIED,
-                ]);
-            }
-
-            return [
-                'message' => 'Patient admitted successfully.',
-                'data' => $this->patientService->showPatient($payload['p_uuid'])
-            ];
-        });
-    }
-
+    /*
+        FOR CHANGE ROOM
+    */
     public function changeRoom(array $payload)
     {
         return DB::transaction(function () use ($payload) {
@@ -366,7 +515,6 @@ class PatientAdmissionService
                 ->where('branch_id', $payload['branch_id'])
                 ->firstOrFail();
 
-
             $oldBedId = $admission->bed_id;
             $oldBed = Bed::query()
                 ->where('bed_id', $oldBedId)
@@ -376,6 +524,7 @@ class PatientAdmissionService
             if (!$oldBed) {
                 throw new Exception('Current bed not found.', 400);
             }
+
             $oldRoomId = $oldBed->room_id;
 
             if (!$isSameBed) {
@@ -390,7 +539,6 @@ class PatientAdmissionService
                     ->update(['status' => Bed::STATUS_OCCUPIED]);
             }
 
-
             $admission->update([
                 'room_id' => $newRoom->room_id,
                 'bed_id'  => $newBed->bed_id,
@@ -398,94 +546,31 @@ class PatientAdmissionService
 
             RoomTransfer::create([
                 'patient_admission_id' => $admission->patient_admission_id,
-                'from_room_id'          => $oldRoomId,
-                'from_bed_id'           => $oldBedId,
-                'to_room_id'            => $newRoom->room_id,
-                'to_bed_id'             => $newBed->bed_id,
-                'reason'                => $payload['reason'] ?? null
+                'from_room_id'         => $oldRoomId,
+                'from_bed_id'          => $oldBedId,
+                'to_room_id'           => $newRoom->room_id,
+                'to_bed_id'            => $newBed->bed_id,
+                'reason'               => $payload['reason'] ?? null,
             ]);
 
             return [
                 'message' => $isSameBed
                     ? 'Bed reassignment recorded.'
                     : 'Room and bed updated successfully.',
-                'data' => $this->patientService->showPatient($payload['p_uuid'])
+                'data' => $this->patientService->showPatient($payload['p_uuid']),
             ];
         });
     }
 
-    public function dischargeAdmission(array $payload)
-    {
-        return DB::transaction(function () use ($payload) {
-            $admission = $this->patientAdmissionRepository->findByFields([
-                ['patient_admission_id', '=', $payload['admission_id']]
-            ]);
 
-            $admission->load('bed');
-            $dischargedAt = now();
-            $admission->update([
-                'status' => PatientAdmission::STATUS_DISCHARGED,
-            ]);
-            // 'end_date' => $dischargedAt,
-            if ($admission->bed) {
-                $admission->bed->update([
-                    'status' => Bed::STATUS_AVAILABLE,
-                ]);
-            }
-
-            return [
-                'message' => 'Patient discharged successfully.',
-                'data' => $this->patientService->showPatient($payload['p_uuid'])
-            ];
-        });
-    }
-
-    public function cancelAdmission(array $payload)
-    {
-        $admission = $this->patientAdmissionRepository->findByFields([
-            ['patient_admission_id', '=', $payload['admission_id']]
-        ]);
-
-        if (!$admission) {
-            throw new Exception('Admission not found.', 404);
-        }
-
-        DB::transaction(function () use ($admission) {
-            $admission->update([
-                'status' => PatientAdmission::STATUS_CANCELLED,
-            ]);
-
-
-            if ($admission->bed_id) {
-                $admission->bed()->update([
-                    'status' => Bed::STATUS_AVAILABLE,
-                ]);
-            }
-
-            $invoiceIds = $admission->invoiceAdmission()
-                ->pluck('invoice_id')
-                ->unique()
-                ->filter();
-
-            if ($invoiceIds->isNotEmpty()) {
-                Invoice::whereIn('invoice_id', $invoiceIds)
-                    ->where('status', '!=', Invoice::STATUS_PAID)
-                    ->update(['status' => Invoice::STATUS_VOID]);
-            }
-        });
-
-        return response()->json([
-            'message' => 'Admission cancelled successfully.',
-            'data' => $this->patientService->showPatient($payload['uuid']),
-        ]);
-    }
-
+    /*
+      WHEN THE ADMISSION IS ONLINE COMPLETE ADMISSION BOOKINGI IS APPROVED OR WALKING ADMISSION
+    */
     public function storeAdmission(User $user, array $payload)
     {
         $referenceId = $payload['reference_id'] ?? null;
 
         return DB::transaction(function () use ($referenceId, $payload, $user) {
-
             if ($referenceId) {
                 $type = $payload['facility']['type'];
 
@@ -512,7 +597,7 @@ class PatientAdmissionService
 
                     $booking->update([
                         'booking_type' => Booking::BOOKINGTYPE_WALKIN,
-                        'status' => Booking::STATUS_APPROVED,
+                        'status'       => Booking::STATUS_APPROVED,
                         'booking_data' => $bookingData,
                     ]);
 
@@ -522,90 +607,77 @@ class PatientAdmissionService
                     ];
                 }
 
-
                 if ($type === Booking::TYPE_COMPLETEADMISSION) {
-                    $booking = Booking::with([
-                        'patientsBooking.admissions.bed.room'
-                    ])
+                    $booking = Booking::with(['patientsBooking.admissions.bed.room'])
                         ->where('reference_id', $referenceId)
                         ->lockForUpdate()
                         ->firstOrFail();
 
-
                     $patient = $booking->patientsBooking->first();
 
                     if (!$patient) {
-                        throw new Exception("Patient not found", 404);
+                        throw new Exception('Patient not found', 404);
                     }
-
 
                     $admission = $patient->admissions->first();
 
                     if (!$admission) {
-                        throw new Exception("Patient admission not found", 404);
+                        throw new Exception('Patient admission not found', 404);
                     }
 
+                    $admissionAt = Carbon::parse($payload['reserved']['admitted_at']);
 
-                    $admissionAt = Carbon::parse(
-                        $payload['reserved']['admitted_at']
-                    );
-
+                    $endDate =  AdmissionHelper::calculateEndDate($admissionAt, $payload['reserved']['billing_cycle']);
 
                     $admission->update([
-                        'status' => PatientAdmission::STATUS_ADMITTED,
+                        'status'      => PatientAdmission::STATUS_ADMITTED,
                         'admitted_at' => $admissionAt,
-                        'end_date' => $this->calculateEndDate(
-                            $admissionAt,
-                            $payload['reserved']['billing_cycle']
-                        ),
+                        'end_date'    => $endDate,
                     ]);
-
 
                     $admission->bed?->update([
                         'status' => Bed::STATUS_OCCUPIED,
                     ]);
 
-
                     $booking->update([
                         'status' => Booking::STATUS_COMPLETED,
                     ]);
 
-
                     return [
                         'message' => 'Patient admitted successfully.',
-                        'data' => $admission->fresh([
-                            'bed.room',
-                            'patient',
-                        ]),
+                        'data' => $admission->fresh(['bed.room', 'patient']),
                     ];
                 }
             }
 
-
             $data = $this->patientService->createFacilityPatient($payload);
+
             $patient = $data['patient'];
             $payload['patient_id'] = $patient['patient_id'];
 
             $admission = $this->registerPatientBed($payload);
 
+            $startDate = Carbon::parse(
+                $admission['admitted_at'] ?? $payload['reserved']['admitted_at']
+            );
+
+            $endDate = Carbon::parse(
+                $admission['end_date']
+                    ?? AdmissionHelper::calculateEndDate($startDate, $payload['reserved']['billing_cycle'])
+            );
+
             $invoice = $this->invoiceRepository->create([
-                'total' => $payload['payment']['total_amount'],
+                'total'     => $payload['payment']['total_amount'],
                 'branch_id' => $payload['branch_id'],
-                'status' => Invoice::STATUS_PENDING,
+                'status'    => Invoice::STATUS_PENDING,
             ]);
 
             $invoice->invoiceFacility()->create([
-                'price' =>  $payload['payment']['total_amount'],
                 'patient_admission_id' => $admission['patient_admission_id'],
-                'branch_contract_id' => $payload['reserved']['contract_id']
+                'branch_contract_id'   => $payload['reserved']['contract_id'],
+                'start_date'           => $startDate->format('Y-m-d'),
+                'end_date'             => $endDate->format('Y-m-d'),
             ]);
-
-            // return [
-            //     'patient'        => $patient,
-            //     'invoice'        => $invoice,
-            //     'admission'      => $admission,
-            //     'patient_access' => $data['patientAccess']
-            // ];
 
             return [
                 'message' => 'Walk-in admission created successfully.',
@@ -613,6 +685,9 @@ class PatientAdmissionService
         });
     }
 
+    /*
+      WHEN THE ADMISSION IS ONLINE PRE ADMISSION BOOKING IS APPROVED OR WALKING ADMISSION
+    */
     public function preAdmission(array $payload)
     {
         $data = $this->patientService->createFacilityPatient($payload);
@@ -622,33 +697,40 @@ class PatientAdmissionService
         $admission = $this->registerPatientBed($payload);
 
         $invoice = $this->invoiceRepository->create([
-            'total' => $payload['payment']['total_amount'],
+            'total'     => $payload['payment']['total_amount'],
             'branch_id' => $payload['branch_id'],
-            'status' => Invoice::STATUS_PENDING,
+            'status'    => Invoice::STATUS_PENDING,
         ]);
 
-
         $invoice->invoiceFacility()->create([
-            'price' =>  $payload['payment']['total_amount'],
-            'patient_admission_id' => $admission['patient_admission_id'],
-            'branch_contract_id' => $payload['reserved']['contract_id']
+            'price'                 => $payload['payment']['total_amount'],
+            'patient_admission_id'  => $admission['patient_admission_id'],
+            'branch_contract_id'    => $payload['reserved']['contract_id'],
+            'start_date'            => $admission['admitted_at'],
+            'end_date'              => $admission['end_date'],
         ]);
 
         return [
-            'patient' => $data,
-            'invoice' => $invoice,
-            'admission' => $admission
+            'patient'   => $data,
+            'invoice'   => $invoice,
+            'admission' => $admission,
         ];
     }
+
+
+
 
     public function list(array $payload)
     {
         if ($payload['type'] === 'booking-admission') {
             $bookings = $this->bookingRepository
                 ->paginate($payload['branch_id'], $payload);
+
             return BookingResource::collection($bookings);
-        } else if ($payload['type'] === 'room_transfers') {
-            return  RoomTransfer::with(['fromRoom',  'toRoom', 'fromBed', 'toBed',])
+        }
+
+        if ($payload['type'] === 'room_transfers') {
+            return RoomTransfer::with(['fromRoom', 'toRoom', 'fromBed', 'toBed'])
                 ->where('patient_admission_id', $payload['patient_admission_id'])
                 ->latest()
                 ->get();
@@ -675,6 +757,7 @@ class PatientAdmissionService
 
         $bookingData = $booking->booking_data;
         $facilityType = strtolower($bookingData['facility']['type'] ?? '');
+
         if ($facilityType !== 'pre-admission') {
             throw new Exception(
                 "This booking cannot be processed because the booking type is '{$facilityType}'. It must be 'pre-admission'."
