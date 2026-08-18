@@ -255,7 +255,7 @@
                                         class="text-right shrink-0"
                                     >
                                         <p
-                                            class="text-lg text-primary uppercase"
+                                            class="text-lg text-primary capitalize"
                                         >
                                             {{ latestAdmission.status }}
                                         </p>
@@ -503,7 +503,7 @@
                         Admit Patient
                     </h3>
                     <p class="text-xs text-muted mt-1 mb-4">
-                        Confirm the admission date and deposit amount.
+                        Confirm the admission date 
                     </p>
 
                     <div class="space-y-4">
@@ -512,6 +512,7 @@
                             mode="date"
                             v-model="admitDate"
                             :min="todayStr"
+                            :max="todayStr"
                         />
                     </div>
 
@@ -539,7 +540,7 @@
         <Teleport to="body">
             <AdmissionDetail
                 v-if="newAdmissionModalOpen"
-                variant="modal"
+                variant="new"
                 :loading="loadingContract"
                 :roomContract="roomContract"
                 :model="reserved"
@@ -572,7 +573,7 @@
 
         <AdmissionDischarge
             :open="dischargeDialogOpen"
-            :admission="latestAdmission ?? null"
+            :admission="latestAdmission "
             :future-invoices="notStartedInvoices"
             :loading="actionLoading"
             @confirm="confirmDischarge"
@@ -610,9 +611,9 @@
             @cancel="cancelNewAdmissionConfirm"
         />
 
-        <ConfirmDialog
+        <!-- <ConfirmDialog
             :open="unpaidAdmitDialogOpen"
-            title="Unpaid Invoice"
+            title="Unpaid Admission"
             message="This patient hasn't paid yet."
             description="Are you sure you want to admit this patient without full payment?"
             confirm-label="Yes, Continue"
@@ -620,7 +621,20 @@
             :loading="actionLoading"
             @confirm="proceedToAdmitModal"
             @cancel="unpaidAdmitDialogOpen = false"
+        /> -->
+        <ConfirmDialog
+            :open="unpaidAdmitDialogOpen"
+            title="Payment Incomplete"
+            :message="`${formatCurrency(unpaidAmount)} remains unpaid.`"
+            description="The patient has not fully paid the admission invoice. Are you sure you want to continue?"
+            confirm-label="Yes, Continue"
+            cancel-label="Cancel"
+            variant="danger"
+            :loading="actionLoading"
+            @confirm="proceedToAdmitModal"
+            @cancel="unpaidAdmitDialogOpen = false"
         />
+
 
         <ConfirmDialog
             :open="unpaidExtendDialogOpen"
@@ -683,6 +697,15 @@ definePageMeta({
 });
 
 useHead({ title: "Admission History" });
+
+const unpaidAmount = computed(() => {
+    if (patient.value?.latest_admission?.status !=='waiting') return 0;
+    const invoice = patient.value?.latest_admission?.invoices[0];
+    const price = Number(invoice?.price ?? 0)
+    const paid = Number(invoice?.paid_amount ?? 0)
+    return Math.max(price - paid, 0)
+})
+
 
 const route = useRoute();
 const router = useRouter();

@@ -79,7 +79,10 @@
 
                     <div class="flex items-center gap-4">
                         <span
-                            v-if="paymentStatus"
+                            v-if="
+                                paymentStatus &&
+                                booking.facility?.type === 'Complete'
+                            "
                             class="px-3 py-1 uppercase rounded-sm text-xs font-medium"
                             :class="{
                                 'bg-emerald-100 text-emerald-700':
@@ -443,6 +446,7 @@ import { stringToDateTime, formatDate, formatDuration } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
 import { Stethoscope } from "lucide-vue-next";
 import { Field } from "~/utils/fields";
+import { format24To12 } from "~/utils/time";
 import PatientDetails from "./PatientDetails.vue";
 import GuardianAssessmentDetails from "./GuardianAssessmentDetails.vue";
 import { useRouter, useRoute } from "vue-router";
@@ -550,10 +554,7 @@ const serviceTypeLabel = computed(() => {
 const preferredTimeLabel = computed(() => {
     const time = props.booking.homecare?.prefered_time;
     if (!time) return "";
-    return new Date(`1970-01-01T${time}`).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+    return format24To12(time);
 });
 
 const totalPrice = computed(() => {

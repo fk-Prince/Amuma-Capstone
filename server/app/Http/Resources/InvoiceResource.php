@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Invoice;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -24,7 +25,8 @@ class InvoiceResource extends JsonResource
             'is_collected' => (bool) $this->is_collected,
             'status'       => $this->resolveStatus(),
             'created_at'   => $this->created_at?->toIso8601String(),
-            'patient'      => $this->resolvePatient(),
+
+            'patient' => $this->resolvePatient(),
 
             'branch' => $this->whenLoaded('branch', fn() => [
                 'branch_id' => $this->branch->branch_id,
@@ -48,13 +50,14 @@ class InvoiceResource extends JsonResource
                 'invoiceFacility',
                 fn() =>
                 $this->invoiceFacility->map(fn($facility) => [
-                    'invoice_facility_id' => $facility->invoice_facility_id,
-                    'branch_contract_id'  => $facility->branch_contract_id,
-                    'price'               => (float) $facility->price,
+                    'invoice_facility_id'  => $facility->invoice_facility_id,
+                    'branch_contract_id'   => $facility->branch_contract_id,
+                    'price'                => (float) $facility->price,
                     'patient_admission_id' => $facility->patient_admission_id,
+
                     'patient_name' => trim(
                         ($facility->patientAdmission->patient->first_name ?? '') . ' ' .
-                            ($facility->patientAdmission->patient->last_name ?? '')
+                        ($facility->patientAdmission->patient->last_name ?? '')
                     ),
                 ])
             ),
@@ -70,23 +73,291 @@ class InvoiceResource extends JsonResource
                     'created_at'     => $payment->created_at?->toIso8601String(),
                 ])
             ),
+
+            /*
+            |--------------------------------------------------------------------------
+            | DISCHARGE CALCULATION
+            |--------------------------------------------------------------------------
+            */
+
+            'discharge_calculation' => $this->when(
+                $this->resource->relationLoaded('invoiceFacility'),
+                fn() => $this->resolveDischargeCalculation()
+            ),
         ];
     }
 
     /**
-     * Resolve display-oriented patient data from whichever relation chain
-     * is loaded: an admitted facility charge, or a scheduled service.
+     * Calculate the discharge amount for the facility invoice.
+     *
+     * Provides:
+     * - Normal refund calculation
+     * - Discharge-today calculation
+     */
+    protected function resolveDischargeCalculation(): ?array
+    {
+        $facility = $this->invoiceFacility->first();
+
+        if (!$facility) {
+            return null;
+        }
+
+        $admission = $facility->patientAdmission;
+
+        if (!$admission) {
+            return null;
+        }
+
+        $contract = $facility->branchContract;
+
+        if (!$contract) {
+            return null;
+        }
+
+        $admissionDate = Carbon::parse(
+            $admission->admission_date ?? $admission->created_at
+        )->startOfDay();
+
+        $today = now()->startOfDay();
+
+        $billingCycle = strtoupper(
+            trim($contract->billing_cycle ?? '')
+        );
+
+        $contractPrice = (float) $facility->price;
+
+        $paidAmount = max(
+            0,
+            (float) $this->net_paid_amount
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | DAYS
+        |--------------------------------------------------------------------------
+        */
+
+        $daysSinceAdmission = max(
+            0,
+            $admissionDate->diffInDays($today)
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | NORMAL REFUND
+        |--------------------------------------------------------------------------
+        */
+
+        $terminationFeePercent = 20;
+
+        $terminationFee = round(
+            $contractPrice * ($terminationFeePercent / 100),
+            2
+        );
+
+        $normalRefund = 0;
+
+        if ($daysSinceAdmission <= 7) {
+            $normalRefund = max(
+                0,
+                $paidAmount - $terminationFee
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | DISCHARGE TODAY
+        |--------------------------------------------------------------------------
+        |
+        | Calculate only the portion actually consumed.
+        |
+        */
+
+        $dischargeTodayBill = $this->calculateDischargeTodayBill(
+            $contractPrice,
+            $billingCycle,
+            $admissionDate,
+            $today
+        );
+
+        $dischargeTodayBalance = max(
+            0,
+            $dischargeTodayBill - $paidAmount
+        );
+
+        $dischargeTodayRefund = max(
+            0,
+            $paidAmount - $dischargeTodayBill
+        );
+
+        return [
+            'admission_date' => $admissionDate->toDateString(),
+
+            'calculation_date' => $today->toDateString(),
+
+            'days_since_admission' => $daysSinceAdmission,
+
+            'billing_cycle' => $billingCycle,
+
+            'contract_price' => $contractPrice,
+
+            'paid_amount' => $paidAmount,
+
+            /*
+            |--------------------------------------------------------------------------
+            | NORMAL
+            |--------------------------------------------------------------------------
+            */
+
+            'normal' => [
+                'within_termination_window' =>
+                    $daysSinceAdmission <= 7,
+
+                'termination_fee_percent' =>
+                    $daysSinceAdmission <= 7
+                        ? $terminationFeePercent
+                        : 0,
+
+                'termination_fee' =>
+                    $daysSinceAdmission <= 7
+                        ? $terminationFee
+                        : 0,
+
+                'refund_amount' =>
+                    $normalRefund,
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | DISCHARGE TODAY
+            |--------------------------------------------------------------------------
+            */
+
+            'discharge_today' => [
+                'bill_amount' => $dischargeTodayBill,
+
+                'paid_amount' => $paidAmount,
+
+                'balance' => $dischargeTodayBalance,
+
+                'refund_amount' => $dischargeTodayRefund,
+
+                'has_balance' =>
+                    $dischargeTodayBalance > 0,
+
+                'has_refund' =>
+                    $dischargeTodayRefund > 0,
+            ],
+        ];
+    }
+
+    /**
+     * Calculate the amount that should be billed
+     * when the patient is discharged today.
+     */
+    protected function calculateDischargeTodayBill(
+        float $contractPrice,
+        string $billingCycle,
+        Carbon $admissionDate,
+        Carbon $today
+    ): float {
+        if ($today->lt($admissionDate)) {
+            return 0;
+        }
+
+        $daysUsed =
+            $admissionDate->diffInDays($today) + 1;
+
+        /*
+        |--------------------------------------------------------------------------
+        | MONTHLY
+        |--------------------------------------------------------------------------
+        */
+
+        if ($billingCycle === 'MONTHLY') {
+            $daysInMonth = $admissionDate->daysInMonth;
+
+            return round(
+                ($contractPrice / $daysInMonth) * $daysUsed,
+                2
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | YEARLY
+        |--------------------------------------------------------------------------
+        */
+
+        if ($billingCycle === 'YEARLY') {
+            $daysInYear = $admissionDate->isLeapYear()
+                ? 366
+                : 365;
+
+            return round(
+                ($contractPrice / $daysInYear) * $daysUsed,
+                2
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 6 MONTHS
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            in_array(
+                $billingCycle,
+                [
+                    '6_MONTHS',
+                    'SIX_MONTHS',
+                    'SEMI_ANNUAL',
+                ],
+                true
+            )
+        ) {
+            $periodEnd = $admissionDate
+                ->copy()
+                ->addMonths(6)
+                ->subDay();
+
+            $periodDays =
+                $admissionDate->diffInDays($periodEnd) + 1;
+
+            return round(   
+                ($contractPrice / $periodDays) * $daysUsed,
+                2
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FALLBACK
+        |--------------------------------------------------------------------------
+        */
+
+        return $contractPrice;
+    }
+
+    /**
+     * Resolve patient data.
      */
     protected function resolvePatient(): ?array
     {
         $patient = null;
 
         if ($this->resource->relationLoaded('invoiceFacility')) {
-            $patient = $this->invoiceFacility->first()?->patientAdmission?->patient;
+            $patient = $this->invoiceFacility
+                ->first()?->patientAdmission?->patient;
         }
 
-        if (!$patient && $this->resource->relationLoaded('invoiceServices')) {
-            $patient = $this->invoiceServices->first()?->scheduleService?->schedule?->patient;
+        if (
+            !$patient &&
+            $this->resource->relationLoaded('invoiceServices')
+        ) {
+            $patient = $this->invoiceServices
+                ->first()?->scheduleService?->schedule?->patient;
         }
 
         if (!$patient) {
@@ -95,7 +366,10 @@ class InvoiceResource extends JsonResource
 
         return [
             'patient_id'    => $patient->patient_id,
-            'full_name'     => trim(($patient->first_name ?? '') . ' ' . ($patient->last_name ?? '')) ?: null,
+            'full_name'     => trim(
+                ($patient->first_name ?? '') . ' ' .
+                ($patient->last_name ?? '')
+            ) ?: null,
             'first_name'    => $patient->first_name,
             'middle_name'   => $patient->middle_name,
             'last_name'     => $patient->last_name,
@@ -109,7 +383,7 @@ class InvoiceResource extends JsonResource
     }
 
     /**
-     * Derive a human-readable status from amount paid vs total.
+     * Derive invoice status.
      */
     protected function resolveStatus(): string
     {

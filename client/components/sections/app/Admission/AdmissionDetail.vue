@@ -1,22 +1,24 @@
 <template>
     <component
-        :is="variant === 'modal' ? 'div' : 'section'"
+        :is="variant === 'modal' || variant === 'new' ? 'div' : 'section'"
         :class="
-            variant === 'modal'
+            variant === 'modal' || variant === 'new'
                 ? 'fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-5'
                 : ''
         "
-        @click.self="variant === 'modal' ? emit('close') : null"
+        @click.self="
+            variant === 'modal' || variant === 'new' ? emit('close') : null
+        "
     >
         <div
             :class="
-                variant === 'modal'
+                variant === 'modal' || variant === 'new'
                     ? 'relative bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 md:p-8 shadow-xl'
                     : 'rounded-2xl bg-white p-6 md:p-8'
             "
         >
             <button
-                v-if="variant === 'modal'"
+                v-if="variant === 'modal' || variant === 'new'"
                 type="button"
                 class="absolute top-5 right-5 h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none"
                 aria-label="Close"
@@ -47,6 +49,7 @@
                         <p class="text-sm font-semibold text-rose-700">
                             Please fix the following before continuing
                         </p>
+
                         <ul
                             class="mt-1.5 space-y-1 text-sm text-rose-600 list-disc list-inside"
                         >
@@ -66,15 +69,17 @@
             >
                 <div class="flex items-baseline gap-3 mb-8">
                     <span
-                        v-if="variant !== 'modal'"
+                        v-if="variant === 'page'"
                         class="text-2xl text-primary"
                     >
                         01
                     </span>
+
                     <div>
                         <h2 class="text-xl text-primary">
                             Choose Accommodation
                         </h2>
+
                         <p class="text-[13px] text-muted">
                             Select your preferred room type and available bed.
                         </p>
@@ -133,6 +138,7 @@
                         "
                     >
                         Yearly
+
                         <span
                             v-if="activeDiscountPercent !== null"
                             class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700"
@@ -152,6 +158,7 @@
                     <div class="flex items-center justify-between">
                         <div class="space-y-3">
                             <div class="h-5 w-32 bg-slate-200 rounded"></div>
+
                             <div class="h-3 w-48 bg-slate-100 rounded"></div>
                         </div>
 
@@ -163,13 +170,13 @@
 
                         <div class="space-y-2 text-right">
                             <div class="h-5 w-20 bg-slate-200 rounded"></div>
+
                             <div class="h-3 w-16 bg-slate-100 rounded"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- v-else-if="roomContract && !roomContract.length" -->
             <div
                 v-else-if="!contracts.length"
                 class="rounded-2xl border border-dashed p-10 text-center text-slate-400"
@@ -241,6 +248,7 @@
                             <span class="font-semibold text-primary">
                                 {{ formatPrice(type.value) }}
                             </span>
+
                             <span class="block text-xs text-slate-400">
                                 {{
                                     billingCycle === "yearly"
@@ -272,8 +280,10 @@
                     <h3 class="text-xl font-semibold">
                         {{ activeType }} Rooms
                     </h3>
+
                     <span class="text-sm font-medium text-primary">
                         {{ formatPrice(activeType) }}
+
                         <span class="text-slate-400 font-normal">
                             /
                             {{ billingCycle === "yearly" ? "year" : "month" }}
@@ -330,32 +340,37 @@
 
                         <div class="mt-5 space-y-2 text-sm">
                             <p class="flex justify-between">
-                                <span class="text-slate-500">Capacity</span>
+                                <span class="text-slate-500"> Capacity </span>
+
                                 <strong>{{ room.capacity }}</strong>
                             </p>
 
                             <p class="flex justify-between">
-                                <span class="text-slate-500"
-                                    >Available Beds</span
-                                >
+                                <span class="text-slate-500">
+                                    Available Beds
+                                </span>
+
                                 <strong class="text-emerald-600">
                                     {{ availableBeds(room).length }}
                                 </strong>
                             </p>
 
                             <p class="flex justify-between">
-                                <span class="text-slate-500"
-                                    >Reserved Beds</span
-                                >
+                                <span class="text-slate-500">
+                                    Reserved Beds
+                                </span>
+
                                 <strong class="text-rose-600">
                                     {{ reservedBeds(room).length }}
                                 </strong>
                             </p>
 
                             <p class="flex justify-between pt-2 border-t">
-                                <span class="text-slate-500">Price</span>
+                                <span class="text-slate-500"> Price </span>
+
                                 <strong class="text-primary">
                                     {{ formatPrice(activeType) }}
+
                                     <span
                                         class="text-slate-400 font-normal text-xs"
                                     >
@@ -397,31 +412,35 @@
                     >
                         <p>
                             Room
-                            <strong class="block">{{
-                                selectedRoom.room_no
-                            }}</strong>
+                            <strong class="block">
+                                {{ selectedRoom.room_no }}
+                            </strong>
                         </p>
 
                         <p>
                             Bed
-                            <strong class="block">{{
-                                selectedBed.bed_no
-                            }}</strong>
+                            <strong class="block">
+                                {{ selectedBed.bed_no }}
+                            </strong>
                         </p>
 
                         <p>
                             Type
-                            <strong class="block">{{ activeType }}</strong>
+                            <strong class="block">
+                                {{ activeType }}
+                            </strong>
                         </p>
 
                         <p>
                             Price
                             <strong class="block text-primary">
                                 {{ formatPrice(activeType) }}
-                                / {{ billingCycle === "yearly" ? "yr" : "mo" }}
+                                /
+                                {{ billingCycle === "yearly" ? "yr" : "mo" }}
                             </strong>
                         </p>
                     </div>
+
                     <div class="mt-4" v-if="requireAdmissionDate">
                         <BaseInput
                             label="Admission Date"
@@ -455,6 +474,7 @@
                                 <h3 class="font-semibold text-lg">
                                     Select Bed
                                 </h3>
+
                                 <p class="text-sm text-slate-500">
                                     Room {{ modalRoom?.room_no }}
                                 </p>
@@ -482,9 +502,9 @@
                                         : 'opacity-50 cursor-not-allowed'
                                 "
                             >
-                                <span class="font-medium"
-                                    >Bed {{ bed.bed_no }}</span
-                                >
+                                <span class="font-medium">
+                                    Bed {{ bed.bed_no }}
+                                </span>
 
                                 <span
                                     class="text-xs rounded-full px-3 py-1 font-medium"
@@ -499,7 +519,7 @@
             </transition>
 
             <div
-                v-if="variant === 'modal'"
+                v-if="variant === 'modal' || variant === 'new'"
                 class="mt-8 pt-5 border-t flex justify-end"
             >
                 <button
@@ -535,7 +555,7 @@ const props = withDefaults(
         loading?: boolean;
         roomContract: RoomContract[] | null | undefined;
         model?: Reserved | null;
-        variant?: "page" | "modal";
+        variant?: "page" | "modal" | "new";
         errors?: Record<string, string>;
         accommodation?: string | null;
         requireAdmissionDate?: boolean;
@@ -550,6 +570,7 @@ const props = withDefaults(
         requireAdmissionDate: false,
     },
 );
+
 const admittedAt = ref("");
 
 const contracts = computed<RoomContract[]>(() => {
@@ -622,7 +643,7 @@ watch(
 
         if (!props.model?.room || !props.model?.bed) {
             viewMode.value = "types";
-            activeType.value = null; // don't show Common selected
+            activeType.value = null;
             selectedRoom.value = null;
             selectedBed.value = null;
             admittedAt.value = "";
@@ -702,13 +723,16 @@ const activeDiscountPercent = computed(() => {
 
     const monthly = contractFor(type, "monthly");
     const yearly = contractFor(type, "yearly");
+
     if (!monthly || !yearly) return null;
 
     const monthlyAnnual = monthly.price * 12;
     const yearlyPrice = yearly.price;
+
     if (!monthlyAnnual) return null;
 
     const percent = Math.round((1 - yearlyPrice / monthlyAnnual) * 100);
+
     return percent > 0 ? percent : null;
 });
 
@@ -740,6 +764,7 @@ function roomsFor(type: string): ApiRoom[] {
 
 const filteredRooms = computed(() => {
     if (!activeType.value) return [];
+
     return roomsFor(activeType.value);
 });
 
@@ -754,6 +779,7 @@ function availableBeds(room: ApiRoom) {
 
     return room.beds.filter((bed) => bed.status?.toLowerCase() === "available");
 }
+
 function reservedBeds(room: ApiRoom) {
     return room.beds.filter((bed) => bed.status.toLowerCase() === "reserved");
 }
@@ -762,10 +788,13 @@ function statusBadgeClass(status: string) {
     switch (status.toLowerCase()) {
         case "available":
             return "bg-emerald-50 text-emerald-700";
+
         case "occupied":
             return "bg-rose-50 text-rose-700";
+
         case "maintenance":
             return "bg-amber-50 text-amber-700";
+
         default:
             return "bg-slate-100 text-slate-600";
     }
@@ -785,6 +814,7 @@ function openBeds(room: ApiRoom) {
     modalRoom.value = room;
     showBeds.value = true;
 }
+
 function emitModel(contract: RoomContract) {
     if (!selectedRoom.value || !selectedBed.value) return;
 
@@ -804,7 +834,9 @@ function emitModel(contract: RoomContract) {
 }
 
 function chooseBed(bed: ApiBed) {
-    if (!isAvailable(bed) || !modalRoom.value || !activeType.value) return;
+    if (!isAvailable(bed) || !modalRoom.value || !activeType.value) {
+        return;
+    }
 
     const contract =
         contractFor(activeType.value, billingCycle.value) ??
@@ -823,8 +855,31 @@ function chooseBed(bed: ApiBed) {
     showBeds.value = false;
 }
 
-watch(admittedAt, () => {
-    if (!selectedRoom.value || !selectedBed.value || !activeType.value) return;
+watch(billingCycle, () => {
+    if (!activeType.value) return;
+
+    const rooms = roomsFor(activeType.value);
+
+    if (
+        selectedRoom.value &&
+        !rooms.some((room) => room.room_id === selectedRoom.value?.room_id)
+    ) {
+        selectedRoom.value = null;
+        selectedBed.value = null;
+        return;
+    }
+
+    if (
+        selectedRoom.value &&
+        selectedBed.value &&
+        !availableBeds(selectedRoom.value).some(
+            (bed) => bed.bed_id === selectedBed.value?.bed_id,
+        )
+    ) {
+        selectedRoom.value = null;
+        selectedBed.value = null;
+        return;
+    }
 
     const contract =
         contractFor(activeType.value, billingCycle.value) ??
@@ -833,7 +888,26 @@ watch(admittedAt, () => {
             billingCycle.value === "monthly" ? "yearly" : "monthly",
         );
 
-    if (contract) emitModel(contract);
+    if (contract) {
+        emitModel(contract);
+    }
+});
+
+watch(admittedAt, () => {
+    if (!selectedRoom.value || !selectedBed.value || !activeType.value) {
+        return;
+    }
+
+    const contract =
+        contractFor(activeType.value, billingCycle.value) ??
+        contractFor(
+            activeType.value,
+            billingCycle.value === "monthly" ? "yearly" : "monthly",
+        );
+
+    if (contract) {
+        emitModel(contract);
+    }
 });
 
 function handleDone() {
@@ -867,6 +941,7 @@ function handleDone() {
 }
 
 const todayStr = toLocalDateString(new Date());
+
 const maxDateStr = toLocalDateString(new Date(Date.now() + 7 * 86400000));
 
 function normalizeAccommodationType(type: string): "Common" | "VIP" {

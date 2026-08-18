@@ -7,6 +7,7 @@ use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Service\InvoiceService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -40,7 +41,7 @@ class InvoiceController extends Controller
         return $this->invoiceService->storeBooking($request->user(), $request->all());
     }
 
-    public function show(Request $request, string $uuid)
+    public function show(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Read);
@@ -61,14 +62,18 @@ class InvoiceController extends Controller
         return $this->invoiceService->retrieveAllBooking($request->user(), $request->all());
     }
 
-    // public function patientInvoiceSummary(Request $request)
-    // {
-    //     $branch = BranchGuard::resolveBranch($request->branch_uuid);
-    //     AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Read);
-    //     $request->merge([
-    //         'branch_id' => $branch->branch_id,
-    //     ]);
-    //     Log::info($request->all());
-    //     return $this->invoiceService->getPatientSummary($request->user(), $request->all());
-    // }
+
+
+    public function action(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Read);
+        $request->merge([
+            'branch_id' => $branch->branch_id,
+        ]);
+
+        if ($request->type === 'refund') {
+            return $this->invoiceService->completeRefund($request->all());
+        }
+    }
 }

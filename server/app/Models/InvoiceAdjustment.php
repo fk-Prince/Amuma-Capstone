@@ -11,6 +11,11 @@ class InvoiceAdjustment extends Model
 
     protected $primaryKey = 'invoice_adjustment_id';
 
+    public const TYPE_REFUND = 'refund';
+    public const TYPE_CORRECTION = 'correction';
+    public const TYPE_TERMINATION_FEE = 'termination_fee';
+
+
     protected $fillable = [
         'invoice_id',
         'type',

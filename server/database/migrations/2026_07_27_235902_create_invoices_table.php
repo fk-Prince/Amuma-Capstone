@@ -12,7 +12,6 @@ return new class extends Migration
             $table->id('invoice_id');
             $table->string('invoice_code')->unique();
             $table->decimal('total', 10, 2);
-            $table->decimal('original_total', 10, 2);
             $table->enum('status', ['pending', 'partial', 'paid', 'void', 'refunded'])->default('pending');
             $table->boolean('is_collected')->default(false);
             $table->foreignId('branch_id')

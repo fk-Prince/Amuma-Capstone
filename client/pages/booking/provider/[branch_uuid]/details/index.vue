@@ -280,8 +280,7 @@ useHead({ title: "Patient Details" });
 definePageMeta({
     navVariant: 4,
     navTheme: "dark",
-    middleware: ["auth-client"],
-    // middleware: ["auth-client", "provider-guard"],
+    middleware: ["auth-client", "provider-guard"],
 });
 
 const user = useAuthUser();

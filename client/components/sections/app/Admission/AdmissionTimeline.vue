@@ -66,7 +66,7 @@
                                     </div>
 
                                     <span
-                                        class="shrink-0 text-[10px] font-medium capitalize rounded-full px-2 py-1"
+                                        class="shrink-0 text-[12px] font-medium capitalize rounded-full px-2 py-1"
                                         :class="
                                             statusBadgeClass(admission.status)
                                         "
@@ -86,33 +86,41 @@
                                     admission.invoices,
                                 ).filter(isInvoiceVisible)"
                                 :key="invoice.invoice_facility_id"
-                                class="relative"
+                                class="group relative"
                             >
                                 <div
-                                    class="rounded-xl bg-slate-50 border border-slate-100 overflow-hidden"
+                                    class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md"
                                 >
                                     <div
-                                        class="px-3 py-2.5 flex items-center justify-between gap-2"
+                                        class="flex items-start justify-between gap-4 px-4 py-3.5"
                                     >
                                         <div class="min-w-0">
                                             <div
                                                 class="flex items-center gap-2 flex-wrap"
                                             >
-                                                <p
-                                                    class="text-[11px] text-primary-900"
+                                                <span
+                                                    class="text-[12px] font-semibold text-slate-800"
                                                 >
                                                     {{
                                                         formatDate(
                                                             invoice.start_date,
                                                         )
                                                     }}
-                                                    —
+                                                </span>
+
+                                                <span class="text-slate-300">
+                                                    →
+                                                </span>
+
+                                                <span
+                                                    class="text-[12px] font-semibold text-slate-800"
+                                                >
                                                     {{
                                                         formatDate(
                                                             invoice.end_date,
                                                         )
                                                     }}
-                                                </p>
+                                                </span>
 
                                                 <span
                                                     v-if="
@@ -123,103 +131,106 @@
                                                             ?.invoice_facility_id ===
                                                             invoice.invoice_facility_id
                                                     "
-                                                    class="shrink-0 text-[11px] font-semibold uppercase rounded-full px-2 py-0.5 bg-emerald-100 text-emerald-700"
+                                                    class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
                                                 >
+                                                    <span
+                                                        class="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                                                    ></span>
                                                     Current
                                                 </span>
                                             </div>
                                         </div>
 
-                                        <p
-                                            class="text-xs font-semibold text-primary-900 shrink-0"
-                                        >
-                                            {{ formatCurrency(invoice.price) }}
-                                        </p>
-                                    </div>
-
-                                    <div
-                                        class="border-t border-primary-100 px-3 py-2.5 space-y-2"
-                                    >
-                                        <div
-                                            class="flex items-center justify-between gap-3 text-[11px]"
-                                        >
-                                            <span class="text-muted">
-                                                Accommodation
-                                            </span>
-
-                                            <span
-                                                class="font-medium text-primary-900 text-right"
-                                            >
-                                                {{
-                                                    invoice.contract
-                                                        ?.accommodation_type ??
-                                                    admission.current_contract
-                                                        ?.accommodation_type ??
-                                                    "—"
-                                                }}
-                                            </span>
-                                        </div>
-
-                                        <div
-                                            class="flex items-center justify-between gap-3 text-[11px]"
-                                        >
-                                            <span class="text-muted">
-                                                Billing Cycle
-                                            </span>
-
-                                            <span
-                                                class="font-medium text-primary-900 text-right"
-                                            >
-                                                {{
-                                                    invoice.contract
-                                                        ?.billing_cycle ??
-                                                    admission.current_contract
-                                                        ?.billing_cycle ??
-                                                    "—"
-                                                }}
-                                            </span>
-                                        </div>
-
-                                        <div
-                                            class="flex items-center justify-between gap-3 text-[11px]"
-                                        >
-                                            <span class="text-muted">
-                                                Contract Rate
-                                            </span>
-
-                                            <span
-                                                class="font-medium text-primary-900 text-right"
+                                        <div class="shrink-0 text-right">
+                                            <p
+                                                class="text-sm font-bold tracking-tight text-slate-900"
                                             >
                                                 {{
                                                     formatCurrency(
-                                                        invoice.contract
-                                                            ?.price ??
-                                                            invoice.price,
+                                                        invoice.price,
                                                     )
                                                 }}
-                                            </span>
-                                        </div>
-                                        <div
-                                            class="flex items-center justify-between gap-3 text-[11px]"
-                                        >
-                                            <span class="text-muted">
-                                                Payment Status
-                                            </span>
+                                            </p>
 
-                                            <span
-                                                class="shrink-0 border text-[9px] font-semibold uppercase rounded-full px-2 py-0.5"
-                                                :class="
-                                                    invoiceStatusClass(
-                                                        invoice.status,
-                                                    )
-                                                "
+                                            <p
+                                                class="mt-0.5 text-[9px] uppercase tracking-wider text-slate-400"
                                             >
-                                                {{
-                                                    invoice.status === "partial"
-                                                        ? "Partially Paid"
-                                                        : invoice.status
-                                                }}
-                                            </span>
+                                                Total
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="border-t border-slate-100 bg-slate-50/60 px-4 py-3"
+                                    >
+                                        <div
+                                            class="grid grid-cols-3 gap-x-6 gap-y-3"
+                                        >
+                                            <div class="min-w-0">
+                                                <p
+                                                    class="text-[9px] font-medium uppercase tracking-wider text-slate-400"
+                                                >
+                                                    Accommodation
+                                                </p>
+
+                                                <p
+                                                    class="mt-0.5 truncate text-[11px] font-semibold text-slate-700"
+                                                >
+                                                    {{
+                                                        invoice.contract
+                                                            ?.accommodation_type ??
+                                                        admission
+                                                            .current_contract
+                                                            ?.accommodation_type ??
+                                                        "—"
+                                                    }}
+                                                </p>
+                                            </div>
+
+                                            <div class="min-w-0">
+                                                <p
+                                                    class="text-[9px] font-medium uppercase tracking-wider text-slate-400"
+                                                >
+                                                    Billing Cycle
+                                                </p>
+
+                                                <p
+                                                    class="mt-0.5 truncate text-[11px] font-semibold text-slate-700"
+                                                >
+                                                    {{
+                                                        invoice.contract
+                                                            ?.billing_cycle ??
+                                                        admission
+                                                            .current_contract
+                                                            ?.billing_cycle ??
+                                                        "—"
+                                                    }}
+                                                </p>
+                                            </div>
+
+                                            <div class="min-w-0">
+                                                <p
+                                                    class="text-[9px] font-medium uppercase tracking-wider text-slate-400"
+                                                >
+                                                    Payment Status
+                                                </p>
+
+                                                <span
+                                                    class="inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide"
+                                                    :class="
+                                                        invoiceStatusClass(
+                                                            invoice.status,
+                                                        )
+                                                    "
+                                                >
+                                                    {{
+                                                        invoice.status ===
+                                                        "partial"
+                                                            ? "Partially Paid"
+                                                            : invoice.status
+                                                    }}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -336,8 +347,8 @@ function invoiceStatusClass(status?: string | null) {
     const key = normalized[s] ?? s;
 
     return (
-        INVOICE_STATUS[key] ??
-        "bg-primary-50 text-primary-600 border-primary-100"
+        INVOICE_STATUS[key] ?? // border-primary-100
+        "bg-primary-50 text-primary-600"
     );
 }
 

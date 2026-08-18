@@ -50,24 +50,29 @@
             >
                 <span class="text-muted">
                     Type
-                    <span class="text-[#16302E] font-medium ml-1">{{
-                        typeSummary
-                    }}</span>
+                    <span class="text-[#16302E] font-medium ml-1">
+                        {{ typeSummary }}
+                    </span>
                 </span>
+
                 <span class="text-[#E4EFED]">|</span>
+
                 <span class="text-muted">
                     Period
-                    <span class="text-[#16302E] font-medium ml-1">{{
-                        periodSummary
-                    }}</span>
+                    <span class="text-[#16302E] font-medium ml-1">
+                        {{ periodSummary }}
+                    </span>
                 </span>
+
                 <span class="text-[#E4EFED]">|</span>
+
                 <span class="text-muted">
                     Status
-                    <span class="text-[#16302E] font-medium ml-1">{{
-                        statusSummary
-                    }}</span>
+                    <span class="text-[#16302E] font-medium ml-1">
+                        {{ statusSummary }}
+                    </span>
                 </span>
+
                 <ChevronDown
                     class="h-4 w-4 text-muted transition-transform"
                     :class="{ 'rotate-180': open }"
@@ -104,6 +109,7 @@
                         >
                             Type
                         </p>
+
                         <div class="flex flex-wrap gap-x-5 gap-y-2">
                             <button
                                 v-for="item in typeFilters"
@@ -130,6 +136,7 @@
                         >
                             Period
                         </p>
+
                         <div class="flex flex-col gap-2.5">
                             <div class="flex flex-wrap gap-x-5 gap-y-2">
                                 <button
@@ -155,7 +162,9 @@
                                     class-name="w-[140px]"
                                     @update:modelValue="activePreset = null"
                                 />
+
                                 <span class="text-muted text-xs">to</span>
+
                                 <BaseInput
                                     v-model="localDateTo"
                                     mode="date"
@@ -174,6 +183,7 @@
                         >
                             Status
                         </p>
+
                         <div class="flex flex-wrap gap-x-5 gap-y-2">
                             <button
                                 v-for="item in statusFilters"
@@ -202,6 +212,7 @@
                         >
                             Reset
                         </button>
+
                         <button
                             type="button"
                             class="px-5 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:opacity-90 transition"
@@ -217,7 +228,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { ChevronDown } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import { typeFilters, statusFilters } from "~/types/booking";
@@ -240,11 +251,39 @@ const emit = defineEmits<{
 
 const open = ref(false);
 
+const getLocalDateStr = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+};
+
+const getDefaultDateRange = () => {
+    const today = new Date();
+
+    const from = new Date(today);
+    from.setDate(from.getDate() - 1);
+
+    const to = new Date(today);
+    to.setDate(to.getDate() + 7);
+
+    return {
+        from: getLocalDateStr(from),
+        to: getLocalDateStr(to),
+    };
+};
+
+const defaultDates = getDefaultDateRange();
+
 const localType = ref(props.type);
 const localStatus = ref(props.status);
-const localDateFrom = ref(props.dateFrom);
-const localDateTo = ref(props.dateTo);
-const activePreset = ref<string | null>(null);
+const localDateFrom = ref(props.dateFrom || defaultDates.from);
+const localDateTo = ref(props.dateTo || defaultDates.to);
+
+const activePreset = ref<string | null>(
+    props.dateFrom || props.dateTo ? null : "1w",
+);
 
 const periodPresets = [
     { label: "All", value: "all" },
@@ -256,25 +295,38 @@ const periodPresets = [
 
 watch(
     () => props.type,
-    (v) => (localType.value = v),
+    (v) => {
+        localType.value = v;
+    },
 );
+
 watch(
     () => props.status,
-    (v) => (localStatus.value = v),
+    (v) => {
+        localStatus.value = v;
+    },
 );
+
 watch(
     () => props.dateFrom,
-    (v) => (localDateFrom.value = v),
+    (v) => {
+        if (v) {
+            localDateFrom.value = v;
+        }
+    },
 );
+
 watch(
     () => props.dateTo,
-    (v) => (localDateTo.value = v),
+    (v) => {
+        if (v) {
+            localDateTo.value = v;
+        }
+    },
 );
 
 function applyPreset(value: string) {
     activePreset.value = value;
-    const today = new Date();
-    const to = today.toISOString().slice(0, 10);
 
     if (value === "all") {
         localDateFrom.value = "";
@@ -282,22 +334,44 @@ function applyPreset(value: string) {
         return;
     }
 
-    const start = new Date(today);
-    if (value === "1d") start.setDate(start.getDate() - 1);
-    if (value === "1w") start.setDate(start.getDate() - 7);
-    if (value === "1m") start.setMonth(start.getMonth() - 1);
-    if (value === "1y") start.setFullYear(start.getFullYear() - 1);
+    const today = new Date();
 
-    localDateFrom.value = start.toISOString().slice(0, 10);
-    localDateTo.value = to;
+    const to = new Date(today);
+    const from = new Date(today);
+
+    if (value === "1d") {
+        from.setDate(from.getDate() - 1);
+        to.setDate(to.getDate() + 1);
+    }
+
+    if (value === "1w") {
+        from.setDate(from.getDate() - 1);
+        to.setDate(to.getDate() + 7);
+    }
+
+    if (value === "1m") {
+        from.setMonth(from.getMonth() - 1);
+        to.setDate(to.getDate() + 7);
+    }
+
+    if (value === "1y") {
+        from.setFullYear(from.getFullYear() - 1);
+        to.setDate(to.getDate() + 7);
+    }
+
+    localDateFrom.value = getLocalDateStr(from);
+    localDateTo.value = getLocalDateStr(to);
 }
 
 function resetAll() {
     localType.value = "all";
     localStatus.value = "all";
-    localDateFrom.value = "";
-    localDateTo.value = "";
-    activePreset.value = "all";
+
+    const defaults = getDefaultDateRange();
+
+    localDateFrom.value = defaults.from;
+    localDateTo.value = defaults.to;
+    activePreset.value = "1w";
 }
 
 function applyAndClose() {
@@ -305,23 +379,41 @@ function applyAndClose() {
     emit("update:status", localStatus.value);
     emit("update:dateFrom", localDateFrom.value);
     emit("update:dateTo", localDateTo.value);
+
     open.value = false;
 }
 
+onMounted(() => {
+    if (!props.dateFrom) {
+        emit("update:dateFrom", defaultDates.from);
+    }
+
+    if (!props.dateTo) {
+        emit("update:dateTo", defaultDates.to);
+    }
+});
+
 const typeSummary = computed(() => {
     const found = typeFilters.find((t: any) => t.value === props.type);
+
     return found?.label ?? "All";
 });
 
 const statusSummary = computed(() => {
     const found = statusFilters.find((s: any) => s.value === props.status);
+
     return found?.label ?? "All";
 });
 
 const periodSummary = computed(() => {
-    if (!props.dateFrom && !props.dateTo) return "All";
-    if (props.dateFrom && props.dateTo)
+    if (!props.dateFrom && !props.dateTo) {
+        return "All";
+    }
+
+    if (props.dateFrom && props.dateTo) {
         return `${props.dateFrom} → ${props.dateTo}`;
+    }
+
     return props.dateFrom || props.dateTo;
 });
 </script>
@@ -331,6 +423,7 @@ const periodSummary = computed(() => {
 .fade-slide-leave-active {
     transition: all 0.15s ease;
 }
+
 .fade-slide-enter-from,
 .fade-slide-leave-to {
     opacity: 0;

@@ -33,12 +33,12 @@ class PatientRepository
             return Patient::with([
                 'location',
                 'currentAdmission.bed.room',
-                'currentAdmission.admissionContract',
+                // 'currentAdmission.admissionContract',
                 'currentAdmission.invoiceAdmission.branchContract',
                 'currentAdmission.currentInvoiceFacility.branchContract',
                 'currentAdmission.currentInvoiceFacility.invoice',
                 'latestAdmission.bed.room',
-                'latestAdmission.admissionContract',
+                // 'latestAdmission.admissionContract',
                 'latestAdmission.invoiceAdmission.branchContract',
                 'schedules.location',
             ])
@@ -64,15 +64,15 @@ class PatientRepository
                 $query->where('status', 'admitted');
             },
             'admissions.bed.room',
-            'admissions.admissionContract',
+            // 'admissions.admissionContract',
             'admissions.currentInvoiceFacility.branchContract',
             'admissions.currentInvoiceFacility.invoice',
             'currentAdmission.bed.room',
-            'currentAdmission.admissionContract',
+            // 'currentAdmission.admissionContract',
             'currentAdmission.currentInvoiceFacility.branchContract',
             'currentAdmission.currentInvoiceFacility.invoice',
             'latestAdmission.bed.room',
-            'latestAdmission.admissionContract',
+            // 'latestAdmission.admissionContract',
             'schedules.location',
             'schedules.scheduleServices.service',
         ])

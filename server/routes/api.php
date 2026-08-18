@@ -20,6 +20,7 @@ use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PatientAdmissionController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\RefundController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ScheduleController;
@@ -73,26 +74,19 @@ Route::middleware('auth:sanctum')->group(function () {
     // EMPLOYEE / STAFF
     Route::post('/services/assign-employee', [ServiceController::class, 'assignEmployee']);
 
-    Route::post('/admissions/action', [PatientAdmissionController::class, 'action']);
-    // Route::post('/admissions/admit', [PatientAdmissionController::class, 'action']);
-
     //SCHEDULES
     Route::get('/online-schedules/qr', [OnlineScheduleController::class, 'generateQr']);
     Route::post('/schedules/action',  [ScheduleController::class, 'action']);
 
-    // CUSTOM-BOOKING
-    // Route::post('/bookings/facility', [BookingController::class, 'createBooking']);
-    // Route::post('/bookings/facility-admission', [BookingController::class, 'admission']);
-    // Route::post('/total', [BookingController::class, 'getTotal']);
-
     Route::post('/bookings/action', [BookingController::class, 'action']);
+    Route::post('/invoices/action', [InvoiceController::class, 'action']);
+    Route::post('/admissions/action', [PatientAdmissionController::class, 'action']);
 
     // OVERVIEW / STATS
     Route::post('/bookings/overview', [BookingController::class, 'overview']);
     Route::get('/invoices/overview', [InvoiceController::class, 'overview']);
     Route::post('/contracts/overview', [BranchContractController::class, 'overview']);
     Route::get('/rooms/overview', [RoomController::class, 'overview']);
-
 
     // SUBSCRIPTION
     Route::post('/subscription', [SubscriptionController::class, 'newSubscription']);
@@ -126,7 +120,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'admissions' => PatientAdmissionController::class,
         'invoices' => InvoiceController::class,
         'settings' => BranchSettingController::class,
-        'online-schedules' => OnlineScheduleController::class
+        'online-schedules' => OnlineScheduleController::class,
     ]);
 
     //VALIDATE INPUTS

@@ -123,6 +123,9 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
             ], 504);
         } catch (\Exception $e) {
             Log::info($e);
+            return response()->json([
+                'message' => 'The external service took too long to respond.'
+            ], 504);
         }
     }
 }

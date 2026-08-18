@@ -136,7 +136,7 @@ class PatientService
     // DONE PATIENT ACCESS
     public function patientAccess(array $guardian, object $patient)
     {
-        $client = $this->userRepository->createUpdateTypeUser([
+        $user = $this->userRepository->createUpdateTypeUser([
             'email' => $guardian['email'],
             'address' => $guardian['address'],
             'first_name' => $guardian['first_name'],
@@ -146,11 +146,14 @@ class PatientService
             'occupation' => $guardian['occupation'],
         ], 'client');
 
+        $client = $user->client;
+
         $client->patientAccess()->create([
             'patient_id' => $patient->patient_id,
             'have_access' => true,
             'relationship_type' => $guardian['relationship'] ?? 'relative',
         ]);
+
         return $client;
     }
 

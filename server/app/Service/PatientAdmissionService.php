@@ -196,17 +196,23 @@ class PatientAdmissionService
                     throw new Exception('Admission not found.', 404);
                 }
 
-                $admission->load('admissionContract');
+                // $admission->load('admissionContract');
 
-                if (!$admission->admissionContract) {
-                    throw new Exception('Admission contract not found.', 400);
-                }
+                // if (!$admission->admissionContract) {
+                //     throw new Exception('Admission contract not found.', 400);
+                // }
+                $admission->load('invoiceAdmission');
+
+                $initialFacility = $admission->invoiceAdmission()
+                    ->where('branch_contract_id', $admission->branch_contract_id)
+                    ->latest('invoice_facility_id')
+                    ->first();
 
                 $admittedAt = isset($payload['admitted_at'])
                     ? Carbon::parse($payload['admitted_at'])
                     : now();
 
-                $endDate = AdmissionHelper::calculateEndDate($admittedAt, $admission->admissionContract->billing_cycle);
+                $endDate = AdmissionHelper::calculateEndDate($admittedAt, $initialFacility->branchContract->billing_cycle);
 
                 $admission->update([
                     'status'      => PatientAdmission::STATUS_ADMITTED,
@@ -219,13 +225,6 @@ class PatientAdmissionService
                         'status' => Bed::STATUS_OCCUPIED,
                     ]);
                 }
-
-                $admission->load('invoiceAdmission');
-
-                $initialFacility = $admission->invoiceAdmission()
-                    ->where('branch_contract_id', $admission->branch_contract_id)
-                    ->latest('invoice_facility_id')
-                    ->first();
 
                 if (!$initialFacility) {
                     throw new Exception('No invoice facility record found to activate for this admission.', 400);
@@ -263,6 +262,12 @@ class PatientAdmissionService
         }
 
         return DB::transaction(function () use ($admission, $payload) {
+            $currentInvoiceFacility = $admission->currentInvoiceFacility()
+                ->with('branchContract')
+                ->first();
+
+            $currentInvoiceId = $currentInvoiceFacility?->invoice_id;
+
             $dischargedAt = now();
 
             $admission->update([
@@ -276,32 +281,54 @@ class PatientAdmissionService
                 ]);
             }
 
-            // $invoiceIds = $admission->invoiceAdmission()
-            //     ->pluck('invoice_id')
-            //     ->unique()
-            //     ->filter();
+            $invoiceIds = $admission->invoiceAdmission()
+                ->pluck('invoice_id')
+                ->unique()
+                ->filter();
 
-            // if ($invoiceIds->isNotEmpty()) {
-            //     $invoices = Invoice::with(['payments.refunds'])
-            //         ->whereIn('invoice_id', $invoiceIds)
-            //         ->get();
+            if ($invoiceIds->isNotEmpty()) {
+                $invoices = Invoice::with([
+                    'payments.refunds',
+                    'invoiceFacility.branchContract',
+                ])
+                    ->whereIn('invoice_id', $invoiceIds)
+                    ->get();
 
-            //     $currentInvoiceId = $admission->currentInvoiceFacility()
-            //         ->first()?->invoice_id;
+                foreach ($invoices as $invoice) {
+                    if (
+                        $currentInvoiceId !== null &&
+                        $invoice->invoice_id === $currentInvoiceId &&
+                        $currentInvoiceFacility
+                    ) {
+                        $this->refundService->createRefundCurrentInvoice(
+                            $invoice,
+                            $admission,
+                            $currentInvoiceFacility
+                        );
 
-            //     foreach ($invoices as $invoice) {
-            //         if ($currentInvoiceId !== null && $invoice->invoice_id === $currentInvoiceId) {
-            //             $this->refundService->refundCurrentInvoice($invoice, $payload);
-            //             continue;
-            //         }
+                        continue;
+                    }
 
-            //         $this->refundService->refundFutureInvoice($invoice, $payload);
-            //     }
-            // }
+                    $this->refundService->createRefundFutureInvoice(
+                        $invoice,
+                        $payload
+                    );
+
+                    $invoice->refresh();
+
+                    if ($invoice->net_paid_amount <= 0) {
+                        $invoice->update([
+                            'status' => Invoice::STATUS_VOID,
+                        ]);
+                    }
+                }
+            }
 
             return response()->json([
                 'message' => 'Admission discharged successfully.',
-                'data' => $this->patientService->showPatient($payload['p_uuid']),
+                'data' => $this->patientService->showPatient(
+                    $payload['p_uuid']
+                ),
             ]);
         });
     }
@@ -670,6 +697,7 @@ class PatientAdmissionService
                 'total'     => $payload['payment']['total_amount'],
                 'branch_id' => $payload['branch_id'],
                 'status'    => Invoice::STATUS_PENDING,
+                'original_total' => $payload['payment']['total_amount'],
             ]);
 
             $invoice->invoiceFacility()->create([

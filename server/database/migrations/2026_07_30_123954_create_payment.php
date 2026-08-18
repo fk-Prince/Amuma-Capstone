@@ -14,6 +14,8 @@ return new class extends Migration
             $table->foreignId('invoice_id')
                 ->constrained('invoices', 'invoice_id')
                 ->cascadeOnDelete();
+            $table->enum('status', ['standard', 'retention_fee'])
+                ->default('standard');
             $table->decimal('amount', 10, 2);
             $table->string('payment_method', 50)->nullable();
             $table->timestamp('created_at')->useCurrent();

@@ -470,12 +470,7 @@ import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import LocationIcon from "~/components/icons/location.vue";
 import ServiceModal from "~/components/sections/booking/provider/ServiceModal.vue";
-import {
-    formatHour,
-    getTimeSlots,
-    getLocalDateStr,
-    filterAvailableSlots,
-} from "~/utils/time";
+import { formatHour, getLocalDateStr } from "~/utils/time";
 import type { HomecareBooking } from "~/types/booking";
 import type { Service } from "~/types/service";
 import type { BranchSettings, BranchHomecare } from "~/types/branch";
@@ -569,12 +564,14 @@ const availableTimeSlots = computed(() =>
         props.settings?.opening ?? "00:00",
         props.settings?.closing ?? "00:00",
         props.model.date,
-        60,
+        30,
     ),
 );
 
 const displayTime = computed(() =>
-    availableTimeSlots.value.length ? "Select time" : "No slots available",
+    availableTimeSlots.value.length
+        ? "Select time"
+        : "No slots available / Please Select different date",
 );
 
 watch(availableTimeSlots, (slots) => {

@@ -3,14 +3,13 @@
 namespace App\Service;
 
 use App\Http\Resources\InvoiceResource;
-use App\Models\Booking;
 use App\Models\Invoice;
+use App\Models\Refund;
 use App\Models\User;
-use App\Repository\BookingRepository;
 use App\Repository\InvoiceRepository;
+use App\Repository\RefundRepository;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class InvoiceService
 {
@@ -18,12 +17,14 @@ class InvoiceService
 
     public function __construct(
         private InvoiceRepository $invoiceRepository,
+        private RefundRepository $refundRepository
     ) {}
 
     public function overview(array $payload)
     {
         return $this->invoiceRepository->overview($payload);
     }
+
     public function createInvoiceService(array $services, string $branchId)
     {
         $invoice = $this->invoiceRepository->create([
@@ -50,7 +51,7 @@ class InvoiceService
     {
         return DB::transaction(function () use ($user, $payload) {
             $mode = $payload['mode'];
-            if ($mode == 'schedule' || $mode == 'invoice') {
+            if ($mode == 'invoice') {
                 $invoice = $this->invoiceRepository->findByField([
                     ['invoice_code', '=', $payload['invoice_code']]
                 ]);
@@ -128,57 +129,6 @@ class InvoiceService
                     }
                 }
 
-                //     else if ($mode == 'booking') {
-
-                //     $booking = $this->bookingRepository->findByField([
-                //         ['reference_id', '=', $payload['reference_id']]
-                //     ]);
-
-                //     if (!$booking) {
-                //         throw new Exception("Booking not found", 404);
-                //     }
-
-                //     $nonProcessableStatuses = [
-                //         Booking::STATUS_PENDING,
-                //         Booking::STATUS_REJECTED,
-                //         // Booking::STATUS_INPROGRESS,
-                //         Booking::STATUS_EXPIRED,
-                //         // Booking::STATUS_COMPLETED
-                //     ];
-
-                //     if (in_array($booking->status, $nonProcessableStatuses)) {
-                //         throw new Exception(
-                //             "Booking cannot be processed because its current status is '{$booking->status}'.",
-                //             400
-                //         );
-                //     }
-
-                //     if (strtolower($booking['category']) == "facility") {
-                //         $bookingData = $booking['booking_data'];
-                //         $admitted_at =
-                //             $booking['booking_data']['service']['admitted_date'] ??
-                //             $bookingData['payment']['admitted_at'] ??
-                //             $payload['admitted_date']  ??
-                //             null;
-
-                //         if ($payload['cash'] < $bookingData['payment']['total_amount']) {
-                //             throw new Exception("Insufficient payment. Required amount: {$bookingData['payment']['total_amount']}, received: {$payload['cash']}", 400);
-                //         }
-                //         $bookingData['payment']['paid'] = true;
-                //         $bookingData['reserved']['admitted_at'] = $admitted_at;
-                //         $booking->update([
-                //             'booking_data' => $bookingData,
-                //             // 'status' => Booking::STATUS_INPROGRESS,
-                //         ]);
-                //         // $patient->bookings()->create([
-                //         //     'booking_id' => $booking['booking_id']
-                //         // ]);
-                //         return [
-                //             'message' => 'Booking payment has been processed successfully. The booking is now ready for the next step.',
-                //         ];
-                //     }
-                // } 
-
                 return [
                     'message' => 'Patient payment has been processed successfully.',
                 ];
@@ -197,14 +147,6 @@ class InvoiceService
                 ], 404);
             }
             return new InvoiceResource($invoice);
-        } else if ($payload['mode'] === 'booking') {
-            // $booking = $this->invoiceRepository->getBookingDetail($payload);
-            // if (!$booking) {
-            //     return response()->json([
-            //         'message' => 'Booking not found.',
-            //     ], 404);
-            // };
-            // return $booking;
         } else if ($payload['mode'] === 'patient') {
             $patient = $this->invoiceRepository->getPatientWithUuid($payload);
             if (! $patient) {
@@ -218,9 +160,35 @@ class InvoiceService
         }
     }
 
-
     public function retrieveAllBooking(User $user, array $payload)
     {
         return $this->invoiceRepository->getInvoices($payload);
+    }
+
+    public function completeRefund(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            $refunds = $this->refundRepository->findRefund($payload);
+
+            if ($refunds->isEmpty()) {
+                throw new Exception('Refund not found.', 404);
+            }
+
+
+            foreach ($refunds as $refund) {
+                if ($refund->status !== Refund::STATUS_PROCESSING) {
+                    continue;
+                }
+                $refund->update([
+                    'status' => Refund::STATUS_COMPLETED,
+                ]);
+            }
+
+
+            return [
+                'message' => 'All refunds have been completed successfully.',
+                'data' => $this->invoiceRepository->getPatientWithUuid($payload)
+            ];
+        });
     }
 }

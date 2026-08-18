@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('invoice_adjustment_id');
             $table->foreignId('invoice_id')
                 ->constrained('invoices', 'invoice_id');
-            $table->enum('type', ['proration_deduction', 'refund', 'correction']);
+            $table->enum('type', ['refund', 'correction']);
             $table->decimal('amount', 10, 2);
             $table->text('reason')->nullable();
             $table->timestamps();

@@ -1,725 +1,949 @@
 <template>
-    <div class="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-5 pb-8">
-        <div class="flex flex-wrap items-center justify-between gap-3 no-print">
-            <button
-                type="button"
-                @click="goBack"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-secondary transition"
+    <div class="min-h-screen w-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-[1600px] space-y-5">
+            <div
+                class="flex flex-wrap items-center justify-between gap-3 no-print"
             >
-                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none">
-                    <path
-                        d="M12.5 15L7.5 10L12.5 5"
+                <button
+                    type="button"
+                    class="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition hover:text-secondary"
+                    @click="goBack"
+                >
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none">
+                        <path
+                            d="M12.5 15L7.5 10L12.5 5"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
+                    Back
+                </button>
+
+                <button
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-xl border border-primary-100 bg-white px-4 py-2 text-sm font-medium text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-primary-50"
+                    @click="handlePrint"
+                >
+                    <svg
+                        class="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
                         stroke="currentColor"
                         stroke-width="1.75"
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                    />
-                </svg>
-                Back
-            </button>
-
-            <button
-                type="button"
-                @click="handlePrint"
-                class="inline-flex items-center gap-2 rounded-full border border-primary-100 bg-white px-4 py-2 text-sm font-medium text-primary-600 shadow-sm transition hover:border-accent-500 hover:text-accent-600"
-            >
-                <svg
-                    class="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M6 9V3h12v6" />
-                    <path
-                        d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
-                    />
-                    <path d="M8 14h8v6H8z" />
-                </svg>
-                Print
-            </button>
-        </div>
-
-        <div
-            class="hidden print:block rounded-2xl border border-primary-100 bg-white p-5"
-        >
-            <div
-                class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-secondary"
-            >
-                <div>
-                    <p
-                        class="font-semibold uppercase tracking-[0.2em] text-muted text-[11px]"
                     >
-                        Patient
-                    </p>
-                    <p class="mt-1 text-base font-semibold">
-                        {{ summary?.patient?.full_name ?? "—" }}
-                    </p>
-                    <p class="text-muted">
-                        {{ summary?.patient?.patient_uuid ?? "—" }}
-                    </p>
-                </div>
-
-                <div class="text-right">
-                    <p
-                        class="font-semibold uppercase tracking-[0.2em] text-muted text-[11px]"
-                    >
-                        Invoices
-                    </p>
-                    <p class="mt-1 text-base font-semibold">
-                        {{ summary?.invoice_count ?? 0 }}
-                    </p>
-                    <p class="text-muted">
-                        Balance ₱{{ formatMoney(summary?.total_balance ?? 0) }}
-                    </p>
-                </div>
+                        <path d="M6 9V3h12v6" />
+                        <path
+                            d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                        />
+                        <path d="M8 14h8v6H8z" />
+                    </svg>
+                    Print
+                </button>
             </div>
-        </div>
 
-        <div
-            v-if="loading"
-            class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-10 text-center text-muted"
-        >
-            Loading patient invoices…
-        </div>
-
-        <div
-            v-else-if="errors"
-            class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-10 text-center text-danger"
-        >
-            {{ errors }}
-        </div>
-
-        <div
-            v-else-if="summary"
-            class="grid grid-cols-1 xl:grid-cols-[1fr_500px] gap-5 items-start"
-        >
             <div
-                class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden"
+                v-if="loading"
+                class="rounded-2xl border border-primary-100 bg-white p-12 text-center shadow-sm"
             >
                 <div
-                    class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 px-7 py-6 border-b border-primary-100 bg-gradient-to-b from-accent-500/[0.04] to-transparent"
-                >
-                    <div class="min-w-0">
-                        <span
-                            class="w-fit font-mono text-xs px-2 py-1 rounded-md bg-accent-50 text-accent-600 inline-block mb-2"
-                        >
-                            {{ summary.patient?.patient_uuid }}
-                        </span>
+                    class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary-100 border-t-primary-600"
+                />
 
-                        <h2
-                            class="text-lg font-semibold text-secondary truncate"
-                        >
-                            {{ summary.patient?.full_name ?? "—" }}
-                        </h2>
+                <p class="mt-4 text-sm font-medium text-secondary">
+                    Loading patient account...
+                </p>
 
-                        <p class="text-sm text-muted truncate">
-                            {{ summary.invoice_count }} invoice(s) on record
-                        </p>
-                    </div>
+                <p class="mt-1 text-xs text-muted">
+                    Please wait while the invoice information is loaded.
+                </p>
+            </div>
 
-                    <div class="flex items-center gap-2.5 shrink-0">
-                        <button
-                            v-if="canRefund"
-                            type="button"
-                            class="inline-flex items-center gap-1.5 rounded-full border border-danger/30 bg-danger/10 px-3.5 py-1.5 text-xs font-medium text-danger hover:border-danger transition no-print"
-                            @click="openRefundModal"
-                        >
-                            <svg
-                                class="h-3.5 w-3.5"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path d="M3 12a9 9 0 1 0 3-6.7" />
-                                <path d="M3 4v5h5" />
-                            </svg>
-
-                            Refund
-                            <span class="opacity-70">
-                                ₱{{ formatMoney(refundableAmount) }}
-                            </span>
-                        </button>
-
-                        <span
-                            class="px-3 py-1 rounded-full text-xs font-medium capitalize shrink-0"
-                            :class="statusClasses(summary.status)"
-                        >
-                            {{ summary.status }}
-                        </span>
-                    </div>
-                </div>
-
+            <div
+                v-else-if="errors"
+                class="rounded-2xl border border-danger/20 bg-white p-10 text-center shadow-sm"
+            >
                 <div
-                    class="grid border-b border-primary-100 bg-white divide-x divide-primary-100"
-                    :class="gridColsClass"
+                    class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-danger/10 text-danger"
                 >
-                    <div class="px-7 py-5 bg-slate-50/60">
-                        <p
-                            class="text-[10px] uppercase tracking-[0.15em] text-muted font-mono mb-2"
-                        >
-                            Total Amount
-                        </p>
-                        <p
-                            class="text-2xl font-bold tracking-tight text-secondary"
-                        >
-                            ₱{{ formatMoney(summary.total_amount) }}
-                        </p>
-                    </div>
-
-                    <div class="px-7 py-5 bg-primary-50/70">
-                        <p
-                            class="text-[10px] uppercase tracking-[0.15em] text-primary-700 font-mono mb-2"
-                        >
-                            Total Paid
-                        </p>
-                        <p
-                            class="text-2xl font-bold tracking-tight text-primary-700"
-                        >
-                            ₱{{ formatMoney(summary.total_paid) }}
-                        </p>
-                    </div>
-
-                    <div v-if="hasRefund" class="px-7 py-5 bg-accent-50/60">
-                        <p
-                            class="text-[10px] uppercase tracking-[0.15em] text-accent-700 font-mono mb-2"
-                        >
-                            Total Refunded
-                        </p>
-                        <p
-                            class="text-2xl font-bold tracking-tight text-accent-700"
-                        >
-                            ₱{{ formatMoney(summary.total_refunded) }}
-                        </p>
-                    </div>
-
-                    <div
-                        v-if="hasProcessingRefund"
-                        class="px-7 py-5 bg-primary-50"
+                    <svg
+                        class="h-6 w-6"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
                     >
-                        <p
-                            class="text-[10px] uppercase tracking-[0.15em] text-primary-800 font-mono mb-2"
-                        >
-                            To Be Refunded
-                        </p>
-                        <p
-                            class="text-2xl font-bold tracking-tight text-primary-800"
-                        >
-                            ₱{{ formatMoney(summary.total_refund_processing) }}
-                        </p>
-                    </div>
-
-                    <div class="px-7 py-5 bg-danger/10">
-                        <p
-                            class="text-[10px] uppercase tracking-[0.15em] text-red-600 font-mono mb-2"
-                        >
-                            Total Balance
-                        </p>
-                        <p
-                            class="text-2xl font-bold tracking-tight text-red-600"
-                        >
-                            ₱{{ formatMoney(summary.total_balance) }}
-                        </p>
-                    </div>
+                        <path
+                            d="M12 9v4M12 17h.01M10.3 3.8L2.9 17a2 2 0 001.75 3h14.7a2 2 0 001.75 3L13.7 3.8a2 2 0 00-3.4 0z"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
                 </div>
 
+                <p class="mt-4 text-sm font-semibold text-secondary">
+                    Unable to load patient account
+                </p>
+
+                <p class="mt-1 text-xs text-danger">
+                    {{ errors }}
+                </p>
+
+                <button
+                    type="button"
+                    class="mt-5 rounded-xl bg-primary-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-primary-700"
+                    @click="fetchSummary"
+                >
+                    Try Again
+                </button>
+            </div>
+
+            <template v-else-if="summary">
                 <div
-                    v-if="summary.patient"
-                    class="px-7 py-6 border-b border-primary-100"
+                    class="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]"
                 >
-                    <SectionHeader>
-                        <template #icon>
-                            <svg
-                                class="h-3.5 w-3.5"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path
-                                    d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
-                                />
-                                <circle cx="12" cy="7" r="4" />
-                            </svg>
-                        </template>
-                        Patient Information
-                    </SectionHeader>
-
-                    <div
-                        class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm"
-                    >
-                        <Field
-                            label="Name"
-                            :value="summary.patient.full_name"
-                        />
-                        <Field label="Gender" :value="summary.patient.gender" />
-                        <Field
-                            label="Birth Date"
-                            :value="formatDate(summary.patient.date_of_birth)"
-                        />
-                        <Field
-                            label="Age"
-                            :value="
-                                calculateAge(
-                                    formatDate(summary.patient.date_of_birth),
-                                    false,
-                                )
-                            "
-                        />
-                        <Field
-                            label="Blood Type"
-                            :value="summary.patient.blood_type"
-                        />
-                        <Field
-                            label="Phone"
-                            :value="summary.patient.phone_number"
-                        />
-                        <Field
-                            label="Citizenship"
-                            :value="summary.patient.citizenship"
-                        />
-                    </div>
-                </div>
-
-                <div class="px-7 py-6">
-                    <SectionHeader>
-                        <template #icon>
-                            <svg
-                                class="h-3.5 w-3.5"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path d="M3 21h18" />
-                                <path d="M5 21V5l7-3 7 3v16" />
-                                <path d="M9 21v-5h6v5" />
-                                <path d="M9 8h.01" />
-                                <path d="M15 8h.01" />
-                                <path d="M9 11h.01" />
-                                <path d="M15 11h.01" />
-                            </svg>
-                        </template>
-                        Admission
-                    </SectionHeader>
-
-                    <div v-if="admissionInvoices.length" class="space-y-3">
-                        <div
-                            v-for="inv in admissionInvoices"
-                            :key="`admission-${inv.invoice_id}`"
-                            class="group rounded-2xl border border-primary-100 bg-white px-5 py-5 cursor-pointer transition-all duration-200 hover:border-primary-200 hover:bg-primary-50/20 hover:shadow-sm"
-                            @click="viewInvoice(inv.invoice_code)"
+                    <main class="min-w-0 space-y-5">
+                        <section
+                            class="overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-sm"
                         >
-                            <div class="flex flex-col gap-5">
+                            <div
+                                class="border-b border-primary-100 bg-gradient-to-br from-primary-50 via-white to-accent-50/40 px-6 py-7 sm:px-7"
+                            >
                                 <div
-                                    class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
+                                    class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"
                                 >
                                     <div class="min-w-0">
                                         <div
-                                            class="flex items-center gap-2 flex-wrap"
+                                            class="flex flex-wrap items-center gap-2"
                                         >
                                             <span
-                                                class="inline-flex items-center rounded-lg bg-primary-50 border border-primary-100 px-2.5 py-1 font-mono text-[11px] font-medium text-primary-700"
+                                                class="rounded-lg bg-primary-100 px-2.5 py-1 font-mono text-[11px] font-semibold text-primary-700"
                                             >
-                                                {{ inv.invoice_code }}
+                                                {{
+                                                    summary.patient
+                                                        ?.patient_uuid ?? "—"
+                                                }}
+                                            </span>
+                                        </div>
+
+                                        <h1
+                                            class="mt-3 truncate text-2xl font-bold tracking-tight text-secondary sm:text-3xl"
+                                        >
+                                            {{
+                                                summary.patient?.full_name ??
+                                                "—"
+                                            }}
+                                        </h1>
+
+                                        <div
+                                            class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted"
+                                        >
+                                            <span>
+                                                {{ summary.invoice_count }}
+                                                invoice(s)
+                                            </span>
+
+                                            <span class="hidden sm:inline">
+                                                •
+                                            </span>
+
+                                            <span>
+                                                {{ admissions.length }}
+                                                admission(s)
+                                            </span>
+
+                                            <span class="hidden sm:inline">
+                                                •
+                                            </span>
+
+                                            <span>
+                                                {{ services.length }}
+                                                service(s)
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                class="grid border-b border-primary-100 sm:grid-cols-2 lg:grid-cols-4"
+                            >
+                                <SummaryCard
+                                    label="Total Amount"
+                                    :value="summary.total_amount"
+                                />
+
+                                <SummaryCard
+                                    label="Total Paid"
+                                    :value="summary.total_paid"
+                                    variant="paid"
+                                />
+
+                                <SummaryCard
+                                    label="Refunded"
+                                    :value="summary.total_refunded"
+                                    variant="refunded"
+                                />
+
+                                <SummaryCard
+                                    label="Balance Due"
+                                    :value="summary.total_balance"
+                                    variant="balance"
+                                />
+                            </div>
+
+                            <div
+                                v-if="hasProcessingRefund"
+                                class="flex flex-wrap items-center justify-between gap-3 border-b border-primary-100 bg-accent-50/40 px-6 py-4 sm:px-7"
+                            >
+                                <div>
+                                    <p
+                                        class="text-[10px] font-semibold uppercase tracking-[0.14em] text-accent-700"
+                                    >
+                                        Refund Processing
+                                    </p>
+
+                                    <p class="mt-1 text-xs text-muted">
+                                        A refund is currently being processed.
+                                    </p>
+                                </div>
+
+                                <!-- <p class="text-sm font-bold text-accent-700">
+                                    ₱{{
+                                        formatMoney(
+                                            summary.total_refund_processing,
+                                        )
+                                    }}
+                                </p> -->
+
+                                <div class="flex items-center gap-3">
+                                    <p
+                                        class="text-sm font-bold text-accent-700"
+                                    >
+                                        ₱{{
+                                            formatMoney(
+                                                summary.total_refund_processing,
+                                            )
+                                        }}
+                                    </p>
+
+                                    <button
+                                        type="button"
+                                        :disabled="processingRefund"
+                                        class="inline-flex items-center gap-2 rounded-xl bg-danger px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-50"
+                                        @click="openRefundModal"
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        >
+                                            <path d="M3 12a9 9 0 1 0 3-6.7" />
+                                            <path d="M3 4v6h6" />
+                                        </svg>
+
+                                        Refund
+                                    </button>
+                                </div>
+                            </div>
+
+                            <section
+                                v-if="summary.patient"
+                                class="border-b border-primary-100 px-6 py-6 sm:px-7"
+                            >
+                                <SectionHeader>
+                                    <template #icon>
+                                        <svg
+                                            class="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        >
+                                            <path
+                                                d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+                                            />
+                                            <circle cx="12" cy="7" r="4" />
+                                        </svg>
+                                    </template>
+
+                                    Patient Information
+                                </SectionHeader>
+
+                                <div
+                                    class="mt-5 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 lg:grid-cols-4"
+                                >
+                                    <Field
+                                        label="Full Name"
+                                        :value="summary.patient.full_name"
+                                    />
+
+                                    <Field
+                                        label="Gender"
+                                        :value="summary.patient.gender"
+                                    />
+
+                                    <Field
+                                        label="Birth Date"
+                                        :value="
+                                            formatDate(
+                                                summary.patient.date_of_birth,
+                                            )
+                                        "
+                                    />
+
+                                    <Field label="Age" :value="patientAge" />
+
+                                    <Field
+                                        label="Blood Type"
+                                        :value="summary.patient.blood_type"
+                                    />
+
+                                    <Field
+                                        label="Phone"
+                                        :value="summary.patient.phone_number"
+                                    />
+
+                                    <Field
+                                        label="Citizenship"
+                                        :value="summary.patient.citizenship"
+                                    />
+                                </div>
+                            </section>
+
+                            <section>
+                                <div
+                                    class="border-b border-primary-100 px-4 sm:px-6"
+                                >
+                                    <div class="flex gap-1 overflow-x-auto">
+                                        <button
+                                            type="button"
+                                            class="relative whitespace-nowrap px-4 py-4 text-sm font-medium transition"
+                                            :class="
+                                                activeTab === 'overview'
+                                                    ? 'text-primary-700'
+                                                    : 'text-muted hover:text-secondary'
+                                            "
+                                            @click="activeTab = 'overview'"
+                                        >
+                                            Overview
+
+                                            <span
+                                                v-if="activeTab === 'overview'"
+                                                class="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary-600"
+                                            />
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="relative inline-flex items-center gap-2 whitespace-nowrap px-4 py-4 text-sm font-medium transition"
+                                            :class="
+                                                activeTab === 'admissions'
+                                                    ? 'text-primary-700'
+                                                    : 'text-muted hover:text-secondary'
+                                            "
+                                            @click="activeTab = 'admissions'"
+                                        >
+                                            Admissions
+
+                                            <span
+                                                class="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] text-primary-700"
+                                            >
+                                                {{ admissions.length }}
                                             </span>
 
                                             <span
-                                                class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium"
-                                                :class="
-                                                    statusClasses(inv.status)
+                                                v-if="
+                                                    activeTab === 'admissions'
                                                 "
+                                                class="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary-600"
+                                            />
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="relative inline-flex items-center gap-2 whitespace-nowrap px-4 py-4 text-sm font-medium transition"
+                                            :class="
+                                                activeTab === 'services'
+                                                    ? 'text-accent-700'
+                                                    : 'text-muted hover:text-secondary'
+                                            "
+                                            @click="activeTab = 'services'"
+                                        >
+                                            Services
+
+                                            <span
+                                                class="rounded-full bg-accent-50 px-2 py-0.5 text-[10px] text-accent-700"
                                             >
-                                                {{ inv.status }}
+                                                {{ services.length }}
                                             </span>
+
+                                            <span
+                                                v-if="activeTab === 'services'"
+                                                class="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-accent-600"
+                                            />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div
+                                    v-if="activeTab === 'overview'"
+                                    class="space-y-5 px-6 py-6 sm:px-7"
+                                >
+                                    <div class="grid gap-4 md:grid-cols-2">
+                                        <div
+                                            class="rounded-xl border border-primary-100 bg-primary-50/40 p-5"
+                                        >
+                                            <div
+                                                class="flex items-start justify-between gap-3"
+                                            >
+                                                <div>
+                                                    <p
+                                                        class="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary-600"
+                                                    >
+                                                        Account Status
+                                                    </p>
+
+                                                    <p
+                                                        class="mt-2 text-lg font-bold capitalize text-secondary"
+                                                    >
+                                                        {{
+                                                            summary.status ||
+                                                            "Unknown"
+                                                        }}
+                                                    </p>
+                                                </div>
+
+                                                <span
+                                                    class="rounded-full px-2.5 py-1 text-[10px] font-medium capitalize"
+                                                    :class="
+                                                        statusClasses(
+                                                            summary.status,
+                                                        )
+                                                    "
+                                                >
+                                                    {{ summary.status }}
+                                                </span>
+                                            </div>
+
+                                            <div
+                                                class="mt-5 grid grid-cols-2 gap-4"
+                                            >
+                                                <div>
+                                                    <p
+                                                        class="text-[10px] text-muted"
+                                                    >
+                                                        Invoices
+                                                    </p>
+
+                                                    <p
+                                                        class="mt-1 text-sm font-semibold text-secondary"
+                                                    >
+                                                        {{
+                                                            summary.invoice_count
+                                                        }}
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <p
+                                                        class="text-[10px] text-muted"
+                                                    >
+                                                        Admissions
+                                                    </p>
+
+                                                    <p
+                                                        class="mt-1 text-sm font-semibold text-secondary"
+                                                    >
+                                                        {{ admissions.length }}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div
-                                            class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4"
+                                            class="rounded-xl border border-primary-100 bg-white p-5"
                                         >
-                                            <div>
-                                                <p
-                                                    class="text-[10px] uppercase tracking-[0.14em] text-muted font-mono"
-                                                >
-                                                    Total
-                                                </p>
-                                                <p
-                                                    class="mt-1 text-sm font-semibold text-secondary"
-                                                >
-                                                    ₱{{
-                                                        formatMoney(inv.total)
-                                                    }}
-                                                </p>
-                                            </div>
+                                            <p
+                                                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted"
+                                            >
+                                                Latest Invoice
+                                            </p>
 
-                                            <div>
-                                                <p
-                                                    class="text-[10px] uppercase tracking-[0.14em] text-muted font-mono"
-                                                >
-                                                    Paid
-                                                </p>
-                                                <p
-                                                    class="mt-1 text-sm font-semibold text-primary-700"
-                                                >
-                                                    ₱{{
-                                                        formatMoney(
-                                                            inv.amount_paid,
+                                            <template
+                                                v-if="summary.latest_invoice"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    class="mt-3 w-full text-left"
+                                                    @click="
+                                                        viewInvoice(
+                                                            summary
+                                                                .latest_invoice!
+                                                                .invoice_code,
                                                         )
-                                                    }}
-                                                </p>
-                                            </div>
+                                                    "
+                                                >
+                                                    <div
+                                                        class="flex items-center justify-between gap-3"
+                                                    >
+                                                        <span
+                                                            class="font-mono text-sm font-semibold text-primary-700"
+                                                        >
+                                                            {{
+                                                                summary
+                                                                    .latest_invoice
+                                                                    .invoice_code
+                                                            }}
+                                                        </span>
 
-                                            <div>
-                                                <p
-                                                    class="text-[10px] uppercase tracking-[0.14em] text-muted font-mono"
-                                                >
-                                                    Date
-                                                </p>
-                                                <p
-                                                    class="mt-1 text-sm font-medium text-secondary"
-                                                >
-                                                    {{
-                                                        formatDate(
-                                                            inv.created_at,
-                                                        )
-                                                    }}
-                                                </p>
-                                            </div>
+                                                        <span
+                                                            class="rounded-full px-2.5 py-1 text-[10px] font-medium"
+                                                            :class="
+                                                                statusClasses(
+                                                                    summary
+                                                                        .latest_invoice
+                                                                        .status,
+                                                                )
+                                                            "
+                                                        >
+                                                            {{
+                                                                summary
+                                                                    .latest_invoice
+                                                                    .status
+                                                            }}
+                                                        </span>
+                                                    </div>
+
+                                                    <div
+                                                        class="mt-4 grid grid-cols-3 gap-3"
+                                                    >
+                                                        <div>
+                                                            <p
+                                                                class="text-[10px] text-muted"
+                                                            >
+                                                                Total
+                                                            </p>
+
+                                                            <p
+                                                                class="mt-1 text-xs font-semibold text-secondary"
+                                                            >
+                                                                ₱{{
+                                                                    formatMoney(
+                                                                        summary
+                                                                            .latest_invoice
+                                                                            .total,
+                                                                    )
+                                                                }}
+                                                            </p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p
+                                                                class="text-[10px] text-muted"
+                                                            >
+                                                                Paid
+                                                            </p>
+
+                                                            <p
+                                                                class="mt-1 text-xs font-semibold text-primary-700"
+                                                            >
+                                                                ₱{{
+                                                                    formatMoney(
+                                                                        summary
+                                                                            .latest_invoice
+                                                                            .amount_paid,
+                                                                    )
+                                                                }}
+                                                            </p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p
+                                                                class="text-[10px] text-muted"
+                                                            >
+                                                                Balance
+                                                            </p>
+
+                                                            <p
+                                                                class="mt-1 text-xs font-semibold"
+                                                                :class="
+                                                                    Number(
+                                                                        summary
+                                                                            .latest_invoice
+                                                                            .balance_due,
+                                                                    ) > 0
+                                                                        ? 'text-danger'
+                                                                        : 'text-primary-700'
+                                                                "
+                                                            >
+                                                                ₱{{
+                                                                    formatMoney(
+                                                                        summary
+                                                                            .latest_invoice
+                                                                            .balance_due,
+                                                                    )
+                                                                }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            </template>
+
+                                            <p
+                                                v-else
+                                                class="mt-3 text-sm text-muted"
+                                            >
+                                                No invoice available.
+                                            </p>
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div
-                                        class="sm:min-w-[150px] sm:border-l sm:border-primary-100 sm:pl-5"
-                                    >
+                                <div
+                                    v-else-if="activeTab === 'admissions'"
+                                    class="px-6 py-6 sm:px-7"
+                                >
+                                    <PatientAdmissions
+                                        :admissions="admissions"
+                                        :discharge-calculation="
+                                            summary.discharge_calculation
+                                        "
+                                        @view-invoice="viewInvoice"
+                                        @view-discharge-termination="
+                                            viewDischargeTermination
+                                        "
+                                    />
+                                </div>
+
+                                <div
+                                    v-else-if="activeTab === 'services'"
+                                    class="px-6 py-6 sm:px-7"
+                                >
+                                    <PatientServices :services="services" />
+                                </div>
+                            </section>
+                        </section>
+                    </main>
+
+                    <aside class="xl:sticky xl:top-6 print:hidden">
+                        <div
+                            v-if="showPayment"
+                            class="overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-sm"
+                        >
+                            <div
+                                class="border-b border-primary-100 bg-primary-50/60 px-6 py-5"
+                            >
+                                <div
+                                    class="flex items-start justify-between gap-3"
+                                >
+                                    <div>
                                         <p
-                                            class="text-[10px] uppercase tracking-[0.14em] text-muted font-mono"
+                                            class="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-600"
                                         >
-                                            Balance Due
+                                            Outstanding Balance
                                         </p>
 
                                         <p
-                                            class="mt-1 text-lg font-bold tracking-tight"
+                                            class="mt-1 text-3xl font-bold tracking-tight text-secondary"
+                                        >
+                                            ₱{{
+                                                formatMoney(
+                                                    summary.total_balance,
+                                                )
+                                            }}
+                                        </p>
+                                    </div>
+
+                                    <div
+                                        class="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-primary-700 shadow-sm"
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                        >
+                                            <rect
+                                                x="3"
+                                                y="5"
+                                                width="18"
+                                                height="14"
+                                                rx="2"
+                                            />
+                                            <path d="M3 10h18" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <p class="mt-2 text-xs text-muted">
+                                    Amount still due from the patient.
+                                </p>
+                            </div>
+
+                            <div class="p-6">
+                                <PaymentForm
+                                    :processing="processingPayment"
+                                    :total-amount="summary.total_balance"
+                                    :enable-card="false"
+                                    :enable-g-cash="false"
+                                    :enable-cash="true"
+                                    title="Complete Payment"
+                                    :description="`Outstanding balance: ₱${formatMoney(summary.total_balance)}`"
+                                    cash-label="Confirm Cash Payment"
+                                    cash-processing-label="Confirming payment..."
+                                    cash-description="Enter the cash amount received from the patient."
+                                    @cash-pay="handleCashPay"
+                                />
+                            </div>
+                        </div>
+
+                        <div
+                            v-else
+                            class="rounded-2xl border border-primary-100 bg-white p-7 text-center shadow-sm"
+                        >
+                            <div
+                                class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-700"
+                            >
+                                <svg
+                                    class="h-5 w-5"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path d="M20 6L9 17l-5-5" />
+                                </svg>
+                            </div>
+
+                            <p
+                                class="mt-4 text-sm font-semibold text-secondary"
+                            >
+                                Account Settled
+                            </p>
+
+                            <p class="mt-1 text-xs leading-5 text-muted">
+                                All outstanding invoices for this patient have
+                                been fully paid.
+                            </p>
+                        </div>
+
+                        <div
+                            class="mt-4 rounded-2xl border border-primary-100 bg-white p-5 shadow-sm"
+                        >
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted"
+                            >
+                                Account Summary
+                            </p>
+
+                            <div class="mt-4 space-y-3">
+                                <div
+                                    class="flex items-center justify-between gap-3"
+                                >
+                                    <span class="text-xs text-muted">
+                                        Total invoices
+                                    </span>
+
+                                    <span
+                                        class="text-xs font-semibold text-secondary"
+                                    >
+                                        {{ summary.invoice_count }}
+                                    </span>
+                                </div>
+
+                                <div
+                                    class="flex items-center justify-between gap-3"
+                                >
+                                    <span class="text-xs text-muted">
+                                        Admissions
+                                    </span>
+
+                                    <span
+                                        class="text-xs font-semibold text-secondary"
+                                    >
+                                        {{ admissions.length }}
+                                    </span>
+                                </div>
+
+                                <div
+                                    class="flex items-center justify-between gap-3"
+                                >
+                                    <span class="text-xs text-muted">
+                                        Services
+                                    </span>
+
+                                    <span
+                                        class="text-xs font-semibold text-secondary"
+                                    >
+                                        {{ services.length }}
+                                    </span>
+                                </div>
+
+                                <div class="border-t border-primary-100 pt-3">
+                                    <div
+                                        class="flex items-center justify-between gap-3"
+                                    >
+                                        <span
+                                            class="text-xs font-medium text-secondary"
+                                        >
+                                            Current balance
+                                        </span>
+
+                                        <span
+                                            class="text-sm font-bold"
                                             :class="
-                                                Number(inv.balance_due ?? 0) > 0
+                                                showPayment
                                                     ? 'text-danger'
                                                     : 'text-primary-700'
                                             "
                                         >
-                                            ₱{{ formatMoney(inv.balance_due) }}
-                                        </p>
-
-                                        <p
-                                            class="mt-1 text-[11px]"
-                                            :class="
-                                                Number(inv.balance_due ?? 0) > 0
-                                                    ? 'text-danger/70'
-                                                    : 'text-primary-700/70'
-                                            "
-                                        >
-                                            {{
-                                                Number(inv.balance_due ?? 0) > 0
-                                                    ? "Outstanding"
-                                                    : "Fully paid"
+                                            ₱{{
+                                                formatMoney(
+                                                    summary.total_balance,
+                                                )
                                             }}
-                                        </p>
+                                        </span>
                                     </div>
-                                </div>
-
-                                <div
-                                    v-if="invoiceRefundAmount(inv) > 0"
-                                    class="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl bg-primary-50/50 border border-primary-100 px-4 py-3"
-                                >
-                                    <span
-                                        v-if="
-                                            Number(inv.refunded_amount ?? 0) > 0
-                                        "
-                                        class="inline-flex items-center gap-1.5 text-xs font-medium text-accent-700"
-                                    >
-                                        <span
-                                            class="h-1.5 w-1.5 rounded-full bg-accent-500"
-                                        ></span>
-                                        Refunded ₱{{
-                                            formatMoney(inv.refunded_amount)
-                                        }}
-                                    </span>
-
-                                    <span
-                                        v-if="
-                                            Number(
-                                                inv.refund_processing_amount ??
-                                                    0,
-                                            ) > 0
-                                        "
-                                        class="inline-flex items-center gap-1.5 text-xs font-medium text-primary-700"
-                                    >
-                                        <span
-                                            class="h-1.5 w-1.5 rounded-full bg-primary-500"
-                                        ></span>
-                                        Refund on process ₱{{
-                                            formatMoney(
-                                                inv.refund_processing_amount,
-                                            )
-                                        }}
-                                    </span>
-                                </div>
-
-                                <div
-                                    class="flex items-center justify-between border-t border-primary-100 pt-3"
-                                >
-                                    <span class="text-[11px] text-muted">
-                                        Admission invoice
-                                    </span>
-
-                                    <span
-                                        class="inline-flex items-center gap-1 text-xs font-medium text-primary-600 group-hover:text-primary-700 transition"
-                                    >
-                                        View invoice
-                                        <svg
-                                            class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
-                                            viewBox="0 0 20 20"
-                                            fill="none"
-                                        >
-                                            <path
-                                                d="M7.5 15L12.5 10L7.5 5"
-                                                stroke="currentColor"
-                                                stroke-width="1.75"
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                            />
-                                        </svg>
-                                    </span>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div
-                        v-else
-                        class="rounded-xl border border-dashed border-primary-100 p-6 text-center text-sm text-muted"
-                    >
-                        No admission invoices found.
-                    </div>
+                    </aside>
                 </div>
-
-                <div class="px-7 py-6 border-t border-primary-100">
-                    <SectionHeader>
-                        <template #icon>
-                            <Stethoscope
-                                class="h-3.5 w-3.5"
-                                :stroke-width="2"
-                            />
-                        </template>
-                        Services
-                    </SectionHeader>
-
-                    <div v-if="serviceInvoices.length" class="space-y-3">
-                        <div
-                            v-for="inv in serviceInvoices"
-                            :key="`service-${inv.invoice_id}`"
-                            class="rounded-xl border border-primary-100 px-5 py-4 cursor-pointer hover:border-accent-500/40 hover:bg-accent-50/30 transition"
-                            @click="viewInvoice(inv.invoice_code)"
-                        >
-                            <div
-                                class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-                            >
-                                <div class="min-w-0">
-                                    <div
-                                        class="flex items-center gap-2 flex-wrap"
-                                    >
-                                        <span
-                                            class="font-mono text-xs px-2 py-1 rounded-md bg-accent-50 text-accent-700"
-                                        >
-                                            {{ inv.invoice_code }}
-                                        </span>
-
-                                        <span
-                                            class="px-2.5 py-1 rounded-full text-[11px] font-medium"
-                                            :class="statusClasses(inv.status)"
-                                        >
-                                            {{ inv.status }}
-                                        </span>
-                                    </div>
-
-                                    <div
-                                        class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-3 text-sm"
-                                    >
-                                        <Field
-                                            label="Total"
-                                            :value="`₱${formatMoney(inv.total)}`"
-                                        />
-                                        <Field
-                                            label="Paid"
-                                            :value="`₱${formatMoney(inv.amount_paid)}`"
-                                        />
-                                        <Field
-                                            label="Date"
-                                            :value="formatDate(inv.created_at)"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div
-                                    class="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0"
-                                >
-                                    <span class="text-xs text-muted">
-                                        Balance
-                                    </span>
-                                    <span
-                                        class="text-sm font-semibold text-danger"
-                                    >
-                                        ₱{{ formatMoney(inv.balance_due) }}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div
-                                v-if="invoiceRefundAmount(inv) > 0"
-                                class="mt-4 pt-3 border-t border-primary-100 flex flex-wrap gap-x-6 gap-y-2 text-xs"
-                            >
-                                <span
-                                    v-if="Number(inv.refunded_amount ?? 0) > 0"
-                                    class="text-primary-700"
-                                >
-                                    Refunded ₱{{
-                                        formatMoney(inv.refunded_amount)
-                                    }}
-                                </span>
-
-                                <span
-                                    v-if="
-                                        Number(
-                                            inv.refund_processing_amount ?? 0,
-                                        ) > 0
-                                    "
-                                    class="text-accent-700"
-                                >
-                                    Refund Processing ₱{{
-                                        formatMoney(
-                                            inv.refund_processing_amount,
-                                        )
-                                    }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        v-else
-                        class="rounded-xl border border-dashed border-primary-100 p-6 text-center text-sm text-muted"
-                    >
-                        No service invoices found.
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="showPayment" class="xl:sticky xl:top-6 print:hidden">
-                <div class="p-6">
-                    <PaymentForm
-                        :processing="processingPayment"
-                        :total-amount="summary.total_balance"
-                        :enable-card="false"
-                        :enable-g-cash="false"
-                        :enable-cash="true"
-                        title="Complete Payment"
-                        :description="`Outstanding balance: ₱${formatMoney(
-                            summary.total_balance,
-                        )}`"
-                        cash-label="Confirm Cash Payment"
-                        cash-processing-label="Confirming payment..."
-                        cash-description="Enter the cash amount received from the patient."
-                        @cash-pay="handleCashPay"
-                    />
-                </div>
-            </div>
+            </template>
 
             <div
                 v-else
-                class="rounded-2xl shadow-sm ring-1 ring-black/5 bg-white p-6 text-center text-sm text-muted xl:sticky xl:top-6 print:hidden"
+                class="rounded-2xl border border-primary-100 bg-white p-12 text-center shadow-sm"
             >
-                All invoices for this patient have been fully paid.
-            </div>
-        </div>
+                <p class="text-sm font-semibold text-secondary">
+                    No patient data found
+                </p>
 
-        <div
-            v-else
-            class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-10 text-center text-muted"
-        >
-            No data found for this patient.
+                <p class="mt-1 text-xs text-muted">
+                    There is no invoice information available for this patient.
+                </p>
+            </div>
         </div>
 
         <Teleport to="body">
             <div
                 v-if="refundModalOpen"
-                class="fixed inset-0 bg-secondary/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 no-print"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 p-4 backdrop-blur-sm no-print"
                 @click.self="closeRefundModal"
             >
                 <div
-                    class="bg-white rounded-2xl shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-black/5 w-full max-w-sm p-6"
+                    class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10"
                 >
-                    <h3 class="text-base font-semibold text-secondary">
-                        Refund Amount
-                    </h3>
+                    <div class="border-b border-primary-100 px-6 py-5">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p
+                                    class="text-[10px] font-semibold uppercase tracking-[0.14em] text-danger"
+                                >
+                                    Refund
+                                </p>
 
-                    <p class="text-xs text-muted mt-1 mb-4">
-                        Refundable amount: ₱{{ formatMoney(refundableAmount) }}
-                    </p>
+                                <h3
+                                    class="mt-1 text-lg font-semibold text-secondary"
+                                >
+                                    Process Refund
+                                </h3>
 
-                    <label class="flex flex-col gap-1.5">
-                        <span class="text-xs font-medium text-muted">
-                            Refund Amount
-                        </span>
+                                <p class="mt-1 text-xs text-muted">
+                                    Please confirm the refund amount below.
+                                </p>
+                            </div>
 
-                        <input
-                            v-model="refundAmount"
-                            type="number"
-                            min="0"
-                            :max="refundableAmount"
-                            step="0.01"
-                            placeholder="0.00"
-                            class="rounded-lg border border-primary-100 px-3 py-2 text-sm text-secondary focus:outline-none focus:ring-2 focus:ring-accent-500/30 focus:border-accent-500"
-                        />
-                    </label>
+                            <button
+                                type="button"
+                                class="rounded-lg p-1.5 text-muted transition hover:bg-slate-100 hover:text-secondary"
+                                :disabled="processingRefund"
+                                @click="closeRefundModal"
+                            >
+                                <svg
+                                    class="h-5 w-5"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.75"
+                                >
+                                    <path
+                                        d="M6 6l12 12M18 6L6 18"
+                                        stroke-linecap="round"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
 
-                    <p
-                        v-if="hasProcessingRefund"
-                        class="mt-2 text-xs text-accent-700"
+                    <div class="space-y-5 p-6">
+                        <div
+                            class="rounded-xl border border-danger/20 bg-danger/5 p-5"
+                        >
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-danger"
+                            >
+                                Amount to Refund
+                            </p>
+
+                            <p
+                                class="mt-2 text-3xl font-bold tracking-tight text-danger"
+                            >
+                                ₱{{ formatMoney(refundableAmount) }}
+                            </p>
+
+                            <p
+                                v-if="hasProcessingRefund"
+                                class="mt-2 text-xs leading-5 text-muted"
+                            >
+                                This amount is currently available for refund.
+                            </p>
+                        </div>
+
+                        <div
+                            class="rounded-xl border border-primary-100 bg-slate-50/70 px-4 py-3"
+                        >
+                            <div
+                                class="flex items-center justify-between gap-3"
+                            >
+                                <span class="text-xs text-muted">
+                                    Refundable Amount
+                                </span>
+
+                                <span class="text-sm font-bold text-secondary">
+                                    ₱{{ formatMoney(refundableAmount) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <p
+                            v-if="refundError"
+                            class="rounded-xl bg-danger/10 px-3 py-2.5 text-xs text-danger"
+                        >
+                            {{ refundError }}
+                        </p>
+                    </div>
+
+                    <div
+                        class="flex justify-end gap-2 border-t border-primary-100 bg-slate-50/60 px-6 py-4"
                     >
-                        ₱{{
-                            formatMoney(summary?.total_refund_processing ?? 0)
-                        }}
-                        is already being processed for refund.
-                    </p>
-
-                    <label class="flex flex-col gap-1.5 mt-4">
-                        <span class="text-xs font-medium text-muted">
-                            Reason (optional)
-                        </span>
-
-                        <textarea
-                            v-model="refundReason"
-                            rows="2"
-                            placeholder="e.g. overpayment, cancelled service"
-                            class="rounded-lg border border-primary-100 px-3 py-2 text-sm text-secondary focus:outline-none focus:ring-2 focus:ring-accent-500/30 focus:border-accent-500 resize-none"
-                        />
-                    </label>
-
-                    <p v-if="refundError" class="text-xs text-danger mt-3">
-                        {{ refundError }}
-                    </p>
-
-                    <div class="mt-5 flex justify-end gap-2">
                         <button
                             type="button"
-                            class="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:text-secondary transition"
+                            class="rounded-xl px-4 py-2.5 text-sm font-medium text-muted transition hover:bg-white hover:text-secondary"
+                            :disabled="processingRefund"
                             @click="closeRefundModal"
                         >
                             Cancel
@@ -727,15 +951,226 @@
 
                         <button
                             type="button"
-                            :disabled="!isRefundAmountValid || processingRefund"
-                            class="rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                            :disabled="processingRefund"
+                            class="rounded-xl bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-40"
                             @click="submitRefund"
                         >
                             {{
                                 processingRefund
-                                    ? "Refunding..."
+                                    ? "Processing..."
                                     : "Confirm Refund"
                             }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
+
+        <Teleport to="body">
+            <div
+                v-if="dischargeModalOpen && selectedDischargeCalculation"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 p-4 backdrop-blur-sm no-print"
+                @click.self="closeDischargeTermination"
+            >
+                <div
+                    class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10"
+                >
+                    <div
+                        class="flex items-start justify-between gap-4 border-b border-primary-100 px-6 py-5"
+                    >
+                        <div>
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-danger"
+                            >
+                                Discharge Termination
+                            </p>
+
+                            <h3
+                                class="mt-1 text-lg font-semibold text-secondary"
+                            >
+                                Discharge Calculation
+                            </h3>
+
+                            <p class="mt-1 text-xs text-muted">
+                                Admission #{{
+                                    selectedDischargeCalculation.admission_id
+                                }}
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="rounded-lg p-1.5 text-muted transition hover:bg-slate-100 hover:text-secondary"
+                            @click="closeDischargeTermination"
+                        >
+                            <svg
+                                class="h-5 w-5"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.75"
+                            >
+                                <path
+                                    d="M6 6l12 12M18 6L6 18"
+                                    stroke-linecap="round"
+                                />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-5 p-6">
+                        <div
+                            class="rounded-xl border border-danger/20 bg-danger/5 p-5"
+                        >
+                            <div
+                                class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                                <div>
+                                    <p
+                                        class="text-[10px] font-semibold uppercase tracking-[0.14em] text-danger"
+                                    >
+                                        Refund Amount
+                                    </p>
+
+                                    <p
+                                        class="mt-1 text-2xl font-bold text-danger"
+                                    >
+                                        ₱{{
+                                            formatMoney(
+                                                selectedDischargeCalculation.refund_amount,
+                                            )
+                                        }}
+                                    </p>
+                                </div>
+
+                                <span
+                                    class="rounded-full bg-primary-50 px-3 py-1.5 text-[10px] font-semibold text-primary-700"
+                                >
+                                    Refund Eligible
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                            <Field
+                                label="Billing Cycle"
+                                :value="
+                                    selectedDischargeCalculation.billing_cycle
+                                "
+                            />
+
+                            <Field
+                                label="Contract Price"
+                                :value="`₱${formatMoney(
+                                    selectedDischargeCalculation.contract_price,
+                                )}`"
+                            />
+
+                            <Field
+                                label="Amount Paid"
+                                :value="`₱${formatMoney(
+                                    selectedDischargeCalculation.amount_paid,
+                                )}`"
+                            />
+
+                            <Field
+                                label="Required Payment"
+                                :value="`₱${formatMoney(
+                                    selectedDischargeCalculation.required_payment,
+                                )}`"
+                            />
+
+                            <Field
+                                label="Retention Amount"
+                                :value="`₱${formatMoney(
+                                    selectedDischargeCalculation.retention_amount,
+                                )}`"
+                            />
+
+                            <Field
+                                label="Termination Fee"
+                                :value="`₱${formatMoney(
+                                    selectedDischargeCalculation.termination_fee_amount,
+                                )}`"
+                            />
+                        </div>
+
+                        <div
+                            class="rounded-xl border border-primary-100 bg-slate-50/70 p-5"
+                        >
+                            <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                                <Field
+                                    label="Admission Date"
+                                    :value="
+                                        formatDate(
+                                            selectedDischargeCalculation.admission_date,
+                                        )
+                                    "
+                                />
+
+                                <Field
+                                    label="Discharge Date"
+                                    :value="
+                                        formatDate(
+                                            selectedDischargeCalculation.discharge_date,
+                                        )
+                                    "
+                                />
+
+                                <Field
+                                    label="Days Since Admission"
+                                    :value="
+                                        selectedDischargeCalculation.days_since_admission
+                                    "
+                                />
+
+                                <Field
+                                    label="Termination Fee %"
+                                    :value="`${selectedDischargeCalculation.termination_fee_percent}%`"
+                                />
+
+                                <Field
+                                    label="Payment Shortfall"
+                                    :value="`₱${formatMoney(
+                                        selectedDischargeCalculation.payment_shortfall,
+                                    )}`"
+                                />
+
+                                <Field
+                                    label="Refund"
+                                    :value="`₱${formatMoney(
+                                        selectedDischargeCalculation.refund_amount,
+                                    )}`"
+                                />
+                            </div>
+                        </div>
+
+                        <div
+                            class="rounded-xl border border-accent-100 bg-accent-50/40 p-4"
+                        >
+                            <p class="text-xs font-semibold text-accent-700">
+                                Termination Fee Window
+                            </p>
+
+                            <p class="mt-1 text-xs leading-5 text-muted">
+                                This admission is currently within the
+                                termination fee window. A
+                                {{
+                                    selectedDischargeCalculation.termination_fee_percent
+                                }}% termination fee applies.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex justify-end border-t border-primary-100 bg-slate-50/60 px-6 py-4"
+                    >
+                        <button
+                            type="button"
+                            class="rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700"
+                            @click="closeDischargeTermination"
+                        >
+                            Close
                         </button>
                     </div>
                 </div>
@@ -745,17 +1180,17 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, h } from "vue";
+import { computed, h, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Stethoscope } from "lucide-vue-next";
+
 import { invoiceService } from "~/api/invoice/InvoiceService";
-import type {
-    PatientInvoiceSummary,
-    PatientInvoiceItem,
-} from "~/types/invoice";
+import PatientAdmissions from "~/components/sections/app/Billing/PatientAdmissions.vue";
+import PatientServices from "~/components/sections/app/Billing/PatientServices.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import { useToast } from "~/composables/useToast";
 import { calculateAge } from "~/utils/user";
+
+import type { PatientAdmission, PatientInvoiceSummary } from "~/types/invoice";
 
 definePageMeta({
     layout: "dashboard",
@@ -769,21 +1204,58 @@ useHead({
 const route = useRoute();
 const router = useRouter();
 
+const { success, error } = useToast();
+
 const uuid = computed(() => route.params.uuid as string);
 const patientUuid = computed(() => route.params.p_uuid as string);
 
 const summary = ref<PatientInvoiceSummary | null>(null);
+
 const loading = ref(true);
 const errors = ref("");
-const { success, error } = useToast();
-const processingPayment = ref(false);
 
-const showPayment = computed(() => {
-    return !!summary.value && Number(summary.value.total_balance ?? 0) > 0;
+const processingPayment = ref(false);
+const processingRefund = ref(false);
+
+const activeTab = ref<"overview" | "admissions" | "services">("overview");
+
+const refundModalOpen = ref(false);
+
+const refundError = ref("");
+
+const services = computed(() => {
+    return summary.value?.services ?? [];
 });
 
-const hasRefund = computed(() => {
-    return Number(summary.value?.total_refunded ?? 0) > 0;
+const admissions = computed(() => {
+    const items = [...(summary.value?.admissions ?? [])];
+
+    return items.sort((a, b) => {
+        const aCurrent = isCurrentAdmission(a);
+        const bCurrent = isCurrentAdmission(b);
+
+        if (aCurrent !== bCurrent) {
+            return aCurrent ? -1 : 1;
+        }
+
+        const aDate = a.admission_date
+            ? new Date(a.admission_date).getTime()
+            : 0;
+
+        const bDate = b.admission_date
+            ? new Date(b.admission_date).getTime()
+            : 0;
+
+        return bDate - aDate;
+    });
+});
+
+const currentAdmission = computed(() => {
+    return admissions.value.find((admission) => isCurrentAdmission(admission));
+});
+
+const showPayment = computed(() => {
+    return Number(summary.value?.total_balance ?? 0) > 0;
 });
 
 const hasProcessingRefund = computed(() => {
@@ -791,94 +1263,64 @@ const hasProcessingRefund = computed(() => {
 });
 
 const refundableAmount = computed(() => {
-    if (!summary.value) return 0;
-
-    return Number(summary.value.total_refund_processing ?? 0);
+    return Number(summary.value?.total_refund_processing ?? 0);
 });
 
 const canRefund = computed(() => {
     return refundableAmount.value > 0;
 });
 
-const gridColsClass = computed(() => {
-    const cols =
-        3 + (hasRefund.value ? 1 : 0) + (hasProcessingRefund.value ? 1 : 0);
+const patientAge = computed(() => {
+    const date = summary.value?.patient?.date_of_birth;
 
-    return {
-        "grid-cols-3": cols === 3,
-        "grid-cols-4": cols === 4,
-        "grid-cols-5": cols === 5,
-    };
-});
-
-const admissionInvoices = computed(() => {
-    return (summary.value?.invoices ?? []).filter((invoice) => {
-        return (
-            Array.isArray(invoice.facilities) && invoice.facilities.length > 0
-        );
-    });
-});
-
-const serviceInvoices = computed(() => {
-    return (summary.value?.invoices ?? []).filter((invoice) => {
-        return (
-            (!Array.isArray(invoice.facilities) ||
-                invoice.facilities.length === 0) &&
-            Array.isArray(invoice.services) &&
-            invoice.services.length > 0
-        );
-    });
-});
-
-function invoiceRefundAmount(inv: PatientInvoiceItem) {
-    return (
-        Number(inv.refunded_amount ?? 0) +
-        Number(inv.refund_processing_amount ?? 0)
-    );
-}
-
-const refundModalOpen = ref(false);
-const refundAmount = ref("");
-const refundReason = ref("");
-const refundError = ref("");
-const processingRefund = ref(false);
-
-const isRefundAmountValid = computed(() => {
-    const amount = Number(refundAmount.value);
-
-    if (!refundAmount.value || Number.isNaN(amount) || amount <= 0) {
-        return false;
+    if (!date) {
+        return "—";
     }
 
-    return amount <= refundableAmount.value;
+    return calculateAge(formatDate(date), false);
 });
 
-function openRefundModal() {
-    if (!canRefund.value) return;
+function isCurrentAdmission(admission: PatientAdmission) {
+    return admission.status?.toLowerCase() === "admitted";
+}
 
-    refundAmount.value = "";
-    refundReason.value = "";
+function openRefundModal() {
+    if (!canRefund.value) {
+        return;
+    }
+
     refundError.value = "";
     refundModalOpen.value = true;
 }
 
 function closeRefundModal() {
-    if (processingRefund.value) return;
+    if (processingRefund.value) {
+        return;
+    }
 
     refundModalOpen.value = false;
 }
 
 async function submitRefund() {
-    if (!summary.value || !isRefundAmountValid.value) return;
+    if (!summary.value || !canRefund.value) {
+        return;
+    }
 
     processingRefund.value = true;
     refundError.value = "";
 
     try {
-        refundModalOpen.value = false;
+        const res = await invoiceService.action({
+            p_uuid: patientUuid.value,
+            branch_uuid: uuid.value,
+            patient_admission_id:
+                currentAdmission.value?.patient_admission_id ?? "",
+            type: "refund",
+        });
 
-        error("NOT YET SETUP");
-        // await fetchSummary();
+        success(res.message ?? "Refund processed successfully.");
+        refundModalOpen.value = false;
+        summary.value = res.data.data ?? res.data ?? res;
     } catch (err: any) {
         refundError.value =
             err?.data?.message ??
@@ -914,13 +1356,15 @@ async function fetchSummary() {
 }
 
 async function handleCashPay(cash: number) {
-    if (!summary.value) return;
+    if (!summary.value) {
+        return;
+    }
 
     processingPayment.value = true;
     errors.value = "";
 
     try {
-        const res = await invoiceService.create({
+        const response = await invoiceService.create({
             cash,
             mode: "patient",
             payment_method: "CASH",
@@ -928,7 +1372,7 @@ async function handleCashPay(cash: number) {
             branch_uuid: uuid.value,
         });
 
-        success(res.message);
+        success(response.message);
 
         await fetchSummary();
     } catch (err) {
@@ -957,23 +1401,60 @@ function viewInvoice(invoiceCode: string) {
         },
     });
 }
+const dischargeModalOpen = ref(false);
+const selectedDischargeAdmissionId = ref<number | null>(null);
 
-function statusClasses(status: string) {
-    const normalized = (status ?? "").toLowerCase();
-
-    if (normalized === "paid") {
-        return "bg-primary-50 text-primary-700";
+const selectedDischargeCalculation = computed(() => {
+    if (!summary.value?.discharge_calculation) {
+        return null;
     }
 
-    if (normalized === "partial") {
-        return "bg-accent-50 text-accent-700";
+    if (
+        selectedDischargeAdmissionId.value !==
+        summary.value.discharge_calculation.admission_id
+    ) {
+        return null;
     }
 
-    if (normalized === "overdue") {
-        return "bg-danger/10 text-danger";
-    }
+    return summary.value.discharge_calculation;
+});
 
-    return "bg-primary-50 text-primary-700";
+function viewDischargeTermination(admissionId: number) {
+    selectedDischargeAdmissionId.value = admissionId;
+    dischargeModalOpen.value = true;
+}
+
+function closeDischargeTermination() {
+    dischargeModalOpen.value = false;
+    selectedDischargeAdmissionId.value = null;
+}
+
+function statusClasses(status: string | null | undefined) {
+    switch (status?.toLowerCase()) {
+        case "paid":
+            return "bg-primary-50 text-primary-700";
+
+        case "partial":
+            return "bg-accent-50 text-accent-700";
+
+        case "pending":
+            return "bg-slate-100 text-slate-600";
+
+        case "admitted":
+            return "bg-primary-50 text-primary-700";
+
+        case "discharged":
+            return "bg-slate-100 text-slate-600";
+
+        case "overdue":
+            return "bg-danger/10 text-danger";
+
+        case "cancelled":
+            return "bg-danger/10 text-danger";
+
+        default:
+            return "bg-slate-100 text-slate-600";
+    }
 }
 
 function formatMoney(amount: number | string | null | undefined) {
@@ -984,39 +1465,162 @@ function formatMoney(amount: number | string | null | undefined) {
 }
 
 function formatDate(value: string | null | undefined) {
-    if (!value) return "—";
+    if (!value) {
+        return "—";
+    }
 
-    return new Date(value).toLocaleDateString("en-PH", {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "—";
+    }
+
+    return date.toLocaleDateString("en-PH", {
         month: "short",
         day: "numeric",
         year: "numeric",
     });
 }
 
-onMounted(() => {
-    fetchSummary();
-});
+onMounted(fetchSummary);
 
-const Field = (fieldProps: { label: string; value: any }, { slots }: any) =>
-    h("p", { class: "flex flex-col gap-0.5" }, [
-        h("span", { class: "text-xs text-muted" }, fieldProps.label),
-        h(
-            "span",
-            { class: "text-secondary font-medium" },
-            slots.value ? slots.value() : (fieldProps.value ?? "—"),
-        ),
-    ]);
+const Field = (
+    fieldProps: {
+        label: string;
+        value: unknown;
+    },
+    { slots }: any,
+) =>
+    h(
+        "div",
+        {
+            class: "flex min-w-0 flex-col gap-0.5",
+        },
+        [
+            h(
+                "span",
+                {
+                    class: "truncate text-[10px] font-semibold uppercase tracking-[0.11em] text-muted",
+                },
+                fieldProps.label,
+            ),
+            h(
+                "span",
+                {
+                    class: "truncate text-sm font-medium text-secondary",
+                },
+                slots.value ? slots.value() : String(fieldProps.value ?? "—"),
+            ),
+        ],
+    );
 
 Field.props = ["label", "value"];
 
 const SectionHeader = (_props: unknown, { slots }: any) =>
     h(
-        "h3",
+        "h2",
         {
-            class: "flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-accent-600 mb-4",
+            class: "flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-accent-700",
         },
-        [slots.icon?.(), slots.default?.()],
+        [
+            h(
+                "span",
+                {
+                    class: "flex h-7 w-7 items-center justify-center rounded-lg bg-accent-50",
+                },
+                slots.icon?.(),
+            ),
+            slots.default?.(),
+        ],
     );
+
+const SummaryCard = (props: {
+    label: string;
+    value: number;
+    variant?: string;
+}) => {
+    const variants: Record<
+        string,
+        {
+            container: string;
+            label: string;
+            value: string;
+        }
+    > = {
+        default: {
+            container: "bg-white",
+            label: "text-muted",
+            value: "text-secondary",
+        },
+        paid: {
+            container: "bg-primary-50/60",
+            label: "text-primary-700",
+            value: "text-primary-700",
+        },
+        refunded: {
+            container: "bg-accent-50/50",
+            label: "text-accent-700",
+            value: "text-accent-700",
+        },
+        balance: {
+            container: "bg-danger/5",
+            label: "text-danger",
+            value: "text-danger",
+        },
+    };
+
+    const variant = variants[props.variant ?? "default"] ?? variants.default;
+
+    if (!variant) return;
+    return h(
+        "div",
+        {
+            class: `border-b border-primary-100 px-5 py-5 last:border-b-0 sm:px-6 lg:border-b-0 lg:border-r lg:last:border-r-0 ${variant.container}`,
+        },
+        [
+            h(
+                "p",
+                {
+                    class: `text-[10px] font-semibold uppercase tracking-[0.14em] ${variant.label}`,
+                },
+                props.label,
+            ),
+            h(
+                "p",
+                {
+                    class: `mt-2 text-xl font-bold tracking-tight sm:text-2xl ${variant.value}`,
+                },
+                `₱${formatMoney(props.value)}`,
+            ),
+        ],
+    );
+};
+
+const EmptyState = (props: { title: string; description: string }) =>
+    h(
+        "div",
+        {
+            class: "rounded-xl border border-dashed border-primary-100 px-6 py-10 text-center",
+        },
+        [
+            h(
+                "p",
+                {
+                    class: "text-sm font-semibold text-secondary",
+                },
+                props.title,
+            ),
+            h(
+                "p",
+                {
+                    class: "mt-1 text-xs text-muted",
+                },
+                props.description,
+            ),
+        ],
+    );
+
+EmptyState.props = ["title", "description"];
 </script>
 
 <style scoped>
@@ -1034,18 +1638,21 @@ const SectionHeader = (_props: unknown, { slots }: any) =>
         display: none !important;
     }
 
-    .rounded-2xl {
+    .rounded-2xl,
+    .rounded-xl {
         border-radius: 0 !important;
     }
 
-    .shadow-sm,
     .shadow,
-    .shadow-md {
+    .shadow-sm,
+    .shadow-md,
+    .shadow-lg,
+    .shadow-xl,
+    .shadow-2xl {
         box-shadow: none !important;
     }
 
     .ring-1,
-    .ring-black\/5,
     .ring {
         box-shadow: none !important;
     }

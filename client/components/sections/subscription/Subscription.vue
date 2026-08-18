@@ -468,7 +468,7 @@
                     </button>
                 </div>
                 <button
-                    v-if="stepCompleted"
+                    v-if="stepCompleted && currentStep === 4"
                     @click="send"
                     :disabled="isLoading"
                     class="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-white py-3 font-semibold transition flex items-center justify-center gap-2"
@@ -652,14 +652,37 @@ const send = async () => {
         });
     } catch (err: any) {
         const errors = err?.errors || err?.response?.data?.errors;
-        console.log(err);
         if (errors) {
-            checkout.errors = Object.fromEntries(
+            const formattedErrors = Object.fromEntries(
                 Object.entries(errors).map(([key, value]: any) => [
                     key,
                     Array.isArray(value) ? value[0] : value,
                 ]),
             );
+
+            checkout.errors = formattedErrors;
+
+            const firstError = Object.keys(formattedErrors)[0];
+
+            if (!firstError) return;
+
+            if (firstError === "agency_email") {
+                currentStep.value = 2;
+            } else if (firstError === "branch_email") {
+                currentStep.value = 3;
+            } else if (
+                firstError.startsWith("agency_") ||
+                firstError.startsWith("agency.")
+            ) {
+                currentStep.value = 2;
+            } else if (
+                firstError.startsWith("branch_") ||
+                firstError.startsWith("branch.")
+            ) {
+                currentStep.value = 3;
+            } else if (firstError.startsWith("branch_settings")) {
+                currentStep.value = 4;
+            }
         }
     } finally {
         isLoading.value = false;

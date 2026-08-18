@@ -31,3 +31,7 @@ export function formatCurrency(value?: number | string | null): string {
     }
     return `₱${Number(value).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`;
 }
+
+export function formatPercent(value: number) {
+    return `${Number((value * 100).toFixed(2))}%`;
+}

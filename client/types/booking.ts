@@ -46,6 +46,7 @@ export interface BookingRetrieve {
         payment_status: string
     };
     reserved: Reserved | null;
+    valid_until?: string;
     created_at: string;
     updated_at: string;
     assignments?: SavedAssignment[];

@@ -155,7 +155,7 @@
                             ></span>
 
                             {{ availableSlots }}
-                            room{{ availableSlots === 1 ? "" : "s" }}
+                            slot {{ availableSlots === 1 ? "" : "s" }}
                             available
                         </span>
 

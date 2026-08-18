@@ -142,8 +142,7 @@ useHead({ title: "Review Booking" });
 definePageMeta({
     navVariant: 4,
     navTheme: "dark",
-    // middleware: ["auth-client", "booking-review-guard"],
-    middleware: ["auth-client"],
+    middleware: ["auth-client", "booking-review-guard"],
 });
 
 const route = useRoute();
@@ -298,7 +297,7 @@ async function handleSubmit() {
             action: "regular",
         });
         toast.success(res.message);
-        // // window.location.href = `/booking/provider/${uuid}/success`;
+        window.location.href = `/booking/provider/${uuid}/success`;
         // router.push({
         //     path: `/booking/provider/${uuid}/success`,
         //     // query: {

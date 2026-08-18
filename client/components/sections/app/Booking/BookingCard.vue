@@ -70,6 +70,11 @@
                       : "—"
             }}
         </td>
+        <td v-if="booking.valid_until" class="py-4 px-3 whitespace-nowrap">
+            <span class="px-3 py-1 rounded-full text-xs font-medium capitalize">
+                {{ stringToDateTime(booking.valid_until) }}
+            </span>
+        </td>
 
         <td class="py-4 px-3 whitespace-nowrap">
             <span

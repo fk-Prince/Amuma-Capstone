@@ -31,14 +31,14 @@ class PatientAdmission extends Model
         'end_date' => 'datetime',
     ];
 
-    public function admissionContract()
-    {
-        return $this->belongsTo(
-            BranchContract::class,
-            'branch_contract_id',
-            'branch_contract_id'
-        );
-    }
+    // public function admissionContract()
+    // {
+    //     return $this->belongsTo(
+    //         BranchContract::class,
+    //         'branch_contract_id',
+    //         'branch_contract_id'
+    //     );
+    // }
 
     public function bed()
     {

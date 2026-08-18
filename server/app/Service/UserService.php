@@ -43,6 +43,9 @@ class UserService
 
                 $location = $branch?->location;
 
+
+                $settings = $branch->settings ?? [];
+                $settings['termination_fee'] = $settings['termination_fee'] ?? 0.20;
                 return [
                     'uuid' => $branch?->uuid,
                     'name' => $branch?->name,
@@ -69,7 +72,8 @@ class UserService
                         'location' => $branch?->agencies->locations,
                         'image' => $branch->agencies->image,
                     ],
-                    'settings' => $branch->settings,
+
+                    'settings' => $settings,
                     'plan' => $branch?->subscriptions
                         ? $branch->subscriptions->map(function ($subscription) {
                             return [

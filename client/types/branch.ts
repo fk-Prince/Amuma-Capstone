@@ -43,6 +43,7 @@ export interface BranchSettings {
     // billing_due_date: number | null;
     is_open: boolean;
     status?: 'OPEN' | 'CLOSED';
+    // termination_fee?: number;
 }
 
 export const getBranchImage = (image: File | string | null | undefined) => {

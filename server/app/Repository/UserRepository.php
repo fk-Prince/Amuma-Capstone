@@ -34,28 +34,29 @@ class UserRepository
 
             if (!$user) {
                 $password = strtolower($payload['last_name']) . rand(100000, 999999);
+
                 $user = User::create([
                     'email' => $payload['email'],
                     'password' => Hash::make($password),
                     'is_verified' => true,
                 ]);
-                $user->client()->create([
+            }
+
+            $user->client()->updateOrCreate(
+                [
+                    'user_id' => $user->user_id,
+                ],
+                [
                     'first_name' => $payload['first_name'],
                     'middle_name' => $payload['middle_name'] ?? null,
                     'last_name' => $payload['last_name'],
                     'location_id' => $payload['location_id'] ?? null,
                     'phone_number' => $payload['phone_number'] ?? null,
                     'occupation' => $payload['occupation'] ?? null,
-                ]);
-
-                return $user;
-            }
-            return Client::updateOrCreate(
-                [
-                    'user_id' => $user->user_id,
-                ],
-                $payload
+                ]
             );
+
+            return $user->load('client');
         }
     }
 

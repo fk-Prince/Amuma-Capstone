@@ -4,7 +4,5 @@ use Illuminate\Support\Facades\Schedule;
 
 
 
-Schedule::command('bookings:reject-expired')
-    ->everyFourHours();
-
+Schedule::command('bookings:reject-expired')->everyMinute();
 Schedule::command('schedules:mark-missed')->everyMinute();

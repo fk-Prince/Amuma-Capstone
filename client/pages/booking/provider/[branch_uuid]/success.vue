@@ -91,7 +91,10 @@ import { useBookingStore } from "~/stores/booking";
 import { fetchAuthUser } from "~/composables/useAuthUser";
 
 useHead({ title: "Booking Submitted" });
-definePageMeta({ navVariant: 1 });
+definePageMeta({
+    navVariant: 4,
+    navTheme: "dark",
+});
 
 const router = useRouter();
 const bookingStore = useBookingStore();

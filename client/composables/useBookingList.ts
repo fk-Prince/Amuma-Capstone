@@ -20,14 +20,28 @@ export function useBookingList(branchUuid: Ref<string>) {
         return `${year}-${month}-${day}`;
     }
 
+    const defaultDateRange = getDefaultDateRange();
+    function getDefaultDateRange() {
+        const from = new Date();
+        from.setDate(from.getDate() - 1);
+
+        const to = new Date(from);
+        to.setDate(to.getDate() + 7);
+
+        return {
+            from: toDateInputValue(from),
+            to: toDateInputValue(to),
+        };
+    }
     const today = toDateInputValue(new Date());
-    const dateFrom = ref<string>(today);
-    const dateTo = ref<string>(today);
+    const dateFrom = ref<string>(defaultDateRange.from);
+    const dateTo = ref<string>(defaultDateRange.to);
 
     const pagination = usePagination({ pageSize: 10 });
 
     let requestId = 0;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
 
     async function fetchBookings() {
         const thisRequest = ++requestId;

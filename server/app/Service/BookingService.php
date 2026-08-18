@@ -13,6 +13,7 @@ use App\Service\External\XenditService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class BookingService
 {
@@ -70,6 +71,7 @@ class BookingService
                 'payment'  =>  $payload['payment'],
             ];
 
+
             $booking->update([
                 'booking_data' =>  $bookingData,
                 'status' => Booking::STATUS_APPROVED
@@ -82,9 +84,10 @@ class BookingService
             ]);
 
 
+
             return response()->json([
                 'message' => "Booking {$booking['reference_id']} has been approved successfully.",
-                'data'  => $booking
+                'data'  => $booking->fresh()
             ], 200);
         });
     }
@@ -110,23 +113,32 @@ class BookingService
         $paymentMethod = PaymentFactory::make($payload['payment_method']);
         $result = $paymentMethod->facilityBilling($payload);
         try {
-            return DB::transaction(function () use ($user, $branch, $payload, $result) {
+            return DB::transaction(function () use ($user, $branch, $payload, $result, $paymentMethod) {
 
                 $bookingData = $payload['booking_data'];
 
                 $bookingData['payment']['total_amount'] = $result['total'];
                 $bookingData['payment']['payment_status'] = 'paid';
+                $bookingData['payment']['payment_method'] = $payload['payment_method'];
                 $bookingData['payment']['xendit_invoice_id'] = $result['xendit_invoice_id'];
                 $bookingData['assessment'] = $this->bookingHelper->resolveAssessment(
                     $bookingData['assessment'] ?? []
                 );
+
+                $validUntil = match ($payload['category']) {
+                    Booking::CATEGORY_ONLINE => Carbon::parse(
+                        $bookingData['homecare']['date'] . ' ' .
+                            $bookingData['homecare']['prefered_time']
+                    ),
+                    default => Carbon::now()->addWeek(),
+                };
 
                 $booking = $this->bookingRepository->create([
                     'user_id'      => $user->user_id,
                     'branch_id'    => $branch->branch_id,
                     'category'     => $payload['category'],
                     'booking_data' => $bookingData,
-                    'valid_until'  => Carbon::now()->addWeek(),
+                    'valid_until'  => $validUntil,
                     'booking_type' => Booking::BOOKINGTYPE_ONLINE,
                 ]);
 
@@ -160,12 +172,19 @@ class BookingService
             $bookingData['payment'] = $this->bookingHelper->resolvePayment($payload);
             $bookingData['assessment'] = $this->bookingHelper->resolveAssessment($bookingData['assessment'] ?? []);
 
+            $validUntil = match ($payload['category']) {
+                Booking::CATEGORY_ONLINE => Carbon::parse(
+                    $bookingData['homecare']['date'] . ' ' .
+                        $bookingData['homecare']['prefered_time']
+                ),
+                default => Carbon::now()->addWeek(),
+            };
             $booking = $this->bookingRepository->create([
                 'user_id'      => $user->user_id,
                 'branch_id'    => $branch->branch_id,
                 'category'     => $payload['category'],
                 'booking_data' => $bookingData,
-                'valid_until'  => Carbon::now()->addWeek(),
+                'valid_until'  => $validUntil,
                 'booking_type' => Booking::BOOKINGTYPE_ONLINE
             ]);
 

@@ -23,7 +23,6 @@ class Invoice extends Model
         'branch_id',
         'invoice_code',
         'status',
-        'original_total',
     ];
 
     protected $casts = [
@@ -34,22 +33,47 @@ class Invoice extends Model
 
     public function branch(): BelongsTo
     {
-        return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
+        return $this->belongsTo(
+            Branch::class,
+            'branch_id',
+            'branch_id'
+        );
     }
 
     public function invoiceServices(): HasMany
     {
-        return $this->hasMany(InvoiceServices::class, 'invoice_id', 'invoice_id');
+        return $this->hasMany(
+            InvoiceServices::class,
+            'invoice_id',
+            'invoice_id'
+        );
     }
 
     public function payments(): HasMany
     {
-        return $this->hasMany(Payment::class, 'invoice_id', 'invoice_id');
+        return $this->hasMany(
+            Payment::class,
+            'invoice_id',
+            'invoice_id'
+        );
     }
 
     public function invoiceFacility(): HasMany
     {
-        return $this->hasMany(InvoiceFacility::class, 'invoice_id', 'invoice_id');
+        return $this->hasMany(
+            InvoiceFacility::class,
+            'invoice_id',
+            'invoice_id'
+        );
+    }
+
+    public function invoiceAdjustments(): HasMany
+    {
+        return $this->hasMany(
+            InvoiceAdjustment::class,
+            'invoice_id',
+            'invoice_id'
+        );
     }
 
     protected static function booted()
@@ -63,7 +87,11 @@ class Invoice extends Model
                 $nextNumber = 1;
 
                 if ($lastInvoice && $lastInvoice->invoice_code) {
-                    $lastNumber = (int) substr($lastInvoice->invoice_code, 4);
+                    $lastNumber = (int) substr(
+                        $lastInvoice->invoice_code,
+                        4
+                    );
+
                     $nextNumber = $lastNumber + 1;
                 }
 
@@ -82,11 +110,16 @@ class Invoice extends Model
         return (float) $this->payments->sum('amount');
     }
 
+
+
     public function getRefundedAmountAttribute(): float
     {
         return (float) $this->payments
             ->flatMap(fn(Payment $payment) => $payment->refunds)
-            ->whereIn('status', [Refund::STATUS_COMPLETED, Refund::STATUS_PROCESSING])
+            ->whereIn('status', [
+                Refund::STATUS_COMPLETED,
+                Refund::STATUS_PROCESSING,
+            ])
             ->sum('amount');
     }
 
@@ -102,18 +135,25 @@ class Invoice extends Model
     {
         return (float) $this->payments
             ->flatMap(fn(Payment $payment) => $payment->refunds)
-            ->where('status', Refund::STATUS_PROCESSING)
+            ->where('status',  Refund::STATUS_PROCESSING)
             ->sum('amount');
     }
 
     public function getNetPaidAmountAttribute(): float
     {
-        return $this->amount_paid - $this->refunded_amount;
+        return max($this->amount_paid - $this->refunded_amount,  0);
+    }
+
+    public function getAdjustedTotalAttribute(): float
+    {
+        $adjustments = (float) $this->invoiceAdjustments->sum('amount');
+
+        return max((float) $this->total - $adjustments,   0);
     }
 
     public function getBalanceDueAttribute(): float
     {
-        return max((float) $this->total - $this->net_paid_amount, 0);
+        return max($this->adjusted_total - $this->net_paid_amount, 0);
     }
 
     public function getRefundStatusAttribute(): string
@@ -122,6 +162,8 @@ class Invoice extends Model
             return 'none';
         }
 
-        return $this->net_paid_amount <= 0 ? 'full refunded' : 'partially refunded';
+        return $this->net_paid_amount <= 0
+            ? 'full refunded'
+            : 'partially refunded';
     }
 }

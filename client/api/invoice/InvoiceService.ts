@@ -30,9 +30,12 @@ class InvoiceService extends BaseService {
         return await this.request(`${this.resource}/${uuid}`, 'GET', payload);
     }
 
-
     async overview(payload: {}): Promise<any> {
         return await this.request(`${this.resource}/overview`, 'GET', payload);
+    }
+
+    async action(payload: {}): Promise<any> {
+        return await this.request(`${this.resource}/action`, 'POST', payload);
     }
 
     private get resource(): string {

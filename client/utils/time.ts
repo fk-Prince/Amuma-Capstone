@@ -25,6 +25,18 @@ export function getTimeZone() {
 }
 
 // FORMAT 00:00 to AM : PM
+// export function format24To12(time: string | undefined | null) {
+//     if (!time) return "";
+
+//     const [hourStr, minute] = time.split(":");
+//     let hour = Number(hourStr);
+
+//     const ampm = hour >= 12 ? "PM" : "AM";
+//     hour = hour % 12 || 12;
+
+//     return `${hour}:${minute} ${ampm}`;
+// }
+
 export function format24To12(time: string | undefined | null) {
     if (!time) return "";
 
@@ -32,9 +44,14 @@ export function format24To12(time: string | undefined | null) {
     let hour = Number(hourStr);
 
     const ampm = hour >= 12 ? "PM" : "AM";
+
+    if (hour === 0) {
+        return `00:${minute} AM`;
+    }
+
     hour = hour % 12 || 12;
 
-    return `${hour}:${minute} ${ampm}`;
+    return `${String(hour).padStart(2, "0")}:${minute} ${ampm}`;
 }
 
 // DISPLAY TIME 
