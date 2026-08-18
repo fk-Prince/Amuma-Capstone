@@ -115,17 +115,10 @@
                     </div>
 
                     <div
-                        v-if="canViewDischargeTermination(admission)"
+                        v-if="canViewDischarge(admission)"
                         class="mt-5 flex justify-end"
                     >
                         <button
-                            v-if="
-                                isCurrentAdmission(admission) &&
-                                props.dischargeCalculation?.admission_id ===
-                                    admission.patient_admission_id &&
-                                props.dischargeCalculation
-                                    ?.is_within_termination_fee_window
-                            "
                             type="button"
                             class="inline-flex items-center gap-2 rounded-xl bg-danger px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-danger/90"
                             @click="
@@ -369,12 +362,20 @@ function isCurrentAdmission(admission: PatientAdmission) {
     return admission.status?.toLowerCase() === "admitted";
 }
 
-function canViewDischargeTermination(admission: PatientAdmission) {
+function canViewDischarge(admission: PatientAdmission) {
+    const calculation = props.dischargeCalculation;
+
+    if (!isCurrentAdmission(admission) || !calculation) {
+        return false;
+    }
+
+    if (calculation.admission_id !== admission.patient_admission_id) {
+        return false;
+    }
+
     return (
-        isCurrentAdmission(admission) &&
-        props.dischargeCalculation?.admission_id ===
-            admission.patient_admission_id &&
-        props.dischargeCalculation?.is_within_termination_fee_window === true
+        calculation.is_within_termination_fee_window === true ||
+        calculation.is_within_yearly_half_refund_window === true
     );
 }
 
@@ -383,6 +384,42 @@ function admissionTotal(admission: PatientAdmission) {
         (total, invoice) => total + Number(invoice.total ?? 0),
         0,
     );
+}
+
+function getRefunds(invoice: any) {
+    return (invoice.payments ?? []).flatMap(
+        (payment: any) => payment.refunds ?? [],
+    );
+}
+
+function hasRefund(invoice: any) {
+    return getRefunds(invoice).some((refund: any) =>
+        ["completed", "processing"].includes(refund.status?.toLowerCase()),
+    );
+}
+
+function refundReason(invoice: any) {
+    const refunds = getRefunds(invoice).filter((refund: any) =>
+        ["completed", "processing"].includes(refund.status?.toLowerCase()),
+    );
+
+    return (
+        refunds
+            .map((refund: any) => refund.reason)
+            .filter(Boolean)
+            .join(" • ") || "No refund reason provided."
+    );
+}
+
+function refundAmount(invoice: any) {
+    return getRefunds(invoice)
+        .filter((refund: any) =>
+            ["completed", "processing"].includes(refund.status?.toLowerCase()),
+        )
+        .reduce(
+            (total: number, refund: any) => total + Number(refund.amount ?? 0),
+            0,
+        );
 }
 
 function formatMoney(amount: number | string | null | undefined) {
@@ -437,10 +474,6 @@ function statusClasses(status: string | null | undefined) {
             return "bg-slate-100 text-slate-600";
     }
 }
-</script>
-
-<script lang="ts">
-import { h } from "vue";
 
 const Field = (props: { label: string; value: unknown }) =>
     h(
@@ -489,42 +522,10 @@ const EmptyState = (props: { title: string; description: string }) =>
             ),
         ],
     );
+</script>
+
+<script lang="ts">
+import { h } from "vue";
 
 export default {};
-
-function getRefunds(invoice: any) {
-    return (invoice.payments ?? []).flatMap(
-        (payment: any) => payment.refunds ?? [],
-    );
-}
-
-function hasRefund(invoice: any) {
-    return getRefunds(invoice).some((refund: any) =>
-        ["completed", "processing"].includes(refund.status?.toLowerCase()),
-    );
-}
-
-function refundReason(invoice: any) {
-    const refunds = getRefunds(invoice).filter((refund: any) =>
-        ["completed", "processing"].includes(refund.status?.toLowerCase()),
-    );
-
-    return (
-        refunds
-            .map((refund: any) => refund.reason)
-            .filter(Boolean)
-            .join(" • ") || "No refund reason provided."
-    );
-}
-
-function refundAmount(invoice: any) {
-    return getRefunds(invoice)
-        .filter((refund: any) =>
-            ["completed", "processing"].includes(refund.status?.toLowerCase()),
-        )
-        .reduce(
-            (total: number, refund: any) => total + Number(refund.amount ?? 0),
-            0,
-        );
-}
 </script>

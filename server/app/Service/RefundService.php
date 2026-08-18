@@ -397,9 +397,6 @@ class RefundService
                 'termination_fee_percent' => 0,
                 'termination_fee_amount' => 0,
                 'refund_amount' => 0,
-                'policy' => 'none',
-                'policy_title' => 'No refund available',
-                'policy_description' => 'No active billing contract was found.',
                 'is_within_termination_fee_window' => false,
                 'is_within_yearly_half_refund_window' => false,
                 'is_under_required_payment' => false,
@@ -415,37 +412,25 @@ class RefundService
         $requiredPayment = $this->getRequiredPaymentAmount($invoiceFacility, $admission);
         $retentionAmount = 0;
         $terminationFeeAmount = 0;
+        $retentionPercent = 20; // change this
         $refundAmount = 0;
         $eligibleForRefund = false;
-        $policy = 'none';
-        $policyTitle = 'No refund';
-        $policyDescription = 'This payment is not eligible for a refund.';
-
         if ($withinTerminationFeeWindow) {
             $eligibleForRefund = true;
             $terminationFeeAmount = round($contractPrice * self::TERMINATION_FEE_RATE, 2);
             $retentionAmount = $terminationFeeAmount;
             $refundAmount = round(max(0, $netPaidAmount - $retentionAmount), 2);
-            $policy = 'termination_fee';
-            $policyTitle = 'Early discharge refund';
-            $policyDescription = 'Discharged within 7 days of admission. The payment is refunded less the 20% termination fee.';
         } elseif ($billingCycle === 'YEARLY' && $withinYearlyHalfRefundWindow) {
+            $retentionPercent = 50;
             $eligibleForRefund = true;
             $retentionAmount = round($contractPrice * self::YEARLY_HALF_REFUND_RATE,   2);
             $refundAmount = round(max(0, $netPaidAmount - $retentionAmount),   2);
-            $policy = 'yearly_half_refund';
-            $policyTitle = '50% yearly retention';
-            $policyDescription = 'The patient is within the yearly partial-refund period. 50% of the contract price is retained.';
         } elseif ($billingCycle === 'YEARLY') {
             $retentionAmount = $contractPrice;
-            $policy = 'outside_refund_window';
-            $policyTitle = 'Outside refund window';
-            $policyDescription = 'The yearly billing period is outside the refundable period. No refund is available.';
+            $retentionPercent = 100;
         } elseif ($billingCycle === 'MONTHLY') {
+            $retentionPercent = 100;
             $retentionAmount = $contractPrice;
-            $policy = 'monthly_no_refund';
-            $policyTitle = 'Monthly billing';
-            $policyDescription = 'The current monthly billing period is not eligible for a refund.';
         }
 
         return [
@@ -459,12 +444,9 @@ class RefundService
             'amount_paid' => round($netPaidAmount, 2),
             'required_payment' => round($requiredPayment, 2),
             'retention_amount' => round($retentionAmount, 2),
-            'termination_fee_percent' => 20,
+            'termination_fee_percent' => $retentionPercent,
             'termination_fee_amount' => round($terminationFeeAmount, 2),
             'refund_amount' => round($refundAmount, 2),
-            // 'policy' => $policy,
-            // 'policy_title' => $policyTitle,
-            // 'policy_description' => $policyDescription,
             'is_within_termination_fee_window' => $withinTerminationFeeWindow,
             'is_within_yearly_half_refund_window' => $withinYearlyHalfRefundWindow,
             'is_under_required_payment' => $netPaidAmount < $requiredPayment,
