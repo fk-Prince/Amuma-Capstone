@@ -1,9 +1,9 @@
 <template>
     <div class="min-h-screen flex flex-col bg-slate-50 relative">
         <div class="w-full md:max-w-[80%] max-w-[90%] mx-auto bg-white">
-            <div class="px-6 sm:px-12">
+            <!-- <div class="px-6 sm:px-12">
                 <Navbar @change="scrollToSection" />
-            </div>
+            </div> -->
 
             <div class="px-6 sm:px-12 scroll-mt-20" ref="overviewRef">
                 <ProviderImage

@@ -33,6 +33,7 @@ class ModuleSeeder extends Seeder
             'Services',
             'Employee Management',
             'Billing & Invoices',
+            'Manage Branches',
             'Branch Settings',
         ];
 
@@ -44,6 +45,7 @@ class ModuleSeeder extends Seeder
             'Services',
             'Employee Management',
             'Billing & Invoices',
+            'Manage Branches',
             'Branch Settings',
         ];
 

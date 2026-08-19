@@ -31,20 +31,7 @@ class RefundService
                 ->with('refunds')
                 ->get()
                 ->flatMap(fn($payment) => $payment->refunds)
-                ->where('status', Refund::STATUS_COMPLETED)
-                ->sum('amount'),
-            2
-        );
-    }
-
-    public function getProcessingRefundAmount(Invoice $invoice)
-    {
-        return round(
-            (float) $invoice->payments()
-                ->with('refunds')
-                ->get()
-                ->flatMap(fn($payment) => $payment->refunds)
-                ->where('status', Refund::STATUS_PROCESSING)
+                ->whereIn('status', [Refund::STATUS_COMPLETED, Refund::STATUS_PROCESSING])
                 ->sum('amount'),
             2
         );
@@ -52,15 +39,7 @@ class RefundService
 
     public function getNetPaidAmount(Invoice $invoice)
     {
-        return round(
-            max(
-                0,
-                $this->getPaidAmount($invoice)
-                    - $this->getRefundedAmount($invoice)
-                    - $this->getProcessingRefundAmount($invoice)
-            ),
-            2
-        );
+        return round(max(0, $this->getPaidAmount($invoice) - $this->getRefundedAmount($invoice)), 2);
     }
 
     public function getRefundableAmount(Invoice $invoice)
@@ -241,59 +220,36 @@ class RefundService
         if ($remainingAmount > 0) throw new Exception('Unable to process the requested refund amount.', 422);
     }
 
-    public function getTerminationFeeAmount(
-        PatientAdmission $admission,
-        mixed $contract
-    ): float {
+    public function getTerminationFeeAmount(PatientAdmission $admission, mixed $contract)
+    {
         if (!$this->isWithinTerminationFeeWindow($admission)) {
             return 0;
         }
 
-        $contractPrice = round(
-            (float) ($contract->price ?? 0),
-            2
-        );
+        $contractPrice = round((float) ($contract->price ?? 0), 2);
 
         if ($contractPrice <= 0) {
             return 0;
         }
 
-        return round(
-            $contractPrice * self::TERMINATION_FEE_RATE,
-            2
-        );
+        return round($contractPrice * self::TERMINATION_FEE_RATE, 2);
     }
 
-    protected function isWithinTerminationFeeWindow(
-        PatientAdmission $admission
-    ): bool {
-        if (!$admission->admitted_at) {
-            return false;
-        }
-
-        $admittedAt = Carbon::parse(
-            $admission->admitted_at
-        );
+    protected function isWithinTerminationFeeWindow(PatientAdmission $admission)
+    {
+        $admittedAt = Carbon::parse($admission->admitted_at);
 
         if ($admittedAt->isFuture()) {
             return false;
         }
 
-        return $admittedAt->diffInDays(now())
-            < self::TERMINATION_FEE_WINDOW_DAYS;
+        return $admittedAt->diffInDays(now()) < self::TERMINATION_FEE_WINDOW_DAYS;
     }
 
 
-    protected function isWithinYearlyHalfRefundWindow(
-        PatientAdmission $admission
-    ): bool {
-        if (!$admission->admitted_at) {
-            return false;
-        }
-
-        $admittedAt = Carbon::parse(
-            $admission->admitted_at
-        );
+    protected function isWithinYearlyHalfRefundWindow(PatientAdmission $admission)
+    {
+        $admittedAt = Carbon::parse($admission->admitted_at);
 
         if ($admittedAt->isFuture()) {
             return false;
@@ -301,8 +257,7 @@ class RefundService
 
         $daysSinceStart = $admittedAt->diffInDays(now());
 
-        return $daysSinceStart >= self::TERMINATION_FEE_WINDOW_DAYS
-            && $daysSinceStart < self::YEARLY_HALF_REFUND_WINDOW_DAYS;
+        return $daysSinceStart >= self::TERMINATION_FEE_WINDOW_DAYS && $daysSinceStart < self::YEARLY_HALF_REFUND_WINDOW_DAYS;
     }
 
 
