@@ -81,7 +81,7 @@ const buildSubscriptionPayload = (): SubscriptionRequest => ({
     payment_method: checkout.payment_method,
     billing_interval: checkout.selectedInterval,
 
-    // BRANCH DATA
+    //BRANCH DATA
     branch_name: checkout.branch.name,
     branch_contact_number: checkout.branch.contact_number,
     branch_image: checkout.branch.image,
@@ -94,6 +94,7 @@ const buildSubscriptionPayload = (): SubscriptionRequest => ({
     branch_latitude: checkout.branch.location.latitude,
     branch_longitude: checkout.branch.location.longitude,
     branch_email: checkout.branch.email ?? "",
+    branch_document: checkout.agency.document ?? "",
 
     // AGENCY DATA
     agency_id: checkout.agency.agency_id,
@@ -107,6 +108,9 @@ const buildSubscriptionPayload = (): SubscriptionRequest => ({
     agency_longitude: checkout.agency.location.longitude ?? undefined,
     agency_email: checkout.agency.email ?? "",
     agency_image: checkout.agency.image,
+    agency_id_front: checkout.agency.id_front ?? "",
+    agency_id_back: checkout.agency.id_back ?? "",
+    agency_document: checkout.agency.document ?? "",
 });
 const xenditProcessing = ref(false);
 

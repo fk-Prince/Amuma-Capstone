@@ -571,6 +571,9 @@ const validateAgency = async (): Promise<boolean> => {
             description: "agency_description",
             email: "agency_email",
             image: "agency_image",
+            id_front: "agency_id_front",
+            id_back: "agency_id_back",
+            document: "agency_document",
         };
         result.error.issues.forEach((issue: any) => {
             const path = issue.path.join(".");
@@ -593,6 +596,7 @@ const validateBranch = async (): Promise<boolean> => {
             contact_number: "branch_contact_number",
             image: "branch_image",
             email: "branch_email",
+            document: "branch_document",
         };
 
         result.error.issues.forEach((issue) => {
@@ -610,12 +614,12 @@ const isLoading = ref(false);
 const send = async () => {
     console.log(checkout.settings);
     try {
-        isLoading.value = true;
         const payload: SubscriptionRequest = {
             plan_code: checkout.selectedPlan.plan_code,
             payment_method: checkout.payment_method,
             billing_interval: checkout.selectedInterval,
 
+            //BRANCH DATA
             branch_name: checkout.branch.name,
             branch_contact_number: checkout.branch.contact_number,
             branch_image: checkout.branch.image,
@@ -628,7 +632,9 @@ const send = async () => {
             branch_latitude: checkout.branch.location.latitude,
             branch_longitude: checkout.branch.location.longitude,
             branch_email: checkout.branch.email ?? "",
+            branch_document: checkout.agency.document ?? "",
 
+            // AGENCY DATA
             agency_id: checkout.agency.agency_id,
             agency_name: checkout.agency.name,
             agency_description: checkout.agency.description,
@@ -640,7 +646,11 @@ const send = async () => {
             agency_longitude: checkout.agency.location.longitude ?? undefined,
             agency_email: checkout.agency.email ?? "",
             agency_image: checkout.agency.image,
+            agency_id_front: checkout.agency.id_front ?? "",
+            agency_id_back: checkout.agency.id_back ?? "",
+            agency_document: checkout.agency.document ?? "",
         };
+        console.log(payload);
         await subscriptionService.validateSubscription(payload);
         checkout.subscriptionPayload = payload;
         await navigateTo({

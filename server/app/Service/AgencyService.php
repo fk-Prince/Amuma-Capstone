@@ -29,8 +29,6 @@ class AgencyService
         if ($payload['type'] === 'agency_branches') {
             return $this->agencyRepository->paginate($payload);
         }
-        // $collection = $this->agencyRepository->paginate($payload['per_page'], $payload['owned']);
-        // return AgencyResource::collection($collection);
     }
 
     public function update(array $payload)

@@ -21,9 +21,9 @@ class Branch extends Model
         'description',
         'is_verified',
         'contact_number',
+        'document',
         'settings',
         'image',
-        'status',
         'email'
     ];
 
@@ -40,6 +40,7 @@ class Branch extends Model
 
     protected $casts = [
         'settings' => 'array',
+        'is_verified' => 'boolean',
     ];
 
     public function uniqueIds()

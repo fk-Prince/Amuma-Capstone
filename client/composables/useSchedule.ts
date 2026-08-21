@@ -124,19 +124,43 @@ export function useSchedule(props: UseScheduleProps = {}) {
     const dateList = computed(() => {
         const { start, end } = activeRange.value;
 
-        if (!start) return [];
-
         const list: string[] = [];
-        const cursor = new Date(`${start}T00:00:00`);
-        const endDate = new Date(`${end}T00:00:00`);
 
-        while (cursor <= endDate) {
-            list.push(toLocalDateString(cursor));
-            cursor.setDate(cursor.getDate() + 1);
+        if (start) {
+            const cursor = new Date(`${start}T00:00:00`);
+            const endDate = new Date(`${end}T00:00:00`);
+
+            while (cursor <= endDate) {
+                list.push(toLocalDateString(cursor));
+                cursor.setDate(cursor.getDate() + 1);
+            }
         }
 
-        return list;
+        for (const schedule of props.schedules ?? []) {
+            const date = getScheduleDate(schedule);
+            if (date && !list.includes(date)) {
+                list.push(date);
+            }
+        }
+
+        return list.sort();
     });
+    // const dateList = computed(() => {
+    //     const { start, end } = activeRange.value;
+
+    //     if (!start) return [];
+
+    //     const list: string[] = [];
+    //     const cursor = new Date(`${start}T00:00:00`);
+    //     const endDate = new Date(`${end}T00:00:00`);
+
+    //     while (cursor <= endDate) {
+    //         list.push(toLocalDateString(cursor));
+    //         cursor.setDate(cursor.getDate() + 1);
+    //     }
+
+    //     return list;
+    // });
 
     function schedulesForDay(date: string) {
         return (props.schedules ?? []).filter(
@@ -196,7 +220,12 @@ export function useSchedule(props: UseScheduleProps = {}) {
                     hourColumnCount: Math.max(hours.length - 1, 1),
                 };
             })
-            .filter((day): day is DayGroup => Boolean(day));
+            .filter((day): day is DayGroup => Boolean(day))
+            .sort((a, b) => {
+                if (a.isToday) return -1;
+                if (b.isToday) return 1;
+                return a.date.localeCompare(b.date);
+            });
     });
 
     const hasAnySchedules = computed(() => {

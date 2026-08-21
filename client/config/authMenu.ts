@@ -102,6 +102,8 @@ export const authMenuList: MenuItems[] = [
         to: "/app/branches/[uuid]/settings",
         modules: ["Branch Settings"],
     },
+
+
 ];
 
 export const ownerMenuList: MenuItems[] = [

@@ -1,7 +1,7 @@
 <template>
     <section v-if="guardian">
         <h3
-            class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
+            class="mb-4 flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B]"
         >
             <svg
                 class="h-3.5 w-3.5"
@@ -20,9 +20,9 @@
             Guardian
         </h3>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+        <div class="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
             <Field
-                label="Name"
+                label="Full Name"
                 :value="
                     fullName(
                         guardian.first_name,
@@ -31,17 +31,18 @@
                     )
                 "
             />
-            <Field label="Relationship" :value="guardian.relationship" />
+
             <Field label="Phone Number" :value="guardian.phone_number" />
             <Field label="Email" :value="guardian.email" />
-            <Field label="Occupation" :value="guardian.occupation" />
             <Field label="Address" :value="guardian.address" />
+            <Field label="Occupation" :value="guardian.occupation" />
+            <Field label="Relationship" :value="guardian.relationship" />
         </div>
     </section>
 
     <section v-if="hasAssessment">
         <h3
-            class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
+            class="mb-4 flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B]"
         >
             <svg
                 class="h-3.5 w-3.5"
@@ -60,38 +61,164 @@
             Assessment
         </h3>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-            <template v-for="(value, key) in assessment" :key="key">
-                <Field
-                    v-if="String(key) !== 'diagnosis_file'"
-                    :label="formatLabel(String(key))"
-                    :value="
-                        String(key) === 'diagnosis_file_name'
-                            ? undefined
-                            : value
+        <div
+            v-if="assessments.length > 1"
+            class="mb-6 flex flex-wrap items-center gap-2"
+        >
+            <button
+                v-for="(assessmentItem, index) in assessments"
+                :key="index"
+                type="button"
+                class="group flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors"
+                :class="
+                    index === activeIndex
+                        ? 'bg-primary text-white'
+                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                "
+                @click="activeIndex = index"
+            >
+                <span
+                    class="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold"
+                    :class="
+                        index === activeIndex
+                            ? 'bg-white/20 text-white'
+                            : 'bg-white text-slate-400'
                     "
                 >
-                    <template
-                        v-if="String(key) === 'diagnosis_file_name'"
-                        #value
+                    {{ index + 1 }}
+                </span>
+
+                Assessment {{ index + 1 }}
+            </button>
+        </div>
+
+        <div v-if="activeAssessment" class="space-y-8">
+            <div class="space-y-4">
+                <h5
+                    class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                >
+                    Recent Diagnosis / Supporting Document
+                </h5>
+
+                <div
+                    class="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2"
+                >
+                    <Field
+                        label="Diagnosis"
+                        :value="activeAssessment.diagnosis"
+                    />
+
+                    <Field
+                        label="Diagnosis Date"
+                        :value="activeAssessment.diagnosis_date"
+                    />
+
+                    <Field
+                        label="Diagnosis Notes"
+                        :value="activeAssessment.diagnosis_notes"
+                    />
+
+                    <Field
+                        label="Diagnosis File"
+                        :value="activeAssessment.diagnosis_file_name"
                     >
-                        <a
-                            v-if="assessment?.diagnosis_file"
-                            :href="diagnosisFileUrl"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="text-primary underline hover:text-primary/70"
-                        >
-                            {{ value || "View file" }}
-                        </a>
-                        <span v-else>{{ value || "—" }}</span>
-                    </template>
-                </Field>
-            </template>
+                        <template #value>
+                            <a
+                                v-if="activeAssessment.diagnosis_file"
+                                :href="diagnosisFileUrl"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-primary underline hover:text-primary/70"
+                            >
+                                {{
+                                    activeAssessment.diagnosis_file_name ||
+                                    "View file"
+                                }}
+                            </a>
+
+                            <span v-else>
+                                {{
+                                    activeAssessment.diagnosis_file_name || "—"
+                                }}
+                            </span>
+                        </template>
+                    </Field>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <h5
+                    class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                >
+                    Vital Signs
+                </h5>
+
+                <div
+                    class="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2"
+                >
+                    <Field
+                        label="Blood Pressure"
+                        :value="activeAssessment.blood_pressure"
+                    />
+
+                    <Field
+                        label="Pulse Rate"
+                        :value="activeAssessment.pulse_rate"
+                    />
+
+                    <Field
+                        label="Respiratory Rate"
+                        :value="activeAssessment.respiratory_rate"
+                    />
+
+                    <Field
+                        label="Temperature"
+                        :value="activeAssessment.temperature"
+                    />
+
+                    <Field
+                        label="Oxygen Saturation"
+                        :value="activeAssessment.oxygen_saturation"
+                    />
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <h5
+                    class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                >
+                    Mental / Cognitive State
+                </h5>
+
+                <div
+                    class="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2"
+                >
+                    <Field
+                        label="Mental State"
+                        :value="activeAssessment.mental_state"
+                    />
+
+                    <Field
+                        label="Memory Issues"
+                        :value="activeAssessment.memory_issues"
+                    />
+
+                    <Field label="Mood" :value="activeAssessment.mood" />
+
+                    <Field
+                        label="Communication"
+                        :value="activeAssessment.communication"
+                    />
+
+                    <Field label="Speech" :value="activeAssessment.speech" />
+                </div>
+            </div>
         </div>
     </section>
 </template>
+
 <script lang="ts" setup>
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import type { BookingRetrieve } from "~/types/booking";
 import { fullName } from "~/utils/user";
 import { Field } from "~/utils/fields";
@@ -101,28 +228,73 @@ const props = defineProps<{
 }>();
 
 const guardian = computed(() => props.booking?.guardian ?? null);
-const assessment = computed(() => props.booking?.assessment ?? null);
+
+const assessments = computed<any[]>(() => {
+    const value = props.booking?.assessment;
+
+    if (!value) {
+        return [];
+    }
+
+    if (Array.isArray(value)) {
+        return value;
+    }
+
+    if (typeof value === "object") {
+        return [value];
+    }
+
+    return [];
+});
+
+const activeIndex = ref(0);
+
+const activeAssessment = computed(() => {
+    return assessments.value[activeIndex.value] ?? null;
+});
+
+const hasAssessment = computed(() => assessments.value.length > 0);
+
+watch(
+    assessments,
+    (list) => {
+        if (!list.length) {
+            activeIndex.value = 0;
+            return;
+        }
+
+        if (activeIndex.value > list.length - 1) {
+            activeIndex.value = list.length - 1;
+        }
+    },
+    {
+        immediate: true,
+    },
+);
 
 const diagnosisFileUrl = computed(() => {
-    const file = assessment.value?.diagnosis_file;
+    const file = activeAssessment.value?.diagnosis_file;
 
-    if (!file) return "";
+    if (!file) {
+        return "";
+    }
 
     if (typeof file === "string") {
         return file;
     }
 
-    return URL.createObjectURL(file);
+    if (file instanceof File) {
+        return URL.createObjectURL(file);
+    }
+
+    return "";
 });
 
-function formatLabel(key: string) {
-    return String(key)
-        .replace(/_/g, " ")
-        .replace(/([a-z])([A-Z])/g, "$1 $2")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
-}
+onBeforeUnmount(() => {
+    const url = diagnosisFileUrl.value;
 
-const hasAssessment = computed(
-    () => !!assessment.value && Object.keys(assessment.value).length > 0,
-);
+    if (url && url.startsWith("blob:")) {
+        URL.revokeObjectURL(url);
+    }
+});
 </script>

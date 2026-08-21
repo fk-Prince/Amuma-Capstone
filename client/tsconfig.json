@@ -7,7 +7,7 @@
         { "path": "./.nuxt/tsconfig.node.json" }
     ],
     "compilerOptions": {
-        "types": ["node"],
+        "types": ["node", "chart.js"],
         "ignoreDeprecations": "6.0",
         "baseUrl": ".",
         "skipLibCheck": true,

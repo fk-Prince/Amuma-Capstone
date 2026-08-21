@@ -77,11 +77,11 @@ export function useBookingList(branchUuid: Ref<string>) {
             }
         }
     }
-
-    function goToPage(page: number) {
+    async function goToPage(page: number) {
         if (page < 1 || page > pagination.totalPages.value) return;
         pagination.currentPage.value = page;
-        fetchBookings();
+        await fetchBookings();
+
     }
 
     watch([searchQuery, statusFilter, typeFilter, dateFrom, dateTo], () => {

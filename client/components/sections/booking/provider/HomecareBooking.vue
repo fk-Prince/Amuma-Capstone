@@ -3,7 +3,6 @@
         class="rounded-2xl p-8 md:p-10"
         :class="{ 'animate-pulse': loading }"
     >
-        <!-- Header -->
         <div class="mb-8 flex items-baseline gap-3">
             <template v-if="loading">
                 <div class="h-6 w-6 shrink-0 rounded bg-slate-200" />
@@ -60,17 +59,17 @@
                                 )"
                                 :key="item.value"
                                 type="button"
-                                @click="
-                                    update(
-                                        'type',
-                                        item.value as HomecareBooking['type'],
-                                    )
-                                "
                                 class="group relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-200"
                                 :class="
                                     model.type === item.value
                                         ? 'border-primary-300 bg-primary-50/60 shadow-sm ring-2 ring-primary-100'
                                         : 'border-slate-200 bg-white hover:border-primary-200 hover:bg-primary-50/30 hover:shadow-sm'
+                                "
+                                @click="
+                                    update(
+                                        'type',
+                                        item.value as HomecareBooking['type'],
+                                    )
                                 "
                             >
                                 <div
@@ -82,11 +81,11 @@
 
                                 <div class="flex items-start gap-4">
                                     <div
-                                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/10 transition"
+                                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/10"
                                         :class="
                                             model.type === item.value
                                                 ? 'bg-primary text-white'
-                                                : 'group-hover:bg-primary/10'
+                                                : ''
                                         "
                                     >
                                         <component
@@ -98,11 +97,11 @@
 
                                     <div class="min-w-0 pr-8">
                                         <h4
-                                            class="text-sm font-bold text-slate-900 transition-colors"
+                                            class="text-sm font-bold text-slate-900"
                                             :class="
                                                 model.type === item.value
                                                     ? 'text-primary'
-                                                    : 'group-hover:text-primary'
+                                                    : ''
                                             "
                                         >
                                             {{ item.title }}
@@ -143,8 +142,7 @@
                                 class="mt-1 max-w-sm text-xs leading-5 text-slate-500"
                             >
                                 There are currently no booking services
-                                available. Please try again later or contact the
-                                provider for assistance.
+                                available.
                             </p>
                         </div>
                     </template>
@@ -248,19 +246,19 @@
                     </h3>
 
                     <p class="mt-0.5 text-xs text-slate-500">
-                        Select the medical service required for this booking.
+                        Select one medical service required for this booking.
                     </p>
                 </div>
 
                 <button
                     type="button"
-                    @click="isServiceModalOpen = true"
                     class="group flex w-full items-center justify-between rounded-xl border p-3.5 text-left transition-all duration-200"
                     :class="
                         errors?.services
                             ? 'border-red-400 bg-red-50/30'
                             : 'border-slate-200 hover:border-primary-200 hover:bg-primary-50/30'
                     "
+                    @click="isServiceModalOpen = true"
                 >
                     <div class="flex min-w-0 items-center gap-3">
                         <div
@@ -273,27 +271,22 @@
                             <p
                                 class="truncate text-sm font-semibold"
                                 :class="
-                                    selectedServiceLabel
+                                    selectedService
                                         ? 'text-slate-800'
                                         : 'text-slate-400'
                                 "
                             >
                                 {{
-                                    selectedServiceLabel ||
+                                    selectedService?.service_name ||
                                     "Select medical service"
                                 }}
                             </p>
 
                             <p
-                                v-if="selectedServicesTotal"
+                                v-if="selectedService"
                                 class="mt-0.5 text-[11px] text-slate-400"
                             >
-                                {{ model.services?.length || 0 }} service{{
-                                    (model.services?.length || 0) === 1
-                                        ? ""
-                                        : "s"
-                                }}
-                                selected
+                                ₱{{ Number(selectedService.price).toFixed(2) }}
                             </p>
                         </div>
                     </div>
@@ -310,7 +303,7 @@
                 </p>
 
                 <div
-                    v-else-if="selectedServicesTotal"
+                    v-if="selectedService"
                     class="mt-4 flex items-center justify-between rounded-xl bg-primary/5 px-4 py-3"
                 >
                     <span class="text-xs font-medium text-slate-500">
@@ -318,7 +311,7 @@
                     </span>
 
                     <span class="text-sm font-bold text-primary">
-                        ₱{{ selectedServicesTotal.toFixed(2) }}
+                        ₱{{ Number(selectedService.price).toFixed(2) }}
                     </span>
                 </div>
             </div>
@@ -365,8 +358,8 @@
                             v-for="preset in durationPresets"
                             :key="preset.label"
                             type="button"
-                            @click="addDurationPreset(preset.hours)"
                             class="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-primary hover:bg-primary/5 hover:text-primary"
+                            @click="addDurationPreset(preset.hours)"
                         >
                             + {{ preset.label }}
                         </button>
@@ -374,8 +367,8 @@
                         <button
                             v-if="Number(model.time_span) > minAdlHours"
                             type="button"
-                            @click="resetDuration"
                             class="rounded-full px-3 py-1.5 text-xs font-medium text-slate-400 transition hover:text-red-500"
+                            @click="resetDuration"
                         >
                             Reset
                         </button>
@@ -386,7 +379,7 @@
                     class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4"
                 >
                     <div class="flex items-center justify-between text-xs">
-                        <span class="text-slate-500"> Hourly Rate </span>
+                        <span class="text-slate-500">Hourly Rate</span>
 
                         <span class="font-semibold text-slate-700">
                             ₱{{ adlRatePerHour.toLocaleString() }} / hour
@@ -394,7 +387,7 @@
                     </div>
 
                     <div class="mt-2 flex items-center justify-between text-xs">
-                        <span class="text-slate-500"> Minimum Hours </span>
+                        <span class="text-slate-500">Minimum Hours</span>
 
                         <span class="font-semibold text-slate-700">
                             {{ minAdlHours }} hours
@@ -486,19 +479,18 @@ const props = defineProps<{
     settings?: BranchSettings;
 }>();
 
-const { selectedServiceLabel, selectedServicesTotal, bookingTypes } =
-    useMedicalServices(
-        () => props.services,
-        () => props.model.services,
-        () => adlRatePerHour.value,
-        () => minAdlHours.value,
-        props.homecare?.description,
-    );
-
 const emit = defineEmits<{
     (e: "update:model", value: HomecareBooking): void;
     (e: "update:errors", value: Record<string, string>): void;
 }>();
+
+const { bookingTypes } = useMedicalServices(
+    () => props.services,
+    () => props.model.services,
+    () => adlRatePerHour.value,
+    () => minAdlHours.value,
+    props.homecare?.description,
+);
 
 function update<K extends keyof HomecareBooking>(
     key: K,
@@ -509,13 +501,14 @@ function update<K extends keyof HomecareBooking>(
         [key]: value,
     });
 
-    clearError(key as string);
+    clearError(String(key));
 }
 
 function clearError(field: string) {
     if (!props.errors) return;
 
     const updated = { ...props.errors };
+
     delete updated[field];
 
     emit("update:errors", updated);
@@ -529,6 +522,16 @@ const adlRatePerHour = computed<number>(() =>
     Number(props.homecare?.adl_hourly_rate ?? 0),
 );
 
+const selectedService = computed(() => {
+    const services = props.model.services ?? [];
+
+    return services.length ? services[0] : null;
+});
+
+const selectedServicesTotal = computed(() => {
+    return selectedService.value ? Number(selectedService.value.price) : 0;
+});
+
 const handleLocation = (data: any) => {
     const address =
         data.address ??
@@ -541,7 +544,11 @@ const handleLocation = (data: any) => {
 
 const adlTotal = computed(() => {
     const hours = Number(props.model.time_span);
-    if (isNaN(hours) || hours < minAdlHours.value) return 0;
+
+    if (isNaN(hours) || hours < minAdlHours.value) {
+        return 0;
+    }
+
     return hours * adlRatePerHour.value;
 });
 
@@ -553,10 +560,13 @@ const operatingHours = computed(() => {
         return "Open 24 hrs";
     }
 
-    return `Open ${formatHour(parseHourString(opening))} – ${formatHour(parseHourString(closing))}`;
+    return `Open ${formatHour(parseHourString(opening))} – ${formatHour(
+        parseHourString(closing),
+    )}`;
 });
 
 const isServiceModalOpen = ref(false);
+
 const todayStr = getLocalDateStr(new Date());
 
 const availableTimeSlots = computed(() =>
@@ -585,6 +595,7 @@ watch(
     (type) => {
         if (type === "ADL") {
             update("services", []);
+
             if (!props.model.time_span) {
                 update("time_span", String(minAdlHours.value));
             }
@@ -606,9 +617,7 @@ const durationPresets = [
 
 const addDurationPreset = (hours: number) => {
     const current = Number(props.model.time_span) || 0;
-    const next = current + hours;
-
-    update("time_span", String(next));
+    update("time_span", String(current + hours));
 };
 
 const resetDuration = () => {

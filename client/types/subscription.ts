@@ -32,6 +32,8 @@ export interface SubscriptionRequest {
     branch_settings?: any;
     branch_latitude?: number | null;
     branch_longitude?: number | null;
+    branch_document?: string | File;
+
 
     agency_id?: number;
     agency_name?: string;
@@ -44,4 +46,7 @@ export interface SubscriptionRequest {
     agency_longitude?: number | null;
     agency_image: File | string | null;
     agency_email?: string;
+    agency_id_front?: string | File;
+    agency_id_back?: string | File;
+    agency_document?: string | File;
 }

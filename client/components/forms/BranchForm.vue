@@ -110,6 +110,147 @@
         </div>
 
         <div class="space-y-5">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-900">
+                    Verification Document
+                </h2>
+
+                <p class="text-sm text-slate-500 mt-1">
+                    Upload a supporting document for this branch.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-5">
+                <div class="space-y-2 p-4">
+                    <div class="flex items-center justify-between">
+                        <label
+                            class="flex items-center gap-1.5 text-sm font-semibold text-slate-700"
+                        >
+                            <svg
+                                class="w-4 h-4 text-slate-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                                />
+                                <path d="M14 2v6h6" />
+                                <path d="M9 13h6" />
+                                <path d="M9 17h6" />
+                            </svg>
+
+                            Document
+                            <span class="text-red-500">*</span>
+                        </label>
+
+                        <button
+                            v-if="branch.document"
+                            type="button"
+                            @click="removeBranchDocument"
+                            class="text-xs font-medium text-red-500 hover:text-red-600"
+                        >
+                            Remove
+                        </button>
+                    </div>
+
+                    <div
+                        class="relative h-40 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group"
+                        @click="branchDocumentInput?.click()"
+                    >
+                        <img
+                            v-if="branchDocumentPreview"
+                            :src="branchDocumentPreview"
+                            class="h-full w-full object-cover"
+                        />
+
+                        <div
+                            v-else
+                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400"
+                        >
+                            <div
+                                class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
+                            >
+                                +
+                            </div>
+
+                            <p class="text-sm font-medium">Upload Document</p>
+
+                            <span class="text-xs">
+                                PNG, JPG, PDF up to 5MB
+                            </span>
+                        </div>
+
+                        <div
+                            v-if="branchDocumentPreview"
+                            class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition"
+                        />
+                    </div>
+
+                    <input
+                        ref="branchDocumentInput"
+                        type="file"
+                        accept="image/*,application/pdf"
+                        class="hidden"
+                        @change="handleBranchDocument"
+                    />
+
+                    <p
+                        v-if="errors?.branch_document"
+                        class="text-xs text-red-500"
+                    >
+                        {{ errors.branch_document }}
+                    </p>
+
+                    <div>
+                        <button
+                            type="button"
+                            @click="
+                                showBranchDocumentList = !showBranchDocumentList
+                            "
+                            class="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-600"
+                        >
+                            {{ showBranchDocumentList ? "Hide" : "Show" }}
+                            applicable documents
+
+                            <svg
+                                class="w-3 h-3 transition-transform"
+                                :class="{
+                                    'rotate-180': showBranchDocumentList,
+                                }"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                            >
+                                <path
+                                    d="M5 7.5L10 12.5L15 7.5"
+                                    stroke="currentColor"
+                                    stroke-width="1.75"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+                        </button>
+
+                        <ul
+                            v-if="showBranchDocumentList"
+                            class="mt-2 space-y-1 rounded-lg bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside"
+                        >
+                            <li
+                                v-for="item in applicableBranchDocuments"
+                                :key="item"
+                            >
+                                {{ item }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-5">
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-slate-900">
@@ -205,6 +346,7 @@
         </div>
     </div>
 </template>
+
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import LocationSelector from "../ui/LocationSelector.vue";
@@ -233,6 +375,19 @@ const branchImagePreview = ref<string | null>(
 );
 const branchImageInput = ref<HTMLInputElement | null>(null);
 const useGeolocation = ref(true);
+
+const branchDocumentPreview = ref<string | null>(
+    typeof (props.branch as any).document === "string"
+        ? (props.branch as any).document
+        : null,
+);
+const branchDocumentInput = ref<HTMLInputElement | null>(null);
+const showBranchDocumentList = ref(false);
+
+const applicableBranchDocuments = [
+    "Mayor's / Business Permit",
+    "Barangay Clearance",
+];
 
 const locationError = computed(() => {
     const keys = [
@@ -312,6 +467,7 @@ const handleLocation = ({
 
     emit("update:errors", updatedErrors);
 };
+
 const handleBranchImage = (event: Event) => {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -326,6 +482,30 @@ const removeBranchImage = () => {
 
     if (branchImageInput.value) {
         branchImageInput.value.value = "";
+    }
+};
+
+const handleBranchDocument = (event: Event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    emit("update:branch", { ...props.branch, document: file } as any);
+
+    if (file.type === "application/pdf") {
+        branchDocumentPreview.value = null;
+    } else {
+        branchDocumentPreview.value = URL.createObjectURL(file);
+    }
+
+    clearError("branch_document");
+};
+
+const removeBranchDocument = () => {
+    emit("update:branch", { ...props.branch, document: null } as any);
+    branchDocumentPreview.value = null;
+
+    if (branchDocumentInput.value) {
+        branchDocumentInput.value.value = "";
     }
 };
 

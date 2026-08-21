@@ -87,7 +87,7 @@
                 </div>
 
                 <div
-                    v-if="hasYearlyOption"
+                    v-if="hasYearlyOption && variant === 'page'"
                     class="flex items-center gap-3 shrink-0"
                 >
                     <span

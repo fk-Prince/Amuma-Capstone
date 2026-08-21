@@ -1,15 +1,15 @@
 <template>
-    <div class="min-h-[calc(100vh-90px)] bg-slate-100 p-2">
+    <div class="min-h-[calc(100vh-90px)] bg-slate-100 p-2 overflow-visible">
         <div
-            class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 items-stretch max-w-8xl h-[calc(100vh-110px)]"
+            class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-4 items-stretch max-w-8xl h-full min-h-0"
         >
-            <div class="w-full min-h-0 flex flex-col order-1">
+            <div class="w-full min-w-0 min-h-0 flex flex-col order-1">
                 <template v-if="!selectedReferenceId">
                     <div
-                        class="bg-white rounded-lg shadow-sm border border-[#E4EFED] overflow-hidden flex-1 min-h-0 flex flex-col"
+                        class="bg-white rounded-lg shadow-sm border border-[#E4EFED] overflow-visible flex flex-col h-full min-h-0"
                     >
                         <div
-                            class="flex flex-col gap-3 px-6 py-4 border-b border-[#E4EFED]"
+                            class="flex flex-col gap-3 px-6 py-4 border-b border-[#E4EFED] shrink-0"
                         >
                             <div class="flex gap-3 items-center">
                                 <BookingFilter
@@ -27,13 +27,13 @@
                             </div>
                         </div>
 
-                        <div class="flex-1 min-h-0">
+                        <div class="flex-1 min-h-0 overflow-visible">
                             <DataTable
-                                class="rounded-none border-none"
+                                class="rounded-none border-none h-full"
                                 :columns="columns"
                                 :rows="bookingData ?? []"
                                 :pagination="pagination"
-                                :loading="isLoading"
+                                :loading="isFetching || isLoading"
                                 :searchable="false"
                                 :row-key="(row) => row.booking_id"
                                 empty-title="No bookings yet"
@@ -195,7 +195,7 @@
                     </button>
 
                     <div
-                        class="bg-white rounded-2xl min-h-screen shadow-sm border border-[#E4EFED] py-16 text-center"
+                        class="bg-white rounded-2xl min-h-[calc(100vh-150px)] shadow-sm border border-[#E4EFED] py-16 text-center"
                     >
                         <div
                             class="mx-auto h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin"
@@ -206,29 +206,34 @@
                 </div>
 
                 <div v-else-if="selectedBooking" class="space-y-5">
-                    <button
-                        type="button"
-                        class="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-secondary transition"
-                        @click="unSelectRefId"
+                    <div
+                        class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
                     >
-                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none">
-                            <path
-                                d="M12.5 15L7.5 10L12.5 5"
-                                stroke="currentColor"
-                                stroke-width="1.75"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            />
-                        </svg>
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-secondary transition"
+                            @click="unSelectRefId"
+                        >
+                            <svg
+                                class="h-4 w-4"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                            >
+                                <path
+                                    d="M12.5 15L7.5 10L12.5 5"
+                                    stroke="currentColor"
+                                    stroke-width="1.75"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
 
-                        Back to bookings
-                    </button>
+                            Back to bookings
+                        </button>
+                    </div>
 
                     <BookingDetails
                         :booking="selectedBooking"
-                        @reject="rejectBooking"
-                        @confirm="confirmBooking"
-                        @accommodation="openAccommodationModal"
                         :loading="isSubmitting"
                     />
                 </div>
@@ -256,7 +261,7 @@
                     </button>
 
                     <div
-                        class="bg-white rounded-2xl shadow-sm border border-[#E4EFED] py-16 text-center"
+                        class="bg-white rounded-2xl min-h-[calc(100vh-150px)] shadow-sm border border-[#E4EFED] py-16 text-center"
                     >
                         <p class="text-sm font-medium text-gray-500">
                             Booking not found
@@ -271,13 +276,303 @@
                 </div>
             </div>
 
-            <div class="w-full min-h-0 order-2">
-                <BookingSidebar
-                    class="w-full lg:h-full"
-                    :overview="overview"
-                    @newBooking="handleNewBooking"
-                />
-            </div>
+            <aside
+                class="w-full lg:self-start order-2"
+                :class="{
+                    'lg:sticky lg:top-[6%]': selectedBooking,
+                    'h-full': !selectedBooking,
+                }"
+            >
+                <template v-if="!selectedReferenceId">
+                    <BookingSidebar
+                        class="w-full"
+                        :overview="overview"
+                        @newBooking="handleNewBooking"
+                    />
+                </template>
+
+                <template v-else-if="selectedBooking">
+                    <div
+                        class="w-full bg-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden"
+                    >
+                        <div
+                            class="px-5 py-4 border-b border-[#EDF4F3] bg-gradient-to-r from-[#0E7C7B]/[0.05] to-transparent"
+                        >
+                            <div
+                                class="flex items-center justify-between gap-3"
+                            >
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary"
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.8"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        >
+                                            <path d="M12 6v12" />
+                                            <path d="M6 12h12" />
+                                        </svg>
+                                    </div>
+
+                                    <div class="min-w-0">
+                                        <p
+                                            class="text-[10px] uppercase tracking-[0.16em] text-[#6B8A87] font-mono"
+                                        >
+                                            Booking Actions
+                                        </p>
+
+                                        <span
+                                            class="w-fit font-mono text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] inline-block"
+                                        >
+                                            #{{ selectedBooking.reference_id }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <span
+                                    class="px-3 py-1 rounded-sm text-xs font-medium capitalize"
+                                    :class="
+                                        statusClasses(selectedBooking.status)
+                                    "
+                                >
+                                    {{ formatStatus(selectedBooking.status) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="p-5">
+                            <div
+                                v-if="
+                                    showAccommodationButton &&
+                                    !isPreAdmissionFacility
+                                "
+                                class="mb-5 rounded-xl border border-[#E4EFED] bg-[#F8FBFA] p-4"
+                            >
+                                <div class="flex items-start gap-3">
+                                    <div
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#0E7C7B] shadow-sm ring-1 ring-[#E4EFED]"
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.8"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        >
+                                            <path d="M3 10h18" />
+                                            <path
+                                                d="M5 10V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"
+                                            />
+                                            <path d="M5 10v9" />
+                                            <path d="M19 10v9" />
+                                            <path d="M3 19h18" />
+                                            <path d="M8 14h8" />
+                                        </svg>
+                                    </div>
+
+                                    <div class="min-w-0 flex-1">
+                                        <p
+                                            class="text-sm font-semibold text-[#16302E]"
+                                        >
+                                            Accommodation
+                                        </p>
+
+                                        <p
+                                            class="text-xs text-[#6B8A87] mt-0.5 leading-relaxed"
+                                        >
+                                            {{
+                                                selectedBooking.reserved
+                                                    ? "Accommodation has already been selected."
+                                                    : "Select an accommodation type for this admission."
+                                            }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <ActionButton
+                                    type="button"
+                                    variant="primary"
+                                    :loading="isSubmitting"
+                                    :disabled="isSubmitting"
+                                    extra-class="w-full mt-3"
+                                    @click="
+                                        openAccommodationModal(selectedBooking)
+                                    "
+                                >
+                                    <span
+                                        class="flex items-center justify-center gap-2"
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        >
+                                            <path d="M3 10h18" />
+                                            <path
+                                                d="M5 10V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"
+                                            />
+                                            <path d="M5 10v9" />
+                                            <path d="M19 10v9" />
+                                            <path d="M3 19h18" />
+                                        </svg>
+
+                                        {{
+                                            selectedBooking.reserved
+                                                ? "Change Accommodation"
+                                                : "Choose Accommodation Type"
+                                        }}
+                                    </span>
+                                </ActionButton>
+                            </div>
+
+                            <div
+                                v-if="
+                                    selectedBooking.status?.toLowerCase() ===
+                                        'pending' && !isPreAdmissionFacility
+                                "
+                                class="space-y-3"
+                            >
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="h-px flex-1 bg-[#EDF4F3]" />
+
+                                    <span
+                                        class="text-[10px] uppercase tracking-[0.14em] text-[#8AA09D] font-mono whitespace-nowrap"
+                                    >
+                                        Review Booking
+                                    </span>
+
+                                    <div class="h-px flex-1 bg-[#EDF4F3]" />
+                                </div>
+
+                                <div class="flex flex-col gap-3">
+                                    <ActionButton
+                                        type="button"
+                                        variant="primary"
+                                        :loading="isApproving"
+                                        :disabled="isApproving"
+                                        extra-class="w-full"
+                                        :tooltip="
+                                            !isApproving && !canApproveBooking
+                                                ? 'Please select an accommodation before approving this admission.'
+                                                : ''
+                                        "
+                                        @click="confirmBooking(selectedBooking)"
+                                    >
+                                        <span
+                                            class="flex items-center justify-center gap-2"
+                                        >
+                                            <svg
+                                                class="h-4 w-4"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                            >
+                                                <path d="m5 12 4 4L19 6" />
+                                            </svg>
+
+                                            {{
+                                                isFacility
+                                                    ? "Approve Admission Booking"
+                                                    : "Approve Homecare Booking"
+                                            }}
+                                        </span>
+                                    </ActionButton>
+
+                                    <ActionButton
+                                        type="button"
+                                        variant="danger"
+                                        :loading="isRejecting"
+                                        :disabled="isRejecting"
+                                        extra-class="w-full"
+                                        :tooltip="
+                                            selectedBooking.payment
+                                                ?.payment_status === 'paid'
+                                                ? 'The payment will be refunded when this booking is rejected.'
+                                                : ''
+                                        "
+                                        @click="rejectBooking(selectedBooking)"
+                                    >
+                                        <span
+                                            class="flex items-center justify-center gap-2"
+                                        >
+                                            <svg
+                                                class="h-4 w-4"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                            >
+                                                <path d="M6 6l12 12" />
+                                                <path d="M18 6 6 18" />
+                                            </svg>
+
+                                            {{
+                                                selectedBooking.payment
+                                                    ?.payment_status === "paid"
+                                                    ? "Reject & Refund"
+                                                    : "Reject Booking"
+                                            }}
+                                        </span>
+                                    </ActionButton>
+                                </div>
+                            </div>
+
+                            <div
+                                v-else
+                                class="rounded-xl border border-[#E4EFED] bg-[#F8FBFA] px-4 py-3"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EAF4F2] text-[#0E7C7B]"
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        >
+                                            <path d="m5 12 4 4L19 6" />
+                                        </svg>
+                                    </div>
+
+                                    <div>
+                                        <p
+                                            class="text-sm font-semibold text-[#16302E]"
+                                        >
+                                            No actions available
+                                        </p>
+
+                                        <p
+                                            class="text-xs text-[#6B8A87] mt-0.5"
+                                        >
+                                            This booking is no longer pending.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </aside>
         </div>
 
         <AdmissionDetail
@@ -311,6 +606,7 @@ import { formatStatus, statusClasses } from "~/types/booking";
 import { fullName } from "~/utils/user";
 import { stringToDateTime } from "~/utils/time";
 import { branchContractService } from "~/api/branch-contract/BranchContractService";
+import ActionButton from "~/components/ui/ActionButton.vue";
 
 const { success, error } = useToast();
 
@@ -331,7 +627,6 @@ const branch_uuid = computed(() => route.params.uuid as string);
 const {
     bookingData,
     isLoading,
-    isFetching,
     searchQuery,
     statusFilter,
     typeFilter,
@@ -340,10 +635,14 @@ const {
     pagination,
     fetchBookings,
     goToPage,
+    isFetching,
 } = useBookingList(branch_uuid);
 
 const isSubmitting = ref(false);
+const isApproving = ref(false);
+const isRejecting = ref(false);
 const isLoadingSelected = ref(true);
+
 const selectedBooking = ref<any | null>(null);
 const showAccommodationModal = ref(false);
 const loadingContract = ref(false);
@@ -386,6 +685,23 @@ const columns = [
         align: "right" as const,
     },
 ];
+
+const isFacility = computed(() => {
+    return selectedBooking.value?.category?.toLowerCase() === "facility";
+});
+
+const isPreAdmissionFacility = computed(() => {
+    return (
+        selectedBooking.value?.category?.toLowerCase() === "facility" &&
+        selectedBooking.value?.facility?.type === "Pre-Admission"
+    );
+});
+
+const showAccommodationButton = computed(() => {
+    const currentStatus = selectedBooking.value?.status?.toLowerCase() ?? "";
+
+    return currentStatus === "pending" && isFacility.value;
+});
 
 function bookingType(booking: BookingRetrieve) {
     return booking.homecare?.type === "Medical"
@@ -445,7 +761,7 @@ function statusDotClasses(status?: string) {
     }
 }
 
-function handlePageChange(page: number) {
+async function handlePageChange(page: number) {
     goToPage(page);
 }
 
@@ -471,9 +787,9 @@ const handleNewBooking = (booking: any) => {
 };
 
 const rejectBooking = async (booking: any) => {
-    if (!booking?.booking_id) return;
+    if (!booking?.booking_id || isRejecting.value) return;
 
-    isSubmitting.value = true;
+    isRejecting.value = true;
 
     try {
         const res = await bookingService.actionBooking({
@@ -482,81 +798,48 @@ const rejectBooking = async (booking: any) => {
             branch_uuid: branch_uuid.value,
         });
 
-        success(res.message ?? res);
+        success(res.message ?? "Booking rejected successfully.");
 
-        const updatedBooking = res.data;
-
-        if (!bookingData.value || !updatedBooking) return;
-
-        const index = bookingData.value.findIndex(
-            (item: any) =>
-                String(item.reference_id) ===
-                String(updatedBooking.reference_id),
-        );
-
-        if (index !== -1) {
-            bookingData.value[index] = updatedBooking;
-        }
-
-        if (
-            selectedBooking.value &&
-            String(selectedBooking.value.reference_id) ===
-                String(updatedBooking.reference_id)
-        ) {
-            selectedBooking.value = updatedBooking;
-        }
+        selectedBooking.value = {
+            ...selectedBooking.value,
+            ...(res.data ?? {}),
+            status: res.data?.status ?? "rejected",
+        };
     } catch (err: any) {
-        error(err.message);
-        console.error(err);
+        error(err?.message ?? "Failed to reject booking.");
+        console.error("Failed to reject booking:", err);
     } finally {
-        isSubmitting.value = false;
+        isRejecting.value = false;
     }
 };
 
 const confirmBooking = async (booking: any) => {
-    isSubmitting.value = true;
+    if (!booking?.reference_id || isApproving.value) return;
 
-    const payload = {
-        ...selectedBooking.value,
-        reference_id: booking.reference_id,
-        action: "approve",
-        branch_uuid: branch_uuid.value,
-    };
+    isApproving.value = true;
 
     try {
-        const res = await bookingService.actionBooking(payload);
+        const res = await bookingService.actionBooking({
+            ...booking,
+            reference_id: booking.reference_id,
+            action: "approve",
+            branch_uuid: branch_uuid.value,
+        });
 
-        success(res.message ?? res);
+        success(res.message ?? "Booking approved successfully.");
 
-        const updatedBooking = res.data;
-
-        if (updatedBooking && bookingData.value) {
-            const index = bookingData.value.findIndex(
-                (item: any) =>
-                    String(item.reference_id) ===
-                    String(updatedBooking.reference_id),
-            );
-
-            if (index !== -1) {
-                bookingData.value[index] = updatedBooking;
-            }
-
-            if (
-                selectedBooking.value &&
-                String(selectedBooking.value.reference_id) ===
-                    String(updatedBooking.reference_id)
-            ) {
-                selectedBooking.value = updatedBooking;
-            }
-        }
+        selectedBooking.value = {
+            ...selectedBooking.value,
+            ...(res.data ?? {}),
+            status: res.data?.status ?? "approved",
+        };
     } catch (err: any) {
-        error(err.message);
-        console.error(err);
+        error(err?.message ?? "Failed to approve booking.");
+        console.error("Failed to approve booking:", err);
     } finally {
-        isSubmitting.value = false;
+        isApproving.value = false;
     }
 };
-
 const refresh = async () => {
     if (!selectedReferenceId.value) {
         await fetchBookings();
@@ -620,6 +903,9 @@ const unSelectRefId = async () => {
 
     delete query.reference_id;
 
+    selectedBooking.value = null;
+    isLoadingSelected.value = false;
+
     await router.push({
         path: route.path,
         query,
@@ -663,6 +949,7 @@ async function resolveSelectedBooking(referenceId: string | null) {
         selectedBooking.value &&
         String(selectedBooking.value.reference_id) === String(referenceId)
     ) {
+        isLoadingSelected.value = false;
         return;
     }
 
@@ -687,7 +974,6 @@ async function resolveSelectedBooking(referenceId: string | null) {
         selectedBooking.value = res ?? null;
     } catch (err) {
         console.error("Failed to load booking by reference_id", err);
-
         selectedBooking.value = null;
     } finally {
         isLoadingSelected.value = false;
@@ -716,11 +1002,19 @@ onMounted(async () => {
 });
 
 watch(selectedReferenceId, (referenceId) => {
+    if (!referenceId) {
+        selectedBooking.value = null;
+        isLoadingSelected.value = false;
+        return;
+    }
+
     resolveSelectedBooking(referenceId);
 });
 
 watch(bookingData, () => {
-    resolveSelectedBooking(selectedReferenceId.value);
+    if (selectedReferenceId.value) {
+        resolveSelectedBooking(selectedReferenceId.value);
+    }
 });
 
 const emptyStateTitle = computed(() =>
@@ -740,4 +1034,14 @@ const emptyStateSubtitle = computed(() =>
         ? "Try a different search term or filter."
         : "New bookings for this branch will show up here.",
 );
+
+const canApproveBooking = computed(() => {
+    if (!selectedBooking.value) return false;
+
+    if (!isFacility.value) return true;
+
+    if (isPreAdmissionFacility.value) return true;
+
+    return !!selectedBooking.value.reserved;
+});
 </script>

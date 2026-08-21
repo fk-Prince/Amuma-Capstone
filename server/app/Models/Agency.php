@@ -9,18 +9,22 @@ class Agency extends Model
 {
     use HasUuids;
     protected $primaryKey = 'agency_id';
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+
     protected $fillable = [
         'name',
         'description',
         'location_id',
         'registered_by',
         'email',
-        'image'
+        'image',
+        'id_front',
+        'id_back',
+        'document',
+        'is_verified',
+    ];
+
+    protected $casts = [
+        'is_verified' => 'boolean',
     ];
 
     public function uniqueIds()

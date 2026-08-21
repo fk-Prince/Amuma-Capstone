@@ -72,6 +72,8 @@
                             v-if="scheduleType === 'medical'"
                             :schedules="filteredScheduleData"
                             :loading="pending"
+                            :date="route.query.date_from as string"
+                            :range-end="route.query.date_to as string"
                             @view-details="viewSchedule"
                             @assign="handleAssign"
                         />

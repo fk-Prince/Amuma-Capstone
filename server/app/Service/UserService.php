@@ -50,6 +50,7 @@ class UserService
                     'uuid' => $branch?->uuid,
                     'name' => $branch?->name,
                     'email' => $branch?->email,
+                    'is_verified' => $branch?->is_verified,
                     'description' => $branch?->description,
                     'contact_number' => $branch?->contact_number,
                     'role_name' => $employeeBranch?->role_name,
@@ -71,6 +72,7 @@ class UserService
                         'description' => $branch?->agencies->description,
                         'location' => $branch?->agencies->locations,
                         'image' => $branch->agencies->image,
+                        'is_verified' => $branch->agencies->is_verified,
                     ],
 
                     'settings' => $settings,

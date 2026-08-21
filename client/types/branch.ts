@@ -21,7 +21,8 @@ export interface Branch {
     agency: Agency
     images?: BranchImage[];
     email: string;
-    status: string;
+    is_verified: boolean;
+    document?: File | string;
 };
 
 export interface BranchImage {

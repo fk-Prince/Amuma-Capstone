@@ -1,3 +1,4 @@
+<!-- pages/booking/provider/[branch_uuid]/index.vue -->
 <template>
     <div
         class="min-h-screen grid grid-cols-1 lg:grid-cols-[280px_1fr] bg-gray-50"
@@ -188,14 +189,16 @@
                     ref="step4"
                     class="scroll-mt-8 border-x rounded-b-2xl border-b border-gray-100 bg-white shadow-sm"
                 >
-                    <!-- <AssessmentForm
-                        :model="assessmentData"
-                        @update:model="Object.assign(assessmentData, $event)"
-                    /> -->
                     <AssessmentForm
                         :model="assessmentData"
                         :errors="assessmentErrors"
-                        @update:model="Object.assign(assessmentData, $event)"
+                        @update:model="
+                            assessmentData.splice(
+                                0,
+                                assessmentData.length,
+                                ...$event,
+                            )
+                        "
                         @update:errors="assessmentErrors = $event"
                     />
                 </section>

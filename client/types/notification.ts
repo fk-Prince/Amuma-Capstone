@@ -8,4 +8,5 @@ export interface Notification {
     icon?: string;
     color?: string;
     bg?: string;
+    data?: any;
 }

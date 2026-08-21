@@ -49,8 +49,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         });
 
         const isDashboard =
-            selectedMenu?.to?.endsWith("/dashboard") ||
-            selectedMenu?.to === "/app/owner/dashboard";
+            selectedMenu?.to?.endsWith("/dashboard");
 
         if (!isDashboard && selectedMenu?.modules) {
             const hasModuleAccess = selectedMenu.modules.some((m) =>

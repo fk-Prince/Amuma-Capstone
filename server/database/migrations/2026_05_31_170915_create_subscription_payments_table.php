@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('payment_reference_id');
             $table->foreignId('subscription_id')->constrained('subscriptions', 'subscription_id');
             $table->decimal('price', 10, 2);
+            $table->enum('status', ['paid', 'refunded'])->default('paid');
             $table->timestamps();
         });
     }

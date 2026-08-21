@@ -130,6 +130,10 @@ class BookingService
                         $bookingData['homecare']['date'] . ' ' .
                             $bookingData['homecare']['prefered_time']
                     ),
+                    Booking::CATEGORY_FACILITY => Carbon::parse(
+                        $bookingData['facility']['admission_date']
+                    )->endOfDay(),
+
                     default => Carbon::now()->addWeek(),
                 };
 
@@ -170,13 +174,21 @@ class BookingService
             $branch = $payload['branch'];
             $bookingData = $payload['booking_data'];
             $bookingData['payment'] = $this->bookingHelper->resolvePayment($payload);
-            $bookingData['assessment'] = $this->bookingHelper->resolveAssessment($bookingData['assessment'] ?? []);
+            $assessments = $bookingData['assessment'] ?? [];
+
+            if (!is_array($assessments)) {
+                $assessments = [$assessments];
+            }
+            $bookingData['assessment'] = array_values(array_filter(array_map(fn($assessment) => $this->bookingHelper->resolveAssessment($assessment),  $assessments)));
 
             $validUntil = match ($payload['category']) {
                 Booking::CATEGORY_ONLINE => Carbon::parse(
                     $bookingData['homecare']['date'] . ' ' .
                         $bookingData['homecare']['prefered_time']
                 ),
+                Booking::CATEGORY_FACILITY => Carbon::parse(
+                    $bookingData['facility']['admission_date']
+                )->endOfDay(),
                 default => Carbon::now()->addWeek(),
             };
             $booking = $this->bookingRepository->create([

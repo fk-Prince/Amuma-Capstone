@@ -9,13 +9,18 @@ use App\Repository\PlanRepository;
 use Carbon\Carbon;
 use App\Factories\PaymentFactory;
 use App\Guard\AuthGuard;
+use App\Http\Resources\SubscriptionResource;
+use App\Models\Subscription;
+use App\Models\SubscriptionPayment;
 use App\Models\User;
 use App\Repository\AgencyRepository;
 use App\Repository\EmployeeRepository;
 use App\Repository\LocationRepository;
 use App\Repository\ModuleRepository;
 use App\Service\External\SupabaseService;
+use App\Service\External\XenditService;
 use App\Service\Geo\NominatimService;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -24,34 +29,19 @@ use Illuminate\Support\Facades\Log;
 
 class SubscriptionService
 {
-    private SubscriptionRepository $subscriptionRepository;
-    private PlanRepository $planRepository;
-    private BranchRepository $branchRepository;
-    private AgencyRepository $agencyRepository;
-    private LocationRepository $locationRepository;
-    private NominatimService $nominatimService;
-    private ModuleRepository $moduleRepository;
-    private EmployeeRepository $employeeRepository;
+
     private string $secretKey;
 
     public function __construct(
-        SubscriptionRepository $subscriptionRepository,
-        PlanRepository $planRepository,
-        BranchRepository $branchRepository,
-        AgencyRepository $agencyRepository,
-        LocationRepository $locationRepository,
-        NominatimService $nominatimService,
-        EmployeeRepository $employeeRepository,
-        ModuleRepository $moduleRepository
+        private SubscriptionRepository $subscriptionRepository,
+        private PlanRepository $planRepository,
+        private BranchRepository $branchRepository,
+        private AgencyRepository $agencyRepository,
+        private LocationRepository $locationRepository,
+        private NominatimService $nominatimService,
+        private EmployeeRepository $employeeRepository,
+        private ModuleRepository $moduleRepository
     ) {
-        $this->subscriptionRepository = $subscriptionRepository;
-        $this->planRepository = $planRepository;
-        $this->moduleRepository = $moduleRepository;
-        $this->branchRepository = $branchRepository;
-        $this->agencyRepository = $agencyRepository;
-        $this->employeeRepository = $employeeRepository;
-        $this->locationRepository =  $locationRepository;
-        $this->nominatimService = $nominatimService;
         $this->secretKey = config('services.xendit.secret_key');
     }
 
@@ -90,9 +80,30 @@ class SubscriptionService
         if (!empty($payload['branch_image']) && $payload['branch_image'] instanceof UploadedFile) {
             $branchImage = SupabaseService::store($payload['branch_image']);
         }
+
+        $branchDocument = null;
+        if (!empty($payload['branch_document']) && $payload['branch_document'] instanceof UploadedFile) {
+            $branchDocument = SupabaseService::store($payload['branch_document']);
+        }
+
         $agencyImage = null;
         if (!empty($payload['agency_image']) && $payload['agency_image'] instanceof UploadedFile) {
             $agencyImage = SupabaseService::store($payload['agency_image']);
+        }
+
+        $agencyIdFront = null;
+        if (!empty($payload['agency_id_front']) && $payload['agency_id_front'] instanceof UploadedFile) {
+            $agencyIdFront = SupabaseService::store($payload['agency_id_front']);
+        }
+
+        $agencyIdBack = null;
+        if (!empty($payload['agency_id_back']) && $payload['agency_id_back'] instanceof UploadedFile) {
+            $agencyIdBack = SupabaseService::store($payload['agency_id_back']);
+        }
+
+        $agencyDocument = null;
+        if (!empty($payload['agency_document']) && $payload['agency_document'] instanceof UploadedFile) {
+            $agencyDocument = SupabaseService::store($payload['agency_document']);
         }
 
         return [
@@ -108,6 +119,7 @@ class SubscriptionService
                 'email'          => $payload['branch_email'] ?? null,
                 'contact_number' => $payload['branch_contact_number'] ?? null,
                 'image'          => is_array($branchImage) ? ($branchImage['url'] ?? null) : null,
+                'document'       => is_array($branchDocument) ? ($branchDocument['url'] ?? null) : null,
                 'setting'        => $payload['branch_settings'] ?? null,
                 'latitude'       => $payload['branch_latitude'] ?? null,
                 'longitude'      => $payload['branch_longitude'] ?? null,
@@ -118,6 +130,9 @@ class SubscriptionService
                 'description'    => $payload['agency_description'] ?? null,
                 'email'          => $payload['agency_email'] ?? null,
                 'image'          => is_array($agencyImage) ? ($agencyImage['url'] ?? null) : null,
+                'id_front'       => is_array($agencyIdFront) ? ($agencyIdFront['url'] ?? null) : null,
+                'id_back'        => is_array($agencyIdBack) ? ($agencyIdBack['url'] ?? null) : null,
+                'document'       => is_array($agencyDocument) ? ($agencyDocument['url'] ?? null) : null,
                 'street'         => $payload['agency_street'] ?? null,
                 'city'           => $payload['agency_city'] ?? null,
                 'province'       => $payload['agency_province'] ?? null,
@@ -202,7 +217,10 @@ class SubscriptionService
                         'location_id' => $agencyLocation->location_id,
                         'registered_by' => $user['user_id'],
                         'email' => $agency['email'],
-                        'image' => $agency['image'] ?? null
+                        'image' => $agency['image'] ?? null,
+                        'id_front' => $agency['id_front'] ?? null,
+                        'id_back' => $agency['id_back'] ?? null,
+                        'document' => $agency['document'] ?? null,
                     ]);
                 }
 
@@ -240,6 +258,7 @@ class SubscriptionService
                     'name' => $branch['name'] ?? null,
                     'contact_number' => $branch['contact_number'] ?? null,
                     'image' => $branch['image'] ?? null,
+                    'document' => $branch['document'] ?? null,
                     'settings' => $branch['setting'] ?? null,
                     'email' => $branch['email']
                 ]);
@@ -252,16 +271,16 @@ class SubscriptionService
                     'plan_id' => $plan['plan_id'],
                     'branch_id' => $branchData->branch_id,
                     'billing_interval' => $billing_interval->value,
-                    'status' => 'active',
                     'start_date' => Carbon::now(),
                     'end_date' => $endDate,
                 ]);
 
-                $subscription->subscription_payments()->create([
+                $subscription->payments()->create([
                     'subscription_id' => $subscription->subscription_id,
                     'xendit_invoice_id' => $xendit_invoice_id,
                     'payment_reference_id' => $reference_id,
                     'price' => $totalAmount,
+                    'status' => SubscriptionPayment::STATUS_PAID,
                 ]);
 
                 $employee = $this->employeeRepository->findEmployeeByFields([
@@ -318,7 +337,6 @@ class SubscriptionService
             ], 500);
         }
     }
-
     public function subscriptionWebhook(object $payload)
     {
         if (
@@ -357,5 +375,126 @@ class SubscriptionService
                 // ]);
             }
         }
+    }
+
+    public function subscriptionList(array $payload)
+    {
+        $subscriptions = $this->subscriptionRepository->paginate($payload);
+        return SubscriptionResource::collection($subscriptions);
+    }
+
+    public function overview(array $payload)
+    {
+        if ($payload['action'] === 'overview') {
+            return $this->subscriptionRepository->overview();
+        } else if ($payload['action'] === 'overview_subscription') {
+            return $this->subscriptionRepository->overviewSubscription();
+        }
+    }
+
+    public function approve(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+
+            $subscription = $this->subscriptionRepository->findByFields([
+                ['uuid', '=', $payload['subscription_uuid']],
+            ]);
+
+            if (!$subscription) {
+                throw new Exception('Subscription not found.', 404);
+            }
+
+            if ($subscription->status !== 'pending') {
+                throw new Exception("Only pending subscriptions can be approved (current status: {$subscription->status}).", 404);
+            }
+
+            $subscription->load('branch.agencies');
+
+            $branch = $subscription->branch;
+            $agency = $branch?->agencies;
+
+            if (! $branch) {
+                throw new Exception('Branch not found for this subscription.', 404);
+            }
+
+            if (! $branch->is_verified) {
+                $branch->update(['is_verified' => true]);
+            }
+
+            if ($agency && ! $agency->is_verified) {
+                $agency->update(['is_verified' => true]);
+            }
+
+            $startDate = Carbon::now();
+            $endDate = $subscription->billing_interval === 'YEARLY'
+                ? $startDate->copy()->addYear()
+                : $startDate->copy()->addMonth();
+
+            $subscription->update([
+                'status' => 'active',
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ]);
+
+            return response()->json([
+                'message' => '',
+                'data' => $subscription->fresh(['branch.agencies'])
+            ]);
+        });
+    }
+
+    public function reject(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+
+            $subscription = $this->subscriptionRepository->findByFields([
+                ['uuid', '=', $payload['subscription_uuid']],
+            ]);
+
+            if (!$subscription) {
+                throw new Exception('Subscription not found.', 404);
+            }
+
+            if ($subscription->status !== 'pending') {
+                throw new Exception("Only pending subscriptions can be approved (current status: {$subscription->status}).", 404);
+            }
+            $subscription->load([
+                'branch.agencies',
+                'payments',
+            ]);
+
+            $payment = $subscription->payments
+                ->where('status', SubscriptionPayment::STATUS_PAID)
+                ->sortByDesc('created_at')
+                ->first();
+
+
+            if (!$payment) {
+                throw new Exception('No successful payment found for this subscription.',  404);
+            }
+
+            $refunded = XenditService::refundXenditPayment(
+                $payment->xendit_invoice_id,
+                (float) $payment->price
+            );
+
+            if (!$refunded) {
+                throw new Exception('Subscription cannot be rejected because the payment refund failed.',);
+            }
+
+            $subscription->update([
+                'status' => Subscription::STATUS_REJECTED,
+            ]);
+
+            $payment->update([
+                'status' => SubscriptionPayment::STATUS_REFUNDED,
+            ]);
+
+
+            return response()->json([
+                'message' => '',
+                'data' => $subscription->fresh(['branch.agencies'])
+            ]);
+        });
     }
 }

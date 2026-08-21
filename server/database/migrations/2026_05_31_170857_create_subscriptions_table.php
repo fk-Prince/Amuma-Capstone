@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('plan_id')->constrained('plans', 'plan_id');
             $table->foreignId('branch_id')->constrained('branches', 'branch_id');
             $table->enum('billing_interval', ['YEARLY', 'MONTHLY']);
-            $table->enum('status', ['active', 'inactive', 'expired']);
+            $table->enum('status', ['active', 'inactive', 'expired', 'pending', 'rejected'])->default('pending');
             $table->date('start_date');
             $table->date('end_date');
             $table->timestamps();

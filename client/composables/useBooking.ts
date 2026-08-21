@@ -32,26 +32,35 @@ export function useBookingValidator<T>(schema: ZodType<T>, data: T) {
 }
 
 
-import { computed, toValue } from "vue";
-
 
 export function useMedicalServices(
     services: any,
     selectedServices?: any,
     adlRatePerHour?: any,
     minAdlHours?: any,
-    adlDescription?: string
+    adlDescription?: string,
 ) {
-    const medicalRateLabel = computed(() => {
-        const list = toValue(services);
 
-        if (!list.length) return "No services";
+    const serviceList = computed(() => {
+        const value = toValue(services);
+        return Array.isArray(value) ? value : [];
+    });
+
+
+    const medicalRateLabel = computed(() => {
+        const list = serviceList.value;
+
+        if (!list.length) {
+            return "No services";
+        }
 
         const prices = list
             .map((service: any) => Number(service.price))
-            .filter((price: any) => !isNaN(price));
+            .filter((price: number) => !Number.isNaN(price));
 
-        if (!prices.length) return "No pricing";
+        if (!prices.length) {
+            return "No pricing";
+        }
 
         const min = Math.min(...prices);
         const max = Math.max(...prices);
@@ -64,67 +73,113 @@ export function useMedicalServices(
     });
 
     const medicalDescription = computed(() => {
-        const list = toValue(services);
-
-        if (!list.length) {
+        if (!serviceList.value.length) {
             return "No medical services available";
         }
 
-        const names = list.map((service: any) => service.service_name);
+        return "Professional medical care and nursing services tailored to the patient's needs.";
+    });
 
-        if (names.length <= 3) {
-            return names.join(", ");
+    // const medicalDescription = computed(() => {
+    //     const list = serviceList.value;
+
+    //     if (!list.length) {
+    //         return "No medical services available";
+    //     }
+
+    //     const names = list
+    //         .map((service: any) => service.service_name)
+    //         .filter(Boolean);
+
+    //     if (!names.length) {
+    //         return "No medical services available";
+    //     }
+
+    //     if (names.length <= 3) {
+    //         return names.join(", ");
+    //     }
+
+    //     return `${names.slice(0, 3).join(", ")} and ${names.length - 3
+    //         } more`;
+    // });
+
+
+    const selectedService = computed(() => {
+        const value = toValue(selectedServices);
+
+        if (!value) {
+            return null;
         }
 
-        return `${names.slice(0, 3).join(", ")} and ${names.length - 3} more`;
+        if (Array.isArray(value)) {
+            return value[0] ?? null;
+        }
+
+        return value;
     });
 
+    /**
+     * Selected service label
+     */
     const selectedServiceLabel = computed(() => {
-        const list = toValue(selectedServices) ?? [];
-
-        return list.length
-            ? list.map((service: any) => service.service_name).join(", ")
-            : "";
+        return selectedService.value?.service_name ?? "";
     });
 
+    /**
+     * Selected service total
+     *
+     * Because only ONE service can be selected,
+     * this is simply that service's price.
+     */
     const selectedServicesTotal = computed(() => {
-        const list = toValue(selectedServices) ?? [];
+        if (!selectedService.value) {
+            return 0;
+        }
 
-        return list.reduce(
-            (sum: any, service: any) => sum + Number(service.price || 0),
-            0
-        );
+        return Number(selectedService.value.price || 0);
     });
 
-    const bookingTypes = computed(() => [
-        {
-            value: "Medical",
-            title: "Medical Services",
-            description: medicalDescription.value,
-            icon: Stethoscope,
-            rateLabel: medicalRateLabel.value,
-            visible: services.length > 0,
-        },
-        {
-            value: "ADL",
-            title: "Caregiver (ADL Services)",
-            description: adlDescription || "Assistance with daily living activities",
-            icon: Users,
-            rateLabel: `₱${Number(
-                toValue(adlRatePerHour) || 0,
-            ).toLocaleString()} / hour`,
-            visible: Number(toValue(adlRatePerHour) || 0) > 0,
-        },
-    ]);
+    /**
+     * Booking types
+     */
+    const bookingTypes = computed(() => {
+        const list = serviceList.value;
 
+        const adlRate = Number(toValue(adlRatePerHour) || 0);
 
+        return [
+            {
+                value: "Medical",
+                title: "Medical Services",
+                description: medicalDescription.value,
+                icon: Stethoscope,
+                rateLabel: medicalRateLabel.value,
+
+                // IMPORTANT:
+                // Use the resolved array.
+                visible: list.length > 0,
+            },
+
+            {
+                value: "ADL",
+                title: "Caregiver (ADL Services)",
+                description:
+                    adlDescription ||
+                    "Assistance with daily living activities",
+                icon: Users,
+                rateLabel: `₱${adlRate.toLocaleString()} / hour`,
+                visible: adlRate > 0,
+            },
+        ];
+    });
 
     return {
         bookingTypes,
+        selectedService,
         selectedServiceLabel,
         selectedServicesTotal,
         medicalRateLabel,
         medicalDescription,
+        serviceList,
     };
 }
-

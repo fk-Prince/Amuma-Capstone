@@ -1,29 +1,57 @@
 <template>
-    <div class="min-h-screen bg-light flex items-center justify-center p-8">
-        <!-- <ScheduleCard
-            date-label="Today, May 2, 2026"
-            :now-hour="12.75"
-            :branches="branches"
-            @change-day="onChangeDay"
-        />
-        <RoomOccupancyCard :rooms="roomData" /> -->
+    <div
+        class="min-h-[calc(100vh-90px)] bg-light flex items-center justify-center p-8"
+    >
+        <SubscriptionReview v-if="isSubscriptionPending" />
+
+        <!-- Normal Dashboard -->
+        <template v-else>
+            <!--
+            <ScheduleCard
+                date-label="Today, May 2, 2026"
+                :now-hour="12.75"
+                :branches="branches"
+                @change-day="onChangeDay"
+            />
+
+            <RoomOccupancyCard :rooms="roomData" />
+            -->
+        </template>
     </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
+
+import SubscriptionReview from "~/components/sections/app/Dashboard/SubscriptionReview.vue";
+
 import RoomOccupancyCard, {
     type RoomOccupancy,
 } from "~/components/sections/app/Dashboard/RoomOccupancyCard.vue";
+
 import ScheduleCard, {
     type Branch,
 } from "~/components/sections/app/Dashboard/ScheduleCard.vue";
+
+import { useBranchStore } from "~/stores/branch";
 
 definePageMeta({
     layout: "dashboard",
     middleware: "auth-client",
 });
 
-useHead({ title: "Dashboard" });
+useHead({
+    title: "Dashboard",
+});
+
+const branchStore = useBranchStore();
+
+const activeBranch = computed(() => branchStore.activeBranch);
+
+const isSubscriptionPending = computed(() => {
+    const branch = activeBranch.value;
+    return !branch?.agency?.is_verified || !branch?.is_verified;
+});
 
 const roomData: RoomOccupancy[] = [
     { label: "VIP", occupied: 2, available: 1, reserved: 1 },
@@ -74,6 +102,7 @@ const branches: Branch[] = [
         ],
     },
 ];
+
 function onChangeDay(direction: 1 | -1) {
     console.log("change day", direction);
 }

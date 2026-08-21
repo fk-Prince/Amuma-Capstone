@@ -188,26 +188,41 @@
 
                 <div class="p-5">
                     <p
-                        v-if="!assessmentRows.length"
+                        v-if="!assessments.length"
                         class="text-sm text-slate-400"
                     >
                         No assessment details were provided.
                     </p>
-                    <dl
-                        v-else
-                        class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3"
-                    >
-                        <div v-for="row in assessmentRows" :key="row.label">
-                            <dt class="text-xs text-slate-400">
-                                {{ row.label }}
-                            </dt>
-                            <dd
-                                class="text-sm font-medium text-slate-800 mt-0.5 break-words"
+                    <div v-else class="space-y-6">
+                        <div
+                            v-for="(assessment, index) in assessments"
+                            :key="index"
+                            class="pb-6 border-b border-slate-100 last:pb-0 last:border-b-0"
+                        >
+                            <h4
+                                class="text-xs font-semibold text-slate-600 mb-3"
                             >
-                                {{ row.value }}
-                            </dd>
+                                Assessment {{ index + 1 }}
+                            </h4>
+                            <dl
+                                class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3"
+                            >
+                                <div
+                                    v-for="row in getAssessmentRows(assessment)"
+                                    :key="row.label"
+                                >
+                                    <dt class="text-xs text-slate-400">
+                                        {{ row.label }}
+                                    </dt>
+                                    <dd
+                                        class="text-sm font-medium text-slate-800 mt-0.5 break-words"
+                                    >
+                                        {{ row.value }}
+                                    </dd>
+                                </div>
+                            </dl>
                         </div>
-                    </dl>
+                    </div>
                 </div>
             </div>
         </div>
@@ -222,9 +237,6 @@ import type { Patient, Guardian, Assessment } from "~/types/patient";
 import type { Service } from "~/types/service";
 import type { BranchFacility, BranchHomecare } from "~/types/branch";
 import { useMedicalServices } from "~/composables/useBooking";
-import { useBranch } from "~/composables/useBranchProvider";
-
-const { branch } = useBranch();
 
 const props = defineProps<{
     category: "homecare" | "facility" | null;
@@ -232,7 +244,7 @@ const props = defineProps<{
     facility: FacilityBooking;
     patient: Patient;
     guardian: Guardian;
-    assessment: Assessment;
+    assessments: Assessment[];
     services: Service[];
     branchHomecare?: BranchHomecare;
     branchFacility?: BranchFacility[];
@@ -243,11 +255,16 @@ defineEmits<{
     (e: "edit-step", step: string): void;
 }>();
 
-type Row = { label: string; value: string; span?: boolean };
+type Row = {
+    label: string;
+    value: string;
+    span?: boolean;
+};
 
 const adlRatePerHour = computed<number>(
     () => props.branchHomecare?.adl_hourly_rate ?? 0,
 );
+
 const minAdlHours = computed<number>(
     () => props.branchHomecare?.adl_min_hour ?? 0,
 );
@@ -261,8 +278,13 @@ const { selectedServiceLabel, selectedServicesTotal } = useMedicalServices(
 
 function formatDate(value?: string) {
     if (!value) return "";
+
     const date = new Date(`${value}T00:00:00`);
-    if (Number.isNaN(date.getTime())) return value;
+
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
     return date.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
@@ -270,22 +292,47 @@ function formatDate(value?: string) {
     });
 }
 
-function fullName(parts: (string | undefined)[]) {
+function fullName(parts: (string | undefined | null)[]) {
     return parts.filter(Boolean).join(" ");
 }
+
+const facilityTotal = computed<number>(() => {
+    if (!props.branchFacility?.length) {
+        return 0;
+    }
+
+    const room = props.facility.plan?.toUpperCase();
+    const billing = props.facility.billing_cycle?.toUpperCase();
+
+    if (!room || !billing) {
+        return 0;
+    }
+
+    const facility = props.branchFacility.find(
+        (item) =>
+            item.accommodation_type?.toUpperCase() === room &&
+            item.billing_cycle?.toUpperCase() === billing,
+    );
+
+    return Number(facility?.price ?? 0);
+});
 
 const bookingRows = computed<Row[]>(() => {
     if (props.category === "homecare") {
         const hc = props.homecare;
+
         const rows: Row[] = [
             {
                 label: "Booking Type",
                 value:
                     hc.type === "ADL"
-                        ? "Activites of Daily Living (ADL)"
-                        : hc.type,
+                        ? "Activities of Daily Living (ADL)"
+                        : (hc.type ?? ""),
             },
-            { label: "Date", value: formatDate(hc.date) },
+            {
+                label: "Date",
+                value: formatDate(hc.date),
+            },
             {
                 label: "Preferred Time",
                 value: hc.prefered_time
@@ -305,20 +352,21 @@ const bookingRows = computed<Row[]>(() => {
                 label: "Medical Service",
                 value: selectedServiceLabel.value ?? "",
             });
-            if (selectedServicesTotal.value) {
-                rows.push({
-                    label: "Estimated Total",
-                    value: `₱${selectedServicesTotal.value.toFixed(2)}`,
-                });
-            }
+
+            rows.push({
+                label: "Estimated Total",
+                value: `₱${Number(selectedServicesTotal.value ?? 0).toFixed(
+                    2,
+                )}`,
+            });
         }
 
         if (hc.type === "ADL") {
+            const hours = Number(hc.time_span ?? 0);
+
             rows.push({
                 label: "Duration",
-                value: hc.time_span
-                    ? `${formatDuration(Number(hc.time_span))} (${hc.time_span} hrs)`
-                    : "",
+                value: hours ? `${formatDuration(hours)} (${hours} hrs)` : "",
             });
         }
 
@@ -327,58 +375,64 @@ const bookingRows = computed<Row[]>(() => {
             value: hc.address ?? "",
             span: true,
         });
+
         if (hc.type === "ADL") {
+            const hours = Number(hc.time_span ?? 0);
+            const amount = hours * adlRatePerHour.value;
+
             rows.push({
                 label: "Total",
-                value: `₱${(Number(hc.time_span) * (branch.value?.homecare?.adl_hourly_rate ?? 0)).toFixed(2)}`,
+                value: `₱${amount.toFixed(2)}`,
                 span: true,
             });
         } else if (hc.type === "Medical") {
             rows.push({
                 label: "Total",
-                value: `₱${selectedServicesTotal.value.toFixed(2)}`,
+                value: `₱${Number(selectedServicesTotal.value ?? 0).toFixed(
+                    2,
+                )}`,
                 span: true,
             });
         }
+
         return rows;
     }
 
     const fc = props.facility;
 
-    const rows: Row[] = [{ label: "Admission Type", value: fc.type ?? "" }];
+    const rows: Row[] = [
+        {
+            label: "Admission Type",
+            value: fc.type ?? "",
+        },
+    ];
 
     if (fc.type === "Complete") {
         rows.push(
-            { label: "Accommodation Type", value: fc.plan ?? "" },
-            { label: "Admission Plan", value: fc.billing_cycle ?? "" },
+            {
+                label: "Accommodation Type",
+                value: fc.plan ?? "",
+            },
+            {
+                label: "Admission Plan",
+                value: fc.billing_cycle ?? "",
+            },
             {
                 label: "Admission Date",
                 value: formatDate(fc.admission_date),
             },
             {
                 label: "Total",
-                value: `₱${facilityTotal.value.toLocaleString()}`,
+                value: `₱${facilityTotal.value.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                })}`,
                 span: true,
             },
         );
     }
 
     return rows;
-});
-
-const facilityTotal = computed(() => {
-    if (!props.branchFacility?.length) return 0;
-
-    const room = props.facility.plan.toUpperCase();
-    const billing = props.facility.billing_cycle.toUpperCase();
-
-    const facility = props.branchFacility.find(
-        (item) =>
-            item.accommodation_type.toUpperCase() === room &&
-            item.billing_cycle.toUpperCase() === billing,
-    );
-
-    return facility?.price ?? 0;
 });
 
 const patientRows = computed<Row[]>(() => {
@@ -399,71 +453,149 @@ const patientRows = computed<Row[]>(() => {
             label: "Full Name",
             value: fullName([p.first_name, p.middle_name, p.last_name]),
         },
-        { label: "Gender", value: p.gender ?? "" },
-        { label: "Date of Birth", value: formatDate(p.date_of_birth) },
-        { label: "Phone Number", value: p.phone_number ?? "" },
-        { label: "Address", value: address ?? "", span: true },
-        { label: "Citizenship", value: p.citizenship ?? "" },
-        { label: "Occupation", value: p.occupation ?? "" },
-        { label: "Marital Status", value: p.marital_status ?? "" },
-        { label: "Height / Weight", value: heightWeight },
-        { label: "Blood Type", value: p.blood_type ?? "" },
+        {
+            label: "Gender",
+            value: p.gender ?? "",
+        },
+        {
+            label: "Date of Birth",
+            value: formatDate(p.date_of_birth),
+        },
+        {
+            label: "Phone Number",
+            value: p.phone_number ?? "",
+        },
+        {
+            label: "Address",
+            value: address ?? "",
+            span: true,
+        },
+        {
+            label: "Citizenship",
+            value: p.citizenship ?? "",
+        },
+        {
+            label: "Occupation",
+            value: p.occupation ?? "",
+        },
+        {
+            label: "Marital Status",
+            value: p.marital_status ?? "",
+        },
+        {
+            label: "Height / Weight",
+            value: heightWeight,
+        },
+        {
+            label: "Blood Type",
+            value: p.blood_type ?? "",
+        },
     ];
 });
 
 const guardianRows = computed<Row[]>(() => {
     const g = props.guardian;
+
     return [
         {
             label: "Full Name",
             value: fullName([g.first_name, g.middle_name, g.last_name]),
         },
-        { label: "Relationship to Patient", value: g.relationship ?? "" },
-        { label: "Phone Number", value: g.phone_number ?? "" },
-        { label: "Email", value: g.email ?? "" },
-        { label: "Address", value: g.address ?? "", span: true },
-        { label: "Occupation", value: g.occupation ?? "" },
+        {
+            label: "Relationship to Patient",
+            value: g.relationship ?? "",
+        },
+        {
+            label: "Phone Number",
+            value: g.phone_number ?? "",
+        },
+        {
+            label: "Email",
+            value: g.email ?? "",
+        },
+        {
+            label: "Address",
+            value: g.address ?? "",
+            span: true,
+        },
+        {
+            label: "Occupation",
+            value: g.occupation ?? "",
+        },
     ];
 });
 
-const assessmentRows = computed<Row[]>(() => {
-    const a = props.assessment;
+function getAssessmentRows(assessment: Assessment): Row[] {
     const rows: Row[] = [
-        { label: "Primary Diagnosis", value: a.diagnosis ?? "" },
-        { label: "Date Diagnosed", value: formatDate(a.diagnosis_date) },
-        { label: "Diagnosis Notes", value: a.diagnosis_notes ?? "" },
-        { label: "Supporting Document", value: a.diagnosis_file_name ?? "" },
-        { label: "Blood Pressure", value: a.blood_pressure ?? "" },
+        {
+            label: "Primary Diagnosis",
+            value: assessment.diagnosis ?? "",
+        },
+        {
+            label: "Date Diagnosed",
+            value: formatDate(assessment.diagnosis_date),
+        },
+        {
+            label: "Diagnosis Notes",
+            value: assessment.diagnosis_notes ?? "",
+        },
+        {
+            label: "Supporting Document",
+            value: assessment.diagnosis_file_name ?? "",
+        },
+        {
+            label: "Blood Pressure",
+            value: assessment.blood_pressure ?? "",
+        },
         {
             label: "Pulse Rate",
-            value: a.pulse_rate ? `${a.pulse_rate} bpm` : "",
+            value: assessment.pulse_rate ? `${assessment.pulse_rate} bpm` : "",
         },
         {
             label: "Respiratory Rate",
-            value: a.respiratory_rate
-                ? `${a.respiratory_rate} breaths/min`
+            value: assessment.respiratory_rate
+                ? `${assessment.respiratory_rate} breaths/min`
                 : "",
         },
         {
             label: "Temperature",
-            value: a.temperature ? `${a.temperature} °C` : "",
+            value: assessment.temperature ? `${assessment.temperature} °C` : "",
         },
         {
             label: "Oxygen Saturation",
-            value: a.oxygen_saturation ? `${a.oxygen_saturation}%` : "",
+            value: assessment.oxygen_saturation
+                ? `${assessment.oxygen_saturation}%`
+                : "",
         },
-        { label: "Level of Consciousness", value: a.mental_state ?? "" },
-        { label: "Memory / Cognitive Issues", value: a.memory_issues ?? "" },
-        { label: "Mood / Behavior", value: a.mood ?? "" },
-        { label: "Communication Ability", value: a.communication ?? "" },
-        { label: "Speech Pattern", value: a.speech ?? "" },
+        {
+            label: "Level of Consciousness",
+            value: assessment.mental_state ?? "",
+        },
+        {
+            label: "Memory / Cognitive Issues",
+            value: assessment.memory_issues ?? "",
+        },
+        {
+            label: "Mood / Behavior",
+            value: assessment.mood ?? "",
+        },
+        {
+            label: "Communication Ability",
+            value: assessment.communication ?? "",
+        },
+        {
+            label: "Speech Pattern",
+            value: assessment.speech ?? "",
+        },
     ];
 
-    return rows.filter((row) => !!row.value);
-});
+    return rows.filter((row) => Boolean(row.value));
+}
 
-const formatDuration = (hours: number) => {
-    if (!hours) return "";
+function formatDuration(hours: number) {
+    if (!Number.isFinite(hours) || hours <= 0) {
+        return "";
+    }
 
     let remainingHours = hours;
 
@@ -473,7 +605,9 @@ const formatDuration = (hours: number) => {
     const days = Math.floor(remainingHours / 24);
     remainingHours %= 24;
 
-    const parts = [];
+    const wholeHours = Math.floor(remainingHours);
+
+    const parts: string[] = [];
 
     if (months) {
         parts.push(`${months} month${months > 1 ? "s" : ""}`);
@@ -483,10 +617,10 @@ const formatDuration = (hours: number) => {
         parts.push(`${days} day${days > 1 ? "s" : ""}`);
     }
 
-    if (remainingHours) {
-        parts.push(`${remainingHours} hr${remainingHours > 1 ? "s" : ""}`);
+    if (wholeHours) {
+        parts.push(`${wholeHours} hr${wholeHours > 1 ? "s" : ""}`);
     }
 
     return parts.join(" and ");
-};
+}
 </script>

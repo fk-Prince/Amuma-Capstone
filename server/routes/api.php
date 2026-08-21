@@ -20,7 +20,6 @@ use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PatientAdmissionController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PlanController;
-use App\Http\Controllers\RefundController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ScheduleController;
@@ -81,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/action', [BookingController::class, 'action']);
     Route::post('/invoices/action', [InvoiceController::class, 'action']);
     Route::post('/admissions/action', [PatientAdmissionController::class, 'action']);
+    Route::post('/subscriptions/action', [SubscriptionController::class, 'action']);
 
     // OVERVIEW / STATS
     Route::post('/bookings/overview', [BookingController::class, 'overview']);
@@ -89,9 +89,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rooms/overview', [RoomController::class, 'overview']);
 
     // SUBSCRIPTION
-    Route::post('/subscription', [SubscriptionController::class, 'newSubscription']);
-    Route::get('/subscription-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
-    Route::post('/subscription-validate',  [SubscriptionController::class, 'validateSubscription']);
+    Route::post('/subscriptions', [SubscriptionController::class, 'newSubscription']);
+    Route::get('/subscriptions-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
+    Route::post('/subscriptions-validate',  [SubscriptionController::class, 'validateSubscription']);
 
     Route::get('/users/branches',  [UserController::class, 'getUserBranch']);
     Route::get('/reviews/public',  [ReviewController::class, 'publicReviews']);
@@ -121,6 +121,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'invoices' => InvoiceController::class,
         'settings' => BranchSettingController::class,
         'online-schedules' => OnlineScheduleController::class,
+        'subscriptions' => SubscriptionController::class
     ]);
 
     //VALIDATE INPUTS

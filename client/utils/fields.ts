@@ -27,13 +27,28 @@ export const patientFields = [
 
 
 
-export const Field = (fieldProps: { label: string; value: any }, { slots }: any) =>
-    h("p", { class: "flex flex-col gap-0.5 capitalize" }, [
-        h("span", { class: "text-xs text-[#6B8A87]" }, fieldProps.label),
-        h(
-            "span",
-            { class: "text-[#16302E] font-medium" },
-            slots.value ? slots.value() : (fieldProps.value ?? "—"),
-        ),
-    ]);
+export const Field = (
+    fieldProps: { label: string; value: any },
+    { slots, attrs }: any,
+) =>
+    h(
+        "p",
+        {
+            ...attrs,
+            class: ["flex flex-col gap-0.5 capitalize", attrs.class],
+        },
+        [
+            h(
+                "span",
+                { class: "text-xs text-[#6B8A87]" },
+                fieldProps.label,
+            ),
+            h(
+                "span",
+                { class: "text-[#16302E] font-medium" },
+                slots.value ? slots.value() : (fieldProps.value ?? "—"),
+            ),
+        ],
+    );
+
 Field.props = ["label", "value"];

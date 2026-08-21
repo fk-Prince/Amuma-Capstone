@@ -55,25 +55,53 @@
                 </thead>
 
                 <tbody class="divide-y divide-[#EEF3F1]">
-                    <!-- Loading -->
+                    <!-- <template v-if="loading">
+                        <tr
+                            v-for="n in pagination.pageSize.value"
+                            :key="`skeleton-row-${n}`"
+                        >
+                            <td
+                                v-for="(col, colIndex) in columns"
+                                :key="col.key"
+                                class="px-5 py-4"
+                            >
+                                <div
+                                    class="h-3 rounded bg-slate-100 animate-pulse"
+                                    :class="[
+                                        colIndex === 0
+                                            ? 'w-[60%]'
+                                            : colIndex === 1
+                                              ? 'w-[75%]'
+                                              : colIndex === 2
+                                                ? 'w-[45%]'
+                                                : colIndex === 3
+                                                  ? 'w-[65%]'
+                                                  : 'w-[50%]',
+                                    ]"
+                                />
+                            </td>
+                        </tr>
+                    </template> -->
+
                     <template v-if="loading">
-                        <tr v-for="n in pagination.pageSize.value" :key="n">
+                        <tr
+                            v-for="n in pagination.pageSize.value"
+                            :key="`skeleton-row-${n}`"
+                        >
                             <td
                                 v-for="col in columns"
                                 :key="col.key"
                                 class="px-5 py-4"
                             >
                                 <div
-                                    class="h-3 rounded bg-slate-100 animate-pulse"
+                                    class="h-4 rounded bg-slate-200 animate-pulse"
                                     :style="{
-                                        width: skeletonWidth(),
+                                        width: `${50 + ((n * 17 + columns.indexOf(col) * 23) % 51)}%`,
                                     }"
                                 />
                             </td>
                         </tr>
                     </template>
-
-                    <!-- Empty -->
                     <tr v-else-if="!sortedRows.length">
                         <td :colspan="columns.length" class="px-5 py-14">
                             <div class="flex flex-col items-center text-center">
@@ -91,7 +119,6 @@
                         </td>
                     </tr>
 
-                    <!-- Rows -->
                     <template v-else>
                         <tr
                             v-for="row in sortedRows"

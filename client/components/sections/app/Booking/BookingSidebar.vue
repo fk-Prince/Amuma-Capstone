@@ -332,7 +332,7 @@ import { notifcationFormatDate } from "~/utils/notification-time";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { formatStatus } from "~/types/booking";
 
-const open = ref(true);
+const open = ref(false);
 
 const route = useRoute();
 const user = useAuthUser();
@@ -341,9 +341,28 @@ const { $echo } = useNuxtApp();
 const props = defineProps<{
     overview: any;
 }>();
+
+const emit = defineEmits<{
+    (e: "newBooking", booking: any): void;
+}>();
+
 let channel: any = null;
 
 const branchUuid = computed(() => route.params.uuid as string);
+
+const isDesktop = ref(false);
+
+const checkScreen = () => {
+    if (typeof window === "undefined") return;
+
+    isDesktop.value = window.innerWidth >= 1024;
+
+    if (isDesktop.value) {
+        open.value = true;
+    } else {
+        open.value = false;
+    }
+};
 
 const bindNotification = () => {
     if (!user.value?.uuid) return;
@@ -355,29 +374,15 @@ const bindNotification = () => {
                 return;
             }
 
-            console.log("new booking:", e.booking);
-            console.log("recent before:", props.overview.bookings.recent);
-            props.overview.bookings.recent = [
-                e.booking,
-                ...(props.overview.bookings.recent ?? []),
-            ].slice(0, 5);
+            if (props.overview?.bookings) {
+                props.overview.bookings.recent = [
+                    e.booking,
+                    ...(props.overview.bookings.recent ?? []),
+                ].slice(0, 5);
+            }
 
             emit("newBooking", e.booking);
         });
-};
-
-const emit = defineEmits<{
-    (e: "newBooking", booking: any): void;
-}>();
-
-const isDesktop = ref(false);
-
-const checkScreen = () => {
-    isDesktop.value = window.innerWidth >= 1024;
-
-    if (isDesktop.value) {
-        open.value = true;
-    }
 };
 
 onMounted(() => {
@@ -391,7 +396,12 @@ onBeforeUnmount(() => {
 
     if (channel) {
         channel.stopListening(".NotificationEvent");
-        $echo.leave(`Notification.${user.value?.uuid}`);
+
+        if (user.value?.uuid) {
+            $echo.leave(`Notification.${user.value.uuid}`);
+        }
+
+        channel = null;
     }
 });
 </script>

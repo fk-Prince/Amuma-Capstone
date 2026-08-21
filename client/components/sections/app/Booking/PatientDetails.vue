@@ -42,12 +42,16 @@
                 :value="patient?.address || booking.homecare?.address"
             />
             <Field
-                label="Height"
-                :value="patient?.height ? `${patient.height} cm` : ''"
-            />
-            <Field
-                label="Weight"
-                :value="patient?.weight ? `${patient.weight} kg` : ''"
+                class="normal-case"
+                label="Height / Weight"
+                :value="
+                    [
+                        patient?.height ? `${patient.height} cm` : '',
+                        patient?.weight ? `${patient.weight} kg` : '',
+                    ]
+                        .filter(Boolean)
+                        .join(' / ')
+                "
             />
         </div>
     </section>
@@ -57,7 +61,6 @@
 import type { BookingRetrieve } from "~/types/booking";
 import { fullName } from "~/utils/user";
 import { Field } from "~/utils/fields";
-import { Home, Stethoscope } from "lucide-vue-next";
 
 const props = defineProps<{
     booking: BookingRetrieve;

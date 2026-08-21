@@ -24,9 +24,18 @@ class SubscriptionService extends BaseService {
         return await this.request(this.resource + '-validate', 'POST', payload);
     }
 
+
+    async list(payload: any): Promise<any> {
+        return await this.request(this.resource, 'GET', payload);
+    }
+
+    async action(payload: any): Promise<any> {
+        return await this.request(this.resource + '/action', 'POST', payload);
+    }
+
     private get resource(): string {
         const config = useRuntimeConfig();
-        return `${config.public.backendApi}/api/subscription`;
+        return `${config.public.backendApi}/api/subscriptions`;
     }
 }
 

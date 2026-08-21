@@ -35,6 +35,7 @@
                                     )
                                 }}
                             </h2>
+
                             <button
                                 v-if="hasPatientUuid"
                                 type="button"
@@ -95,6 +96,7 @@
                         >
                             {{ paymentStatus }}
                         </span>
+
                         <div class="text-right">
                             <p
                                 class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono"
@@ -130,6 +132,7 @@
                             <path d="M15 3h6v6" />
                             <path d="M10 14 21 3" />
                         </svg>
+
                         {{
                             isFacility
                                 ? "Admission Information"
@@ -164,14 +167,15 @@
                             "
                         >
                             <Field
-                                label="Schedule Date"
-                                :value="formatDate(booking.homecare?.date)"
-                            />
-
-                            <Field
-                                v-if="preferredTimeLabel"
-                                label="Preferred Time"
-                                :value="preferredTimeLabel"
+                                label="Schedule Date / Preferred Time"
+                                :value="
+                                    [
+                                        formatDate(booking.homecare?.date),
+                                        preferredTimeLabel,
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' - ')
+                                "
                             />
 
                             <Field
@@ -304,6 +308,7 @@
                                                 :alt="item.employee_name"
                                                 class="h-full w-full object-cover"
                                             />
+
                                             <span
                                                 v-else
                                                 class="text-sm font-semibold text-[#0E7C7B]"
@@ -325,6 +330,7 @@
                                                     "Unassigned"
                                                 }}
                                             </p>
+
                                             <p
                                                 v-if="item.role_name"
                                                 class="text-xs font-normal text-slate-400"
@@ -360,12 +366,6 @@
                         </p>
 
                         <div class="flex gap-2 items-center">
-                            <!-- <img
-                                :src="booking.guardian?.avatar"
-                                alt="User Avatar"
-                                class="w-12 h-12 rounded-full object-cover shrink-0"
-                            /> -->
-
                             <div>
                                 <p class="text-sm font-medium text-[#16302E]">
                                     {{ booking.guardian?.first_name }}
@@ -375,61 +375,10 @@
                                 <p class="text-sm text-[#6B8A87]">
                                     {{ booking.guardian?.email }}
                                 </p>
+
                                 <p class="text-sm text-[#6B8A87]">
                                     {{ stringToDateTime(booking.created_at) }}
                                 </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3">
-                        <div class="flex gap-3">
-                            <ActionButton
-                                v-if="
-                                    showAccommodationButton &&
-                                    !isPreAdmissionFacility
-                                "
-                                :loading="loading"
-                                variant="solid"
-                                @click="handleAccommodation"
-                            >
-                                {{
-                                    booking.reserved
-                                        ? "Change Accommodation"
-                                        : "Choose Accommodation Type"
-                                }}
-                            </ActionButton>
-
-                            <div
-                                v-if="
-                                    status === 'pending' &&
-                                    !isPreAdmissionFacility
-                                "
-                                class="flex flex-col gap-2"
-                            >
-                                <ActionButton
-                                    :loading="loading"
-                                    variant="solid"
-                                    @click="emit('confirm', booking)"
-                                >
-                                    {{
-                                        isFacility
-                                            ? "Approve Admission Booking"
-                                            : "Approve Homecare Booking"
-                                    }}
-                                </ActionButton>
-
-                                <ActionButton
-                                    :loading="loading"
-                                    variant="danger"
-                                    @click="emit('reject', booking)"
-                                >
-                                    {{
-                                        paymentStatus === "paid"
-                                            ? "Reject & Refund"
-                                            : "Reject Booking"
-                                    }}
-                                </ActionButton>
                             </div>
                         </div>
                     </div>
@@ -440,7 +389,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, h } from "vue";
+import { computed } from "vue";
 import { fullName } from "~/utils/user";
 import { stringToDateTime, formatDate, formatDuration } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
@@ -458,25 +407,13 @@ import {
 
 const router = useRouter();
 const route = useRoute();
+
 const props = defineProps<{
     booking: BookingRetrieve;
     loading?: boolean;
 }>();
 
-const emit = defineEmits<{
-    (e: "reject", booking: any): void;
-    (e: "confirm", booking: any): void;
-    (e: "accommodation", booking: any): void;
-}>();
-
-function handleAccommodation() {
-    emit("accommodation", props.booking);
-}
-
-const showAccommodationButton = computed(() => {
-    const currentStatus = status.value?.toLowerCase() ?? "";
-    return ["pending"].includes(currentStatus) && isFacility.value;
-});
+const booking = computed(() => props.booking);
 
 const hasPatientUuid = computed(() => {
     return !!props.booking?.patient?.uuid;
@@ -494,36 +431,33 @@ const viewPatientInfo = () => {
     });
 };
 
-const isPreAdmissionFacility = computed(() => {
-    return (
-        props.booking.category === "facility" &&
-        props.booking.facility?.type === "Pre-Admission"
-    );
+const status = computed(() => {
+    return (props.booking?.status ?? "").toLowerCase();
 });
-// const viewInvoice = () => {
-//     if (!props.booking?.reference_id) return;
 
-//     router.push({
-//         path: `/app/branches/${route.params.uuid}/invoices/booking/${props.booking.reference_id}`,
-//         query: { mode: "booking" },
-//     });
-// };
+const category = computed(() => {
+    return (props.booking?.category ?? "").toLowerCase();
+});
 
-const status = computed(() => (props.booking?.status ?? "").toLowerCase());
-const category = computed(() => (props.booking?.category ?? "").toLowerCase());
-const isFacility = computed(() => category.value === "facility");
+const isFacility = computed(() => {
+    return category.value === "facility";
+});
+
 const serviceType = computed(() => {
     if (props.booking.booking_type !== "online") {
         return "walk-in";
     }
+
     if (props.booking.category === "facility") {
         return props.booking.facility.type;
     }
+
     return props.booking.homecare.type;
 });
 
 const reserveInfo = computed(() => {
     const reserved = props.booking?.reserved;
+
     if (!reserved) return null;
 
     return {
@@ -553,17 +487,21 @@ const serviceTypeLabel = computed(() => {
 
 const preferredTimeLabel = computed(() => {
     const time = props.booking.homecare?.prefered_time;
+
     if (!time) return "";
+
     return format24To12(time);
 });
 
 const totalPrice = computed(() => {
     const paymentTotal = props.booking?.payment?.total_amount;
+
     if (paymentTotal !== undefined && paymentTotal !== null) {
         return Number(paymentTotal);
     }
 
-    const services = props.booking.homecare.services ?? [];
+    const services = props.booking.homecare?.services ?? [];
+
     return services.reduce(
         (sum: number, s: any) => sum + (Number(s.price) || 0),
         0,
@@ -573,69 +511,4 @@ const totalPrice = computed(() => {
 const paymentStatus = computed(() => {
     return props.booking?.payment?.payment_status ?? null;
 });
-
-// const isAssignableService = computed(() =>
-//     ["Medical", "ADL"].includes(serviceType.value),
-// );
-
-function getAssignment(serviceId: number) {
-    return props.booking?.assignments?.find(
-        (assignment: any) => assignment.service_id === serviceId,
-    );
-}
-
-const ActionButton = (
-    actionProps: {
-        loading?: boolean;
-        variant: "solid" | "outline" | "danger";
-    },
-    { slots, attrs }: any,
-) => {
-    const variantClass =
-        actionProps.variant === "solid"
-            ? "bg-primary text-white hover:bg-primary/90"
-            : actionProps.variant === "danger"
-              ? "border border-red-300 text-red-600 hover:bg-red-50"
-              : "border border-primary text-primary hover:bg-primary/10";
-
-    return h(
-        "button",
-        {
-            type: "button",
-            disabled: actionProps.loading,
-            class: `inline-flex items-center justify-center w-64 px-5 py-2 text-sm font-medium rounded-md transition ${variantClass}`,
-            ...attrs,
-        },
-        actionProps.loading
-            ? [
-                  h("span", { class: "flex items-center gap-2" }, [
-                      h(
-                          "svg",
-                          {
-                              class: "w-4 h-4 animate-spin",
-                              viewBox: "0 0 24 24",
-                              fill: "none",
-                              stroke: "currentColor",
-                              "stroke-width": "3",
-                          },
-                          [
-                              h("circle", {
-                                  cx: "12",
-                                  cy: "12",
-                                  r: "10",
-                                  class: "opacity-25",
-                              }),
-                              h("path", {
-                                  d: "M4 12a8 8 0 018-8",
-                                  class: "opacity-75",
-                              }),
-                          ],
-                      ),
-                      "Processing...",
-                  ]),
-              ]
-            : slots.default?.(),
-    );
-};
-ActionButton.props = ["loading", "variant"];
 </script>

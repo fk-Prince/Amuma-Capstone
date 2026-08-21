@@ -103,7 +103,319 @@
                 </div>
             </div>
         </div>
+        <div class="space-y-5">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-900">
+                    Verification Documents
+                </h2>
 
+                <p class="text-sm text-slate-500 mt-1">
+                    Upload a valid ID and a supporting document for
+                    verification.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-5">
+                <div class="space-y-2 p-4">
+                    <div class="flex items-center justify-between">
+                        <label
+                            class="flex items-center gap-1.5 text-sm font-semibold text-slate-700"
+                        >
+                            <svg
+                                class="w-4 h-4 text-slate-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <rect
+                                    x="2"
+                                    y="5"
+                                    width="20"
+                                    height="14"
+                                    rx="2"
+                                />
+                                <circle cx="8" cy="12" r="2" />
+                                <path d="M14 10h4" />
+                                <path d="M14 14h4" />
+                            </svg>
+
+                            Valid ID
+                            <span class="text-red-500">*</span>
+                        </label>
+
+                        <div class="flex items-center gap-2">
+                            <button
+                                v-if="currentIdFile"
+                                type="button"
+                                @click="removeFile(idSide)"
+                                class="text-xs font-medium text-red-500 hover:text-red-600"
+                            >
+                                Remove
+                            </button>
+
+                            <div
+                                class="flex items-center rounded-full bg-slate-100 p-0.5 text-xs font-medium"
+                            >
+                                <button
+                                    type="button"
+                                    @click="idSide = 'id_front'"
+                                    class="px-2.5 py-1 rounded-full transition"
+                                    :class="
+                                        idSide === 'id_front'
+                                            ? 'bg-primary shadow-sm text-white'
+                                            : 'text-slate-500'
+                                    "
+                                >
+                                    Front
+                                </button>
+
+                                <button
+                                    type="button"
+                                    @click="idSide = 'id_back'"
+                                    class="px-2.5 py-1 rounded-full transition"
+                                    :class="
+                                        idSide === 'id_back'
+                                            ? 'bg-primary shadow-sm text-white'
+                                            : 'text-slate-500'
+                                    "
+                                >
+                                    Back
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="relative h-40 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group"
+                        @click="idInput?.click()"
+                    >
+                        <img
+                            v-if="currentIdPreview"
+                            :src="currentIdPreview"
+                            class="h-full w-full object-cover"
+                        />
+
+                        <div
+                            v-else
+                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400"
+                        >
+                            <div
+                                class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
+                            >
+                                +
+                            </div>
+
+                            <p class="text-sm font-medium">
+                                Upload ID
+                                {{ idSide === "id_front" ? "Front" : "Back" }}
+                            </p>
+
+                            <span class="text-xs"> PNG, JPG up to 5MB </span>
+                        </div>
+
+                        <div
+                            v-if="currentIdPreview"
+                            class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition"
+                        />
+
+                        <span
+                            v-if="idFrontPreview && idBackPreview"
+                            class="absolute bottom-2 right-2 flex gap-1"
+                        >
+                            <span
+                                class="h-1.5 w-1.5 rounded-full"
+                                :class="
+                                    idSide === 'id_front'
+                                        ? 'bg-primary'
+                                        : 'bg-white/70'
+                                "
+                            />
+
+                            <span
+                                class="h-1.5 w-1.5 rounded-full"
+                                :class="
+                                    idSide === 'id_back'
+                                        ? 'bg-primary'
+                                        : 'bg-white/70'
+                                "
+                            />
+                        </span>
+                    </div>
+
+                    <input
+                        ref="idInput"
+                        type="file"
+                        accept="image/*"
+                        class="hidden"
+                        @change="(e) => handleFile(e, idSide)"
+                    />
+
+                    <p
+                        v-if="errors?.agency_id_front || errors?.agency_id_back"
+                        class="text-xs text-red-500"
+                    >
+                        {{ errors.agency_id_front || errors.agency_id_back }}
+                    </p>
+
+                    <div>
+                        <button
+                            type="button"
+                            @click="showIdList = !showIdList"
+                            class="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-600"
+                        >
+                            {{ showIdList ? "Hide" : "Show" }} applicable IDs
+
+                            <svg
+                                class="w-3 h-3 transition-transform"
+                                :class="{ 'rotate-180': showIdList }"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                            >
+                                <path
+                                    d="M5 7.5L10 12.5L15 7.5"
+                                    stroke="currentColor"
+                                    stroke-width="1.75"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+                        </button>
+
+                        <ul
+                            v-if="showIdList"
+                            class="mt-2 space-y-1 rounded-lg bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside"
+                        >
+                            <li v-for="item in applicableIds" :key="item">
+                                {{ item }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="space-y-2 p-4">
+                    <div class="flex items-center justify-between">
+                        <label
+                            class="flex items-center gap-1.5 text-sm font-semibold text-slate-700"
+                        >
+                            <svg
+                                class="w-4 h-4 text-slate-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                                />
+                                <path d="M14 2v6h6" />
+                                <path d="M9 13h6" />
+                                <path d="M9 17h6" />
+                            </svg>
+
+                            Document
+                            <span class="text-red-500">*</span>
+                        </label>
+
+                        <button
+                            v-if="agency.document"
+                            type="button"
+                            @click="removeFile('document')"
+                            class="text-xs font-medium text-red-500 hover:text-red-600"
+                        >
+                            Remove
+                        </button>
+                    </div>
+
+                    <div
+                        class="relative h-40 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group"
+                        @click="documentInput?.click()"
+                    >
+                        <img
+                            v-if="documentPreview"
+                            :src="documentPreview"
+                            class="h-full w-full object-cover"
+                        />
+
+                        <div
+                            v-else
+                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400"
+                        >
+                            <div
+                                class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
+                            >
+                                +
+                            </div>
+
+                            <p class="text-sm font-medium">Upload Document</p>
+
+                            <span class="text-xs">
+                                PNG, JPG, PDF up to 5MB
+                            </span>
+                        </div>
+
+                        <div
+                            v-if="documentPreview"
+                            class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition"
+                        />
+                    </div>
+
+                    <input
+                        ref="documentInput"
+                        type="file"
+                        accept="image/*,application/pdf"
+                        class="hidden"
+                        @change="(e) => handleFile(e, 'document')"
+                    />
+
+                    <p
+                        v-if="errors?.agency_document"
+                        class="text-xs text-red-500"
+                    >
+                        {{ errors.agency_document }}
+                    </p>
+
+                    <div>
+                        <button
+                            type="button"
+                            @click="showDocumentList = !showDocumentList"
+                            class="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-600"
+                        >
+                            {{ showDocumentList ? "Hide" : "Show" }} applicable
+                            documents
+
+                            <svg
+                                class="w-3 h-3 transition-transform"
+                                :class="{ 'rotate-180': showDocumentList }"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                            >
+                                <path
+                                    d="M5 7.5L10 12.5L15 7.5"
+                                    stroke="currentColor"
+                                    stroke-width="1.75"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+                        </button>
+
+                        <ul
+                            v-if="showDocumentList"
+                            class="mt-2 space-y-1 rounded-lg bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside"
+                        >
+                            <li v-for="item in applicableDocuments" :key="item">
+                                {{ item }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="space-y-5">
             <div class="flex items-center justify-between">
                 <div>
@@ -232,6 +544,65 @@ const agencyImagePreview = ref<string | null>(
 const agencyImageInput = ref<HTMLInputElement | null>(null);
 const useGeolocation = ref(true);
 
+type FileField = "id_front" | "id_back" | "document";
+
+const idSide = ref<"id_front" | "id_back">("id_front");
+const idInput = ref<HTMLInputElement | null>(null);
+const documentInput = ref<HTMLInputElement | null>(null);
+
+const showIdList = ref(false);
+const showDocumentList = ref(false);
+
+const applicableIds = [
+    "Philippine Passport",
+    "Driver's License",
+    "UMID (Unified Multi-Purpose ID)",
+    "SSS ID",
+    "PhilHealth ID",
+    "PRC ID",
+    "Voter's ID",
+    "Postal ID",
+    "PhilSys National ID (ePhilID)",
+];
+
+const applicableDocuments = [
+    "DTI Business Name Registration",
+    "SEC Certificate of Registration",
+    // "Mayor's / Business Permit",
+    "BIR Certificate of Registration (Form 2303)",
+    "DOH / Home Health Agency Accreditation",
+];
+
+const idFrontPreview = ref<string | null>(
+    typeof props.agency.id_front === "string" ? props.agency.id_front : null,
+);
+const idBackPreview = ref<string | null>(
+    typeof props.agency.id_back === "string" ? props.agency.id_back : null,
+);
+const documentPreview = ref<string | null>(
+    typeof props.agency.document === "string" ? props.agency.document : null,
+);
+
+const previewRefs: Record<FileField, ReturnType<typeof ref<string | null>>> = {
+    id_front: idFrontPreview,
+    id_back: idBackPreview,
+    document: documentPreview,
+};
+
+const errorKeys: Record<FileField, string> = {
+    id_front: "agency_id_front",
+    id_back: "agency_id_back",
+    document: "agency_document",
+};
+
+const currentIdFile = computed(() =>
+    idSide.value === "id_front" ? agency.value.id_front : agency.value.id_back,
+);
+
+const currentIdPreview = computed(() =>
+    idSide.value === "id_front" ? idFrontPreview.value : idBackPreview.value,
+);
+
 const locationError = computed(() => {
     const keys = [
         "location",
@@ -325,6 +696,37 @@ const removeAgencyImage = () => {
 
     if (agencyImageInput.value) {
         agencyImageInput.value.value = "";
+    }
+};
+
+const handleFile = (event: Event, field: FileField) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    emit("update:agency", { ...agency.value, [field]: file });
+
+    const previewRef = previewRefs[field];
+
+    if (file.type === "application/pdf") {
+        previewRef.value = null;
+    } else {
+        previewRef.value = URL.createObjectURL(file);
+    }
+
+    clearError(errorKeys[field]);
+};
+
+const removeFile = (field: FileField) => {
+    emit("update:agency", { ...agency.value, [field]: null });
+
+    previewRefs[field].value = null;
+
+    if (field === "document" && documentInput.value) {
+        documentInput.value.value = "";
+    }
+
+    if ((field === "id_front" || field === "id_back") && idInput.value) {
+        idInput.value.value = "";
     }
 };
 

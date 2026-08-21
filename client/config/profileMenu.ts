@@ -44,7 +44,7 @@ export const profileMenuDropDownList = [
     {
         icon: "Subscription Management",
         label: "Subscription Management",
-        to: "/",
+        to: "/app/owner/dashboard",
         types: ["isSystemOwner"],
     },
     { icon: "user", label: "Settings", to: "/" },

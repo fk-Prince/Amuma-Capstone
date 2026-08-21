@@ -23,7 +23,6 @@ return new class extends Migration
             $table->json('settings')->nullable();
             $table->string('contact_number')->nullable();
             $table->string('image')->nullable(true);
-            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
     }

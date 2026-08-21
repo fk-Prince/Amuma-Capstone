@@ -1,6 +1,8 @@
 <template>
-    <div class="flex gap-3 items-center flex-1">
-        <div class="relative flex-1">
+    <div
+        class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center flex-1"
+    >
+        <div class="relative flex-1 min-w-0">
             <svg
                 class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted"
                 viewBox="0 0 20 20"
@@ -19,7 +21,7 @@
                 :modelValue="search"
                 @update:modelValue="$emit('update:search', $event)"
                 placeholder="Search by Reference ID or Patient name"
-                inputClass="pl-[2.3rem]"
+                inputClass="pl-[2.3rem] w-full"
             />
 
             <button
@@ -44,34 +46,26 @@
 
         <div class="relative shrink-0">
             <button
+                ref="filterButton"
                 type="button"
-                class="flex items-center gap-4 px-4 py-2.5 text-sm border border-[#E4EFED] rounded-lg bg-white hover:bg-[#F7FAF9] transition"
-                @click="open = !open"
+                class="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 text-sm border border-[#E4EFED] rounded-lg bg-white hover:bg-[#F7FAF9] transition"
+                @click="toggleFilters"
             >
-                <span class="text-muted">
-                    Type
-                    <span class="text-[#16302E] font-medium ml-1">
-                        {{ typeSummary }}
-                    </span>
-                </span>
+                <svg
+                    class="h-4 w-4 text-[#6B8A87]"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="M3 5h14" />
+                    <path d="M5 10h10" />
+                    <path d="M8 15h4" />
+                </svg>
 
-                <span class="text-[#E4EFED]">|</span>
-
-                <span class="text-muted">
-                    Period
-                    <span class="text-[#16302E] font-medium ml-1">
-                        {{ periodSummary }}
-                    </span>
-                </span>
-
-                <span class="text-[#E4EFED]">|</span>
-
-                <span class="text-muted">
-                    Status
-                    <span class="text-[#16302E] font-medium ml-1">
-                        {{ statusSummary }}
-                    </span>
-                </span>
+                <span class="font-medium text-[#16302E]">Filters</span>
 
                 <ChevronDown
                     class="h-4 w-4 text-muted transition-transform"
@@ -79,156 +73,183 @@
                 />
             </button>
 
-            <div v-if="open" class="fixed inset-0 z-20" @click="open = false" />
-
-            <transition name="fade-slide">
+            <Teleport to="body">
                 <div
                     v-if="open"
-                    class="absolute right-0 z-30 mt-2 w-[630px] max-w-[90vw] bg-white rounded-xl shadow-lg border border-[#E4EFED] p-6"
-                >
-                    <button
-                        type="button"
-                        class="absolute right-4 top-4 text-muted hover:text-[#16302E]"
-                        @click="open = false"
+                    class="fixed inset-0 z-[9998]"
+                    @click="open = false"
+                />
+
+                <Transition name="fade-slide">
+                    <div
+                        v-if="open"
+                        class="fixed z-[9999] w-[630px] max-w-[calc(100vw-1rem)] bg-white rounded-xl shadow-xl border border-[#E4EFED] p-4 sm:p-6"
+                        :style="dropdownStyle"
+                        @click.stop
                     >
-                        <svg
-                            class="h-4 w-4"
-                            viewBox="0 0 20 20"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.75"
-                            stroke-linecap="round"
+                        <button
+                            type="button"
+                            class="absolute right-4 top-4 text-muted hover:text-[#16302E]"
+                            @click="open = false"
                         >
-                            <path d="M5 5l10 10M15 5 5 15" />
-                        </svg>
-                    </button>
-
-                    <div class="flex items-start gap-6 py-2">
-                        <p
-                            class="w-20 shrink-0 text-sm font-semibold text-[#16302E] pt-1.5"
-                        >
-                            Type
-                        </p>
-
-                        <div class="flex flex-wrap gap-x-5 gap-y-2">
-                            <button
-                                v-for="item in typeFilters"
-                                :key="item.value"
-                                type="button"
-                                class="text-sm transition"
-                                :class="
-                                    localType === item.value
-                                        ? 'text-primary font-medium'
-                                        : 'text-[#16302E] hover:text-primary'
-                                "
-                                @click="localType = item.value"
+                            <svg
+                                class="h-4 w-4"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.75"
+                                stroke-linecap="round"
                             >
-                                {{ item.label }}
-                            </button>
-                        </div>
-                    </div>
+                                <path d="M5 5l10 10M15 5 5 15" />
+                            </svg>
+                        </button>
 
-                    <div class="h-px bg-[#E4EFED] my-3" />
-
-                    <div class="flex items-start gap-6 py-2">
-                        <p
-                            class="w-20 shrink-0 text-sm font-semibold text-[#16302E] pt-1.5"
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
                         >
-                            Period
-                        </p>
+                            <p
+                                class="sm:w-20 shrink-0 text-sm font-semibold text-[#16302E]"
+                            >
+                                Type
+                            </p>
 
-                        <div class="flex flex-col gap-2.5">
                             <div class="flex flex-wrap gap-x-5 gap-y-2">
                                 <button
-                                    v-for="p in periodPresets"
-                                    :key="p.value"
+                                    v-for="item in typeFilters"
+                                    :key="item.value"
                                     type="button"
                                     class="text-sm transition"
                                     :class="
-                                        activePreset === p.value
+                                        localType === item.value
                                             ? 'text-primary font-medium'
                                             : 'text-[#16302E] hover:text-primary'
                                     "
-                                    @click="applyPreset(p.value)"
+                                    @click="localType = item.value"
                                 >
-                                    {{ p.label }}
+                                    {{ item.label }}
                                 </button>
                             </div>
+                        </div>
 
-                            <div class="flex items-center gap-2 w-full">
-                                <BaseInput
-                                    v-model="localDateFrom"
-                                    mode="date"
-                                    class-name="w-[140px]"
-                                    @update:modelValue="activePreset = null"
-                                />
+                        <div class="h-px bg-[#E4EFED] my-3" />
 
-                                <span class="text-muted text-xs">to</span>
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
+                        >
+                            <p
+                                class="sm:w-20 shrink-0 text-sm font-semibold text-[#16302E]"
+                            >
+                                Period
+                            </p>
 
-                                <BaseInput
-                                    v-model="localDateTo"
-                                    mode="date"
-                                    class-name="w-[140px]"
-                                    @update:modelValue="activePreset = null"
-                                />
+                            <div class="flex flex-col gap-2.5 min-w-0">
+                                <div class="flex flex-wrap gap-x-5 gap-y-2">
+                                    <button
+                                        v-for="p in periodPresets"
+                                        :key="p.value"
+                                        type="button"
+                                        class="text-sm transition"
+                                        :class="
+                                            activePreset === p.value
+                                                ? 'text-primary font-medium'
+                                                : 'text-[#16302E] hover:text-primary'
+                                        "
+                                        @click="applyPreset(p.value)"
+                                    >
+                                        {{ p.label }}
+                                    </button>
+                                </div>
+
+                                <div
+                                    class="flex flex-row flex-nowrap items-center gap-2"
+                                >
+                                    <BaseInput
+                                        v-model="localDateFrom"
+                                        mode="date"
+                                        class-name="w-full min-w-0 xs:w-[140px]"
+                                        @update:modelValue="activePreset = null"
+                                    />
+
+                                    <span
+                                        class="text-muted text-xs text-center shrink-0"
+                                    >
+                                        to
+                                    </span>
+
+                                    <BaseInput
+                                        v-model="localDateTo"
+                                        mode="date"
+                                        class-name="w-full min-w-0 xs:w-[140px]"
+                                        @update:modelValue="activePreset = null"
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="h-px bg-[#E4EFED] my-3" />
+                        <div class="h-px bg-[#E4EFED] my-3" />
 
-                    <div class="flex items-start gap-6 py-2">
-                        <p
-                            class="w-20 shrink-0 text-sm font-semibold text-[#16302E] pt-1.5"
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
                         >
-                            Status
-                        </p>
-
-                        <div class="flex flex-wrap gap-x-5 gap-y-2">
-                            <button
-                                v-for="item in statusFilters"
-                                :key="item.value"
-                                type="button"
-                                class="text-sm transition"
-                                :class="
-                                    localStatus === item.value
-                                        ? 'text-primary font-medium'
-                                        : 'text-[#16302E] hover:text-primary'
-                                "
-                                @click="localStatus = item.value"
+                            <p
+                                class="sm:w-20 shrink-0 text-sm font-semibold text-[#16302E]"
                             >
-                                {{ item.label }}
+                                Status
+                            </p>
+
+                            <div class="flex flex-wrap gap-x-5 gap-y-2">
+                                <button
+                                    v-for="item in statusFilters"
+                                    :key="item.value"
+                                    type="button"
+                                    class="text-sm transition"
+                                    :class="
+                                        localStatus === item.value
+                                            ? 'text-primary font-medium'
+                                            : 'text-[#16302E] hover:text-primary'
+                                    "
+                                    @click="localStatus = item.value"
+                                >
+                                    {{ item.label }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="h-px bg-[#E4EFED] my-4" />
+
+                        <div class="flex justify-end gap-3">
+                            <button
+                                type="button"
+                                class="px-4 py-2 text-sm font-medium text-muted hover:text-[#16302E] transition"
+                                @click="resetAll"
+                            >
+                                Reset
+                            </button>
+
+                            <button
+                                type="button"
+                                class="px-5 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:opacity-90 transition"
+                                @click="applyAndClose"
+                            >
+                                Apply
                             </button>
                         </div>
                     </div>
-
-                    <div class="h-px bg-[#E4EFED] my-4" />
-
-                    <div class="flex justify-end gap-3">
-                        <button
-                            type="button"
-                            class="px-4 py-2 text-sm font-medium text-muted hover:text-[#16302E] transition"
-                            @click="resetAll"
-                        >
-                            Reset
-                        </button>
-
-                        <button
-                            type="button"
-                            class="px-5 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:opacity-90 transition"
-                            @click="applyAndClose"
-                        >
-                            Apply
-                        </button>
-                    </div>
-                </div>
-            </transition>
+                </Transition>
+            </Teleport>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import {
+    ref,
+    computed,
+    watch,
+    onMounted,
+    onBeforeUnmount,
+    nextTick,
+} from "vue";
 import { ChevronDown } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import { typeFilters, statusFilters } from "~/types/booking";
@@ -250,6 +271,68 @@ const emit = defineEmits<{
 }>();
 
 const open = ref(false);
+const filterButton = ref<HTMLElement | null>(null);
+
+const dropdownStyle = ref<Record<string, string>>({
+    top: "0px",
+    left: "0px",
+});
+
+const DROPDOWN_WIDTH = 630;
+const DROPDOWN_HEIGHT = 440;
+const SCREEN_GAP = 16;
+
+const updateDropdownPosition = () => {
+    if (!filterButton.value || !open.value) return;
+
+    const rect = filterButton.value.getBoundingClientRect();
+
+    const width = Math.min(DROPDOWN_WIDTH, window.innerWidth - SCREEN_GAP * 2);
+
+    const height = Math.min(
+        DROPDOWN_HEIGHT,
+        window.innerHeight - SCREEN_GAP * 2,
+    );
+
+    let left = rect.right - width;
+
+    left = Math.max(
+        SCREEN_GAP,
+        Math.min(left, window.innerWidth - width - SCREEN_GAP),
+    );
+
+    let top = rect.bottom + 8;
+
+    if (top + height > window.innerHeight - SCREEN_GAP) {
+        top = rect.top - height - 8;
+    }
+
+    if (top < SCREEN_GAP) {
+        top = SCREEN_GAP;
+    }
+
+    dropdownStyle.value = {
+        top: `${top}px`,
+        left: `${left}px`,
+        maxHeight: `${height}px`,
+        overflowY: "auto",
+    };
+};
+
+const toggleFilters = async () => {
+    open.value = !open.value;
+
+    if (open.value) {
+        await nextTick();
+        updateDropdownPosition();
+    }
+};
+
+const handleViewportChange = () => {
+    if (open.value) {
+        updateDropdownPosition();
+    }
+};
 
 const getLocalDateStr = (date: Date) => {
     const year = date.getFullYear();
@@ -293,6 +376,17 @@ const periodPresets = [
     { label: "1 Year", value: "1y" },
 ];
 
+const activeFilterCount = computed(() => {
+    let count = 0;
+
+    if (props.type && props.type !== "all") count++;
+    if (props.status && props.status !== "all") count++;
+
+    if (props.dateFrom || props.dateTo) count++;
+
+    return count;
+});
+
 watch(
     () => props.type,
     (v) => {
@@ -310,18 +404,14 @@ watch(
 watch(
     () => props.dateFrom,
     (v) => {
-        if (v) {
-            localDateFrom.value = v;
-        }
+        localDateFrom.value = v;
     },
 );
 
 watch(
     () => props.dateTo,
     (v) => {
-        if (v) {
-            localDateTo.value = v;
-        }
+        localDateTo.value = v;
     },
 );
 
@@ -335,7 +425,6 @@ function applyPreset(value: string) {
     }
 
     const today = new Date();
-
     const to = new Date(today);
     const from = new Date(today);
 
@@ -383,6 +472,26 @@ function applyAndClose() {
     open.value = false;
 }
 
+const typeSummary = computed(() => {
+    const found = typeFilters.find((t: any) => t.value === props.type);
+    return found?.label ?? "All";
+});
+
+const statusSummary = computed(() => {
+    const found = statusFilters.find((s: any) => s.value === props.status);
+    return found?.label ?? "All";
+});
+
+const periodSummary = computed(() => {
+    if (!props.dateFrom && !props.dateTo) return "All";
+
+    if (props.dateFrom && props.dateTo) {
+        return `${props.dateFrom} → ${props.dateTo}`;
+    }
+
+    return props.dateFrom || props.dateTo;
+});
+
 onMounted(() => {
     if (!props.dateFrom) {
         emit("update:dateFrom", defaultDates.from);
@@ -391,37 +500,23 @@ onMounted(() => {
     if (!props.dateTo) {
         emit("update:dateTo", defaultDates.to);
     }
+
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
 });
 
-const typeSummary = computed(() => {
-    const found = typeFilters.find((t: any) => t.value === props.type);
-
-    return found?.label ?? "All";
-});
-
-const statusSummary = computed(() => {
-    const found = statusFilters.find((s: any) => s.value === props.status);
-
-    return found?.label ?? "All";
-});
-
-const periodSummary = computed(() => {
-    if (!props.dateFrom && !props.dateTo) {
-        return "All";
-    }
-
-    if (props.dateFrom && props.dateTo) {
-        return `${props.dateFrom} → ${props.dateTo}`;
-    }
-
-    return props.dateFrom || props.dateTo;
+onBeforeUnmount(() => {
+    window.removeEventListener("resize", handleViewportChange);
+    window.removeEventListener("scroll", handleViewportChange, true);
 });
 </script>
 
 <style scoped>
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-    transition: all 0.15s ease;
+    transition:
+        opacity 0.15s ease,
+        transform 0.15s ease;
 }
 
 .fade-slide-enter-from,

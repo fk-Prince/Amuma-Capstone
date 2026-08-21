@@ -69,7 +69,7 @@
                             :facility="bookingStore.facility"
                             :patient="bookingStore.patient"
                             :guardian="bookingStore.guardian"
-                            :assessment="bookingStore.assessment"
+                            :assessments="bookingStore.assessment"
                             :services="bookingStore.services"
                             :branchHomecare="
                                 bookingStore.branchHomecare ?? undefined
@@ -77,8 +77,8 @@
                             :branchFacility="
                                 bookingStore.branchFacility ?? undefined
                             "
-                            @edit-step="goEditStep"
                             :showPayment="showPayment"
+                            @edit-step="goEditStep"
                         />
                     </div>
 

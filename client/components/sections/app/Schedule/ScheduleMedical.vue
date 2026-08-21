@@ -21,11 +21,11 @@
                     Today
                 </span>
 
-                <span
+                <!-- <span
                     class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500"
                 >
                     {{ day.count }} {{ day.count === 1 ? "visit" : "visits" }}
-                </span>
+                </span> -->
 
                 <span
                     v-if="day.unassignedCount"
@@ -335,7 +335,7 @@
                                                         3,
                                                     )"
                                                     :key="assignee.employee_id"
-                                                    class="flex h-4.5 w-4.5 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-primary text-[8px] font-bold text-white"
+                                                    class="flex h-[32px] w-[32px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-primary text-[8px] font-bold text-white"
                                                     :title="assignee.full_name"
                                                 >
                                                     <img

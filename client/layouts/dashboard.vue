@@ -92,6 +92,17 @@ const activeModules = computed(() => {
 const menus = computed(() => {
     const modules = activeModules.value ?? [];
     const uuid = branchStore.routeUuid;
+    const branch = branchStore.activeBranch;
+
+    if (!branch?.agency?.is_verified || !branch?.is_verified) {
+        return authMenuList
+            .filter((item) => item.label === "Dashboard")
+            .map((item) => ({
+                label: item.label,
+                to: uuid ? item.to.replace("[uuid]", uuid) : item.to,
+                icon: item.icon,
+            }));
+    }
 
     // const branch = branchStore.activeBranch;
     //   const branchPlans =

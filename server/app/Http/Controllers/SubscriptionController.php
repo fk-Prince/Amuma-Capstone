@@ -26,6 +26,19 @@ class SubscriptionController extends Controller
         if ($request->hasFile('agency_image')) {
             $data['agency_image'] = $request->file('branch_image');
         }
+
+        if ($request->hasFile('branch_document')) {
+            $data['branch_document'] = $request->file('branch_document');
+        }
+        if ($request->hasFile('agency_document')) {
+            $data['agency_document'] = $request->file('agency_document');
+        }
+        if ($request->hasFile('agency_id_back')) {
+            $data['agency_id_back'] = $request->file('agency_id_back');
+        }
+        if ($request->hasFile('agency_id_front')) {
+            $data['agency_id_front'] = $request->file('agency_id_front');
+        }
         return $this->subscriptionService->makeSubscription($data, $request->user());
     }
 
@@ -47,5 +60,20 @@ class SubscriptionController extends Controller
     public function retrieveSubscriptionDetail(Request $request)
     {
         return $this->subscriptionService->createSubscription($request->user(), $request->all());
+    }
+    public function index(Request $request)
+    {
+        return $this->subscriptionService->subscriptionList($request->all());
+    }
+
+    public function action(Request $request)
+    {
+        if ($request->action === 'overview' || $request->action === 'overview_subscription') {
+            return $this->subscriptionService->overview($request->all());
+        } else if ($request->action === 'approve') {
+            return $this->subscriptionService->approve($request->all());
+        } else if ($request->action === 'reject') {
+            return $this->subscriptionService->reject($request->all());
+        }
     }
 }

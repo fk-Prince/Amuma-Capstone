@@ -55,6 +55,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             },
             email: "davao@amuma.com",
             status: "active",
+            document: ""
         } as Branch,
 
         agency: {
@@ -72,6 +73,9 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             },
             email: "info@amuma.com",
             image: "",
+            document: "",
+            id_front: "",
+            id_back: ""
         } as Agency,
 
         settings: {

@@ -81,29 +81,7 @@ export const branchSchema = z.object({
             .min(1, "Email is required")
             .email("Invalid email address")
             .max(255, "Email must not exceed 255 characters"),
-    // image: z
-    //     .instanceof(File, {
-    //         message: "Please select an image.",
-    //     })
-    //     .refine(
-    //         (file) =>
-    //             [
-    //                 "image/jpeg",
-    //                 "image/jpg",
-    //                 "image/png",
-    //             ].includes(file.type),
-    //         {
-    //             message: "Only JPG and PNG images are allowed.",
-    //         },
-    //     )
-    //     .refine(
-    //         (file) => file.size <= 5 * 1024 * 1024,
-    //         {
-    //             message: "Image size must be less than 5MB.",
-    //         },
-    //     )
-    //     .optional()
-    //     .nullable(),
+
     image: z
         .union([
             z.instanceof(File).refine(
@@ -118,9 +96,48 @@ export const branchSchema = z.object({
         ])
         .optional()
         .nullable(),
+
+    document: z.any().superRefine((val, ctx) => {
+        if (val === null || val === undefined || val === "") {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Document is required",
+            });
+            return;
+        }
+
+        if (typeof val === "string") {
+            return;
+        }
+
+        if (val instanceof File) {
+            if (
+                !["image/jpeg", "image/jpg", "image/png", "application/pdf"].includes(
+                    val.type,
+                )
+            ) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Only JPG, PNG, and PDF files are allowed for Document.",
+                });
+            }
+
+            if (val.size > 5 * 1024 * 1024) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Document size must be less than 5MB.",
+                });
+            }
+
+            return;
+        }
+
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Invalid file for Document.",
+        });
+    }),
 });
-
-
 
 export const settingSchema = z.object({
     reserved_walkin_slots: z.preprocess(

@@ -7,4 +7,8 @@ export interface Agency {
     email: string,
     image: File | string | null;
     location: Location;
+    id_front?: string | File;
+    id_back?: string | File;
+    document?: string | File;
+    is_verified: boolean
 }

@@ -149,81 +149,83 @@ export type DiagnosisInput = z.infer<typeof assessmentSchema>;
 
 
 
-export const patientData = reactive<Patient>({
-    first_name: "",
-    middle_name: "",
-    last_name: "",
-    gender: "",
-    citizenship: "",
-    occupation: "",
-    date_of_birth: "",
-    phone_number: "",
-    marital_status: "",
-    height: "",
-    weight: "",
-    blood_type: "",
-    address: ""
-});
-
-
-export const guardianData = reactive<Guardian>({
-    first_name: "",
-    middle_name: "",
-    last_name: "",
-    phone_number: "",
-    email: "",
-    relationship: "",
-    occupation: "",
-    address: "",
-});
 // export const patientData = reactive<Patient>({
-//     first_name: "Juan",
-//     middle_name: "Dela",
-//     last_name: "Cruz",
-//     gender: "Male",
-//     citizenship: "vasd",
-//     occupation: "Engineer",
-//     date_of_birth: "1995-06-15",
-//     phone_number: "+63 912 345 6789",
-//     marital_status: "Single",
-//     height: "175",
-//     weight: "70",
-//     blood_type: "O+",
+//     first_name: "",
+//     middle_name: "",
+//     last_name: "",
+//     gender: "",
+//     citizenship: "",
+//     occupation: "",
+//     date_of_birth: "",
+//     phone_number: "",
+//     marital_status: "",
+//     height: "",
+//     weight: "",
+//     blood_type: "",
 //     address: ""
 // });
 
 
 // export const guardianData = reactive<Guardian>({
-//     first_name: "Maria",
-//     middle_name: "Santos",
-//     last_name: "Cruz",
-//     phone_number: "09771171913",
-//     email: "maria.cruz@example.com",
-//     relationship: "Mother",
-//     occupation: "Engineer",
-//     address: "dfg",
+//     first_name: "",
+//     middle_name: "",
+//     last_name: "",
+//     phone_number: "",
+//     email: "",
+//     relationship: "",
+//     occupation: "",
+//     address: "",
 // });
 
-
-
-
-export const assessmentData = reactive<Assessment>({
-    diagnosis: "",
-    diagnosis_date: "",
-    diagnosis_notes: "",
-    diagnosis_file: undefined,
-    diagnosis_file_name: "",
-
-    blood_pressure: "",
-    pulse_rate: "",
-    temperature: "",
-    oxygen_saturation: "",
-    respiratory_rate: "",
-
-    communication: "Coherent & Logical",
-    speech: "clear",
-
-    mental_state: "alert",
-    memory_issues: "none",
-    mood: "calm",
+export const patientData = reactive<Patient>({
+    first_name: "Juan",
+    middle_name: "Dela",
+    last_name: "Cruz",
+    gender: "Male",
+    citizenship: "vasd",
+    occupation: "Engineer",
+    date_of_birth: "1995-06-15",
+    phone_number: "+63 912 345 6789",
+    marital_status: "Single",
+    height: "175",
+    weight: "70",
+    blood_type: "O+",
+    address: ""
 });
+
+
+export const guardianData = reactive<Guardian>({
+    first_name: "Maria",
+    middle_name: "Santos",
+    last_name: "Cruz",
+    phone_number: "09771171913",
+    email: "maria.cruz@example.com",
+    relationship: "Mother",
+    occupation: "Engineer",
+    address: "dfg",
+});
+
+
+
+export const assessmentData = reactive<Assessment[]>([
+    {
+        diagnosis: "",
+        diagnosis_date: "",
+        diagnosis_notes: "",
+        diagnosis_file: undefined,
+        diagnosis_file_name: "",
+
+        blood_pressure: "",
+        pulse_rate: "",
+        temperature: "",
+        oxygen_saturation: "",
+        respiratory_rate: "",
+
+        communication: "Coherent & Logical",
+        speech: "clear",
+
+        mental_state: "alert",
+        memory_issues: "none",
+        mood: "calm",
+    },
+]);

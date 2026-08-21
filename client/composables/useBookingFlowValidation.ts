@@ -1,5 +1,3 @@
-
-
 import { computed, ref, type ComputedRef, type Ref } from "vue";
 import { useSchemaValidation } from "~/composables/useSchemaValidation";
 import type { HomecareBooking, FacilityBooking } from "~/types/booking";
@@ -18,13 +16,13 @@ export function useBookingFlowValidation(opts: {
     facilityBookingSchema: ZodTypeAny;
     patientSchema: ComputedRef<ZodTypeAny>;
     guardianSchema: ZodTypeAny;
-    assessmentSchema: ZodTypeAny;
+    assessmentSchema: ZodTypeAny; // schema for a SINGLE assessment item
 
     homecareData: HomecareBooking;
     facilityData: FacilityBooking;
     patientData: Patient;
     guardianData: Guardian;
-    assessmentData: Assessment;
+    assessmentData: Assessment[];
 
     reserved?: Ref<Reserved>;
 }) {
@@ -48,14 +46,75 @@ export function useBookingFlowValidation(opts: {
         opts.guardianData
     );
 
-    const assessment = useSchemaValidation(
-        opts.assessmentSchema,
-        opts.assessmentData
-    );
+    // Assessment is a list, and it's optional overall — an item only needs to
+    // validate if the user actually started filling it in. Errors are keyed
+    // flat as `field.index` to match AssessmentForm's lookup pattern.
+    const assessmentErrors = ref<Record<string, string>>({});
 
+    const ASSESSMENT_FIELDS = [
+        "diagnosis",
+        "diagnosis_date",
+        "diagnosis_notes",
+        "diagnosis_file",
+        "blood_pressure",
+        "pulse_rate",
+        "respiratory_rate",
+        "temperature",
+        "oxygen_saturation",
+        "mental_state",
+        "memory_issues",
+        "mood",
+        "communication",
+        "speech",
+    ] as const;
+
+    function isAssessmentTouched(item: Assessment): boolean {
+        return ASSESSMENT_FIELDS.some((key) => {
+            const value = (item as any)[key];
+            return value !== "" && value !== undefined && value !== null;
+        });
+    }
+
+    const assessmentIsValid = computed(() => {
+        const items = opts.assessmentData ?? [];
+
+        return items.every((item) => {
+            if (!isAssessmentTouched(item)) return true;
+            return opts.assessmentSchema.safeParse(item).success;
+        });
+    });
+
+    function validateAssessment(): boolean {
+        const items = opts.assessmentData ?? [];
+        const next: Record<string, string> = {};
+        let valid = true;
+
+        items.forEach((item, index) => {
+            if (!isAssessmentTouched(item)) return;
+
+            const result = opts.assessmentSchema.safeParse(item);
+
+            if (result.success) return;
+
+            valid = false;
+
+            const formatted = result.error.format() as any;
+
+            for (const key of ASSESSMENT_FIELDS) {
+                const errors = formatted[key]?._errors;
+
+                if (errors?.length) {
+                    next[`${key}.${index}`] = errors[0];
+                }
+            }
+        });
+
+        assessmentErrors.value = next;
+
+        return valid;
+    }
 
     const reservedErrors = ref<Record<string, string>>({});
-
 
     const reservedIsValid = computed(() => {
         if (!opts.reserved) return true;
@@ -64,7 +123,6 @@ export function useBookingFlowValidation(opts: {
             opts.reserved.value
         ).success;
     });
-
 
     function validateReserved(): boolean {
         if (!opts.reserved) {
@@ -76,12 +134,10 @@ export function useBookingFlowValidation(opts: {
             opts.reserved.value
         );
 
-
         if (result.success) {
             reservedErrors.value = {};
             return true;
         }
-
 
         const formatted = result.error.format() as any;
 
@@ -103,31 +159,26 @@ export function useBookingFlowValidation(opts: {
             }
         }
 
-
         reservedErrors.value = next;
 
         return false;
     }
-
 
     const step1Valid = computed(() => {
         if (opts.category.value === "homecare") {
             return homecare.isValid.value;
         }
 
-
         if (opts.validationMode.value === "reserved") {
             return reservedIsValid.value;
         }
 
-
         return facility.isValid.value;
     });
 
-
     const step2Valid = patient.isValid;
     const step3Valid = guardian.isValid;
-    const step4Valid = assessment.isValid;
+    const step4Valid = assessmentIsValid;
 
     const canSubmit = computed(() =>
         step1Valid.value &&
@@ -135,7 +186,6 @@ export function useBookingFlowValidation(opts: {
         step3Valid.value &&
         step4Valid.value
     );
-
 
     const progress = computed(() => {
         const steps = [
@@ -150,7 +200,6 @@ export function useBookingFlowValidation(opts: {
         );
     });
 
-
     const completedSteps = computed(() =>
         [
             step1Valid.value ? "step1" : null,
@@ -160,23 +209,17 @@ export function useBookingFlowValidation(opts: {
         ].filter((x): x is string => x !== null)
     );
 
-
     function validateStep1(): boolean {
-
         if (opts.category.value === "homecare") {
             return homecare.validate();
         }
-
 
         if (opts.validationMode.value === "reserved") {
             return validateReserved();
         }
 
-
         return facility.validate();
     }
-
-
 
     function validateAll():
         | "step1"
@@ -189,27 +232,20 @@ export function useBookingFlowValidation(opts: {
             return "step1";
         }
 
-
         if (!patient.validate()) {
             return "step2";
         }
-
 
         if (!guardian.validate()) {
             return "step3";
         }
 
-
-        if (!assessment.validate()) {
+        if (!validateAssessment()) {
             return "step4";
         }
 
-
-
         return null;
     }
-
-
 
     return {
         homecareErrors: homecare.errors,
@@ -218,8 +254,7 @@ export function useBookingFlowValidation(opts: {
 
         patientErrors: patient.errors,
         guardianErrors: guardian.errors,
-        assessmentErrors: assessment.errors,
-
+        assessmentErrors,
 
         step1Valid,
         step2Valid,
@@ -230,13 +265,12 @@ export function useBookingFlowValidation(opts: {
         progress,
         completedSteps,
 
-
         validateStep1,
         validateReserved,
 
         validatePatient: patient.validate,
         validateGuardian: guardian.validate,
-        validateAssessment: assessment.validate,
+        validateAssessment,
 
         validateAll,
     };

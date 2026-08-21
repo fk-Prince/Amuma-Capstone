@@ -36,6 +36,9 @@ class SubscriptionRequest extends FormRequest
             'agency_country'     => ['nullable', 'string', 'required_with:agency_name'],
             'agency_email'       => ['nullable', 'string', 'required_with:agency_name', 'unique:agencies,email'],
             'agency_image'       => ['nullable', 'file', 'image', 'max:5120'],
+            'agency_id_front'    => ['nullable', 'file', 'image', 'max:5120', 'required_with:agency_name'],
+            'agency_id_back'     => ['nullable', 'file', 'image', 'max:5120', 'required_with:agency_name'],
+            'agency_document'    => ['nullable', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:5120', 'required_with:agency_name'],
 
             // Branch data
             'branch_name' => ['required', 'string'],
@@ -47,6 +50,7 @@ class SubscriptionRequest extends FormRequest
             'branch_email' => ['required', 'string', 'unique:branches,email'],
             'branch_contact_number' => ['required', 'string'],
             'branch_image' => ['nullable', 'file', 'image', 'max:5120'],
+            'branch_document' => ['required', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:5120'],
             'branch_settings' => ['required', 'array'],
             'branch_settings.currency' => ['required', 'string'],
             'branch_settings.opening' => ['required', 'string'],

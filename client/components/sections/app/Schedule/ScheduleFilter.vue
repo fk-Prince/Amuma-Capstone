@@ -343,11 +343,7 @@ const statusOptions = [
     },
     {
         label: "On going",
-        value: "in_progress",
-    },
-    {
-        label: "Waiting",
-        value: "waiting",
+        value: "ongoing",
     },
     {
         label: "Completed",
@@ -356,6 +352,10 @@ const statusOptions = [
     {
         label: "Cancelled",
         value: "cancelled",
+    },
+    {
+        label: "Missed",
+        value: "missed",
     },
 ];
 
