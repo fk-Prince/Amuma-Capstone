@@ -45,7 +45,7 @@
                     </svg>
                     Refresh
                 </button>
-
+                <!-- 
                 <div
                     class="inline-flex w-fit items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-600 ring-1 ring-inset ring-amber-100"
                 >
@@ -60,7 +60,7 @@
                     </span>
 
                     {{ total }} {{ totalLabel }}
-                </div>
+                </div> -->
             </div>
         </div>
 
