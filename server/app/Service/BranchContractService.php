@@ -23,16 +23,8 @@ class BranchContractService
 
     public function overview(array $payload)
     {
-        return [
-            'total_active_plans' => $this->branchContractRepository->overview($payload, $payload['branch_id']),
-            'patient_with_plan' => 5,
-            'new_monthy_patients' => 10,
-            'patient_retention' => '99%',
-            "active_patient" =>  "0",
-            "caregivers" =>  "0",
-            "scheduled_visits" =>  "0",
-            "homecare_retention" =>  "0",
-        ];
+        return $this->branchContractRepository
+            ->dashboardStats($payload['branch_id']);
     }
 
     public function createBranchContract(array $payload)

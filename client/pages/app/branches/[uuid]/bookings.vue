@@ -1,7 +1,7 @@
 <template>
     <div class="min-h-screen-header bg-slate-100 p-2 overflow-visible">
         <div
-            class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-4 items-stretch max-w-8xl h-full min-h-0"
+            class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-4 items-stretch w-full h-full min-h-0"
         >
             <div class="w-full min-w-0 min-h-0 flex flex-col order-1">
                 <template v-if="!selectedReferenceId">
