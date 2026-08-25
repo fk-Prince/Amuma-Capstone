@@ -113,6 +113,49 @@
             </div>
 
             <div class="px-7 py-6 space-y-8">
+                <section v-if="isPaid && paymentRows.length">
+                    <h3
+                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
+                    >
+                        <svg
+                            class="h-3.5 w-3.5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <rect x="2" y="5" width="20" height="14" rx="2" />
+                            <path d="M2 10h20" />
+                        </svg>
+
+                        Payment Information
+                    </h3>
+
+                    <div
+                        class="rounded-lg border border-emerald-100 bg-emerald-50/40 px-5 py-4"
+                    >
+                        <div
+                            class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm"
+                        >
+                            <div v-for="row in paymentRows" :key="row.label">
+                                <p
+                                    class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono"
+                                >
+                                    {{ row.label }}
+                                </p>
+
+                                <p
+                                    class="mt-0.5 font-medium text-[#16302E] break-all"
+                                >
+                                    {{ row.value }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section>
                     <h3
                         class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
@@ -447,5 +490,34 @@ const totalPrice = computed(() => {
 
 const paymentStatus = computed(() => {
     return props.booking?.payment?.payment_status ?? null;
+});
+
+const isPaid = computed(() => paymentStatus.value === "paid");
+
+// Only a settled payment carries a method, reference and card — a pending one
+// holds nothing but the total, so the section stays hidden until it's paid.
+const paymentRows = computed(() => {
+    const payment = props.booking?.payment;
+
+    if (!payment) return [];
+
+    const label = (method?: string | null) => {
+        if (!method) return null;
+
+        const known: Record<string, string> = {
+            "CREDIT-CARD": "Credit / Debit card",
+            GCASH: "GCash",
+            CASH: "Cash",
+        };
+
+        return known[String(method).toUpperCase()] ?? method;
+    };
+
+    return [
+        { label: "Amount paid", value: formatCurrency(Number(payment.total_amount) || 0) },
+        { label: "Method", value: label(payment.payment_method) },
+        { label: "Card", value: payment.masked_card_number },
+        { label: "Reference", value: payment.xendit_invoice_id },
+    ].filter((row) => row.value);
 });
 </script>
