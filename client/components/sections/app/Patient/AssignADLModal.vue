@@ -183,7 +183,8 @@
                                         ? 'border-primary bg-primary/5'
                                         : 'border-slate-200 hover:border-primary/40',
                                     employee.is_busy ||
-                                    isTakenElsewhere(employee.employee_id)
+                                    isTakenElsewhere(employee.employee_id) ||
+                                    !isCaregiver(employee)
                                         ? 'opacity-60'
                                         : '',
                                 ]"
@@ -263,6 +264,12 @@
                                             </span>
                                         </span>
                                     </div>
+                                    <span
+                                        v-else-if="!isCaregiver(employee)"
+                                        class="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-600"
+                                    >
+                                        Caregiver only
+                                    </span>
                                     <span
                                         v-else-if="
                                             isTakenElsewhere(
@@ -392,6 +399,7 @@ import { fullName } from "~/utils/user";
 import { formatDate, formatTime, formatDuration } from "~/utils/time";
 import Combobox from "~/components/ui/Combobox.vue";
 import { employeeService } from "~/api/employee/EmployeeService";
+import { useToast } from "~/composables/useToast";
 import type { AuditRow } from "~/types/schedule";
 
 const props = defineProps<{
@@ -414,6 +422,13 @@ const emit = defineEmits<{
 
 const employeeData = ref<Employee[]>([]);
 const isFetching = ref(false);
+const { error: toastError } = useToast();
+
+// ADL bookings can only ever be staffed by a caregiver — matches the
+// hard rule the backend enforces unconditionally.
+function isCaregiver(employee: Employee) {
+    return (employee.role_name ?? "").toLowerCase() === "caregiver";
+}
 
 const adlEmployeeIds = ref<string[]>([""]);
 const activeAdlSlot = ref(0);
@@ -437,6 +452,7 @@ function availableEmployeeItemsFor(currentValue: string) {
 
             if (takenElsewhere.has(id)) return false;
             if (employee.is_busy) return false;
+            if (!isCaregiver(employee)) return false;
 
             return true;
         })
@@ -548,6 +564,13 @@ function isSelected(employeeId: string | number) {
 function handleEmployeeClick(employee: Employee) {
     if (employee.is_busy) return;
     if (isTakenElsewhere(employee.employee_id)) return;
+
+    if (!isCaregiver(employee)) {
+        toastError(
+            `${fullName(employee.first_name, "", employee.last_name)} is not a caregiver and cannot be assigned to this ADL booking.`,
+        );
+        return;
+    }
 
     assignAdl(activeAdlSlot.value, String(employee.employee_id));
 }

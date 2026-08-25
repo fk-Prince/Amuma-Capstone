@@ -121,9 +121,11 @@ class BookingService
                 $bookingData['payment']['payment_status'] = 'paid';
                 $bookingData['payment']['payment_method'] = $payload['payment_method'];
                 $bookingData['payment']['xendit_invoice_id'] = $result['xendit_invoice_id'];
+                $bookingData['payment']['masked_card_number'] = $result['masked_card_number'];
                 $bookingData['assessment'] = $this->bookingHelper->resolveAssessment(
                     $bookingData['assessment'] ?? []
                 );
+
 
                 $validUntil = match ($payload['category']) {
                     Booking::CATEGORY_ONLINE => Carbon::parse(

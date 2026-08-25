@@ -270,7 +270,7 @@
                     </section>
                 </section>
 
-                <section
+                <!-- <section
                     v-if="booking.homecare?.type?.toLowerCase() === 'adl'"
                     class="flex flex-col"
                 >
@@ -287,70 +287,7 @@
                     >
                         List of Medical Staff
                     </p>
-
-                    <div v-if="booking.assignments?.length" class="space-y-3">
-                        <div
-                            v-for="item in booking.assignments"
-                            :key="item.employee_id"
-                            class="rounded-xl bg-white px-4"
-                        >
-                            <div
-                                class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm"
-                            >
-                                <div>
-                                    <div class="flex items-center gap-3 mt-1">
-                                        <div
-                                            class="h-10 w-10 overflow-hidden rounded-full bg-[#EAF4F2] flex items-center justify-center shrink-0"
-                                        >
-                                            <img
-                                                v-if="item.avatar"
-                                                :src="item.avatar"
-                                                :alt="item.employee_name"
-                                                class="h-full w-full object-cover"
-                                            />
-
-                                            <span
-                                                v-else
-                                                class="text-sm font-semibold text-[#0E7C7B]"
-                                            >
-                                                {{
-                                                    item.employee_name?.charAt(
-                                                        0,
-                                                    ) ?? "?"
-                                                }}
-                                            </span>
-                                        </div>
-
-                                        <div>
-                                            <p
-                                                class="text-sm font-normal text-[#16302E]"
-                                            >
-                                                {{
-                                                    item.employee_name ||
-                                                    "Unassigned"
-                                                }}
-                                            </p>
-
-                                            <p
-                                                v-if="item.role_name"
-                                                class="text-xs font-normal text-slate-400"
-                                            >
-                                                {{ item.role_name }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <p
-                        v-else
-                        class="rounded-xl border border-dashed border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700"
-                    >
-                        No medical staff assigned yet
-                    </p>
-                </section>
+                </section> -->
 
                 <PatientDetails :booking="booking" />
                 <GuardianAssessmentDetails :booking="booking" />

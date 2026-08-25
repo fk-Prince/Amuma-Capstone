@@ -21,6 +21,9 @@ class InvoiceResource extends JsonResource
             'invoice_code' => $this->invoice_code,
             'total'        => (float) $this->total,
             'amount_paid'  => $this->amount_paid,
+            'refunded_amount'          => $this->refunded_amount,
+            'refund_processing_amount' => $this->refunded_processing_amount,
+            'refund_status'            => $this->refund_status,
             'balance_due'  => $this->balance_due,
             'is_collected' => (bool) $this->is_collected,
             'status'       => $this->resolveStatus(),
@@ -71,6 +74,31 @@ class InvoiceResource extends JsonResource
                     'amount'         => (float) $payment->amount,
                     'payment_method' => $payment->payment_method,
                     'created_at'     => $payment->created_at?->toIso8601String(),
+
+                    'refunds' => $payment->relationLoaded('refunds')
+                        ? $payment->refunds->map(fn($refund) => [
+                            'refund_id'           => $refund->refund_id,
+                            'reference_id'        => $refund->reference_id,
+                            'amount'              => (float) $refund->amount,
+                            'status'              => $refund->status,
+                            'refund_method'       => $refund->refund_method,
+                            'reason'              => $refund->reason,
+                            'masked_card_number'  => $refund->masked_card_number,
+                            'created_at'          => $refund->created_at?->toIso8601String(),
+                        ])
+                        : [],
+                ])
+            ),
+
+            'adjustments' => $this->whenLoaded(
+                'invoiceAdjustments',
+                fn() =>
+                $this->invoiceAdjustments->map(fn($adjustment) => [
+                    'invoice_adjustment_id' => $adjustment->invoice_adjustment_id,
+                    'type'                  => $adjustment->type,
+                    'amount'                => (float) $adjustment->amount,
+                    'reason'                => $adjustment->reason,
+                    'created_at'            => $adjustment->created_at?->toIso8601String(),
                 ])
             ),
 

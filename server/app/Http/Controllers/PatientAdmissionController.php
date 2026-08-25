@@ -48,7 +48,6 @@ class PatientAdmissionController extends Controller
     public function show(Request $request, string $id)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Read);
         $request->merge([
             'branch_id' => $branch->branch_id,
         ]);
@@ -58,7 +57,6 @@ class PatientAdmissionController extends Controller
     public function index(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Read);
         $request->merge([
             'branch_id' => $branch->branch_id,
         ]);

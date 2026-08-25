@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-screen grid grid-cols-1 lg:grid-cols-[1fr_320px] bg-slate-50"
+        class="min-h-screen-header grid grid-cols-1 lg:grid-cols-[1fr_320px] bg-slate-50"
     >
         <main class="px-5 sm:px-10 py-8 w-full mx-auto lg:mx-0">
             <div class="lg:hidden mb-6">

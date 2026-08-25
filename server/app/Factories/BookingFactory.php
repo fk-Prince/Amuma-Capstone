@@ -54,17 +54,17 @@ class BookingFactory
 
 
         $invoice->invoiceFacility()->create([
-            // 'price' =>  $payload['payment']['total_amount'],
+            'price' => $payload['payment']['total_amount'],
             'patient_admission_id' => $admission['patient_admission_id'],
             'branch_contract_id' => $payload['reserved']['contract_id']
         ]);
 
-        Log::info($payload['payment']);
 
         $invoice->payments()->create([
             'amount' => $payload['payment']['total_amount'] ?? null,
             'payment_method' => $payload['payment']['payment_method'] ?? 'cash',
             'reference_id' => $payload['payment']['xendit_invoice_id'] ?? null,
+            'masked_card_number' => $payload['payment']['masked_card_number'] ?? null,
         ]);
 
 

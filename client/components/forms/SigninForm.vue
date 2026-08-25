@@ -4,12 +4,14 @@ import BaseInput from "../ui/BaseInput.vue";
 import BaseButton from "../ui/BaseButton.vue";
 import AlertMessage from "../ui/AlertMessage.vue";
 
-import { useAuthUser } from "~/composables/useAuthUser";
+import { useAuthUser, fetchAuthUser } from "~/composables/useAuthUser";
 import { authService } from "~/api/auth/AuthService";
 import type { Alert } from "~/types/alert.js";
 import type { SigninRequest } from "~/types/auth.js";
+import { useBranchStore } from "#imports";
 
 const route = useRoute();
+const branch = useBranchStore();
 const user = useAuthUser();
 const redirecting = ref(false);
 
@@ -55,6 +57,7 @@ async function handleSignIn() {
             loading.value = true;
             user.value = res.user;
             await navigateTo("/");
+            await branch.fetchBranches();
         }, 1500);
     } catch (err: any) {
         showAlert(

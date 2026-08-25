@@ -139,7 +139,8 @@
                 </div>
 
                 <div
-                    class="grid grid-cols-3 divide-x divide-[#EDF4F3] border-b border-[#EDF4F3] bg-[#FAFDFC]"
+                    class="grid divide-x divide-[#EDF4F3] border-b border-[#EDF4F3] bg-[#FAFDFC]"
+                    :class="hasRefunds ? 'grid-cols-4' : 'grid-cols-3'"
                 >
                     <div class="px-7 py-5">
                         <p
@@ -160,6 +161,20 @@
                         </p>
                         <p class="text-2xl font-bold text-[#1F7A4D]">
                             ₱{{ formatMoney(invoice.amount_paid) }}
+                        </p>
+                    </div>
+
+                    <div
+                        v-if="hasRefunds"
+                        class="px-7 py-5 bg-[#FDF3DE]/60"
+                    >
+                        <p
+                            class="text-[10px] uppercase tracking-[0.15em] text-[#966B1F]/80 font-mono mb-1"
+                        >
+                            Refunded
+                        </p>
+                        <p class="text-2xl font-bold text-[#966B1F]">
+                            ₱{{ formatMoney(invoice.refunded_amount) }}
                         </p>
                     </div>
 
@@ -358,6 +373,62 @@
                                 <p class="text-xs text-[#6B8A87] mt-2">
                                     {{ formatDate(payment.created_at) }}
                                 </p>
+
+                                <div
+                                    v-if="payment.refunds?.length"
+                                    class="mt-3 space-y-2 border-t border-[#EDF4F3] pt-3"
+                                >
+                                    <div
+                                        v-for="refund in payment.refunds"
+                                        :key="refund.refund_id"
+                                        class="rounded-lg bg-[#FDF3DE]/50 px-4 py-3"
+                                    >
+                                        <div
+                                            class="flex items-center justify-between gap-3"
+                                        >
+                                            <span
+                                                class="text-xs font-mono text-[#966B1F]"
+                                            >
+                                                {{
+                                                    refund.reference_id ??
+                                                    "Refund"
+                                                }}
+                                            </span>
+
+                                            <span
+                                                class="rounded-full px-2 py-0.5 text-[10px] font-medium capitalize"
+                                                :class="
+                                                    refundStatusClasses(
+                                                        refund.status,
+                                                    )
+                                                "
+                                            >
+                                                {{ refund.status }}
+                                            </span>
+                                        </div>
+
+                                        <div
+                                            class="mt-1.5 flex items-center justify-between gap-3"
+                                        >
+                                            <p
+                                                class="text-xs text-[#6B8A87]"
+                                            >
+                                                {{
+                                                    refund.reason ??
+                                                    "No reason provided."
+                                                }}
+                                            </p>
+
+                                            <span
+                                                class="shrink-0 text-sm font-semibold text-[#966B1F]"
+                                            >
+                                                ₱{{
+                                                    formatMoney(refund.amount)
+                                                }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -367,6 +438,79 @@
                         >
                             No payments recorded yet
                         </p>
+                    </section>
+
+                    <section
+                        v-if="invoice.adjustments?.length"
+                        class="pt-5 border-t border-[#EDF4F3]"
+                    >
+                        <SectionHeader>
+                            <template #icon>
+                                <svg
+                                    class="h-3.5 w-3.5"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path d="M3 6h18" />
+                                    <path d="M6 12h12" />
+                                    <path d="M9 18h6" />
+                                </svg>
+                            </template>
+                            Adjustments
+                        </SectionHeader>
+
+                        <div class="space-y-3">
+                            <div
+                                v-for="adjustment in invoice.adjustments"
+                                :key="adjustment.invoice_adjustment_id"
+                                class="rounded-xl border border-[#EDF4F3] px-5 py-4"
+                            >
+                                <div
+                                    class="flex items-start justify-between gap-4"
+                                >
+                                    <div class="min-w-0">
+                                        <p
+                                            class="text-sm font-medium text-[#16302E] capitalize"
+                                        >
+                                            {{
+                                                formatAdjustmentType(
+                                                    adjustment.type,
+                                                )
+                                            }}
+                                        </p>
+                                        <p
+                                            class="text-xs text-[#6B8A87] mt-1"
+                                        >
+                                            {{
+                                                adjustment.reason ??
+                                                "No reason provided."
+                                            }}
+                                        </p>
+                                        <p
+                                            class="text-xs text-[#6B8A87] mt-1"
+                                        >
+                                            {{
+                                                formatDate(
+                                                    adjustment.created_at,
+                                                )
+                                            }}
+                                        </p>
+                                    </div>
+
+                                    <span
+                                        class="shrink-0 text-sm font-semibold text-[#16302E]"
+                                    >
+                                        ₱{{
+                                            formatMoney(adjustment.amount)
+                                        }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
                     </section>
                 </div>
             </div>
@@ -465,6 +609,10 @@ const showPayment = computed(
     () => !!invoice.value && invoice.value.balance_due > 0,
 );
 
+const hasRefunds = computed(
+    () => Number(invoice.value?.refunded_amount ?? 0) > 0,
+);
+
 async function fetchInvoice() {
     loading.value = true;
     errorLabel.value = "";
@@ -551,6 +699,27 @@ function statusClasses(status: string) {
         return "bg-[#FBE8E6] text-[#B3402F]";
     }
     return "bg-[#FDF3DE] text-[#966B1F]";
+}
+
+function refundStatusClasses(status: string) {
+    const normalized = (status ?? "").toLowerCase();
+
+    if (normalized === "completed") {
+        return "bg-[#E4F4EE] text-[#1F7A4D]";
+    }
+    if (normalized === "processing" || normalized === "pending") {
+        return "bg-[#FDF3DE] text-[#966B1F]";
+    }
+    if (normalized === "failed" || normalized === "cancelled") {
+        return "bg-[#FBE8E6] text-[#B3402F]";
+    }
+    return "bg-slate-100 text-slate-600";
+}
+
+function formatAdjustmentType(type: string) {
+    return (type ?? "")
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function formatMoney(amount: number | string | null | undefined) {

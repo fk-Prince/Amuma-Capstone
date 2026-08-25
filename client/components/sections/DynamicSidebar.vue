@@ -35,6 +35,19 @@
                     <div
                         class="flex items-center justify-between px-5 h-[72px] border-b border-primary-100/80"
                     >
+                        <!-- <NuxtLink to="/" class="flex items-center gap-2.5">
+                            <img
+                                :src="logo"
+                                alt="AMUMA"
+                                class="w-9 h-9 rounded-lg object-contain shrink-0"
+                            />
+                            <p
+                                class="font-extrabold text-primary-500 text-xl tracking-wide [text-shadow:0_4px_8px_rgb(49_130_237_/_35%)]"
+                            >
+                                AMUMA
+                            </p>
+                        </NuxtLink> -->
+
                         <button
                             @click="$emit('close')"
                             class="w-8 h-8 flex items-center justify-center rounded-full text-primary-500 hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200"
@@ -208,6 +221,30 @@
             desktopCollapsed ? 'w-[76px]' : 'w-60',
         ]"
     >
+        <!-- <NuxtLink
+            to="/"
+            :class="[
+                'flex items-center gap-2.5 shrink-0 pt-4 pb-3',
+                desktopCollapsed ? 'justify-center px-0' : 'px-[19px]',
+            ]"
+        >
+            <img
+                :src="logo"
+                alt="AMUMA"
+                class="w-9 h-9 rounded-lg object-contain shrink-0"
+            />
+            <div
+                v-if="!desktopCollapsed"
+                class="whitespace-nowrap leading-tight"
+            >
+                <p
+                    class="font-extrabold text-primary-500 text-2xl tracking-wide [text-shadow:0_4px_8px_rgb(49_130_237_/_35%)]"
+                >
+                    AMUMA
+                </p>
+            </div>
+        </NuxtLink> -->
+
         <button
             @click="desktopCollapsed = !desktopCollapsed"
             class="absolute -right-3 top-7 z-10 bg-white border border-primary-200 shadow-md w-7 h-7 flex items-center justify-center rounded-full text-primary-600 hover:bg-primary hover:text-white hover:border-primary transition-colors duration-200"

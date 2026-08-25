@@ -55,14 +55,6 @@
                         <div class="min-w-0">
                             <div class="flex flex-wrap items-center gap-2">
                                 <span
-                                    class="rounded-lg border border-primary-100 bg-primary-50 px-2.5 py-1 font-mono text-[11px] font-semibold text-primary-700"
-                                >
-                                    Admission #{{
-                                        admission.patient_admission_id
-                                    }}
-                                </span>
-
-                                <span
                                     class="rounded-full px-2.5 py-1 text-[10px] font-medium capitalize"
                                     :class="statusClasses(admission.status)"
                                 >

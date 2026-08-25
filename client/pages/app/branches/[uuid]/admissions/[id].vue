@@ -481,7 +481,13 @@
                                             </span>
                                         </div>
                                     </div>
-                                 
+
+                                    <p
+                                        v-if="admission.note"
+                                        class="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-muted"
+                                    >
+                                        {{ admission.note }}
+                                    </p>
                                 </div>
                             </div>
                         </section>
@@ -573,31 +579,19 @@
 
         <AdmissionDischarge
             :open="dischargeDialogOpen"
-            :admission="latestAdmission "
+            :admission="currentAdmission"
             :future-invoices="notStartedInvoices"
             :loading="actionLoading"
             @confirm="confirmDischarge"
             @cancel="dischargeDialogOpen = false"
         />
 
-        <ConfirmDialog
+        <AdmissionCancel
             :open="cancelAdmissionDialogOpen"
-            title="Cancel Admission"
-            message="Are you sure you want to cancel this admission?"
-            description="This will cancel the pending admission and free up the reserved bed. This cannot be undone."
-            confirm-label="Cancel Admission"
-            variant="danger"
             :loading="actionLoading"
             @confirm="confirmCancelAdmission"
             @cancel="cancelAdmissionDialogOpen = false"
         />
-
-        <!-- <AdmissionCancel
-            :open="cancelAdmissionDialogOpen"
-            :loading="actionLoading"
-            @confirm="confirmCancelAdmission"
-            @cancel="cancelAdmissionDialogOpen = false"
-        /> -->
 
         <ConfirmDialog
             :open="newAdmissionDialogOpen"
@@ -721,6 +715,10 @@ const latestAdmission = computed<Admission | undefined>(
     () => patient.value?.latest_admission,
 );
 
+const currentAdmission = computed<Admission | undefined>(
+    () => patient.value?.current_admission,
+);
+
 const pastAdmissions = computed<Admission[]>(() => {
     const all = patient.value?.admissions ?? [];
     const latestId = latestAdmission.value?.patient_admission_id;
@@ -728,12 +726,15 @@ const pastAdmissions = computed<Admission[]>(() => {
 
     return all
         .filter((a) => {
-            if (a.status !== "discharged") {
+            if (a.status !== "discharged" && a.status !== "cancelled") {
                 return false;
             }
 
             if (a.patient_admission_id === latestId) {
-                return latestStatus === "discharged";
+                return (
+                    latestStatus === "discharged" ||
+                    latestStatus === "cancelled"
+                );
             }
 
             return true;
@@ -805,10 +806,15 @@ const notStartedInvoices = computed(() => {
 });
 
 
-function confirmDischarge(payload: { refund: boolean; currentRefundAmount: number | null }) {
+function confirmDischarge(payload: {
+    refund: boolean;
+    currentRefundAmount: number | null;
+    note: string;
+}) {
     runAction("discharge", {
         refund: payload.refund,
         current_refund_amount: payload.currentRefundAmount,
+        note: payload.note,
     });
 }
 
@@ -902,11 +908,12 @@ async function runAction(
         admitModalOpen.value = false;
         dischargeDialogOpen.value = false;
         extendModalOpen.value = false;
+        cancelAdmissionDialogOpen.value = false;
     }
 }
 
-function confirmCancelAdmission() {
-    runAction("cancel");
+function confirmCancelAdmission(reason: string) {
+    runAction("cancel", { note: reason });
 }
 
 function confirmAdmit() {

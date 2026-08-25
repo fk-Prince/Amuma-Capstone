@@ -142,7 +142,7 @@
                                 Process
                             </button>
                             <!-- v-if="row.status?.toLowerCase() === 'pending'" -->
-                            <button
+                            <!-- <button
                                 type="button"
                                 class="text-primary font-medium hover:underline"
                                 @click="
@@ -155,7 +155,7 @@
                                 "
                             >
                                 View Booking
-                            </button>
+                            </button> -->
                             <button
                                 v-if="
                                     row.status?.toLowerCase() !== 'pending' &&
@@ -459,6 +459,7 @@ async function loadByReference() {
             weight: booking.patient?.weight ?? "",
             blood_type: booking.patient?.blood_type ?? "",
             address: booking.patient?.address ?? "",
+            allergies: booking.patient?.allergies ?? "",
         });
 
         Object.assign(guardianData, {
@@ -650,7 +651,7 @@ async function fetchAdmissions() {
             (data: PatientRetrieve) => {
                 const admission = data.latest_admission;
                 const isActiveAdmission = ["waiting", "admitted"].includes(
-                    admission?.status,
+                    admission?.status ?? "",
                 );
 
                 return {

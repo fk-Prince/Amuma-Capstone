@@ -19,27 +19,30 @@ class UserService
 
     public function getUserBranch(User $user)
     {
-        $user->load('employee.permissions.modules');
+        $user->load('employee.permissions.modules', 'employee.employeeBranch');
         $employee = $user->employee;
-        $permissions = $user->employee?->permissions ?? collect();
+        $permissionsByBranch = ($employee?->permissions ?? collect())->groupBy('branch_id');
 
-        $branchIds = $permissions->pluck('branch_id')->filter()->unique()->values();
+        $employeeBranches = $employee?->employeeBranch ?? collect();
+        $branchIds = $employeeBranches->pluck('branch_id')->filter()->unique()->values();
 
         $branchModels = $this->branchRepository->getUserBranches($branchIds->all());
 
-        $branches = $permissions
-            ->groupBy('branch_id')
-            ->map(function ($perms, $branchId) use ($branchModels, $employee) {
-                $branch = $branchModels->get($branchId);
+        // Branch membership is driven by EmployeeBranch (the actual branch
+        // assignment), not by having at least one EmployeePermission row —
+        // an employee can be assigned to a branch before any module
+        // permissions are configured for them, and they should still see
+        // that branch (just with an empty permissions list) instead of it
+        // silently disappearing from this list.
+        $branches = $employeeBranches
+            ->map(function ($employeeBranch) use ($branchModels, $permissionsByBranch) {
+                $branch = $branchModels->get($employeeBranch->branch_id);
 
                 if (!$branch || !$branch->uuid) {
                     return null;
                 }
 
-                $employeeBranch = $employee->employeeBranch
-                    ->firstWhere('branch_id', $branchId);
-
-                // $employeeBranches = $employee->employeeBranch;
+                $perms = $permissionsByBranch->get($employeeBranch->branch_id, collect());
 
                 $location = $branch?->location;
 

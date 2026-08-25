@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-slate-50 px-4 py-8 lg:px-8">
+    <div class="min-h-screen-header bg-slate-50 px-4 py-8 lg:px-8">
         <BranchDashboard :stats-data="statsData" />
 
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">

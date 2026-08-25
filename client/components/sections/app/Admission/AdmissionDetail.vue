@@ -558,6 +558,11 @@ const props = withDefaults(
         variant?: "page" | "modal" | "new";
         errors?: Record<string, string>;
         accommodation?: string | null;
+        // The billing cycle the family actually chose when they submitted
+        // this booking. Without it, the modal has no way to know and
+        // silently falls back to "monthly" — which then picks the wrong
+        // contract (and price) for a booking made under a yearly plan.
+        initialBillingCycle?: "monthly" | "yearly" | null;
         requireAdmissionDate?: boolean;
     }>(),
     {
@@ -567,6 +572,7 @@ const props = withDefaults(
         variant: "page",
         errors: () => ({}),
         accommodation: null,
+        initialBillingCycle: null,
         requireAdmissionDate: false,
     },
 );
@@ -647,6 +653,7 @@ watch(
             selectedRoom.value = null;
             selectedBed.value = null;
             admittedAt.value = "";
+            billingCycle.value = props.initialBillingCycle ?? "monthly";
             return;
         }
 

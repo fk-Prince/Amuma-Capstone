@@ -110,20 +110,6 @@ export interface ConflictItem {
     conflict_schedule_codes: string[];
 }
 
-export type ConflictSource = "assignment" | "schedule";
-
-export const conflictConfirm = ref<{
-    open: boolean;
-    source: ConflictSource | null;
-    conflicts: ConflictItem[];
-    pendingPayload: any;
-}>({
-    open: false,
-    source: null,
-    conflicts: [],
-    pendingPayload: null,
-});
-
 export interface AuditRow {
     schedule_id: number;
     schedule_code: string;

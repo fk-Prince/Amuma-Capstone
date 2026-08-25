@@ -23,7 +23,7 @@ class PatientController extends Controller
     public function index(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Patients, PermissionAction::Read);
+        // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Patients, PermissionAction::Read);
         $request->merge([
             'branch_id' => $branch->branch_id,
         ]);
@@ -33,7 +33,7 @@ class PatientController extends Controller
     public function show(Request $request, string $uuid)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Patients, PermissionAction::Read);
+        // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Patients, PermissionAction::Read);
         $request->merge([
             'branch_id' => $branch->branch_id,
         ]);

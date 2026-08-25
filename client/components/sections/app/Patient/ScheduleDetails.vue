@@ -67,48 +67,66 @@
 
                     <div
                         v-if="isFacilitySchedule"
-                        class="rounded-xl border p-4"
-                        :class="
-                            schedule.patient?.is_admitted
-                                ? 'border-emerald-100 bg-emerald-50'
-                                : 'border-amber-100 bg-amber-50'
-                        "
+                        class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
                     >
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p
-                                    class="text-xs font-medium uppercase tracking-wide"
-                                    :class="
-                                        schedule.patient?.is_admitted
-                                            ? 'text-emerald-600'
-                                            : 'text-amber-600'
-                                    "
+                        <div
+                            class="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-4 py-3"
+                        >
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600"
                                 >
-                                    Facility Admission
-                                </p>
+                                    <svg
+                                        width="18"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    >
+                                        <path d="M3 21h18" />
+                                        <path
+                                            d="M5 21V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v14"
+                                        />
+                                        <path d="M9 9h6" />
+                                        <path d="M9 13h6" />
+                                        <path d="M9 17h2" />
+                                    </svg>
+                                </div>
 
-                                <p
-                                    class="mt-1 text-sm font-semibold text-slate-800"
-                                >
-                                    {{
-                                        schedule.patient?.is_admitted
-                                            ? "Patient is currently admitted"
-                                            : "Patient is not currently admitted"
-                                    }}
-                                </p>
+                                <div>
+                                    <p
+                                        class="text-sm font-semibold tracking-tight text-slate-800"
+                                    >
+                                        Facility Admission
+                                    </p>
+
+                                    <p class="text-xs text-slate-400">
+                                        Current room assignment
+                                    </p>
+                                </div>
                             </div>
 
                             <span
-                                class="rounded-full px-3 py-1 text-xs font-semibold"
+                                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
                                 :class="
                                     schedule.patient?.is_admitted
                                         ? 'bg-emerald-100 text-emerald-700'
                                         : 'bg-amber-100 text-amber-700'
                                 "
                             >
+                                <span
+                                    class="h-1.5 w-1.5 rounded-full"
+                                    :class="
+                                        schedule.patient?.is_admitted
+                                            ? 'bg-emerald-500'
+                                            : 'bg-amber-500'
+                                    "
+                                />
+
                                 {{
                                     schedule.patient?.is_admitted
-                                        ? "Admitted"
+                                        ? "Currently Admitted"
                                         : "Not Admitted"
                                 }}
                             </span>
@@ -119,75 +137,114 @@
                                 schedule.patient?.is_admitted &&
                                 schedule.patient?.admission
                             "
-                            class="mt-3 grid grid-cols-2 gap-3"
+                            class="p-4"
                         >
                             <div
-                                class="rounded-xl border border-emerald-100 bg-white p-3"
+                                class="mb-4 flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-3"
                             >
-                                <p class="text-xs text-slate-400">Bed</p>
+                                <div>
+                                    <p
+                                        class="text-[11px] font-medium uppercase tracking-wider text-emerald-600"
+                                    >
+                                        Assigned Accommodation
+                                    </p>
 
-                                <p
-                                    class="mt-1 text-sm font-semibold text-slate-700"
+                                    <p
+                                        class="mt-0.5 text-sm font-semibold text-emerald-900"
+                                    >
+                                        {{
+                                            schedule.patient.admission.bed?.room
+                                                ?.room_type ?? "—"
+                                        }}
+
+                                        <span class="mx-1 text-emerald-300"
+                                            >•</span
+                                        >
+
+                                        Room
+                                        {{
+                                            schedule.patient.admission.bed?.room
+                                                ?.room_no ?? "—"
+                                        }}
+
+                                        <span class="mx-1 text-emerald-300"
+                                            >•</span
+                                        >
+
+                                        Bed
+                                        {{
+                                            schedule.patient.admission.bed
+                                                ?.bed_no ?? "—"
+                                        }}
+
+                                        <span class="mx-1 text-emerald-300"
+                                            >•</span
+                                        >
+
+                                        {{
+                                            schedule.patient.admission.bed?.room
+                                                ?.floor ?? "—"
+                                        }}
+                                        Floor
+                                    </p>
+                                </div>
+
+                                <div
+                                    class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm"
                                 >
-                                    {{
-                                        schedule.patient.admission.bed
-                                            ?.bed_no ?? "No bed assigned"
-                                    }}
-                                </p>
-                            </div>
-
-                            <div
-                                class="rounded-xl border border-emerald-100 bg-white p-3"
-                            >
-                                <p class="text-xs text-slate-400">Room</p>
-
-                                <p
-                                    class="mt-1 text-sm font-semibold text-slate-700"
-                                >
-                                    {{
-                                        schedule.patient.admission.bed?.room
-                                            ?.room_no ?? "No room assigned"
-                                    }}
-                                </p>
-                            </div>
-
-                            <div
-                                class="rounded-xl border border-emerald-100 bg-white p-3"
-                            >
-                                <p class="text-xs text-slate-400">Room Type</p>
-
-                                <p
-                                    class="mt-1 text-sm font-semibold text-slate-700"
-                                >
-                                    {{
-                                        schedule.patient.admission.bed?.room
-                                            ?.room_type ?? "-"
-                                    }}
-                                </p>
-                            </div>
-
-                            <div
-                                class="rounded-xl border border-emerald-100 bg-white p-3"
-                            >
-                                <p class="text-xs text-slate-400">Floor</p>
-
-                                <p
-                                    class="mt-1 text-sm font-semibold text-slate-700"
-                                >
-                                    {{
-                                        schedule.patient.admission.bed?.room
-                                            ?.floor ?? "-"
-                                    }}
-                                </p>
+                                    <svg
+                                        width="17"
+                                        height="17"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    >
+                                        <path d="M3 7v11" />
+                                        <path
+                                            d="M21 18v-7a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v7"
+                                        />
+                                        <path d="M3 15h18" />
+                                        <path d="M5 11h4" />
+                                    </svg>
+                                </div>
                             </div>
                         </div>
 
-                        <p
-                            v-else-if="schedule.patient?.is_admitted"
-                            class="mt-3 rounded-xl border border-dashed border-emerald-200 bg-white p-3 text-sm text-slate-500"
+                        <div
+                            v-else
+                            class="flex items-center gap-3 border-t border-slate-100 bg-amber-50/60 px-4 py-4"
                         >
-                            No bed or room details available.
-                        </p>
+                            <div
+                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600"
+                            >
+                                <svg
+                                    width="17"
+                                    height="17"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path d="M12 9v4" />
+                                    <path d="M12 17h.01" />
+                                    <path
+                                        d="M10.3 3.8 2.9 17a2 2 0 0 0 1.75 3h14.7a2 2 0 0 0 1.75-3l-7.4-13.2a2 2 0 0 0-3.4 0Z"
+                                    />
+                                </svg>
+                            </div>
+
+                            <div>
+                                <p class="text-sm font-semibold text-slate-800">
+                                    Patient is not currently admitted
+                                </p>
+
+                                <p class="mt-0.5 text-xs text-slate-500">
+                                    No active facility admission or room
+                                    assignment was found.
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     <div
@@ -279,8 +336,8 @@
                             <p class="text-xs text-slate-400">Time</p>
                             <p class="mt-1 text-sm font-medium text-slate-700">
                                 {{ schedule.start_time }}
-                                -
-                                {{ schedule.end_time }}
+                                <!-- -
+                                {{ schedule.end_time }} -->
                             </p>
                         </div>
 
@@ -372,8 +429,9 @@
                                         Assigned Employee
                                         <span
                                             v-if="service.assignees?.length > 1"
-                                            >s</span
                                         >
+                                            s
+                                        </span>
                                     </p>
 
                                     <div
@@ -436,7 +494,7 @@
 
                         <button
                             type="button"
-                            class="rounded-lg flex gap-2 items-center bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                            class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                             :disabled="submitLoading"
                             @click="handleSchedule"
                         >
@@ -464,6 +522,7 @@
                         </button>
 
                         <button
+                            v-if="schedule?.status !== 'cancelled'"
                             class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
                             @click="startEdit"
                         >
@@ -474,12 +533,26 @@
             </div>
         </div>
     </Transition>
+
+    <ConfirmDialog
+        :open="cancelConfirmOpen"
+        title="Cancel this schedule?"
+        message="This action cannot be undone."
+        description="The payment will be refunded if there is any, and the invoice will be voided."
+        confirm-label="Cancel Schedule"
+        cancel-label="Keep Schedule"
+        variant="danger"
+        :loading="submitLoading"
+        @confirm="confirmCancelSchedule"
+        @cancel="cancelConfirmOpen = false"
+    />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
+import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import { getLocalDateStr } from "~/utils/time";
 import { generateAvailableAmPmTimes } from "~/utils/time-slot";
 import { fullName } from "~/utils/user";
@@ -591,6 +664,7 @@ function resetForm() {
 
 function startEdit() {
     if (!props.schedule) return;
+    if (props.schedule.status === "cancelled") return;
 
     isEditing.value = true;
 
@@ -650,24 +724,50 @@ function validate() {
     return !Object.keys(errors.value).length;
 }
 
-function handleSchedule() {
-    if (!props.schedule) return;
+const cancelConfirmOpen = ref(false);
 
-    if (!validate()) return;
+function buildSchedulePayload() {
+    if (!props.schedule) return null;
 
-    emit("schedule", {
+    return {
         schedule_id: props.schedule.schedule_id,
         status: form.value.status,
         date: form.value.date,
         preferred_time: form.value.preferred_time,
-
         assignments: (props.schedule.services ?? []).map((service) => ({
             schedule_services_id: service.schedule_services_id,
             employee_id: assignments.value[service.schedule_services_id]
                 ? Number(assignments.value[service.schedule_services_id])
                 : null,
         })),
-    });
+    };
+}
+
+function handleSchedule() {
+    if (!props.schedule) return;
+
+    if (!validate()) return;
+
+    if (form.value.status === "cancelled") {
+        cancelConfirmOpen.value = true;
+        return;
+    }
+
+    const payload = buildSchedulePayload();
+
+    if (payload) {
+        emit("schedule", payload);
+    }
+}
+
+function confirmCancelSchedule() {
+    cancelConfirmOpen.value = false;
+
+    const payload = buildSchedulePayload();
+
+    if (payload) {
+        emit("schedule", payload);
+    }
 }
 
 function close() {
@@ -675,6 +775,7 @@ function close() {
     emit("close");
 }
 </script>
+
 <style scoped>
 .modal-enter-active,
 .modal-leave-active {

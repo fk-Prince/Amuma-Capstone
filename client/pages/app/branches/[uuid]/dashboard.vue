@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-[calc(100vh-90px)] bg-light flex items-center justify-center p-8"
+        class="min-h-screen-header-header bg-light flex items-center justify-center p-8"
     >
         <SubscriptionReview v-if="isSubscriptionPending" />
 

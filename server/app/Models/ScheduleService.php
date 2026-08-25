@@ -11,6 +11,9 @@ class ScheduleService extends Model
 
     protected $primaryKey = 'schedule_services_id';
 
+    public const TYPE_MEDICAL = 'Medical';
+    public const TYPE_ADL = 'ADL';
+
     protected $fillable = [
         'schedule_id',
         'service_id',

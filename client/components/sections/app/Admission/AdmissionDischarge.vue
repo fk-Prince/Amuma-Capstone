@@ -256,12 +256,6 @@
                                                         class="flex justify-between"
                                                     >
                                                         <span
-                                                            class="text-slate-500"
-                                                        >
-                                                            Amount paid
-                                                        </span>
-
-                                                        <span
                                                             class="font-medium text-slate-700"
                                                         >
                                                             {{
@@ -286,7 +280,7 @@
                                                     }}% of
                                                     {{
                                                         formatCurrency(
-                                                            currentContractPrice,
+                                                            feeBaseAmount,
                                                         )
                                                     }})
                                                 </span>
@@ -304,24 +298,65 @@
                                                 v-else-if="
                                                     isWithinYearlyHalfRefundWindow
                                                 "
-                                                class="flex justify-between text-slate-600"
+                                                class="space-y-2"
                                             >
-                                                <span class="text-slate-500">
-                                                    Retained (50% of
-                                                    {{
-                                                        formatCurrency(
-                                                            currentContractPrice,
-                                                        )
-                                                    }})
-                                                </span>
+                                                <div
+                                                    class="flex justify-between text-slate-600"
+                                                >
+                                                    <span
+                                                        class="text-slate-500"
+                                                    >
+                                                        Half of price ({{
+                                                            terminationFeePercent
+                                                        }}% of
+                                                        {{
+                                                            formatCurrency(
+                                                                feeBaseAmount,
+                                                            )
+                                                        }})
+                                                    </span>
 
-                                                <span class="font-medium">
-                                                    {{
-                                                        formatCurrency(
-                                                            halfYearlyPrice,
-                                                        )
-                                                    }}
-                                                </span>
+                                                    <span
+                                                        class="font-medium"
+                                                    >
+                                                        {{
+                                                            formatCurrency(
+                                                                (feeBaseAmount *
+                                                                    terminationFeePercent) /
+                                                                    100,
+                                                            )
+                                                        }}
+                                                    </span>
+                                                </div>
+
+                                                <div
+                                                    class="flex justify-between text-slate-600"
+                                                >
+                                                    <span
+                                                        class="text-slate-500"
+                                                    >
+                                                        Days stayed ({{
+                                                            daysSinceAdmissionStart
+                                                        }}
+                                                        {{
+                                                            daysSinceAdmissionStart ===
+                                                            1
+                                                                ? "day"
+                                                                : "days"
+                                                        }})
+                                                    </span>
+
+                                                    <span
+                                                        class="font-medium"
+                                                    >
+                                                        −
+                                                        {{
+                                                            formatCurrency(
+                                                                daysStayedAmount,
+                                                            )
+                                                        }}
+                                                    </span>
+                                                </div>
                                             </div>
 
                                             <div
@@ -555,10 +590,7 @@
                                 <p
                                     class="mt-0.5 text-xs leading-5 text-slate-500"
                                 >
-                                    {{
-                                        requiredPaymentDescription
-                                    }}
-                   
+                                    {{ requiredPaymentDescription }}
                                 </p>
                             </div>
 
@@ -591,6 +623,27 @@
                                     }}
                                 </p>
                             </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <label
+                                for="discharge-note"
+                                class="block text-sm font-semibold text-slate-700 mb-2"
+                            >
+                                Discharge note
+                                <span class="font-normal text-slate-400">
+                                    (optional)
+                                </span>
+                            </label>
+
+                            <textarea
+                                id="discharge-note"
+                                v-model="dischargeNote"
+                                rows="3"
+                                :disabled="loading"
+                                placeholder="Why is this patient being discharged?"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                            />
                         </div>
                     </div>
 
@@ -700,12 +753,14 @@ const emit = defineEmits<{
         payload: {
             refund: boolean;
             currentRefundAmount: number | null;
+            note: string;
         },
     ];
     cancel: [];
 }>();
 
 const refund = ref(false);
+const dischargeNote = ref("");
 
 const currentInvoice = computed(() => {
     return props.admission?.current_invoice ?? null;
@@ -714,21 +769,15 @@ const currentInvoice = computed(() => {
 const {
     currentNetPaidAmount,
     currentContractPrice,
-    currentBillingCycle,
     currentBillingCycleLabel,
-    terminationFeeRate,
-    terminationFeeBaseAmount,
+    terminationFeePercent,
     terminationFeeAmount,
-    monthlyEquivalentPrice,
-    halfYearlyPrice,
-    yearlyRefundAmount,
+    daysStayedAmount,
     daysSinceAdmissionStart,
+    feeBaseAmount,
     isWithinTerminationFeeWindow,
     isWithinYearlyHalfRefundWindow,
-    isWithinYearlyRefundWindow,
-    isPastRefundWindow,
     isEligibleForRefund,
-    maximumCurrentRefundAmount,
     currentRefundAmount,
     requiredPaymentAmount,
     requiredPaymentDescription,
@@ -737,10 +786,7 @@ const {
     refundPolicyTitle,
     refundPolicyBadge,
     refundPolicyDescription,
-} = useDischargeRefund(
-    computed(() => props.admission),
-    currentInvoice,
-);
+} = useDischargeRefund(computed(() => props.admission));
 
 const futureInvoices = computed(() => {
     return props.futureInvoices ?? [];
@@ -780,10 +826,6 @@ const isCurrentInvoiceRefundable = computed(() => {
     return getNetPaid(currentInvoice.value) > 0;
 });
 
-const terminationFeePercent = computed(() => {
-    return Math.round(terminationFeeRate.value * 100);
-});
-
 const canDischarge = computed(() => {
     if (!showCurrentPeriodBlock.value) {
         return true;
@@ -821,6 +863,8 @@ function proceedWithDischarge() {
         currentRefundAmount: isCurrentInvoiceRefundable.value
             ? currentRefundAmount.value
             : null,
+
+        note: dischargeNote.value.trim(),
     });
 }
 
@@ -830,6 +874,7 @@ function handleClose() {
     }
 
     refund.value = false;
+    dischargeNote.value = "";
 
     emit("cancel");
 }
@@ -839,6 +884,7 @@ watch(
     (open) => {
         if (open) {
             refund.value = false;
+            dischargeNote.value = "";
         }
     },
 );

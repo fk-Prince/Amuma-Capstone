@@ -1,6 +1,15 @@
 import type { Agency } from "./agency";
 import type { Branch, BranchSettings } from "./branch";
 
+export interface SubscriptionPaymentRecord {
+    subscription_payment_id: number;
+    payment_reference_id: string;
+    masked_card_number: string | null;
+    price: number;
+    status: "paid" | "refunded";
+    created_at: string | null;
+}
+
 export interface Subscription {
     plans: any[];
     selectedPlan: any;

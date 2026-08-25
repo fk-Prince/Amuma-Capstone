@@ -155,12 +155,14 @@ class SubscriptionService
         $meta = $payload['metadata'];
         $reference_id = $payload['external_id'];
         $xendit_invoice_id = $payload['xendit_invoice_id'];
+        $masked_card_number = $payload['masked_card_number'] ?? null;
         try {
 
             return DB::transaction(function () use (
                 $meta,
                 $reference_id,
-                $xendit_invoice_id
+                $xendit_invoice_id,
+                $masked_card_number
             ) {
 
                 $plan = $meta['plan'];
@@ -279,6 +281,7 @@ class SubscriptionService
                     'subscription_id' => $subscription->subscription_id,
                     'xendit_invoice_id' => $xendit_invoice_id,
                     'payment_reference_id' => $reference_id,
+                    'masked_card_number' => $masked_card_number,
                     'price' => $totalAmount,
                     'status' => SubscriptionPayment::STATUS_PAID,
                 ]);
@@ -317,6 +320,10 @@ class SubscriptionService
                 ], 201);
             });
         } catch (\Exception $e) {
+            Log::error('Subscription creation failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             Http::withOptions([
                 'verify' => false,
             ])->withBasicAuth($this->secretKey, '')
@@ -363,7 +370,10 @@ class SubscriptionService
                 return $this->newSubscriber([
                     'xendit_invoice_id' => $payload->id,
                     'external_id' => $payload->external_id,
-                    'metadata' => $metadata
+                    'metadata' => $metadata,
+                    'masked_card_number' => $invoice['masked_card_number']
+                        ?? $invoice['credit_card_charge']['masked_card_number']
+                        ?? null,
                 ]);
             }
 

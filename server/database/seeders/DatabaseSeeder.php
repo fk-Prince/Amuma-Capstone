@@ -21,7 +21,9 @@ class DatabaseSeeder extends Seeder
             PlanSeeder::class,
             RoomSeeder::class,
             BedSeeder::class,
-            BranchContractSeeder::class
+            BranchContractSeeder::class,
+            ServiceSeeder::class,
+            EmployeeSeeder::class,
         ]);
     }
 }

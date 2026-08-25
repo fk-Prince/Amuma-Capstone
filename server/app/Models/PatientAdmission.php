@@ -16,7 +16,6 @@ class PatientAdmission extends Model
     public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
-        'branch_contract_id',
         'bed_id',
         'patient_id',
         'status',
@@ -30,15 +29,6 @@ class PatientAdmission extends Model
         'admitted_at' => 'datetime',
         'end_date' => 'datetime',
     ];
-
-    // public function admissionContract()
-    // {
-    //     return $this->belongsTo(
-    //         BranchContract::class,
-    //         'branch_contract_id',
-    //         'branch_contract_id'
-    //     );
-    // }
 
     public function bed()
     {

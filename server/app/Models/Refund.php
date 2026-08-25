@@ -22,6 +22,7 @@ class Refund extends Model
         'reference_id',
         'status',
         'reason',
+        'masked_card_number',
     ];
 
     protected $casts = [
@@ -31,5 +32,28 @@ class Refund extends Model
     public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class, 'payment_id', 'payment_id');
+    }
+
+    protected static function booted()
+    {
+        static::creating(function ($refund) {
+            if (!$refund->reference_id) {
+                $lastRefund = self::lockForUpdate()
+                    ->whereNotNull('reference_id')
+                    ->orderByDesc('refund_id')
+                    ->first();
+
+                $nextNumber = $lastRefund
+                    ? ((int) substr($lastRefund->reference_id, 7)) + 1
+                    : 1;
+
+                $refund->reference_id = 'REFUND-' . str_pad(
+                    $nextNumber,
+                    6,
+                    '0',
+                    STR_PAD_LEFT
+                );
+            }
+        });
     }
 }

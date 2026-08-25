@@ -41,6 +41,10 @@ export const medicationSchema = z
             .string()
             .min(1, "Duration is required"),
 
+        frequency: z
+            .string()
+            .min(1, "Select how often this is taken"),
+
         startDate: z
             .string()
             .min(1, "Start date is required"),
@@ -74,6 +78,7 @@ export interface Medication {
     takenFor: string;
     duration: string;
     durationLabel: string;
+    frequency: string;
     kind: ScheduleKind;
     times: string[];
     startDate: string;
@@ -181,6 +186,8 @@ export const vitalSchema = z
     })
     .refine(
         (data) =>
+            // Pain level alone doesn't count as a recorded vital sign — at
+            // least one actual measurement is required.
             [
                 data.bloodPressureSystolic,
                 data.bloodPressureDiastolic,
@@ -188,13 +195,10 @@ export const vitalSchema = z
                 data.respiratoryRate,
                 data.temperature,
                 data.oxygenSaturation,
-                // data.weight,
                 data.bloodGlucose,
-                data.painLevel,
             ].some((v) => v && v.length > 0),
         {
             message: "Record at least one vital sign",
-            // path: ["heartRate"],
         },
     )
     .refine(
@@ -239,6 +243,13 @@ export const routeOptions = [
     { label: "Nasal", value: "nasal" },
 ];
 
+export const frequencyOptions = [
+    { label: "Everyday", value: "everyday" },
+    { label: "Every 2 Days", value: "every_2_days" },
+    { label: "Every 3 Days", value: "every_3_days" },
+    { label: "Every Week", value: "every_week" },
+];
+
 export function emptyForm(): MedicationForm {
     return {
         name: "",
@@ -249,6 +260,7 @@ export function emptyForm(): MedicationForm {
         instructions: "",
         takenFor: "",
         duration: "30",
+        frequency: "everyday",
         startDate: new Date().toISOString().slice(0, 10),
         kind: "Scheduled",
         times: ["08:00"],

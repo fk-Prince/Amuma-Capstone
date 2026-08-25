@@ -14,6 +14,11 @@ class MedicationController extends Controller
         $this->medicationService = $medicationService;
     }
 
+    public function index(Request $request)
+    {
+        return $this->medicationService->listMedications($request->all());
+    }
+
     public function store(Request $request)
     {
         return $this->medicationService->createMedication($request->user(), $request->all());
@@ -22,5 +27,10 @@ class MedicationController extends Controller
     public function update(Request $request, string $id)
     {
         return $this->medicationService->updateMedication($request->user(), $request->all(), $id);
+    }
+
+    public function dosage(Request $request)
+    {
+        return $this->medicationService->markDosage($request->user(), $request->all());
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Schedule;
+use App\Service\RefundService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -9,8 +11,6 @@ class PatientResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $records = collect($this->medication ?? []);
-
         return [
             'patient_id' => $this->patient_id,
             'uuid' => $this->uuid,
@@ -26,20 +26,22 @@ class PatientResource extends JsonResource
             'weight' => $this->weight,
             'phone_number' => $this->phone_number,
             'citizenship' => $this->citizenship,
+            'allergies' => $this->allergies ?? [],
+
+            'has_homecare' => $this->relationLoaded('schedules')
+                ? $this->schedules->contains(
+                    fn($schedule) => $schedule->category === Schedule::CATEGORYHOMECARE
+                )
+                : false,
 
             'location' => $this->whenLoaded('location', fn() => [
                 'full_address' => $this->location?->full_address,
             ]),
 
-            'initial_medication' => $this->initial_medication,
+            'initial_assessment' => $this->initial_assessment,
 
-            'medication' => $records
-                ->whereIn('category', ['Medication', 'PRN'])
-                ->values(),
-
-            'vital' => $records
-                ->where('category', 'Vital Signs')
-                ->values(),
+            'medications_count' => $this->medications_count ?? 0,
+            'vitals_count' => $this->vitals_count ?? 0,
 
             'admissions' => $this->whenLoaded('admissions', function () {
                 return $this->admissions
@@ -50,7 +52,7 @@ class PatientResource extends JsonResource
 
             'current_admission' => $this->whenLoaded('currentAdmission', function () {
                 return $this->currentAdmission
-                    ? $this->formatAdmission($this->currentAdmission)
+                    ? $this->formatAdmission($this->currentAdmission, true)
                     : null;
             }),
 
@@ -62,15 +64,23 @@ class PatientResource extends JsonResource
         ];
     }
 
-    private function formatAdmission(mixed $admission): array
+    private function formatAdmission(mixed $admission, bool $includeDischargeCalculation = false): array
     {
         $currentInvoice = $admission->currentInvoiceFacility;
+
+        $invoice = $currentInvoice
+            ?? $admission->invoiceAdmission
+            ->sortByDesc('created_at')
+            ->first();
+
+        $contract = $invoice?->branchContract;
 
         return [
             'patient_admission_id' => $admission->patient_admission_id,
             'status' => $admission->status,
             'admitted_at' => $admission->admitted_at,
             'end_date' => $admission->end_date,
+            'note' => $admission->note,
 
             'bed' => [
                 'bed_id' => $admission->bed?->bed_id,
@@ -85,9 +95,17 @@ class PatientResource extends JsonResource
                 'floor' => $admission->bed?->room?->floor,
             ],
 
-            'current_contract' => $this->formatContract($currentInvoice?->branchContract),
+            'current_contract' => $this->formatContract($contract),
 
             'current_invoice' => $this->formatInvoiceFacility($currentInvoice),
+
+            'discharge_calculation' => ($includeDischargeCalculation && $invoice && $contract)
+                ? app(RefundService::class)->getDischargeCalculation(
+                    $invoice->invoice,
+                    $admission,
+                    $invoice
+                )
+                : null,
 
             'invoices' => $admission->relationLoaded('invoiceAdmission')
                 ? $admission->invoiceAdmission

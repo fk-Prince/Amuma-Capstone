@@ -490,6 +490,11 @@ const patientRows = computed<Row[]>(() => {
             label: "Blood Type",
             value: p.blood_type ?? "",
         },
+        {
+            label: "Allergies",
+            value: p.allergies ?? "",
+            span: true,
+        },
     ];
 });
 

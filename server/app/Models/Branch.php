@@ -9,11 +9,9 @@ class Branch extends Model
 {
     use HasUuids;
     protected $primaryKey = 'branch_id';
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+
+    public const TERMINATION_FEE = 20;
+
     protected $fillable = [
         'agency_id',
         'name',

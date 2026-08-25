@@ -67,6 +67,7 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                 'metadata'          => $charge['metadata'] ?? [],
                 'external_id'       => $charge['external_id'] ?? null,
                 'xendit_invoice_id' => $charge['id'] ?? null,
+                'masked_card_number' => $charge['masked_card_number'] ?? null,
             ]);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
 
@@ -109,9 +110,11 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                     'error'   => $response->json(),
                 ], $response->status());
             }
+
             $charge = $response->json();
             return  [
                 'metadata'          => $charge['metadata'] ?? [],
+                'masked_card_number' => $charge['masked_card_number'] ?? null,
                 'external_id'       => $charge['external_id'] ?? null,
                 'xendit_invoice_id' => $charge['id'] ?? null,
                 'total'             => $payload['total']

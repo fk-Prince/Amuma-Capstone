@@ -49,7 +49,7 @@ class BranchContractController extends Controller
             $request->merge([
                 'branch_id' => $branch->branch_id,
             ]);
-            AuthGuard::requireModule($request->user(),  $branch->branch_id, ModuleEnum::Contracts, PermissionAction::Update); // used also in Contracts,admission
+            // AuthGuard::requireModule($request->user(),  $branch->branch_id, ModuleEnum::Contracts, PermissionAction::Update); // used also in Contracts,admission
             return $this->branchContractService->roomContract(
                 $request->user(),
                 $request->all()
@@ -59,7 +59,7 @@ class BranchContractController extends Controller
             $request->merge([
                 'branch_id' => $branch->branch_id,
             ]);
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Contracts,  PermissionAction::Read);
+            // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Contracts,  PermissionAction::Read);
             return $this->branchContractService->list(
                 $request->user(),
                 $request->all()

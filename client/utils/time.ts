@@ -383,7 +383,7 @@ export function formatHourLabel(hour24: number): string {
 
 // RESULT 50hrs -> 2days and 2 hours
 export const formatDuration = (hours: number) => {
-    if (!hours) return "";
+    if (!hours || hours <= 0) return "";
 
     let remainingHours = hours;
 
@@ -393,7 +393,9 @@ export const formatDuration = (hours: number) => {
     const days = Math.floor(remainingHours / 24);
     remainingHours %= 24;
 
-    const parts = [];
+    const roundedHours = Math.round(remainingHours * 100) / 100;
+
+    const parts: string[] = [];
 
     if (months) {
         parts.push(`${months} month${months > 1 ? "s" : ""}`);
@@ -403,8 +405,10 @@ export const formatDuration = (hours: number) => {
         parts.push(`${days} day${days > 1 ? "s" : ""}`);
     }
 
-    if (remainingHours) {
-        parts.push(`${remainingHours} hr${remainingHours > 1 ? "s" : ""}`);
+    if (roundedHours) {
+        parts.push(
+            `${roundedHours} hr${roundedHours > 1 ? "s" : ""}`
+        );
     }
 
     return parts.join(" and ");

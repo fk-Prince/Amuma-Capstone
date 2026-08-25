@@ -15,6 +15,7 @@ class InvoiceFacility extends Model
         'branch_contract_id',
         'patient_admission_id',
         'invoice_id',
+        'price',
         'start_date',
         'end_date',
     ];

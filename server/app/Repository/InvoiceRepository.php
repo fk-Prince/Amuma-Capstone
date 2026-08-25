@@ -48,6 +48,7 @@ class InvoiceRepository
             'invoiceFacility.patientAdmission.bed.room',
             'invoiceFacility.branchContract',
             'payments.refunds',
+            'invoiceAdjustments',
         ])
             ->where('invoice_code', $payload['invoice_code'])
             ->where('branch_id', $payload['branch_id'])
@@ -129,7 +130,6 @@ class InvoiceRepository
         $query->with([
             'branch',
             'payments.refunds',
-            'invoiceServices.scheduleService.patient',
             'invoiceServices.scheduleService.schedule.patient',
             'invoiceServices.scheduleService.service',
             'invoiceFacility.patientAdmission.patient',
@@ -481,6 +481,16 @@ class InvoiceRepository
                             : null
                         ),
 
+                    'price' => (float) $invoiceService->price,
+
+                    'note' => $invoiceService->note,
+
+                    'type' => $scheduleService?->type,
+
+                    'hours_booked' => $scheduleService?->hours_booked !== null
+                        ? (float) $scheduleService->hours_booked
+                        : null,
+
                     'invoices' => $invoices,
                 ];
             })
@@ -589,6 +599,10 @@ class InvoiceRepository
             $invoice->refund_status,
 
             'total' => $total,
+
+            'paid' => (float) $invoice->amount_paid,
+
+            'refunded' => (float) $invoice->refunded_amount,
 
             'amount' => $balance,
 

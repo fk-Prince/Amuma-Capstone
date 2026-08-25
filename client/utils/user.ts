@@ -19,11 +19,11 @@ export const roleMeta: Record<string, { label: string; class: string }> = {
         class: 'bg-red-50 text-red-600 border-red-200',
     },
     accounting: {
-        label: 'Accounting',
+        label: 'Accounting Staff',
         class: 'bg-yellow-50 text-yellow-600 border-yellow-200',
     },
     admission: {
-        label: 'Admission',
+        label: 'Admission Staff',
         class: 'bg-blue-50 text-blue-600 border-blue-200',
     },
     nurse: {

@@ -238,7 +238,7 @@
                                 <h3
                                     class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2"
                                 >
-                                    Medication
+                                    Assessment
                                 </h3>
                                 <div
                                     class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 rounded-xl border border-primary-100 p-4"
@@ -358,15 +358,37 @@ const admission = computed<Admission | undefined>(
     () => props.patient?.latest_admission,
 );
 
-const vitalEntries = computed(() => toEntries(props.patient?.vital));
+const initialAssessment = computed(() => {
+    const value = props.patient?.initial_assessment;
+    if (!value) return null;
+    return Array.isArray(value) ? (value[0] ?? null) : value;
+});
+
+const VITAL_KEYS = [
+    "blood_pressure",
+    "pulse_rate",
+    "respiratory_rate",
+    "temperature",
+    "oxygen_saturation",
+];
+
+const vitalEntries = computed(() =>
+    toEntries(initialAssessment.value, (key) => VITAL_KEYS.includes(key)),
+);
 const medicationEntries = computed(() =>
-    toEntries(props.patient?.medication ?? props.patient?.initial_medication),
+    toEntries(
+        initialAssessment.value,
+        (key) => !VITAL_KEYS.includes(key) && key !== "diagnosis_file",
+    ),
 );
 
-function toEntries(value: unknown): [string, string][] {
+function toEntries(
+    value: unknown,
+    include: (key: string) => boolean,
+): [string, string][] {
     if (!value || typeof value !== "object") return [];
     return Object.entries(value as Record<string, unknown>)
-        .filter(([, v]) => v !== null && v !== undefined && v !== "")
+        .filter(([k, v]) => include(k) && v !== null && v !== undefined && v !== "")
         .map(([k, v]) => [k, String(v)]);
 }
 

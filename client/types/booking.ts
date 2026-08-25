@@ -43,13 +43,13 @@ export interface BookingRetrieve {
         total_amount: number,
         paid: boolean,
         xendit_invoice_id: string,
-        payment_status: string
+        payment_status: string,
+        masked_card_number: string
     };
     reserved: Reserved | null;
     valid_until?: string;
     created_at: string;
     updated_at: string;
-    assignments?: SavedAssignment[];
 }
 
 

@@ -41,10 +41,23 @@
                                 {{ service.service_name ?? "Unnamed Service" }}
                             </p>
 
-                            <p class="mt-1 font-mono text-[10px] text-muted">
+                            <!-- <p class="mt-1 font-mono text-[10px] text-muted">
                                 Schedule Service #{{
                                     service.schedule_services_id
                                 }}
+                            </p> -->
+
+                            <p
+                                v-if="isAdl(service) && service.hours_booked"
+                                class="mt-1 text-xs text-muted"
+                            >
+                                {{ service.hours_booked }}
+                                {{
+                                    service.hours_booked === 1
+                                        ? "hour"
+                                        : "hours"
+                                }}
+                                booked
                             </p>
                         </div>
                     </div>
@@ -108,5 +121,9 @@ function formatMoney(amount: number | string | null | undefined) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
+}
+
+function isAdl(service: InvoiceServiceLine) {
+    return (service.type ?? "").toUpperCase() === "ADL";
 }
 </script>

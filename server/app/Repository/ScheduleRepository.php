@@ -4,12 +4,78 @@ namespace App\Repository;
 
 use App\Models\Employee;
 use App\Models\Schedule;
+use App\Models\ScheduleAssigned;
 use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ScheduleRepository
 {
+    // Same overlap condition used by getEmployeeAvailable()'s conflict
+    // detection: a schedule's occupied window runs from scheduled_at to
+    // scheduled_at + (its services' durations, or 60 min if unknown).
+    private const CONFLICT_WINDOW_SQL = 'schedules.scheduled_at + (
+        SELECT COALESCE(
+            SUM(
+                CASE
+                    WHEN ss.service_id IS NOT NULL THEN EXTRACT(EPOCH FROM sv.maximum_duration) / 60
+                    WHEN ss.hours_booked IS NOT NULL THEN ss.hours_booked * 60
+                    ELSE 60
+                END
+            ),
+            60
+        )
+        FROM schedule_services ss
+        LEFT JOIN services sv ON sv.service_id = ss.service_id
+        WHERE ss.schedule_id = schedules.schedule_id
+    ) * INTERVAL \'1 minute\' > ?';
+
+    /**
+     * The hard, server-side gate against double-booking an employee. Unlike
+     * the pre-flight conflict check surfaced to the UI (which can be
+     * bypassed by confirming past the warning, calling the endpoint
+     * directly, or a race between check-time and submit-time), this is
+     * re-verified at the moment of assignment and has no override — if it
+     * returns true, the assignment must not be written.
+     */
+    public function employeeHasActiveConflict(
+        int $employeeId,
+        string $excludeScheduleId,
+        Carbon $targetStart,
+        Carbon $targetEnd
+    ): bool {
+        return ScheduleAssigned::query()
+            ->where('employee_id', $employeeId)
+            ->where('is_active', true)
+            ->whereHas('scheduleService.schedule', function ($query) use ($targetStart, $targetEnd, $excludeScheduleId) {
+                $query->where('schedules.schedule_id', '!=', $excludeScheduleId)
+                    ->whereIn('schedules.status', [Schedule::STATUS_ONGOING, Schedule::STATUS_PENDING])
+                    ->where('schedules.scheduled_at', '<', $targetEnd)
+                    ->whereRaw(self::CONFLICT_WINDOW_SQL, [$targetStart]);
+            })
+            ->exists();
+    }
+
+    public function calculateScheduleDurationMinutes(Schedule $schedule): float
+    {
+        return (float) $schedule->scheduleServices->sum(function ($scheduleService) {
+            if ($scheduleService->service_id && $scheduleService->service) {
+                $duration = $scheduleService->service->maximum_duration;
+
+                if ($duration) {
+                    [$hours, $minutes, $seconds] = array_pad(explode(':', $duration), 3, 0);
+
+                    return ((int) $hours * 60) + (int) $minutes + ((int) $seconds / 60);
+                }
+            }
+
+            if ($scheduleService->hours_booked !== null) {
+                return (float) $scheduleService->hours_booked * 60;
+            }
+
+            return 60;
+        });
+    }
 
     public function create(array $payload)
     {

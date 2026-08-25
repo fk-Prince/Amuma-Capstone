@@ -170,6 +170,14 @@
                     ]"
                 />
             </div>
+
+            <BaseInput
+                label="Allergies"
+                :model-value="model.allergies"
+                @update:model-value="update('allergies', $event)"
+                placeholder="e.g. Penicillin, Peanuts, Latex"
+                :error="errors?.allergies"
+            />
         </div>
     </section>
 </template>

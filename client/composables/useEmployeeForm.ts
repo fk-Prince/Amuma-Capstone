@@ -1,4 +1,4 @@
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import {
     createEmployee,
@@ -7,7 +7,7 @@ import {
     type EmployeePayload,
 } from "~/types/employee";
 import { moduleService } from "~/api/module/ModuleService";
-import type { Module } from "~/types/module";
+import { Modules, type Module } from "~/types/module";
 import { employeeService } from "~/api/employee/EmployeeService";
 import { useToast } from "~/composables/useToast";
 import { fetchAuthUser } from "~/composables/useAuthUser";
@@ -18,6 +18,55 @@ export type PermissionSet = {
     can_update: boolean;
     can_approve: boolean;
     can_assign: boolean;
+};
+
+type ActionKey = keyof PermissionSet;
+
+const ALL_ACTIONS: ActionKey[] = [
+    "can_read",
+    "can_create",
+    "can_update",
+    "can_approve",
+    "can_assign",
+];
+const ADD_UPDATE_READ: ActionKey[] = ["can_read", "can_create", "can_update"];
+const READ_ONLY: ActionKey[] = ["can_read"];
+
+// Default module access checked in when a position is picked for a new
+// employee — matches the org's standing role/permission policy. Only
+// applied while creating a new employee; an existing employee's saved
+// permissions are never overwritten by this.
+const ROLE_DEFAULT_PERMISSIONS: Record<
+    string,
+    Partial<Record<Modules, ActionKey[]>>
+> = {
+    administrator: {
+        [Modules.RoomsAndBeds]: ADD_UPDATE_READ,
+        [Modules.Contracts]: ADD_UPDATE_READ,
+        [Modules.Services]: ADD_UPDATE_READ,
+    },
+    admission: {
+        [Modules.Patients]: ALL_ACTIONS,
+        [Modules.Admissions]: ALL_ACTIONS,
+        [Modules.Bookings]: ALL_ACTIONS,
+        [Modules.Schedules]: ALL_ACTIONS,
+        [Modules.Services]: READ_ONLY,
+        [Modules.Contracts]: READ_ONLY,
+        [Modules.RoomsAndBeds]: READ_ONLY,
+        [Modules.EmployeeManagement]: READ_ONLY,
+    },
+    accounting: {
+        [Modules.BillingAndInvoices]: ALL_ACTIONS,
+        [Modules.Patients]: READ_ONLY,
+    },
+    nurse: {
+        [Modules.Patients]: ADD_UPDATE_READ,
+        [Modules.Schedules]: READ_ONLY,
+    },
+    caregiver: {
+        [Modules.Patients]: ADD_UPDATE_READ,
+        [Modules.Schedules]: READ_ONLY,
+    },
 };
 
 export interface UseEmployeeFormOptions {
@@ -101,6 +150,37 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             can_assign: next && !!module?.has_assign,
         };
     }
+
+    function applyRoleDefaults(role: string) {
+        if (!modules.value.length) return;
+
+        const roleDefaults = ROLE_DEFAULT_PERMISSIONS[role] ?? {};
+
+        modules.value.forEach((module) => {
+            const actions =
+                roleDefaults[module.module_name as Modules] ?? [];
+
+            permissions.value[module.module_id] = {
+                can_read: actions.includes("can_read") && !!module.has_read,
+                can_create:
+                    actions.includes("can_create") && !!module.has_create,
+                can_update:
+                    actions.includes("can_update") && !!module.has_update,
+                can_approve:
+                    actions.includes("can_approve") && !!module.has_approve,
+                can_assign:
+                    actions.includes("can_assign") && !!module.has_assign,
+            };
+        });
+    }
+
+    watch(
+        () => employee.value.role_name,
+        (role) => {
+            if (hasExistingEmployee.value || !role) return;
+            applyRoleDefaults(role);
+        },
+    );
 
     function toggleAction(moduleId: number, action: keyof PermissionSet) {
         if (!permissions.value[moduleId]) {
@@ -284,6 +364,8 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
 
         if (hasExistingEmployee.value) {
             loadEmployee();
+        } else {
+            applyRoleDefaults(employee.value.role_name);
         }
     }
 

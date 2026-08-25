@@ -86,9 +86,7 @@ function bindChannel(token: string) {
 
     channel = $echo
         .private(`qr.${token}`)
-        .listen(".qr.scanned", (e: { token: string }) => {
-            console.log("QR SCANNED!", e);
-            alert("QR SCANNED");
+        .listen(".qr.scanned", () => {
             emit("scanned");
             emit("close");
         });

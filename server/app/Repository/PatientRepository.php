@@ -147,6 +147,7 @@ class PatientRepository
             'schedules.location',
             'schedules.scheduleServices.service',
         ])
+            ->withCount(['medications', 'vitals'])
             ->where('uuid', $uuid)
             ->first();
     }

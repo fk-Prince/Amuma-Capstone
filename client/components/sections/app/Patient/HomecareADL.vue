@@ -1,6 +1,7 @@
 <template>
     <div class="rounded-2xl bg-white font-sans">
         <div
+            v-if="variant !== 3"
             class="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between"
         >
             <div>
@@ -45,377 +46,482 @@
             v-else-if="!filteredLogs.length"
             class="p-12 text-center text-sm text-muted"
         >
-            No audit records found
+            {{
+                variant === 3
+                    ? "No schedule records found"
+                    : "No audit records found"
+            }}
         </div>
 
-        <div v-else class="space-y-4 p-5">
+        <div v-else class="p-5 space-y-6">
             <div
-                v-for="log in filteredLogs"
-                :key="`${log.schedule_id}-${log.schedule_services_id}`"
-                class="rounded-xl border border-muted-light bg-white overflow-hidden"
+                v-for="group in logGroups"
+                :key="group.key"
+                class="space-y-4"
             >
-                <button
-                    type="button"
-                    class="flex w-full flex-col gap-3 p-5 text-left sm:flex-row sm:items-center sm:justify-between"
-                    :class="
-                        isExpanded(log)
-                            ? 'border-b border-muted-light'
-                            : 'hover:bg-muted-light/40 transition-colors'
-                    "
-                    @click="onRowClick(log)"
+                <div
+                    v-if="group.title"
+                    class="flex items-center justify-between gap-2"
                 >
-                    <div class="flex items-start gap-3 min-w-0">
-                        <span
-                            class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted transition-transform"
-                            :class="isExpanded(log) ? 'rotate-180' : ''"
-                        >
-                            <ChevronDown class="h-4 w-4" />
-                        </span>
-
-                        <div class="min-w-0">
-                            <h4 class="text-xl font-semibold text-secondary">
-                                {{ log.schedule_code }}
-                            </h4>
-
-                            <p class="text-[14px] text-muted">
-                                {{ formatDateTime(log.scheduled_at) }}
-                            </p>
-                            <p class="text-[13px] text-muted truncate">
-                                {{ log.address }}
-                            </p>
-                        </div>
+                    <div class="flex items-center gap-2">
+                        <CalendarClock class="h-4 w-4 text-primary" />
+                        <p class="text-sm font-semibold text-secondary">
+                            {{ group.title }}
+                        </p>
                     </div>
+                    <span class="text-xs text-muted">
+                        {{ group.logs.length }} upcoming
+                    </span>
+                </div>
 
-                    <div
-                        class="flex flex-wrap items-center gap-2 sm:shrink-0"
-                        @click="$event.stopPropagation()"
+                <div
+                    v-for="log in group.logs"
+                    :key="rowKey(log)"
+                    class="rounded-xl border border-muted-light bg-white overflow-hidden"
+                >
+                    <button
+                        type="button"
+                        class="flex w-full flex-col gap-3 p-5 text-left sm:flex-row sm:items-center sm:justify-between"
+                        :class="
+                            isExpanded(log)
+                                ? 'border-b border-muted-light'
+                                : 'hover:bg-muted-light/40 transition-colors'
+                        "
+                        @click="onRowClick(log)"
                     >
-                        <template v-if="variant === 1">
-                            <ActionButton
-                                @click="openAssignModal(log)"
-                                variant="primary"
+                        <div class="flex items-start gap-3 min-w-0">
+                            <span
+                                class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted transition-transform"
+                                :class="isExpanded(log) ? 'rotate-180' : ''"
                             >
-                                Assign
-                            </ActionButton>
+                                <ChevronDown class="h-4 w-4" />
+                            </span>
+
+                            <div class="min-w-0">
+                                <h4
+                                    class="text-xl font-semibold text-secondary"
+                                >
+                                    {{ log.schedule_code }}
+                                </h4>
+
+                                <p class="text-[14px] text-muted">
+                                    {{ formatDateTime(log.scheduled_at) }}
+                                </p>
+                                <p
+                                    class="text-[13px] text-muted truncate flex gap-3 ite"
+                                >
+                                    <MapPinned
+                                        class="w-3.5 h-3.5 text-muted shrink-0"
+                                    />
+                                    {{ log.address }}
+                                </p>
+                                <p
+                                    v-if="variant === 3 && latestCheckIn(log)"
+                                    class="text-[13px] font-medium text-emerald-600"
+                                >
+                                    Checked in
+                                    {{
+                                        formatDateTime(
+                                            latestCheckIn(log)?.in_timestamp,
+                                        )
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div
+                            class="flex flex-wrap items-center gap-2 sm:shrink-0"
+                            @click="$event.stopPropagation()"
+                        >
+                            <template v-if="variant === 1">
+                                <ActionButton
+                                    variant="outline"
+                                    @click="viewDetails(log)"
+                                >
+                                    View details
+                                </ActionButton>
+
+                                <ActionButton
+                                    v-if="log.status !== 'cancelled'"
+                                    @click="openAssignModal(log)"
+                                    variant="primary"
+                                >
+                                    Assign
+                                </ActionButton>
+                            </template>
+
                             <ActionButton
-                                :loading="generatingQr"
-                                @click="generateQr('in', log)"
+                                v-if="variant === 2"
                                 variant="primary"
+                                @click="goToPatientSchedule(log)"
                             >
-                                CLOCK-IN
+                                View Information
                             </ActionButton>
+
                             <ActionButton
+                                v-if="
+                                    variant === 3 &&
+                                    canGenerateQr(log) &&
+                                    isCurrentlyCheckedIn(log)
+                                "
                                 :loading="generatingQr"
                                 @click="generateQr('out', log)"
                                 variant="primary"
                             >
-                                CLOCK-OUT
+                                Generate QR Out
                             </ActionButton>
-                        </template>
 
-                        <ActionButton
-                            v-if="variant === 2"
-                            variant="primary"
-                            @click="goToPatientSchedule(log)"
-                        >
-                            View Information
-                        </ActionButton>
+                            <ActionButton
+                                v-if="
+                                    variant === 3 &&
+                                    canGenerateQr(log) &&
+                                    !isCurrentlyCheckedIn(log)
+                                "
+                                :loading="generatingQr"
+                                @click="generateQr('in', log)"
+                                variant="primary"
+                            >
+                                Generate QR In
+                            </ActionButton>
 
-                        <div
-                            class="rounded-xl border border-primary/20 bg-primary/5 px-4 py-2"
-                        >
-                            <p class="text-[10px] uppercase text-primary/60">
-                                Scheduled Duration
-                            </p>
+                            <div
+                                class="rounded-xl border border-primary/20 bg-primary/5 px-4 py-2"
+                            >
+                                <p
+                                    class="text-[10px] uppercase text-primary/60"
+                                >
+                                    Scheduled Duration
+                                </p>
 
-                            <p class="text-sm font-bold text-primary">
-                                {{ formatBookedHours(log.total_hours) }}
-                            </p>
-                        </div>
+                                <p class="text-sm font-bold text-primary">
+                                    {{
+                                        formatDuration(log.total_hours) ||
+                                        "0 hrs"
+                                    }}
+                                </p>
+                            </div>
 
-                        <div
-                            class="rounded-xl border px-4 py-2"
-                            :class="{
-                                'border-amber-200 bg-amber-50':
-                                    log.status === 'pending',
-                                'border-blue-200 bg-blue-50':
-                                    log.status === 'ongoing',
-                                'border-green-200 bg-green-50':
-                                    log.status === 'completed',
-                                'border-red-200 bg-red-50':
-                                    log.status === 'cancelled',
-                                'border-orange-300 bg-orange-50':
-                                    log.status === 'missed',
-                            }"
-                        >
-                            <p class="text-[10px] uppercase text-muted">
-                                Status
-                            </p>
+                            <div
+                                class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2"
+                            >
+                                <p
+                                    class="text-[10px] uppercase text-amber-600/70"
+                                >
+                                    Remaining
+                                </p>
 
-                            <p
-                                class="text-sm font-bold capitalize"
+                                <p class="text-sm font-bold text-amber-700">
+                                    {{ formatRemaining(log) }}
+                                </p>
+                            </div>
+
+                            <div
+                                class="rounded-xl border px-4 py-2"
                                 :class="{
-                                    'text-amber-700': log.status === 'pending',
-                                    'text-blue-700': log.status === 'ongoing',
-                                    'text-green-700':
+                                    'border-amber-200 bg-amber-50':
+                                        log.status === 'pending',
+                                    'border-blue-200 bg-blue-50':
+                                        log.status === 'ongoing',
+                                    'border-green-200 bg-green-50':
                                         log.status === 'completed',
-                                    'text-red-700': log.status === 'cancelled',
-                                    'text-orange-700': log.status === 'missed',
+                                    'border-red-200 bg-red-50':
+                                        log.status === 'cancelled',
+                                    'border-orange-300 bg-orange-50':
+                                        log.status === 'missed',
                                 }"
                             >
-                                {{ log.status }}
-                            </p>
-                        </div>
-                    </div>
-                </button>
-
-                <Transition
-                    name="row-collapse"
-                    @enter="onEnter"
-                    @after-enter="onAfterEnter"
-                    @leave="onLeave"
-                >
-                    <div v-show="isExpanded(log)" class="overflow-hidden">
-                        <div class="px-5">
-                            <div
-                                class="mt-4 space-y-2 border-b border-muted-light pb-4"
-                            >
-                                <p
-                                    v-if="log.assignees.length"
-                                    class="text-xs font-semibold uppercase text-muted"
-                                >
-                                    Assigned Medical Staff
+                                <p class="text-[10px] uppercase text-muted">
+                                    Status
                                 </p>
 
-                                <template v-if="log.assignees.length">
-                                    <div
-                                        v-for="assignee in log.assignees"
-                                        :key="assignee.employee_id"
-                                        class="flex items-center gap-3"
+                                <p
+                                    class="text-sm font-bold capitalize"
+                                    :class="{
+                                        'text-amber-700':
+                                            log.status === 'pending',
+                                        'text-blue-700':
+                                            log.status === 'ongoing',
+                                        'text-green-700':
+                                            log.status === 'completed',
+                                        'text-red-700':
+                                            log.status === 'cancelled',
+                                        'text-orange-700':
+                                            log.status === 'missed',
+                                    }"
+                                >
+                                    {{ log.status }}
+                                </p>
+                            </div>
+                        </div>
+                    </button>
+
+                    <Transition
+                        name="row-collapse"
+                        @enter="onEnter"
+                        @after-enter="onAfterEnter"
+                        @leave="onLeave"
+                    >
+                        <div v-show="isExpanded(log)" class="overflow-hidden">
+                            <div class="px-5">
+                                <div
+                                    class="mt-4 space-y-2 border-b border-muted-light pb-4"
+                                >
+                                    <p
+                                        v-if="log.assignees.length"
+                                        class="text-xs font-semibold uppercase text-muted"
                                     >
-                                        <img
-                                            v-if="assignee.avatar"
-                                            :src="assignee.avatar"
-                                            class="h-10 w-10 rounded-full object-cover"
-                                        />
+                                        Assigned Medical Staff
+                                    </p>
+
+                                    <template v-if="log.assignees.length">
                                         <div
-                                            v-else
-                                            class="flex h-10 w-10 items-center justify-center rounded-full bg-muted-light text-sm font-semibold text-muted"
+                                            v-for="assignee in log.assignees"
+                                            :key="assignee.employee_id"
+                                            class="flex items-center gap-3"
                                         >
-                                            {{ initials(assignee.full_name) }}
+                                            <img
+                                                v-if="assignee.avatar"
+                                                :src="assignee.avatar"
+                                                class="h-10 w-10 rounded-full object-cover"
+                                            />
+                                            <div
+                                                v-else
+                                                class="flex h-10 w-10 items-center justify-center rounded-full bg-muted-light text-sm font-semibold text-muted"
+                                            >
+                                                {{
+                                                    initials(assignee.full_name)
+                                                }}
+                                            </div>
+
+                                            <div>
+                                                <p
+                                                    class="text-sm font-semibold text-secondary"
+                                                >
+                                                    {{ assignee.full_name }}
+                                                </p>
+
+                                                <p
+                                                    v-if="
+                                                        assignee.employee_role
+                                                    "
+                                                    class="text-xs text-muted capitalize"
+                                                >
+                                                    {{
+                                                        assignee.employee_role ??
+                                                        "—"
+                                                    }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <div v-else class="flex items-center gap-3">
+                                        <div
+                                            class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-700"
+                                        >
+                                            !
                                         </div>
 
                                         <div>
                                             <p
-                                                class="text-sm font-semibold text-secondary"
+                                                class="text-sm font-semibold text-amber-700"
                                             >
-                                                {{ assignee.full_name }}
+                                                Service is unassigned
                                             </p>
 
-                                            <p
-                                                v-if="assignee.employee_role"
-                                                class="text-xs text-muted capitalize"
-                                            >
-                                                {{
-                                                    assignee.employee_role ??
-                                                    "—"
-                                                }}
+                                            <p class="text-xs text-muted">
+                                                No employee has been assigned
+                                                yet
                                             </p>
                                         </div>
                                     </div>
-                                </template>
+                                </div>
 
-                                <div v-else class="flex items-center gap-3">
-                                    <div
-                                        class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-700"
-                                    >
-                                        !
-                                    </div>
-
+                                <div
+                                    class="mt-4 flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-3"
+                                >
                                     <div>
                                         <p
-                                            class="text-sm font-semibold text-amber-700"
+                                            class="text-[11px] uppercase text-muted"
                                         >
-                                            Service is unassigned
+                                            Currently Total Hours Worked
                                         </p>
-
-                                        <p class="text-xs text-muted">
-                                            No employee has been assigned yet
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div
-                                class="mt-4 flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-3"
-                            >
-                                <div>
-                                    <p class="text-[11px] uppercase text-muted">
-                                        Currently Total Hours Worked
-                                    </p>
-
-                                    <p class="text-sm font-bold text-primary">
-                                        {{
-                                            formatMinutes(
-                                                log.total_worked_minutes,
-                                            )
-                                        }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="mt-5 space-y-3 pb-5">
-                                <p
-                                    class="text-xs font-semibold uppercase text-muted"
-                                >
-                                    QR Scan History
-                                </p>
-                                <div
-                                    v-if="!log.online_logs.length"
-                                    class="rounded-lg border border-muted-light bg-muted-light/40 p-4 text-sm text-muted"
-                                >
-                                    No scan history available
-                                </div>
-
-                                <div
-                                    v-else
-                                    v-for="(scan, index) in log.online_logs"
-                                    :key="index"
-                                    class="rounded-lg border border-muted-light bg-muted-light/40 p-4"
-                                >
-                                    <div
-                                        v-if="scan.employee_name"
-                                        class="mb-3 flex items-center gap-2"
-                                    >
-                                        <img
-                                            v-if="scan.employee_avatar"
-                                            :src="scan.employee_avatar"
-                                            class="h-6 w-6 rounded-full object-cover"
-                                        />
-                                        <div
-                                            v-else
-                                            class="flex h-6 w-6 items-center justify-center rounded-full bg-muted-light text-[10px] font-semibold text-muted"
-                                        >
-                                            {{ initials(scan.employee_name) }}
-                                        </div>
 
                                         <p
-                                            class="text-xs font-medium text-secondary"
+                                            class="text-sm font-bold text-primary"
                                         >
-                                            {{ scan.employee_name }}
+                                            {{
+                                                formatDuration(
+                                                    log.total_worked_minutes /
+                                                        60,
+                                                ) || "0 hrs"
+                                            }}
                                         </p>
                                     </div>
+                                </div>
 
-                                    <div class="grid gap-4 lg:grid-cols-4">
-                                        <div>
-                                            <p
-                                                class="text-[11px] uppercase text-muted"
-                                            >
-                                                Check-in
-                                            </p>
-
-                                            <p class="text-sm text-secondary">
-                                                {{
-                                                    scan.in_timestamp
-                                                        ? formatDateTime(
-                                                              scan.in_timestamp,
-                                                          )
-                                                        : "Not checked in"
-                                                }}
-                                            </p>
-
-                                            <p
-                                                v-if="scan.in_timestamp"
-                                                class="text-[11px] text-emerald-600"
-                                            >
-                                                QR scanned
-                                            </p>
-                                        </div>
-
-                                        <div>
-                                            <p
-                                                class="text-[11px] uppercase text-muted"
-                                            >
-                                                Check-out
-                                            </p>
-
-                                            <p class="text-sm text-secondary">
-                                                {{
-                                                    scan.out_timestamp
-                                                        ? formatDateTime(
-                                                              scan.out_timestamp,
-                                                          )
-                                                        : "Not checked out"
-                                                }}
-                                            </p>
-
-                                            <p
-                                                v-if="scan.out_timestamp"
-                                                class="text-[11px] text-emerald-600"
-                                            >
-                                                QR scanned
-                                            </p>
-                                        </div>
-
-                                        <div>
-                                            <p
-                                                class="text-[11px] uppercase text-muted"
-                                            >
-                                                Worked
-                                            </p>
-
-                                            <p
-                                                class="text-sm font-semibold text-secondary"
-                                            >
-                                                {{ duration(scan) }}
-                                            </p>
-                                        </div>
-
-                                        <div>
-                                            <p
-                                                class="text-[11px] uppercase text-muted"
-                                            >
-                                                Status
-                                            </p>
-
-                                            <span
-                                                class="inline-flex rounded-full px-3 py-1 text-[11px] font-semibold"
-                                                :class="
-                                                    scan.out_timestamp
-                                                        ? 'bg-primary/10 text-primary'
-                                                        : 'bg-amber-100 text-amber-700'
-                                                "
-                                            >
-                                                {{
-                                                    scan.out_timestamp
-                                                        ? "Completed"
-                                                        : "Ongoing"
-                                                }}
-                                            </span>
-                                        </div>
+                                <div class="mt-5 space-y-3 pb-5">
+                                    <p
+                                        class="text-xs font-semibold uppercase text-muted"
+                                    >
+                                        QR Scan History
+                                    </p>
+                                    <div
+                                        v-if="!log.online_logs.length"
+                                        class="rounded-lg border border-muted-light bg-muted-light/40 p-4 text-sm text-muted"
+                                    >
+                                        No scan history available
                                     </div>
 
                                     <div
-                                        v-if="scan.notes"
-                                        class="mt-3 border-t border-muted-light pt-3 text-xs text-muted"
+                                        v-else
+                                        v-for="(scan, index) in log.online_logs"
+                                        :key="index"
+                                        class="rounded-lg border border-muted-light bg-muted-light/40 p-4"
                                     >
-                                        {{ scan.notes }}
+                                        <div
+                                            v-if="scan.employee_name"
+                                            class="mb-3 flex items-center gap-2"
+                                        >
+                                            <img
+                                                v-if="scan.employee_avatar"
+                                                :src="scan.employee_avatar"
+                                                class="h-6 w-6 rounded-full object-cover"
+                                            />
+                                            <div
+                                                v-else
+                                                class="flex h-6 w-6 items-center justify-center rounded-full bg-muted-light text-[10px] font-semibold text-muted"
+                                            >
+                                                {{
+                                                    initials(scan.employee_name)
+                                                }}
+                                            </div>
+
+                                            <p
+                                                class="text-xs font-medium text-secondary"
+                                            >
+                                                {{ scan.employee_name }}
+                                            </p>
+                                        </div>
+
+                                        <div class="grid gap-4 lg:grid-cols-4">
+                                            <div>
+                                                <p
+                                                    class="text-[11px] uppercase text-muted"
+                                                >
+                                                    Check-in
+                                                </p>
+
+                                                <p
+                                                    class="text-sm text-secondary"
+                                                >
+                                                    {{
+                                                        scan.in_timestamp
+                                                            ? formatDateTime(
+                                                                  scan.in_timestamp,
+                                                              )
+                                                            : "Not checked in"
+                                                    }}
+                                                </p>
+
+                                                <p
+                                                    v-if="scan.in_timestamp"
+                                                    class="text-[11px] text-emerald-600"
+                                                >
+                                                    QR scanned
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <p
+                                                    class="text-[11px] uppercase text-muted"
+                                                >
+                                                    Check-out
+                                                </p>
+
+                                                <p
+                                                    class="text-sm text-secondary"
+                                                >
+                                                    {{
+                                                        scan.out_timestamp
+                                                            ? formatDateTime(
+                                                                  scan.out_timestamp,
+                                                              )
+                                                            : "Not checked out"
+                                                    }}
+                                                </p>
+
+                                                <p
+                                                    v-if="scan.out_timestamp"
+                                                    class="text-[11px] text-emerald-600"
+                                                >
+                                                    QR scanned
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <p
+                                                    class="text-[11px] uppercase text-muted"
+                                                >
+                                                    Worked Hours
+                                                </p>
+
+                                                <p
+                                                    class="text-sm font-semibold text-secondary"
+                                                >
+                                                    {{ duration(scan) }}
+                                                </p>
+                                            </div>
+
+                                            <!-- <div>
+                                                <p
+                                                    class="text-[11px] uppercase text-muted"
+                                                >
+                                                    Status
+                                                </p>
+
+                                                <span
+                                                    class="inline-flex rounded-full px-3 py-1 text-[11px] font-semibold"
+                                                    :class="
+                                                        scan.out_timestamp
+                                                            ? 'bg-primary/10 text-primary'
+                                                            : 'bg-amber-100 text-amber-700'
+                                                    "
+                                                >
+                                                    {{
+                                                        scan.out_timestamp
+                                                            ? "Completed"
+                                                            : "Ongoing"
+                                                    }}
+                                                </span>
+                                            </div> -->
+                                        </div>
+
+                                        <div
+                                            v-if="scan.notes"
+                                            class="mt-3 border-t border-muted-light pt-3 text-xs text-muted"
+                                        >
+                                            {{ scan.notes }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </Transition>
+                    </Transition>
+                </div>
             </div>
         </div>
 
+        <QrCodeModal
+            v-if="variant === 1 || variant === 3"
+            :show="showQrModal"
+            :token="qrToken"
+            :mode="qrMode"
+            @close="closeQrModal"
+            @scanned="handleQrScanned"
+        />
+
         <template v-if="variant === 1">
-            <QrCodeModal
-                :show="showQrModal"
-                :token="qrToken"
-                :mode="qrMode"
-                @close="closeQrModal"
-            />
             <AssignADLModal
                 :open="showAssignModal"
                 :schedule="selectedSchedule"
@@ -432,12 +538,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { ChevronDown } from "lucide-vue-next";
+import { ChevronDown, CalendarClock, MapPinned } from "lucide-vue-next";
 import type { ScheduleItem, AuditRow } from "~/types/schedule";
 import ActionButton from "~/components/ui/ActionButton.vue";
 import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "~/composables/useToast";
+import { formatDuration } from "~/utils/time";
 import AssignADLModal from "./AssignADLModal.vue";
 import QrCodeModal from "~/components/ui/QrCodeModal.vue";
 import QrScanner from "~/components/ui/QrScanner.vue";
@@ -454,7 +561,7 @@ const props = withDefaults(
         loading?: boolean;
         date?: string;
         rangeEnd?: string;
-        variant?: 1 | 2;
+        variant?: 1 | 2 | 3;
     }>(),
     {
         logs: () => [],
@@ -464,6 +571,8 @@ const props = withDefaults(
 );
 const emit = defineEmits<{
     (e: "update", schedule: ScheduleItem[]): void;
+    (e: "refresh"): void;
+    (e: "view-details", schedule: ScheduleItem): void;
 }>();
 const selectedSchedule = ref<AuditRow>();
 const showAssignModal = ref(false);
@@ -499,6 +608,14 @@ function onRowClick(log: AuditRow) {
 function openAssignModal(log: AuditRow) {
     selectedSchedule.value = log;
     showAssignModal.value = true;
+}
+
+// AuditRow is a flattened one-row-per-service view of a schedule; the
+// "Update" flow (ScheduleDetails) needs the original nested ScheduleItem,
+// same as the Medical schedule list already provides via view-details.
+function viewDetails(log: AuditRow) {
+    const schedule = props.logs.find((s) => s.schedule_id === log.schedule_id);
+    if (schedule) emit("view-details", schedule);
 }
 
 function closeAssignModal() {
@@ -549,6 +666,11 @@ async function generateQr(type: "in" | "out", schedule: AuditRow) {
             type,
             branch_uuid: route.params.uuid,
             schedule_services_id: schedule.schedule_services_id,
+            // Variant 3 is the family portal view — a dual-role account
+            // (also has a staff record) needs this explicit signal so the
+            // backend resolves the patient's assigned caregiver instead
+            // of assuming the portal user is clocking themselves in.
+            as_family: props.variant === 3,
         });
         qrToken.value = res.data?.token ?? res.token ?? res;
     } catch (err: any) {
@@ -567,6 +689,19 @@ async function generateQr(type: "in" | "out", schedule: AuditRow) {
 function closeQrModal() {
     showQrModal.value = false;
     qrToken.value = null;
+}
+
+// Fires on the device that GENERATED the QR once the scanning device
+// verifies it (relayed over the .qr.scanned broadcast inside QrCodeModal),
+// so the person waiting to be scanned also finds out it went through.
+function handleQrScanned() {
+    success(
+        qrMode.value === "clock-in"
+            ? "Clocked in successfully."
+            : "Clocked out successfully.",
+    );
+    emit("refresh");
+    closeQrModal();
 }
 
 const search = ref("");
@@ -667,6 +802,62 @@ const filteredLogs = computed<AuditRow[]>(() => {
     // return rows;
 });
 
+// Only visits that have already happened (or are happening now) count as
+// "history" — a pending/confirmed visit hasn't occurred yet, so the
+// portal splits it out into its own "Scheduled Days" list instead of
+// mixing it in with past attendance records.
+const NOT_YET_DONE_STATUSES = ["pending", "confirmed"];
+
+const upcomingLogs = computed(() =>
+    filteredLogs.value.filter((log) =>
+        NOT_YET_DONE_STATUSES.includes(log.status),
+    ),
+);
+
+const historyLogs = computed(() =>
+    filteredLogs.value.filter(
+        (log) => !NOT_YET_DONE_STATUSES.includes(log.status),
+    ),
+);
+
+// Variant 3 (portal) keeps upcoming visits under their own "Scheduled
+// Days" heading while everything else (dashboard/staff variants) shows a
+// single flat list — but every group renders through the same card markup
+// so the two views only differ by grouping, not by layout.
+const logGroups = computed(() => {
+    if (props.variant === 3) {
+        const groups: { key: string; title: string | null; logs: AuditRow[] }[] =
+            [];
+
+        if (upcomingLogs.value.length) {
+            groups.push({
+                key: "upcoming",
+                title: "Scheduled Days",
+                logs: upcomingLogs.value,
+            });
+        }
+
+        if (historyLogs.value.length) {
+            groups.push({ key: "history", title: null, logs: historyLogs.value });
+        }
+
+        return groups;
+    }
+
+    return [{ key: "all", title: null, logs: filteredLogs.value }];
+});
+
+// QR generation should stay available for the whole lifecycle of a visit
+// (upcoming, then ongoing) and only stop once it's cancelled or finished.
+const QR_GENERATION_BLOCKED_STATUSES = ["cancelled", "completed", "missed"];
+
+function canGenerateQr(log: AuditRow): boolean {
+    return (
+        !!log.assignees.length &&
+        !QR_GENERATION_BLOCKED_STATUSES.includes(log.status)
+    );
+}
+
 function initials(name?: string | null) {
     if (!name) return "?";
 
@@ -690,6 +881,29 @@ function formatDateTime(value?: string | null) {
     });
 }
 
+function latestCheckIn(log: AuditRow) {
+    return log.online_logs.reduce<AuditRow["online_logs"][number] | null>(
+        (latest, scan) => {
+            if (!scan.in_timestamp) return latest;
+            if (!latest?.in_timestamp) return scan;
+
+            return new Date(scan.in_timestamp) > new Date(latest.in_timestamp)
+                ? scan
+                : latest;
+        },
+        null,
+    );
+}
+
+// A schedule with several services can be "ongoing" overall while a given
+// service's own caregiver hasn't clocked in yet, so whether to offer
+// Generate QR In vs Out has to follow this service's own latest scan, not
+// just the schedule-level status.
+function isCurrentlyCheckedIn(log: AuditRow): boolean {
+    const latest = latestCheckIn(log);
+    return Boolean(latest && !latest.out_timestamp);
+}
+
 function workedMinutes(scan: {
     in_timestamp: string | null;
     out_timestamp: string | null;
@@ -711,45 +925,22 @@ function duration(scan: {
     in_timestamp: string | null;
     out_timestamp: string | null;
 }) {
-    const minutes = workedMinutes(scan);
-
     if (!scan.in_timestamp) {
         return "—";
     }
 
-    return formatMinutes(minutes);
+    const minutes = workedMinutes(scan);
+
+    return formatDuration(minutes / 60) || "0 hrs";
 }
 
-function formatMinutes(minutes: number) {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
+function formatRemaining(log: AuditRow) {
+    const remainingMinutes = Math.max(
+        log.total_hours * 60 - log.total_worked_minutes,
+        0,
+    );
 
-    return `${hours}h ${mins}m`;
-}
-function formatBookedHours(hours: number) {
-    if (!hours || hours <= 0) {
-        return "0 hrs";
-    }
-
-    const months = Math.floor(hours / 720);
-    const days = Math.floor((hours % 720) / 24);
-    const remainingHours = hours % 24;
-
-    const parts = [];
-
-    if (months) {
-        parts.push(`${months} month${months > 1 ? "s" : ""}`);
-    }
-
-    if (days) {
-        parts.push(`${days} day${days > 1 ? "s" : ""}`);
-    }
-
-    if (remainingHours) {
-        parts.push(`${remainingHours} hr${remainingHours > 1 ? "s" : ""}`);
-    }
-
-    return parts.join(" ");
+    return formatDuration(remainingMinutes / 60) || "0 hrs";
 }
 
 const onEnter = (el: Element) => {

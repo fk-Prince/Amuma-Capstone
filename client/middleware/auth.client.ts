@@ -34,7 +34,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
         }
 
         const branch = branchStore.branches.find((b) => b?.uuid === branchUuid);
-
         if (!branch) {
             return navigateTo("/403");
         }

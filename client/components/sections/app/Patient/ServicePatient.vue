@@ -61,7 +61,7 @@
                     <div>
                         <div class="mb-3 flex items-center justify-between">
                             <label class="text-sm font-semibold text-slate-700">
-                                Select Services
+                                Select Service
                                 <span class="text-danger">*</span>
                             </label>
 
@@ -166,7 +166,7 @@
                                             class="flex min-w-0 items-center gap-3"
                                         >
                                             <span
-                                                class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition"
+                                                class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition"
                                                 :class="
                                                     isSelected(service)
                                                         ? 'border-primary bg-primary text-white'
@@ -285,7 +285,7 @@
                             <p
                                 class="text-xs font-semibold uppercase tracking-wide text-muted"
                             >
-                                Services
+                                Service
                             </p>
                             <span
                                 v-if="selectedServices.length"
@@ -303,7 +303,7 @@
                         >
                             <ClipboardX class="h-5 w-5 text-slate-300" />
                             <p class="text-xs text-muted">
-                                No services selected yet.
+                                No service selected yet.
                             </p>
                         </div>
 
@@ -521,16 +521,18 @@ function toggleService(service: Service) {
 
     if (isSelected(service)) {
         removeService(service.service_id);
-    } else {
-        selectedServices.value = [
-            ...selectedServices.value,
-            {
-                service_id: service.service_id,
-                service_name: service.service_name,
-                price: Number(service.price),
-            },
-        ];
+        return;
     }
+
+    // Only one service may be booked at a time — selecting a new one
+    // replaces whatever was previously selected instead of adding to it.
+    selectedServices.value = [
+        {
+            service_id: service.service_id,
+            service_name: service.service_name,
+            price: Number(service.price),
+        },
+    ];
 
     clearError("services");
 }

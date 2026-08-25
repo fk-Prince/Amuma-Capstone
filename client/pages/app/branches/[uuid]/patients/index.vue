@@ -141,11 +141,30 @@ function currentAdmission(patient: PatientRetrieve) {
 }
 
 function careType(patient: PatientRetrieve) {
-    const admission = currentAdmission(patient);
-    const contract = admission?.invoices?.[0]?.contract;
-    return contract?.category.toLowerCase() == "facility"
-        ? "Inhouse Facility"
-        : "Homecare Services";
+    const status = patient.current_admission?.status.toLowerCase();
+    const latestStatus = patient.latest_admission?.status.toLowerCase();
+
+    if (status === "admitted") {
+        return "Inhouse Facility";
+    }
+
+    if (patient.has_homecare) {
+        return "Homecare Services";
+    }
+
+    if (status === "discharge" || status === "discharged") {
+        return "Inhouse Facility";
+    }
+
+    if (
+        latestStatus === "discharged" ||
+        latestStatus === "waiting" ||
+        latestStatus === "cancelled"
+    ) {
+        return "Inhouse Facility";
+    }
+
+    return "—";
 }
 
 const emptyStateTitle = computed(() =>

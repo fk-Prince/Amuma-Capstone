@@ -296,6 +296,48 @@
         </div>
 
         <div
+            v-if="latestPayment"
+            class="flex items-center justify-between gap-4 border-t border-slate-100 px-5 py-3"
+        >
+            <div class="flex items-center gap-2 text-[11px] text-muted">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    class="h-3.5 w-3.5 shrink-0 text-primary"
+                >
+                    <rect x="2" y="5" width="20" height="14" rx="2" />
+                    <path d="M2 10h20" />
+                </svg>
+
+                <span v-if="latestPayment.masked_card_number">
+                    {{ latestPayment.masked_card_number }}
+                </span>
+
+                <span v-else>No card on file</span>
+            </div>
+
+            <div class="flex items-center gap-2 text-[11px]">
+                <span class="font-semibold text-secondary">
+                    ₱{{ latestPayment.price.toLocaleString() }}
+                </span>
+
+                <span
+                    class="rounded-full px-2 py-0.5 text-[9px] font-medium capitalize"
+                    :class="
+                        latestPayment.status === 'paid'
+                            ? 'bg-accent-50 text-accent-600'
+                            : 'bg-slate-100 text-slate-500'
+                    "
+                >
+                    {{ latestPayment.status }}
+                </span>
+            </div>
+        </div>
+
+        <div
             v-if="canShowActions"
             class="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-5 py-3"
         >
@@ -356,6 +398,7 @@
 
 <script setup lang="ts">
 import DocumentLink from "~/components/ui/DocumentLink.vue";
+import type { SubscriptionPaymentRecord } from "~/types/subscription";
 
 interface SubscriptionCardData {
     uuid: string;
@@ -363,6 +406,7 @@ interface SubscriptionCardData {
     status: "pending" | "active" | "inactive" | "expired";
     start_date: string;
     end_date: string;
+    payments?: SubscriptionPaymentRecord[];
 
     branch: {
         branch_id: number;
@@ -410,6 +454,18 @@ const emit = defineEmits<{
     approve: [subscription: SubscriptionCardData];
     reject: [subscription: SubscriptionCardData];
 }>();
+
+const latestPayment = computed(() => {
+    const payments = props.subscription.payments;
+
+    if (!payments?.length) {
+        return null;
+    }
+
+    return [...payments].sort((a, b) =>
+        (b.created_at ?? "").localeCompare(a.created_at ?? ""),
+    )[0];
+});
 
 const hasAgencyDocuments = computed(() => {
     const agency = props.subscription.branch.agency;

@@ -1,12 +1,12 @@
 <template>
-    <div class="min-h-[calc(100vh-90px)] bg-slate-100 p-2 overflow-visible">
+    <div class="h-[calc(100vh-90px)] bg-slate-100 p-2 overflow-visible">
         <div
             class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-4 items-stretch max-w-8xl h-full min-h-0"
         >
             <div class="w-full min-w-0 min-h-0 flex flex-col order-1">
                 <template v-if="!selectedReferenceId">
                     <div
-                        class="bg-white rounded-lg shadow-sm border border-[#E4EFED] overflow-visible flex flex-col h-full min-h-0"
+                        class="rounded-lg shadow-sm border border-[#E4EFED] overflow-visible flex flex-col h-full min-h-0"
                     >
                         <div
                             class="flex flex-col gap-3 px-6 py-4 border-b border-[#E4EFED] shrink-0"
@@ -584,6 +584,12 @@
             @confirm="onAccommodationConfirm"
             @close="showAccommodationModal = false"
             :accommodation="selectedBooking.facility?.plan"
+            :initial-billing-cycle="
+                selectedBooking.facility?.billing_cycle?.toLowerCase() ===
+                'yearly'
+                    ? 'yearly'
+                    : 'monthly'
+            "
             :require-admission-date="false"
         />
     </div>

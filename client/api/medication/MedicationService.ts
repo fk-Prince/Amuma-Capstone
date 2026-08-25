@@ -24,6 +24,10 @@ class MedicationService extends BaseService {
         return await this.request(this.resource, 'POST', payload);
     }
 
+    async dosage(payload: object): Promise<any> {
+        return await this.request(`${this.resource}/dosage`, 'POST', payload);
+    }
+
     async show(uuid: string): Promise<any> {
         return await this.request(`${this.resource}/${uuid}`, 'GET');
     }

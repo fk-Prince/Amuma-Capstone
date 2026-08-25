@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id('subscription_payment_id');
             $table->string('xendit_invoice_id');
             $table->string('payment_reference_id');
+            $table->string('masked_card_number', 25)->nullable();
             $table->foreignId('subscription_id')->constrained('subscriptions', 'subscription_id');
             $table->decimal('price', 10, 2);
             $table->enum('status', ['paid', 'refunded'])->default('paid');

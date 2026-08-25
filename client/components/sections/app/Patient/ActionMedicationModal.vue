@@ -12,6 +12,7 @@ import {
     emptyForm,
     dosageUnitOptions,
     routeOptions,
+    frequencyOptions,
 } from "~/types/medication";
 import { useSchemaValidation } from "~/composables/useSchemaValidation";
 
@@ -245,7 +246,7 @@ function close() {
                                 />
 
                                 <div
-                                    class="grid grid-cols-1 gap-4 sm:grid-cols-2"
+                                    class="grid grid-cols-1 gap-4 sm:grid-cols-3"
                                 >
                                     <BaseInput
                                         v-model="form.startDate"
@@ -263,6 +264,17 @@ function close() {
                                         label="Duration"
                                         placeholder="Select duration"
                                         :items="durationOptions"
+                                    />
+
+                                    <Combobox
+                                        v-model="form.frequency"
+                                        label="Taken Every"
+                                        placeholder="Select frequency"
+                                        :items="frequencyOptions"
+                                        :error="errors.frequency"
+                                        @update:modelValue="
+                                            clearError('frequency')
+                                        "
                                     />
                                 </div>
 

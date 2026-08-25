@@ -1,4 +1,4 @@
-﻿<template>
+﻿﻿<template>
     <div
         class="h-screen flex flex-col bg-[#EEF3FB] print:bg-white print:h-auto print:overflow-visible"
     >

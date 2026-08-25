@@ -2,14 +2,48 @@
 
 namespace App\Service;
 
+use App\Models\Medication;
+use App\Models\MedicationSchedule;
 use App\Models\User;
 use App\Repository\PatientRepository;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
+use App\Utils\MedicationPresenter;
+use Exception;
 
 class MedicationService
 {
     public function __construct(private PatientRepository $patientRepository) {}
+
+    /**
+     * Medications are no longer bundled into the main patient fetch — the
+     * Medication tab pulls its own paginated page on demand instead.
+     */
+    public function listMedications(array $payload)
+    {
+        $patient = $this->patientRepository->findByFields([
+            ['uuid', '=', $payload['patient_uuid']]
+        ]);
+
+        if (!$patient) {
+            throw new Exception('Patient not found');
+        }
+
+        $medications = Medication::where('patient_id', $patient->patient_id)
+            ->with('schedules')
+            ->orderByDesc('recorded_at')
+            ->paginate((int) ($payload['per_page'] ?? 10));
+
+        return response()->json([
+            'data' => collect($medications->items())
+                ->map(fn($medication) => MedicationPresenter::medication($medication))
+                ->values(),
+            'meta' => [
+                'current_page' => $medications->currentPage(),
+                'last_page' => $medications->lastPage(),
+                'total' => $medications->total(),
+                'per_page' => $medications->perPage(),
+            ],
+        ], 200);
+    }
 
     public function createMedication(User $user, array $payload)
     {
@@ -18,139 +52,113 @@ class MedicationService
         ]);
 
         if (!$patient) {
-            throw new \Exception('Patient not found');
+            throw new Exception('Patient not found');
         }
 
-        $medications = $patient->medication ?? [];
+        $data = $payload['payload'] ?? [];
 
-        if ($payload['category'] === "dosage") {
-            $schedule = $payload['medSchedule'];
-            $updatedSchedule = null;
-            foreach ($medications as &$medication) {
-                if ($medication['id'] !== $schedule['medication_id']) {
-                    continue;
-                }
-                if ($schedule['status'] === "taken") {
-                    $medication['schedules'] ??= [];
-                    $exists = collect($medication['schedules'])
-                        ->contains(function ($item) use ($schedule) {
-                            return $item['date'] === $schedule['date']
-                                && $item['time'] === $schedule['time'];
-                        });
-
-                    if (!$exists) {
-                        do {
-                            $id = (string) Str::uuid();
-                            $scheduleExists = collect($medications)
-                                ->flatMap(function ($med) {
-                                    return $med['schedules'] ?? [];
-                                })
-                                ->contains('id', $id);
-                        } while ($scheduleExists);
-                        $updatedSchedule = [
-                            'id' => $id,
-                            'date' => $schedule['date'],
-                            'time' => $schedule['time'],
-                            'status' => $schedule['status'],
-                            'marked_by' => $user->uuid,
-                            'recorded_date' => now()->toISOString(),
-                        ];
-                        $medication['schedules'][] = $updatedSchedule;
-                    } else {
-                        $updatedSchedule = collect($medication['schedules'])
-                            ->first(function ($item) use ($schedule) {
-                                return $item['date'] === $schedule['date']
-                                    && $item['time'] === $schedule['time'];
-                            });
-                    }
-                }
-                if ($schedule['status'] === "removed") {
-                    $removedSchedule = collect($medication['schedules'] ?? [])
-                        ->first(function ($item) use ($schedule) {
-                            return $item['id'] === ($schedule['schedule_id'] ?? null);
-                        });
-
-
-                    $medication['schedules'] = collect($medication['schedules'] ?? [])
-                        ->reject(function ($item) use ($schedule) {
-                            return $item['id'] === ($schedule['schedule_id'] ?? null);
-                        })
-                        ->values()
-                        ->toArray();
-                    $updatedSchedule = $removedSchedule;
-                }
-                break;
-            }
-
-            $patient->update([
-                'medication' => $medications,
-            ]);
-            return response()->json([
-                'message' => 'Successfully updated dosage schedule.',
-                'data' => $updatedSchedule,
-                'status' => $schedule['status'],
-            ], 200);
-        }
-
-        do {
-            $id = (string) Str::uuid();
-        } while (collect($medications)->contains('id', $id));
-
-
-        $newMedication = [
-            'id' => $id,
-            'category' => $payload['category'],
-            'recorded_date' => now()->toISOString(),
-            ...($payload['payload'] ?? []),
-        ];
-
-        Log::info("xd");
-        $medications[] = $newMedication;
-
-        Log::info("xd1");
-        $patient->update([
-            'medication' => $medications,
+        $medication = Medication::create([
+            'patient_id' => $patient->patient_id,
+            'name' => $data['name'],
+            'strength' => $data['strength'],
+            'dosage_amount' => $data['dosageAmount'],
+            'dosage_unit' => $data['dosageUnit'],
+            'route' => $data['route'],
+            'instructions' => $data['instructions'],
+            'taken_for' => $data['takenFor'] ?? null,
+            'duration' => $data['duration'],
+            'frequency' => $data['frequency'] ?? 'everyday',
+            'kind' => $data['kind'],
+            'times' => $data['times'] ?? [],
+            'start_date' => $data['startDate'],
+            'recorded_at' => now(),
         ]);
-        Log::info("xd12");
 
         return response()->json([
-            'message' => 'Successfully saved ' . $payload['category'] . '.',
-            'data' => $newMedication,
+            'message' => 'Successfully saved Medication.',
+            'data' => MedicationPresenter::medication($medication),
         ], 200);
     }
 
     public function updateMedication(User $user, array $payload, string $id)
     {
-        $patient = $this->patientRepository->findByFields([
-            ['uuid', '=', $payload['patient_uuid']]
-        ]);
+        $medication = Medication::whereHas(
+            'patient',
+            fn($query) => $query->where('uuid', $payload['patient_uuid'])
+        )->find($id);
 
-        if (!$patient) {
-            throw new \Exception('Patient not found');
+        if (!$medication) {
+            throw new Exception('Medication record not found');
         }
 
-        $medications = $patient->medication ?? [];
+        $data = $payload['payload'] ?? [];
 
-        $index = collect($medications)->search(function ($item) use ($id) {
-            return $item['id'] === $id;
-        });
+        $medication->update(array_filter([
+            'name' => $data['name'] ?? null,
+            'strength' => $data['strength'] ?? null,
+            'dosage_amount' => $data['dosageAmount'] ?? null,
+            'dosage_unit' => $data['dosageUnit'] ?? null,
+            'route' => $data['route'] ?? null,
+            'instructions' => $data['instructions'] ?? null,
+            'taken_for' => $data['takenFor'] ?? null,
+            'duration' => $data['duration'] ?? null,
+            'frequency' => $data['frequency'] ?? null,
+            'kind' => $data['kind'] ?? null,
+            'times' => $data['times'] ?? null,
+            'start_date' => $data['startDate'] ?? null,
+        ], fn($value) => $value !== null));
 
-        if ($index === false) {
-            throw new \Exception('Medication record not found');
+        return response()->json([
+            'message' => 'Successfully updated Medication.',
+            'data' => MedicationPresenter::medication($medication->fresh()),
+        ], 200);
+    }
+
+    public function markDosage(User $user, array $payload)
+    {
+        $schedule = $payload['medSchedule'];
+
+        $medication = Medication::whereHas(
+            'patient',
+            fn($query) => $query->where('uuid', $payload['patient_uuid'])
+        )->find($schedule['medication_id']);
+
+        if (!$medication) {
+            throw new Exception('Medication record not found');
         }
 
-        $medications[$index] = [
-            ...$medications[$index],
-            ...($payload['payload'] ?? []),
-        ];
+        if ($schedule['status'] === 'removed') {
+            $removed = $medication->schedules()
+                ->where('medication_schedule_id', $schedule['schedule_id'] ?? null)
+                ->first();
 
-        $patient->update([
-            'medication' => array_values($medications),
+            $removed?->delete();
+
+            return response()->json([
+                'message' => 'Successfully updated dosage schedule.',
+                'data' => $removed ? MedicationPresenter::schedule($removed) : null,
+                'status' => $schedule['status'],
+            ], 200);
+        }
+
+        $existing = $medication->schedules()
+            ->where('date', $schedule['date'])
+            ->where('time', $schedule['time'])
+            ->first();
+
+        $dose = $existing ?? $medication->schedules()->create([
+            'date' => $schedule['date'],
+            'time' => $schedule['time'],
+            'status' => MedicationSchedule::STATUS_TAKEN,
+            'marked_by' => $user->user_id,
+            'recorded_at' => now(),
         ]);
 
         return response()->json([
-            'message' => 'Successfully updated  ' . $medications[$index]['category'] . '.',
-            'data' => $medications[$index],
+            'message' => 'Successfully updated dosage schedule.',
+            'data' => MedicationPresenter::schedule($dose),
+            'status' => $schedule['status'],
         ], 200);
     }
+
 }

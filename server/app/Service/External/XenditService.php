@@ -65,7 +65,6 @@ class XenditService
                     ]
                 )
                 ->throw();
-
             return true;
         } catch (Exception $e) {
             Log::error('Xendit refund failed', [

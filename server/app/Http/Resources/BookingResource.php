@@ -42,6 +42,7 @@ class BookingResource extends JsonResource
                 'weight' => $data['patient']['weight'] ?? null,
                 'blood_type' => $data['patient']['blood_type'] ?? null,
                 'address' => $data['patient']['address'] ?? null,
+                'allergies' => $data['patient']['allergies'] ?? null,
             ],
             'guardian' => [
                 'first_name' => $data['guardian']['first_name'] ?? null,

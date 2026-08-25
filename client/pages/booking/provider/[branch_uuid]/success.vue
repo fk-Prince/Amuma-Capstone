@@ -115,7 +115,6 @@ function goHome() {
 }
 
 function viewBookings() {
-    // router.push("/portal");
-    //L INK SA PORTAL
+    router.push("/portal/bookings");
 }
 </script>

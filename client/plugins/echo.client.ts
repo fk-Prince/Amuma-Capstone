@@ -11,14 +11,17 @@ function getCookie(name: string): string | null {
 export default defineNuxtPlugin(() => {
     const config = useRuntimeConfig();
 
+    const backendUrl = new URL(config.public.backendApi as string);
+    const isSecure = backendUrl.protocol === 'https:';
+
     const echo = new Echo({
         broadcaster: 'reverb',
         key: 'lbcswwvuj6gh7s5cmwza',
-        wsHost: '127.0.0.1',
+        wsHost: backendUrl.hostname,
         wsPort: 8080,
-        wssPort: 8080,
-        forceTLS: false,
-        enabledTransports: ['ws'],
+        wssPort: 9443,
+        forceTLS: isSecure,
+        enabledTransports: isSecure ? ['wss'] : ['ws'],
         authorizer: (channel: any) => {
             return {
                 authorize: (socketId: string, callback: Function) => {

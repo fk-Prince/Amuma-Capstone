@@ -87,7 +87,7 @@
                 <div v-show="open" class="grid overflow-hidden">
                     <div class="min-h-0">
                         <div
-                            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
+                            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"
                         >
                             <div
                                 v-for="metric in metrics"
@@ -227,6 +227,7 @@ import {
     TrendingUp,
     ChevronLeft,
     ChevronRight,
+    RotateCcw,
 } from "lucide-vue-next";
 
 const open = ref(false);
@@ -322,6 +323,16 @@ const metrics = computed(() => [
         icon: Wallet,
         iconBg: "bg-emerald-50",
         iconColor: "text-emerald-600",
+    },
+    {
+        key: "refunded",
+        label: "Refunded",
+        display: formatCurrency(props.overview?.refunds_issued?.value ?? 0),
+        secondary: props.overview?.refunds_issued?.secondary ?? "No changes",
+        secondaryColor: trendColor(props.overview?.refunds_issued?.trend),
+        icon: RotateCcw,
+        iconBg: "bg-amber-50",
+        iconColor: "text-amber-600",
     },
     {
         key: "outstanding",

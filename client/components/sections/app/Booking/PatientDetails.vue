@@ -37,6 +37,7 @@
             <Field label="Blood Type" :value="patient?.blood_type" />
             <Field label="Phone" :value="patient?.phone_number" />
             <Field label="Occupation" :value="patient?.occupation" />
+            <Field label="Allergies" :value="patient?.allergies" />
             <Field
                 label="Address"
                 :value="patient?.address || booking.homecare?.address"

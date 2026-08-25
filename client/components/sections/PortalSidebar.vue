@@ -1,135 +1,101 @@
 <template>
-    <ClientOnly>
-        <template #fallback>
-            <div />
-        </template>
-
-        <Teleport to="body">
-            <Transition
-                enter-active-class="transition-opacity duration-300 ease-out"
-                enter-from-class="opacity-0"
-                enter-to-class="opacity-100"
-                leave-active-class="transition-opacity duration-200 ease-in"
-                leave-from-class="opacity-100"
-                leave-to-class="opacity-0"
-            >
-                <div
-                    v-if="open && !isDesktop"
-                    class="fixed inset-0 z-[60] bg-primary-900/50 backdrop-blur-sm"
-                    @click="$emit('close')"
-                />
-            </Transition>
-
-            <Transition
-                enter-active-class="transition-transform duration-300 ease-out"
-                enter-from-class="-translate-x-full"
-                enter-to-class="translate-x-0"
-                leave-active-class="transition-transform duration-250 ease-in"
-                leave-from-class="translate-x-0"
-                leave-to-class="-translate-x-full"
-            >
-                <aside
-                    v-if="open && !isDesktop"
-                    class="fixed left-0 top-0 h-full w-64 bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] z-[70] flex flex-col lg:hidden"
-                >
-                    <div
-                        class="flex items-center justify-between px-5 h-[72px] border-b border-primary-100/80"
-                    >
-                        <NuxtLink to="/" @click="$emit('close')">
-                            <img :src="logo" class="w-[130px] object-contain" />
-                        </NuxtLink>
-
-                        <button
-                            @click="$emit('close')"
-                            class="w-8 h-8 flex items-center justify-center rounded-full text-primary-500 hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200"
-                        >
-                            <X class="w-[18px] h-[18px]" />
-                        </button>
-                    </div>
-
-                    <nav class="scroll-left flex-1 overflow-y-auto">
-                        <div
-                            class="scroll-left-inner flex flex-col px-3 py-4 gap-1"
-                        >
-                            <NuxtLink
-                                v-for="item in navItems"
-                                :key="item.to"
-                                :to="item.to"
-                                :class="navClass(item.to)"
-                                @click="$emit('close')"
-                            >
-                                <span :class="iconWrapClass(item.to)">
-                                    <component
-                                        :is="item.icon"
-                                        class="w-4 h-4"
-                                    />
-                                </span>
-                                <span class="truncate">{{ item.label }}</span>
-                                <ChevronRight
-                                    v-if="isActive(item.to)"
-                                    class="w-3.5 h-3.5 ml-auto opacity-70"
-                                />
-                            </NuxtLink>
-                        </div>
-                    </nav>
-                </aside>
-            </Transition>
-        </Teleport>
-    </ClientOnly>
+    <div
+        v-if="open"
+        class="fixed inset-0 z-30 bg-gray-900/40 backdrop-blur-sm lg:hidden"
+        aria-hidden="true"
+        @click="emit('close')"
+    />
 
     <aside
-        v-if="isDesktop"
-        :class="[
-            'hidden lg:flex h-full relative bg-white shadow-[0_0_40px_rgba(10,40,87,0.08)] flex-col shrink-0 transition-[width] duration-300 ease-in-out border-r border-primary-100/70',
-            desktopCollapsed ? 'w-[76px]' : 'w-60',
-        ]"
+        class="group fixed inset-y-0 left-0 z-40 flex h-full w-64 shrink-0 flex-col overflow-hidden border-r border-gray-100 bg-white transition-transform duration-200 ease-in-out lg:static lg:z-20 lg:w-[76px] lg:translate-x-0 lg:transition-[width] lg:hover:w-64"
+        :class="open ? 'translate-x-0' : '-translate-x-full'"
     >
-        <button
-            @click="desktopCollapsed = !desktopCollapsed"
-            class="absolute -right-3 top-7 z-10 bg-white border border-primary-200 shadow-md w-7 h-7 flex items-center justify-center rounded-full text-primary-600 hover:bg-primary hover:text-white hover:border-primary transition-colors duration-200"
-        >
-            <component
-                :is="desktopCollapsed ? ChevronRight : ChevronLeft"
-                class="w-4 h-4"
-            />
-        </button>
-
-        <div class="scroll-left flex-1 overflow-y-auto overflow-x-hidden py-4">
-            <div class="scroll-left-inner flex flex-col px-2.5 gap-1">
-                <NuxtLink
-                    v-for="item in navItems"
-                    :key="item.to"
-                    :to="item.to"
-                    :class="navClass(item.to, true)"
-                    :title="desktopCollapsed ? item.label : undefined"
+        <div class="flex shrink-0 items-center justify-between px-[19px] pt-4 pb-3">
+            <NuxtLink to="/" class="flex items-center gap-2.5" @click="emit('close')">
+                <img
+                    :src="logo"
+                    alt="AMUMA"
+                    class="w-9 h-9 rounded-lg object-contain shrink-0"
+                />
+                <div
+                    class="whitespace-nowrap leading-tight transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
                 >
-                    <span :class="iconWrapClass(item.to)">
-                        <component :is="item.icon" class="w-4 h-4" />
-                    </span>
-                    <span v-if="!desktopCollapsed" class="truncate">{{
-                        item.label
-                    }}</span>
-                </NuxtLink>
-            </div>
+                    <p
+                        class="font-extrabold text-brand-500 text-2xl tracking-wide [text-shadow:0_4px_8px_rgb(49_130_237_/_35%)]"
+                    >
+                        AMUMA
+                    </p>
+                </div>
+            </NuxtLink>
+
+            <button
+                type="button"
+                class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-50 hover:text-gray-600 lg:hidden"
+                aria-label="Close navigation"
+                @click="emit('close')"
+            >
+                <X class="h-5 w-5" />
+            </button>
+        </div>
+
+        <nav
+            class="sidebar-scroll flex-1 px-3.5 space-y-1.5 mt-5 overflow-y-auto overflow-x-hidden"
+        >
+            <NuxtLink
+                v-for="item in navItems"
+                :key="item.to"
+                :to="item.to"
+                class="w-full flex items-center gap-3 px-[13px] py-3 rounded-xl text-sm font-medium transition-colors"
+                :class="
+                    isActive(item.to)
+                        ? 'bg-brand-500 text-white shadow-sm'
+                        : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+                "
+                @click="emit('close')"
+            >
+                <component :is="item.icon" class="w-[18px] h-[18px] shrink-0" />
+                <span
+                    class="flex-1 text-left whitespace-nowrap transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
+                    >{{ item.label }}</span
+                >
+            </NuxtLink>
+        </nav>
+
+        <div class="px-3.5 pb-6 pt-3 shrink-0 border-t border-gray-50">
+            <button
+                class="w-full flex items-center gap-3 px-[13px] py-3 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+            >
+                <LogOut class="w-[18px] h-[18px] shrink-0" />
+                <span
+                    class="whitespace-nowrap transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
+                    >Logout</span
+                >
+            </button>
         </div>
     </aside>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import logo from "assets/logo/logo.png";
+import { watch } from "vue";
 import { useRoute } from "vue-router";
 import {
-    User,
+    ClipboardList,
+    LayoutGrid,
+    Users,
+    Camera,
+    MessageSquare,
     CreditCard,
     Calendar,
-    ChevronLeft,
-    ChevronRight,
+    Pill,
+    Bell,
+    Settings,
+    LogOut,
     X,
 } from "lucide-vue-next";
 
-const props = defineProps<{
-    open: boolean;
-    logo?: string;
+defineProps<{
+    open?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -137,83 +103,46 @@ const emit = defineEmits<{
 }>();
 
 const route = useRoute();
-const desktopCollapsed = ref(false);
-const isDesktop = ref(false);
 
 const navItems = [
-    { label: "Patient", to: "/", icon: User },
-    { label: "Booking", to: "/", icon: Calendar },
-    { label: "Billing", to: "/", icon: CreditCard },
+    { label: "Bookings", to: "/portal/bookings", icon: ClipboardList },
+    { label: "Overview", to: "/portal/overview", icon: LayoutGrid },
+    { label: "My Loved Ones", to: "/portal/loved-ones", icon: Users },
+    { label: "Monitoring", to: "/portal/monitoring", icon: Camera },
+    { label: "Messages", to: "/portal/messages", icon: MessageSquare },
+    { label: "Balance", to: "/portal/balance", icon: CreditCard },
+    { label: "Schedule", to: "/portal/schedule", icon: Calendar },
+    { label: "Medications", to: "/portal/medications", icon: Pill },
+    { label: "Updates", to: "/portal/updates", icon: Bell },
+    { label: "Settings", to: "/portal/settings", icon: Settings },
 ];
 
-const checkScreen = () => {
-    isDesktop.value = window.innerWidth >= 1024;
-
-    if (isDesktop.value) {
-        emit("close");
-    } else {
-        desktopCollapsed.value = false;
-    }
-};
-
-onMounted(() => {
-    checkScreen();
-    window.addEventListener("resize", checkScreen);
-});
-
-onBeforeUnmount(() => {
-    window.removeEventListener("resize", checkScreen);
-});
+// The drawer overlays the page on mobile, so it has to get out of the way
+// once navigation actually happens — including back/forward, which no
+// click handler would catch.
+watch(() => route.path, () => emit("close"));
 
 function isActive(to: string) {
-    return route.path === to || route.path.startsWith(to + "/");
-}
-
-function navClass(to: string, desktop = false) {
-    return [
-        "relative px-3 py-2 rounded-lg transition-all duration-200 flex gap-2.5 items-center font-medium text-[13px]",
-        desktop && desktopCollapsed.value ? "justify-center px-0" : "",
-        isActive(to)
-            ? "bg-primary text-white shadow-md shadow-primary-500/30"
-            : "text-primary-700 hover:bg-primary-50",
-    ];
-}
-
-function iconWrapClass(to: string) {
-    return [
-        "w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-colors duration-200",
-        isActive(to)
-            ? "bg-white/20 text-white"
-            : "bg-primary-50 text-primary-500",
-    ];
+    return (
+        route.path === to ||
+        (to !== "/portal" && route.path.startsWith(to + "/"))
+    );
 }
 </script>
 
 <style scoped>
-.scroll-left {
-    direction: rtl;
+.sidebar-scroll {
     scrollbar-width: thin;
-    scrollbar-color: theme("colors.primary.300") transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
 }
-
-.scroll-left-inner {
-    direction: ltr;
+.sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
 }
-
-.scroll-left::-webkit-scrollbar {
-    width: 5px;
-}
-
-.scroll-left::-webkit-scrollbar-track {
+.sidebar-scroll::-webkit-scrollbar-track {
     background: transparent;
 }
-
-.scroll-left::-webkit-scrollbar-thumb {
-    background-color: theme("colors.primary.300");
+.sidebar-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1);
     border-radius: 999px;
-}
-
-.scroll-left::-webkit-scrollbar-thumb:hover {
-    background-color: theme("colors.primary.500");
 }
 </style>

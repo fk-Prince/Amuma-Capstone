@@ -15,6 +15,7 @@ class SubscriptionPayment extends Model
         'subscription_id',
         'xendit_invoice_id',
         'payment_reference_id',
+        'masked_card_number',
         'price',
         'status'
     ];

@@ -46,7 +46,7 @@ class AuthGuard
         });
 
         if (!$hasPermission) {
-            throw new Exception('Insufficient permissionsb', 403);
+            throw new Exception('Insufficient permissions', 403);
         }
 
         return $user;

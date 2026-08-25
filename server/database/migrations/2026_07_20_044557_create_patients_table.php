@@ -29,7 +29,7 @@ return new class extends Migration
             $table->string('phone_number', 20)->nullable();
             $table->string('citizenship', 20)->nullable();
             $table->json('initial_assessment')->nullable();
-            $table->json('medication')->nullable();
+            $table->json('allergies')->nullable();
             $table->timestamps();
         });
     }

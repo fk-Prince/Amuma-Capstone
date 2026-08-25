@@ -13,11 +13,15 @@ import type { Vital } from "~/types/medication";
 const props = withDefaults(
     defineProps<{
         vitals?: Vital[];
+        variant?: "table" | "preview";
     }>(),
     {
         vitals: () => [],
+        variant: "table",
     },
 );
+
+const latestVital = computed(() => props.vitals[0] ?? null);
 
 const months = [
     "January",
@@ -72,7 +76,104 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <div class="space-y-4">
+    <div v-if="variant === 'preview'" class="space-y-3">
+        <div
+            v-if="!latestVital"
+            class="py-8 text-center text-sm text-slate-400"
+        >
+            No vital signs recorded.
+        </div>
+
+        <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                <p class="text-[10px] uppercase tracking-wide text-slate-400">
+                    Blood Pressure
+                </p>
+                <p class="mt-1 text-sm font-semibold text-slate-800">
+                    {{
+                        latestVital.bloodPressureSystolic &&
+                        latestVital.bloodPressureDiastolic
+                            ? `${latestVital.bloodPressureSystolic}/${latestVital.bloodPressureDiastolic}`
+                            : "—"
+                    }}
+                </p>
+            </div>
+
+            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                <p class="text-[10px] uppercase tracking-wide text-slate-400">
+                    Heart Rate
+                </p>
+                <p class="mt-1 text-sm font-semibold text-slate-800">
+                    {{ latestVital.heartRate || "—" }}
+                </p>
+            </div>
+
+            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                <p class="text-[10px] uppercase tracking-wide text-slate-400">
+                    Oxygen
+                </p>
+                <p class="mt-1 text-sm font-semibold text-slate-800">
+                    {{
+                        latestVital.oxygenSaturation
+                            ? `${latestVital.oxygenSaturation}%`
+                            : "—"
+                    }}
+                </p>
+            </div>
+
+            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                <p class="text-[10px] uppercase tracking-wide text-slate-400">
+                    Temperature
+                </p>
+                <p class="mt-1 text-sm font-semibold text-slate-800">
+                    {{
+                        latestVital.temperature
+                            ? `${latestVital.temperature}°F`
+                            : "—"
+                    }}
+                </p>
+            </div>
+
+            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                <p class="text-[10px] uppercase tracking-wide text-slate-400">
+                    Resp. Rate
+                </p>
+                <p class="mt-1 text-sm font-semibold text-slate-800">
+                    {{ latestVital.respiratoryRate || "—" }}
+                </p>
+            </div>
+
+            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                <p class="text-[10px] uppercase tracking-wide text-slate-400">
+                    Glucose
+                </p>
+                <p class="mt-1 text-sm font-semibold text-slate-800">
+                    {{ latestVital.bloodGlucose || "—" }}
+                </p>
+            </div>
+
+            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                <p class="text-[10px] uppercase tracking-wide text-slate-400">
+                    Pain
+                </p>
+                <p class="mt-1 text-sm font-semibold text-slate-800">
+                    {{ latestVital.painLevel || "—" }}
+                </p>
+            </div>
+
+            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                <p class="text-[10px] uppercase tracking-wide text-slate-400">
+                    Recorded
+                </p>
+                <p class="mt-1 text-sm font-semibold text-slate-800">
+                    {{ latestVital.recordedDate }}
+                    {{ latestVital.recordedTime }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div v-else class="space-y-4">
         <div class="flex items-center justify-between">
             <div
                 class="flex items-center rounded-xl border border-slate-200 bg-white px-2 py-1.5 shadow-sm"

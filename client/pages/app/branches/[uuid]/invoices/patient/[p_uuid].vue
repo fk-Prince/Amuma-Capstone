@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen w-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
+    <div class="min-h-screen-header w-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-[1600px] space-y-5">
             <div
                 class="flex flex-wrap items-center justify-between gap-3 no-print"

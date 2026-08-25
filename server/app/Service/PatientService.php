@@ -19,6 +19,25 @@ class PatientService
         private UserRepository $userRepository,
     ) {}
 
+    /**
+     * The booking form collects allergies as a single comma-separated
+     * string; stored as a JSON array to match how the portal renders them
+     * as individual badges.
+     */
+    private function parseAllergies(?string $allergies): ?array
+    {
+        if (!$allergies) {
+            return null;
+        }
+
+        $items = array_values(array_filter(array_map(
+            'trim',
+            explode(',', $allergies)
+        )));
+
+        return $items ?: null;
+    }
+
 
     // DONE MEDICAL
     public function createMedicalPatient(array $payload)
@@ -26,6 +45,7 @@ class PatientService
         $patient = $payload['patient'];
         $homecare = $payload['homecare'];
         $assessment = $payload['assessment'];
+        $guardian = $payload['guardian'];
 
         $patient = $this->patientRepository->create([
             'branch_id'          => $payload['branch_id'],
@@ -41,8 +61,16 @@ class PatientService
             'phone_number'       => $patient['phone_number'] ?? null,
             'citizenship'        => $patient['citizenship'] ?? null,
             'initial_assessment' => $assessment,
-            'medication'         => [],
+            'allergies'          => $this->parseAllergies($patient['allergies'] ?? null),
         ]);
+
+
+        $patientAccess = $this->patientAccess($guardian, $patient);
+
+        if (!$patientAccess) {
+            throw new Exception('Unable to create patient.', 500);
+        }
+
 
         $scheduledAt = Carbon::parse(
             $homecare['date'] . ' ' . $homecare['prefered_time']
@@ -115,6 +143,7 @@ class PatientService
             'occupation'         => $patient['occupation'] ?? null,
             'marital_status'     => $patient['marital_status'] ?? null,
             'initial_assessment' => $assessment,
+            'allergies'          => $this->parseAllergies($patient['allergies'] ?? null),
         ]);
 
         if (!$patient) {

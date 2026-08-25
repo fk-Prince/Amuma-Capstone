@@ -18,6 +18,7 @@ class EmployeePermission extends Model
         'can_update',
         'can_create',
         'can_approve',
+        'can_assign',
     ];
 
     public function modules()

@@ -17,6 +17,7 @@ class Payment extends Model
         'amount',
         'reference_id',
         'payment_method',
+        'masked_card_number',
     ];
 
     protected $casts = [

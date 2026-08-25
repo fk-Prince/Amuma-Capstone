@@ -21,6 +21,8 @@ export const handleMenuClick = async (item: any) => {
             uuid = branch?.uuid;
         }
 
+        if (!uuid) return;
+
         await navigateTo(`/app/branches/${uuid}/dashboard`);
     } else {
         await navigateTo(item.to);
@@ -38,8 +40,8 @@ export const profileMenuDropDownList = [
     {
         icon: "Family Portal",
         label: "Family Portal",
-        to: "/portal",
-        types: ["hasBooking"],
+        to: "/portal/bookings",
+        types: ["isClient"],
     },
     {
         icon: "Subscription Management",

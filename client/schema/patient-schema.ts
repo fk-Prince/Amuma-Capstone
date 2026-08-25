@@ -42,6 +42,7 @@ export const createPatientSchema = (
             .positive("Weight must be greater than 0")
             .optional(),
         blood_type: z.string().optional(),
+        allergies: z.string().optional(),
 
         address:
             category === "facility"
@@ -190,7 +191,8 @@ export const patientData = reactive<Patient>({
     height: "175",
     weight: "70",
     blood_type: "O+",
-    address: ""
+    address: "",
+    allergies: "",
 });
 
 

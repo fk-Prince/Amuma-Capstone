@@ -2,33 +2,47 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ModuleEnum;
-use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
-use App\Guard\BranchGuard;
-use App\Service\InvoiceService;
+use App\Models\PatientAccess;
 use App\Service\RefundService;
+use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 
 class RefundController extends Controller
 {
-    // private RefundService $refundService;
-    // private InvoiceService $invoiceService;
+    public function __construct(
+        private RefundService $refundService
+    ) {}
 
-    // public function __construct(RefundService $refundService)
-    // {
-    //     $this->refundService = $refundService;
-    // }
+    /**
+     * Family/client-facing endpoint: claim the refund(s) already sitting in
+     * "processing" for a patient (created automatically elsewhere, e.g. on
+     * discharge) by supplying how they want to be paid out. Staff then
+     * releases the actual funds via the existing admin refund-complete flow.
+     */
+    public function store(Request $request)
+    {
+        $user = AuthGuard::requireUser($request->user());
 
+        if (!$user->client) {
+            throw new Exception('Only family/client accounts can claim a refund.', 403);
+        }
 
-    // public function store(Request $request)
-    // {
-    //     $branch = BranchGuard::resolveBranch($request->branch_uuid);
-    //     AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Read);
-    //     $request->merge([
-    //         'branch_id' => $branch->branch_id,
-    //     ]);
-    //     return $this->refundService->completeRefund($request->all());
-    // }
+        $validated = $request->validate([
+            'patient_id' => ['required', 'integer'],
+            'method' => ['required', 'string', 'max:100'],
+            'account_details' => ['required', 'string', 'max:255'],
+        ]);
+
+        $access = PatientAccess::where('patient_id', $validated['patient_id'])
+            ->where('client_id', $user->client->client_id)
+            ->where('have_access', true)
+            ->first();
+
+        if (!$access) {
+            throw new Exception('You do not have access to this patient.', 403);
+        }
+
+        return $this->refundService->claimPortalRefund($access->patient, $validated);
+    }
 }

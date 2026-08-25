@@ -26,6 +26,7 @@ class ModuleSeeder extends Seeder
         ];
 
         $approveDisabledModules = [
+            'Patients',
             'Schedules',
             'Admissions',
             'Contracts',

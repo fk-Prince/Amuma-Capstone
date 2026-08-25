@@ -45,6 +45,19 @@ class SubscriptionResource extends JsonResource
                 'name' => $this->plans?->name,
                 'plan_code' => $this->plans?->plan_code,
             ],
+
+            'payments' => $this->whenLoaded(
+                'payments',
+                fn() =>
+                $this->payments->map(fn($payment) => [
+                    'subscription_payment_id' => $payment->subscription_payment_id,
+                    'payment_reference_id' => $payment->payment_reference_id,
+                    'masked_card_number' => $payment->masked_card_number,
+                    'price' => (float) $payment->price,
+                    'status' => $payment->status,
+                    'created_at' => $payment->created_at?->toIso8601String(),
+                ])
+            ),
         ];
     }
 }

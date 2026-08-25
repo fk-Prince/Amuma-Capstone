@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\AdmissionController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BedController;
@@ -17,15 +16,20 @@ use App\Http\Controllers\NominatimController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnlineScheduleController;
 use App\Http\Controllers\OtpController;
+use App\Http\Controllers\PatientAccessController;
 use App\Http\Controllers\PatientAdmissionController;
+use App\Http\Controllers\PatientActivityController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\RefundController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VitalController;
 use App\Http\Controllers\XenditController;
 use Illuminate\Support\Facades\Route;
 
@@ -77,10 +81,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/online-schedules/qr', [OnlineScheduleController::class, 'generateQr']);
     Route::post('/schedules/action',  [ScheduleController::class, 'action']);
 
+    // MEDICATION DOSAGE TRACKING
+    Route::post('/medications/dosage', [MedicationController::class, 'dosage']);
+
     Route::post('/bookings/action', [BookingController::class, 'action']);
     Route::post('/invoices/action', [InvoiceController::class, 'action']);
     Route::post('/admissions/action', [PatientAdmissionController::class, 'action']);
     Route::post('/subscriptions/action', [SubscriptionController::class, 'action']);
+
+    Route::get('/patient-access/action', [PatientAccessController::class, 'retrieveAction']);
+    Route::post('/patient-access/action', [PatientAccessController::class, 'executeAction']);
+
+    // PORTAL BILLING (family/client-facing)
+    Route::post('/refunds/action', [RefundController::class, 'store']);
+    Route::post('/payments/action', [PaymentController::class, 'store']);
 
     // OVERVIEW / STATS
     Route::post('/bookings/overview', [BookingController::class, 'overview']);
@@ -90,6 +104,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // SUBSCRIPTION
     Route::post('/subscriptions', [SubscriptionController::class, 'newSubscription']);
+    Route::get('/subscriptions', [SubscriptionController::class, 'index']);
     Route::get('/subscriptions-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
     Route::post('/subscriptions-validate',  [SubscriptionController::class, 'validateSubscription']);
 
@@ -116,12 +131,13 @@ Route::middleware('auth:sanctum')->group(function () {
         'reviews' => ReviewController::class,
         'patients' => PatientController::class,
         'medications' => MedicationController::class,
+        'vitals' => VitalController::class,
+        'patient-activities' => PatientActivityController::class,
         'schedules' => ScheduleController::class,
         'admissions' => PatientAdmissionController::class,
         'invoices' => InvoiceController::class,
         'settings' => BranchSettingController::class,
         'online-schedules' => OnlineScheduleController::class,
-        'subscriptions' => SubscriptionController::class
     ]);
 
     //VALIDATE INPUTS

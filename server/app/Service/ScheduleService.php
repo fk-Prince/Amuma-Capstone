@@ -9,6 +9,7 @@ use App\Guard\BranchGuard;
 use App\Http\Resources\EmployeeScheduleResource;
 use App\Repository\ScheduleRepository;
 use App\Http\Resources\ScheduleResource;
+use App\Models\EmployeeBranch;
 use App\Models\Invoice;
 use App\Models\User;
 use App\Repository\InvoiceRepository;
@@ -24,7 +25,8 @@ class ScheduleService
     public function __construct(
         private ScheduleRepository $scheduleRepository,
         private PatientRepository $patientRepository,
-        private InvoiceRepository $invoiceRepository
+        private InvoiceRepository $invoiceRepository,
+        private RefundService $refundService
     ) {}
 
     public function createSchedule(User $user, array $payload)
@@ -52,6 +54,7 @@ class ScheduleService
                 'branch_id' => $payload['branch_id'],
                 'status' => Invoice::STATUS_PENDING,
                 'is_collected' => false,
+                'total' => 0
             ]);
 
             $total = 0;
@@ -77,6 +80,7 @@ class ScheduleService
                 'message' => 'Schedule services have been created successfully.',
                 'data' => new ScheduleResource($schedule->fresh([
                     'scheduleServices.service',
+                    'patient'
                 ]))
             ]);
         });
@@ -139,7 +143,10 @@ class ScheduleService
             }
         }
 
-        if (!empty($conflicts) && empty($payload['confirm_conflicts'])) {
+        // No override: a conflict is never allowed through, so there's
+        // nothing a "confirm anyway" flag could unlock — updateSchedule()
+        // re-verifies and rejects it unconditionally either way.
+        if (!empty($conflicts)) {
             return response()->json([
                 'has_conflicts' => true,
                 'conflicts' => $conflicts,
@@ -153,10 +160,47 @@ class ScheduleService
     public function updateSchedule(Schedule $schedule, array $payload)
     {
         return DB::transaction(function () use ($schedule, $payload) {
+            // Hard gate: a cancelled schedule is final — refunded and
+            // voided, per refundCancelledSchedule() — so nothing about it
+            // (status, date/time, assignments) can ever be changed again.
+            if (strtolower($schedule->status) === Schedule::STATUS_CANCELLED) {
+                throw new Exception(
+                    'This schedule has been cancelled and can no longer be updated.',
+                    422
+                );
+            }
+
+            $targetStart = Carbon::parse("{$payload['date']} {$payload['preferred_time']}");
+
+            $currentStart = $schedule->scheduled_at ? Carbon::parse($schedule->scheduled_at) : null;
+            $isDateTimeUnchanged = $currentStart
+                && $targetStart->format('Y-m-d H:i') === $currentStart->format('Y-m-d H:i');
+
+            // Hard gate: a schedule can never be MOVED to a date/time that
+            // has already passed, regardless of what the frontend allowed
+            // the user to submit. Leaving the date/time untouched (e.g. just
+            // changing status to completed/missed/cancelled on a visit that
+            // already happened) is not a move, so it's exempt from this gate.
+            if ($targetStart->isPast() && !$isDateTimeUnchanged) {
+                throw new Exception(
+                    'A schedule cannot be updated to a date/time in the past.',
+                    422
+                );
+            }
+
+            $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
+
+            $newStatus = strtolower($payload['status']);
+
             $schedule->update([
-                'status' => strtolower($payload['status']),
-                'scheduled_at' => Carbon::parse("{$payload['date']} {$payload['preferred_time']}"),
+                'status' => $newStatus,
+                'scheduled_at' => $targetStart,
             ]);
+
+            $schedule->load('scheduleServices.service');
+
+            $targetDurationMinutes = $this->scheduleRepository->calculateScheduleDurationMinutes($schedule);
+            $targetEnd = $targetStart->copy()->addMinutes($targetDurationMinutes);
 
             foreach ($payload['assignments'] as $assignment) {
                 $scheduleService = $schedule->scheduleServices()
@@ -166,10 +210,54 @@ class ScheduleService
                 $scheduleService->assigned()->delete();
 
                 if (!empty($assignment['employee_id'])) {
+                    $employeeId = (int) $assignment['employee_id'];
+
+                    // Hard gate, independent of whatever the frontend's
+                    // pre-flight conflict check / confirmation said — an
+                    // employee already booked over this window can never
+                    // actually be assigned, no matter how the request got
+                    // here.
+                    if ($this->scheduleRepository->employeeHasActiveConflict(
+                        $employeeId,
+                        $schedule->schedule_id,
+                        $targetStart,
+                        $targetEnd
+                    )) {
+                        throw new Exception(
+                            'This employee is already assigned to another schedule during this time and cannot be assigned here.',
+                            409
+                        );
+                    }
+
+                    // Hard gate: Medical schedule services can only be
+                    // staffed by a nurse, ADL services only by a caregiver
+                    // — never the other way around, regardless of what the
+                    // frontend let the user pick.
+                    $roleName = EmployeeBranch::where('employee_id', $employeeId)
+                        ->where('branch_id', $branch->branch_id)
+                        ->value('role_name');
+
+                    $requiredRole = match ($scheduleService->type) {
+                        'Medical' => 'nurse',
+                        'ADL' => 'caregiver',
+                        default => null,
+                    };
+
+                    if ($requiredRole !== null && $roleName !== $requiredRole) {
+                        throw new Exception(
+                            "Only a {$requiredRole} can be assigned to a {$scheduleService->type} service.",
+                            422
+                        );
+                    }
+
                     $scheduleService->assigned()->create([
-                        'employee_id' => $assignment['employee_id'],
+                        'employee_id' => $employeeId,
                     ]);
                 }
+            }
+
+            if ($newStatus === Schedule::STATUS_CANCELLED) {
+                $this->refundCancelledSchedule($schedule);
             }
 
             return response()->json([
@@ -177,6 +265,43 @@ class ScheduleService
                 'data' => new ScheduleResource($schedule->fresh(['scheduleServices.assigned', 'scheduleServices.service', 'patient'])),
             ]);
         });
+    }
+
+    /**
+     * Refunds whatever's been paid (if anything) on every invoice tied to
+     * this schedule's services, then voids each of those invoices — the
+     * schedule is cancelled, so none of them remain valid regardless of
+     * payment state.
+     */
+    private function refundCancelledSchedule(Schedule $schedule): void
+    {
+        $schedule->load('scheduleServices.invoiceServices.invoice.payments.refunds');
+
+        $invoiceIds = $schedule->scheduleServices
+            ->flatMap(fn($scheduleService) => $scheduleService->invoiceServices)
+            ->pluck('invoice_id')
+            ->filter()
+            ->unique();
+
+        if ($invoiceIds->isEmpty()) {
+            return;
+        }
+
+        $invoices = Invoice::with('payments.refunds')
+            ->whereIn('invoice_id', $invoiceIds)
+            ->where('status', '!=', Invoice::STATUS_VOID)
+            ->get();
+
+        foreach ($invoices as $invoice) {
+            $this->refundService->createRefundFull(
+                $invoice,
+                'Invoice refunded due to schedule cancellation.'
+            );
+
+            $invoice->update([
+                'status' => Invoice::STATUS_VOID,
+            ]);
+        }
     }
 
     public function overview(array $payload)
@@ -269,7 +394,7 @@ class ScheduleService
 
     public function assignEmployee(User $user, array $payload)
     {
-        return DB::transaction(function () use ($user, $payload) {
+        return DB::transaction(function () use ($payload) {
             $schedule = $this->scheduleRepository->findByFields([
                 ['schedule_id', '=', $payload['schedule_id']]
             ]);
@@ -278,6 +403,31 @@ class ScheduleService
                 throw new Exception('Schedule dont exists', 404);
             }
 
+            // Hard gate: a cancelled schedule is final — nobody can be
+            // (re)assigned to it, no matter how the request got here.
+            if (strtolower($schedule->status) === Schedule::STATUS_CANCELLED) {
+                throw new Exception(
+                    'This schedule has been cancelled and can no longer be updated.',
+                    422
+                );
+            }
+
+            // Hard gate: nobody can be (re)assigned to a schedule whose
+            // time has already passed.
+            if ($schedule->scheduled_at && Carbon::parse($schedule->scheduled_at)->isPast()) {
+                throw new Exception(
+                    'This schedule has already passed and can no longer be updated.',
+                    422
+                );
+            }
+
+            $schedule->load('scheduleServices.service');
+
+            $targetStart = Carbon::parse($schedule->scheduled_at);
+            $targetDurationMinutes = $this->scheduleRepository->calculateScheduleDurationMinutes($schedule);
+            $targetEnd = $targetStart->copy()->addMinutes($targetDurationMinutes);
+
+            $branchId = $payload['branch_id'];
 
             $assignmentsByService = collect($payload['assignments'] ?? [])
                 ->groupBy('schedule_services_id');
@@ -302,6 +452,52 @@ class ScheduleService
                     ->where('is_active', true)
                     ->get();
 
+                $currentlyActiveIds = $currentlyActive
+                    ->pluck('employee_id')
+                    ->map(fn($id) => (int) $id);
+
+                $requiredRole = match ($scheduleService->type) {
+                    'Medical' => 'nurse',
+                    'ADL' => 'caregiver',
+                    default => null,
+                };
+
+                // Validate every newly-desired employee before mutating
+                // anything, so a rejected assignment can't leave the
+                // schedule half-changed. Same hard rules as
+                // updateSchedule() — no override, no matter how the
+                // request got here.
+                foreach ($desiredEmployeeIds as $employeeId) {
+                    if ($currentlyActiveIds->contains($employeeId)) {
+                        continue;
+                    }
+
+                    if ($this->scheduleRepository->employeeHasActiveConflict(
+                        $employeeId,
+                        $schedule->schedule_id,
+                        $targetStart,
+                        $targetEnd
+                    )) {
+                        throw new Exception(
+                            'This employee is already assigned to another schedule during this time and cannot be assigned here.',
+                            409
+                        );
+                    }
+
+                    if ($requiredRole !== null) {
+                        $roleName = EmployeeBranch::where('employee_id', $employeeId)
+                            ->where('branch_id', $branchId)
+                            ->value('role_name');
+
+                        if ($roleName !== $requiredRole) {
+                            throw new Exception(
+                                "Only a {$requiredRole} can be assigned to a {$scheduleService->type} service.",
+                                422
+                            );
+                        }
+                    }
+                }
+
                 // Deactivate/delete anyone active who's no longer in the desired set
                 foreach ($currentlyActive as $currentAssigned) {
                     if ($desiredEmployeeIds->contains((int) $currentAssigned->employee_id)) {
@@ -316,10 +512,6 @@ class ScheduleService
                         $currentAssigned->delete();
                     }
                 }
-
-                $currentlyActiveIds = $currentlyActive
-                    ->pluck('employee_id')
-                    ->map(fn($id) => (int) $id);
 
                 // Activate/create anyone in the desired set who isn't already active
                 foreach ($desiredEmployeeIds as $employeeId) {
@@ -344,7 +536,7 @@ class ScheduleService
 
             return response()->json([
                 'message' => 'Schedule services have been updated successfully.',
-                'data' => $this->retrieveSchedule($user, $payload)
+                'data' => new ScheduleResource($schedule->fresh(['scheduleServices.assigned', 'scheduleServices.service', 'patient'])),
             ]);
         });
     }

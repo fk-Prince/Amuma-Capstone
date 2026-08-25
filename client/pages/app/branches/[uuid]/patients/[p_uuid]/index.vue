@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
 import PatientHeader from "~/components/sections/app/Patient/PatientHeader.vue";
-import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import ActionMedicationModal from "~/components/sections/app/Patient/ActionMedicationModal.vue";
 import MedicationTable from "~/components/sections/app/Patient/MedicationTable.vue";
 import ActionVitalModal from "~/components/sections/app/Patient/ActionVitalModal.vue";
 import VitalSignsTable from "~/components/sections/app/Patient/VitalSignsTable.vue";
+import ActionPatientActivityModal from "~/components/sections/app/Patient/ActionPatientActivityModal.vue";
+import PatientActivityTable from "~/components/sections/app/Patient/PatientActivityTable.vue";
 import { useToast } from "~/composables/useToast";
 import Overview from "~/components/sections/app/Patient/Overview.vue";
 import ServicePatient from "~/components/sections/app/Patient/ServicePatient.vue";
@@ -15,13 +16,10 @@ import ScheduleDetails from "~/components/sections/app/Patient/ScheduleDetails.v
 import HomecareADL from "~/components/sections/app/Patient/HomecareADL.vue";
 import SchedulePatient from "~/components/sections/app/Patient/SchedulePatient.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
+import Pagination from "~/components/ui/Pagination.vue";
 import PatientAdmission from "~/components/sections/app/Patient/PatientAdmission.vue";
 import { ChevronRight, ArrowLeft } from "lucide-vue-next";
-import {
-    type ConflictItem,
-    conflictConfirm,
-    type ConflictSource,
-} from "~/types/schedule";
+import { type ConflictItem } from "~/types/schedule";
 import type {
     Medication,
     MedicationForm,
@@ -29,6 +27,10 @@ import type {
     Vital,
     VitalFormData,
 } from "~/types/medication";
+import type {
+    PatientActivity,
+    PatientActivityForm,
+} from "~/types/patient-activity";
 
 useHead({ title: "Patient Information" });
 
@@ -51,11 +53,22 @@ const {
     loadingSecond,
     medications,
     vitals,
+    patientActivities,
+    medicationsMeta,
+    vitalsMeta,
+    patientActivitiesMeta,
+    isFetchingMedications,
+    isFetchingVitals,
+    isFetchingPatientActivities,
     fetchData,
+    fetchMedications,
+    fetchVitals,
+    fetchPatientActivities,
     fetchEmployee,
     handleVitalAction,
     handleMedicationAction,
     handleDosageAction,
+    handlePatientActivityAction,
     handleScheduleAction,
     handleAssignment,
     updateSchedule,
@@ -81,6 +94,7 @@ const tabs = [
     "Service",
     "Medication",
     "Vital Signs",
+    "Activity",
 ] as const;
 type Tab = (typeof tabs)[number];
 
@@ -91,6 +105,7 @@ const tabSlugMap: Record<Tab, string> = {
     Medication: "medication",
     "Vital Signs": "vitals",
     Admission: "admissions",
+    Activity: "activity",
 };
 
 const slugToTab: Record<string, Tab> = Object.fromEntries(
@@ -118,9 +133,11 @@ function setActiveTab(tab: Tab) {
 const showAddMedication = ref(false);
 const savingMedication = ref(false);
 const showRecordVital = ref(false);
+const showAddActivity = ref(false);
 const showScheduleModal = ref(false);
 
 const savingVital = ref(false);
+const savingActivity = ref(false);
 const savingSchedule = ref(false);
 const savingDosage = ref(false);
 const savingAssignment = ref(false);
@@ -130,6 +147,7 @@ const isFetchingEmployee = ref(false);
 const isFetchingSchedule = ref(loadingSecond.value);
 
 const selectedVital = ref<Vital | null>(null);
+const selectedActivity = ref<PatientActivity | null>(null);
 const selectedSchedule = ref<ScheduleItem | null>(null);
 const selectedMedication = ref<Medication | null>(null);
 
@@ -145,61 +163,56 @@ const nextWeekStr = new Date(Date.now() + 7 * 86400000)
 const scheduleFrom = ref(yesterdayStr);
 const scheduleTo = ref(nextWeekStr);
 
-const conflictMessage = computed(() => {
-    const count = conflictConfirm.value.conflicts.length;
-    if (count === 1) {
-        return `${conflictConfirm.value.conflicts[0]?.employee_name} has a scheduling conflict.`;
+// A scheduling conflict is never allowed to proceed — there's no
+// "assign anyway" override, so a conflict just surfaces as an error
+// instead of a confirmation the user could push past.
+function describeConflicts(conflicts: ConflictItem[]): string {
+    if (conflicts.length === 1) {
+        const c = conflicts[0];
+        const codes = c.conflict_schedule_codes.join(", ");
+        return `${c.employee_name} has a scheduling conflict with ${codes}.`;
     }
-    return `${count} employees have scheduling conflicts.`;
-});
 
-const conflictDescription = computed(() =>
-    conflictConfirm.value.conflicts
+    return conflicts
         .map((c) => {
             const codes = c.conflict_schedule_codes.join(", ");
             const service = c.service_name ? ` (${c.service_name})` : "";
             return `${c.employee_name}${service} — conflicts with ${codes}`;
         })
-        .join("\n"),
-);
-
-function openConflictConfirm(
-    source: ConflictSource,
-    conflicts: ConflictItem[],
-    pendingPayload: any,
-) {
-    conflictConfirm.value = { open: true, source, conflicts, pendingPayload };
-}
-
-function resetConflictConfirm() {
-    conflictConfirm.value = {
-        open: false,
-        source: null,
-        conflicts: [],
-        pendingPayload: null,
-    };
-}
-
-function cancelConflictOverride() {
-    resetConflictConfirm();
-}
-
-async function confirmConflictOverride() {
-    const { source, pendingPayload } = conflictConfirm.value;
-    if (!source || !pendingPayload) return;
-
-    const overridePayload = { ...pendingPayload, confirm_conflicts: true };
-
-    if (source === "assignment") {
-        await runAssignment(overridePayload);
-    } else {
-        await runScheduleUpdate(overridePayload);
-    }
+        .join("\n");
 }
 
 function vitalAction(vital: Vital) {
     selectedVital.value = vital;
     showRecordVital.value = true;
+}
+
+function activityAction(activity: PatientActivity) {
+    selectedActivity.value = activity;
+    showAddActivity.value = true;
+}
+
+async function onActivitySubmit(
+    action: "create" | "update",
+    payload: PatientActivityForm,
+    id?: string,
+) {
+    savingActivity.value = true;
+    try {
+        const res: any = await handlePatientActivityAction(
+            action,
+            payload,
+            uuid.value,
+            id,
+        );
+        success(res.message);
+        showAddActivity.value = false;
+        selectedActivity.value = null;
+    } catch (err: any) {
+        error(err.error);
+    } finally {
+        savingActivity.value = false;
+    }
 }
 
 async function onVitalSubmit(
@@ -313,14 +326,13 @@ async function runAssignment(payload: any) {
         const res: any = await handleAssignment(payload, b_uuid.value);
 
         if (res?.has_conflicts) {
-            openConflictConfirm("assignment", res.conflicts ?? [], payload);
+            error(describeConflicts(res.conflicts ?? []));
             return;
         }
 
         updateScheduleInList(res?.data);
         success(res.message);
         assignModalOpen.value = false;
-        resetConflictConfirm();
     } catch (err: any) {
         error(err.error);
     } finally {
@@ -338,14 +350,13 @@ async function runScheduleUpdate(payload: any) {
         const res: any = await updateSchedule(payload, b_uuid.value);
 
         if (res?.has_conflicts) {
-            openConflictConfirm("schedule", res.conflicts ?? [], payload);
+            error(describeConflicts(res.conflicts ?? []));
             return;
         }
 
         updateScheduleInList(res?.data);
         success(res.message);
         showScheduleModal.value = false;
-        resetConflictConfirm();
     } catch (err: any) {
         error(err.error ?? err.message);
     } finally {
@@ -388,6 +399,20 @@ function resetSchedule(s: ScheduleItem[]) {
     scheduleData.value = s;
 }
 
+async function refreshSchedule() {
+    isFetchingSchedule.value = true;
+    try {
+        await fetchSchedules(
+            uuid.value,
+            b_uuid.value,
+            scheduleFrom.value,
+            scheduleTo.value,
+        );
+    } finally {
+        isFetchingSchedule.value = false;
+    }
+}
+
 async function loadSchedulesIfNeeded(from: string, to: string, tab: Tab) {
     if (tab !== "Schedule") return;
     isFetchingSchedule.value = true;
@@ -397,8 +422,41 @@ async function loadSchedulesIfNeeded(from: string, to: string, tab: Tab) {
         isFetchingSchedule.value = false;
     }
 }
+
+// Medications/vitals are only pulled once their tab is actually opened,
+// not on every patient page visit.
+async function loadMedicationsIfNeeded(tab: Tab, page = 1) {
+    if (tab !== "Medication") return;
+    await fetchMedications(uuid.value, page);
+}
+
+async function loadVitalsIfNeeded(tab: Tab, page = 1) {
+    if (tab !== "Vital Signs") return;
+    await fetchVitals(uuid.value, page);
+}
+
+async function loadPatientActivitiesIfNeeded(tab: Tab, page = 1) {
+    if (tab !== "Activity") return;
+    await fetchPatientActivities(uuid.value, page);
+}
+
+function onMedicationsPageChange(page: number) {
+    fetchMedications(uuid.value, page);
+}
+
+function onVitalsPageChange(page: number) {
+    fetchVitals(uuid.value, page);
+}
+
+function onPatientActivitiesPageChange(page: number) {
+    fetchPatientActivities(uuid.value, page);
+}
+
 watch([scheduleFrom, scheduleTo, activeTab], ([from, to, tab]) => {
     loadSchedulesIfNeeded(from, to, tab);
+    loadMedicationsIfNeeded(tab);
+    loadVitalsIfNeeded(tab);
+    loadPatientActivitiesIfNeeded(tab);
 });
 onMounted(async () => {
     await fetchData(uuid.value, b_uuid.value);
@@ -414,6 +472,9 @@ onMounted(async () => {
         scheduleTo.value,
         activeTab.value,
     );
+    await loadMedicationsIfNeeded(activeTab.value);
+    await loadVitalsIfNeeded(activeTab.value);
+    await loadPatientActivitiesIfNeeded(activeTab.value);
 });
 
 // onMounted(() => {
@@ -545,26 +606,103 @@ onMounted(async () => {
                         </button>
                     </nav>
 
-                    <MedicationTable
-                        v-if="activeTab === 'Medication'"
-                        :medications="medications"
-                        :saving-dose="savingDosage"
-                        @add-medication="
-                            selectedMedication = null;
-                            showAddMedication = true;
-                        "
-                        @mark-dose="onDosageSubmit"
-                    />
+                    <template v-if="activeTab === 'Medication'">
+                        <p
+                            v-if="isFetchingMedications"
+                            class="py-8 text-center text-sm text-gray-400"
+                        >
+                            Loading medications...
+                        </p>
 
-                    <VitalSignsTable
-                        v-if="activeTab === 'Vital Signs'"
-                        :vitals="vitals"
-                        @add-vital="
-                            selectedVital = null;
-                            showRecordVital = true;
-                        "
-                        @edit-vital="vitalAction"
-                    />
+                        <template v-else>
+                            <MedicationTable
+                                :medications="medications"
+                                :saving-dose="savingDosage"
+                                @add-medication="
+                                    selectedMedication = null;
+                                    showAddMedication = true;
+                                "
+                                @mark-dose="onDosageSubmit"
+                            />
+
+                            <Pagination
+                                v-if="
+                                    medicationsMeta && medicationsMeta.total > 0
+                                "
+                                :current-page="medicationsMeta.current_page"
+                                :total-pages="medicationsMeta.last_page"
+                                :total-items="medicationsMeta.total"
+                                :items-per-page="medicationsMeta.per_page"
+                                class="pb-5"
+                                @change-page="onMedicationsPageChange"
+                            />
+                        </template>
+                    </template>
+
+                    <template v-if="activeTab === 'Vital Signs'">
+                        <p
+                            v-if="isFetchingVitals"
+                            class="py-8 text-center text-sm text-gray-400"
+                        >
+                            Loading vital signs...
+                        </p>
+
+                        <template v-else>
+                            <VitalSignsTable
+                                :vitals="vitals"
+                                @add-vital="
+                                    selectedVital = null;
+                                    showRecordVital = true;
+                                "
+                                @edit-vital="vitalAction"
+                            />
+
+                            <Pagination
+                                v-if="vitalsMeta && vitalsMeta.total > 0"
+                                :current-page="vitalsMeta.current_page"
+                                :total-pages="vitalsMeta.last_page"
+                                :total-items="vitalsMeta.total"
+                                :items-per-page="vitalsMeta.per_page"
+                                class="pb-5"
+                                @change-page="onVitalsPageChange"
+                            />
+                        </template>
+                    </template>
+
+                    <template v-if="activeTab === 'Activity'">
+                        <p
+                            v-if="isFetchingPatientActivities"
+                            class="py-8 text-center text-sm text-gray-400"
+                        >
+                            Loading activities...
+                        </p>
+
+                        <template v-else>
+                            <PatientActivityTable
+                                :activities="patientActivities"
+                                @add-activity="
+                                    selectedActivity = null;
+                                    showAddActivity = true;
+                                "
+                                @edit-activity="activityAction"
+                            />
+
+                            <Pagination
+                                v-if="
+                                    patientActivitiesMeta &&
+                                    patientActivitiesMeta.total > 0
+                                "
+                                :current-page="
+                                    patientActivitiesMeta.current_page
+                                "
+                                :total-pages="patientActivitiesMeta.last_page"
+                                :total-items="patientActivitiesMeta.total"
+                                :items-per-page="patientActivitiesMeta.per_page"
+                                class="pb-5"
+                                @change-page="onPatientActivitiesPageChange"
+                            />
+                        </template>
+                    </template>
 
                     <Overview
                         v-if="activeTab === 'Overview' && patientData"
@@ -662,6 +800,8 @@ onMounted(async () => {
                                 :range-end="scheduleTo"
                                 :loading="isFetchingSchedule"
                                 @update="resetSchedule"
+                                @refresh="refreshSchedule"
+                                @view-details="viewSchedule"
                             />
                         </div>
                     </div>
@@ -708,17 +848,14 @@ onMounted(async () => {
             @submit="onVitalSubmit"
         />
 
-        <ConfirmDialog
-            :open="conflictConfirm.open"
-            title="Assign employee with conflict?"
-            :message="conflictMessage"
-            :description="conflictDescription"
-            confirm-label="Assign Anyway"
-            cancel-label="Cancel"
-            variant="danger"
-            :loading="savingAssignment"
-            @confirm="confirmConflictOverride"
-            @cancel="cancelConflictOverride"
+        <ActionPatientActivityModal
+            v-if="patientData"
+            :patient="patientData"
+            :open="showAddActivity"
+            :submit-loading="savingActivity"
+            :activity="selectedActivity"
+            @close="showAddActivity = false"
+            @submit="onActivitySubmit"
         />
     </div>
 </template>

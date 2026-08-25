@@ -114,6 +114,33 @@ export function useSchedule(props: UseScheduleProps = {}) {
         return null;
     }
 
+    /**
+     * A schedule's booked duration can span multiple calendar days (e.g. a
+     * 24hr+ homecare shift that starts late one day and runs into the
+     * next), so "which day does this schedule belong to" has to be a
+     * range, not just its literal start date.
+     */
+    function scheduleDateSpan(
+        schedule: ScheduleItem,
+    ): { start: string; end: string } | null {
+        const start = getScheduleDate(schedule);
+        if (!start) return null;
+
+        const spanDays = Math.max(1, Math.ceil((schedule.total_hours ?? 0) / 24));
+
+        const endDate = new Date(`${start}T00:00:00`);
+        endDate.setDate(endDate.getDate() + spanDays - 1);
+
+        return { start, end: toLocalDateString(endDate) };
+    }
+
+    function scheduleCoversDate(schedule: ScheduleItem, dateStr: string): boolean {
+        const span = scheduleDateSpan(schedule);
+        if (!span) return false;
+
+        return dateStr >= span.start && dateStr <= span.end;
+    }
+
     const activeRange = computed(() => {
         const start = selectedDate.value;
         const end = rangeEnd.value || selectedDate.value;
@@ -137,9 +164,16 @@ export function useSchedule(props: UseScheduleProps = {}) {
         }
 
         for (const schedule of props.schedules ?? []) {
-            const date = getScheduleDate(schedule);
-            if (date && !list.includes(date)) {
-                list.push(date);
+            const span = scheduleDateSpan(schedule);
+            if (!span) continue;
+
+            const cursor = new Date(`${span.start}T00:00:00`);
+            const spanEnd = new Date(`${span.end}T00:00:00`);
+
+            while (cursor <= spanEnd) {
+                const iso = toLocalDateString(cursor);
+                if (!list.includes(iso)) list.push(iso);
+                cursor.setDate(cursor.getDate() + 1);
             }
         }
 
@@ -163,9 +197,7 @@ export function useSchedule(props: UseScheduleProps = {}) {
     // });
 
     function schedulesForDay(date: string) {
-        return (props.schedules ?? []).filter(
-            (s) => getScheduleDate(s) === date,
-        );
+        return (props.schedules ?? []).filter((s) => scheduleCoversDate(s, date));
     }
 
     const dayGroups = computed<DayGroup[]>(() => {
@@ -229,18 +261,16 @@ export function useSchedule(props: UseScheduleProps = {}) {
     });
 
     const hasAnySchedules = computed(() => {
-        return (props.schedules ?? []).some((s) => {
-            const date = getScheduleDate(s);
-            return date !== null && dateList.value.includes(date);
-        });
+        return (props.schedules ?? []).some((s) =>
+            dateList.value.some((d) => scheduleCoversDate(s, d)),
+        );
     });
 
     const totalCount = computed(
         () =>
-            (props.schedules ?? []).filter((s) => {
-                const date = getScheduleDate(s);
-                return date !== null && dateList.value.includes(date);
-            }).length,
+            (props.schedules ?? []).filter((s) =>
+                dateList.value.some((d) => scheduleCoversDate(s, d)),
+            ).length,
     );
 
     const unassignedCount = computed(() =>
@@ -479,6 +509,8 @@ export function useSchedule(props: UseScheduleProps = {}) {
         schedulesForDay,
         getScheduleDate,
         getScheduleTimes,
+        scheduleDateSpan,
+        scheduleCoversDate,
 
         getServiceLeft,
         getServiceWidth,

@@ -242,15 +242,21 @@
                                         v-for="employee in employees"
                                         :key="employee.employee_id"
                                         type="button"
+                                        :disabled="
+                                            employee.is_busy ||
+                                            hasRoleMismatch(employee)
+                                        "
                                         class="flex w-full items-center gap-3 rounded-2xl border bg-white p-3 text-left transition"
                                         :class="[
                                             isSelected(employee.employee_id)
                                                 ? 'border-primary/50 bg-primary/[0.04] ring-1 ring-primary/20'
                                                 : 'border-slate-200 hover:border-primary/30 hover:bg-slate-50',
                                             employee.is_busy ||
-                                            !employee.is_assigned
-                                                ? 'opacity-60'
-                                                : '',
+                                            hasRoleMismatch(employee)
+                                                ? 'opacity-60 cursor-not-allowed hover:border-slate-200 hover:bg-white'
+                                                : !employee.is_assigned
+                                                  ? 'opacity-60'
+                                                  : '',
                                         ]"
                                         @click="
                                             requestAssign(
@@ -304,6 +310,14 @@
                                                 class="h-3.5 w-3.5"
                                             />
                                             Conflict
+                                        </div>
+
+                                        <div
+                                            v-else-if="hasRoleMismatch(employee)"
+                                            class="flex shrink-0 items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-600"
+                                        >
+                                            <CircleHelp class="h-3.5 w-3.5" />
+                                            {{ requiredRoleLabel }} only
                                         </div>
 
                                         <div
@@ -363,22 +377,6 @@
             </Transition>
         </div>
     </Transition>
-
-    <ConfirmDialog
-        :open="conflictConfirm.open"
-        title="Assign employee with conflict?"
-        :message="`${conflictConfirm.employeeName} already has a conflicting schedule.`"
-        :description="
-            conflictConfirm.conflictCodes.length
-                ? `Conflicts with: ${conflictConfirm.conflictCodes.join(', ')}`
-                : 'Are you sure you want to assign them to this service anyway?'
-        "
-        confirm-label="Assign Anyway"
-        cancel-label="Cancel"
-        variant="danger"
-        @confirm="confirmConflictAssign"
-        @cancel="cancelConflictAssign"
-    />
 </template>
 
 <script setup lang="ts">
@@ -387,7 +385,7 @@ import type { ScheduleItem } from "~/types/schedule";
 import { fullName } from "~/utils/user";
 import { formatDate } from "~/utils/time";
 import Combobox from "~/components/ui/Combobox.vue";
-import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
+import { useToast } from "~/composables/useToast";
 import {
     X,
     UserRound,
@@ -434,20 +432,47 @@ const employeeItems = computed(() => {
     }));
 });
 const activeService = ref<number | null>(null);
+const { error: toastError } = useToast();
 
-const conflictConfirm = ref<{
-    open: boolean;
-    serviceId: number | null;
-    employeeId: string | null;
-    employeeName: string;
-    conflictCodes: string[];
-}>({
-    open: false,
-    serviceId: null,
-    employeeId: null,
-    employeeName: "",
-    conflictCodes: [],
+// A Medical schedule service can only be staffed by a nurse, an ADL
+// service only by a caregiver — matches the hard rule the backend
+// enforces unconditionally, so the picker shouldn't offer a choice that
+// would just fail on submit.
+function serviceTypeFor(serviceId: number | null): string | null {
+    if (!serviceId) return null;
+
+    return (
+        props.schedule?.services?.find(
+            (s) => s.schedule_services_id === serviceId,
+        )?.type ?? null
+    );
+}
+
+function requiredRoleFor(serviceId: number | null): string | null {
+    const type = serviceTypeFor(serviceId);
+
+    if (type === "Medical") return "nurse";
+    if (type === "ADL") return "caregiver";
+
+    return null;
+}
+
+const requiredRoleLabel = computed(() => {
+    const role = requiredRoleFor(activeService.value);
+
+    return role ? role.charAt(0).toUpperCase() + role.slice(1) : "";
 });
+
+function hasRoleMismatch(
+    employee: Employee,
+    serviceId: number | null = activeService.value,
+) {
+    const required = requiredRoleFor(serviceId);
+
+    if (!required) return false;
+
+    return (employee.role_name ?? "").toLowerCase() !== required;
+}
 
 watch(
     () => props.schedule,
@@ -493,48 +518,27 @@ function requestAssign(serviceId: number | null, employeeId: string) {
         (e) => String(e.employee_id) === employeeId,
     );
 
+    // An employee with a scheduling conflict is shown in the list so the
+    // conflict is visible, but can never actually be assigned — the
+    // backend enforces this unconditionally, so there's no "assign
+    // anyway" path here either.
     if (employee?.is_busy) {
-        const codes = Array.from(
-            new Set(
-                (employee.conflict_schedules ?? []).map((s) => s.schedule_code),
-            ),
+        toastError(
+            `${fullName(employee.first_name, "", employee.last_name)} already has a conflicting schedule and cannot be assigned.`,
         );
+        return;
+    }
 
-        conflictConfirm.value = {
-            open: true,
-            serviceId,
-            employeeId,
-            employeeName: fullName(employee.first_name, "", employee.last_name),
-            conflictCodes: codes,
-        };
+    const requiredRole = requiredRoleFor(serviceId);
+
+    if (employee && requiredRole && hasRoleMismatch(employee, serviceId)) {
+        toastError(
+            `Only a ${requiredRole} can be assigned to this service.`,
+        );
         return;
     }
 
     assign(serviceId, employeeId);
-}
-
-function confirmConflictAssign() {
-    const { serviceId, employeeId } = conflictConfirm.value;
-
-    if (serviceId && employeeId) {
-        assign(serviceId, employeeId);
-    }
-
-    resetConflictConfirm();
-}
-
-function cancelConflictAssign() {
-    resetConflictConfirm();
-}
-
-function resetConflictConfirm() {
-    conflictConfirm.value = {
-        open: false,
-        serviceId: null,
-        employeeId: null,
-        employeeName: "",
-        conflictCodes: [],
-    };
 }
 
 function isSelected(employeeId: string | number) {
@@ -589,7 +593,6 @@ watch(
 
 function close() {
     resetAssignmentsFromSchedule(props.schedule);
-    resetConflictConfirm();
     emit("close");
 }
 </script>

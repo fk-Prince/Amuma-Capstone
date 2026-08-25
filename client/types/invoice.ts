@@ -124,6 +124,8 @@ export interface InvoiceServiceLine {
     price: number;
     note: string | null;
     service_name: string | null;
+    type?: string | null;
+    hours_booked?: number | null;
 }
 
 export interface InvoiceFacilityLine {
@@ -153,6 +155,16 @@ export interface InvoiceRefund {
     refund_method: string | null;
     status: RefundStatus;
     reason: string | null;
+    masked_card_number: string | null;
+    created_at: string | null;
+}
+
+export interface InvoiceAdjustmentDetail {
+    invoice_adjustment_id: number;
+    type: string;
+    amount: number;
+    reason: string | null;
+    created_at: string | null;
 }
 
 export interface InvoicePayment {
@@ -209,6 +221,8 @@ export interface DischargeCalculation {
     contract_price: number;
     amount_paid: number;
     required_payment: number;
+    fee_base_amount: number;
+    days_stayed_amount: number;
     retention_amount: number;
     termination_fee_percent: number;
     termination_fee_amount: number;
@@ -240,6 +254,7 @@ export interface InvoiceDetail {
     services?: InvoiceServiceLine[];
     facilities?: InvoiceFacilityLine[];
     payments?: InvoicePayment[];
+    adjustments?: InvoiceAdjustmentDetail[];
 }
 
 export interface PatientInvoiceItem {
@@ -311,8 +326,11 @@ export interface InvoiceRow {
     patient: string;
     category: string;
     total: number | string;
+    paid: number | string;
+    refunded: number | string;
     amount: number | string;
     status: string;
+    refund_status?: RefundSummaryStatus;
     created_at: string;
 }
 
@@ -335,6 +353,8 @@ export interface PatientSummaryRow {
     } | null;
     total_amount: number | string;
     total_paid: number | string;
+    total_refunded: number | string;
+    total_refund_processing: number | string;
     total_balance: number | string;
     status: string;
     invoice_count: number;

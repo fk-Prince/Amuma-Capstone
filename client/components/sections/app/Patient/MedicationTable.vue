@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { Check, ChevronLeft, ChevronRight, Clock, X } from "lucide-vue-next";
+import {
+    Check,
+    ChevronLeft,
+    ChevronRight,
+    Clock,
+    X,
+    Plus,
+} from "lucide-vue-next";
 import { formatDate } from "~/utils/time";
 import {
     ROUTE_LABELS,
@@ -13,7 +20,7 @@ import type {
     MedicationSchedule,
     MarkDosePayload,
 } from "~/types/medication";
-import { Plus } from "lucide-vue-next";
+import { frequencyOptions } from "~/types/medication";
 
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 
@@ -34,13 +41,20 @@ const props = withDefaults(
         medications?: Medication[];
         disabled?: boolean;
         savingDose?: boolean;
+        view?: "client" | "provider";
+        variant?: "calendar" | "preview";
     }>(),
     {
         medications: () => [],
         disabled: false,
         savingDose: false,
+        view: "provider",
+        variant: "calendar",
     },
 );
+
+const isProvider = computed(() => props.view === "provider");
+const latestMedication = computed(() => props.medications[0] ?? null);
 
 const scheduleKind = ref<"Scheduled" | "PRN">("Scheduled");
 
@@ -82,18 +96,14 @@ const visibleMedications = computed(() =>
     }),
 );
 
-const days = computed<DayColumn[]>(() => {
-    const firstMedication = visibleMedications.value[0];
-
-    if (!firstMedication?.startDate) {
+function getDays(med: Medication): DayColumn[] {
+    if (!med?.startDate) {
         return [];
     }
 
-    const startDate = new Date(firstMedication.startDate);
+    const startDate = new Date(`${med.startDate}T00:00:00`);
 
-    const duration = Number(
-        firstMedication.durationLabel?.replace(" Days", "") || 1,
-    );
+    const duration = Number(med.durationLabel?.replace(" Days", "") || 1);
 
     if (Number.isNaN(duration) || duration <= 0) {
         return [];
@@ -104,13 +114,17 @@ const days = computed<DayColumn[]>(() => {
 
         current.setDate(startDate.getDate() + index);
 
+        const year = current.getFullYear();
+        const month = String(current.getMonth() + 1).padStart(2, "0");
+        const day = String(current.getDate()).padStart(2, "0");
+
         return {
             label: dayLetters[current.getDay()] ?? "",
             date: current.getDate(),
-            fullDate: current.toISOString().split("T")[0]!,
+            fullDate: `${year}-${month}-${day}`,
         };
     });
-});
+}
 
 function isToday(dateStr: string) {
     const today = new Date().toISOString().split("T")[0];
@@ -122,6 +136,43 @@ function formatDosage(amount: string, unit: string) {
     const number = Number(amount);
 
     return `${amount} ${number === 1 ? label : `${label}s`}`;
+}
+
+function formatFrequency(value: string) {
+    return (
+        frequencyOptions.find((option) => option.value === value)?.label ??
+        value
+    );
+}
+
+const FREQUENCY_INTERVAL_DAYS: Record<string, number> = {
+    everyday: 1,
+    every_2_days: 2,
+    every_3_days: 3,
+    every_week: 7,
+};
+
+function frequencyIntervalDays(frequency: string) {
+    return FREQUENCY_INTERVAL_DAYS[frequency] ?? 1;
+}
+
+// Non-daily medications (e.g. "every 3 days") only have a dose due on
+// every Nth day from their start date — the days in between are skipped
+// rather than shown as an empty/missed dose.
+function isDoseDay(med: Medication, dateStr: string) {
+    if (!med.startDate) return true;
+
+    const interval = frequencyIntervalDays(med.frequency);
+    if (interval <= 1) return true;
+
+    const start = new Date(`${med.startDate}T00:00:00`);
+    const current = new Date(`${dateStr}T00:00:00`);
+
+    const diffDays = Math.round(
+        (current.getTime() - start.getTime()) / 86400000,
+    );
+
+    return diffDays >= 0 && diffDays % interval === 0;
 }
 
 function formatTime(value: string) {
@@ -231,7 +282,7 @@ const confirmVariant = computed(() =>
 );
 
 function requestToggle(med: Medication, time: string, date: string) {
-    if (props.disabled) return;
+    if (props.disabled || !isProvider.value) return;
     pendingDose.value = { med, time, date };
 }
 
@@ -253,7 +304,6 @@ function confirmToggle() {
 watch(
     () => props.savingDose,
     (loading, wasLoading) => {
-        // Close only after saving finished
         if (wasLoading && !loading) {
             pendingDose.value = null;
         }
@@ -271,7 +321,86 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <div class="space-y-4">
+    <div v-if="variant === 'preview'" class="space-y-3">
+        <div
+            v-if="!latestMedication"
+            class="py-8 text-center text-sm text-gray-400"
+        >
+            No medications recorded.
+        </div>
+
+        <div
+            v-else
+            class="rounded-2xl border border-gray-100 bg-white shadow-sm"
+        >
+            <div class="flex items-start justify-between gap-3 px-5 py-4">
+                <div>
+                    <h2 class="text-base font-semibold text-gray-900">
+                        {{ latestMedication.name }}
+                    </h2>
+                    <p class="mt-0.5 text-xs text-gray-400">
+                        {{ latestMedication.strength }} ·
+                        {{
+                            formatDosage(
+                                latestMedication.dosageAmount,
+                                latestMedication.dosageUnit,
+                            )
+                        }}
+                        ·
+                        {{
+                            ROUTE_LABELS[latestMedication.route] ??
+                            latestMedication.route
+                        }}
+                    </p>
+                </div>
+
+                <span
+                    class="shrink-0 rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600"
+                >
+                    {{ formatFrequency(latestMedication.frequency) }}
+                </span>
+            </div>
+
+            <div
+                class="grid grid-cols-2 gap-3 border-t border-gray-50 px-5 py-4 sm:grid-cols-3"
+            >
+                <div>
+                    <p
+                        class="text-xs font-medium uppercase tracking-wide text-gray-400"
+                    >
+                        Instructions
+                    </p>
+                    <p class="mt-1 text-sm font-medium text-gray-800">
+                        {{ latestMedication.instructions || "—" }}
+                    </p>
+                </div>
+
+                <div>
+                    <p
+                        class="text-xs font-medium uppercase tracking-wide text-gray-400"
+                    >
+                        Taken for
+                    </p>
+                    <p class="mt-1 text-sm font-medium text-gray-800">
+                        {{ latestMedication.takenFor || "—" }}
+                    </p>
+                </div>
+
+                <div>
+                    <p
+                        class="text-xs font-medium uppercase tracking-wide text-gray-400"
+                    >
+                        Duration
+                    </p>
+                    <p class="mt-1 text-sm font-medium text-gray-800">
+                        {{ latestMedication.durationLabel }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div v-else class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap items-center gap-3">
                 <div
@@ -324,6 +453,7 @@ const emit = defineEmits<{
             </div>
 
             <button
+                v-if="isProvider"
                 class="rounded-xl bg-primary flex items-center gap-3 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/50"
                 @click="$emit('add-medication')"
             >
@@ -373,7 +503,7 @@ const emit = defineEmits<{
             </div>
 
             <div
-                class="grid grid-cols-1 gap-3 border-b border-gray-50 px-5 py-4 sm:grid-cols-4"
+                class="grid grid-cols-1 gap-3 border-b border-gray-50 px-5 py-4 sm:grid-cols-5"
             >
                 <div>
                     <p
@@ -384,6 +514,18 @@ const emit = defineEmits<{
 
                     <p class="mt-1 text-sm font-medium text-gray-800">
                         {{ med.instructions }}
+                    </p>
+                </div>
+
+                <div>
+                    <p
+                        class="text-xs font-medium uppercase tracking-wide text-gray-400"
+                    >
+                        Taken Every
+                    </p>
+
+                    <p class="mt-1 text-sm font-medium text-gray-800">
+                        {{ formatFrequency(med.frequency) }}
                     </p>
                 </div>
 
@@ -438,7 +580,7 @@ const emit = defineEmits<{
 
                             <div class="flex">
                                 <div
-                                    v-for="day in days"
+                                    v-for="day in getDays(med)"
                                     :key="day.fullDate"
                                     class="flex w-11 shrink-0 flex-col items-center gap-0.5 py-2.5"
                                     :class="
@@ -485,7 +627,7 @@ const emit = defineEmits<{
 
                             <div class="flex">
                                 <div
-                                    v-for="day in days"
+                                    v-for="day in getDays(med)"
                                     :key="`${time}-${day.fullDate}`"
                                     class="flex w-11 justify-center py-2"
                                     :class="
@@ -495,6 +637,7 @@ const emit = defineEmits<{
                                     "
                                 >
                                     <button
+                                        v-if="isDoseDay(med, day.fullDate)"
                                         type="button"
                                         class="flex h-7 w-7 items-center justify-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-60"
                                         :class="
@@ -508,7 +651,7 @@ const emit = defineEmits<{
                                                   ? 'border-rose-300 bg-rose-50 text-rose-500'
                                                   : 'border-gray-200 bg-white hover:border-emerald-400 hover:bg-emerald-50'
                                         "
-                                        :disabled="disabled"
+                                        :disabled="disabled || !isProvider"
                                         :aria-label="
                                             (isTaken(med, time, day.fullDate)
                                                 ? 'Mark as not taken: '
@@ -548,6 +691,14 @@ const emit = defineEmits<{
                                             class="h-3.5 w-3.5"
                                         />
                                     </button>
+
+                                    <span
+                                        v-else
+                                        class="flex h-7 w-7 items-center justify-center text-xs text-gray-300"
+                                        aria-hidden="true"
+                                    >
+                                        –
+                                    </span>
                                 </div>
                             </div>
                         </div>

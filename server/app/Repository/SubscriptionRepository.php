@@ -31,6 +31,7 @@ class SubscriptionRepository
             ->with([
                 'branch.agencies',
                 'plans',
+                'payments',
             ]);
 
         if (!empty($payload['status'])) {

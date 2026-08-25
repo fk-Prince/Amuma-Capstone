@@ -5,6 +5,14 @@
             class="h-[240px] sm:h-[420px] w-full animate-pulse rounded-2xl bg-gray-200"
         ></div>
 
+        <div
+            v-else-if="!hasImages"
+            class="flex h-[240px] sm:h-[420px] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-gray-400"
+        >
+            <ImageOff class="h-8 w-8" />
+            <p class="text-sm font-medium">No photos available</p>
+        </div>
+
         <template v-else>
             <div
                 class="hidden sm:flex gap-[3px] h-[420px] overflow-hidden rounded-2xl"
@@ -139,7 +147,7 @@
 </template>
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { Heart, Share2, LayoutGrid } from "lucide-vue-next";
+import { Heart, Share2, LayoutGrid, ImageOff } from "lucide-vue-next";
 import ImagePopup from "~/components/ui/ImagePopup.vue";
 import type { BranchImage } from "~/types/branch";
 
@@ -168,6 +176,8 @@ const images = computed<BranchImage[]>(() => {
 
     return [...primary, ...(props.secondaryImage ?? [])];
 });
+
+const hasImages = computed(() => images.value.length > 0);
 
 const sideImages = computed(() => images.value.slice(1, 5));
 const overflowCount = computed(() => Math.max(images.value.length - 5, 0));

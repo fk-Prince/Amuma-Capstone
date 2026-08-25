@@ -62,8 +62,6 @@ class InvoiceController extends Controller
         return $this->invoiceService->retrieveAllBooking($request->user(), $request->all());
     }
 
-
-
     public function action(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);

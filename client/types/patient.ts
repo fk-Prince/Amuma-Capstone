@@ -2,6 +2,7 @@ import type { Location } from "./location";
 import type { Bed } from "./bed";
 import type { Room, RoomTransfer } from "./room";
 import type { Contract } from "./contract";
+import type { DischargeCalculation } from "./invoice";
 
 
 export interface Patient {
@@ -22,6 +23,7 @@ export interface Patient {
     location?: Location
     address?: string
     reference_id?: string;
+    allergies?: string;
 }
 
 
@@ -80,9 +82,11 @@ export interface PatientRetrieve {
     weight?: string;
     phone_number?: string;
     citizenship?: string;
-    initial_medication: any;
-    medication: any;
-    vital: any;
+    allergies?: string[];
+    has_homecare?: boolean;
+    initial_assessment?: Assessment | Assessment[] | null;
+    medications_count?: number;
+    vitals_count?: number;
     location?: {
         location_id: number;
         full_address: string;
@@ -97,11 +101,13 @@ export interface Admission {
     status: string;
     admitted_at: string;
     end_date?: string | null;
+    note?: string | null;
     bed?: Bed;
     room?: Room;
     invoices: InvoiceFacility[];
     current_contract?: Contract | null;
     current_invoice?: InvoiceFacility | null;
+    discharge_calculation?: DischargeCalculation | null;
     room_transfers?: RoomTransfer[];
 }
 

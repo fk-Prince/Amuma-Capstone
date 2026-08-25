@@ -9,13 +9,17 @@
         "schedule": "cd server && php artisan schedule:work",
         "queue": "cd server && php artisan queue:work",
         "client": "pnpm --prefix client exec nuxt dev --host 0.0.0.0 --port 3000 --strictPort",
-        "dev": "concurrently \"npm run artisan\" \"npm run reverb\" \"npm run schedule\" \"npm run client\" "
+        "api-https": "local-ssl-proxy --source 8443 --target 8000 --cert client/certs/192.168.1.2+3.pem --key client/certs/192.168.1.2+3-key.pem",
+        "reverb-wss": "local-ssl-proxy --source 9443 --target 8080 --cert client/certs/192.168.1.2+3.pem --key client/certs/192.168.1.2+3-key.pem",
+        "dev": "concurrently \"npm run artisan\" \"npm run reverb\" \"npm run schedule\" \"npm run client\" ",
+        "dev:https": "concurrently \"npm run artisan\" \"npm run api-https\" \"npm run reverb\" \"npm run reverb-wss\" \"npm run schedule\" \"npm run client\" "
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "packageManager": "pnpm@10.28.2",
     "devDependencies": {
-        "concurrently": "^10.0.0"
+        "concurrently": "^10.0.0",
+        "local-ssl-proxy": "^2.0.5"
     }
 }
