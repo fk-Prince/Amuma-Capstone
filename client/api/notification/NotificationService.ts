@@ -20,6 +20,10 @@ class NotificationService extends BaseService {
         return await this.request(this.resource, 'GET', params);
     }
 
+    async markRead(notificationId?: number): Promise<any> {
+        return await this.request(`${this.resource}/read`, 'POST', notificationId ? { notification_id: notificationId } : {},);
+    }
+
     async create(payload: object): Promise<any> {
         return await this.request(this.resource, 'POST', payload);
     }

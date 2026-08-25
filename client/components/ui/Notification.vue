@@ -55,6 +55,13 @@
                 <div
                     class="max-h-[400px] overflow-y-auto divide-y divide-gray-100"
                 >
+                    <p
+                        v-if="!notifications.length"
+                        class="px-4 py-8 text-center text-xs text-gray-400"
+                    >
+                        No notifications yet.
+                    </p>
+
                     <div
                         v-for="notif in notifications"
                         :key="notif.id"
@@ -95,8 +102,9 @@
 
                 <div class="px-4 py-2.5 border-t border-gray-100 text-center">
                     <NuxtLink
-                        to="/app/notifications"
+                        to="/notifications"
                         class="text-sm text-blue-500 hover:underline"
+                        @click="open = false"
                     >
                         View all notifications
                     </NuxtLink>
@@ -134,24 +142,44 @@ const unreadCount = computed(
 
 const toggle = () => (open.value = !open.value);
 
-const markRead = (id: number) => {
+const markRead = async (id: number) => {
     const n = notifications.value.find((n) => n.id === id);
-    if (n) n.unread = false;
+
+    if (!n || !n.unread) return;
+
+    n.unread = false;
+
+    try {
+        await notificationService.markRead(id);
+    } catch (err) {
+        console.error(err);
+        n.unread = true;
+    }
 };
 
-const markAllRead = () => {
+const markAllRead = async () => {
+    const previous = notifications.value.map((n) => n.unread);
+
     notifications.value.forEach((n) => (n.unread = false));
+
+    try {
+        await notificationService.markRead();
+    } catch (err) {
+        console.error(err);
+        notifications.value.forEach(
+            (n, i) => (n.unread = previous[i] ?? false),
+        );
+    }
 };
 
 onClickOutside(dropdownRef, () => (open.value = false));
 
-const loadNotifications = async (branchUuid: string) => {
+const loadNotifications = async (branchUuid?: string) => {
     try {
         const res = await notificationService.list({
             per_page: 4,
-            branch_uuid: branchUuid,
+            branch_uuid: branchUuid || undefined,
         });
-
         notifications.value = Array.isArray(res?.data) ? res.data : [];
     } catch (err) {
         console.error(err);
@@ -159,7 +187,7 @@ const loadNotifications = async (branchUuid: string) => {
     }
 };
 
-const bindChannel = (branchUuid: string) => {
+const bindChannel = (branchUuid?: string) => {
     if (!user.value?.uuid) return;
 
     if (channel) {
@@ -170,7 +198,9 @@ const bindChannel = (branchUuid: string) => {
     channel = $echo
         .private(`Notification.${user.value.uuid}`)
         .listen(".NotificationEvent", (e: any) => {
-            if (e.branch_uuid !== branchUuid) return;
+            // Only filter by branch when this bell is scoped to one.
+            if (branchUuid && e.branch_uuid !== branchUuid) return;
+
             const newNotification: Notification = {
                 id: Date.now(),
                 uuid: generateId(),
@@ -191,13 +221,15 @@ const bindChannel = (branchUuid: string) => {
         });
 };
 
+// Re-runs when moving between branches, and still runs once on routes that
+// have no branch at all so the portal bell fills in.
 watch(
     () => route.params.uuid,
     async (newUuid) => {
-        if (!newUuid) return;
+        const branchUuid = Array.isArray(newUuid) ? newUuid[0] : newUuid;
 
-        await loadNotifications(newUuid as string);
-        bindChannel(newUuid as string);
+        await loadNotifications(branchUuid as string | undefined);
+        bindChannel(branchUuid as string | undefined);
     },
     { immediate: true },
 );

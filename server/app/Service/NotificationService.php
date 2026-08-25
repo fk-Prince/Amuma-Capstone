@@ -2,34 +2,31 @@
 
 namespace App\Service;
 
-use App\Enums\ModuleEnum;
-use App\Enums\PermissionAction;
 use App\Events\NotificationEvent;
 use App\Guard\BranchGuard;
-use App\Repository\NotificationRepository;
 use App\Http\Resources\NotificationResource;
 use App\Models\Branch;
 use App\Models\User;
-use App\Repository\BranchRepository;
-use App\Repository\ModuleRepository;
-use Exception;
+use App\Repository\EmployeeRepository;
+use App\Repository\NotificationRepository;
 
 class NotificationService
 {
-    private NotificationRepository $notificationRepository;
-    private  ModuleRepository $moduleRepository;
+    public function __construct(
+        private NotificationRepository $notificationRepository,
+        private EmployeeRepository $employeeRepository,
+    ) {}
 
-    public function __construct(NotificationRepository $notificationRepository,  ModuleRepository $moduleRepository)
-    {
-        $this->notificationRepository = $notificationRepository;
-        $this->moduleRepository = $moduleRepository;
-    }
+    private const BOOKING_ROLES = ['admission'];
 
     public function sendNotification(array $payload, object $booking)
     {
 
         $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
-        $employees = $this->moduleRepository->getEmployeesModuleWithPermission([PermissionAction::Read], ModuleEnum::Bookings, $branch->branch_id);
+        $employees = $this->employeeRepository->getBranchStaffByRoles(
+            self::BOOKING_ROLES,
+            $branch->branch_id
+        );
 
         foreach ($employees as $employee) {
             $this->notificationRepository->create([
@@ -53,11 +50,45 @@ class NotificationService
         return ['message' => 'Successfully Send Notification'];
     }
 
+
     public function listNotification(array $payload, User $user)
     {
-        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
-        $collection = $this->notificationRepository->paginate($payload['per_page'], $user->user_id, $branch->branch_id);
-        return NotificationResource::collection($collection);
+        $branchId = null;
+
+        if (! empty($payload['branch_uuid'])) {
+            $branchId = BranchGuard::resolveBranch($payload['branch_uuid'])->branch_id;
+        }
+
+        $collection = $this->notificationRepository->paginate(
+            (int) ($payload['per_page'] ?? 15),
+            $user->user_id,
+            $branchId,
+            $payload['unread_only'] ?? false
+        );
+
+        return NotificationResource::collection($collection)
+            ->additional([
+                'meta' => [
+                    'unread_count' => $this->notificationRepository
+                        ->unreadCount($user->user_id, $branchId),
+                ],
+            ]);
+    }
+
+    public function markRead(array $payload, User $user)
+    {
+        $updated = $this->notificationRepository->markRead(
+            $user->user_id,
+            $payload['notification_id'] ?? null
+        );
+
+        return response()->json([
+            'status' => true,
+            'message' => __('Notification updated.'),
+            'updated' => $updated,
+            'unread_count' => $this->notificationRepository
+                ->unreadCount($user->user_id, null),
+        ]);
     }
 
     public function notifyNewBooking(Branch $branch, User $user, object $booking): void

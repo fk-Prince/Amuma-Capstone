@@ -109,6 +109,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/subscriptions-validate',  [SubscriptionController::class, 'validateSubscription']);
     Route::post('/subscriptions-renew',  [SubscriptionController::class, 'renew']);
 
+    Route::post('/notifications/read', [NotificationController::class, 'markRead']);
+
     Route::get('/users/branches',  [UserController::class, 'getUserBranch']);
     Route::get('/profile',  [UserController::class, 'profile']);
     Route::post('/profile',  [UserController::class, 'updateProfile']);

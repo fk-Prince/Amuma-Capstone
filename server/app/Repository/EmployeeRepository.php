@@ -24,6 +24,29 @@ class EmployeeRepository
         return Employee::where($conditioins)->first();
     }
 
+    /**
+     * Active staff holding any of the given roles at a branch, reduced to what
+     * notifications need: who to write the row for and who to broadcast to.
+     */
+    public function getBranchStaffByRoles(array $roles, string $branchId)
+    {
+        return Employee::query()
+            ->with('users:user_id,uuid')
+            ->where('status', Employee::STATUS_ACTIVE)
+            ->whereHas('employeeBranch', function ($query) use ($roles, $branchId) {
+                $query->where('branch_id', $branchId)
+                    ->whereIn('role_name', $roles);
+            })
+            ->get()
+            ->map(fn(Employee $employee) => [
+                'employee_id' => $employee->employee_id,
+                'user_id' => $employee->user_id,
+                'uuid' => $employee->users?->uuid,
+            ])
+            ->filter(fn($staff) => $staff['uuid'] !== null)
+            ->values();
+    }
+
     public function getPaginateEmployee(array $payload, string $branchId)
     {
         $perPage = $payload['per_page'] ?? 10;

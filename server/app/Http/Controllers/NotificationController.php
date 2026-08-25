@@ -19,4 +19,9 @@ class NotificationController extends Controller
     {
         return $this->notificationService->listNotification($request->all(), $request->user());
     }
+
+    public function markRead(Request $request)
+    {
+        return $this->notificationService->markRead($request->all(), $request->user());
+    }
 }

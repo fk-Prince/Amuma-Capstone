@@ -139,86 +139,7 @@
                 </div>
             </div>
 
-            <div class="relative">
-                <button
-                    type="button"
-                    @click.stop="toggleDropdown('notifications')"
-                    class="w-9 h-9 sm:w-auto sm:h-auto flex items-center justify-center text-gray-700 hover:text-brand-500 transition-colors"
-                    aria-label="Notifications"
-                >
-                    <Bell class="w-5 h-5" />
-
-                    <span
-                        v-if="unreadCount"
-                        class="absolute top-1 right-1 sm:-top-1 sm:-right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white"
-                    />
-                </button>
-
-                <div
-                    v-if="openDropdown === 'notifications'"
-                    class="absolute right-0 top-full mt-3 w-[calc(100vw-2rem)] max-w-80 bg-white rounded-2xl border border-gray-100 shadow-lg z-50 overflow-hidden"
-                >
-                    <div
-                        class="px-4 py-3 border-b border-gray-50 flex items-center justify-between"
-                    >
-                        <p class="text-sm font-semibold text-gray-800">
-                            Notifications
-                        </p>
-
-                        <button
-                            type="button"
-                            @click="closeDropdowns"
-                            class="text-gray-300 hover:text-gray-500"
-                            aria-label="Close notifications"
-                        >
-                            <X class="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    <ul class="max-h-[60vh] overflow-y-auto">
-                        <li
-                            v-for="n in notifications"
-                            :key="n.id"
-                            class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50"
-                            :class="n.unread ? 'bg-brand-50/40' : ''"
-                        >
-                            <span
-                                class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-brand-50 text-brand-600"
-                            >
-                                <Pill v-if="n.icon === 'med'" class="w-4 h-4" />
-                                <CalendarClock
-                                    v-else-if="n.icon === 'appointment'"
-                                    class="w-4 h-4"
-                                />
-                                <CreditCard
-                                    v-else-if="n.icon === 'billing'"
-                                    class="w-4 h-4"
-                                />
-                                <MessageSquare v-else class="w-4 h-4" />
-                            </span>
-
-                            <div class="min-w-0 flex-1">
-                                <p class="text-xs text-gray-700 leading-snug">
-                                    {{ n.text }}
-                                </p>
-
-                                <p class="text-[11px] text-gray-400 mt-1">
-                                    {{ n.time }}
-                                </p>
-                            </div>
-                        </li>
-                    </ul>
-
-                    <button
-                        type="button"
-                        @click="goToUpdates"
-                        class="w-full text-center text-xs font-medium text-brand-600 py-3 border-t border-gray-50 hover:bg-gray-50"
-                    >
-                        View all updates
-                    </button>
-                </div>
-            </div>
-
+            <Notification />
             <NavbarProfileDropdown v-if="user" :user="user" />
         </div>
     </header>
@@ -231,15 +152,11 @@ import {
     Calendar,
     Clock,
     MessagesSquare,
-    Bell,
     X,
-    Pill,
-    CalendarClock,
-    CreditCard,
-    MessageSquare,
     Menu,
 } from "lucide-vue-next";
 import NavbarProfileDropdown from "~/components/ui/NavbarProfileDropdown.vue";
+import Notification from "~/components/ui/Notification.vue";
 import { useAuthUser } from "~/composables/useAuthUser";
 
 const user = useAuthUser();
@@ -326,7 +243,7 @@ const formattedTime = computed(() =>
     }),
 );
 
-type DropdownKey = "messages" | "notifications" | null;
+type DropdownKey = "messages" | null;
 
 const openDropdown = ref<DropdownKey>(null);
 
@@ -352,47 +269,6 @@ function goToMessages() {
     closeDropdowns();
     router.push("/messages");
 }
-
-function goToUpdates() {
-    closeDropdowns();
-    router.push("/updates");
-}
-
-interface Notification {
-    id: number;
-    icon: "med" | "appointment" | "billing" | "message";
-    text: string;
-    time: string;
-    unread: boolean;
-}
-
-const notifications = ref<Notification[]>([
-    {
-        id: 1,
-        icon: "appointment",
-        text: "Doctor consultation with Dr. Gem Manolo at 2:00 PM today",
-        time: "10m ago",
-        unread: true,
-    },
-    {
-        id: 2,
-        icon: "med",
-        text: "Amlodipine 5mg was given as scheduled",
-        time: "2h ago",
-        unread: true,
-    },
-    {
-        id: 3,
-        icon: "billing",
-        text: "Your August billing statement is ready",
-        time: "1d ago",
-        unread: false,
-    },
-]);
-
-const unreadCount = computed(
-    () => notifications.value.filter((n) => n.unread).length,
-);
 
 interface ConversationPreview {
     id: number;
