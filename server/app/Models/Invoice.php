@@ -19,7 +19,6 @@ class Invoice extends Model
 
     protected $fillable = [
         'total',
-        'is_collected',
         'branch_id',
         'invoice_code',
         'status',
@@ -27,7 +26,6 @@ class Invoice extends Model
 
     protected $casts = [
         'total' => 'decimal:2',
-        'is_collected' => 'boolean',
         'created_at' => 'datetime',
     ];
 
@@ -244,7 +242,6 @@ class Invoice extends Model
 
 //     protected $fillable = [
 //         'total',
-//         'is_collected',
 //         'branch_id',
 //         'invoice_code',
 //         'status',
@@ -252,7 +249,6 @@ class Invoice extends Model
 
 //     protected $casts = [
 //         'total' => 'decimal:2',
-//         'is_collected' => 'boolean',
 //         'created_at' => 'datetime',
 //     ];
 

@@ -916,7 +916,6 @@ interface Invoice {
     amount_paid: number;
     balance_due: number;
     refund_status: string;
-    is_collected: boolean;
     facilityPeriod: {
         start_date: string | null;
         end_date: string | null;

@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-slate-50">
+    <div class="min-h-screen-header bg-slate-50">
         <div class="w-full mx-auto px-4 lg:px-8 py-8">
             <button
                 type="button"

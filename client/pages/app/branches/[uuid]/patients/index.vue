@@ -184,15 +184,17 @@ const emptyStateSubtitle = computed(() =>
 </script>
 
 <template>
-    <div class="min-h-[calc(100vh-90px)] bg-slate-100 p-2">
-        <div class="max-w-8xl h-[calc(100vh-110px)] flex flex-col gap-4">
+    <div class="min-h-screen-header bg-slate-100 p-2">
+        <div
+            class="max-w-8xl min-h-[calc(100dvh-var(--header-h)-1rem)] lg:h-[calc(100dvh-var(--header-h)-1rem)] flex flex-col gap-4"
+        >
             <div
                 class="bg-white rounded-lg shadow-sm border border-[#E4EFED] overflow-hidden flex-1 min-h-0 flex flex-col"
             >
                 <div
-                    class="flex flex-col gap-3 px-6 py-4 border-b border-[#E4EFED]"
+                    class="flex flex-col gap-3 px-3 sm:px-6 py-4 border-b border-[#E4EFED]"
                 >
-                    <div class="flex gap-3 items-center">
+                    <div class="flex gap-3 items-center flex-wrap">
                         <PatientFilter
                             :search="searchQuery"
                             :type="typeFilter"

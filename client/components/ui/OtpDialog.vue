@@ -3,6 +3,15 @@
 import { ref } from "vue";
 import BaseButton from "../ui/BaseButton.vue";
 
+const props = withDefaults(
+    defineProps<{
+        loading?: boolean;
+    }>(),
+    {
+        loading: false,
+    },
+);
+
 const emit = defineEmits<{
     verify: [otp: string];
     close: [];
@@ -80,7 +89,8 @@ function verifyOtp() {
                     :value="otp[index]"
                     maxlength="1"
                     type="text"
-                    class="h-12 w-12 rounded-xl border border-slate-300 text-center text-lg font-semibold outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    :disabled="loading"
+                    class="h-12 w-12 rounded-xl border border-slate-300 text-center text-lg font-semibold outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200 disabled:opacity-50"
                     @input="handleInput(index, $event)"
                     @keydown="handleBackspace(index, $event)"
                 />
@@ -91,9 +101,10 @@ function verifyOtp() {
                     variant="primary"
                     size="lg"
                     :full="true"
+                    :loading="loading"
                     @click="verifyOtp"
                 >
-                    Verify Code
+                    {{ loading ? "Verifying..." : "Verify Code" }}
                 </BaseButton>
                 <!-- 
                 <button
@@ -104,7 +115,8 @@ function verifyOtp() {
                 </button> -->
 
                 <button
-                    class="w-full text-sm text-slate-500 hover:text-slate-700"
+                    class="w-full text-sm text-slate-500 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="loading"
                     @click="emit('close')"
                 >
                     Cancel

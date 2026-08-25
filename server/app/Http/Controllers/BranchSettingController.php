@@ -23,9 +23,7 @@ class BranchSettingController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Create);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->branchService->action($request->all());
     }
 
@@ -33,9 +31,7 @@ class BranchSettingController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->branchService->retrieveAction($request->all());
     }
 
@@ -43,10 +39,8 @@ class BranchSettingController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Update);
-        $request->merge([
-            'branch' => $branch,
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
+        $request->merge(['branch' => $branch]);
 
         return $this->branchService->updateSettings($request->all());
     }

@@ -30,19 +30,6 @@ class BranchService
 
     public function getBranch(string $uuid)
     {
-        // $branch = $this->branchRepository->getBranch($uuid);
-
-        // $branch->averageRating = round($branch->reviews_avg_rate ?? 0, 1);
-        // $branch->reviewCount = $branch->reviews_count ?? 0;
-
-        // $settings = (array) ($branch->settings ?? []);
-
-        // $branch->settings = array_merge($settings, [
-        //     'adl_hourly_rate' => 500,
-        //     'adl_min_hour' => 8,
-        // ]);
-
-        // return $branch;
         $branch = $this->branchRepository->getBranch($uuid);
         return new BranchResource($branch);
     }
@@ -73,8 +60,14 @@ class BranchService
             'plan_code' => $payload['plan_code']
         ];
 
+        $branch = $this->branchRepository->getFilterBranches(
+            $payload['per_page'],
+            $filters,
+            $payload['sort'] ?? 'recommended',
+            !empty($payload['lat']) ? (float) $payload['lat'] : null,
+            !empty($payload['long']) ? (float) $payload['long'] : null,
+        );
 
-        $branch = $this->branchRepository->getFilterBranches($payload['per_page'], $filters);
         return BranchResource::collection($branch);
     }
 

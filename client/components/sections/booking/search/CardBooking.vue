@@ -1,33 +1,43 @@
 <template>
     <div
         v-if="variant === 1"
-        class="rounded-2xl border border-muted-light bg-white overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary-200"
+        class="group rounded-2xl border border-primary-200 bg-white overflow-hidden cursor-pointer shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
         @click="$emit('select', branch)"
     >
-        <div class="relative h-32 bg-muted-light">
+        <div class="relative h-40 overflow-hidden bg-muted-light">
             <img
                 v-if="branch?.image"
                 :src="branch.image"
-                class="w-full h-full object-cover"
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 alt="branch image"
             />
 
-            <img
+            <div
                 v-else
-                :src="Logo"
-                class="w-full h-full object-contain opacity-60 p-6"
-                alt="default logo"
+                class="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50"
+            >
+                <img
+                    :src="Logo"
+                    class="h-16 w-16 object-contain opacity-70"
+                    alt="default logo"
+                />
+            </div>
+
+            <div
+                v-if="branch?.image"
+                class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent"
             />
+
             <span
-                class="absolute left-3 top-3 rounded-md bg-white/90 px-2.5 py-1 text-xs font-semibold text-accent-700 shadow-sm backdrop-blur-sm"
+                class="absolute left-3 top-3 rounded-md bg-white/95 px-2.5 py-1 text-xs font-semibold text-accent-700 shadow-sm backdrop-blur-sm"
             >
                 {{ getTime(branch.settings).label }}
             </span>
 
             <div
-                class="absolute right-3 top-3 flex items-center gap-1 rounded-md bg-white/90 px-2.5 py-1 shadow-sm backdrop-blur-sm"
+                class="absolute right-3 top-3 flex items-center gap-1 rounded-md bg-white/95 px-2.5 py-1 shadow-sm backdrop-blur-sm"
             >
-                <Star class="h-3 w-3 text-orange-400 fill-orange-400" />
+                <Star class="h-3 w-3 text-amber-400 fill-amber-400" />
 
                 <span class="text-xs font-semibold text-secondary">
                     {{ branch.averageRating ?? "0.0" }}
@@ -40,16 +50,21 @@
         </div>
 
         <div class="p-4">
-            <h3 class="font-semibold text-secondary">
+            <h3
+                class="truncate font-semibold text-secondary transition-colors group-hover:text-primary"
+            >
                 {{ branch.name }}
             </h3>
 
-            <p class="text-xs text-muted mt-1 flex gap-1">
-                <Location />
-                {{ branch.location.street }}, {{ branch.location.city }}
+            <p class="mt-1 flex items-center gap-1 text-xs text-muted">
+                <Location class="h-3.5 w-3.5 shrink-0" />
+                <span class="truncate"
+                    >{{ branch.location.street }},
+                    {{ branch.location.city }}</span
+                >
             </p>
 
-            <div class="mt-3 flex items-center justify-start gap-2">
+            <div class="mt-3 flex flex-wrap items-center gap-1.5">
                 <template
                     v-for="subscription in branch.subscriptions"
                     :key="subscription.subscription_id"
@@ -79,23 +94,31 @@
         </div>
 
         <div
-            class="p-4 border-t border-muted-light bg-light flex justify-between items-center"
+            class="flex items-center justify-between gap-2 border-t border-muted-light bg-light px-4 py-3"
         >
             <span
-                class="text-xs px-4 uppercase py-1 rounded-full font-semibold"
+                class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide"
                 :class="
                     branch.settings.is_open
                         ? 'bg-accent-50 text-accent-700'
                         : 'bg-danger/10 text-danger'
                 "
             >
+                <span
+                    class="h-1.5 w-1.5 rounded-full"
+                    :class="
+                        branch.settings.is_open ? 'bg-accent-500' : 'bg-danger'
+                    "
+                />
                 {{ branch.settings.is_open ? "Open" : "Closed" }}
             </span>
+
             <button
-                @click="$emit('select', branch)"
-                class="text-xs font-semibold text-white bg-primary px-5 py-1.5 rounded-lg hover:bg-primary-600"
+                @click.stop="$emit('select', branch)"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-600"
             >
                 Book Now
+                <ArrowRight class="h-3 w-3" />
             </button>
         </div>
     </div>
@@ -254,7 +277,7 @@
 import type { BranchRetrieve } from "~/types/branch";
 import Location from "~/components/icons/location.vue";
 import Logo from "~/assets/logo/logo.png";
-import { Star } from "lucide-vue-next";
+import { Star, ArrowRight } from "lucide-vue-next";
 import { getBranchTimeDisplay } from "~/utils/time";
 
 const props = defineProps<{

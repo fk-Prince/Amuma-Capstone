@@ -151,6 +151,29 @@ class PatientRepository
             ->where('uuid', $uuid)
             ->first();
     }
+
+    public function findForReport(string $uuid)
+    {
+        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $uuid)) {
+            return null;
+        }
+
+        return Patient::with([
+            'branch',
+            'location',
+
+            'admissions.bed.room',
+
+            'schedules.location',
+            'schedules.scheduleServices.service',
+
+            'medications',
+            'vitals',
+            'activities',
+        ])
+            ->where('uuid', $uuid)
+            ->first();
+    }
 }
 
 

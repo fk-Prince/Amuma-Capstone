@@ -9,12 +9,8 @@ use Illuminate\Support\Facades\Log;
 
 class FacilityWebhook
 {
-    private BookingService $bookingService;
 
-    public function __construct(BookingService $bookingService)
-    {
-        $this->bookingService = $bookingService;
-    }
+    public function __construct(private BookingService $bookingService) {}
 
     public function handle(array $payload)
     {

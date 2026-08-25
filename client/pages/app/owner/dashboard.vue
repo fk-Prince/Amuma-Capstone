@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-[calc(100vh-90px)]">
+    <div class="min-h-screen-header">
         <div class="px-4 py-3 sm:px-5 lg:px-6 lg:py-4">
             <header
                 class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"

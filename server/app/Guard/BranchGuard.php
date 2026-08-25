@@ -4,6 +4,7 @@ namespace App\Guard;
 
 use App\Repository\BranchRepository;
 use Exception;
+use Illuminate\Http\Request;
 
 class BranchGuard
 {
@@ -31,5 +32,12 @@ class BranchGuard
         }
 
         return $branch;
+    }
+
+    public static function mergeRequest(Request $request, mixed $branch): void
+    {
+        $request->merge([
+            'branch_id' => $branch->branch_id,
+        ]);
     }
 }

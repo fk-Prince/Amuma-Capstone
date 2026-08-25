@@ -18,9 +18,7 @@ class PatientAdmissionController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Patients, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->patientAdmissionService->action($request->all());
     }
 
@@ -28,9 +26,7 @@ class PatientAdmissionController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Create);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->patientAdmissionService->storeAdmission($request->user(), $request->all());
     }
 
@@ -38,28 +34,22 @@ class PatientAdmissionController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Create);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-            'user' => $request->user()
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
+        $request->merge(['user' => $request->user()]);
         return $this->patientAdmissionService->action($request->all());
     }
 
     public function show(Request $request, string $id)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->patientAdmissionService->show($request->all());
     }
 
     public function index(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->patientAdmissionService->list($request->all());
     }
 }

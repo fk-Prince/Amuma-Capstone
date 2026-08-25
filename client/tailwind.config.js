@@ -2,6 +2,7 @@
 
 import { colors, fontFamily } from "./tailwind.theme";
 export default {
+    darkMode: "class",
     content: [
         "./components/**/*.{vue,js,ts}",
         "./layouts/**/*.vue",

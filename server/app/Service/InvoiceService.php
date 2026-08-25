@@ -47,7 +47,7 @@ class InvoiceService
         return $invoice;
     }
 
-    public function storeBooking(User $user, array $payload)
+    public function storeBooking(array $payload)
     {
         return DB::transaction(function () use ($user, $payload) {
             $mode = $payload['mode'];
@@ -160,7 +160,7 @@ class InvoiceService
         }
     }
 
-    public function retrieveAllBooking(User $user, array $payload)
+    public function retrieveAllBooking(array $payload)
     {
         return $this->invoiceRepository->getInvoices($payload);
     }

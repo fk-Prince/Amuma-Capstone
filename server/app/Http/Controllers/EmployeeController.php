@@ -25,10 +25,8 @@ class EmployeeController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Create);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-            'branch' => $branch
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
+        $request->merge(['branch' => $branch]);
         return $this->employeeService->createEmployee($request->all(), $request->user());
     }
 
@@ -36,10 +34,8 @@ class EmployeeController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Create);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-            'branch' => $branch
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
+        $request->merge(['branch' => $branch]);
         return $this->employeeService->updateEmployee($request->all(), $uuid, $request->user());
     }
 
@@ -47,14 +43,10 @@ class EmployeeController extends Controller
     {
         $type = $request->input('type', 'regular');
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-            'branch' => $branch
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
+        $request->merge(['branch' => $branch]);
         if ($type === 'regular') {
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Read);
-        } else if ($type === 'schedule') {
-            // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Patients, PermissionAction::Create); // assign
         } else if ($type === 'service') {
             AuthGuard::requireModule($request->user(),  $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
         }

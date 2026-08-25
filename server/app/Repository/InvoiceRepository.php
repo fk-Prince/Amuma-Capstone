@@ -636,7 +636,6 @@ class InvoiceRepository
             'refunded_amount' =>   $refunded,
             'refund_processing_amount' =>   $refundProcessing,
             'balance_due' => $balance - $refundProcessing,
-            'is_collected' =>  $balance <= 0,
             'status' => match (true) {
                 $balance <= 0 && $paid > 0 => 'Paid',
                 $paid > 0 => 'Partial',

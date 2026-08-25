@@ -1,9 +1,18 @@
 <template>
     <div class="min-h-screen flex flex-col bg-slate-50 relative">
-        <div class="w-full md:max-w-[80%] max-w-[90%] mx-auto bg-white">
+        <div class="mx-auto max-w-[100rem] bg-white">
             <!-- <div class="px-6 sm:px-12">
                 <Navbar @change="scrollToSection" />
             </div> -->
+
+            <div class="px-6 sm:px-12 pt-5">
+                <Breadcrumb
+                    :items="[
+                        { label: 'Find a Provider', to: '/booking/search' },
+                        { label: branch?.name ?? 'Provider' },
+                    ]"
+                />
+            </div>
 
             <div class="px-6 sm:px-12 scroll-mt-20" ref="overviewRef">
                 <ProviderImage
@@ -114,6 +123,7 @@ import BookingCard from "~/components/sections/booking/provider/BookingCard.vue"
 import ReviewSection from "~/components/sections/booking/provider/Review.vue";
 import LocationPin from "~/components/ui/LocationPin.vue";
 import Location from "~/components/icons/location.vue";
+import Breadcrumb from "~/components/ui/Breadcrumb.vue";
 import { useBranch } from "~/composables/useBranchProvider";
 useHead({ title: "Search Homecare" });
 definePageMeta({

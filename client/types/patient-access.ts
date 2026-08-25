@@ -149,7 +149,6 @@ export interface InvoiceItem {
     amount_paid: number;
     balance_due: number;
     refund_status: string;
-    is_collected: boolean;
     created_at: string | null;
     source: InvoiceSource;
     payments: PaymentInfo[];

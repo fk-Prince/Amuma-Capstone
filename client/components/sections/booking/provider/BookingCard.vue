@@ -286,6 +286,3 @@ const confirm = () => {
     }
 };
 </script>
-
-const props = defineProps<{ hasHomecare: boolean; hasFacility: boolean; branch:
-BranchRetrieve; loading?: boolean; }>();

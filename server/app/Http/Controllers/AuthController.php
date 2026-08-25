@@ -18,18 +18,14 @@ class AuthController extends Controller
         $this->authService = $authService;
     }
 
-    public function validate(SignupRequest $request)
-    {
-        return response()->json([
-            'status' => true,
-            'message' => 'Validation passed',
-            'data' => $request->validated(),
-        ]);
-    }
-
     public function login(SigninRequest $request)
     {
         return $this->authService->login($request->all());
+    }
+
+    public function signup(SignupRequest $request)
+    {
+        return $this->authService->signup($request->all());
     }
 
     public function logout(Request $request)
@@ -45,10 +41,5 @@ class AuthController extends Controller
     public function googleCallback(Request $request)
     {
         return $this->authService->googleCallback();
-    }
-
-    public function signup(Request $request)
-    {
-        return $this->authService->signup($request->all());
     }
 }

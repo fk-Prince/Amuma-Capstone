@@ -26,7 +26,6 @@ class NominatimController extends Controller
     public function geocode(Request $request)
     {
         $q = $request->query('q');
-        Log::info('Geocode request: ' . $q);
         if (!$q || !is_string($q)) {
             return response()->json([
                 'lat' => null,

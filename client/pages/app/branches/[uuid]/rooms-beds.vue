@@ -302,7 +302,7 @@ const roomMatchesCurrentFilter = (room: Room) => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-slate-50">
+    <div class="min-h-screen-header bg-slate-50">
         <div class="mx-auto max-w-[1700px] space-y-6 p-4 md:p-6">
             <RoomDashboard @addRoom="addRoomClicked" :overview="overview" />
 

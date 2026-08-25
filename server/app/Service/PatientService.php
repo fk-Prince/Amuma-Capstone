@@ -3,6 +3,7 @@
 namespace App\Service;
 
 
+use App\Http\Resources\PatientReportResource;
 use App\Http\Resources\PatientResource;
 use App\Models\Schedule;
 use App\Models\User;
@@ -204,5 +205,158 @@ class PatientService
         }
 
         return new PatientResource($patient);
+    }
+
+    public const REPORT_SECTIONS = [
+        'profile',
+        'admission',
+        'billing',
+        'schedule',
+        'medication',
+        'vitals',
+        'activity',
+    ];
+
+    public function buildPatientReport(string $uuid, array $requestedSections)
+    {
+        $sections = array_values(array_intersect(
+            array_map('strtolower', $requestedSections),
+            self::REPORT_SECTIONS
+        ));
+
+        if (empty($sections)) {
+            throw new Exception('Select at least one section to print.', 422);
+        }
+
+        $patient = $this->patientRepository->findForReport($uuid);
+
+        if (!$patient) {
+            throw new Exception('Patient not found.', 404);
+        }
+
+        $built = [];
+
+        foreach ($sections as $section) {
+            $built[$section] = match ($section) {
+                'profile' => $this->reportProfile($patient),
+                'admission' => $this->reportAdmissions($patient),
+                'billing' => $this->reportBilling($patient),
+                'schedule' => $this->reportSchedules($patient),
+                'medication' => $this->reportMedications($patient),
+                'vitals' => $this->reportVitals($patient),
+                'activity' => $this->reportActivities($patient),
+            };
+        }
+
+        return new PatientReportResource([
+            'patient' => $patient,
+            'sections' => $built,
+        ]);
+    }
+
+    private function reportProfile($patient): array
+    {
+        return [
+            'initial_assessment' => $patient->initial_assessment,
+            'allergies' => $patient->allergies ?? [],
+        ];
+    }
+
+    private function reportAdmissions($patient): array
+    {
+        return $patient->admissions->map(fn($admission) => [
+            'status' => $admission->status,
+            'note' => $admission->note,
+            'admitted_at' => $admission->admitted_at?->format('Y-m-d H:i'),
+            'end_date' => $admission->end_date?->format('Y-m-d H:i'),
+            'room' => $admission->bed?->room?->room_no,
+            'room_type' => $admission->bed?->room?->room_type,
+            'bed' => $admission->bed?->bed_no,
+            'floor' => $admission->bed?->room?->floor,
+        ])->values()->all();
+    }
+
+    private function reportBilling($patient): array
+    {
+        return [
+            'summary' => $patient->billing_summary,
+            'invoices' => $patient->patient_invoices->map(fn($invoice) => [
+                'invoice_code' => $invoice->invoice_code,
+                'status' => $invoice->status,
+                'created_at' => $invoice->created_at?->format('Y-m-d'),
+                'total' => (float) $invoice->total,
+                'amount_paid' => (float) $invoice->amount_paid,
+                'refunded_amount' => (float) $invoice->refunded_amount,
+                'balance_due' => (float) $invoice->balance_due,
+                'payments' => $invoice->payments->map(fn($payment) => [
+                    'amount' => (float) $payment->amount,
+                    'payment_method' => $payment->payment_method,
+                    'reference_id' => $payment->reference_id,
+                    'paid_at' => $payment->created_at?->format('Y-m-d H:i'),
+                ])->values()->all(),
+            ])->values()->all(),
+        ];
+    }
+
+    private function reportSchedules($patient): array
+    {
+        return $patient->schedules->map(fn($schedule) => [
+            'schedule_code' => $schedule->schedule_code,
+            'status' => $schedule->status,
+            'scheduled_at' => $schedule->scheduled_at?->format('Y-m-d H:i'),
+            'services' => $schedule->scheduleServices->map(fn($scheduleService) => [
+                'service_name' => $scheduleService->service?->name,
+                'type' => $scheduleService->type,
+                'hours_booked' => $scheduleService->hours_booked,
+                'duration_minutes' => $scheduleService->service?->maximum_duration,
+            ])->values()->all(),
+        ])->values()->all();
+    }
+
+    private function reportMedications($patient): array
+    {
+        return $patient->medications->map(fn($medication) => [
+            'name' => $medication->name,
+            'strength' => $medication->strength,
+            'dosage_amount' => $medication->dosage_amount,
+            'dosage_unit' => $medication->dosage_unit,
+            'route' => $medication->route,
+            'frequency' => $medication->frequency,
+            'kind' => $medication->kind,
+            'times' => $medication->times,
+            'instructions' => $medication->instructions,
+            'taken_for' => $medication->taken_for,
+            'duration' => $medication->duration,
+            'start_date' => $medication->start_date?->format('Y-m-d'),
+        ])->values()->all();
+    }
+
+    private function reportVitals($patient): array
+    {
+        return $patient->vitals->map(fn($vital) => [
+            'recorded_date' => $vital->recorded_date?->format('Y-m-d'),
+            'recorded_time' => $vital->recorded_time,
+            'blood_pressure' => $vital->blood_pressure_systolic && $vital->blood_pressure_diastolic
+                ? "{$vital->blood_pressure_systolic}/{$vital->blood_pressure_diastolic}"
+                : null,
+            'heart_rate' => $vital->heart_rate,
+            'respiratory_rate' => $vital->respiratory_rate,
+            'temperature' => $vital->temperature,
+            'oxygen_saturation' => $vital->oxygen_saturation,
+            'blood_glucose' => $vital->blood_glucose,
+            'pain_level' => $vital->pain_level,
+            'notes' => $vital->notes,
+        ])->values()->all();
+    }
+
+    private function reportActivities($patient): array
+    {
+        return $patient->activities->map(fn($activity) => [
+            'title' => $activity->title,
+            'subtitle' => $activity->subtitle,
+            'description' => $activity->description,
+            'type' => $activity->type,
+            'occurred_at' => $activity->occurred_at?->format('Y-m-d H:i'),
+        ])->values()->all();
     }
 }

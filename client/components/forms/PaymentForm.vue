@@ -471,6 +471,7 @@ watch(isCash, (active) => {
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <LabelInput
                             label="First name"
+                            placeholder="Juan"
                             :error="errors.firstName"
                             :model-value="card.firstName"
                             @update:model-value="
@@ -480,6 +481,7 @@ watch(isCash, (active) => {
 
                         <LabelInput
                             label="Last name"
+                            placeholder="Dela Cruz"
                             :error="errors.lastName"
                             :model-value="card.lastName"
                             @update:model-value="updateCard('lastName', $event)"

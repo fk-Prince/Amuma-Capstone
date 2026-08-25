@@ -24,18 +24,14 @@ class ServiceController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->serviceService->createService($request->all(), $request->user());
     }
     public function update(UpdateServiceRequest $request, string $id)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Services, PermissionAction::Update);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->serviceService->updateService($request->all(), $id, $request->user());
     }
 
@@ -58,9 +54,7 @@ class ServiceController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(),  $branch->branch_id,  ModuleEnum::Services, PermissionAction::Create);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->serviceService->assignEmployeeService($request->user(), $request->all());
     }
 }

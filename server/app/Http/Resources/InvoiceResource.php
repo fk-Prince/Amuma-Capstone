@@ -25,7 +25,6 @@ class InvoiceResource extends JsonResource
             'refund_processing_amount' => $this->refunded_processing_amount,
             'refund_status'            => $this->refund_status,
             'balance_due'  => $this->balance_due,
-            'is_collected' => (bool) $this->is_collected,
             'status'       => $this->resolveStatus(),
             'created_at'   => $this->created_at?->toIso8601String(),
 

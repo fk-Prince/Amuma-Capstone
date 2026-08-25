@@ -236,7 +236,7 @@ const bloodPressureDisplay = computed(() => {
                                         Blood Pressure
                                     </label>
 
-                                    <div class="grid grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <BaseInput
                                             v-model="form.bloodPressureSystolic"
                                             type="number"

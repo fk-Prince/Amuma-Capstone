@@ -1,6 +1,6 @@
 <template>
     <section
-        class="h-full overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-100 md:p-8"
+        class="h-full overflow-hidden rounded-2xl bg-white p-4 sm:p-6 shadow-sm border border-slate-100 md:p-8"
         :class="{ 'animate-pulse': loading }"
     >
         <div class="mb-8">
@@ -22,9 +22,9 @@
         </div>
 
         <div
-            class="grid h-[calc(100vh-260px)] items-start gap-8 overflow-hidden md:grid-cols-[minmax(0,3fr)_2fr]"
+            class="grid items-start gap-6 md:h-[calc(100dvh-var(--header-h)-11rem)] md:gap-8 md:overflow-hidden md:grid-cols-[minmax(0,3fr)_2fr]"
         >
-            <div class="h-full overflow-y-auto pr-2">
+            <div class="md:h-full md:overflow-y-auto md:pr-2">
                 <div class="space-y-6">
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <BaseInput
@@ -221,9 +221,9 @@
             </div>
 
             <aside
-                class="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-slate-50"
+                class="flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 md:h-full"
             >
-                <div class="border-b border-slate-100 bg-white p-6">
+                <div class="border-b border-slate-100 bg-white p-4 sm:p-6">
                     <div class="flex items-center gap-2">
                         <ClipboardList class="h-4 w-4 text-primary" />
                         <h3 class="font-semibold text-slate-800">

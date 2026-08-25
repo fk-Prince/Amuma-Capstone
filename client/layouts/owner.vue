@@ -5,7 +5,7 @@
         <div class="flex flex-1 min-h-0">
             <OwnerSidebar :open="isOpen" :logo="logo" @close="isOpen = false" />
 
-            <main class="flex-1 overflow-auto p-0 m-0 relative">
+            <main class="flex-1 min-w-0 overflow-auto p-0 m-0 relative">
                 <div
                     class="pointer-events-none absolute inset-0 overflow-hidden"
                     aria-hidden="true"

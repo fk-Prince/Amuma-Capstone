@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { LoaderCircle } from "lucide-vue-next";
 
 defineOptions({ name: "BaseButton" });
 
@@ -50,6 +51,7 @@ const widthClass = computed(() => (props.full ? "w-full" : ""));
         :disabled="disabled || loading"
         :class="[baseClass, variantClass, sizeClass, widthClass, buttonClass]"
     >
+        <LoaderCircle v-if="loading" class="h-4 w-4 shrink-0 animate-spin" />
         <slot />
     </button>
 </template>

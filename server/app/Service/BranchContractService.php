@@ -18,11 +18,10 @@ class BranchContractService
     public function __construct(
         private BranchContractRepository $branchContractRepository,
         private RoomRepository $roomRepository,
-        private BookingRepository $bookingRepository
     ) {}
 
 
-    public function overview(User $user, array $payload)
+    public function overview(array $payload)
     {
         return [
             'total_active_plans' => $this->branchContractRepository->overview($payload, $payload['branch_id']),
@@ -36,7 +35,7 @@ class BranchContractService
         ];
     }
 
-    public function createBranchContract(User $user, array $payload)
+    public function createBranchContract(array $payload)
     {
         $existingContract = $this->branchContractRepository->findByField([
             ['branch_id', '=', $payload['branch_id']],
@@ -69,13 +68,13 @@ class BranchContractService
         ];
     }
 
-    public function list(User $user, array $payload)
+    public function list(array $payload)
     {
         $data = $this->branchContractRepository->all($payload['branch_id']);
         return $data;
     }
 
-    public function updateBranchContract(User $user, array $payload, string $id)
+    public function updateBranchContract(array $payload, string $id)
     {
         $contract = $this->branchContractRepository->findByField([
             ['branch_contract_id', '=', $id],
@@ -114,7 +113,7 @@ class BranchContractService
         ];
     }
 
-    public function roomContract(User $user, array $payload)
+    public function roomContract(array $payload)
     {
         $contracts = $this->branchContractRepository->findAllByConditions([
             ['category', '=', BranchContract::CAREGORY_FACILITY],

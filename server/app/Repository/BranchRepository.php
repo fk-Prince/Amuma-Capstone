@@ -4,8 +4,6 @@ namespace App\Repository;
 
 use App\Models\Branch;
 use App\Models\BranchImage;
-use App\Models\Subscription;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class BranchRepository
 {
@@ -20,10 +18,10 @@ class BranchRepository
         return Branch::all();
     }
 
-    public function getUserBranchesesByField(string $column, string $value)
-    {
-        return Branch::all();
-    }
+    // public function getUserBranchesesByField(string $column, string $value)
+    // {
+    //     return Branch::all();
+    // }
 
 
     public function findByField(string $column, string $value)
@@ -53,15 +51,17 @@ class BranchRepository
             ->keyBy('branch_id');
     }
 
-    public function getFilterBranches(int $perPage, array $filters)
+    public function getFilterBranches(int $perPage, array $filters, string $sort = 'recommended',   ?float $lat = null,  ?float $long = null)
     {
-        return Branch::with([
+        $query = Branch::with([
             'subscriptions.plans',
             'reviews',
             'location',
             'contracts',
         ])
             ->withAvg('reviews', 'rate')
+            ->withCount('reviews')
+            ->withCount('bookings')
 
             ->when(!empty($filters['city']), function ($query) use ($filters) {
                 $query->whereHas('location', function ($q) use ($filters) {
@@ -69,7 +69,7 @@ class BranchRepository
                 });
             })
             ->when(!empty($filters['provider_name']), function ($query) use ($filters) {
-                $query->where('branch_name', 'ilike', $filters['provider_name']);
+                $query->where('name', 'ILIKE', '%' . $filters['provider_name'] . '%');
             })
 
             ->when(
@@ -79,9 +79,33 @@ class BranchRepository
                         $q->where('plan_code', $filters['plan_code']);
                     });
                 }
-            )
-            ->orderByDesc('reviews_avg_rate')
-            ->paginate($perPage);
+            );
+
+        if ($sort === 'nearest' && $lat !== null && $long !== null) {
+            $distanceExpr = 'CASE
+                WHEN locations.latitude IS NULL OR locations.longitude IS NULL THEN NULL
+                ELSE (6371 * acos(LEAST(1, GREATEST(-1,
+                    cos(radians(?)) * cos(radians(locations.latitude)) * cos(radians(locations.longitude) - radians(?))
+                    + sin(radians(?)) * sin(radians(locations.latitude))
+                ))))
+            END';
+
+            $query
+                ->leftJoin('locations', 'locations.location_id', '=', 'branches.location_id')
+                ->selectRaw("{$distanceExpr} as distance_km", [$lat, $long, $lat])
+                ->orderByRaw(
+                    "({$distanceExpr}) IS NULL, ({$distanceExpr}) ASC",
+                    [$lat, $long, $lat, $lat, $long, $lat]
+                );
+        } elseif ($sort === 'highest_rated') {
+            $query->orderByDesc('reviews_avg_rate');
+        } elseif ($sort === 'most_popular') {
+            $query->orderByDesc('bookings_count');
+        } else {
+            $query->orderByDesc('reviews_avg_rate')->orderByDesc('reviews_count');
+        }
+
+        return $query->paginate($perPage);
     }
 
     public function getBranch(string $uuid)

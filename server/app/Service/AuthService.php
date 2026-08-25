@@ -38,7 +38,6 @@ class AuthService
         return response()->json([
             'user' => $user,
             'message' => __('Successfully logged-in.'),
-            // 'token' => $user->createToken('auth-token')->plainTextToken,
         ], 200);
     }
 
@@ -64,10 +63,22 @@ class AuthService
             throw new Exception(__('Email already exists.'), 409);
         }
 
-        $payload['password'] = Hash::make($payload['password']);
+        $user = $this->userRepository->create([
+            'email' => $payload['email'],
+            'password' => Hash::make($payload['password']),
+        ]);
 
-        $user = $this->userRepository->create($payload);
+        $initials = strtoupper(
+            substr($payload['first_name'], 0, 1) . substr($payload['last_name'], 0, 1)
+        );
 
+        $user->client()->create([
+            'first_name' => $payload['first_name'],
+            'last_name' => $payload['last_name'],
+            'avatar' => 'https://ui-avatars.com/api/?name=' . $initials,
+        ]);
+
+        $user->load('client');
 
         return response()->json([
             'user' => $user,
@@ -101,28 +112,37 @@ class AuthService
 
         if (!$user) {
             $nameParts = explode(' ', trim($googleUser->getName()), 2);
+            $firstName = $nameParts[0] ?? '';
+            $lastName = $nameParts[1] ?? '';
 
             $user = User::create([
-                'first_name' => $nameParts[0] ?? '',
-                'last_name' => $nameParts[1] ?? '',
                 'email' => $googleUser->getEmail(),
+                'provider' => 'google',
+                'provider_id' => $googleUser->getId(),
+                'is_verified' => true,
+            ]);
+
+            $user->client()->create([
+                'first_name' => $firstName,
+                'last_name' => $lastName,
                 'avatar' => $googleUser->getAvatar(),
+            ]);
+        } elseif ($user->provider !== 'google') {
+            $user->update([
                 'provider' => 'google',
                 'provider_id' => $googleUser->getId(),
             ]);
-        }
 
-        if ($user->provider !== 'google') {
-            $user->update([
-                'provider' => 'google',
-                'uuid' => $googleUser->getId(),
-                'avatar' => $googleUser->getAvatar(),
-            ]);
+            $user->client()->updateOrCreate(
+                ['user_id' => $user->user_id],
+                ['avatar' => $googleUser->getAvatar()],
+            );
         }
-
-        $token = $user->createToken('auth-token')->plainTextToken;
 
         Auth::login($user);
+        request()->session()->regenerate();
+
+        $token = $user->createToken('auth-token')->plainTextToken;
 
         return redirect()->away(
             config('app.client_url') . '/auth/success?token=' . urlencode($token)

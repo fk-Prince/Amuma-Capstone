@@ -25,9 +25,7 @@ class InvoiceController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->invoiceService->overview($request->all());
     }
 
@@ -35,19 +33,15 @@ class InvoiceController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Create);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
-        return $this->invoiceService->storeBooking($request->user(), $request->all());
+        BranchGuard::mergeRequest($request, $branch);
+        return $this->invoiceService->storeBooking($request->all());
     }
 
     public function show(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->invoiceService->retreiveBooking($request->all());
     }
 
@@ -55,21 +49,14 @@ class InvoiceController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
-
-        return $this->invoiceService->retrieveAllBooking($request->user(), $request->all());
+        BranchGuard::mergeRequest($request, $branch);
+        return $this->invoiceService->retrieveAllBooking($request->all());
     }
 
     public function action(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
-
+        BranchGuard::mergeRequest($request, $branch);
         if ($request->type === 'refund') {
             return $this->invoiceService->completeRefund($request->all());
         }

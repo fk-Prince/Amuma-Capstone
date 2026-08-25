@@ -69,7 +69,6 @@
 //     refunded_amount: number;
 //     refund_processing_amount: number;
 //     balance_due: number;
-//     is_collected: boolean;
 //     status: string;
 //     refund_status: RefundSummaryStatus;
 //     created_at: string | null;
@@ -89,7 +88,6 @@
 //     refunded_amount: number;
 //     refund_processing_amount: number;
 //     balance_due: number;
-//     is_collected: boolean;
 //     status: string;
 //     refund_status: RefundSummaryStatus;
 //     created_at: string | null;
@@ -245,7 +243,6 @@ export interface InvoiceDetail {
     refunded_amount: number;
     refund_processing_amount: number;
     balance_due: number;
-    is_collected: boolean;
     status: string;
     refund_status: RefundSummaryStatus;
     created_at: string | null;
@@ -266,7 +263,6 @@ export interface PatientInvoiceItem {
     refunded_amount: number;
     refund_processing_amount: number;
     balance_due: number;
-    is_collected: boolean;
     status: string;
     refund_status: RefundSummaryStatus;
     created_at: string | null;

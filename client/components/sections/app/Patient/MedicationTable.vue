@@ -566,7 +566,7 @@ const emit = defineEmits<{
                 </div>
             </div>
 
-            <div v-if="med.kind === 'Scheduled'" class="px-5 py-4">
+            <div v-if="med.kind === 'Scheduled'" class="px-3 sm:px-5 py-4">
                 <div class="overflow-x-auto rounded-xl border border-gray-100">
                     <div class="min-w-max">
                         <div

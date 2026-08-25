@@ -14,6 +14,7 @@ import AssignEmployeeModal from "~/components/sections/app/Patient/AssignEmploye
 import type { ScheduleItem } from "~/types/schedule";
 import ScheduleDetails from "~/components/sections/app/Patient/ScheduleDetails.vue";
 import HomecareADL from "~/components/sections/app/Patient/HomecareADL.vue";
+import PatientPrintModal from "~/components/sections/app/Patient/PatientPrintModal.vue";
 import SchedulePatient from "~/components/sections/app/Patient/SchedulePatient.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Pagination from "~/components/ui/Pagination.vue";
@@ -135,6 +136,7 @@ const savingMedication = ref(false);
 const showRecordVital = ref(false);
 const showAddActivity = ref(false);
 const showScheduleModal = ref(false);
+const showPrintModal = ref(false);
 
 const savingVital = ref(false);
 const savingActivity = ref(false);
@@ -502,8 +504,8 @@ onMounted(async () => {
 // );
 </script>
 <template>
-    <div class="min-h-screen bg-gray-50 p-6">
-        <div class="m-full space-y-4">
+    <div class="min-h-screen-header bg-gray-50 p-4 sm:p-6">
+        <div class="w-full min-w-0 space-y-4">
             <button
                 type="button"
                 class="flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-800"
@@ -580,31 +582,37 @@ onMounted(async () => {
                 </div>
             </div>
             <template v-else>
-                <PatientHeader v-if="patientData" :patient="patientData" />
+                <PatientHeader
+                    v-if="patientData"
+                    :patient="patientData"
+                    @print="showPrintModal = true"
+                />
 
                 <div
-                    class="rounded-2xl border space-y-4 border-gray-100 bg-white px-5 shadow-sm"
+                    class="min-w-0 max-w-full overflow-hidden rounded-2xl border space-y-4 border-gray-100 bg-white px-3 sm:px-5 shadow-sm"
                 >
-                    <nav class="flex gap-7">
-                        <button
-                            v-for="tab in visibleTabs"
-                            :key="tab"
-                            class="relative py-4 text-sm font-medium"
-                            :class="
-                                activeTab === tab
-                                    ? 'text-primary'
-                                    : 'text-gray-500'
-                            "
-                            @click="setActiveTab(tab)"
-                        >
-                            {{ tab }}
+                    <div class="min-w-0 overflow-x-auto scrollbar-none">
+                        <nav class="flex w-max gap-4 sm:gap-7">
+                            <button
+                                v-for="tab in visibleTabs"
+                                :key="tab"
+                                class="relative shrink-0 whitespace-nowrap py-4 text-sm font-medium"
+                                :class="
+                                    activeTab === tab
+                                        ? 'text-primary'
+                                        : 'text-gray-500'
+                                "
+                                @click="setActiveTab(tab)"
+                            >
+                                {{ tab }}
 
-                            <span
-                                v-if="activeTab === tab"
-                                class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                            />
-                        </button>
-                    </nav>
+                                <span
+                                    v-if="activeTab === tab"
+                                    class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                                />
+                            </button>
+                        </nav>
+                    </div>
 
                     <template v-if="activeTab === 'Medication'">
                         <p
@@ -808,6 +816,13 @@ onMounted(async () => {
                 </div>
             </template>
         </div>
+
+        <PatientPrintModal
+            :open="showPrintModal"
+            :patient-uuid="uuid"
+            :branch-uuid="b_uuid"
+            @close="showPrintModal = false"
+        />
 
         <AssignEmployeeModal
             :open="assignModalOpen"

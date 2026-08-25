@@ -6,11 +6,10 @@
                 class="fixed inset-0 z-50 flex items-center justify-center bg-primary-950/60 p-4 backdrop-blur-sm"
             >
                 <div
-                    class="w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-[0_20px_60px_-15px_rgba(10,40,87,0.35)] ring-1 ring-black/5"
+                    class="w-full max-w-4xl max-h-[90dvh] overflow-y-auto rounded-2xl bg-white shadow-[0_20px_60px_-15px_rgba(10,40,87,0.35)] ring-1 ring-black/5"
                 >
-                    <!-- HEADER -->
                     <div
-                        class="flex items-start gap-4 border-b border-slate-100 px-8 py-7"
+                        class="flex items-start gap-4 border-b border-slate-100 px-4 sm:px-8 py-5 sm:py-7"
                     >
                         <div
                             class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600 ring-1 ring-rose-100"
@@ -68,7 +67,7 @@
                     </div>
 
                     <!-- BODY -->
-                    <div class="max-h-[78vh] overflow-y-auto px-8 py-7">
+                    <div class="px-4 sm:px-8 py-5 sm:py-7">
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <!-- CURRENT -->
                             <section class="flex flex-col">
@@ -649,7 +648,7 @@
 
                     <!-- FOOTER -->
                     <div
-                        class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-8 py-5"
+                        class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-4 sm:px-8 py-5"
                     >
                         <div
                             v-if="

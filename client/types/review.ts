@@ -5,6 +5,7 @@ export interface Review {
     branch_id: number;
     rate: number;
     description: string;
+    image?: string | null;
     created_at: string;
     updated_at: string;
     user: User

@@ -25,19 +25,15 @@ class BookingController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->bookingService->listBooking($request->user(), $request->all());
     }
 
     public function store(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        $request->merge([
-            'branch' => $branch,
-            'branch_id' => $branch->branch_id
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
+        $request->merge(['branch' => $branch]);
 
         if ($request->action === 'regular') {
             return $this->bookingService->createBooking($request->user(), $request->all());
@@ -49,10 +45,8 @@ class BookingController extends Controller
     public function action(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        $request->merge([
-            'branch' => $branch,
-            'branch_id' => $branch->branch_id
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
+        $request->merge(['branch' => $branch]);
 
         if ($request->action === 'total') {
             return $this->bookingHelper->getTotal($request->all());
@@ -72,9 +66,7 @@ class BookingController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->bookingService->show($request->all());
     }
 
@@ -82,9 +74,7 @@ class BookingController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return  $this->bookingService->overview($request->all());
     }
 }

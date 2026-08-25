@@ -535,7 +535,7 @@ function cardClasses(status?: string) {
                         </div>
                     </div>
 
-                    <div class="mt-4 grid grid-cols-3 gap-3">
+                    <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <div class="flex items-center gap-2">
                             <Building2 class="h-3.5 w-3.5 text-primary" />
                             <div>

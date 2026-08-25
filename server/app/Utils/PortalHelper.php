@@ -515,7 +515,6 @@ class PortalHelper
                 'amount_paid' => (float) $invoice->amount_paid,
                 'balance_due' => (float) $invoice->balance_due,
                 'refund_status' => $invoice->refund_status,
-                'is_collected' => $invoice->is_collected,
                 'created_at' => $invoice->created_at?->format('Y-m-d H:i:s'),
 
                 'payments' => $invoice->payments

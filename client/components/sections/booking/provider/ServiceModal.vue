@@ -52,7 +52,7 @@
                     </div>
 
                     <div
-                        class="flex items-center gap-3 border-b border-gray-100 px-6 py-3"
+                        class="flex flex-col gap-3 border-b border-gray-100 px-6 py-3 sm:flex-row sm:items-center"
                     >
                         <div class="relative flex-1">
                             <Search
@@ -67,7 +67,7 @@
                             />
                         </div>
 
-                        <div class="w-52">
+                        <div class="w-full sm:w-52">
                             <Combobox
                                 :model-value="selectedCategory"
                                 @update:model-value="selectCategory"
@@ -135,7 +135,7 @@
                                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                 "
                             >
-                                <div class="flex items-center gap-3">
+                                <div class="flex min-w-0 items-center gap-3">
                                     <span
                                         class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition"
                                         :class="
@@ -158,9 +158,9 @@
                                         class="sr-only"
                                     />
 
-                                    <div>
+                                    <div class="min-w-0">
                                         <p
-                                            class="text-sm font-medium leading-tight text-gray-900"
+                                            class="truncate text-sm font-medium leading-tight text-gray-900"
                                         >
                                             {{ service.service_name }}
                                         </p>

@@ -21,10 +21,5 @@ class AppServiceProvider extends ServiceProvider
     }
 
 
-    public function boot(): void
-    {
-        Patient::observe(PatientObserver::class);
-        Client::observe(ClientObserver::class);
-        Booking::observe(BookingObserver::class);
-    }
+    public function boot(): void {}
 }

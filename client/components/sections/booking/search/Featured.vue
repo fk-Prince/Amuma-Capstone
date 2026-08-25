@@ -1,6 +1,6 @@
 <template>
-    <section class="py-16 font-sans">
-        <div class="max-w-6xl mx-auto px-6">
+    <section class="py-16 mx-auto max-w-[100rem]">
+        <div class="mx-auto px-6">
             <div class="mb-10">
                 <div class="flex items-center gap-2.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>

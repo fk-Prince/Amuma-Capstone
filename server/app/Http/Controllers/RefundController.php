@@ -14,12 +14,6 @@ class RefundController extends Controller
         private RefundService $refundService
     ) {}
 
-    /**
-     * Family/client-facing endpoint: claim the refund(s) already sitting in
-     * "processing" for a patient (created automatically elsewhere, e.g. on
-     * discharge) by supplying how they want to be paid out. Staff then
-     * releases the actual funds via the existing admin refund-complete flow.
-     */
     public function store(Request $request)
     {
         $user = AuthGuard::requireUser($request->user());

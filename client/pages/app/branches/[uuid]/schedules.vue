@@ -1,7 +1,7 @@
 <template>
-    <div class="min-h-[calc(100vh-90px)] bg-light p-6 font-sans">
+    <div class="min-h-screen-header bg-light p-3 sm:p-4 lg:p-6 font-sans">
         <div
-            class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 max-w-8xl min-h-[calc(100vh-90px-3rem)] lg:h-[calc(100vh-90px-3rem)]"
+            class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 max-w-8xl lg:h-[calc(100dvh-var(--header-h)-3rem)]"
         >
             <div class="flex min-w-0 min-h-0 flex-col">
                 <ScheduleFilter />

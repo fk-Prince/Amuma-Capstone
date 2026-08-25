@@ -476,7 +476,6 @@ class PatientAdmissionService
                 'branch_id'      => $payload['branch_id'],
                 'total'          => $contract['price'],
                 'original_total' => $contract['price'],
-                'is_collected'   => false,
             ]);
 
             InvoiceFacility::create([

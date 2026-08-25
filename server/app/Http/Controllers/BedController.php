@@ -25,9 +25,7 @@ class BedController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Create);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->bedService->createBed($request->user(), $request->all());
     }
 
@@ -35,9 +33,7 @@ class BedController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Update);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->bedService->updateBed($request->user(), $request->all(), $id);
     }
 }

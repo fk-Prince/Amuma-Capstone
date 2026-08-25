@@ -46,14 +46,16 @@
                 v-model="statusFilter"
                 class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
-                <option value="all">All status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+                <option value="all">All branches</option>
+                <option value="verified">Verified</option>
+                <option value="pending">Pending review</option>
             </select>
 
             <button
                 type="button"
-                class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+                :disabled="branchStore.loading"
+                class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                @click="openAddBranch"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -312,7 +314,6 @@
                     v-for="branch in filteredBranches"
                     :key="branch.branch_id"
                     :branch="branch"
-                    @toggle-status="toggleStatus"
                     @edit="onEditBranch"
                     @menu="onBranchMenu"
                 />
@@ -336,12 +337,21 @@
                 </button>
             </div>
         </div>
+
+        <AddBranchModal
+            v-if="showAddBranch && agencyId"
+            :agency-id="agencyId"
+            :agency-name="agency?.name ?? 'Your agency'"
+            @close="showAddBranch = false"
+            @created="onBranchCreated"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
 import BranchDashboard from "~/components/sections/app/branches/BranchDashboard.vue";
 import BranchCard from "~/components/sections/app/branches/BranchCard.vue";
+import AddBranchModal from "~/components/sections/app/Branch/AddBranchModal.vue";
 import { computed, ref, h, onMounted } from "vue";
 import { agencyService } from "~/api/agency/AgencyService";
 import { useBranchStore } from "~/stores/branch";
@@ -363,12 +373,10 @@ type Branch = {
     branch_id: number;
     uuid: string;
     name: string;
-    region: string;
     address: string;
     phone: string;
     email: string;
-    tags: string;
-    status: "active" | "inactive";
+    is_verified: boolean;
     rooms: number;
     staffs: number;
     patients: number;
@@ -378,8 +386,62 @@ type Branch = {
 const branchStore = useBranchStore();
 
 const search = ref("");
-const statusFilter = ref<"all" | "active" | "inactive">("all");
+const statusFilter = ref<"all" | "verified" | "pending">("all");
 const viewMode = ref<"list" | "grid">("grid");
+
+const showAddBranch = ref(false);
+
+// Every branch belongs to an agency, so fall back to the first loaded branch:
+// `activeBranch` resolves by route uuid and is briefly null while the branch
+// store hydrates, which would otherwise leave "Add New Branch" stuck disabled.
+const agencyId = computed(
+    () =>
+        branchStore.activeBranch?.agency?.agency_id ??
+        branchStore.branches[0]?.agency?.agency_id ??
+        null,
+);
+
+const openAddBranch = async () => {
+    // Direct loads can reach this page before the branch store has hydrated,
+    // so pull the list in on demand rather than leaving the button inert.
+    if (!branchStore.branches.length) {
+        await branchStore.fetchBranches();
+    }
+
+    showAddBranch.value = true;
+};
+
+const onBranchCreated = (result: any) => {
+    showAddBranch.value = false;
+
+    const created = result?.branch;
+
+    // Card payments create the branch inline and hand it back, so the list and
+    // the counters are patched in place — no refetch, no loading flash.
+    // GCash completes through a webhook after the redirect, so there is nothing
+    // to sync yet; that branch shows up on the next load.
+    if (!created) return;
+
+    branches.value = [mapBranch(created), ...branches.value];
+
+    statsData.value = {
+        ...statsData.value,
+        total_branches: statsData.value.total_branches + 1,
+        total_branches_new_this_month:
+            statsData.value.total_branches_new_this_month + 1,
+        active_branches_percent: percentOfTotal(
+            statsData.value.active_branches,
+            statsData.value.total_branches + 1,
+        ),
+        expiring_soon_percent: percentOfTotal(
+            statsData.value.expiring_soon,
+            statsData.value.total_branches + 1,
+        ),
+    };
+};
+
+const percentOfTotal = (value: number, total: number) =>
+    total ? Math.round((value / total) * 100) : 0;
 
 const loading = ref(true);
 const loadingMore = ref(false);
@@ -403,31 +465,34 @@ const filteredBranches = computed(() => {
         const matchesSearch =
             !search.value ||
             b.name.toLowerCase().includes(search.value.toLowerCase()) ||
-            b.region.toLowerCase().includes(search.value.toLowerCase());
+            b.address.toLowerCase().includes(search.value.toLowerCase());
 
         const matchesStatus =
-            statusFilter.value === "all" || b.status === statusFilter.value;
+            statusFilter.value === "all" ||
+            b.is_verified === (statusFilter.value === "verified");
 
         return matchesSearch && matchesStatus;
     });
 });
 
-function toggleStatus(branch: Branch) {
-    branch.status = branch.status === "active" ? "inactive" : "active";
-}
-
 const mapBranch = (b: any): Branch => ({
     branch_id: b.branch_id,
     uuid: b.uuid,
     name: b.name,
-    region: b.location?.province ?? "—",
     address:
-        [b.location?.street, b.location?.city].filter(Boolean).join(", ") ||
+        b.location?.full_address ||
+        [
+            b.location?.street,
+            b.location?.city,
+            b.location?.province,
+            b.location?.country,
+        ]
+            .filter(Boolean)
+            .join(", ") ||
         "—",
     phone: b.contact_number ?? "—",
     email: b.email ?? "—",
-    tags: Array.isArray(b.services) ? b.services.join(" + ") : "",
-    status: b.status,
+    is_verified: Boolean(b.is_verified),
     rooms: b.rooms_count ?? 0,
     staffs: b.staff_count ?? 0,
     patients: b.patients_count ?? 0,

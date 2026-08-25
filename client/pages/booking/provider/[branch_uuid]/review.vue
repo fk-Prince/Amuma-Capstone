@@ -36,6 +36,22 @@
         </aside>
 
         <main class="px-5 sm:px-10 py-8 w-full mx-auto lg:mx-0">
+            <Breadcrumb
+                class="mb-5"
+                :items="[
+                    { label: 'Find a Provider', to: '/booking/search' },
+                    {
+                        label: branch?.name ?? 'Provider',
+                        to: `/booking/provider/${uuid}`,
+                    },
+                    {
+                        label: 'Booking Details',
+                        to: `/booking/provider/${uuid}/details`,
+                    },
+                    { label: 'Review & Submit' },
+                ]"
+            />
+
             <div class="lg:hidden mb-6">
                 <div class="flex items-center gap-2">
                     <div
@@ -137,6 +153,8 @@ import { bookingService } from "~/api/booking/BookingService";
 import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import type { CardDetails } from "~/types/payment";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
+import Breadcrumb from "~/components/ui/Breadcrumb.vue";
+import { useBranch } from "~/composables/useBranchProvider";
 
 useHead({ title: "Review Booking" });
 definePageMeta({
@@ -155,6 +173,19 @@ const closeModal = ref<(() => void) | null>(null);
 const uuid = route.params.branch_uuid as string;
 const total = ref();
 const loadingTotal = ref(true);
+
+const { branch, fetchBranch } = useBranch();
+
+onMounted(async () => {
+    // Reuses the shared branch state from the details step when the user
+    // arrived through the normal flow; only re-fetches if it's missing or
+    // belongs to a different branch (e.g. a direct link or a back/forward
+    // navigation that skipped that step).
+    if (!branch.value || branch.value.uuid !== uuid) {
+        fetchBranch(uuid).catch(() => {});
+    }
+});
+
 onMounted(async () => {
     // if (!bookingStore.category) {
     //     router.replace(

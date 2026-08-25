@@ -24,9 +24,7 @@ class PatientController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Patients, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->patientService->retrievePatients($request->all(), $request->user());
     }
 
@@ -34,9 +32,20 @@ class PatientController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Patients, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->patientService->showPatient($uuid);
+    }
+
+    public function report(Request $request, string $uuid)
+    {
+        BranchGuard::resolveBranch($request->branch_uuid);
+
+        $sections = $request->input('sections', []);
+
+        if (is_string($sections)) {
+            $sections = array_filter(array_map('trim', explode(',', $sections)));
+        }
+
+        return $this->patientService->buildPatientReport($uuid, (array) $sections);
     }
 }

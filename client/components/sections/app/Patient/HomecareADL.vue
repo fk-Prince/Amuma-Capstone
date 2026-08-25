@@ -2,7 +2,7 @@
     <div class="rounded-2xl bg-white font-sans">
         <div
             v-if="variant !== 3"
-            class="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between"
+            class="flex flex-col gap-3 p-4 sm:p-5 sm:flex-row sm:items-center sm:justify-between"
         >
             <div>
                 <h3 class="text-base font-semibold text-secondary">
@@ -34,7 +34,7 @@
             </div>
         </div>
 
-        <div v-if="loading" class="space-y-3 p-5">
+        <div v-if="loading" class="space-y-3 p-4 sm:p-5">
             <div
                 v-for="i in 4"
                 :key="i"
@@ -53,7 +53,7 @@
             }}
         </div>
 
-        <div v-else class="p-5 space-y-6">
+        <div v-else class="p-4 sm:p-5 space-y-6">
             <div
                 v-for="group in logGroups"
                 :key="group.key"
@@ -81,7 +81,7 @@
                 >
                     <button
                         type="button"
-                        class="flex w-full flex-col gap-3 p-5 text-left sm:flex-row sm:items-center sm:justify-between"
+                        class="flex w-full flex-col gap-3 p-4 sm:p-5 text-left sm:flex-row sm:items-center sm:justify-between"
                         :class="
                             isExpanded(log)
                                 ? 'border-b border-muted-light'
@@ -262,7 +262,7 @@
                         @leave="onLeave"
                     >
                         <div v-show="isExpanded(log)" class="overflow-hidden">
-                            <div class="px-5">
+                            <div class="px-4 sm:px-5">
                                 <div
                                     class="mt-4 space-y-2 border-b border-muted-light pb-4"
                                 >
@@ -404,7 +404,7 @@
                                             </p>
                                         </div>
 
-                                        <div class="grid gap-4 lg:grid-cols-4">
+                                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                                             <div>
                                                 <p
                                                     class="text-[11px] uppercase text-muted"

@@ -12,13 +12,6 @@ class AuthService extends BaseService {
     }
 
     async login(payload: SigninRequest): Promise<any> {
-        // const config = useRuntimeConfig()
-
-        // await $fetch('/sanctum/csrf-cookie', {
-        //     baseURL: config.public.backendApi,
-        //     credentials: 'include',
-        // })
-
         return await this.request(this.resource + '/login', 'POST', payload);
     }
 

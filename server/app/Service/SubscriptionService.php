@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use App\Factories\PaymentFactory;
 use App\Guard\AuthGuard;
 use App\Http\Resources\SubscriptionResource;
+use App\Models\EmployeePermission;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Models\User;
@@ -188,7 +189,9 @@ class SubscriptionService
                 $agencyLatitude = $agency['latitude'] ?? null;
                 $agencyLongitude = $agency['longitude'] ?? null;
 
-                if (empty($agencyLatitude) || empty($agencyLongitude)) {
+                $needsAgency = empty($agencyData) && !empty($agencyName);
+
+                if ($needsAgency && (empty($agencyLatitude) || empty($agencyLongitude))) {
                     $geo = $this->nominatimService->geocodeAddress(
                         collect($agency)->only([
                             'street',
@@ -202,7 +205,7 @@ class SubscriptionService
                     $agencyLongitude = $geo['lng'] ?? null;
                 }
 
-                if (empty($agencyData) && !empty($agencyName)) {
+                if ($needsAgency) {
 
                     $agencyLocation = $this->locationRepository->create([
                         'street' => $agency['street'] ?? null,
@@ -307,16 +310,52 @@ class SubscriptionService
                 $modules = $this->moduleRepository->getAllModules();
 
                 foreach ($modules as $module) {
-                    $employee->permissions()->create([
-                        'module_id'   => $module->module_id,
-                        'branch_id'   => $branchData->branch_id,
-                        'employee_id' => $employee->employee_id,
-                    ]);
+                    EmployeePermission::updateOrCreate(
+                        [
+                            'employee_id' => $employee->employee_id,
+                            'branch_id'   => $branchData->branch_id,
+                            'module_id'   => $module->module_id,
+                        ],
+                        [
+                            'can_read'    => true,
+                            'can_create'  => true,
+                            'can_update'  => true,
+                            'can_approve' => true,
+                            'can_assign'  => true,
+                        ]
+                    );
                 }
 
+                // Returned in the same shape AgencyRepository::paginate() uses,
+                // so the client can append the new branch to a list it already
+                // has instead of refetching it.
                 return response()->json([
                     'status' => true,
                     'message' => __('Subscription created successfully.'),
+                    'branch' => [
+                        'branch_id' => $branchData->branch_id,
+                        'uuid' => $branchData->uuid,
+                        'name' => $branchData->name,
+                        'description' => $branchData->description,
+                        'image' => $branchData->image,
+                        'is_verified' => $branchData->is_verified,
+                        'contact_number' => $branchData->contact_number,
+                        'email' => $branchData->email,
+                        'location' => $branchLocation ? [
+                            'street' => $branchLocation->street,
+                            'city' => $branchLocation->city,
+                            'province' => $branchLocation->province,
+                            'country' => $branchLocation->country,
+                            'full_address' => $branchLocation->full_address,
+                        ] : null,
+                        'agency' => $agencyData ? [
+                            'agency_id' => $agencyData->agency_id,
+                            'name' => $agencyData->name,
+                        ] : null,
+                        'rooms_count' => 0,
+                        'staff_count' => 1,
+                        'patients_count' => 0,
+                    ],
                 ], 201);
             });
         } catch (\Exception $e) {

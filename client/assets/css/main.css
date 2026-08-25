@@ -1,8 +1,59 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --header-h: 150px;
+}
+
+@media (min-width: 1024px) {
+    :root {
+        --header-h: 90px;
+    }
+}
+
 html,
 body,
 #__nuxt {
     height: 100%;
     margin: 0;
     padding: 0;
+}
+
+@layer utilities {
+    .min-h-screen-header {
+        min-height: calc(100dvh - var(--header-h));
+    }
+
+    .h-screen-header {
+        height: calc(100dvh - var(--header-h));
+    }
+
+    .max-w-8xl {
+        max-width: 88rem;
+    }
+
+    .scrollbar-none {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .scrollbar-none::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+@media print {
+    body.printing-report > *:not(.patient-print-report) {
+        display: none !important;
+    }
+
+    body.printing-report {
+        background: #ffffff !important;
+        height: auto !important;
+    }
+
+    html:has(body.printing-report) {
+        height: auto !important;
+    }
 }

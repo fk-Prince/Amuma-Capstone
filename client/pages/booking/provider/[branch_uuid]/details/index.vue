@@ -88,6 +88,18 @@
         </aside>
 
         <main class="px-5 sm:px-10 py-8 max-w-7xl w-full mx-auto lg:mx-0">
+            <Breadcrumb
+                class="mb-5"
+                :items="[
+                    { label: 'Find a Provider', to: '/booking/search' },
+                    {
+                        label: branch?.name ?? 'Provider',
+                        to: `/booking/provider/${uuid}`,
+                    },
+                    { label: 'Booking Details' },
+                ]"
+            />
+
             <header class="mb-8">
                 <p
                     class="text-xs font-semibold uppercase tracking-wide text-primary"
@@ -252,6 +264,7 @@ import { ClipboardCheck, Info } from "lucide-vue-next";
 import { useBookingFlowValidation } from "~/composables/useBookingFlowValidation";
 
 import BookingSteps from "~/components/sections/booking/provider/BookingSteps.vue";
+import Breadcrumb from "~/components/ui/Breadcrumb.vue";
 import HomecareBooking from "~/components/sections/booking/provider/HomecareBooking.vue";
 import FacilityBooking from "~/components/sections/booking/provider/FacilityBooking.vue";
 import GuardianForm from "~/components/forms/GuardianForm.vue";

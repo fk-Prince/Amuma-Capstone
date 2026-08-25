@@ -219,121 +219,7 @@
                 </div>
             </div>
 
-            <div class="relative">
-                <button
-                    type="button"
-                    @click.stop="toggleDropdown('profile')"
-                    class="flex items-center gap-2"
-                    aria-label="Profile menu"
-                >
-                    <div class="text-sm text-left hidden sm:block">
-                        <p class="font-medium text-gray-800 leading-tight">
-                            {{ familyMember.name }}
-                        </p>
-
-                        <p class="text-xs text-brand-500 leading-tight">
-                            {{ familyMember.role }}
-                        </p>
-                    </div>
-
-                    <div
-                        class="w-9 h-9 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center sm:hidden"
-                    >
-                        <UserCheck class="w-4 h-4" />
-                    </div>
-
-                    <ChevronDown class="w-3.5 h-3.5 text-gray-400 ml-0.5" />
-                </button>
-
-                <div
-                    v-if="openDropdown === 'profile'"
-                    class="absolute right-0 top-full mt-3 w-[calc(100vw-2rem)] max-w-60 bg-white rounded-2xl border border-gray-100 shadow-lg z-50 overflow-hidden"
-                >
-                    <div class="px-4 py-3 border-b border-gray-50">
-                        <p class="text-sm font-medium text-gray-800">
-                            {{ familyMember.name }}
-                        </p>
-
-                        <p class="text-xs text-gray-400">
-                            {{ familyMember.role }}
-                        </p>
-                    </div>
-
-                    <div class="px-4 pt-3 pb-2 border-b border-gray-50">
-                        <p class="text-[11px] font-medium text-gray-400 mb-2">
-                            Appearance
-                        </p>
-
-                        <div
-                            class="flex items-center gap-1 bg-gray-50 rounded-full p-1"
-                        >
-                            <button
-                                type="button"
-                                @click.stop="setTheme(false)"
-                                class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-full text-xs font-medium transition-colors"
-                                :class="
-                                    !isDark
-                                        ? 'bg-white text-gray-800 shadow-sm'
-                                        : 'text-gray-400 hover:text-gray-600'
-                                "
-                            >
-                                <Sun class="w-3.5 h-3.5" />
-                                Light
-                            </button>
-
-                            <button
-                                type="button"
-                                @click.stop="setTheme(true)"
-                                class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-full text-xs font-medium transition-colors"
-                                :class="
-                                    isDark
-                                        ? 'bg-gray-800 text-white shadow-sm'
-                                        : 'text-gray-400 hover:text-gray-600'
-                                "
-                            >
-                                <Moon class="w-3.5 h-3.5" />
-                                Dark
-                            </button>
-                        </div>
-                    </div>
-
-                    <NuxtLink
-                        to="/settings"
-                        @click="closeDropdowns"
-                        class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50"
-                    >
-                        <UserCheck class="w-4 h-4 text-gray-400" />
-                        My Profile
-                    </NuxtLink>
-
-                    <NuxtLink
-                        to="/settings"
-                        @click="closeDropdowns"
-                        class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50"
-                    >
-                        <Settings class="w-4 h-4 text-gray-400" />
-                        Account Settings
-                    </NuxtLink>
-
-                    <button
-                        type="button"
-                        @click="closeDropdowns"
-                        class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50"
-                    >
-                        <HelpCircle class="w-4 h-4 text-gray-400" />
-                        Help &amp; Support
-                    </button>
-
-                    <button
-                        type="button"
-                        @click="closeDropdowns"
-                        class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-500 hover:bg-rose-50 border-t border-gray-50"
-                    >
-                        <LogOut class="w-4 h-4" />
-                        Logout
-                    </button>
-                </div>
-            </div>
+            <NavbarProfileDropdown v-if="user" :user="user" />
         </div>
     </header>
 </template>
@@ -351,15 +237,12 @@ import {
     CalendarClock,
     CreditCard,
     MessageSquare,
-    ChevronDown,
-    Sun,
-    Moon,
-    UserCheck,
-    Settings,
-    HelpCircle,
-    LogOut,
     Menu,
 } from "lucide-vue-next";
+import NavbarProfileDropdown from "~/components/ui/NavbarProfileDropdown.vue";
+import { useAuthUser } from "~/composables/useAuthUser";
+
+const user = useAuthUser();
 
 const emit = defineEmits<{
     open: [];
@@ -443,7 +326,7 @@ const formattedTime = computed(() =>
     }),
 );
 
-type DropdownKey = "messages" | "notifications" | "profile" | null;
+type DropdownKey = "messages" | "notifications" | null;
 
 const openDropdown = ref<DropdownKey>(null);
 
@@ -543,43 +426,12 @@ const unreadMessageCount = computed(
     () => conversationPreviews.value.filter((c) => c.unread).length,
 );
 
-const isDark = ref(false);
-
-function applyTheme() {
-    if (typeof document === "undefined") {
-        return;
-    }
-
-    document.documentElement.classList.toggle("dark", isDark.value);
-}
-
-function setTheme(dark: boolean) {
-    isDark.value = dark;
-
-    if (typeof localStorage !== "undefined") {
-        localStorage.setItem("amuma-theme", dark ? "dark" : "light");
-    }
-
-    applyTheme();
-}
-
-const familyMember = ref({
-    name: "Nicollette Libunao",
-    role: "Family Member",
-});
-
 onMounted(() => {
     clockTimer = setInterval(() => {
         now.value = new Date();
     }, 1000 * 30);
 
     window.addEventListener("click", handleOutsideClick);
-
-    const saved = localStorage.getItem("amuma-theme");
-
-    isDark.value = saved === "dark";
-
-    applyTheme();
 });
 
 onUnmounted(() => {

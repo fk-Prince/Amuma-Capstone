@@ -139,10 +139,10 @@
                 </div>
 
                 <div
-                    class="grid divide-x divide-[#EDF4F3] border-b border-[#EDF4F3] bg-[#FAFDFC]"
-                    :class="hasRefunds ? 'grid-cols-4' : 'grid-cols-3'"
+                    class="grid grid-cols-2 sm:divide-x divide-[#EDF4F3] border-b border-[#EDF4F3] bg-[#FAFDFC]"
+                    :class="hasRefunds ? 'sm:grid-cols-4' : 'sm:grid-cols-3'"
                 >
-                    <div class="px-7 py-5">
+                    <div class="px-4 sm:px-7 py-4 sm:py-5">
                         <p
                             class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono mb-1"
                         >
@@ -153,7 +153,7 @@
                         </p>
                     </div>
 
-                    <div class="px-7 py-5 bg-[#E4F4EE]/40">
+                    <div class="px-4 sm:px-7 py-4 sm:py-5 bg-[#E4F4EE]/40">
                         <p
                             class="text-[10px] uppercase tracking-[0.15em] text-[#1F7A4D]/80 font-mono mb-1"
                         >
@@ -166,7 +166,7 @@
 
                     <div
                         v-if="hasRefunds"
-                        class="px-7 py-5 bg-[#FDF3DE]/60"
+                        class="px-4 sm:px-7 py-4 sm:py-5 bg-[#FDF3DE]/60"
                     >
                         <p
                             class="text-[10px] uppercase tracking-[0.15em] text-[#966B1F]/80 font-mono mb-1"
@@ -178,7 +178,7 @@
                         </p>
                     </div>
 
-                    <div class="px-7 py-5 bg-[#FBE8E6]/40">
+                    <div class="px-4 sm:px-7 py-4 sm:py-5 bg-[#FBE8E6]/40">
                         <p
                             class="text-[10px] uppercase tracking-[0.15em] text-[#B3402F]/80 font-mono mb-1"
                         >

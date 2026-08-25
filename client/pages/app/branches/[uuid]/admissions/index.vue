@@ -1,8 +1,8 @@
 <template>
-    <div class="min-h-screen bg-slate-50">
+    <div class="min-h-screen-header bg-slate-50">
         <div class="w-full mx-auto px-4 lg:px-8 py-8">
             <div
-                class="relative mb-6 inline-grid grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm"
+                class="relative mb-6 grid w-full grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm sm:inline-grid sm:w-auto"
             >
                 <div
                     class="absolute inset-y-1 left-1 rounded-lg bg-primary transition-transform duration-300 ease-out"
@@ -14,7 +14,7 @@
 
                 <button
                     type="button"
-                    class="relative z-10 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                    class="relative z-10 rounded-lg px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors"
                     :class="
                         viewMode === 'form'
                             ? 'text-white'
@@ -27,7 +27,7 @@
 
                 <button
                     type="button"
-                    class="relative z-10 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                    class="relative z-10 rounded-lg px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors"
                     :class="
                         viewMode === 'table'
                             ? 'text-white'
@@ -40,7 +40,7 @@
 
                 <button
                     type="button"
-                    class="relative z-10 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                    class="relative z-10 rounded-lg px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors"
                     :class="
                         viewMode === 'bookings'
                             ? 'text-white'
@@ -52,7 +52,7 @@
                 </button>
             </div>
 
-            <div v-if="viewMode === 'table'" class="h-[calc(100vh-220px)]">
+            <div v-if="viewMode === 'table'" class="min-h-[24rem] lg:h-[calc(100dvh-var(--header-h)-8rem)]">
                 <DataTable
                     :columns="admissionColumns"
                     :rows="admissionRows"
@@ -105,7 +105,7 @@
                 </DataTable>
             </div>
 
-            <div v-if="viewMode === 'bookings'" class="h-[calc(100vh-220px)]">
+            <div v-if="viewMode === 'bookings'" class="min-h-[24rem] lg:h-[calc(100dvh-var(--header-h)-8rem)]">
                 <DataTable
                     :columns="bookingColumns"
                     :rows="bookingRows"

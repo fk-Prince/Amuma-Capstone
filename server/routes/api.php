@@ -115,6 +115,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // PRIVATE API ROUTES
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/patients/{uuid}/report', [PatientController::class, 'report']);
+
     Route::apiResources([
         'employees' => EmployeeController::class,
         'agencies' => AgencyController::class,

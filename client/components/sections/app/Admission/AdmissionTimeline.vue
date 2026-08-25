@@ -164,7 +164,7 @@
                                         class="border-t border-slate-100 bg-slate-50/60 px-4 py-3"
                                     >
                                         <div
-                                            class="grid grid-cols-3 gap-x-6 gap-y-3"
+                                            class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-3"
                                         >
                                             <div class="min-w-0">
                                                 <p

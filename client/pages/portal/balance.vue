@@ -90,7 +90,6 @@ interface InvoiceSummary {
     amount_paid: number;
     balance_due: number;
     refund_status: string;
-    is_collected: boolean;
     created_at: string;
     accommodation_type: string | null;
     billing_cycle: string | null;
@@ -484,7 +483,6 @@ function mapInvoices(items: any[]): InvoiceSummary[] {
             amount_paid: Number(invoice.amount_paid ?? 0),
             balance_due: Number(invoice.balance_due ?? 0),
             refund_status: invoice.refund_status ?? "none",
-            is_collected: Boolean(invoice.is_collected),
             created_at: invoice.created_at,
             accommodation_type: contract.accommodation_type ?? null,
             billing_cycle: contract.billing_cycle ?? null,

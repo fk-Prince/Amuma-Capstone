@@ -1,5 +1,5 @@
 <template>
-    <div class="h-[calc(100vh-90px)] bg-slate-100 p-2 overflow-visible">
+    <div class="min-h-screen-header bg-slate-100 p-2 overflow-visible">
         <div
             class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-4 items-stretch max-w-8xl h-full min-h-0"
         >
@@ -195,7 +195,7 @@
                     </button>
 
                     <div
-                        class="bg-white rounded-2xl min-h-[calc(100vh-150px)] shadow-sm border border-[#E4EFED] py-16 text-center"
+                        class="bg-white rounded-2xl min-h-[calc(100dvh-var(--header-h))] shadow-sm border border-[#E4EFED] py-16 text-center"
                     >
                         <div
                             class="mx-auto h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin"
@@ -261,7 +261,7 @@
                     </button>
 
                     <div
-                        class="bg-white rounded-2xl min-h-[calc(100vh-150px)] shadow-sm border border-[#E4EFED] py-16 text-center"
+                        class="bg-white rounded-2xl min-h-[calc(100dvh-var(--header-h))] shadow-sm border border-[#E4EFED] py-16 text-center"
                     >
                         <p class="text-sm font-medium text-gray-500">
                             Booking not found
@@ -1022,15 +1022,6 @@ watch(bookingData, () => {
         resolveSelectedBooking(selectedReferenceId.value);
     }
 });
-
-const emptyStateTitle = computed(() =>
-    searchQuery.value ||
-    statusFilter.value !== "all" ||
-    dateFrom.value ||
-    dateTo.value
-        ? "No matching bookings"
-        : "No bookings yet",
-);
 
 const emptyStateSubtitle = computed(() =>
     searchQuery.value ||

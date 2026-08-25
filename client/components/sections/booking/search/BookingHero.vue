@@ -1,5 +1,7 @@
 <template>
-    <section class="pt-[50px] relative overflow-hidden bg-secondary">
+    <section
+        class="pt-[50px] min-h-screen relative overflow-hidden bg-secondary"
+    >
         <img
             :src="logo"
             class="pointer-events-none select-none absolute inset-0 w-full h-full object-cover"
@@ -58,14 +60,16 @@
                     </ul>
 
                     <!-- stats -->
-                    <div class="mt-10 flex divide-x divide-white/10">
+                    <div
+                        class="mt-10 grid grid-cols-3 gap-4 sm:flex sm:gap-0 sm:divide-x sm:divide-white/10"
+                    >
                         <div
                             v-for="stat in stats"
                             :key="stat.label"
-                            class="px-6 first:pl-0"
+                            class="sm:px-6 sm:first:pl-0"
                         >
                             <p
-                                class="text-2xl md:text-3xl font-medium text-white tabular-nums"
+                                class="text-xl sm:text-2xl md:text-3xl font-medium text-white tabular-nums"
                             >
                                 {{ stat.value }}
                             </p>

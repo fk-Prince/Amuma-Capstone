@@ -132,11 +132,6 @@
                         </svg>
                     </div>
 
-                    <span
-                        class="px-2.5 py-1 rounded-full bg-fuchsia-50 text-fuchsia-600 text-xs font-semibold"
-                    >
-                        14 days
-                    </span>
                 </div>
 
                 <p
@@ -147,10 +142,6 @@
 
                 <p class="mt-1 text-3xl font-bold text-slate-800 tabular-nums">
                     {{ statsData.expiring_soon }}
-                </p>
-
-                <p class="mt-3 text-xs text-fuchsia-600">
-                    {{ statsData.expiring_soon_percent }}% of total branches
                 </p>
             </div>
         </div>

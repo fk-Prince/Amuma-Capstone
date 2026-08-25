@@ -53,7 +53,6 @@ class ScheduleService
             $invoice = $this->invoiceRepository->create([
                 'branch_id' => $payload['branch_id'],
                 'status' => Invoice::STATUS_PENDING,
-                'is_collected' => false,
                 'total' => 0
             ]);
 

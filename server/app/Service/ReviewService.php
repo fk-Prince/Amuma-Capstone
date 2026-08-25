@@ -6,6 +6,7 @@ use App\Guard\BranchGuard;
 use App\Repository\ReviewRepository;
 use App\Http\Resources\ReviewResource;
 use App\Models\User;
+use App\Service\External\SupabaseService;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -28,7 +29,11 @@ class ReviewService
             'description' => $payload['description'],
         ];
 
-        $review = $this->reviewRepository->create($reviewData);
+        if (!empty($payload['image'])) {
+            $reviewData['image'] = SupabaseService::store($payload['image'])['url'];
+        }
+
+        $review = $this->reviewRepository->create($reviewData, $branch->uuid);
 
         return response()->json([
             'success' => true,
@@ -40,11 +45,6 @@ class ReviewService
     public function retrieveReview(array $payload)
     {
         $branch =  BranchGuard::resolveBranch($payload['branch_uuid']);
-        return $this->reviewRepository->paginate(
-            $payload['per_page'],
-            $branch->uuid,
-            $payload['rate'] ?? null,
-            $payload['withComments'] ?? false
-        );
+        return $this->reviewRepository->paginate($payload['per_page'],  $branch->uuid,  $payload['rate'] ?? null,   $payload['withComments'] ?? false);
     }
 }

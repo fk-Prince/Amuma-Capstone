@@ -26,6 +26,7 @@ class ReviewRequest extends FormRequest
             'branch_uuid' => ['nullable', 'exists:branches,uuid'],
             'rate' => ['required', 'decimal:2'],
             'description' => ['required', 'string'],
+            'image' => ['nullable', 'file', 'image', 'max:5120'],
         ];
     }
 }

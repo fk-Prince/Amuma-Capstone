@@ -26,9 +26,11 @@ class AgencyRepository
             ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
             ->count();
 
+        // Branches have no `status` column — verification is what marks a
+        // branch as live, so that is what "active" counts here.
         $activeBranches = Branch::query()
             ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
-            ->where('status', 'active')
+            ->where('is_verified', true)
             ->count();
 
         $newThisMonth = Branch::query()
@@ -79,21 +81,28 @@ class AgencyRepository
         $perPage = $payload['per_page'] ?? 12;
 
         $branches = Branch::query()
-            ->with(['location', 'agencies', 'services'])
+            ->with(['location', 'agencies'])
             ->withCount(['rooms', 'patients', 'employees'])
             ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
+            // ilike, not like: Postgres LIKE is case-sensitive, so a lowercase
+            // query would never match a capitalised branch or city name.
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
-                    $sub->where('name', 'like', "%{$search}%")
-                        ->orWhere('contact_number', 'like', "%{$search}%")
+                    $sub->where('name', 'ilike', "%{$search}%")
+                        ->orWhere('email', 'ilike', "%{$search}%")
+                        ->orWhere('contact_number', 'ilike', "%{$search}%")
                         ->orWhereHas('location', function ($loc) use ($search) {
-                            $loc->where('city', 'like', "%{$search}%")
-                                ->orWhere('street', 'like', "%{$search}%")
-                                ->orWhere('province', 'like', "%{$search}%");
+                            $loc->where('city', 'ilike', "%{$search}%")
+                                ->orWhere('street', 'ilike', "%{$search}%")
+                                ->orWhere('province', 'ilike', "%{$search}%")
+                                ->orWhere('country', 'ilike', "%{$search}%");
                         });
                 });
             })
-            ->when($status && $status !== 'all', fn($q) => $q->where('status', $status))
+            ->when(
+                $status && $status !== 'all',
+                fn($q) => $q->where('is_verified', $status === 'verified')
+            )
             ->latest('created_at')
             ->paginate($perPage);
 
@@ -104,7 +113,6 @@ class AgencyRepository
                 'name' => $branch->name,
                 'description' => $branch->description,
                 'image' => $branch->image,
-                'status' => $branch->status,
                 'is_verified' => $branch->is_verified,
                 'contact_number' => $branch->contact_number,
                 'email' => $branch->email,
@@ -113,12 +121,12 @@ class AgencyRepository
                     'city' => $branch->location->city,
                     'province' => $branch->location->province,
                     'country' => $branch->location->country,
+                    'full_address' => $branch->location->full_address,
                 ] : null,
                 'agency' => $branch->agencies ? [
                     'agency_id' => $branch->agencies->agency_id,
                     'name' => $branch->agencies->name,
                 ] : null,
-                'services' => $branch->services->pluck('name'),
                 'rooms_count' => $branch->rooms_count,
                 'staff_count' => $branch->employees_count,
                 'patients_count' => $branch->patients_count,

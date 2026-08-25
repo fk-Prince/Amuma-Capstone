@@ -24,9 +24,7 @@ class ScheduleController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->scheduleService->createSchedule($request->user(), $request->all());
     }
 
@@ -34,9 +32,7 @@ class ScheduleController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->scheduleService->retrieveSchedule($request->user(), $request->all());
     }
 
@@ -45,23 +41,17 @@ class ScheduleController extends Controller
         if ($request->type === 'assign') { // USED
             $branch = BranchGuard::resolveBranch($request->branch_uuid);
             // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Create);
-            $request->merge([
-                'branch_id' => $branch->branch_id,
-            ]);
+            BranchGuard::mergeRequest($request, $branch);
             return $this->scheduleService->assignEmployee($request->user(), $request->all());
         } else  if ($request->type === 'available_employee') {
             // NOT USED
             $branch = BranchGuard::resolveBranch($request->branch_uuid);
             // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Create);
-            $request->merge([
-                'branch_id' => $branch->branch_id,
-            ]);
+            BranchGuard::mergeRequest($request, $branch);
             return $this->scheduleService->availableEmployee($request->all());
         } else if ($request->type === 'overview') {
             $branch = BranchGuard::resolveBranch($request->branch_uuid);
-            $request->merge([
-                'branch_id' => $branch->branch_id,
-            ]);
+            BranchGuard::mergeRequest($request, $branch);
             return $this->scheduleService->overview($request->all());
         }
     }
@@ -70,9 +60,7 @@ class ScheduleController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Update);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->scheduleService->checkConflictSchedule($request->user(), $request->all());
     }
 }

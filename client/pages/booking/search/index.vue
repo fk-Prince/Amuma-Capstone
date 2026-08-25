@@ -5,6 +5,10 @@
         <div
             class="w-full z-40 border-b border-slate-200/50 bg-white backdrop-blur-sm"
         >
+            <div class="mx-auto max-w-[100rem] px-4 pt-4">
+                <Breadcrumb :items="[{ label: 'Find a Provider' }]" />
+            </div>
+
             <div class="mx-auto max-w-[100rem]">
                 <Filter />
             </div>
@@ -118,6 +122,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Filter from "~/components/sections/booking/search/Filter.vue";
+import Breadcrumb from "~/components/ui/Breadcrumb.vue";
 import LocationPin from "~/components/ui/LocationPin.vue";
 import SearchBooking from "~/components/sections/booking/search/SearchBooking.vue";
 import { branchService } from "~/api/branch/BranchService";
@@ -174,6 +179,7 @@ const l = async (opts: { append?: boolean } = {}) => {
             lat: route.query.lat ?? DEFAULT_LOCATION.lat,
             long: route.query.long ?? DEFAULT_LOCATION.long,
             plan_code: route.query.plan_code ?? "",
+            sort: route.query.sort ?? "recommended",
             per_page: PER_PAGE,
             page: page.value,
         };

@@ -11,12 +11,16 @@ defineOptions({ name: "SignupForm" });
 const { success, error } = useToast();
 
 const signupData = ref({
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
 });
 
 const errors = ref({
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -31,6 +35,20 @@ watch(
     () => signupData.value.email,
     () => {
         errors.value.email = "";
+    },
+);
+
+watch(
+    () => signupData.value.firstName,
+    () => {
+        errors.value.firstName = "";
+    },
+);
+
+watch(
+    () => signupData.value.lastName,
+    () => {
+        errors.value.lastName = "";
     },
 );
 
@@ -51,10 +69,20 @@ watch(
 
 async function handleSignUp() {
     errors.value = {
+        firstName: "",
+        lastName: "",
         email: "",
         password: "",
         confirmPassword: "",
     };
+
+    if (!signupData.value.firstName.trim()) {
+        errors.value.firstName = "First name is required.";
+    }
+
+    if (!signupData.value.lastName.trim()) {
+        errors.value.lastName = "Last name is required.";
+    }
 
     if (!signupData.value.email) {
         errors.value.email = "Email is required.";
@@ -77,6 +105,8 @@ async function handleSignUp() {
     }
 
     if (
+        errors.value.firstName ||
+        errors.value.lastName ||
         errors.value.email ||
         errors.value.password ||
         errors.value.confirmPassword
@@ -120,6 +150,8 @@ async function verifyOtp(code: string) {
         const res = await otpService.validateOtp({
             otp_key,
             user: {
+                first_name: signupData.value.firstName.trim(),
+                last_name: signupData.value.lastName.trim(),
                 email: signupData.value.email,
                 password: signupData.value.password,
             },
@@ -180,6 +212,22 @@ async function verifyOtp(code: string) {
         </div>
 
         <div class="flex flex-col gap-5">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <BaseInput
+                    v-model="signupData.firstName"
+                    label="First Name"
+                    placeholder="Enter your first name"
+                    :error="errors.firstName"
+                />
+
+                <BaseInput
+                    v-model="signupData.lastName"
+                    label="Last Name"
+                    placeholder="Enter your last name"
+                    :error="errors.lastName"
+                />
+            </div>
+
             <BaseInput
                 v-model="signupData.email"
                 label="Email"

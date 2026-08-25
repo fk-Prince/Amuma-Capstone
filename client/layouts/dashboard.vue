@@ -18,7 +18,7 @@
                 />
             </div>
 
-            <main class="flex-1 overflow-auto p-0 m-0">
+            <main class="flex-1 min-w-0 overflow-auto p-0 m-0">
                 <div
                     class="pointer-events-none absolute inset-0 overflow-hidden print:hidden"
                     aria-hidden="true"

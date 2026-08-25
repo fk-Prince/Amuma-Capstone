@@ -8,12 +8,9 @@ use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Http\Requests\Room\StoreRoomRequest;
 use App\Http\Requests\Room\UpdateRoomRequest;
-use App\Http\Requests\RoomRequest;
 use App\Service\RoomService;
-use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
+
 
 class RoomController extends Controller
 {
@@ -28,9 +25,7 @@ class RoomController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->roomService->listRoom($request->user(), $request->all());
     }
 
@@ -38,9 +33,7 @@ class RoomController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Create);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
 
         return $this->roomService->createRoom($request->user(), $request->all());
     }
@@ -49,9 +42,7 @@ class RoomController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Update);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->roomService->updateRoom($request->user(), $id, $request->all());
     }
 
@@ -59,9 +50,7 @@ class RoomController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->roomService->overview($request->user(), $request->all());
     }
 }

@@ -21,13 +21,13 @@
         </div>
 
         <div class="flex-1 min-h-0 overflow-auto">
-            <table class="w-full text-sm">
+            <table class="w-full min-w-[42rem] text-sm">
                 <thead class="sticky top-0 z-10">
                     <tr class="bg-slate-50/70">
                         <th
                             v-for="col in columns"
                             :key="col.key"
-                            class="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 whitespace-nowrap bg-slate-50/70"
+                            class="px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 whitespace-nowrap bg-slate-50/70"
                             :class="[
                                 alignClass(col.align),
                                 col.sortable
@@ -130,7 +130,7 @@
                             <td
                                 v-for="col in columns"
                                 :key="col.key"
-                                class="px-5 py-3.5 text-slate-700 whitespace-nowrap"
+                                class="px-3 sm:px-5 py-3.5 text-slate-700 whitespace-nowrap"
                                 :class="alignClass(col.align)"
                             >
                                 <slot

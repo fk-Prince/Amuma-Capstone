@@ -10,36 +10,46 @@
                         :is-search="true"
                         placeholder="Provider name or service"
                         input-class="px-4 py-2.5 rounded-lg"
-                        @keyup.enter="handleSearch"
                     />
                 </div>
 
                 <div class="relative shrink-0">
                     <button
                         type="button"
-                        class="flex items-center gap-4 px-4 py-2.5 text-sm border border-slate-300 rounded-lg bg-white hover:bg-slate-50 transition-colors"
+                        class="flex items-center gap-4 rounded-lg border px-4 py-2.5 text-sm transition-colors"
+                        :class="
+                            hasActiveFilters
+                                ? 'border-primary/30 bg-primary/5 hover:bg-primary/10'
+                                : 'border-slate-300 bg-white hover:bg-slate-50'
+                        "
                         @click="dropdownOpen = !dropdownOpen"
                     >
-                        <span class="text-slate-600">
-                            Location
-                            <span class="text-slate-900 font-medium ml-1">{{
+                        <span class="flex items-center gap-1.5 text-slate-600">
+                            <MapPin class="h-3.5 w-3.5 text-slate-400" />
+                            <span class="text-slate-900 font-medium">{{
                                 locationLabel
                             }}</span>
                         </span>
                         <span class="text-slate-300">|</span>
-                        <span class="text-slate-600">
-                            Care Type
-                            <span class="text-slate-900 font-medium ml-1">{{
+                        <span class="flex items-center gap-1.5 text-slate-600">
+                            <HeartPulse class="h-3.5 w-3.5 text-slate-400" />
+                            <span class="text-slate-900 font-medium">{{
                                 careTypeLabel
                             }}</span>
                         </span>
                         <span class="text-slate-300">|</span>
-                        <span class="text-slate-600">
-                            Sort by
-                            <span class="text-slate-900 font-medium ml-1">{{
+                        <span class="flex items-center gap-1.5 text-slate-600">
+                            <ArrowUpDown class="h-3.5 w-3.5 text-slate-400" />
+                            <span class="text-slate-900 font-medium">{{
                                 sortLabel
                             }}</span>
                         </span>
+
+                        <span
+                            v-if="hasActiveFilters"
+                            class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                        />
+
                         <Dropdown :isOpen="dropdownOpen" />
                     </button>
 
@@ -52,142 +62,166 @@
                     <transition name="fade-slide">
                         <div
                             v-if="dropdownOpen"
-                            class="absolute right-0 z-30 mt-2 w-[650px] max-w-[90vw] bg-white rounded-xl shadow-lg border border-slate-200 p-6"
+                            class="absolute right-0 z-30 mt-2 w-[650px] max-w-[90vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
                         >
-                            <button
-                                type="button"
-                                class="absolute right-4 top-4 text-slate-400 hover:text-slate-600"
-                                @click="dropdownOpen = false"
+                            <div
+                                class="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/80 px-6 py-4"
                             >
-                                <svg
-                                    class="h-4 w-4"
-                                    viewBox="0 0 20 20"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="1.75"
-                                    stroke-linecap="round"
-                                >
-                                    <path d="M5 5l10 10M15 5 5 15" />
-                                </svg>
-                            </button>
-
-                            <div class="flex items-start gap-6 py-2">
-                                <p
-                                    class="w-24 shrink-0 text-sm font-semibold text-slate-900 pt-1.5"
-                                >
-                                    Location
-                                </p>
-                                <div class="flex-1">
-                                    <BaseInput
-                                        :model-value="searchLocation"
-                                        @update:model-value="onLocationInput"
-                                        :placeholder="
-                                            locating
-                                                ? 'Locating...'
-                                                : 'Enter your city'
-                                        "
-                                        input-class="py-2.5 rounded-lg w-full"
-                                        :readonly="locating"
+                                <div>
+                                    <p
+                                        class="text-sm font-semibold text-slate-900"
                                     >
-                                        <template #suffix>
-                                            <span
-                                                class="pr-3 flex items-center"
-                                            >
-                                                <Location
-                                                    clickable
-                                                    @get-location="
-                                                        handleLocation
-                                                    "
-                                                    @loading="locating = $event"
-                                                />
-                                            </span>
-                                        </template>
-                                    </BaseInput>
+                                        Refine Your Search
+                                    </p>
+                                    <p class="mt-0.5 text-xs text-slate-500">
+                                        Narrow providers down by location, care
+                                        type, and how results are sorted.
+                                    </p>
                                 </div>
-                            </div>
 
-                            <div class="h-px bg-slate-200 my-4" />
-
-                            <div class="flex items-start gap-6 py-2">
-                                <p
-                                    class="w-24 shrink-0 text-sm font-semibold text-slate-900 pt-1.5"
-                                >
-                                    Care Type
-                                </p>
-                                <div class="flex flex-wrap gap-x-6 gap-y-3">
-                                    <button
-                                        v-for="item in planCodeList"
-                                        :key="item.value"
-                                        type="button"
-                                        class="text-sm transition"
-                                        :class="
-                                            planCodeType === item.value
-                                                ? 'text-primary font-medium'
-                                                : 'text-slate-600 hover:text-primary'
-                                        "
-                                        @click="planCodeType = item.value"
-                                    >
-                                        {{ item.label }}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="h-px bg-slate-200 my-4" />
-
-                            <div class="flex items-start gap-6 py-2">
-                                <p
-                                    class="w-24 shrink-0 text-sm font-semibold text-slate-900 pt-1.5"
-                                >
-                                    Sort by
-                                </p>
-                                <div class="flex flex-wrap gap-x-6 gap-y-3">
-                                    <button
-                                        v-for="sort in sortOptions"
-                                        :key="sort.value"
-                                        type="button"
-                                        class="text-sm transition"
-                                        :class="
-                                            activeSortOption === sort.value
-                                                ? 'text-primary font-medium'
-                                                : 'text-slate-600 hover:text-primary'
-                                        "
-                                        @click="activeSortOption = sort.value"
-                                    >
-                                        {{ sort.label }}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="h-px bg-slate-200 my-4" />
-
-                            <div class="flex justify-end gap-3">
                                 <button
                                     type="button"
-                                    class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition"
-                                    @click="resetFilters"
+                                    class="shrink-0 text-slate-400 hover:text-slate-600"
+                                    @click="dropdownOpen = false"
                                 >
-                                    Reset
+                                    <svg
+                                        class="h-4 w-4"
+                                        viewBox="0 0 20 20"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.75"
+                                        stroke-linecap="round"
+                                    >
+                                        <path d="M5 5l10 10M15 5 5 15" />
+                                    </svg>
                                 </button>
-                                <button
-                                    type="button"
-                                    class="px-5 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:opacity-90 transition"
-                                    @click="applyFilters"
-                                >
-                                    Apply
-                                </button>
+                            </div>
+
+                            <div class="p-6">
+                                <div class="flex items-start gap-6 py-2">
+                                    <p
+                                        class="flex w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
+                                    >
+                                        <MapPin
+                                            class="h-3.5 w-3.5 text-slate-400"
+                                        />
+                                        Location
+                                    </p>
+                                    <div class="flex-1">
+                                        <BaseInput
+                                            :model-value="searchLocation"
+                                            @update:model-value="
+                                                onLocationInput
+                                            "
+                                            :placeholder="
+                                                locating
+                                                    ? 'Locating...'
+                                                    : 'Enter your city'
+                                            "
+                                            input-class="py-2.5 rounded-lg w-full"
+                                            :readonly="locating"
+                                        >
+                                            <template #suffix>
+                                                <span
+                                                    class="pr-3 flex items-center"
+                                                >
+                                                    <Location
+                                                        clickable
+                                                        @get-location="
+                                                            handleLocation
+                                                        "
+                                                        @loading="
+                                                            locating = $event
+                                                        "
+                                                    />
+                                                </span>
+                                            </template>
+                                        </BaseInput>
+                                    </div>
+                                </div>
+
+                                <div class="h-px bg-slate-200 my-4" />
+
+                                <div class="flex items-start gap-6 py-2">
+                                    <p
+                                        class="flex w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
+                                    >
+                                        <HeartPulse
+                                            class="h-3.5 w-3.5 text-slate-400"
+                                        />
+                                        Care Type
+                                    </p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <button
+                                            v-for="item in planCodeList"
+                                            :key="item.value"
+                                            type="button"
+                                            class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
+                                            :class="
+                                                planCodeType === item.value
+                                                    ? 'border-primary bg-primary text-white'
+                                                    : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
+                                            "
+                                            @click="planCodeType = item.value"
+                                        >
+                                            {{ item.label }}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="h-px bg-slate-200 my-4" />
+
+                                <div class="flex items-start gap-6 py-2">
+                                    <p
+                                        class="flex w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
+                                    >
+                                        <ArrowUpDown
+                                            class="h-3.5 w-3.5 text-slate-400"
+                                        />
+                                        Sort by
+                                    </p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <button
+                                            v-for="sort in sortOptions"
+                                            :key="sort.value"
+                                            type="button"
+                                            class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
+                                            :class="
+                                                activeSortOption === sort.value
+                                                    ? 'border-primary bg-primary text-white'
+                                                    : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
+                                            "
+                                            @click="
+                                                activeSortOption = sort.value
+                                            "
+                                        >
+                                            {{ sort.label }}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="h-px bg-slate-200 my-4" />
+
+                                <div class="flex justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition"
+                                        @click="resetFilters"
+                                    >
+                                        Reset
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="px-5 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:opacity-90 transition"
+                                        @click="applyFilters"
+                                    >
+                                        Apply
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </transition>
                 </div>
-
-                <button
-                    class="w-12 h-12 bg-primary hover:bg-primary-600 active:scale-95 flex items-center justify-center rounded-lg border border-primary shadow-sm transition-all duration-150 shrink-0"
-                    @click="handleSearch"
-                    type="button"
-                    aria-label="Search"
-                >
-                    <Search extraClass="text-white" />
-                </button>
             </div>
         </div>
     </header>
@@ -202,7 +236,6 @@
                     :is-search="true"
                     placeholder="Search provider name"
                     input-class="px-4 py-2.5 rounded-lg"
-                    @keyup.enter="handleSearch"
                 />
             </div>
 
@@ -267,21 +300,13 @@
                 </div>
             </div>
 
-            <div class="flex gap-3 pt-2">
+            <div class="pt-2">
                 <button
                     type="button"
-                    class="flex-1 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg transition"
+                    class="w-full py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg transition"
                     @click="resetFilters"
                 >
                     Reset
-                </button>
-                <button
-                    type="button"
-                    class="flex-1 py-2.5 bg-primary hover:opacity-90 flex items-center justify-center gap-2 rounded-lg border border-primary text-white text-sm font-medium transition"
-                    @click="handleSearch"
-                >
-                    <Search extraClass="text-white" />
-                    <span>Search</span>
                 </button>
             </div>
         </div>
@@ -289,12 +314,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch, onBeforeUnmount } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import Location from "~/components/icons/location.vue";
-import Search from "~/components/icons/search.vue";
 import Dropdown from "~/components/icons/dropdown.vue";
+import { MapPin, HeartPulse, ArrowUpDown } from "lucide-vue-next";
 
 const route = useRoute();
 const router = useRouter();
@@ -335,6 +360,17 @@ const activeSortOption = ref((route.query.sort as string) ?? "recommended");
 const searchName = ref(
     (route.query.provider_name as string) ?? props.searchName ?? "",
 );
+
+// Debounced instead of requiring a search button click / Enter press —
+// waits for a pause in typing so we're not firing a request per keystroke.
+let searchDebounce: ReturnType<typeof setTimeout> | undefined;
+
+watch(searchName, () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => updateQuery(), 400);
+});
+
+onBeforeUnmount(() => clearTimeout(searchDebounce));
 
 const searchLocation = ref(
     (route.query.location as string) ??
@@ -418,19 +454,6 @@ function applyFilters() {
     dropdownOpen.value = false;
 }
 
-const handleSearch = () => {
-    if (!searchLocation.value?.trim()) {
-        searchLocation.value = DEFAULT_LOCATION.label;
-        lat.value = DEFAULT_LOCATION.lat;
-        long.value = DEFAULT_LOCATION.long;
-    } else if (!lat.value || !long.value) {
-        lat.value = "";
-        long.value = "";
-    }
-
-    updateQuery();
-};
-
 function resetFilters() {
     searchName.value = "";
     searchLocation.value = DEFAULT_LOCATION.label;
@@ -438,7 +461,19 @@ function resetFilters() {
     long.value = DEFAULT_LOCATION.long;
     planCodeType.value = "C";
     activeSortOption.value = "recommended";
+
+    // Was only resetting the local form state — the URL query (and the
+    // results it drives) stayed on whatever was previously applied.
+    updateQuery();
+    dropdownOpen.value = false;
 }
+
+const hasActiveFilters = computed(
+    () =>
+        planCodeType.value !== "C" ||
+        activeSortOption.value !== "recommended" ||
+        (searchLocation.value || "") !== DEFAULT_LOCATION.label,
+);
 </script>
 
 <style scoped>

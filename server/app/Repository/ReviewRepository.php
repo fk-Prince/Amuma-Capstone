@@ -3,75 +3,109 @@
 namespace App\Repository;
 
 use App\Models\Review;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Cache;
 
 class ReviewRepository
 {
-    public function paginate(
-        int $perPage,
-        string $branch_uuid,
-        ?int $rate = null,
-        bool $withComments = false
-    ) {
+    private function cacheKey(string $branchUuid): string
+    {
+        return "reviews:branch:{$branchUuid}";
+    }
 
-        $query = Review::query()
-            ->whereHas(
-                'branch',
-                fn($bq) =>
-                $bq->where('uuid', $branch_uuid)
-            )
-            ->when(
-                $rate !== null,
-                fn($q) =>
-                $q->whereRaw('ROUND(rate) = ?', [$rate])
-            )
-            ->when(
-                $withComments,
-                fn($q) =>
-                $q->whereNotNull('description')
-                    ->where('description', '!=', '')
-            );
 
-        $reviews = (clone $query)
-            ->with('user')
-            ->orderByRaw('ROUND(rate) DESC')
-            ->latest()
-            ->paginate($perPage);
+    private function loadReviews(string $branchUuid)
+    {
+        return Cache::rememberForever(
+            $this->cacheKey($branchUuid),
+            fn() => Review::query()
+                ->whereHas('branch', fn($q) => $q->where('uuid', $branchUuid))
+                ->with('user')
+                ->orderByRaw('ROUND(rate) DESC')
+                ->latest()
+                ->get()
+        );
+    }
 
-        $statsQuery = Review::query()
-            ->whereHas(
-                'branch',
-                fn($bq) =>
-                $bq->where('uuid', $branch_uuid)
-            );
+    public function paginate(int $perPage, string $branch_uuid,  ?int $rate = null,  bool $withComments = false)
+    {
+        $all = $this->loadReviews($branch_uuid);
 
-        $averageRating = (clone $statsQuery)->avg('rate');
+        $filtered = $all->filter(function ($review) use ($rate, $withComments) {
+            if ($rate !== null && (int) round($review->rate) !== $rate) {
+                return false;
+            }
 
-        $starCounts = (clone $statsQuery)
-            ->selectRaw('ROUND(rate) as star, COUNT(*) as total')
-            ->groupBy('star')
-            ->pluck('total', 'star');
+            if ($withComments && empty($review->description)) {
+                return false;
+            }
+
+            return true;
+        })->values();
+
+        $page = Paginator::resolveCurrentPage() ?: 1;
+
+        $items = $filtered->slice(($page - 1) * $perPage, $perPage)->values();
+
+        $reviews = new LengthAwarePaginator(
+            $items,
+            $filtered->count(),
+            $perPage,
+            $page,
+            [
+                'path' => Paginator::resolveCurrentPath(),
+                'query' => request()->query(),
+            ]
+        );
+
+        $starCounts = $all
+            ->groupBy(fn($review) => (int) round($review->rate))
+            ->map->count();
 
         $ratingBreakdown = collect(range(1, 5))
             ->mapWithKeys(fn($star) => [
                 $star => $starCounts[$star] ?? 0
             ]);
 
-        $withCommentsCount = (clone $statsQuery)
-            ->whereNotNull('description')
-            ->where('description', '!=', '')
+        $withCommentsCount = $all
+            ->filter(fn($review) => !empty($review->description))
             ->count();
 
         return [
             'paginator' => $reviews,
-            'average_rating' => round($averageRating, 2),
+            'average_rating' => round($all->avg('rate') ?? 0, 2),
             'rating_breakdown' => $ratingBreakdown,
             'with_comments_count' => $withCommentsCount,
         ];
     }
 
-    public function create(array $payload)
+    public function create(array $payload, ?string $branchUuid = null)
     {
-        return Review::create($payload);
+        $review = Review::create($payload);
+
+        if ($branchUuid) {
+            $review->load('user');
+
+            $key = $this->cacheKey($branchUuid);
+            $cached = Cache::get($key);
+
+            if ($cached !== null) {
+                $updated = $cached->push($review)->sort(function ($a, $b) {
+                    $rateCompare = round($b->rate) <=> round($a->rate);
+
+                    return $rateCompare !== 0
+                        ? $rateCompare
+                        : $b->created_at <=> $a->created_at;
+                })->values();
+
+                Cache::forever($key, $updated);
+            } else {
+                $this->loadReviews($branchUuid);
+            }
+        }
+
+        return $review;
     }
 
     public function findByUuid(string $uuid)

@@ -15,12 +15,10 @@ class PatientAccessController extends Controller
         $this->patientAccessService = $patientAccessService;
     }
 
-    public function executeAction(Request $request) {}
     public function retrieveAction(Request $request)
     {
         $clientId = $request->user()->client?->client_id;
 
-        // Then pass it to repository
         $payload = array_merge($request->all(), [
             'client_id' => $clientId,
             'user_id' => $request->user()->user_id,

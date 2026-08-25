@@ -16,6 +16,7 @@ class Review extends Model
         'user_id',
         'rate',
         'description',
+        'image',
     ];
 
     protected $casts = [

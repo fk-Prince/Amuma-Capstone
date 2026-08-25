@@ -1,5 +1,5 @@
 <template>
-    <div class="flex min-h-[calc(100vh-90px)] flex-col bg-slate-50">
+    <div class="flex min-h-screen-header flex-col bg-slate-50">
         <div
             class="mx-auto flex w-full max-w-[1700px] flex-1 flex-col space-y-6 p-4"
         >

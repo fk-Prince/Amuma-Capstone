@@ -9,6 +9,10 @@ export default defineNuxtConfig({
     'nuxt-auth-utils',
     '@nuxt/icon',
   ],
+
+  tailwindcss: {
+    cssPath: '~/assets/css/main.css',
+  },
   // runtimeConfig: {
   //   public: {
   //     backendApi: 'http://localhost:8000',

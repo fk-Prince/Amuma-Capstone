@@ -24,9 +24,7 @@ class AgencyController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::ManageBranches, PermissionAction::Read);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
         return $this->agencyService->listAgency($request->all());
     }
 
@@ -34,10 +32,8 @@ class AgencyController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::ManageBranches, PermissionAction::Update);
-        $request->merge([
-            'branch_id' => $branch->branch_id,
-            'agency_id' => $branch->agency_id
-        ]);
+        BranchGuard::mergeRequest($request, $branch);
+        $request->merge(['agency_id' => $branch->agency_id]);
         return $this->agencyService->update($request->all());
     }
 }

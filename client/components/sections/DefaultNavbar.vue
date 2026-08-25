@@ -75,7 +75,7 @@ const header = computed(() => {
         case 4:
             return [
                 "relative w-full h-[70px] flex items-center",
-                "md:px-[5%] lg:px-[10%]",
+                "md:px-[5%] lg:px-[8%]",
                 "transition-all duration-300 ease-out bg-primary",
             ]
                 .filter(Boolean)
@@ -87,12 +87,6 @@ const header = computed(() => {
             ]
                 .filter(Boolean)
                 .join(" ");
-        // case 3:
-        //     return "absolute top-0 left-1/4 -translate-x-1/4 w-full h-[90px] bg-gradient-to-b from-black/40 to-transparent z-[9999]";
-        // case 4:
-        //     return "w-full md:px-[5%] lg:px-[10%] bg-transparent h-[90px]";
-        // default:
-        //     return "";
     }
 });
 
@@ -238,9 +232,17 @@ watch(
 
                 <div class="flex items-center gap-3">
                     <template v-if="!hydrated || !user">
-                        <NuxtLink :to="hydrated ? '/auth/signin' : undefined">
+                        <NuxtLink
+                            :to="hydrated ? '/auth/signin' : undefined"
+                            class="shrink-0"
+                        >
                             <BaseButton
-                                buttonClass="px-[15px] lg:px-[30px] whitespace-nowrap min-w-fit"
+                                buttonClass="px-[18px] lg:px-[28px] h-11 rounded-xl whitespace-nowrap min-w-fit transition-all duration-300"
+                                :class="
+                                    variant === 1 && !scrolled
+                                        ? 'bg-primary text-white border border-primary shadow-[0_6px_20px_rgba(37,99,235,0.25)] hover:bg-primary/90 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(37,99,235,0.35)]'
+                                        : ''
+                                "
                             >
                                 SIGN IN
                             </BaseButton>
@@ -248,18 +250,25 @@ watch(
 
                         <NuxtLink
                             :to="hydrated ? '/auth/signup' : undefined"
-                            class="hidden sm:block"
+                            class="hidden sm:block shrink-0"
                         >
                             <BaseButton
                                 variant="secondary"
-                                class="bg-transparent px-[30px] border-muted-dark hover:bg-primary/10 whitespace-nowrap min-w-fit"
+                                class="h-11 rounded-xl border px-[20px] lg:px-[24px] whitespace-nowrap min-w-fit transition-all duration-300"
+                                :class="
+                                    variant === 1 && !scrolled
+                                        ? 'border-white/20 bg-white/[0.06] text-white backdrop-blur-md hover:border-white/30 hover:bg-white/10 hover:-translate-y-0.5'
+                                        : 'border-muted-dark bg-transparent hover:bg-primary/10'
+                                "
                             >
-                                Get Started
+                                <span>Get Started</span>
+
                                 <svg
-                                    width="20"
-                                    height="16"
+                                    width="18"
+                                    height="18"
                                     viewBox="0 0 16 16"
                                     fill="none"
+                                    class="ml-1.5 transition-transform duration-300 group-hover:translate-x-0.5"
                                 >
                                     <path
                                         d="M3 8h10M9 4l4 4-4 4"

@@ -525,7 +525,7 @@
                                                     </div>
 
                                                     <div
-                                                        class="mt-4 grid grid-cols-3 gap-3"
+                                                        class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3"
                                                     >
                                                         <div>
                                                             <p

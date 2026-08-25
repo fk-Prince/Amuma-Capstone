@@ -17,21 +17,57 @@
                         >
                             {{ branch.name }}
                         </p>
-                        <p class="text-xs text-slate-400">
-                            {{ branch.region }}
-                        </p>
                     </div>
 
-                    <span
-                        class="shrink-0 text-[11px] font-medium rounded-full px-2.5 py-1 capitalize"
-                        :class="
-                            branch.status === 'active'
-                                ? 'bg-emerald-50 text-emerald-600'
-                                : 'bg-slate-200 text-slate-500'
-                        "
-                    >
-                        {{ branch.status }}
-                    </span>
+                    <div class="flex shrink-0 flex-col items-end gap-1">
+                        <span
+                            class="inline-flex items-center gap-1 text-[11px] font-medium rounded-full px-2.5 py-1"
+                            :class="
+                                branch.is_verified
+                                    ? 'bg-primary-50 text-primary'
+                                    : 'bg-amber-50 text-amber-600'
+                            "
+                        >
+                            <svg
+                                v-if="branch.is_verified"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.5"
+                                class="w-3 h-3 shrink-0"
+                            >
+                                <path
+                                    d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+
+                            <svg
+                                v-else
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.5"
+                                class="w-3 h-3 shrink-0"
+                            >
+                                <circle cx="12" cy="12" r="9" />
+                                <path
+                                    d="M12 7v5l3 2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+
+                            {{
+                                branch.is_verified
+                                    ? "Verified"
+                                    : "Pending review"
+                            }}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -84,13 +120,6 @@
             </p>
         </div>
 
-        <span
-            v-if="branch.tags"
-            class="inline-block mt-3 text-[11px] font-medium rounded-full px-2.5 py-1 bg-primary-50 text-primary"
-        >
-            {{ branch.tags }}
-        </span>
-
         <div
             class="mt-4 grid grid-cols-3 divide-x divide-slate-200 border-t border-slate-200 pt-3"
         >
@@ -134,33 +163,6 @@
                 Edit
             </button>
 
-            <div
-                class="flex-1 flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2"
-            >
-                <span class="text-xs text-slate-500">Deactivate</span>
-                <button
-                    type="button"
-                    role="switch"
-                    :aria-checked="branch.status === 'active'"
-                    class="relative h-5 w-9 rounded-full transition-colors"
-                    :class="
-                        branch.status === 'active'
-                            ? 'bg-primary'
-                            : 'bg-slate-200'
-                    "
-                    @click="emit('toggle-status', branch)"
-                >
-                    <span
-                        class="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform"
-                        :class="
-                            branch.status === 'active'
-                                ? 'translate-x-4'
-                                : 'translate-x-0'
-                        "
-                    />
-                </button>
-            </div>
-
             <button
                 type="button"
                 class="h-8 w-8 shrink-0 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-slate-600"
@@ -188,12 +190,10 @@ interface BranchCardData {
     branch_id: number;
     uuid: string;
     name: string;
-    region: string;
     address: string;
     phone: string;
     email: string;
-    tags: string;
-    status: "active" | "inactive";
+    is_verified: boolean;
     rooms: number;
     staffs: number;
     patients: number;
@@ -206,7 +206,6 @@ defineProps<{
 
 const emit = defineEmits<{
     edit: [branch: BranchCardData];
-    "toggle-status": [branch: BranchCardData];
     menu: [branch: BranchCardData];
 }>();
 </script>

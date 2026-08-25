@@ -24,6 +24,8 @@ class OtpRequest extends FormRequest
     {
         return [
             'otp_key' => ['required', 'string'],
+            'user.first_name' => ['required', 'string', 'max:255'],
+            'user.last_name' => ['required', 'string', 'max:255'],
             'user.email' => ['required', 'email'],
             'user.password' => ['required', 'string', 'min:6'],
             'otp_value' => ['required', 'digits:6'],

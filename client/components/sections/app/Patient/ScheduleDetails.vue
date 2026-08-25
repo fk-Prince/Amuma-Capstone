@@ -290,7 +290,7 @@
                     </div>
 
                     <div v-if="isEditing" class="space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <BaseInput
                                 :model-value="form.date"
                                 label="Select Schedule Date"
@@ -314,7 +314,7 @@
                             />
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <Combobox
                                 v-model="form.status"
                                 label="Status"
@@ -324,7 +324,7 @@
                         </div>
                     </div>
 
-                    <div v-else class="grid grid-cols-3 gap-3">
+                    <div v-else class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div class="rounded-xl border border-slate-100 p-3">
                             <p class="text-xs text-slate-400">Date</p>
                             <p class="mt-1 text-sm font-medium text-slate-700">

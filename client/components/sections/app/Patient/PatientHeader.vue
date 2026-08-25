@@ -17,6 +17,8 @@ defineProps<{
     patient: PatientRetrieve;
 }>();
 
+const emit = defineEmits<{ print: [] }>();
+
 function fullName(
     firstName?: string | null,
     middleName?: string | null,
@@ -27,16 +29,16 @@ function fullName(
 </script>
 
 <template>
-    <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div class="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 shadow-sm">
         <div class="flex flex-wrap items-start justify-between gap-4">
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-4 min-w-0">
                 <div
-                    class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary text-xl font-semibold text-white"
+                    class="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl bg-primary text-lg sm:text-xl font-semibold text-white"
                 >
                     {{ patient.first_name.charAt(0) }}
                 </div>
 
-                <div>
+                <div class="min-w-0">
                     <h1 class="text-lg font-semibold text-gray-900">
                         {{
                             fullName(
@@ -86,7 +88,7 @@ function fullName(
         </div>
 
         <div
-            class="mt-5 flex justify-end gap-2 border-t border-gray-100 pt-4 text-sm text-gray-500"
+            class="mt-5 flex flex-wrap justify-end gap-2 border-t border-gray-100 pt-4 text-sm text-gray-500"
         >
             <button
                 class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary"
@@ -104,6 +106,7 @@ function fullName(
 
             <button
                 class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary"
+                @click="emit('print')"
             >
                 <Printer class="h-4 w-4" />
                 Print
