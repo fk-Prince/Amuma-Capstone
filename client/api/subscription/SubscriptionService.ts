@@ -24,6 +24,10 @@ class SubscriptionService extends BaseService {
         return await this.request(this.resource + '-validate', 'POST', payload);
     }
 
+    async renew(payload: any): Promise<any> {
+        return await this.request(this.resource + '-renew', 'POST', payload);
+    }
+
 
     async list(payload: any): Promise<any> {
         return await this.request(this.resource, 'GET', payload);

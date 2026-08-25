@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('password')->nullable();
             $table->string('provider')->default('local');
             $table->string('provider_id')->nullable();
-            $table->boolean('is_verified')->default(false);
             $table->timestamps();
         });
 

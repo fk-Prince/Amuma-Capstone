@@ -107,8 +107,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/subscriptions', [SubscriptionController::class, 'index']);
     Route::get('/subscriptions-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
     Route::post('/subscriptions-validate',  [SubscriptionController::class, 'validateSubscription']);
+    Route::post('/subscriptions-renew',  [SubscriptionController::class, 'renew']);
 
     Route::get('/users/branches',  [UserController::class, 'getUserBranch']);
+    Route::get('/profile',  [UserController::class, 'profile']);
+    Route::post('/profile',  [UserController::class, 'updateProfile']);
     Route::get('/reviews/public',  [ReviewController::class, 'publicReviews']);
 });
 

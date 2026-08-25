@@ -38,7 +38,6 @@ class UserRepository
                 $user = User::create([
                     'email' => $payload['email'],
                     'password' => Hash::make($password),
-                    'is_verified' => true,
                 ]);
             }
 

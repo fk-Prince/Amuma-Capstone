@@ -15,6 +15,11 @@ return new class extends Migration
             $table->id('employee_permission_id');
             $table->foreignId('user_id')
                 ->constrained('users', 'user_id');
+
+            $table->foreignId('location_id')
+                ->nullable()
+                ->constrained('locations', 'location_id');
+
             $table->boolean('is_active')->default(true);
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();

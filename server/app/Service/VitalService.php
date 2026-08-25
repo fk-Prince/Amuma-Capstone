@@ -12,10 +12,7 @@ class VitalService
 {
     public function __construct(private PatientRepository $patientRepository) {}
 
-    /**
-     * Vitals are no longer bundled into the main patient fetch — the
-     * Vital Signs tab pulls its own paginated page on demand instead.
-     */
+
     public function listVitals(array $payload)
     {
         $patient = $this->patientRepository->findByFields([

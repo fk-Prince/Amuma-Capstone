@@ -55,6 +55,111 @@ class SubscriptionService
         return $paymentMethod->subscriptionInvoice($payload, $subscription);
     }
 
+    public function makeRenewal(array $payload, User $user)
+    {
+        AuthGuard::requireUser($user);
+        $paymentMethod = PaymentFactory::make($payload['payment_method']);
+        $renewal = $this->createRenewal($user, $payload);
+        return $paymentMethod->subscriptionInvoice($payload, $renewal);
+    }
+
+    /**
+     * Builds the charge metadata for extending an existing branch subscription.
+     * Mirrors createSubscription()'s shape so the payment drivers can stay
+     * generic, but carries type 'renewal' so no branch or agency is created.
+     */
+    public function createRenewal(?User $user, array $payload)
+    {
+        $subscription = $this->subscriptionRepository
+            ->findLatestForBranch($payload['branch_id']);
+
+        if (!$subscription) {
+            throw new Exception(__('This branch has no subscription to renew.'), 404);
+        }
+
+        // Renewing keeps the current plan unless a different one is chosen.
+        $planCode = $payload['plan_code'] ?? $subscription->plans?->plan_code;
+        $plan = $this->planRepository->findByField('plan_code', $planCode);
+
+        if (!$plan) {
+            throw new Exception(__('Plan not found.'), 404);
+        }
+
+        $interval = BillingIntervalEnum::tryFrom(
+            strtoupper($payload['billing_interval'] ?? $subscription->billing_interval)
+        );
+
+        if (!$interval) {
+            throw new Exception(__('Invalid billing interval.'), 422);
+        }
+
+        // Extend from whichever is later: an early renewal should add time on
+        // top of what is left, while a lapsed one restarts from today.
+        $currentEnd = $subscription->end_date
+            ? Carbon::parse($subscription->end_date)
+            : Carbon::now();
+
+        $extendFrom = $currentEnd->isFuture() ? $currentEnd : Carbon::now();
+
+        return [
+            'user' => $user,
+            'plan' => $plan,
+            'branch' => ['branch_id' => $subscription->branch_id],
+            'agency' => [],
+            'subscription_uuid' => $subscription->uuid,
+            'method' => $payload['payment_method'],
+            'billing_interval' => $interval->value,
+            'total_amount' => (float) $plan->{$interval->loadPriceKey()},
+            'endDate' => $interval->addTo($extendFrom)->toDateTimeString(),
+            'type' => 'renewal',
+            'status' => true,
+            'payment_type' => 'RENEWAL',
+        ];
+    }
+
+    public function renewSubscriber(array $payload)
+    {
+        $meta = $payload['metadata'];
+
+        return DB::transaction(function () use ($payload, $meta) {
+            $subscription = $this->subscriptionRepository->findByFields([
+                ['uuid', '=', $meta['subscription_uuid']],
+            ]);
+
+            if (!$subscription) {
+                throw new Exception(__('Subscription not found.'), 404);
+            }
+
+            $subscription->update([
+                'plan_id' => $meta['plan']['plan_id'] ?? $subscription->plan_id,
+                'billing_interval' => $meta['billing_interval'],
+                'end_date' => $meta['endDate'],
+                'status' => Subscription::STATUS_ACTIVE,
+            ]);
+
+            $subscription->payments()->create([
+                'subscription_id' => $subscription->subscription_id,
+                'xendit_invoice_id' => $payload['xendit_invoice_id'] ?? null,
+                'payment_reference_id' => $payload['external_id'] ?? null,
+                'masked_card_number' => $payload['masked_card_number'] ?? null,
+                'price' => $meta['total_amount'],
+                'status' => SubscriptionPayment::STATUS_PAID,
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => __('Subscription renewed successfully.'),
+                'subscription' => [
+                    'uuid' => $subscription->uuid,
+                    'status' => $subscription->status,
+                    'billing_interval' => $subscription->billing_interval,
+                    'start_date' => $subscription->start_date,
+                    'end_date' => $subscription->end_date,
+                ],
+            ], 200);
+        });
+    }
+
     public function createSubscription(?User $user, array $payload)
     {
         $plan_code = $payload['plan_code'];

@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
+use App\Guard\AuthGuard;
+use App\Guard\BranchGuard;
 use App\Http\Requests\SubscriptionRequest;
 use App\Service\SubscriptionService;
 use Illuminate\Http\Request;
@@ -63,7 +67,26 @@ class SubscriptionController extends Controller
     }
     public function index(Request $request)
     {
+        if ($request->filled('branch_uuid')) {
+            $branch = BranchGuard::resolveBranch($request->branch_uuid);
+            AuthGuard::requireModule(
+                $request->user(),
+                $branch->branch_id,
+                ModuleEnum::BranchSettings,
+                PermissionAction::Read
+            );
+            BranchGuard::mergeRequest($request, $branch);
+        }
+
         return $this->subscriptionService->subscriptionList($request->all());
+    }
+
+    public function renew(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Update);
+        BranchGuard::mergeRequest($request, $branch);
+        return $this->subscriptionService->makeRenewal($request->all(), $request->user());
     }
 
     public function action(Request $request)

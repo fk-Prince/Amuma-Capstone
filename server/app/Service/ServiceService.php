@@ -18,16 +18,9 @@ use Illuminate\Support\Facades\DB;
 
 class ServiceService
 {
-    private ServiceRepository $serviceRepository;
-    private CategoryRepository $categoryRepository;
-    private EmployeeRepository $employeeRepository;
 
-    public function __construct(ServiceRepository $serviceRepository, CategoryRepository $categoryRepository,  EmployeeRepository $employeeRepository)
-    {
-        $this->serviceRepository = $serviceRepository;
-        $this->categoryRepository = $categoryRepository;
-        $this->employeeRepository = $employeeRepository;
-    }
+
+    public function __construct(private ServiceRepository $serviceRepository, private CategoryRepository $categoryRepository) {}
 
     public function createService(array $payload, User $user)
     {

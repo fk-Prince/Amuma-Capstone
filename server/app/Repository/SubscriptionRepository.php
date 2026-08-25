@@ -25,6 +25,18 @@ class SubscriptionRepository
         return Subscription::where($payload)->first();
     }
 
+    /**
+     * A branch can accumulate several subscription rows over time, so renewal
+     * has to act on the newest one rather than whatever the table returns first.
+     */
+    public function findLatestForBranch(string $branchId)
+    {
+        return Subscription::with('plans')
+            ->where('branch_id', $branchId)
+            ->latest('created_at')
+            ->first();
+    }
+
     public function paginate(array $payload)
     {
         $query = Subscription::query()
@@ -33,6 +45,12 @@ class SubscriptionRepository
                 'plans',
                 'payments',
             ]);
+
+        // Scoped when the branch settings screen asks for one branch's
+        // subscriptions; omitted by the owner-wide listing.
+        if (!empty($payload['branch_id'])) {
+            $query->where('branch_id', $payload['branch_id']);
+        }
 
         if (!empty($payload['status'])) {
             $query->where('status', $payload['status']);
@@ -52,7 +70,9 @@ class SubscriptionRepository
             });
         }
 
-        return $query->paginate($payload['per_page'] ?? 15);
+        return $query
+            ->latest('created_at')
+            ->paginate($payload['per_page'] ?? 15);
     }
 
     public function overviewSubscription()

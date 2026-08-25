@@ -167,6 +167,42 @@
                             class="h-full w-full object-cover"
                         />
 
+                        <!-- PDFs can't be previewed as an image, so show the
+                             file name instead of an empty dropzone. -->
+                        <div
+                            v-else-if="branchDocumentName"
+                            class="absolute inset-0 flex flex-col items-center justify-center px-4 text-center"
+                        >
+                            <div
+                                class="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-500"
+                            >
+                                <svg
+                                    class="h-5 w-5"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path
+                                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                                    />
+                                    <path d="M14 2v6h6" />
+                                </svg>
+                            </div>
+
+                            <p
+                                class="max-w-full truncate text-sm font-medium text-slate-700"
+                            >
+                                {{ branchDocumentName }}
+                            </p>
+
+                            <span class="mt-0.5 text-xs text-slate-400">
+                                PDF selected — click to replace
+                            </span>
+                        </div>
+
                         <div
                             v-else
                             class="absolute inset-0 flex flex-col items-center justify-center text-slate-400"
@@ -384,6 +420,17 @@ const branchDocumentPreview = ref<string | null>(
 const branchDocumentInput = ref<HTMLInputElement | null>(null);
 const showBranchDocumentList = ref(false);
 
+// A previously saved PDF comes back as a URL string, so derive its name from
+// the path rather than leaving the dropzone looking empty on re-open.
+const branchDocumentName = ref<string | null>(
+    typeof (props.branch as any).document === "string" &&
+    (props.branch as any).document.toLowerCase().endsWith(".pdf")
+        ? decodeURIComponent(
+              (props.branch as any).document.split("/").pop() ?? "Document.pdf",
+          )
+        : null,
+);
+
 const applicableBranchDocuments = [
     "Mayor's / Business Permit",
     "Barangay Clearance",
@@ -493,8 +540,10 @@ const handleBranchDocument = (event: Event) => {
 
     if (file.type === "application/pdf") {
         branchDocumentPreview.value = null;
+        branchDocumentName.value = file.name;
     } else {
         branchDocumentPreview.value = URL.createObjectURL(file);
+        branchDocumentName.value = null;
     }
 
     clearError("branch_document");
@@ -503,6 +552,7 @@ const handleBranchDocument = (event: Event) => {
 const removeBranchDocument = () => {
     emit("update:branch", { ...props.branch, document: null } as any);
     branchDocumentPreview.value = null;
+    branchDocumentName.value = null;
 
     if (branchDocumentInput.value) {
         branchDocumentInput.value.value = "";

@@ -3,19 +3,21 @@
 namespace App\Service;
 
 
+use App\Models\Location;
 use App\Models\User;
 use App\Repository\BranchRepository;
 use App\Repository\LocationRepository;
 use App\Repository\UserRepository;
+use App\Service\External\SupabaseService;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 
 class UserService
 {
-    private BranchRepository $branchRepository;
-    public function __construct(UserRepository $userRepository, BranchRepository $branchRepository, LocationRepository $locationRepository)
-    {
-        $this->branchRepository = $branchRepository;
-    }
+    public function __construct(private BranchRepository $branchRepository) {}
 
     public function getUserBranch(User $user)
     {
@@ -28,12 +30,6 @@ class UserService
 
         $branchModels = $this->branchRepository->getUserBranches($branchIds->all());
 
-        // Branch membership is driven by EmployeeBranch (the actual branch
-        // assignment), not by having at least one EmployeePermission row —
-        // an employee can be assigned to a branch before any module
-        // permissions are configured for them, and they should still see
-        // that branch (just with an empty permissions list) instead of it
-        // silently disappearing from this list.
         $branches = $employeeBranches
             ->map(function ($employeeBranch) use ($branchModels, $permissionsByBranch) {
                 $branch = $branchModels->get($employeeBranch->branch_id);
@@ -117,5 +113,156 @@ class UserService
             'user' => $user,
             'has_booking' => $user->bookings()->exists(),
         ];
+    }
+
+
+    public function profile(User $user)
+    {
+        $user->load([
+            'employee.locations',
+            'client.location',
+            'systemOwner.location',
+        ]);
+
+        $profile = $user->employee ?? $user->client ?? $user->systemOwner;
+
+        $location = $user->employee?->locations
+            ?? $user->client?->location
+            ?? $user->systemOwner?->location;
+
+        return response()->json([
+            'data' => [
+                'uuid'         => $user->uuid,
+                'email'        => $user->email,
+                'provider'     => $user->provider,
+                'created_at'   => $user->created_at,
+                // Google-only accounts have no local password to change.
+                'has_password' => !empty($user->getAuthPassword()),
+
+                'first_name'   => $profile?->first_name,
+                'last_name'    => $profile?->last_name,
+                'avatar'       => $profile?->avatar,
+                // platform_admins has no phone column.
+                'phone_number' => $user->employee?->phone_number
+                    ?? $user->client?->phone_number,
+                'birth_date'   => $user->employee?->birth_date,
+
+                'location' => $location ? [
+                    'street'       => $location->street,
+                    'city'         => $location->city,
+                    'province'     => $location->province,
+                    'country'      => $location->country,
+                    'latitude'     => $location->latitude,
+                    'longitude'    => $location->longitude,
+                    'full_address' => $location->full_address,
+                ] : null,
+
+                'roles' => [
+                    'is_employee'     => $user->isEmployee,
+                    'is_client'       => $user->isClient,
+                    'is_system_owner' => $user->isSystemOwner,
+                ],
+            ],
+        ]);
+    }
+
+    public function updateProfile(User $user, array $payload)
+    {
+        return DB::transaction(function () use ($user, $payload) {
+            $user->load([
+                'employee.locations',
+                'client.location',
+                'systemOwner.location',
+            ]);
+
+            $avatarUrl = null;
+
+            if (!empty($payload['avatar']) && $payload['avatar'] instanceof UploadedFile) {
+                $stored = SupabaseService::store($payload['avatar']);
+                $avatarUrl = $stored['url'] ?? null;
+            }
+
+            $userChanges = ['email' => $payload['email']];
+
+            if (!empty($payload['password'])) {
+                $userChanges['password'] = $this->resolveNewPassword($user, $payload);
+            }
+
+            $user->update($userChanges);
+
+            $locationId = $this->syncLocation($user, $payload);
+
+            $shared = array_filter([
+                'first_name' => $payload['first_name'] ?? null,
+                'last_name'  => $payload['last_name'] ?? null,
+                'avatar'     => $avatarUrl,
+            ], fn($value) => $value !== null);
+
+            $withLocation = $locationId
+                ? $shared + ['location_id' => $locationId]
+                : $shared;
+
+            $user->employee?->update($withLocation + array_filter([
+                'phone_number' => $payload['phone_number'] ?? null,
+                'birth_date'   => $payload['birth_date'] ?? null,
+            ], fn($value) => $value !== null));
+
+            $user->client?->update($withLocation + array_filter([
+                'phone_number' => $payload['phone_number'] ?? null,
+            ], fn($value) => $value !== null));
+
+            $user->systemOwner?->update($withLocation);
+
+            return $this->profile($user->fresh());
+        });
+    }
+
+
+    private function resolveNewPassword(User $user, array $payload): string
+    {
+        $existing = $user->getAuthPassword();
+
+        if (!empty($existing)) {
+            $current = $payload['current_password'] ?? '';
+
+            if (!Hash::check($current, $existing)) {
+                throw ValidationException::withMessages([
+                    'current_password' => __('Your current password is incorrect.'),
+                ]);
+            }
+        }
+
+        return $payload['password'];
+    }
+
+
+    private function syncLocation(User $user, array $payload): ?int
+    {
+        $fields = array_filter([
+            'street'    => $payload['street'] ?? null,
+            'city'      => $payload['city'] ?? null,
+            'province'  => $payload['province'] ?? null,
+            'country'   => $payload['country'] ?? null,
+            'latitude'  => $payload['latitude'] ?? null,
+            'longitude' => $payload['longitude'] ?? null,
+        ], fn($value) => $value !== null && $value !== '');
+
+        if (empty($fields)) {
+            return null;
+        }
+
+        $fields['full_address'] = null;
+
+        $location = $user->employee?->locations
+            ?? $user->client?->location
+            ?? $user->systemOwner?->location;
+
+        if ($location) {
+            $location->update($fields);
+
+            return $location->location_id;
+        }
+
+        return Location::create($fields)->location_id;
     }
 }

@@ -1,0 +1,800 @@
+<template>
+    <div class="min-h-screen bg-white pt-[100px]">
+        <div class="mx-auto max-w-5xl px-5 pb-16 sm:px-8">
+            <!-- Header -->
+            <div
+                class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between"
+            >
+                <h1 class="text-2xl font-bold tracking-tight text-slate-900">
+                    My Profile
+                </h1>
+
+                <div class="flex items-center gap-2">
+                    <button
+                        type="button"
+                        :disabled="saving || !isDirty"
+                        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        @click="reset"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        :disabled="saving || !isDirty"
+                        class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                        @click="save"
+                    >
+                        <LoaderCircle
+                            v-if="saving"
+                            class="h-3.5 w-3.5 animate-spin"
+                        />
+                        {{ saving ? "Saving..." : "Save changes" }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-1 border-b border-slate-200 pb-0">
+                <button
+                    v-for="tab in tabs"
+                    :key="tab.value"
+                    type="button"
+                    class="rounded-t-lg border px-4 py-2 text-sm font-medium transition"
+                    :class="
+                        activeTab === tab.value
+                            ? 'border-slate-200 border-b-white bg-white text-slate-900'
+                            : 'border-transparent text-slate-500 hover:text-slate-800'
+                    "
+                    @click="activeTab = tab.value"
+                >
+                    {{ tab.label }}
+                </button>
+            </div>
+
+            <div v-if="loading" class="space-y-10 py-10">
+                <div
+                    v-for="n in 3"
+                    :key="n"
+                    class="grid gap-6 lg:grid-cols-[240px_1fr]"
+                >
+                    <div class="h-10 animate-pulse rounded bg-slate-100" />
+                    <div class="h-24 animate-pulse rounded bg-slate-100" />
+                </div>
+            </div>
+
+            <template v-else>
+                <!-- PROFILE -->
+                <div v-show="activeTab === 'profile'">
+                    <!-- Profile photo -->
+                    <section
+                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr]"
+                    >
+                        <div>
+                            <h2 class="text-sm font-semibold text-slate-900">
+                                Profile photo
+                            </h2>
+                            <p class="mt-1 text-sm leading-6 text-slate-500">
+                                This photo appears on your profile and anywhere
+                                you're shown across AMUMA.
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-4">
+                            <img
+                                :src="avatarPreview || fallbackAvatar"
+                                alt="Profile photo"
+                                class="h-14 w-14 rounded-full object-cover ring-1 ring-slate-200"
+                            />
+
+                            <button
+                                type="button"
+                                class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                @click="avatarInput?.click()"
+                            >
+                                Change photo
+                            </button>
+
+                            <button
+                                v-if="avatarPreview"
+                                type="button"
+                                class="text-sm font-medium text-slate-500 transition hover:text-slate-800"
+                                @click="removeAvatar"
+                            >
+                                Remove
+                            </button>
+
+                            <input
+                                ref="avatarInput"
+                                type="file"
+                                accept="image/*"
+                                class="hidden"
+                                @change="handleAvatar"
+                            />
+
+                            <p
+                                v-if="errors.avatar"
+                                class="w-full text-xs text-red-600"
+                            >
+                                {{ errors.avatar }}
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- Personal info -->
+                    <section
+                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr]"
+                    >
+                        <div>
+                            <h2 class="text-sm font-semibold text-slate-900">
+                                Personal info
+                            </h2>
+                            <p class="mt-1 text-sm leading-6 text-slate-500">
+                                Your name and contact details.
+                            </p>
+                        </div>
+
+                        <div class="space-y-5">
+                            <div class="grid gap-5 sm:grid-cols-2">
+                                <BaseInput
+                                    v-model="form.first_name"
+                                    label="First name"
+                                    :error="errors.first_name"
+                                    @update:modelValue="
+                                        clearError('first_name')
+                                    "
+                                />
+
+                                <BaseInput
+                                    v-model="form.last_name"
+                                    label="Last name"
+                                    :error="errors.last_name"
+                                    @update:modelValue="clearError('last_name')"
+                                />
+                            </div>
+
+                            <BaseInput
+                                v-model="form.email"
+                                label="Email"
+                                mode="email"
+                                :error="errors.email"
+                                @update:modelValue="clearError('email')"
+                            />
+
+                            <div class="grid gap-5 sm:grid-cols-2">
+                                <BaseInput
+                                    v-if="canEditPhone"
+                                    v-model="form.phone_number"
+                                    label="Contact number"
+                                    :error="errors.phone_number"
+                                    @update:modelValue="
+                                        clearError('phone_number')
+                                    "
+                                />
+
+                                <BaseInput
+                                    v-if="roles.is_employee"
+                                    v-model="form.birth_date"
+                                    label="Birth date"
+                                    mode="date"
+                                    :max="today"
+                                    :error="errors.birth_date"
+                                    @update:modelValue="
+                                        clearError('birth_date')
+                                    "
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Address -->
+                    <section
+                        v-if="canEditLocation"
+                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr]"
+                    >
+                        <div>
+                            <h2 class="text-sm font-semibold text-slate-900">
+                                Address
+                            </h2>
+                            <p class="mt-1 text-sm leading-6 text-slate-500">
+                                Where you're based. Used for scheduling and
+                                travel estimates.
+                            </p>
+
+                            <button
+                                type="button"
+                                class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary-700"
+                                @click="useMap = !useMap"
+                            >
+                                <MapPin class="h-3.5 w-3.5" />
+                                {{ useMap ? "Enter manually" : "Pick on map" }}
+                            </button>
+                        </div>
+
+                        <div>
+                            <ClientOnly v-if="useMap">
+                                <LocationSelector
+                                    :initial-lat="form.latitude || undefined"
+                                    :initial-lng="form.longitude || undefined"
+                                    :initial-street="form.street || undefined"
+                                    :initial-city="form.city || undefined"
+                                    :initial-province="
+                                        form.province || undefined
+                                    "
+                                    :initial-country="form.country || undefined"
+                                    @location-selected="handleLocation"
+                                />
+
+                                <template #fallback>
+                                    <div
+                                        class="flex h-64 items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-400"
+                                    >
+                                        Loading map...
+                                    </div>
+                                </template>
+                            </ClientOnly>
+
+                            <div v-else class="space-y-5">
+                                <BaseInput
+                                    v-model="form.street"
+                                    label="Street"
+                                    :error="errors.street"
+                                    @update:modelValue="clearError('street')"
+                                />
+
+                                <div class="grid gap-5 sm:grid-cols-2">
+                                    <BaseInput
+                                        v-model="form.city"
+                                        label="City"
+                                        :error="errors.city"
+                                        @update:modelValue="clearError('city')"
+                                    />
+
+                                    <BaseInput
+                                        v-model="form.province"
+                                        label="Province"
+                                        :error="errors.province"
+                                        @update:modelValue="
+                                            clearError('province')
+                                        "
+                                    />
+                                </div>
+
+                                <BaseInput
+                                    v-model="form.country"
+                                    label="Country"
+                                    :error="errors.country"
+                                    @update:modelValue="clearError('country')"
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Password -->
+                    <section
+                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr]"
+                    >
+                        <div>
+                            <h2 class="text-sm font-semibold text-slate-900">
+                                Password
+                            </h2>
+                            <p class="mt-1 text-sm leading-6 text-slate-500">
+                                {{
+                                    meta.has_password
+                                        ? "Set a new password for your account."
+                                        : "Add a password so you can sign in without Google."
+                                }}
+                            </p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="grid gap-5 sm:grid-cols-2">
+                                <BaseInput
+                                    v-if="meta.has_password"
+                                    v-model="form.current_password"
+                                    label="Current password"
+                                    mode="password"
+                                    :error="errors.current_password"
+                                    @update:modelValue="
+                                        clearError('current_password')
+                                    "
+                                />
+
+                                <div>
+                                    <BaseInput
+                                        v-model="form.password"
+                                        label="New password"
+                                        mode="password"
+                                        :error="errors.password"
+                                        @update:modelValue="
+                                            clearError('password')
+                                        "
+                                    />
+
+                                    <p
+                                        v-if="!errors.password"
+                                        class="mt-1.5 text-xs text-slate-400"
+                                    >
+                                        Minimum 8 characters
+                                    </p>
+                                </div>
+                            </div>
+
+                            <BaseInput
+                                v-if="form.password"
+                                v-model="form.password_confirmation"
+                                label="Confirm new password"
+                                mode="password"
+                                class="sm:max-w-[calc(50%-0.625rem)]"
+                                :error="errors.password_confirmation"
+                                @update:modelValue="
+                                    clearError('password_confirmation')
+                                "
+                            />
+
+                            <button
+                                type="button"
+                                :disabled="saving || !form.password"
+                                class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                @click="save"
+                            >
+                                Update password
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- Account -->
+                    <section class="grid gap-6 py-8 lg:grid-cols-[260px_1fr]">
+                        <div>
+                            <h2 class="text-sm font-semibold text-slate-900">
+                                Account
+                            </h2>
+                            <p class="mt-1 text-sm leading-6 text-slate-500">
+                                Read-only details about this account.
+                            </p>
+                        </div>
+
+                        <dl class="divide-y divide-slate-100">
+                            <div
+                                v-for="row in accountRows"
+                                :key="row.label"
+                                class="flex items-center justify-between gap-4 py-2.5"
+                            >
+                                <dt class="text-sm text-slate-500">
+                                    {{ row.label }}
+                                </dt>
+                                <dd
+                                    class="truncate text-sm font-medium text-slate-800"
+                                >
+                                    {{ row.value }}
+                                </dd>
+                            </div>
+                        </dl>
+                    </section>
+                </div>
+
+                <!-- NOTIFICATIONS -->
+                <div v-show="activeTab === 'notifications'">
+                    <section class="grid gap-6 py-8 lg:grid-cols-[260px_1fr]">
+                        <div>
+                            <h2 class="text-sm font-semibold text-slate-900">
+                                Email preferences
+                            </h2>
+                            <p class="mt-1 text-sm leading-6 text-slate-500">
+                                What we send to your inbox.
+                            </p>
+                        </div>
+
+                        <div class="space-y-5">
+                            <div
+                                v-for="pref in preferences"
+                                :key="pref.key"
+                                class="flex items-start gap-3"
+                            >
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    :aria-checked="pref.enabled"
+                                    class="relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors"
+                                    :class="
+                                        pref.enabled
+                                            ? 'bg-primary'
+                                            : 'bg-slate-200'
+                                    "
+                                    @click="pref.enabled = !pref.enabled"
+                                >
+                                    <span
+                                        class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform"
+                                        :class="
+                                            pref.enabled
+                                                ? 'translate-x-4'
+                                                : 'translate-x-0'
+                                        "
+                                    />
+                                </button>
+
+                                <div>
+                                    <p
+                                        class="text-sm font-medium text-slate-800"
+                                    >
+                                        {{ pref.label }}
+                                    </p>
+                                    <p class="text-sm text-slate-500">
+                                        {{ pref.description }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- <p class="text-xs text-slate-400">
+                                Email preferences aren't saved yet — this
+                                section is a placeholder.
+                            </p> -->
+                        </div>
+                    </section>
+                </div>
+            </template>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, reactive, ref } from "vue";
+import { LoaderCircle, MapPin } from "lucide-vue-next";
+
+import BaseInput from "~/components/ui/BaseInput.vue";
+import LocationSelector from "~/components/ui/LocationSelector.vue";
+import { userService } from "~/api/user/UserService";
+import { useToast } from "~/composables/useToast";
+import { fetchAuthUser } from "~/composables/useAuthUser";
+
+definePageMeta({
+    middleware: "auth-client",
+    navVariant: 1,
+    theme: "light",
+});
+
+useHead({ title: "My Profile" });
+
+const { success, error } = useToast();
+
+const loading = ref(true);
+const saving = ref(false);
+const useMap = ref(false);
+const activeTab = ref("profile");
+
+const tabs = [
+    { label: "General", value: "profile" },
+    { label: "Notifications", value: "notifications" },
+];
+
+const preferences = reactive([
+    {
+        key: "schedule",
+        label: "Schedule updates",
+        description: "Changes to visits and shifts assigned to you.",
+        enabled: true,
+    },
+    {
+        key: "billing",
+        label: "Billing notices",
+        description: "Invoices, payments and subscription renewals.",
+        enabled: true,
+    },
+    {
+        key: "product",
+        label: "Product news",
+        description: "Feature announcements and tips from AMUMA.",
+        enabled: false,
+    },
+]);
+
+const avatarInput = ref<HTMLInputElement | null>(null);
+const avatarFile = ref<File | null>(null);
+const avatarPreview = ref<string | null>(null);
+const avatarCleared = ref(false);
+
+const errors = ref<Record<string, string>>({});
+
+const roles = reactive({
+    is_employee: false,
+    is_client: false,
+    is_system_owner: false,
+});
+
+const form = reactive({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone_number: "",
+    birth_date: "",
+
+    street: "",
+    city: "",
+    province: "",
+    country: "",
+    latitude: 0,
+    longitude: 0,
+
+    current_password: "",
+    password: "",
+    password_confirmation: "",
+});
+
+const meta = reactive({
+    provider: "local",
+    uuid: "",
+    created_at: "",
+    has_password: true,
+    full_address: "",
+});
+
+const original = ref<Record<string, any>>({});
+
+const today = new Date().toISOString().slice(0, 10);
+
+// platform_admins carries no phone or birth date column, so those fields are
+// hidden for an account that is only a system owner. Address applies to all.
+const canEditPhone = computed(() => roles.is_employee || roles.is_client);
+const canEditLocation = computed(
+    () => roles.is_employee || roles.is_client || roles.is_system_owner,
+);
+
+// Password fields are excluded: they start empty and are never part of the
+// saved snapshot, so comparing them would mark a clean form as dirty.
+const trackedKeys = [
+    "first_name",
+    "last_name",
+    "email",
+    "phone_number",
+    "birth_date",
+    "street",
+    "city",
+    "province",
+    "country",
+    "latitude",
+    "longitude",
+] as const;
+
+const isDirty = computed(
+    () =>
+        Boolean(avatarFile.value) ||
+        avatarCleared.value ||
+        Boolean(form.password) ||
+        trackedKeys.some((key) => original.value[key] !== form[key]),
+);
+
+const memberSince = computed(() => {
+    if (!meta.created_at) return "—";
+
+    try {
+        return new Date(meta.created_at).toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric",
+        });
+    } catch {
+        return "—";
+    }
+});
+
+// The two aren't exclusive: an account linked to Google can also have a local
+// password, so both are listed rather than picking one.
+const signInMethods = computed(() => {
+    const methods: string[] = [];
+
+    if (meta.has_password) {
+        methods.push("Email & password");
+    }
+
+    if (meta.provider && meta.provider !== "local") {
+        methods.push(
+            meta.provider.charAt(0).toUpperCase() + meta.provider.slice(1),
+        );
+    }
+
+    return methods.length ? methods.join(", ") : "—";
+});
+
+const accountRows = computed(() => [
+    { label: "Sign-in method", value: signInMethods.value },
+    { label: "Address", value: meta.full_address || "Not set" },
+    { label: "Member since", value: memberSince.value },
+    { label: "Account ID", value: meta.uuid ? meta.uuid.split("-")[0] : "—" },
+]);
+
+const fallbackAvatar = computed(() => {
+    const initials = `${form.first_name?.[0] ?? ""}${form.last_name?.[0] ?? ""}`;
+
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        initials || "U",
+    )}`;
+});
+
+const applyProfile = (data: any) => {
+    form.first_name = data.first_name ?? "";
+    form.last_name = data.last_name ?? "";
+    form.email = data.email ?? "";
+    form.phone_number = data.phone_number ?? "";
+    // A date input only accepts YYYY-MM-DD.
+    form.birth_date = data.birth_date
+        ? String(data.birth_date).slice(0, 10)
+        : "";
+
+    form.street = data.location?.street ?? "";
+    form.city = data.location?.city ?? "";
+    form.province = data.location?.province ?? "";
+    form.country = data.location?.country ?? "";
+    form.latitude = Number(data.location?.latitude) || 0;
+    form.longitude = Number(data.location?.longitude) || 0;
+
+    form.current_password = "";
+    form.password = "";
+    form.password_confirmation = "";
+
+    roles.is_employee = Boolean(data.roles?.is_employee);
+    roles.is_client = Boolean(data.roles?.is_client);
+    roles.is_system_owner = Boolean(data.roles?.is_system_owner);
+
+    meta.provider = data.provider ?? "local";
+    meta.uuid = data.uuid ?? "";
+    meta.created_at = data.created_at ?? "";
+    meta.has_password = data.has_password !== false;
+    meta.full_address = data.location?.full_address ?? "";
+
+    avatarPreview.value = data.avatar ?? null;
+    avatarCleared.value = false;
+
+    original.value = Object.fromEntries(
+        trackedKeys.map((key) => [key, form[key]]),
+    );
+};
+
+const fetchProfile = async () => {
+    loading.value = true;
+
+    try {
+        const res: any = await userService.profile();
+        applyProfile(res?.data ?? res);
+    } catch (err: any) {
+        error(err?.message ?? "Failed to load your profile.");
+    } finally {
+        loading.value = false;
+    }
+};
+
+const handleLocation = ({
+    lat,
+    lng,
+    street,
+    city,
+    province,
+    country,
+}: {
+    lat: number;
+    lng: number;
+    street: string;
+    city: string;
+    province: string;
+    country: string;
+}) => {
+    form.street = street ?? "";
+    form.city = city ?? "";
+    form.province = province ?? "";
+    form.country = country ?? "";
+    form.latitude = lat ?? 0;
+    form.longitude = lng ?? 0;
+
+    ["street", "city", "province", "country"].forEach(clearError);
+};
+
+const handleAvatar = (event: Event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    avatarFile.value = file;
+    avatarCleared.value = false;
+    avatarPreview.value = URL.createObjectURL(file);
+    clearError("avatar");
+};
+
+const removeAvatar = () => {
+    avatarFile.value = null;
+    avatarPreview.value = null;
+    avatarCleared.value = true;
+
+    if (avatarInput.value) {
+        avatarInput.value.value = "";
+    }
+};
+
+const clearError = (field: string) => {
+    if (!errors.value[field]) return;
+
+    const next = { ...errors.value };
+    delete next[field];
+    errors.value = next;
+};
+
+const reset = () => {
+    Object.assign(form, original.value);
+
+    form.current_password = "";
+    form.password = "";
+    form.password_confirmation = "";
+
+    avatarFile.value = null;
+    avatarCleared.value = false;
+    errors.value = {};
+};
+
+const save = async () => {
+    saving.value = true;
+    errors.value = {};
+
+    try {
+        const payload: Record<string, any> = {
+            first_name: form.first_name,
+            last_name: form.last_name,
+            email: form.email,
+        };
+
+        if (canEditPhone.value && form.phone_number) {
+            payload.phone_number = form.phone_number;
+        }
+
+        if (roles.is_employee && form.birth_date) {
+            payload.birth_date = form.birth_date;
+        }
+
+        if (canEditLocation.value) {
+            Object.assign(payload, {
+                street: form.street || undefined,
+                city: form.city || undefined,
+                province: form.province || undefined,
+                country: form.country || undefined,
+                latitude: form.latitude || undefined,
+                longitude: form.longitude || undefined,
+            });
+        }
+
+        // Only sent when the user actually typed a new password.
+        if (form.password) {
+            payload.password = form.password;
+            payload.password_confirmation = form.password_confirmation;
+
+            if (meta.has_password) {
+                payload.current_password = form.current_password;
+            }
+        }
+
+        // BaseService switches to FormData automatically when a File is present.
+        if (avatarFile.value) {
+            payload.avatar = avatarFile.value;
+        }
+
+        const res: any = await userService.updateProfile(payload);
+
+        applyProfile(res?.data ?? res);
+        avatarFile.value = null;
+
+        // Refresh the shared auth user so the navbar name and avatar update
+        // without a reload.
+        await fetchAuthUser();
+
+        success("Profile updated.");
+    } catch (err: any) {
+        const raw = err?.errors ?? {};
+
+        errors.value = Object.fromEntries(
+            Object.entries(raw).map(([key, value]: any) => [
+                key,
+                Array.isArray(value) ? value[0] : value,
+            ]),
+        );
+
+        error(err?.message ?? "Failed to update your profile.");
+    } finally {
+        saving.value = false;
+    }
+};
+
+onMounted(fetchProfile);
+</script>

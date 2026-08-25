@@ -31,7 +31,6 @@ class User extends Authenticatable
         'password',
         'provider',
         'provider_id',
-        'is_verified'
     ];
 
     /**
@@ -70,7 +69,6 @@ class User extends Authenticatable
         return [
             // 'email_verified_at' => 'datetime',
             'is_active' => 'boolean',
-            'is_verified' => 'boolean',
             'password' => 'hashed',
         ];
     }

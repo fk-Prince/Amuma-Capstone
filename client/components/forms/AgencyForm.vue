@@ -341,6 +341,42 @@
                             class="h-full w-full object-cover"
                         />
 
+                        <!-- PDFs can't be previewed as an image, so show the
+                             file name instead of an empty dropzone. -->
+                        <div
+                            v-else-if="fileNames.document"
+                            class="absolute inset-0 flex flex-col items-center justify-center px-4 text-center"
+                        >
+                            <div
+                                class="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-500"
+                            >
+                                <svg
+                                    class="h-5 w-5"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path
+                                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                                    />
+                                    <path d="M14 2v6h6" />
+                                </svg>
+                            </div>
+
+                            <p
+                                class="max-w-full truncate text-sm font-medium text-slate-700"
+                            >
+                                {{ fileNames.document }}
+                            </p>
+
+                            <span class="mt-0.5 text-xs text-slate-400">
+                                PDF selected — click to replace
+                            </span>
+                        </div>
+
                         <div
                             v-else
                             class="absolute inset-0 flex flex-col items-center justify-center text-slate-400"
@@ -589,6 +625,19 @@ const previewRefs: Record<FileField, ReturnType<typeof ref<string | null>>> = {
     document: documentPreview,
 };
 
+// PDFs have no image preview, so their file name is what gets shown instead.
+// A previously saved PDF arrives as a URL string, so derive the name from it.
+const pdfNameFrom = (value: unknown): string | null =>
+    typeof value === "string" && value.toLowerCase().endsWith(".pdf")
+        ? decodeURIComponent(value.split("/").pop() ?? "Document.pdf")
+        : null;
+
+const fileNames = ref<Record<FileField, string | null>>({
+    id_front: pdfNameFrom(props.agency.id_front),
+    id_back: pdfNameFrom(props.agency.id_back),
+    document: pdfNameFrom(props.agency.document),
+});
+
 const errorKeys: Record<FileField, string> = {
     id_front: "agency_id_front",
     id_back: "agency_id_back",
@@ -709,8 +758,10 @@ const handleFile = (event: Event, field: FileField) => {
 
     if (file.type === "application/pdf") {
         previewRef.value = null;
+        fileNames.value = { ...fileNames.value, [field]: file.name };
     } else {
         previewRef.value = URL.createObjectURL(file);
+        fileNames.value = { ...fileNames.value, [field]: null };
     }
 
     clearError(errorKeys[field]);
@@ -720,6 +771,7 @@ const removeFile = (field: FileField) => {
     emit("update:agency", { ...agency.value, [field]: null });
 
     previewRefs[field].value = null;
+    fileNames.value = { ...fileNames.value, [field]: null };
 
     if (field === "document" && documentInput.value) {
         documentInput.value.value = "";

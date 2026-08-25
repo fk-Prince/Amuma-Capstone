@@ -19,7 +19,7 @@
                 <input
                     v-model="search"
                     type="text"
-                    placeholder="Search branches, location, manager..."
+                    placeholder="Search by name, address, email or contact..."
                     class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-11 pr-4 text-sm placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
             </div>
@@ -42,14 +42,12 @@
                 </svg>
             </button>
 
-            <select
+            <Combobox
                 v-model="statusFilter"
-                class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-                <option value="all">All branches</option>
-                <option value="verified">Verified</option>
-                <option value="pending">Pending review</option>
-            </select>
+                class="w-full shrink-0 sm:w-52"
+                placeholder="Filter branches"
+                :items="statusOptions"
+            />
 
             <button
                 type="button"
@@ -273,7 +271,7 @@
             </div>
 
             <div
-                v-else-if="!filteredBranches.length"
+                v-else-if="!branches.length"
                 class="flex flex-col items-center justify-center py-16 text-center"
             >
                 <div
@@ -311,7 +309,7 @@
                 "
             >
                 <BranchCard
-                    v-for="branch in filteredBranches"
+                    v-for="branch in branches"
                     :key="branch.branch_id"
                     :branch="branch"
                     @edit="onEditBranch"
@@ -322,7 +320,7 @@
             <div
                 v-if="
                     !loading &&
-                    filteredBranches.length &&
+                    branches.length &&
                     currentPage < lastPage
                 "
                 class="flex justify-center pt-6"
@@ -352,7 +350,9 @@
 import BranchDashboard from "~/components/sections/app/branches/BranchDashboard.vue";
 import BranchCard from "~/components/sections/app/branches/BranchCard.vue";
 import AddBranchModal from "~/components/sections/app/Branch/AddBranchModal.vue";
-import { computed, ref, h, onMounted } from "vue";
+import Combobox from "~/components/ui/Combobox.vue";
+import { CircleCheck, Clock, LayoutGrid } from "lucide-vue-next";
+import { computed, ref, h, onMounted, onBeforeUnmount, watch } from "vue";
 import { agencyService } from "~/api/agency/AgencyService";
 import { useBranchStore } from "~/stores/branch";
 import { useRoute } from "vue-router";
@@ -387,6 +387,12 @@ const branchStore = useBranchStore();
 
 const search = ref("");
 const statusFilter = ref<"all" | "verified" | "pending">("all");
+
+const statusOptions = [
+    { label: "All branches", value: "all", iconComponent: LayoutGrid },
+    { label: "Verified", value: "verified", iconComponent: CircleCheck },
+    { label: "Pending review", value: "pending", iconComponent: Clock },
+];
 const viewMode = ref<"list" | "grid">("grid");
 
 const showAddBranch = ref(false);
@@ -460,20 +466,6 @@ const statsData = ref({
     maintenance_alerts: 0,
 });
 
-const filteredBranches = computed(() => {
-    return branches.value.filter((b) => {
-        const matchesSearch =
-            !search.value ||
-            b.name.toLowerCase().includes(search.value.toLowerCase()) ||
-            b.address.toLowerCase().includes(search.value.toLowerCase());
-
-        const matchesStatus =
-            statusFilter.value === "all" ||
-            b.is_verified === (statusFilter.value === "verified");
-
-        return matchesSearch && matchesStatus;
-    });
-});
 
 const mapBranch = (b: any): Branch => ({
     branch_id: b.branch_id,
@@ -528,7 +520,13 @@ const agency = computed(() => {
     };
 });
 
+// Guards against a slow early page overwriting the results of a later, more
+// specific query when the user keeps typing.
+let requestId = 0;
+
 const fetchBranches = async (page = 1) => {
+    const thisRequest = ++requestId;
+
     if (page === 1) loading.value = true;
     else loadingMore.value = true;
 
@@ -539,17 +537,35 @@ const fetchBranches = async (page = 1) => {
             agency_id: branchStore.activeBranch?.agency.agency_id,
             type: "agency_branches",
             branch_uuid: route.params.uuid,
+            search: search.value.trim() || undefined,
+            status: statusFilter.value,
         });
+
+        if (thisRequest !== requestId) return;
 
         const mapped = res.data.map(mapBranch);
         branches.value = page === 1 ? mapped : [...branches.value, ...mapped];
         currentPage.value = res.current_page;
         lastPage.value = res.last_page;
     } finally {
-        loading.value = false;
-        loadingMore.value = false;
+        if (thisRequest === requestId) {
+            loading.value = false;
+            loadingMore.value = false;
+        }
     }
 };
+
+let searchDebounce: ReturnType<typeof setTimeout>;
+
+watch(search, () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => fetchBranches(1), 400);
+});
+
+// The select commits in one action, so it refetches straight away.
+watch(statusFilter, () => fetchBranches(1));
+
+onBeforeUnmount(() => clearTimeout(searchDebounce));
 
 onMounted(async () => {
     await Promise.all([fetchStats(), fetchBranches()]);

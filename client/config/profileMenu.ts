@@ -30,7 +30,7 @@ export const handleMenuClick = async (item: any) => {
 };
 
 export const profileMenuDropDownList = [
-    { icon: "user", label: "My profile", to: "/" },
+    { icon: "user", label: "My profile", to: "/profile" },
     {
         icon: "user",
         label: "Dashboard",

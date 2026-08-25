@@ -119,7 +119,6 @@ class AuthService
                 'email' => $googleUser->getEmail(),
                 'provider' => 'google',
                 'provider_id' => $googleUser->getId(),
-                'is_verified' => true,
             ]);
 
             $user->client()->create([

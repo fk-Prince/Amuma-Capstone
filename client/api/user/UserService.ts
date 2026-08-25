@@ -20,6 +20,14 @@ class UserService extends BaseService {
         return await this.request(this.resource + '/branches', 'GET', params);
     }
 
+    public async profile(): Promise<any> {
+        return await this.request(`${this.getBackendApi}/api/profile`, 'GET');
+    }
+
+    public async updateProfile(payload: object): Promise<any> {
+        return await this.request(`${this.getBackendApi}/api/profile`, 'POST', payload);
+    }
+
 
     private get resource(): string {
         const backend = this.getBackendApi;

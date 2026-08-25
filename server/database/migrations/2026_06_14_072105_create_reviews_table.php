@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('branch_id')->nullable()->constrained('branches', 'branch_id');
             $table->foreignId('user_id')->constrained('users', 'user_id');
             $table->decimal('rate', 3, 2);
+            $table->string('image')->nullable();
             $table->text('description');
             $table->timestamps();
         });

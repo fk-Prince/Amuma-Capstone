@@ -52,6 +52,7 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                         'billing_interval' => $subscription['billing_interval'],
                         'total_amount'     => $subscription['total_amount'],
                         'endDate'          => $subscription['endDate'],
+                        'subscription_uuid' => $subscription['subscription_uuid'] ?? null,
                     ],
                 ]);
 
@@ -62,13 +63,21 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                     'error'   => $response->json(),
                 ], $response->status());
             }
+
             $charge = $response->json();
-            return $this->subscriptionService->newSubscriber([
+
+            $result = [
                 'metadata'          => $charge['metadata'] ?? [],
                 'external_id'       => $charge['external_id'] ?? null,
                 'xendit_invoice_id' => $charge['id'] ?? null,
                 'masked_card_number' => $charge['masked_card_number'] ?? null,
-            ]);
+            ];
+
+            if (($subscription['type'] ?? null) === 'renewal') {
+                return $this->subscriptionService->renewSubscriber($result);
+            }
+
+            return $this->subscriptionService->newSubscriber($result);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
 
             Log::error("API timeout: " . $e->getMessage());
