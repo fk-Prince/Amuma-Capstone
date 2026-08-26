@@ -1,9 +1,22 @@
 <template>
     <div class="relative py-4">
-        <div
-            v-if="loading"
-            class="h-[240px] sm:h-[420px] w-full animate-pulse rounded-2xl bg-gray-200"
-        ></div>
+        <!-- Mirrors the real gallery: one large panel with a stacked column of
+             thumbnails, so the layout doesn't jump when the images arrive. -->
+        <div v-if="loading" class="animate-pulse">
+            <div
+                class="hidden sm:flex gap-[3px] h-[420px] overflow-hidden rounded-2xl"
+            >
+                <div class="flex-1 bg-gray-200" />
+
+                <div class="flex w-40 flex-col gap-[3px]">
+                    <div class="flex-1 bg-gray-200 rounded-tr-2xl" />
+                    <div class="flex-1 bg-gray-200" />
+                    <div class="flex-1 bg-gray-200 rounded-br-2xl" />
+                </div>
+            </div>
+
+            <div class="sm:hidden h-[240px] w-full rounded-2xl bg-gray-200" />
+        </div>
 
         <div
             v-else-if="!hasImages"
@@ -119,7 +132,9 @@
             </div>
         </template>
 
-        <div class="absolute top-8 left-3 flex gap-2">
+        <!-- Hidden while loading: these were rendering on top of the skeleton,
+             offering actions for a provider that isn't there yet. -->
+        <div v-if="!loading" class="absolute top-8 left-3 flex gap-2">
             <button
                 @click="emit('share')"
                 aria-label="Share"

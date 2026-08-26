@@ -21,6 +21,7 @@ return new class extends Migration
             $table->jsonb('booking_data');
             $table->enum('category', ['homecare', 'facility'])->index();
             $table->enum('status', ['approved', 'pending', 'rejected', 'expired',  'cancelled'])->default('pending')->index();
+            $table->text('reason')->nullable();
             $table->enum('booking_type', ['walk_in', 'online'])->index();
             $table->dateTime('valid_until');
             $table->timestamps();

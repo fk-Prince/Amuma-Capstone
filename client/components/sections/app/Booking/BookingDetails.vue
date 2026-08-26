@@ -113,6 +113,44 @@
             </div>
 
             <div class="px-7 py-6 space-y-8">
+                <section v-if="isRejected">
+                    <h3
+                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-rose-600 mb-4"
+                    >
+                        <svg
+                            class="h-3.5 w-3.5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="m15 9-6 6M9 9l6 6" />
+                        </svg>
+
+                        Rejection Details
+                    </h3>
+
+                    <div
+                        class="rounded-lg border border-rose-100 bg-rose-50/50 px-5 py-4"
+                    >
+                        <p
+                            class="text-[10px] uppercase tracking-[0.15em] text-rose-400 font-mono"
+                        >
+                            Reason
+                        </p>
+
+                        <p
+                            class="mt-1 text-sm leading-relaxed text-[#16302E]"
+                            :class="booking.reason ? '' : 'italic text-[#6B8A87]'"
+                        >
+                            {{ booking.reason || "No reason was recorded." }}
+                        </p>
+                    </div>
+                </section>
+
                 <section v-if="isPaid && paymentRows.length">
                     <h3
                         class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
@@ -493,6 +531,10 @@ const paymentStatus = computed(() => {
 });
 
 const isPaid = computed(() => paymentStatus.value === "paid");
+
+const isRejected = computed(
+    () => String(props.booking?.status ?? "").toLowerCase() === "rejected",
+);
 
 // Only a settled payment carries a method, reference and card — a pending one
 // holds nothing but the total, so the section stays hidden until it's paid.

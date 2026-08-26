@@ -1,7 +1,9 @@
 <template>
-    <div class="min-h-screen-header bg-slate-100 p-2 overflow-visible">
+    <div
+        class="min-h-screen-header bg-slate-100 p-2 overflow-visible flex flex-col"
+    >
         <div
-            class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-4 items-stretch w-full h-full min-h-0"
+            class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-4 items-stretch w-full flex-1 min-h-0"
         >
             <div class="w-full min-w-0 min-h-0 flex flex-col order-1">
                 <template v-if="!selectedReferenceId">
@@ -140,7 +142,7 @@
                                             "
                                             type="button"
                                             class="px-3 py-1.5 text-xs font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 transition"
-                                            @click.stop="rejectBooking(row)"
+                                            @click.stop="openRejectModal(row)"
                                         >
                                             Reject
                                         </button>
@@ -504,7 +506,9 @@
                                                 ? 'The payment will be refunded when this booking is rejected.'
                                                 : ''
                                         "
-                                        @click="rejectBooking(selectedBooking)"
+                                        @click="
+                                            openRejectModal(selectedBooking)
+                                        "
                                     >
                                         <span
                                             class="flex items-center justify-center gap-2"
@@ -592,6 +596,15 @@
             "
             :require-admission-date="false"
         />
+
+        <RejectBookingModal
+            v-if="rejectTarget"
+            :reference-id="rejectTarget.reference_id"
+            :loading="isRejecting"
+            :will-refund="rejectWillRefund"
+            @close="closeRejectModal"
+            @confirm="rejectBooking"
+        />
     </div>
 </template>
 
@@ -602,6 +615,7 @@ import { bookingService } from "~/api/booking/BookingService";
 import BookingSidebar from "~/components/sections/app/Booking/BookingSidebar.vue";
 import BookingFilter from "~/components/sections/app/Booking/BookingFilter.vue";
 import BookingDetails from "~/components/sections/app/Booking/BookingDetails.vue";
+import RejectBookingModal from "~/components/sections/app/Booking/RejectBookingModal.vue";
 import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
 import DataTable from "~/components/ui/DataTable.vue";
 import { useToast } from "~/composables/useToast";
@@ -792,7 +806,27 @@ const handleNewBooking = (booking: any) => {
     pagination.totalItems.value++;
 };
 
-const rejectBooking = async (booking: any) => {
+const rejectTarget = ref<any>(null);
+
+const rejectWillRefund = computed(
+    () => rejectTarget.value?.payment?.payment_status === "paid",
+);
+
+const openRejectModal = (booking: any) => {
+    if (!booking?.booking_id) return;
+
+    rejectTarget.value = booking;
+};
+
+const closeRejectModal = () => {
+    if (isRejecting.value) return;
+
+    rejectTarget.value = null;
+};
+
+const rejectBooking = async (reason: string) => {
+    const booking = rejectTarget.value;
+
     if (!booking?.booking_id || isRejecting.value) return;
 
     isRejecting.value = true;
@@ -801,16 +835,33 @@ const rejectBooking = async (booking: any) => {
         const res = await bookingService.actionBooking({
             ...booking,
             action: "reject",
+            reason,
             branch_uuid: branch_uuid.value,
         });
 
         success(res.message ?? "Booking rejected successfully.");
 
-        selectedBooking.value = {
-            ...selectedBooking.value,
+        const rejected = {
             ...(res.data ?? {}),
             status: res.data?.status ?? "rejected",
+            reason: res.data?.reason ?? reason,
         };
+
+        if (!bookingData.value) return;
+        const row = bookingData.value.find(
+            (item: any) => item.booking_id === booking.booking_id,
+        );
+
+        if (row) Object.assign(row, rejected);
+
+        if (selectedBooking.value?.booking_id === booking.booking_id) {
+            selectedBooking.value = {
+                ...selectedBooking.value,
+                ...rejected,
+            };
+        }
+
+        rejectTarget.value = null;
     } catch (err: any) {
         error(err?.message ?? "Failed to reject booking.");
         console.error("Failed to reject booking:", err);

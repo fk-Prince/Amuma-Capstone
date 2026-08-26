@@ -187,21 +187,29 @@ const loadNotifications = async (branchUuid?: string) => {
     }
 };
 
+const announce = (notification: Notification) => {
+    notifications.value = [notification, ...notifications.value].slice(0, 4);
+
+    info("New Notification", notification.message);
+};
+
 const bindChannel = (branchUuid?: string) => {
-    if (!user.value?.uuid) return;
+    const uuid = user.value?.uuid;
+
+    if (!uuid || !$echo) return;
 
     if (channel) {
         channel.stopListening(".NotificationEvent");
-        $echo.leave(`private-Notification.${user.value.uuid}`);
+        $echo.leave(`private-Notification.${uuid}`);
+        channel = null;
     }
 
     channel = $echo
-        .private(`Notification.${user.value.uuid}`)
+        .private(`Notification.${uuid}`)
         .listen(".NotificationEvent", (e: any) => {
-            // Only filter by branch when this bell is scoped to one.
             if (branchUuid && e.branch_uuid !== branchUuid) return;
 
-            const newNotification: Notification = {
+            announce({
                 id: Date.now(),
                 uuid: generateId(),
                 message: e.message,
@@ -211,25 +219,48 @@ const bindChannel = (branchUuid?: string) => {
                 icon: "ti-bell",
                 bg: "#EAF4F2",
                 color: "#0E7C7B",
-            };
-
-            info("New Notification", e.message);
-
-            notifications.value.unshift(newNotification);
-
-            notifications.value = notifications.value.slice(0, 4);
+            });
         });
 };
 
-// Re-runs when moving between branches, and still runs once on routes that
-// have no branch at all so the portal bell fills in.
-watch(
-    () => route.params.uuid,
-    async (newUuid) => {
-        const branchUuid = Array.isArray(newUuid) ? newUuid[0] : newUuid;
+const currentBranchUuid = () => {
+    const value = route.params.uuid;
+    const uuid = Array.isArray(value) ? value[0] : value;
 
-        await loadNotifications(branchUuid as string | undefined);
-        bindChannel(branchUuid as string | undefined);
+    return (uuid as string | undefined) || undefined;
+};
+
+const POLL_MS = 15000;
+let poll: ReturnType<typeof setInterval> | null = null;
+
+const refresh = async () => {
+    const known = new Set(notifications.value.map((n) => n.id));
+
+    try {
+        const res = await notificationService.list({
+            per_page: 4,
+            branch_uuid: currentBranchUuid(),
+        });
+
+        const rows: Notification[] = Array.isArray(res?.data) ? res.data : [];
+
+        const fresh = rows.filter((n) => n.unread && !known.has(n.id));
+
+        notifications.value = rows;
+
+        if (known.size) {
+            fresh.forEach((n) => info("New Notification", n.message));
+        }
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+watch(
+    [() => route.params.uuid, () => user.value?.uuid],
+    async () => {
+        await loadNotifications(currentBranchUuid());
+        bindChannel(currentBranchUuid());
     },
     { immediate: true },
 );
@@ -238,10 +269,24 @@ function generateId(): string {
 }
 onMounted(() => {
     isMounted.value = true;
+
+    poll = setInterval(refresh, POLL_MS);
+
+    // Catch up immediately on returning to the tab rather than waiting out
+    // the interval.
+    document.addEventListener("visibilitychange", onVisible);
 });
 
+const onVisible = () => {
+    if (document.visibilityState === "visible") refresh();
+};
+
 onBeforeUnmount(() => {
-    if (channel) {
+    if (poll) clearInterval(poll);
+
+    document.removeEventListener("visibilitychange", onVisible);
+
+    if (channel && $echo) {
         channel.stopListening(".NotificationEvent");
         $echo.leave(`Notification.${user.value?.uuid}`);
     }

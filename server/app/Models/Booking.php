@@ -39,6 +39,7 @@ class Booking extends Model
         'branch_id',
         'booking_data',
         'status',
+        'reason',
         'category',
         'valid_until',
         'booking_type'

@@ -83,7 +83,12 @@ class BookingService
                 'patient_id' => $data['patient']['patient_id'],
             ]);
 
-
+            $this->notificationService->notifyBookingDecision(
+                $branch,
+                $booking->fresh(),
+                Booking::STATUS_APPROVED,
+                $payload['user'] ?? null
+            );
 
             return response()->json([
                 'message' => "Booking {$booking['reference_id']} has been approved successfully.",
@@ -257,11 +262,21 @@ class BookingService
                 );
             }
 
+            $reason = trim((string) ($payload['reason'] ?? '')) ?: null;
+
             $booking->update([
                 'booking_data' => $bookingData,
                 'status' => Booking::STATUS_REJECTED,
+                'reason' => $reason,
             ]);
 
+            $this->notificationService->notifyBookingDecision(
+                $payload['branch'],
+                $booking->fresh(),
+                Booking::STATUS_REJECTED,
+                $payload['user'] ?? null,
+                $reason
+            );
 
             return [
                 'data' => $booking->fresh(),

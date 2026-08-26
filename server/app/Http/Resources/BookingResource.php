@@ -23,6 +23,7 @@ class BookingResource extends JsonResource
             'booking_type' => $this->booking_type,
             'valid_until' => $this->valid_until,
             'status' => $this->status,
+            'reason' => $this->reason,
 
             'facility' => $data['facility'] ?? null,
             'homecare' => $data['homecare'] ?? null,

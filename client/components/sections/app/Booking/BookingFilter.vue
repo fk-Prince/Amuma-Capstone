@@ -2,73 +2,83 @@
     <div
         class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center flex-1"
     >
-        <div class="relative flex-1 min-w-0">
-            <svg
-                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted"
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.75"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <circle cx="9" cy="9" r="6" />
-                <path d="m17 17-4-4" />
-            </svg>
-
+        <div class="relative w-full min-w-0 sm:flex-1 sm:max-w-sm">
             <BaseInput
                 mode="text"
+                :is-search="true"
                 :modelValue="search"
                 @update:modelValue="$emit('update:search', $event)"
-                placeholder="Search by Reference ID or Patient name"
-                inputClass="pl-[2.3rem] w-full"
+                placeholder="Reference ID or patient name"
+                input-class="px-4 py-2.5 rounded-lg w-full"
             />
-
-            <button
-                v-if="search"
-                type="button"
-                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9AB3AF] hover:text-[#16302E] transition"
-                @click="$emit('update:search', '')"
-            >
-                <svg
-                    class="h-4 w-4"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M5 5l10 10M15 5 5 15" />
-                </svg>
-            </button>
         </div>
 
-        <div class="relative shrink-0">
+        <div class="relative w-full sm:w-auto sm:shrink-0">
             <button
                 ref="filterButton"
                 type="button"
-                class="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 text-sm border border-[#E4EFED] rounded-lg bg-white hover:bg-[#F7FAF9] transition"
+                class="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-3 lg:gap-4 rounded-lg border px-4 py-2.5 text-sm transition-colors"
+                :class="
+                    hasActiveFilters
+                        ? 'border-primary/30 bg-primary/5 hover:bg-primary/10'
+                        : 'border-slate-300 bg-white hover:bg-slate-50'
+                "
                 @click="toggleFilters"
             >
-                <svg
-                    class="h-4 w-4 text-[#6B8A87]"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M3 5h14" />
-                    <path d="M5 10h10" />
-                    <path d="M8 15h4" />
-                </svg>
+                <!-- Below lg the three summaries won't fit beside the table, so
+                     the trigger collapses to a label plus an active count. -->
+                <span class="flex items-center gap-1.5 lg:hidden">
+                    <SlidersHorizontal class="h-4 w-4 text-slate-400" />
+                    <span class="font-medium text-slate-900">Filters</span>
 
-                <span class="font-medium text-[#16302E]">Filters</span>
+                    <span
+                        v-if="activeFilterCount"
+                        class="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
+                    >
+                        {{ activeFilterCount }}
+                    </span>
+                </span>
+
+                <span
+                    class="hidden lg:flex min-w-0 items-center gap-1.5 text-slate-600"
+                >
+                    <Layers class="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                    <span class="truncate font-medium text-slate-900">
+                        {{ typeSummary }}
+                    </span>
+                </span>
+
+                <span class="hidden lg:inline text-slate-300">|</span>
+
+                <span
+                    class="hidden lg:flex min-w-0 items-center gap-1.5 text-slate-600"
+                >
+                    <CalendarRange
+                        class="h-3.5 w-3.5 shrink-0 text-slate-400"
+                    />
+                    <span class="truncate font-medium text-slate-900">
+                        {{ periodSummary }}
+                    </span>
+                </span>
+
+                <span class="hidden lg:inline text-slate-300">|</span>
+
+                <span
+                    class="hidden lg:flex min-w-0 items-center gap-1.5 text-slate-600"
+                >
+                    <CircleDot class="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                    <span class="truncate font-medium text-slate-900">
+                        {{ statusSummary }}
+                    </span>
+                </span>
+
+                <span
+                    v-if="hasActiveFilters"
+                    class="hidden lg:block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                />
 
                 <ChevronDown
-                    class="h-4 w-4 text-muted transition-transform"
+                    class="h-4 w-4 shrink-0 text-slate-400 transition-transform"
                     :class="{ 'rotate-180': open }"
                 />
             </button>
@@ -83,46 +93,62 @@
                 <Transition name="fade-slide">
                     <div
                         v-if="open"
-                        class="fixed z-[9999] w-[630px] max-w-[calc(100vw-1rem)] bg-white rounded-xl shadow-xl border border-[#E4EFED] p-4 sm:p-6"
+                        class="fixed z-[9999] w-[650px] max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
                         :style="dropdownStyle"
                         @click.stop
                     >
-                        <button
-                            type="button"
-                            class="absolute right-4 top-4 text-muted hover:text-[#16302E]"
-                            @click="open = false"
+                        <div
+                            class="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/80 px-6 py-4"
                         >
-                            <svg
-                                class="h-4 w-4"
-                                viewBox="0 0 20 20"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.75"
-                                stroke-linecap="round"
-                            >
-                                <path d="M5 5l10 10M15 5 5 15" />
-                            </svg>
-                        </button>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900">
+                                    Filter Bookings
+                                </p>
+                                <p class="mt-0.5 text-xs text-slate-500">
+                                    Narrow bookings down by care type, the
+                                    period they fall in, and their status.
+                                </p>
+                            </div>
 
+                            <button
+                                type="button"
+                                class="shrink-0 text-slate-400 hover:text-slate-600"
+                                @click="open = false"
+                            >
+                                <svg
+                                    class="h-4 w-4"
+                                    viewBox="0 0 20 20"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.75"
+                                    stroke-linecap="round"
+                                >
+                                    <path d="M5 5l10 10M15 5 5 15" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="p-6">
                         <div
                             class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
                         >
                             <p
-                                class="sm:w-20 shrink-0 text-sm font-semibold text-[#16302E]"
+                                class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
                             >
+                                <Layers class="h-3.5 w-3.5 text-slate-400" />
                                 Type
                             </p>
 
-                            <div class="flex flex-wrap gap-x-5 gap-y-2">
+                            <div class="flex flex-wrap gap-2">
                                 <button
                                     v-for="item in typeFilters"
                                     :key="item.value"
                                     type="button"
-                                    class="text-sm transition"
+                                    class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
                                     :class="
                                         localType === item.value
-                                            ? 'text-primary font-medium'
-                                            : 'text-[#16302E] hover:text-primary'
+                                            ? 'border-primary bg-primary text-white'
+                                            : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
                                     "
                                     @click="localType = item.value"
                                 >
@@ -131,28 +157,31 @@
                             </div>
                         </div>
 
-                        <div class="h-px bg-[#E4EFED] my-3" />
+                        <div class="h-px bg-slate-200 my-4" />
 
                         <div
                             class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
                         >
                             <p
-                                class="sm:w-20 shrink-0 text-sm font-semibold text-[#16302E]"
+                                class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
                             >
+                                <CalendarRange
+                                    class="h-3.5 w-3.5 text-slate-400"
+                                />
                                 Period
                             </p>
 
                             <div class="flex flex-col gap-2.5 min-w-0">
-                                <div class="flex flex-wrap gap-x-5 gap-y-2">
+                                <div class="flex flex-wrap gap-2">
                                     <button
                                         v-for="p in periodPresets"
                                         :key="p.value"
                                         type="button"
-                                        class="text-sm transition"
+                                        class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
                                         :class="
                                             activePreset === p.value
-                                                ? 'text-primary font-medium'
-                                                : 'text-[#16302E] hover:text-primary'
+                                                ? 'border-primary bg-primary text-white'
+                                                : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
                                         "
                                         @click="applyPreset(p.value)"
                                     >
@@ -161,7 +190,7 @@
                                 </div>
 
                                 <div
-                                    class="flex flex-row flex-nowrap items-center gap-2"
+                                    class="flex flex-wrap xs:flex-nowrap items-center gap-2"
                                 >
                                     <BaseInput
                                         v-model="localDateFrom"
@@ -171,7 +200,7 @@
                                     />
 
                                     <span
-                                        class="text-muted text-xs text-center shrink-0"
+                                        class="text-slate-400 text-xs text-center shrink-0"
                                     >
                                         to
                                     </span>
@@ -186,27 +215,28 @@
                             </div>
                         </div>
 
-                        <div class="h-px bg-[#E4EFED] my-3" />
+                        <div class="h-px bg-slate-200 my-4" />
 
                         <div
                             class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
                         >
                             <p
-                                class="sm:w-20 shrink-0 text-sm font-semibold text-[#16302E]"
+                                class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
                             >
+                                <CircleDot class="h-3.5 w-3.5 text-slate-400" />
                                 Status
                             </p>
 
-                            <div class="flex flex-wrap gap-x-5 gap-y-2">
+                            <div class="flex flex-wrap gap-2">
                                 <button
                                     v-for="item in statusFilters"
                                     :key="item.value"
                                     type="button"
-                                    class="text-sm transition"
+                                    class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
                                     :class="
                                         localStatus === item.value
-                                            ? 'text-primary font-medium'
-                                            : 'text-[#16302E] hover:text-primary'
+                                            ? 'border-primary bg-primary text-white'
+                                            : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
                                     "
                                     @click="localStatus = item.value"
                                 >
@@ -215,12 +245,12 @@
                             </div>
                         </div>
 
-                        <div class="h-px bg-[#E4EFED] my-4" />
+                        <div class="h-px bg-slate-200 my-4" />
 
                         <div class="flex justify-end gap-3">
                             <button
                                 type="button"
-                                class="px-4 py-2 text-sm font-medium text-muted hover:text-[#16302E] transition"
+                                class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition"
                                 @click="resetAll"
                             >
                                 Reset
@@ -233,6 +263,7 @@
                             >
                                 Apply
                             </button>
+                        </div>
                         </div>
                     </div>
                 </Transition>
@@ -250,7 +281,13 @@ import {
     onBeforeUnmount,
     nextTick,
 } from "vue";
-import { ChevronDown } from "lucide-vue-next";
+import {
+    CalendarRange,
+    ChevronDown,
+    CircleDot,
+    Layers,
+    SlidersHorizontal,
+} from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import { typeFilters, statusFilters } from "~/types/booking";
 
@@ -482,14 +519,35 @@ const statusSummary = computed(() => {
     return found?.label ?? "All";
 });
 
+const hasActiveFilters = computed(() => activeFilterCount.value > 0);
+
+// Kept short so the trigger button stays on one line — the full range is
+// visible in the date inputs once the dropdown is open.
 const periodSummary = computed(() => {
-    if (!props.dateFrom && !props.dateTo) return "All";
+    if (!props.dateFrom && !props.dateTo) return "Any date";
+
+    const preset = periodPresets.find((p) => p.value === activePreset.value);
+
+    if (preset && preset.value !== "all") return preset.label;
+
+    const short = (value: string) => {
+        if (!value) return "";
+
+        try {
+            return new Date(value).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+            });
+        } catch {
+            return value;
+        }
+    };
 
     if (props.dateFrom && props.dateTo) {
-        return `${props.dateFrom} → ${props.dateTo}`;
+        return `${short(props.dateFrom)} – ${short(props.dateTo)}`;
     }
 
-    return props.dateFrom || props.dateTo;
+    return short(props.dateFrom || props.dateTo);
 });
 
 onMounted(() => {

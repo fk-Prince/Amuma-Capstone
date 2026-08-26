@@ -11,15 +11,19 @@
 
 <script setup lang="ts">
 import AppToast from "./components/ui/AppToast.vue";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { registerToast } from "@/composables/useToast";
 import { useRoute, navigateTo } from "#imports";
 
 const toastRef = ref();
 
-onMounted(() => {
-    registerToast(toastRef.value);
-});
+watch(
+    toastRef,
+    (instance) => {
+        if (instance) registerToast(instance);
+    },
+    { immediate: true },
+);
 
 const route = useRoute();
 

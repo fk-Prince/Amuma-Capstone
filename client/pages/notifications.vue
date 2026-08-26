@@ -1,6 +1,6 @@
 <template>
     <div class="min-h-screen bg-white pt-[100px]">
-        <div class="mx-auto max-w-3xl px-5 pb-16 sm:px-8">
+        <div class="mx-auto w-full md:px-[5%] lg:px-[8%] px-5 pb-16 sm:px-8">
             <!-- Header -->
             <div
                 class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between"
@@ -15,7 +15,11 @@
                     <p class="mt-1 text-sm text-slate-500">
                         <span v-if="unreadCount">
                             You have {{ unreadCount }} unread
-                            {{ unreadCount === 1 ? "notification" : "notifications" }}.
+                            {{
+                                unreadCount === 1
+                                    ? "notification"
+                                    : "notifications"
+                            }}.
                         </span>
                         <span v-else>You're all caught up.</span>
                     </p>
@@ -231,7 +235,10 @@ const TONES: Record<string, { icon: any; wrapper: string }> = {
 };
 
 const toneFor = (type: string) =>
-    TONES[type] ?? { icon: MessageSquare, wrapper: "bg-slate-100 text-slate-500" };
+    TONES[type] ?? {
+        icon: MessageSquare,
+        wrapper: "bg-slate-100 text-slate-500",
+    };
 
 // Guards against a slow earlier page landing after a filter switch.
 let requestId = 0;

@@ -14,6 +14,8 @@ export default defineNuxtPlugin(() => {
     const backendUrl = new URL(config.public.backendApi as string);
     const isSecure = backendUrl.protocol === 'https:';
 
+    (window as any).Pusher = Pusher;
+
     const echo = new Echo({
         broadcaster: 'reverb',
         key: 'lbcswwvuj6gh7s5cmwza',
