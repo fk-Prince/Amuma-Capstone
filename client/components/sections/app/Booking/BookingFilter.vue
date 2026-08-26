@@ -25,8 +25,6 @@
                 "
                 @click="toggleFilters"
             >
-                <!-- Below lg the three summaries won't fit beside the table, so
-                     the trigger collapses to a label plus an active count. -->
                 <span class="flex items-center gap-1.5 lg:hidden">
                     <SlidersHorizontal class="h-4 w-4 text-slate-400" />
                     <span class="font-medium text-slate-900">Filters</span>
@@ -129,141 +127,149 @@
                         </div>
 
                         <div class="p-6">
-                        <div
-                            class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
-                        >
-                            <p
-                                class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
+                            <div
+                                class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
                             >
-                                <Layers class="h-3.5 w-3.5 text-slate-400" />
-                                Type
-                            </p>
-
-                            <div class="flex flex-wrap gap-2">
-                                <button
-                                    v-for="item in typeFilters"
-                                    :key="item.value"
-                                    type="button"
-                                    class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
-                                    :class="
-                                        localType === item.value
-                                            ? 'border-primary bg-primary text-white'
-                                            : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
-                                    "
-                                    @click="localType = item.value"
+                                <p
+                                    class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
                                 >
-                                    {{ item.label }}
-                                </button>
-                            </div>
-                        </div>
+                                    <Layers
+                                        class="h-3.5 w-3.5 text-slate-400"
+                                    />
+                                    Type
+                                </p>
 
-                        <div class="h-px bg-slate-200 my-4" />
-
-                        <div
-                            class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
-                        >
-                            <p
-                                class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
-                            >
-                                <CalendarRange
-                                    class="h-3.5 w-3.5 text-slate-400"
-                                />
-                                Period
-                            </p>
-
-                            <div class="flex flex-col gap-2.5 min-w-0">
                                 <div class="flex flex-wrap gap-2">
                                     <button
-                                        v-for="p in periodPresets"
-                                        :key="p.value"
+                                        v-for="item in typeFilters"
+                                        :key="item.value"
                                         type="button"
                                         class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
                                         :class="
-                                            activePreset === p.value
+                                            localType === item.value
                                                 ? 'border-primary bg-primary text-white'
                                                 : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
                                         "
-                                        @click="applyPreset(p.value)"
+                                        @click="localType = item.value"
                                     >
-                                        {{ p.label }}
+                                        {{ item.label }}
                                     </button>
                                 </div>
+                            </div>
 
-                                <div
-                                    class="flex flex-wrap xs:flex-nowrap items-center gap-2"
+                            <div class="h-px bg-slate-200 my-4" />
+
+                            <div
+                                class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
+                            >
+                                <p
+                                    class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
                                 >
-                                    <BaseInput
-                                        v-model="localDateFrom"
-                                        mode="date"
-                                        class-name="w-full min-w-0 xs:w-[140px]"
-                                        @update:modelValue="activePreset = null"
+                                    <CalendarRange
+                                        class="h-3.5 w-3.5 text-slate-400"
                                     />
+                                    Period
+                                </p>
 
-                                    <span
-                                        class="text-slate-400 text-xs text-center shrink-0"
+                                <div class="flex flex-col gap-2.5 min-w-0">
+                                    <div class="flex flex-wrap gap-2">
+                                        <button
+                                            v-for="p in periodPresets"
+                                            :key="p.value"
+                                            type="button"
+                                            class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
+                                            :class="
+                                                activePreset === p.value
+                                                    ? 'border-primary bg-primary text-white'
+                                                    : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
+                                            "
+                                            @click="applyPreset(p.value)"
+                                        >
+                                            {{ p.label }}
+                                        </button>
+                                    </div>
+
+                                    <div
+                                        class="flex flex-wrap sm:flex-nowrap items-center gap-2"
                                     >
-                                        to
-                                    </span>
+                                        <BaseInput
+                                            v-model="localDateFrom"
+                                            mode="date"
+                                            class-name="w-full min-w-0 sm:w-[140px]"
+                                            @update:modelValue="
+                                                activePreset = null
+                                            "
+                                        />
 
-                                    <BaseInput
-                                        v-model="localDateTo"
-                                        mode="date"
-                                        class-name="w-full min-w-0 xs:w-[140px]"
-                                        @update:modelValue="activePreset = null"
-                                    />
+                                        <span
+                                            class="text-slate-400 text-xs text-center shrink-0"
+                                        >
+                                            to
+                                        </span>
+
+                                        <BaseInput
+                                            v-model="localDateTo"
+                                            mode="date"
+                                            class-name="w-full min-w-0 sm:w-[140px]"
+                                            @update:modelValue="
+                                                activePreset = null
+                                            "
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="h-px bg-slate-200 my-4" />
+                            <div class="h-px bg-slate-200 my-4" />
 
-                        <div
-                            class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
-                        >
-                            <p
-                                class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
+                            <div
+                                class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
                             >
-                                <CircleDot class="h-3.5 w-3.5 text-slate-400" />
-                                Status
-                            </p>
-
-                            <div class="flex flex-wrap gap-2">
-                                <button
-                                    v-for="item in statusFilters"
-                                    :key="item.value"
-                                    type="button"
-                                    class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
-                                    :class="
-                                        localStatus === item.value
-                                            ? 'border-primary bg-primary text-white'
-                                            : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
-                                    "
-                                    @click="localStatus = item.value"
+                                <p
+                                    class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
                                 >
-                                    {{ item.label }}
+                                    <CircleDot
+                                        class="h-3.5 w-3.5 text-slate-400"
+                                    />
+                                    Status
+                                </p>
+
+                                <div class="flex flex-wrap gap-2">
+                                    <button
+                                        v-for="item in statusFilters"
+                                        :key="item.value"
+                                        type="button"
+                                        class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
+                                        :class="
+                                            localStatus === item.value
+                                                ? 'border-primary bg-primary text-white'
+                                                : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
+                                        "
+                                        @click="localStatus = item.value"
+                                    >
+                                        {{ item.label }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="h-px bg-slate-200 my-4" />
+
+                            <div class="flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition"
+                                    @click="resetAll"
+                                >
+                                    Reset
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="px-5 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:opacity-90 transition"
+                                    @click="applyAndClose"
+                                >
+                                    Apply
                                 </button>
                             </div>
-                        </div>
-
-                        <div class="h-px bg-slate-200 my-4" />
-
-                        <div class="flex justify-end gap-3">
-                            <button
-                                type="button"
-                                class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition"
-                                @click="resetAll"
-                            >
-                                Reset
-                            </button>
-
-                            <button
-                                type="button"
-                                class="px-5 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:opacity-90 transition"
-                                @click="applyAndClose"
-                            >
-                                Apply
-                            </button>
-                        </div>
                         </div>
                     </div>
                 </Transition>
@@ -315,9 +321,12 @@ const dropdownStyle = ref<Record<string, string>>({
     left: "0px",
 });
 
-const DROPDOWN_WIDTH = 630;
+// Must match the panel's w-[650px] / max-w-[calc(100vw-1rem)], otherwise the
+// measured width used for placement disagrees with the rendered width and the
+// panel sits off-centre near the viewport edge.
+const DROPDOWN_WIDTH = 650;
 const DROPDOWN_HEIGHT = 440;
-const SCREEN_GAP = 16;
+const SCREEN_GAP = 8;
 
 const updateDropdownPosition = () => {
     if (!filterButton.value || !open.value) return;
@@ -521,8 +530,6 @@ const statusSummary = computed(() => {
 
 const hasActiveFilters = computed(() => activeFilterCount.value > 0);
 
-// Kept short so the trigger button stays on one line — the full range is
-// visible in the date inputs once the dropdown is open.
 const periodSummary = computed(() => {
     if (!props.dateFrom && !props.dateTo) return "Any date";
 
