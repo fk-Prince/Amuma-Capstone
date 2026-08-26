@@ -203,15 +203,48 @@ class ScheduleService
             $targetDurationMinutes = $this->scheduleRepository->calculateScheduleDurationMinutes($schedule);
             $targetEnd = $targetStart->copy()->addMinutes($targetDurationMinutes);
 
-            foreach ($payload['assignments'] as $assignment) {
+            // Grouped by service: a service can now be staffed by several
+            // people, and clearing the existing rows once per *assignment*
+            // would delete the assignee created by the previous row.
+            $assignmentsByService = collect($payload['assignments'])
+                ->groupBy('schedule_services_id');
+
+            foreach ($assignmentsByService as $scheduleServicesId => $rows) {
                 $scheduleService = $schedule->scheduleServices()
-                    ->where('schedule_services_id', $assignment['schedule_services_id'])
+                    ->where('schedule_services_id', $scheduleServicesId)
                     ->firstOrFail();
 
-                $scheduleService->assigned()->delete();
+                // Rows with an online scan history are deactivated rather
+                // than deleted, so the check-in/out audit trail survives a
+                // reassignment.
+                foreach ($scheduleService->assigned()->get() as $existing) {
+                    if ($existing->onlineSchedules()->exists()) {
+                        $existing->update(['is_active' => false]);
+                    } else {
+                        $existing->delete();
+                    }
+                }
 
-                if (!empty($assignment['employee_id'])) {
+                $requiredRole = match ($scheduleService->type) {
+                    'Medical' => 'nurse',
+                    'ADL' => 'caregiver',
+                    default => null,
+                };
+
+                $seen = [];
+
+                foreach ($rows as $assignment) {
+                    if (empty($assignment['employee_id'])) {
+                        continue;
+                    }
+
                     $employeeId = (int) $assignment['employee_id'];
+
+                    if (in_array($employeeId, $seen, true)) {
+                        continue;
+                    }
+
+                    $seen[] = $employeeId;
 
                     // Hard gate, independent of whatever the frontend's
                     // pre-flight conflict check / confirmation said — an
@@ -238,12 +271,6 @@ class ScheduleService
                         ->where('branch_id', $branch->branch_id)
                         ->value('role_name');
 
-                    $requiredRole = match ($scheduleService->type) {
-                        'Medical' => 'nurse',
-                        'ADL' => 'caregiver',
-                        default => null,
-                    };
-
                     if ($requiredRole !== null && $roleName !== $requiredRole) {
                         throw new Exception(
                             "Only a {$requiredRole} can be assigned to a {$scheduleService->type} service.",
@@ -251,9 +278,18 @@ class ScheduleService
                         );
                     }
 
-                    $scheduleService->assigned()->create([
-                        'employee_id' => $employeeId,
-                    ]);
+                    $note = $assignment['note'] ?? null;
+
+                    $note = is_string($note) && trim($note) !== ''
+                        ? mb_substr(trim($note), 0, 255)
+                        : null;
+
+                    // A deactivated row for this person may still exist from
+                    // the pass above; the (service, employee) pair is unique.
+                    $scheduleService->assigned()->updateOrCreate(
+                        ['employee_id' => $employeeId],
+                        ['is_active' => true, 'note' => $note]
+                    );
                 }
             }
 
@@ -455,6 +491,25 @@ class ScheduleService
                     ->unique()
                     ->values();
 
+                // Each assignment may carry its own free-text note describing
+                // what that person does on this service ("Primary",
+                // "Assistance", ...). Only rows that actually sent a `note`
+                // key are collected: other callers (the schedule edit form)
+                // post assignments without notes, and those must leave the
+                // existing note alone rather than blanking it.
+                $notesByEmployee = $assignments
+                    ->filter(fn($row) => !empty($row['employee_id'])
+                        && array_key_exists('note', $row))
+                    ->mapWithKeys(function ($row) {
+                        $note = $row['note'];
+
+                        $note = is_string($note) && trim($note) !== ''
+                            ? mb_substr(trim($note), 0, 255)
+                            : null;
+
+                        return [(int) $row['employee_id'] => $note];
+                    });
+
                 $currentlyActive = $scheduleService->assigned()
                     ->where('is_active', true)
                     ->get();
@@ -520,9 +575,22 @@ class ScheduleService
                     }
                 }
 
-                // Activate/create anyone in the desired set who isn't already active
+                // Activate/create anyone in the desired set who isn't already
+                // active, and refresh the note on those who already are — an
+                // edit that only changes a note must still be saved.
                 foreach ($desiredEmployeeIds as $employeeId) {
+                    $hasNote = $notesByEmployee->has($employeeId);
+                    $note = $notesByEmployee->get($employeeId);
+
                     if ($currentlyActiveIds->contains($employeeId)) {
+                        // Already staffed — the only thing that can change is
+                        // the note, and only when one was actually sent.
+                        if ($hasNote) {
+                            $currentlyActive
+                                ->firstWhere('employee_id', $employeeId)
+                                ?->update(['note' => $note]);
+                        }
+
                         continue;
                     }
 
@@ -531,11 +599,15 @@ class ScheduleService
                         ->first();
 
                     if ($existingRow) {
-                        $existingRow->update(['is_active' => true]);
+                        $existingRow->update(array_filter([
+                            'is_active' => true,
+                            'note' => $note,
+                        ], fn($value, $key) => $key !== 'note' || $hasNote, ARRAY_FILTER_USE_BOTH));
                     } else {
                         $scheduleService->assigned()->create([
                             'employee_id' => $employeeId,
                             'is_active' => true,
+                            'note' => $note,
                         ]);
                     }
                 }

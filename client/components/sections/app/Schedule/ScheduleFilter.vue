@@ -1,86 +1,134 @@
 <template>
     <div
-        class="w-full bg-white p-5 rounded-t-2xl border border-muted-light/70 shadow-sm shadow-secondary/[0.03] font-sans"
+        class="w-full rounded-t-2xl border border-muted-light/70 bg-white font-sans shadow-sm shadow-secondary/[0.03]"
     >
-        <div
-            class="flex items-center justify-between gap-3"
-            :class="expanded ? 'mb-4' : ''"
-        >
-            <button
-                type="button"
-                class="flex items-center gap-3 text-left flex-1 min-w-0 group"
-                @click="expanded = !expanded"
-            >
-                <div
-                    class="h-10 w-10 shrink-0 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600 transition-colors group-hover:bg-primary-100"
+        <div class="flex flex-col gap-3 p-4 sm:p-5">
+            <div class="flex items-center gap-3">
+                <button
+                    type="button"
+                    class="group flex min-w-0 flex-1 items-center gap-3 text-left"
+                    :aria-expanded="expanded"
+                    @click="expanded = !expanded"
                 >
-                    <SlidersHorizontal class="h-5 w-5" />
-                </div>
+                    <span
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 transition-colors group-hover:bg-primary-100"
+                    >
+                        <SlidersHorizontal class="h-5 w-5" />
+                    </span>
 
-                <div class="min-w-0">
-                    <div class="flex items-center gap-2">
-                        <h3 class="font-semibold text-secondary tracking-tight">
-                            Filter Schedule
-                        </h3>
+                    <span class="min-w-0">
+                        <span class="flex items-center gap-2">
+                            <span
+                                class="font-semibold tracking-tight text-secondary"
+                            >
+                                Filter Schedule
+                            </span>
+
+                            <span
+                                v-if="activeFilterCount"
+                                class="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-white"
+                            >
+                                {{ activeFilterCount }}
+                            </span>
+                        </span>
 
                         <span
-                            v-if="!expanded && activeFilterCount > 0"
-                            class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-primary text-white text-[10px] font-semibold"
+                            class="mt-0.5 block truncate text-xs text-muted"
                         >
-                            {{ activeFilterCount }}
+                            Refine appointments by date, status or service type
                         </span>
+                    </span>
+                </button>
+
+                <div class="flex shrink-0 items-center gap-2 pl-2">
+                    <div
+                        class="flex items-center gap-1 rounded-xl bg-muted-light p-1"
+                    >
+                        <button
+                            v-for="option in viewOptions"
+                            :key="option.value"
+                            type="button"
+                            :aria-label="option.label"
+                            :aria-pressed="filters.view === option.value"
+                            class="flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+                            :class="
+                                filters.view === option.value
+                                    ? 'bg-white text-primary-600 shadow-sm'
+                                    : 'text-muted hover:text-secondary'
+                            "
+                            @click="setView(option.value)"
+                        >
+                            <component :is="option.icon" class="h-4 w-4" />
+                        </button>
                     </div>
 
-                    <p class="text-xs text-muted mt-0.5 truncate">
-                        Refine appointments by date, status or provider
-                    </p>
-                </div>
-            </button>
-
-            <div class="flex items-center gap-2 shrink-0 pl-2">
-                <div
-                    class="flex items-center gap-1 rounded-xl bg-muted-light p-1"
-                >
                     <button
-                        v-for="option in viewOptions"
-                        :key="option.value"
                         type="button"
-                        :aria-label="option.label"
-                        :aria-pressed="filters.view === option.value"
-                        class="flex items-center justify-center h-8 w-8 rounded-lg transition-colors"
-                        :class="
-                            filters.view === option.value
-                                ? 'bg-white text-primary-600 shadow-sm'
-                                : 'text-muted hover:text-secondary'
-                        "
-                        @click="setView(option.value)"
+                        class="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-primary-50 hover:text-primary-600"
+                        :aria-expanded="expanded"
+                        aria-label="Toggle filters"
+                        @click="expanded = !expanded"
                     >
-                        <component :is="option.icon" class="h-4 w-4" />
+                        <ChevronDown
+                            class="h-4 w-4 transition-transform duration-300 ease-out"
+                            :class="expanded ? 'rotate-180' : ''"
+                        />
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search stays out of the collapsible panel: it is the control
+                 people reach for most, and hiding it behind a toggle made
+                 every lookup a two-step. -->
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div class="relative min-w-0 flex-1">
+                    <Search
+                        class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                    />
+
+                    <input
+                        :value="filters.search"
+                        type="text"
+                        placeholder="Search patient, assigned nurse or schedule code"
+                        class="w-full rounded-xl border border-muted-light bg-muted-light/40 py-2.5 pl-10 pr-9 text-sm text-secondary transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25"
+                        @input="onSearchInput"
+                    />
+
+                    <button
+                        v-if="filters.search"
+                        type="button"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-secondary"
+                        aria-label="Clear search"
+                        @click="clearSearch"
+                    >
+                        <X class="h-4 w-4" />
                     </button>
                 </div>
 
                 <button
                     v-if="activeFilterCount > 0"
                     type="button"
-                    class="hidden sm:flex items-center gap-1 h-8 px-2.5 rounded-lg text-xs font-medium text-muted hover:text-danger hover:bg-danger/10 transition-colors"
+                    class="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-muted-light px-3 text-xs font-medium text-muted transition-colors hover:border-danger/30 hover:bg-danger/10 hover:text-danger"
                     @click="resetFilters"
                 >
                     <X class="h-3.5 w-3.5" />
-                    Clear
+                    Clear all
                 </button>
+            </div>
 
-                <button
-                    type="button"
-                    class="h-9 w-9 rounded-lg flex items-center justify-center text-muted hover:bg-primary-50 hover:text-primary-600 transition-colors"
-                    :aria-expanded="expanded"
-                    aria-label="Toggle filters"
-                    @click="expanded = !expanded"
+            <!-- What is applied, readable without opening the panel. -->
+            <div
+                v-if="!expanded && summaryChips.length"
+                class="flex flex-wrap items-center gap-1.5"
+            >
+                <span
+                    v-for="chip in summaryChips"
+                    :key="chip.key"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-medium text-primary-600"
                 >
-                    <ChevronDown
-                        class="h-4 w-4 transition-transform duration-300 ease-out"
-                        :class="expanded ? 'rotate-180' : ''"
-                    />
-                </button>
+                    <component :is="chip.icon" class="h-3 w-3" />
+                    {{ chip.label }}
+                </span>
             </div>
         </div>
 
@@ -91,131 +139,108 @@
             @leave="onLeave"
         >
             <div v-show="expanded" ref="panelRef" class="overflow-hidden">
-                <div class="relative flex-1 mb-4">
-                    <Search
-                        class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-                    />
-                    <BaseInput
-                        v-model="filters.search"
-                        :allowResize="true"
-                        :textMax="1000"
-                        input-class="pl-11"
-                        placeholder="Search patient, assigned nurse, schedule..."
-                        @update:modelValue="emitChange()"
-                    />
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 mb-4">
+                <div
+                    class="space-y-5 border-t border-muted-light/70 p-4 sm:p-5"
+                >
                     <div>
-                        <label
-                            class="text-[11px] font-medium uppercase tracking-wide text-muted mb-1.5 block"
+                        <p
+                            class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted"
                         >
-                            From
-                        </label>
+                            <CalendarDays class="h-3.5 w-3.5" />
+                            Date range
+                        </p>
 
-                        <div class="relative">
-                            <CalendarDays
-                                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none"
-                            />
-
+                        <div
+                            class="flex flex-col gap-2 sm:flex-row sm:items-center"
+                        >
                             <input
                                 v-model="filters.date_from"
                                 type="date"
-                                class="w-full rounded-xl border border-muted-light bg-muted-light/40 pl-9 pr-2 py-2.5 text-sm text-secondary focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary focus:bg-white transition-colors"
+                                aria-label="From"
+                                class="w-full min-w-0 rounded-xl border border-muted-light bg-muted-light/40 px-3 py-2.5 text-sm text-secondary transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 sm:w-44"
                                 @change="emitChange(true)"
                             />
-                        </div>
-                    </div>
 
-                    <div>
-                        <label
-                            class="text-[11px] font-medium uppercase tracking-wide text-muted mb-1.5 block"
-                        >
-                            To
-                        </label>
-
-                        <div class="relative">
-                            <CalendarDays
-                                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none"
-                            />
+                            <span class="shrink-0 text-xs text-muted sm:px-1">
+                                to
+                            </span>
 
                             <input
                                 v-model="filters.date_to"
                                 type="date"
-                                class="w-full rounded-xl border border-muted-light bg-muted-light/40 pl-9 pr-2 py-2.5 text-sm text-secondary focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary focus:bg-white transition-colors"
+                                aria-label="To"
+                                class="w-full min-w-0 rounded-xl border border-muted-light bg-muted-light/40 px-3 py-2.5 text-sm text-secondary transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 sm:w-44"
                                 @change="emitChange(true)"
                             />
                         </div>
                     </div>
-                </div>
 
-                <div class="mb-4">
-                    <p
-                        class="text-[11px] font-medium uppercase tracking-wide text-muted mb-2"
-                    >
-                        Status
-                    </p>
-
-                    <div class="flex flex-wrap gap-2">
-                        <button
-                            v-for="status in statusOptions"
-                            :key="status.value"
-                            type="button"
-                            class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
-                            :class="
-                                (
-                                    status.value === ''
-                                        ? filters.statuses.length === 0
-                                        : filters.statuses.includes(
-                                              status.value,
-                                          )
-                                )
-                                    ? 'bg-primary border-primary text-white'
-                                    : 'bg-white border-muted-light text-muted hover:border-primary/40 hover:text-primary-600'
-                            "
-                            @click="toggleStatus(status.value)"
+                    <div>
+                        <p
+                            class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted"
                         >
-                            {{ status.label }}
-                        </button>
+                            <CircleDot class="h-3.5 w-3.5" />
+                            Status
+                        </p>
+
+                        <div class="flex flex-wrap gap-2">
+                            <button
+                                v-for="status in statusOptions"
+                                :key="status.value"
+                                type="button"
+                                class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                                :class="
+                                    isStatusActive(status.value)
+                                        ? 'border-primary bg-primary text-white'
+                                        : 'border-muted-light bg-white text-muted hover:border-primary/40 hover:text-primary-600'
+                                "
+                                @click="toggleStatus(status.value)"
+                            >
+                                {{ status.label }}
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <div>
-                    <p
-                        class="text-[11px] font-medium uppercase tracking-wide text-muted mb-2"
-                    >
-                        Type
-                    </p>
-
-                    <div class="flex flex-wrap gap-2">
-                        <button
-                            v-for="type in typeOptions"
-                            :key="type.value"
-                            type="button"
-                            class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
-                            :class="
-                                filters.type.includes(type.value)
-                                    ? 'bg-primary border-primary text-white'
-                                    : 'bg-white border-muted-light text-muted hover:border-primary/40 hover:text-primary-600'
-                            "
-                            @click="toggleType(type.value)"
+                    <div>
+                        <p
+                            class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted"
                         >
-                            {{ type.label }}
-                        </button>
+                            <Layers class="h-3.5 w-3.5" />
+                            Service type
+                        </p>
+
+                        <div class="flex flex-wrap gap-2">
+                            <button
+                                v-for="type in typeOptions"
+                                :key="type.value"
+                                type="button"
+                                class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                                :class="
+                                    filters.type.includes(type.value)
+                                        ? 'border-primary bg-primary text-white'
+                                        : 'border-muted-light bg-white text-muted hover:border-primary/40 hover:text-primary-600'
+                                "
+                                @click="toggleType(type.value)"
+                            >
+                                {{ type.label }}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </Transition>
     </div>
 </template>
+
 <script setup lang="ts">
 import { reactive, computed, watch, ref, onMounted } from "vue";
-import BaseInput from "~/components/ui/BaseInput.vue";
 import { useRoute, useRouter } from "vue-router";
 import {
     Search,
     CalendarDays,
     ChevronDown,
+    CircleDot,
+    Layers,
     X,
     LayoutGrid,
     Table,
@@ -239,7 +264,7 @@ const props = withDefaults(
         defaultExpanded?: boolean;
     }>(),
     {
-        defaultExpanded: true,
+        defaultExpanded: false,
     },
 );
 
@@ -255,6 +280,8 @@ const panelRef = ref<HTMLElement | null>(null);
 
 const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
 const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+
+const DEFAULT_TYPE = "medical";
 
 function toArray(value: unknown): string[] {
     if (Array.isArray(value)) {
@@ -288,7 +315,7 @@ function filtersFromQuery(): ScheduleFilters {
 
         type: toArray(route.query.type).length
             ? toArray(route.query.type)
-            : ["medical"],
+            : [DEFAULT_TYPE],
 
         view: (toStr(route.query.view) as ScheduleView) || "card",
     };
@@ -301,8 +328,9 @@ onMounted(() => {
         !route.query.date_from || !route.query.date_to || !route.query.type;
 
     if (!route.query.type) {
-        filters.type = ["medical"];
+        filters.type = [DEFAULT_TYPE];
     }
+
     if (needsDefaultQuery) {
         syncQuery();
     }
@@ -320,74 +348,106 @@ const viewOptions: {
     value: ScheduleView;
     icon: unknown;
 }[] = [
-    {
-        label: "Card view",
-        value: "card",
-        icon: LayoutGrid,
-    },
-    {
-        label: "Table view",
-        value: "table",
-        icon: Table,
-    },
+    { label: "Card view", value: "card", icon: LayoutGrid },
+    { label: "Table view", value: "table", icon: Table },
 ];
 
 const statusOptions = [
-    {
-        label: "All",
-        value: "",
-    },
-    {
-        label: "Pending",
-        value: "pending",
-    },
-    {
-        label: "On going",
-        value: "ongoing",
-    },
-    {
-        label: "Completed",
-        value: "completed",
-    },
-    {
-        label: "Cancelled",
-        value: "cancelled",
-    },
-    {
-        label: "Missed",
-        value: "missed",
-    },
+    { label: "All", value: "" },
+    { label: "Pending", value: "pending" },
+    { label: "On going", value: "ongoing" },
+    { label: "Completed", value: "completed" },
+    { label: "Cancelled", value: "cancelled" },
+    { label: "Missed", value: "missed" },
 ];
 
 const typeOptions = [
-    {
-        label: "Medical Services",
-        value: "medical",
-    },
-    {
-        label: "Activities of Daily Living (ADL)",
-        value: "adl",
-    },
+    { label: "Medical Services", value: "medical" },
+    { label: "Activities of Daily Living (ADL)", value: "adl" },
 ];
 
+const isDefaultDateRange = computed(
+    () => filters.date_from === yesterday && filters.date_to === nextWeek,
+);
+
+const isDefaultType = computed(
+    () => filters.type.length === 1 && filters.type[0] === DEFAULT_TYPE,
+);
+
+/**
+ * Only counts what the user actually changed. Counting `type` unconditionally
+ * meant the badge never dropped below 1, since the filter always carries a
+ * type and defaults to Medical.
+ */
 const activeFilterCount = computed(() => {
     let count = 0;
 
     if (filters.search) count++;
-
-    if (filters.date_from || filters.date_to) count++;
+    if (!isDefaultDateRange.value) count++;
+    if (!isDefaultType.value) count++;
 
     count += filters.statuses.length;
 
-    count += filters.type.length;
-
     return count;
+});
+
+const shortDate = (value: string) => {
+    if (!value) return "";
+
+    const parsed = new Date(value);
+
+    if (Number.isNaN(parsed.getTime())) return value;
+
+    return parsed.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+    });
+};
+
+const summaryChips = computed(() => {
+    const chips: { key: string; label: string; icon: unknown }[] = [];
+
+    chips.push({
+        key: "type",
+        icon: Layers,
+        label:
+            typeOptions.find((t) => filters.type.includes(t.value))?.label ??
+            "All types",
+    });
+
+    chips.push({
+        key: "period",
+        icon: CalendarDays,
+        label: `${shortDate(filters.date_from)} – ${shortDate(filters.date_to)}`,
+    });
+
+    if (filters.statuses.length) {
+        chips.push({
+            key: "status",
+            icon: CircleDot,
+            label: filters.statuses
+                .map(
+                    (value) =>
+                        statusOptions.find((s) => s.value === value)?.label ??
+                        value,
+                )
+                .join(", "),
+        });
+    }
+
+    return chips;
 });
 
 const setView = (value: ScheduleView) => {
     filters.view = value;
     emitChange(true);
 };
+
+function isStatusActive(value: string) {
+    return value === ""
+        ? filters.statuses.length === 0
+        : filters.statuses.includes(value);
+}
 
 const toggleStatus = (value: string) => {
     if (value === "") {
@@ -412,12 +472,22 @@ const toggleType = (value: string) => {
     emitChange(true);
 };
 
+const onSearchInput = (event: Event) => {
+    filters.search = (event.target as HTMLInputElement).value;
+    emitChange();
+};
+
+const clearSearch = () => {
+    filters.search = "";
+    emitChange(true);
+};
+
 const resetFilters = () => {
     filters.search = "";
     filters.date_from = yesterday;
     filters.date_to = nextWeek;
     filters.statuses = [];
-    filters.type = ["medical"];
+    filters.type = [DEFAULT_TYPE];
     emitChange(true);
 };
 
@@ -427,6 +497,7 @@ function syncQuery() {
     const query: Record<string, string> = {
         ...(route.query as Record<string, string>),
     };
+
     const setOrDelete = (key: string, value: string) => {
         if (value) {
             query[key] = value;
@@ -434,6 +505,7 @@ function syncQuery() {
             delete query[key];
         }
     };
+
     setOrDelete("search", filters.search);
     setOrDelete("date_from", filters.date_from);
     setOrDelete("date_to", filters.date_to);
@@ -441,13 +513,9 @@ function syncQuery() {
     setOrDelete("type", filters.type.join(","));
     setOrDelete("view", filters.view === "card" ? "" : filters.view);
 
-    router.replace({
-        query,
-    });
+    router.replace({ query });
 
-    emit("change", {
-        ...filters,
-    });
+    emit("change", { ...filters });
 }
 
 const emitChange = (immediate = false) => {
@@ -490,6 +558,7 @@ const onLeave = (el: Element) => {
     panel.style.opacity = "0";
 };
 </script>
+
 <style scoped>
 .dropdown-enter-active,
 .dropdown-leave-active {

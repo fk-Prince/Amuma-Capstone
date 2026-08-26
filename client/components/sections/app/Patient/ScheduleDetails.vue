@@ -11,7 +11,7 @@
 
             <div
                 v-if="schedule"
-                class="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl"
+                class="relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl"
             >
                 <div
                     class="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-6 py-4"
@@ -45,9 +45,18 @@
                     </span>
                 </div>
 
-                <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
+                <!-- The body splits on wide screens: patient, location and the
+                     schedule details/form stack on the left, and the services
+                     list — the tallest part — gets its own column on the
+                     right. Explicit grid placement keeps the markup in reading
+                     order. Below xl it falls back to a single stack. -->
+                <div
+                    class="min-h-0 flex-1 space-y-4 overflow-y-auto p-6 xl:space-y-0"
+                    :class="bodyGridClass"
+                >
                     <div
                         class="flex items-center gap-3 rounded-xl bg-slate-50 p-3"
+                        :class="leftColClass"
                     >
                         <div
                             class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary"
@@ -97,6 +106,7 @@
                     <div
                         v-if="isFacilitySchedule"
                         class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                        :class="leftColClass"
                     >
                         <div
                             class="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-4 py-3"
@@ -279,6 +289,7 @@
                     <div
                         v-else
                         class="space-y-4 rounded-xl border border-sky-100 bg-sky-50 p-4"
+                        :class="leftColClass"
                     >
                         <div class="flex items-start gap-3">
                             <div
@@ -363,7 +374,11 @@
                         </ClientOnly>
                     </div>
 
-                    <div v-if="isEditing" class="space-y-3">
+                    <div
+                        v-if="isEditing"
+                        class="space-y-3"
+                        :class="leftColClass"
+                    >
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <BaseInput
                                 :model-value="form.date"
@@ -398,7 +413,11 @@
                         </div>
                     </div>
 
-                    <div v-else class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div
+                        v-else
+                        class="grid grid-cols-1 sm:grid-cols-3 gap-3"
+                        :class="leftColClass"
+                    >
                         <div class="rounded-xl border border-slate-100 p-3">
                             <p class="text-xs text-slate-400">Date</p>
                             <p class="mt-1 text-sm font-medium text-slate-700">
@@ -429,7 +448,7 @@
                         </div>
                     </div>
 
-                    <div>
+                    <div :class="servicesColClass">
                         <p class="mb-2 text-sm font-semibold text-slate-800">
                             Services
                         </p>
@@ -482,31 +501,290 @@
                                     </span>
                                 </div>
 
-                                <div v-if="isEditing" class="mt-3">
+                                <!-- Same picker as the assign modal: a plain
+                                     search over a multi-select list, two
+                                     columns once there is room, and only the
+                                     role the service actually allows. -->
+                                <div v-if="isEditing" class="mt-4 space-y-3">
                                     <div
                                         v-if="isFetchingEmployees"
-                                        class="h-11 w-full animate-pulse rounded-lg bg-slate-100"
-                                    />
+                                        class="space-y-2"
+                                    >
+                                        <div
+                                            v-for="i in 4"
+                                            :key="i"
+                                            class="h-[68px] animate-pulse rounded-xl bg-slate-100"
+                                        />
+                                    </div>
 
-                                    <Combobox
-                                        v-else
-                                        label="Assigned Employee"
-                                        placeholder="Select employee"
-                                        search-bar
-                                        :items="employeeItems"
-                                        :model-value="
-                                            assignments[
-                                                service.schedule_services_id
-                                            ] ?? ''
-                                        "
-                                        @update:model-value="
-                                            (val) =>
-                                                assign(
-                                                    service.schedule_services_id,
-                                                    String(val),
-                                                )
-                                        "
-                                    />
+                                    <template v-else>
+                                        <div
+                                            class="flex flex-wrap items-center justify-between gap-2"
+                                        >
+                                            <p
+                                                class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                                            >
+                                                Assign
+                                                {{ requiredRoleLabel(service) }}
+                                                <span class="text-slate-300">
+                                                    ·
+                                                </span>
+                                                {{
+                                                    entriesFor(
+                                                        service.schedule_services_id,
+                                                    ).length
+                                                }}
+                                                selected
+                                            </p>
+
+                                            <div class="relative w-full sm:w-64">
+                                                <Search
+                                                    class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                                                />
+
+                                                <input
+                                                    v-model="employeeSearch"
+                                                    type="text"
+                                                    placeholder="Search name"
+                                                    class="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            v-if="!eligibleFor(service).length"
+                                            class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center text-xs text-slate-500"
+                                        >
+                                            {{
+                                                employeeSearch
+                                                    ? "No staff match that search."
+                                                    : `No ${requiredRoleLabel(service).toLowerCase()} is available for this branch.`
+                                            }}
+                                        </div>
+
+                                        <div
+                                            v-else
+                                            class="space-y-2"
+                                        >
+                                            <div
+                                                v-for="employee in eligibleFor(
+                                                    service,
+                                                )"
+                                                :key="employee.employee_id"
+                                                class="rounded-xl border transition"
+                                                :class="[
+                                                    isAssigned(
+                                                        service.schedule_services_id,
+                                                        employee.employee_id,
+                                                    )
+                                                        ? 'border-primary/40 bg-primary/[0.04] ring-1 ring-primary/20'
+                                                        : 'border-slate-200 bg-white hover:border-primary/30',
+                                                    employee.is_busy
+                                                        ? 'opacity-60'
+                                                        : '',
+                                                ]"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    :disabled="employee.is_busy"
+                                                    class="flex w-full items-start gap-3 p-3 text-left disabled:cursor-not-allowed"
+                                                    @click="
+                                                        toggleAssignee(
+                                                            service.schedule_services_id,
+                                                            Number(
+                                                                employee.employee_id,
+                                                            ),
+                                                        )
+                                                    "
+                                                >
+                                                    <span
+                                                        class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-[11px] font-semibold"
+                                                        :class="
+                                                            isAssigned(
+                                                                service.schedule_services_id,
+                                                                employee.employee_id,
+                                                            )
+                                                                ? 'bg-primary text-white'
+                                                                : 'bg-primary/10 text-primary'
+                                                        "
+                                                    >
+                                                        <img
+                                                            v-if="
+                                                                employee.avatar
+                                                            "
+                                                            :src="
+                                                                employee.avatar
+                                                            "
+                                                            class="h-full w-full object-cover"
+                                                        />
+
+                                                        <template v-else>
+                                                            {{
+                                                                initials(
+                                                                    employeeLabel(
+                                                                        employee,
+                                                                    ),
+                                                                )
+                                                            }}
+                                                        </template>
+                                                    </span>
+
+                                                    <span
+                                                        class="min-w-0 flex-1"
+                                                    >
+                                                        <span
+                                                            class="flex items-center gap-1.5"
+                                                        >
+                                                            <span
+                                                                class="truncate text-sm font-semibold text-slate-800"
+                                                            >
+                                                                {{
+                                                                    employeeLabel(
+                                                                        employee,
+                                                                    )
+                                                                }}
+                                                            </span>
+
+                                                            <Check
+                                                                v-if="
+                                                                    isAssigned(
+                                                                        service.schedule_services_id,
+                                                                        employee.employee_id,
+                                                                    )
+                                                                "
+                                                                class="h-3.5 w-3.5 shrink-0 text-primary"
+                                                            />
+                                                        </span>
+
+                                                        <span
+                                                            class="block truncate text-xs capitalize text-slate-500"
+                                                        >
+                                                            {{
+                                                                employee.role_name ??
+                                                                "Staff"
+                                                            }}
+
+                                                            <template
+                                                                v-if="
+                                                                    employee.formatted_assignment_type
+                                                                "
+                                                            >
+                                                                ·
+                                                                {{
+                                                                    employee.formatted_assignment_type
+                                                                }}
+                                                            </template>
+                                                        </span>
+
+                                                        <span
+                                                            v-if="
+                                                                employee.phone_number
+                                                            "
+                                                            class="mt-0.5 flex items-center gap-1 text-[11px] text-slate-400"
+                                                        >
+                                                            <Phone
+                                                                class="h-3 w-3 shrink-0"
+                                                            />
+                                                            {{
+                                                                employee.phone_number
+                                                            }}
+                                                        </span>
+                                                    </span>
+
+                                                    <span
+                                                        v-if="employee.is_busy"
+                                                        class="shrink-0 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700"
+                                                    >
+                                                        Conflict
+                                                    </span>
+
+                                                    <span
+                                                        v-else-if="
+                                                            !employee.is_assigned
+                                                        "
+                                                        class="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500"
+                                                    >
+                                                        Not specialized
+                                                    </span>
+
+                                                    <span
+                                                        v-else
+                                                        class="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700"
+                                                    >
+                                                        Available
+                                                    </span>
+                                                </button>
+
+                                                <div
+                                                    v-if="
+                                                        isAssigned(
+                                                            service.schedule_services_id,
+                                                            employee.employee_id,
+                                                        )
+                                                    "
+                                                    class="border-t border-primary/15 px-3 py-3"
+                                                >
+                                                    <input
+                                                        :value="
+                                                            noteFor(
+                                                                service.schedule_services_id,
+                                                                Number(
+                                                                    employee.employee_id,
+                                                                ),
+                                                            )
+                                                        "
+                                                        type="text"
+                                                        maxlength="255"
+                                                        placeholder="Note for this assignment"
+                                                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                                        @input="
+                                                            setNote(
+                                                                service.schedule_services_id,
+                                                                Number(
+                                                                    employee.employee_id,
+                                                                ),
+                                                                (
+                                                                    $event.target as HTMLInputElement
+                                                                ).value,
+                                                            )
+                                                        "
+                                                    />
+
+                                                    <div
+                                                        class="mt-2 flex flex-wrap items-center gap-1.5"
+                                                    >
+                                                        <button
+                                                            v-for="preset in NOTE_PRESETS"
+                                                            :key="preset"
+                                                            type="button"
+                                                            class="rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition"
+                                                            :class="
+                                                                noteFor(
+                                                                    service.schedule_services_id,
+                                                                    Number(
+                                                                        employee.employee_id,
+                                                                    ),
+                                                                ) === preset
+                                                                    ? 'border-primary bg-primary text-white'
+                                                                    : 'border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary'
+                                                            "
+                                                            @click="
+                                                                togglePreset(
+                                                                    service.schedule_services_id,
+                                                                    Number(
+                                                                        employee.employee_id,
+                                                                    ),
+                                                                    preset,
+                                                                )
+                                                            "
+                                                        >
+                                                            {{ preset }}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
 
                                 <div v-else class="mt-3">
@@ -532,28 +810,50 @@
                                             class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
                                         >
                                             <div
-                                                class="flex items-center gap-3"
+                                                class="flex min-w-0 items-center gap-3"
                                             >
-                                                <img
-                                                    v-if="employee.avatar"
-                                                    :src="employee.avatar"
-                                                    class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white"
-                                                />
+                                                <span
+                                                    class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-xs font-semibold text-white"
+                                                >
+                                                    <img
+                                                        v-if="employee.avatar"
+                                                        :src="employee.avatar"
+                                                        class="h-full w-full object-cover"
+                                                    />
 
-                                                <div>
+                                                    <template v-else>
+                                                        {{
+                                                            initials(
+                                                                employee.full_name,
+                                                            )
+                                                        }}
+                                                    </template>
+                                                </span>
+
+                                                <div class="min-w-0">
                                                     <p
-                                                        class="text-sm font-semibold text-slate-800"
+                                                        class="truncate text-sm font-semibold text-slate-800"
                                                     >
                                                         {{ employee.full_name }}
                                                     </p>
 
                                                     <p
-                                                        class="text-xs text-slate-500"
+                                                        class="truncate text-xs capitalize text-slate-500"
                                                     >
-                                                        Assigned Employee
+                                                        {{
+                                                            employee.employee_role ??
+                                                            "Staff"
+                                                        }}
                                                     </p>
                                                 </div>
                                             </div>
+
+                                            <span
+                                                v-if="employee.note"
+                                                class="ml-3 shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary"
+                                            >
+                                                {{ employee.note }}
+                                            </span>
                                         </div>
                                     </div>
 
@@ -644,10 +944,16 @@ import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import LocationMap from "~/components/ui/LocationMap.vue";
 import { getLocalDateStr } from "~/utils/time";
 import { generateAvailableAmPmTimes } from "~/utils/time-slot";
-import { fullName } from "~/utils/user";
+import { fullName, initials } from "~/utils/user";
 import type { Employee } from "~/types/employee";
-import type { ScheduleItem } from "~/types/schedule";
-import { CalendarCheck2, LoaderCircle } from "lucide-vue-next";
+import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
+import {
+    CalendarCheck2,
+    Check,
+    LoaderCircle,
+    Phone,
+    Search,
+} from "lucide-vue-next";
 import { useSchedule } from "~/composables/useSchedule";
 
 const props = defineProps<{
@@ -733,7 +1039,21 @@ const form = ref({
     status: "",
 });
 
-const assignments = ref<Record<number, string>>({});
+interface AssignmentEntry {
+    employee_id: number;
+    note: string;
+}
+
+/** schedule_services_id → the people assigned to it, each with its own note. */
+const assignments = ref<Record<number, AssignmentEntry[]>>({});
+
+const NOTE_PRESETS = [
+    "Primary",
+    "Assistance",
+    "Supervisor",
+    "Observer",
+    "Stand-by",
+];
 
 const errors = ref<Record<string, string>>({});
 
@@ -741,16 +1061,120 @@ const isFacilitySchedule = computed(
     () => props.schedule?.category?.toLowerCase() === "facility",
 );
 
-const employeeItems = computed(() => [
-    {
-        label: "Unassigned",
-        value: "",
-    },
-    ...(props.employees ?? []).map((employee) => ({
-        label: fullName(employee.first_name, "", employee.last_name),
-        value: String(employee.employee_id),
-    })),
-]);
+const employeeSearch = ref("");
+
+/**
+ * Two columns from xl up, in both the read-only and the editing view. The left
+ * column stacks patient, location and the schedule details/form; services take
+ * the right column and span all of those rows. `xl:grid` rather than `grid`
+ * so the plain `space-y-4` stack still applies on narrower screens.
+ */
+const bodyGridClass =
+    "xl:grid xl:items-start xl:gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]";
+
+const leftColClass = "xl:col-start-1";
+
+const servicesColClass = "xl:col-start-2 xl:row-span-3 xl:row-start-1";
+
+function employeeLabel(employee: Employee) {
+    return (
+        employee.full_name ||
+        fullName(employee.first_name, "", employee.last_name)
+    );
+}
+
+/**
+ * A Medical service can only be staffed by a nurse and an ADL service only by
+ * a caregiver — the backend rejects anything else outright, so the picker only
+ * lists the role that can actually be saved.
+ */
+function requiredRoleFor(service: ScheduleServiceItem): string | null {
+    if (service.type === "Medical") return "nurse";
+    if (service.type === "ADL") return "caregiver";
+
+    return null;
+}
+
+function requiredRoleLabel(service: ScheduleServiceItem) {
+    const role = requiredRoleFor(service);
+
+    return role ? role.charAt(0).toUpperCase() + role.slice(1) : "Staff";
+}
+
+function eligibleFor(service: ScheduleServiceItem) {
+    const required = requiredRoleFor(service);
+    const term = employeeSearch.value.trim().toLowerCase();
+
+    return (props.employees ?? []).filter((employee) => {
+        if (
+            required &&
+            (employee.role_name ?? "").toLowerCase() !== required
+        ) {
+            // Someone already assigned before the rule tightened stays
+            // visible, otherwise they could never be removed.
+            if (!isAssigned(service.schedule_services_id, employee.employee_id)) {
+                return false;
+            }
+        }
+
+        if (!term) return true;
+
+        // Name only — matching on role or email surfaces people the typist
+        // wasn't looking for.
+        return employeeLabel(employee).toLowerCase().includes(term);
+    });
+}
+
+function entriesFor(serviceId: number): AssignmentEntry[] {
+    return assignments.value[serviceId] ?? [];
+}
+
+function isAssigned(serviceId: number, employeeId: string | number) {
+    return entriesFor(serviceId).some(
+        (entry) => Number(entry.employee_id) === Number(employeeId),
+    );
+}
+
+function noteFor(serviceId: number, employeeId: number) {
+    return (
+        entriesFor(serviceId).find(
+            (entry) => Number(entry.employee_id) === Number(employeeId),
+        )?.note ?? ""
+    );
+}
+
+function toggleAssignee(serviceId: number, employeeId: number) {
+    const current = entriesFor(serviceId);
+
+    const index = current.findIndex(
+        (entry) => Number(entry.employee_id) === Number(employeeId),
+    );
+
+    assignments.value = {
+        ...assignments.value,
+        [serviceId]:
+            index === -1
+                ? [...current, { employee_id: employeeId, note: "" }]
+                : current.filter((_, i) => i !== index),
+    };
+}
+
+function setNote(serviceId: number, employeeId: number, note: string) {
+    assignments.value = {
+        ...assignments.value,
+        [serviceId]: entriesFor(serviceId).map((entry) =>
+            Number(entry.employee_id) === Number(employeeId)
+                ? { ...entry, note }
+                : entry,
+        ),
+    };
+}
+
+function togglePreset(serviceId: number, employeeId: number, preset: string) {
+    const current = noteFor(serviceId, employeeId);
+
+    setNote(serviceId, employeeId, current === preset ? "" : preset);
+}
 
 const availableTimeSlots = computed(() =>
     generateAvailableAmPmTimes(form.value.date),
@@ -773,20 +1197,28 @@ watch(
             status: schedule.status ?? "Pending",
         };
 
-        schedule.services?.forEach((service) => {
-            const employee = service.assignees?.[0];
-
-            if (employee) {
-                assignments.value[service.schedule_services_id] = String(
-                    employee.employee_id,
-                );
-            }
-        });
+        hydrateAssignments(schedule);
     },
     {
         immediate: true,
     },
 );
+
+/** Seeds the editor from every active assignee, notes included. */
+function hydrateAssignments(schedule?: ScheduleItem | null) {
+    assignments.value = {};
+
+    schedule?.services?.forEach((service) => {
+        assignments.value[service.schedule_services_id] = (
+            service.assignees ?? []
+        )
+            .filter((assignee) => assignee.is_active !== false)
+            .map((assignee) => ({
+                employee_id: Number(assignee.employee_id),
+                note: assignee.note ?? "",
+            }));
+    });
+}
 
 function resetForm() {
     isEditing.value = false;
@@ -806,35 +1238,13 @@ function startEdit() {
         status: props.schedule.status ?? "Pending",
     };
 
-    assignments.value = {};
-
-    props.schedule.services?.forEach((service) => {
-        const employee = service.assignees?.[0];
-
-        if (employee) {
-            assignments.value[service.schedule_services_id] = String(
-                employee.employee_id,
-            );
-        }
-    });
+    hydrateAssignments(props.schedule);
 
     emit("start-edit", props.schedule);
 }
 
 function cancelEdit() {
     resetForm();
-}
-
-function assign(serviceId: number, employeeId: string) {
-    const updated = { ...assignments.value };
-
-    if (!employeeId) {
-        delete updated[serviceId];
-    } else {
-        updated[serviceId] = employeeId;
-    }
-
-    assignments.value = updated;
 }
 
 function update(key: keyof typeof form.value, value: string) {
@@ -866,12 +1276,28 @@ function buildSchedulePayload() {
         status: form.value.status,
         date: form.value.date,
         preferred_time: form.value.preferred_time,
-        assignments: (props.schedule.services ?? []).map((service) => ({
-            schedule_services_id: service.schedule_services_id,
-            employee_id: assignments.value[service.schedule_services_id]
-                ? Number(assignments.value[service.schedule_services_id])
-                : null,
-        })),
+        // One row per assigned person, so a service can carry several. A
+        // service left empty still sends a null row, which is how the backend
+        // learns to unassign everyone from it.
+        assignments: (props.schedule.services ?? []).flatMap((service) => {
+            const entries = entriesFor(service.schedule_services_id);
+
+            if (!entries.length) {
+                return [
+                    {
+                        schedule_services_id: service.schedule_services_id,
+                        employee_id: null,
+                        note: null,
+                    },
+                ];
+            }
+
+            return entries.map((entry) => ({
+                schedule_services_id: service.schedule_services_id,
+                employee_id: Number(entry.employee_id),
+                note: entry.note.trim() || null,
+            }));
+        }),
     };
 }
 

@@ -11,7 +11,14 @@ export interface ScheduleAssignee {
     employee_id: number;
     full_name: string;
     avatar: string | null;
-    role: string | null;
+
+    /**
+     * Free-text note about what this person does on this assignment
+     * ("Primary", "Assistance", ...). Distinct from `employee_role`, which is
+     * their actual role at the branch.
+     */
+    note: string | null;
+
     online: OnlineScheduleAssignment[];
     is_active: boolean
     employee_role: string | null;
@@ -138,7 +145,10 @@ export interface AuditRow {
     employee_id: number | null;
     full_name: string | null;
     avatar: string | null;
-    role: string | null;
+
+    /** Assignment note ("Primary", "Assistance", ...) — not a job role. */
+    note: string | null;
+
     address: string | null;
     patient_uuid: string;
     patient_full_name: string;
@@ -151,7 +161,7 @@ export interface AuditRow {
         employee_id: number;
         full_name: string | null;
         avatar: string | null;
-        role: string | null;
+        note: string | null;
     }[];
 
     assigned?: {

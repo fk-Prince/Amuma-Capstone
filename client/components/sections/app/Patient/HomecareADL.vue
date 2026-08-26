@@ -54,11 +54,7 @@
         </div>
 
         <div v-else class="p-4 sm:p-5 space-y-6">
-            <div
-                v-for="group in logGroups"
-                :key="group.key"
-                class="space-y-4"
-            >
+            <div v-for="group in logGroups" :key="group.key" class="space-y-4">
                 <div
                     v-if="group.title"
                     class="flex items-center justify-between gap-2"
@@ -404,7 +400,9 @@
                                             </p>
                                         </div>
 
-                                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                        <div
+                                            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+                                        >
                                             <div>
                                                 <p
                                                     class="text-[11px] uppercase text-muted"
@@ -717,7 +715,7 @@ const filteredLogs = computed<AuditRow[]>(() => {
                 employee_id: assignee.employee_id,
                 full_name: assignee.full_name ?? null,
                 avatar: assignee.avatar ?? null,
-                role: assignee.role ?? null,
+                note: assignee.note ?? null,
                 employee_role: assignee.employee_role ?? null,
             }));
 
@@ -758,16 +756,11 @@ const filteredLogs = computed<AuditRow[]>(() => {
                 employee_id: firstAssignee?.employee_id ?? null,
                 full_name: firstAssignee?.full_name ?? null,
                 avatar: firstAssignee?.avatar ?? null,
-                role: firstAssignee?.role ?? null,
+                note: firstAssignee?.note ?? null,
 
                 assignees,
 
-                // schedule.address resolves to "On-site" for facility schedules
-                // and to the visit address for homecare ones.
-                address:
-                    schedule.address ??
-                    schedule.patient?.address ??
-                    null,
+                address: schedule.address ?? schedule.patient?.address ?? null,
                 patient_uuid: schedule.patient?.patient_uuid ?? "",
                 patient_full_name: schedule.patient?.full_name ?? "",
 
@@ -792,25 +785,9 @@ const filteredLogs = computed<AuditRow[]>(() => {
             );
 
         return searchMatch;
-        // const rowDate = row.scheduled_at
-        //     ? new Date(row.scheduled_at).toISOString().slice(0, 10)
-        //     : null;
-
-        // const dateMatch =
-        //     (!props.date && !props.rangeEnd) ||
-        //     (rowDate !== null &&
-        //         (!props.date || rowDate >= props.date) &&
-        //         (!props.rangeEnd || rowDate <= props.rangeEnd));
-
-        // return searchMatch && dateMatch;
     });
-    // return rows;
 });
 
-// Only visits that have already happened (or are happening now) count as
-// "history" — a pending/confirmed visit hasn't occurred yet, so the
-// portal splits it out into its own "Scheduled Days" list instead of
-// mixing it in with past attendance records.
 const NOT_YET_DONE_STATUSES = ["pending", "confirmed"];
 
 const upcomingLogs = computed(() =>
@@ -831,8 +808,11 @@ const historyLogs = computed(() =>
 // so the two views only differ by grouping, not by layout.
 const logGroups = computed(() => {
     if (props.variant === 3) {
-        const groups: { key: string; title: string | null; logs: AuditRow[] }[] =
-            [];
+        const groups: {
+            key: string;
+            title: string | null;
+            logs: AuditRow[];
+        }[] = [];
 
         if (upcomingLogs.value.length) {
             groups.push({
@@ -843,7 +823,11 @@ const logGroups = computed(() => {
         }
 
         if (historyLogs.value.length) {
-            groups.push({ key: "history", title: null, logs: historyLogs.value });
+            groups.push({
+                key: "history",
+                title: null,
+                logs: historyLogs.value,
+            });
         }
 
         return groups;
@@ -852,8 +836,6 @@ const logGroups = computed(() => {
     return [{ key: "all", title: null, logs: filteredLogs.value }];
 });
 
-// QR generation should stay available for the whole lifecycle of a visit
-// (upcoming, then ongoing) and only stop once it's cancelled or finished.
 const QR_GENERATION_BLOCKED_STATUSES = ["cancelled", "completed", "missed"];
 
 function canGenerateQr(log: AuditRow): boolean {
@@ -900,10 +882,6 @@ function latestCheckIn(log: AuditRow) {
     );
 }
 
-// A schedule with several services can be "ongoing" overall while a given
-// service's own caregiver hasn't clocked in yet, so whether to offer
-// Generate QR In vs Out has to follow this service's own latest scan, not
-// just the schedule-level status.
 function isCurrentlyCheckedIn(log: AuditRow): boolean {
     const latest = latestCheckIn(log);
     return Boolean(latest && !latest.out_timestamp);

@@ -11,7 +11,7 @@ class ScheduleAssigned extends Model
     protected $fillable = [
         'schedule_services_id',
         'employee_id',
-        'role',
+        'note',
         'is_active'
     ];
 

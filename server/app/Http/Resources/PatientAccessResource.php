@@ -424,7 +424,7 @@ class PatientAccessResource extends JsonResource
         return [
             'schedule_assigned_id' => $assigned->schedule_assigned_id,
             'employee_id' => $assigned->employee_id,
-            'role' => $assigned->role,
+            'note' => $assigned->note,
             'is_active' => $assigned->is_active,
 
             'employee' => $assigned->relationLoaded('employee') && $assigned->employee ? [

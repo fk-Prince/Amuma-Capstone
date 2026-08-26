@@ -225,58 +225,26 @@ onMounted(() => {
 <template>
     <div class="min-h-screen space-y-6 p-5">
         <div
-            class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-600 to-brand-700 px-6 py-7 text-white shadow-sm sm:px-8"
+            v-if="meta"
+            class="inline-flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
         >
-            <div
-                class="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-white/10"
-            />
-            <div
-                class="absolute -bottom-20 right-20 h-48 w-48 rounded-full bg-white/5"
-            />
+            <span
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600"
+            >
+                <ClipboardList class="h-5 w-5" />
+            </span>
 
-            <div class="relative">
-                <div class="flex justify-between items-start gap-4">
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20"
-                        >
-                            <ClipboardList class="h-6 w-6" />
-                        </div>
+            <span>
+                <span
+                    class="block text-[11px] font-medium uppercase tracking-wider text-gray-400"
+                >
+                    Total bookings
+                </span>
 
-                        <div>
-                            <h1
-                                class="text-xl font-semibold tracking-tight sm:text-2xl"
-                            >
-                                My Bookings
-                            </h1>
-                            <p
-                                class="mt-1 max-w-xl text-sm leading-6 text-white/75"
-                            >
-                                View your booking requests, service details,
-                                payment information, and current status.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div
-                        v-if="meta"
-                        class="mt-6 flex flex-wrap items-center gap-3"
-                    >
-                        <div
-                            class="rounded-xl bg-white/10 px-3.5 py-2 ring-1 ring-white/10"
-                        >
-                            <p
-                                class="text-[11px] font-medium uppercase tracking-wider text-white/60"
-                            >
-                                Total bookings
-                            </p>
-                            <p class="mt-0.5 text-lg font-semibold">
-                                {{ meta.total }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <span class="block text-lg font-semibold text-gray-900">
+                    {{ meta.total }}
+                </span>
+            </span>
         </div>
 
         <div v-if="isLoading" class="space-y-4">

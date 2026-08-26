@@ -286,7 +286,7 @@ class ScheduleResource extends JsonResource
                                         ?->role_name,
 
                                     'avatar' => $employee?->avatar,
-                                    'role' => $assignment->role,
+                                    'note' => $assignment->note,
 
                                     'online' => $assignment->relationLoaded('onlineSchedules')
                                         ? $assignment->onlineSchedules

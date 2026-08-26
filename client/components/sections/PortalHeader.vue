@@ -168,50 +168,71 @@ const emit = defineEmits<{
 const route = useRoute();
 const router = useRouter();
 
+/**
+ * Keys are full route paths. They previously omitted the `/portal` prefix, so
+ * no lookup ever matched and every page fell back to "Overview" — which is why
+ * the pages each carried their own banner. Those banners are gone now, so this
+ * map is the single source of the page title.
+ */
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
-    "/": {
+    "/portal": {
         title: "Overview",
         subtitle: "Stay connected with your loved ones.",
     },
-    "/loved-ones": {
+    "/portal/overview": {
+        title: "Overview",
+        subtitle: "Stay connected with your loved ones.",
+    },
+    "/portal/bookings": {
+        title: "My Bookings",
+        subtitle:
+            "View your booking requests, service details, payment information, and current status.",
+    },
+    "/portal/loved-ones": {
         title: "My Loved Ones",
         subtitle: "View and manage your loved one's profile and records.",
     },
-    "/monitoring": {
+    "/portal/monitoring": {
         title: "Monitoring",
         subtitle: "Check in on the room, live and in real time.",
     },
-    "/schedule": {
+    "/portal/schedule": {
         title: "Schedule",
         subtitle: "Upcoming appointments and daily care schedule.",
     },
-    "/medications": {
-        title: "Medications",
-        subtitle: "Track medications, dosage, and schedule.",
+    "/portal/medications": {
+        title: "Medications & Care",
+        subtitle:
+            "View medication schedules, vital signs, and important care instructions for your loved one.",
     },
-    "/updates": {
+    "/portal/updates": {
         title: "Updates",
-        subtitle: "Daily updates and highlights from the care team.",
+        subtitle:
+            "Stay informed about your loved one's latest activities, care, appointments, and updates.",
     },
-    "/messages": {
+    "/portal/messages": {
         title: "Messages",
         subtitle: "Chat directly with your loved one's caregiver.",
     },
-    "/balance": {
-        title: "Balance",
-        subtitle: "Review invoices, payments, and outstanding balance.",
-    },
-    "/settings": {
-        title: "Settings",
-        subtitle: "Manage your profile, notifications, and preferences.",
+    "/portal/balance": {
+        title: "Financial Overview",
+        subtitle:
+            "View invoices, payments, balances, and available refunds for your loved ones.",
     },
 };
 
-const pageTitle = computed(() => pageTitles[route.path]?.title ?? "Overview");
+// Trailing slashes would otherwise miss every key.
+const currentPath = computed(() =>
+    route.path.length > 1 ? route.path.replace(/\/+$/, "") : route.path,
+);
+
+const pageTitle = computed(
+    () => pageTitles[currentPath.value]?.title ?? "Overview",
+);
 
 const pageSubtitle = computed(
     () =>
-        pageTitles[route.path]?.subtitle ??
+        pageTitles[currentPath.value]?.subtitle ??
         "Stay connected with your loved ones.",
 );
 

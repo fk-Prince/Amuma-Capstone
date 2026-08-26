@@ -870,73 +870,37 @@ async function payBalance() {
 <template>
     <div class="min-h-full bg-slate-50/60 p-5">
         <div class="space-y-5">
+            <!-- Title and subtitle live in the portal header; this keeps only
+                 the loved-one context the page itself needs. -->
             <div
-                class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-500 to-brand-700 px-5 py-6 text-white shadow-lg shadow-brand-500/10 sm:px-7"
+                v-if="selectedLovedOne"
+                class="inline-flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
             >
                 <div
-                    class="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-white/10"
-                />
-                <div
-                    class="absolute -bottom-28 right-24 h-48 w-48 rounded-full bg-white/5"
-                />
-
-                <div
-                    class="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between"
+                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-bold text-brand-600"
                 >
-                    <div>
-                        <p
-                            class="text-xs font-semibold uppercase tracking-[0.16em] text-white/70"
-                        >
-                            Family Portal
-                        </p>
+                    {{
+                        selectedLovedOne.full_name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .slice(0, 2)
+                            .join("")
+                    }}
+                </div>
 
-                        <h1
-                            class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl"
-                        >
-                            Financial Overview
-                        </h1>
+                <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-gray-900">
+                        {{ selectedLovedOne.full_name }}
+                    </p>
 
-                        <p class="mt-1.5 max-w-xl text-sm text-white/75">
-                            View invoices, payments, balances, and available
-                            refunds for your loved ones.
-                        </p>
-                    </div>
-
-                    <div
-                        v-if="selectedLovedOne"
-                        class="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur"
-                    >
-                        <div
-                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-bold"
-                        >
-                            {{
-                                selectedLovedOne.full_name
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .slice(0, 2)
-                                    .join("")
-                            }}
-                        </div>
-
-                        <div class="min-w-0">
-                            <p
-                                class="truncate text-sm font-semibold text-white"
-                            >
-                                {{ selectedLovedOne.full_name }}
-                            </p>
-
-                            <p class="mt-0.5 text-xs text-white/65">
-                                {{
-                                    selectedLovedOne.room_label ||
-                                    selectedLovedOne.location_type ===
-                                        "homecare"
-                                        ? selectedLovedOne.room_label ||
-                                          "Homecare"
-                                        : "Resident"
-                                }}
-                            </p>
-                        </div>
-                    </div>
+                    <p class="mt-0.5 text-xs text-gray-400">
+                        {{
+                            selectedLovedOne.room_label ||
+                            selectedLovedOne.location_type === "homecare"
+                                ? selectedLovedOne.room_label || "Homecare"
+                                : "Resident"
+                        }}
+                    </p>
                 </div>
             </div>
 

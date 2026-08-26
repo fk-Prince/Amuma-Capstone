@@ -342,39 +342,6 @@ onMounted(() => {
 
 <template>
     <div class="min-h-full space-y-6 p-5">
-        <div
-            class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-600 to-brand-700 px-6 py-7 text-white shadow-sm sm:px-8"
-        >
-            <div
-                class="absolute -right-10 -top-16 h-40 w-40 rounded-full bg-white/10"
-            />
-
-            <div
-                class="absolute -bottom-24 right-24 h-52 w-52 rounded-full bg-white/5"
-            />
-
-            <div class="relative flex items-start gap-4">
-                <div
-                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20"
-                >
-                    <Activity class="h-6 w-6" />
-                </div>
-
-                <div>
-                    <h1
-                        class="text-xl font-semibold tracking-tight sm:text-2xl"
-                    >
-                        Updates
-                    </h1>
-
-                    <p class="mt-1 max-w-xl text-sm leading-6 text-white/75">
-                        Stay informed about your loved one's latest activities,
-                        care, appointments, and updates.
-                    </p>
-                </div>
-            </div>
-        </div>
-
         <div v-if="isLoading" class="space-y-5">
             <div
                 class="overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"

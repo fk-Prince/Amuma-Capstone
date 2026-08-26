@@ -89,7 +89,6 @@ import {
     Calendar,
     Pill,
     Bell,
-    Settings,
     LogOut,
     X,
 } from "lucide-vue-next";
@@ -114,7 +113,6 @@ const navItems = [
     { label: "Schedule", to: "/portal/schedule", icon: Calendar },
     { label: "Medications", to: "/portal/medications", icon: Pill },
     { label: "Updates", to: "/portal/updates", icon: Bell },
-    { label: "Settings", to: "/portal/settings", icon: Settings },
 ];
 
 // The drawer overlays the page on mobile, so it has to get out of the way

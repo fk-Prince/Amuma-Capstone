@@ -456,7 +456,7 @@ class PortalHelper
                 ?->role_name,
 
             'avatar' => $employee?->avatar,
-            'role' => $assignment->role,
+            'note' => $assignment->note,
 
             'online' => $assignment->onlineSchedules
                 ->filter(fn($online) => $online->in_timestamp !== null)

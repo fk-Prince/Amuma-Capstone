@@ -10,26 +10,21 @@ return new class extends Migration
     {
         Schema::create('schedule_assigned', function (Blueprint $table) {
             $table->id('schedule_assigned_id');
-
             $table->foreignId('schedule_services_id')
                 ->constrained('schedule_services', 'schedule_services_id')
                 ->cascadeOnDelete();
-
             $table->foreignId('employee_id')
                 ->constrained('employees', 'employee_id')
                 ->cascadeOnDelete();
-
             $table->boolean('is_active')->default(true);
-            $table->string('role', 50)->nullable();
-
+            $table->string('note', 255)->nullable();
             $table->timestamps();
-
             $table->unique(['schedule_services_id', 'employee_id']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('schedule_assigneds');
+        Schema::dropIfExists('schedule_assigned');
     }
 };
