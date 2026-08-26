@@ -269,11 +269,57 @@
                                 "
                             />
 
-                            <Field
-                                label="Address"
-                                :value="booking.homecare?.address"
-                            />
+                            <Field label="Service Address">
+                                <template #value>
+                                    <span
+                                        class="flex flex-col items-start gap-1"
+                                    >
+                                        <span>
+                                            {{
+                                                booking.homecare?.address ?? "—"
+                                            }}
+                                        </span>
+
+                                        <!-- Only bookings placed through the
+                                             map picker carry coordinates. -->
+                                        <button
+                                            v-if="hasHomecareCoordinates"
+                                            type="button"
+                                            class="inline-flex items-center gap-1 rounded-md border border-[#E4EFED] px-2 py-1 text-xs font-medium normal-case text-[#0E7C7B] transition hover:bg-[#EAF4F2]"
+                                            @click="isMapOpen = true"
+                                        >
+                                            <svg
+                                                class="h-3.5 w-3.5"
+                                                viewBox="0 0 20 20"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="1.5"
+                                                stroke-linejoin="round"
+                                            >
+                                                <path
+                                                    d="M10 17.5s5.5-4.6 5.5-9a5.5 5.5 0 1 0-11 0c0 4.4 5.5 9 5.5 9Z"
+                                                />
+                                                <circle
+                                                    cx="10"
+                                                    cy="8.5"
+                                                    r="1.75"
+                                                />
+                                            </svg>
+
+                                            View on map
+                                        </button>
+                                    </span>
+                                </template>
+                            </Field>
                         </template>
+
+                        <!-- Facility care is delivered at the branch, so it has
+                             no visit address of its own. -->
+                        <Field
+                            v-if="isFacility"
+                            label="Service Address"
+                            value="On-site"
+                        />
 
                         <Field
                             v-if="
@@ -403,12 +449,23 @@
                 </section>
             </div>
         </div>
+
+        <LocationMapModal
+            v-if="homecareCoordinates"
+            :open="isMapOpen"
+            :lat="homecareCoordinates.lat"
+            :lng="homecareCoordinates.lng"
+            :address="booking.homecare?.address"
+            title="Homecare Service Location"
+            @close="isMapOpen = false"
+        />
     </div>
 </template>
 
 <script lang="ts" setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { fullName } from "~/utils/user";
+import LocationMapModal from "~/components/ui/LocationMapModal.vue";
 import { stringToDateTime, formatDate, formatDuration } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
 import { Stethoscope } from "lucide-vue-next";
@@ -432,6 +489,24 @@ const props = defineProps<{
 }>();
 
 const booking = computed(() => props.booking);
+
+const isMapOpen = ref(false);
+
+/**
+ * The coordinates live in the booking payload alongside the address, so
+ * bookings placed before the map picker existed simply have none and the
+ * "View on map" button stays hidden.
+ */
+const homecareCoordinates = computed(() => {
+    const lat = Number(props.booking?.homecare?.latitude);
+    const lng = Number(props.booking?.homecare?.longitude);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+    return { lat, lng };
+});
+
+const hasHomecareCoordinates = computed(() => !!homecareCoordinates.value);
 
 const hasPatientUuid = computed(() => {
     return !!props.booking?.patient?.uuid;

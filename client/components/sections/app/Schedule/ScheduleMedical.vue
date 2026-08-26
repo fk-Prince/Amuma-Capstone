@@ -114,14 +114,44 @@
 
                 <div
                     v-else
-                    class="min-w-full border border-secondary/20"
+                    class="relative min-w-full border border-secondary/20"
                     :style="{
                         width: `max(100%, ${labelWidth + day.hours.length * hourWidth}px)`,
                     }"
                 >
+                    <!-- One continuous marker for the whole day. It used to be
+                         rendered inside the row loop, which repeated the "Now"
+                         pill on every row. Sits below the sticky label column
+                         (z-20) so it slides under it when scrolled. -->
+                    <div
+                        v-if="day.isToday && nowOffset(day) !== null"
+                        class="pointer-events-none absolute bottom-0 z-10 w-0.5 bg-teal-500 shadow-[0_0_6px_rgba(20,184,166,0.5)]"
+                        :style="{
+                            left: `${labelWidth + (nowOffset(day) ?? 0)}px`,
+                            top: '40px',
+                        }"
+                    >
+                        <div
+                            class="absolute -left-[5px] -top-1 h-2.5 w-2.5 rounded-full bg-teal-500 ring-2 ring-white"
+                        />
+                    </div>
+
                     <div
                         class="sticky top-0 z-20 flex h-10 bg-white shadow-[0_1px_0_0_rgba(0,0,0,0.04)]"
                     >
+                        <!-- The pill lives in the hour ruler rather than above
+                             the line: anchored to the line's top it rendered
+                             underneath this sticky header and was invisible. -->
+                        <div
+                            v-if="day.isToday && nowOffset(day) !== null"
+                            class="pointer-events-none absolute top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-teal-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm"
+                            :style="{
+                                left: `${labelWidth + (nowOffset(day) ?? 0)}px`,
+                            }"
+                        >
+                            Now
+                        </div>
+
                         <div
                             class="sticky left-0 z-30 shrink-0 border-b border-r border-slate-100 bg-white"
                             :style="{ width: `${labelWidth}px` }"
@@ -147,73 +177,47 @@
                         class="relative flex border-b last:border-b-0 transition"
                         :class="rowTheme(rowIndex)"
                         :style="{
-                            minHeight: '72px',
+                            minHeight: '92px',
                         }"
                     >
                         <div
-                            class="sticky left-0 z-21 shrink-0 border-r border-slate-100/80 px-3 py-2"
+                            class="sticky left-0 z-20 shrink-0 border-r border-slate-100/80 px-3 py-2.5"
                             :style="{ width: `${labelWidth}px` }"
                             :class="rowTheme(rowIndex)"
                         >
                             <div
-                                class="flex h-full flex-col justify-between gap-1.5"
+                                class="flex h-full flex-col justify-between gap-2"
                             >
                                 <div class="min-w-0">
-                                    <p
-                                        class="truncate text-[13.5px] font-semibold text-slate-800"
+                                    <div
+                                        class="flex items-center gap-1.5 min-w-0"
                                     >
-                                        {{ schedule.schedule_code }}
-                                    </p>
+                                        <p
+                                            class="truncate text-[13.5px] font-semibold text-slate-800"
+                                        >
+                                            {{ schedule.schedule_code }}
+                                        </p>
 
-                                    <p
-                                        class="truncate text-[12px] font-medium text-slate-500"
-                                    >
-                                        {{
-                                            schedule.category === "Facility"
-                                                ? "Inhouse Facility"
-                                                : "Homecare"
-                                        }}
                                         <span
-                                            v-if="
-                                                schedule.patient?.admission?.bed
+                                            class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium"
+                                            :class="
+                                                schedule.category === 'Facility'
+                                                    ? 'bg-indigo-50 text-indigo-600'
+                                                    : 'bg-teal-50 text-teal-600'
                                             "
                                         >
-                                            •
-                                            {{ schedule.patient.admission.bed }}
+                                            {{
+                                                schedule.category === "Facility"
+                                                    ? "Facility"
+                                                    : "Homecare"
+                                            }}
                                         </span>
-                                    </p>
-                                </div>
+                                    </div>
 
-                                <div>
+                                    <!-- The day header above already states the
+                                         date, so the row only needs the time. -->
                                     <p
-                                        class="flex items-center gap-1 text-[12px] font-medium text-slate-600"
-                                    >
-                                        <svg
-                                            width="11"
-                                            height="11"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="2"
-                                            class="shrink-0 opacity-50"
-                                        >
-                                            <rect
-                                                x="3"
-                                                y="5"
-                                                width="18"
-                                                height="16"
-                                                rx="2"
-                                            />
-                                            <path d="M3 10h18M8 3v4M16 3v4" />
-                                        </svg>
-                                        {{
-                                            formatDate(schedule.scheduled_at) ||
-                                            "—"
-                                        }}
-                                    </p>
-
-                                    <p
-                                        class="flex items-center gap-1 text-[12px] text-slate-400"
+                                        class="mt-1 flex items-center gap-1 text-[12px] font-medium text-slate-600"
                                     >
                                         <svg
                                             width="11"
@@ -227,10 +231,21 @@
                                             <circle cx="12" cy="12" r="9" />
                                             <path d="M12 7v5l3 3" />
                                         </svg>
-                                        {{ schedule.start_time }}
-                                        <span v-if="schedule.end_time">
+                                        {{ schedule.start_time ?? "—" }}
+                                        <span
+                                            v-if="schedule.end_time"
+                                            class="text-slate-400"
+                                        >
                                             – {{ schedule.end_time }}
                                         </span>
+                                    </p>
+
+                                    <p
+                                        v-if="bedLabel(schedule)"
+                                        class="mt-0.5 truncate text-[11px] text-slate-400"
+                                        :title="bedLabel(schedule)"
+                                    >
+                                        {{ bedLabel(schedule) }}
                                     </p>
                                 </div>
 
@@ -275,25 +290,9 @@
                                 <div
                                     v-for="hour in day.hours"
                                     :key="hour.value"
-                                    class="h-full shrink-0 border-r border-secondary/20 last:border-b-0"
+                                    class="h-full shrink-0 border-r border-secondary/20 last:border-r-0"
                                     :style="{ width: `${hourWidth}px` }"
                                 />
-                            </div>
-
-                            <div
-                                v-if="day.isToday && nowOffset(day) !== null"
-                                class="absolute top-0 z-20 h-full w-0.5 bg-teal-500 shadow-[0_0_6px_rgba(20,184,166,0.5)]"
-                                :style="{ left: `${nowOffset(day)}px` }"
-                            >
-                                <div
-                                    class="absolute -left-[5px] -top-1 h-2.5 w-2.5 rounded-full bg-teal-500 ring-2 ring-white"
-                                />
-
-                                <div
-                                    class="absolute -left-5 -top-6 whitespace-nowrap rounded-full bg-teal-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm"
-                                >
-                                    Now
-                                </div>
                             </div>
 
                             <template v-if="schedule.services?.length">
@@ -312,8 +311,8 @@
                                     :style="{
                                         left: `${getServiceLeft(schedule, sIndex, day)}px`,
                                         width: `${getServiceWidth(service)}px`,
-                                        top: '4px',
-                                        height: '60px',
+                                        top: '6px',
+                                        height: '80px',
                                     }"
                                     @click="$emit('view-details', schedule)"
                                 >
@@ -335,7 +334,7 @@
                                                         3,
                                                     )"
                                                     :key="assignee.employee_id"
-                                                    class="flex h-[32px] w-[32px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-primary text-[8px] font-bold text-white"
+                                                    class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-primary text-[9px] font-bold text-white"
                                                     :title="assignee.full_name"
                                                 >
                                                     <img
@@ -463,8 +462,8 @@
                                 :style="{
                                     left: `${getScheduleLeft(schedule, day)}px`,
                                     width: `${getScheduleWidth(schedule)}px`,
-                                    top: '4px',
-                                    height: '60px',
+                                    top: '6px',
+                                    height: '80px',
                                 }"
                                 @click="$emit('view-details', schedule)"
                             >
@@ -589,6 +588,23 @@ const {
     scheduleStatusTheme,
     scheduleStatusLabel,
 } = useSchedule(props);
+
+/**
+ * `admission.bed` is an object, not a string — rendering it directly printed
+ * the raw JSON into the row.
+ */
+function bedLabel(schedule: ScheduleItem) {
+    const bed = schedule.patient?.admission?.bed;
+
+    if (!bed) return "";
+
+    return [
+        bed.room?.room_no ? `Room ${bed.room.room_no}` : "",
+        bed.bed_no ? `Bed ${bed.bed_no}` : "",
+    ]
+        .filter(Boolean)
+        .join(" • ");
+}
 
 const timelineContainers = ref<HTMLElement[]>([]);
 const expandedDays = ref<Set<string>>(new Set([today()]));

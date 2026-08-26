@@ -182,6 +182,12 @@ class ScheduleResource extends JsonResource
 
         $patient = $this->whenLoaded('patient', fn() => $this->patient);
 
+        $isOnsite = $this->category === \App\Models\Schedule::CATEGORYFACILITY;
+
+        $serviceLocation = $this->location ?? $patient?->location;
+
+        $serviceAddress = $serviceLocation?->full_address;
+
         return [
             'schedule_id' => $this->schedule_id,
             'schedule_code' => $this->schedule_code,
@@ -199,6 +205,26 @@ class ScheduleResource extends JsonResource
             'type' => $this->scheduleServices->contains(
                 fn($service) => $service->hours_booked !== null
             ) ? 'adl' : 'medical',
+
+            // Where the care actually happens. patient.address is overloaded:
+            // for a homecare booking it holds the service address, but for a
+            // facility booking it holds the patient's own home address — which
+            // is not where the visit takes place. Facility care is on-site at
+            // the branch, so it gets a fixed label instead.
+            'is_onsite' => $isOnsite,
+            'address' => $isOnsite
+                ? 'On-site'
+                : ($serviceAddress ?? 'No address on file'),
+
+            // Only homecare has a mappable visit location; facility care is
+            // delivered at the branch itself.
+            'latitude' => !$isOnsite && $serviceLocation?->latitude !== null
+                ? (float) $serviceLocation->latitude
+                : null,
+
+            'longitude' => !$isOnsite && $serviceLocation?->longitude !== null
+                ? (float) $serviceLocation->longitude
+                : null,
 
             'patient' => $patient ? [
                 'patient_id' => $patient->patient_id,

@@ -16,6 +16,12 @@ return new class extends Migration
             $table->string('schedule_code')->unique();
             $table->foreignId('patient_id')
                 ->constrained('patients', 'patient_id');
+
+
+            $table->foreignId('location_id')
+                ->nullable()
+                ->constrained('locations', 'location_id');
+
             $table->timestamp('scheduled_at')->index();
             $table->enum('status', [
                 'pending',

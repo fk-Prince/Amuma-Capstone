@@ -762,7 +762,12 @@ const filteredLogs = computed<AuditRow[]>(() => {
 
                 assignees,
 
-                address: schedule.patient?.address ?? null,
+                // schedule.address resolves to "On-site" for facility schedules
+                // and to the visit address for homecare ones.
+                address:
+                    schedule.address ??
+                    schedule.patient?.address ??
+                    null,
                 patient_uuid: schedule.patient?.patient_uuid ?? "",
                 patient_full_name: schedule.patient?.full_name ?? "",
 

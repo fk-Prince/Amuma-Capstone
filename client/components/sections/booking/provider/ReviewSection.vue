@@ -445,9 +445,6 @@ const patientRows = computed<Row[]>(() => {
         .filter(Boolean)
         .join(" / ");
 
-    const address =
-        props.category === "facility" ? p.address : props.homecare.address;
-
     return [
         {
             label: "Full Name",
@@ -466,8 +463,11 @@ const patientRows = computed<Row[]>(() => {
             value: p.phone_number ?? "",
         },
         {
-            label: "Address",
-            value: address ?? "",
+            // The patient's own address. Homecare bookings show the visit
+            // address separately under the service section.
+            label:
+                props.category === "facility" ? "Address" : "Home Address",
+            value: p.address ?? "",
             span: true,
         },
         {

@@ -89,12 +89,41 @@
                     class="relative overflow-x-auto"
                 >
                     <div
-                        class="min-w-full"
+                        class="relative min-w-full"
                         :style="{
                             width: `max(100%, ${labelWidth + day.hours.length * hourWidth}px)`,
                         }"
                     >
+                        <!-- One continuous marker for the whole day rather than
+                             one per row, and below the sticky label column so it
+                             slides under it when scrolled. -->
+                        <div
+                            v-if="day.isToday && nowOffset(day) !== null"
+                            class="pointer-events-none absolute bottom-0 z-[5] w-px bg-teal-400"
+                            :style="{
+                                left: `${labelWidth + (nowOffset(day) ?? 0)}px`,
+                                top: '40px',
+                            }"
+                        >
+                            <div
+                                class="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-teal-500"
+                            />
+                        </div>
+
                         <div class="sticky top-0 z-20 flex h-10 bg-white">
+                            <!-- The pill lives in the hour ruler rather than
+                                 above the line: anchored to the line's top it
+                                 rendered underneath this sticky header. -->
+                            <div
+                                v-if="day.isToday && nowOffset(day) !== null"
+                                class="pointer-events-none absolute top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-teal-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm"
+                                :style="{
+                                    left: `${labelWidth + (nowOffset(day) ?? 0)}px`,
+                                }"
+                            >
+                                Now
+                            </div>
+
                             <div
                                 class="sticky left-0 z-30 shrink-0 border-b border-r border-slate-100 bg-white"
                                 :style="{ width: `${labelWidth}px` }"
@@ -120,10 +149,7 @@
                             class="relative flex border-b border-slate-100 last:border-b-0 transition"
                             :class="rowTheme(rowIndex)"
                             :style="{
-                                minHeight: `${Math.max(
-                                    130,
-                                    (schedule.services?.length || 1) * 130 + 8,
-                                )}px`,
+                                minHeight: `${rowHeight(schedule)}px`,
                             }"
                         >
                             <div
@@ -134,53 +160,46 @@
                                 <div
                                     class="flex h-full flex-col justify-between gap-3"
                                 >
-                                    <div
-                                        class="space-y-4 flex gap-3 items-center"
-                                    >
-                                        <div>
-                                            <p
-                                                class="text-xs font-medium uppercase tracking-wide text-slate-400"
-                                            >
-                                                Schedule
-                                            </p>
+                                    <div class="min-w-0 space-y-1">
+                                        <p
+                                            class="text-[11px] font-medium uppercase tracking-wider text-slate-400"
+                                        >
+                                            Schedule
+                                        </p>
 
-                                            <p
-                                                class="mt-1 text-sm font-semibold text-slate-800"
-                                            >
-                                                {{
-                                                    schedule.schedule_code ||
-                                                    "—"
-                                                }}
-                                            </p>
-                                        </div>
+                                        <p
+                                            class="truncate text-sm font-semibold text-slate-800"
+                                        >
+                                            {{ schedule.schedule_code || "—" }}
+                                        </p>
 
-                                        <div>
-                                            <p
-                                                class="text-xs uppercase tracking-wide text-slate-400"
+                                        <!-- The day header above already states
+                                             the date, so the row only needs the
+                                             time. -->
+                                        <p
+                                            class="flex items-center gap-1 pt-1 text-xs font-medium text-slate-600"
+                                        >
+                                            <svg
+                                                width="11"
+                                                height="11"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                class="shrink-0 opacity-50"
                                             >
-                                                Date & Time
-                                            </p>
+                                                <circle cx="12" cy="12" r="9" />
+                                                <path d="M12 7v5l3 3" />
+                                            </svg>
 
-                                            <p
-                                                v-if="schedule.scheduled_at"
-                                                class="mt-1 text-sm text-slate-800"
+                                            {{ schedule.start_time ?? "—" }}
+                                            <span
+                                                v-if="schedule.end_time"
+                                                class="text-slate-400"
                                             >
-                                                {{
-                                                    formatDate(
-                                                        schedule.scheduled_at,
-                                                    ) || "—"
-                                                }}
-                                            </p>
-
-                                            <p
-                                                class="mt-0.5 text-xs text-slate-500"
-                                            >
-                                                {{ schedule.start_time }}
-                                                <span v-if="schedule.end_time">
-                                                    – {{ schedule.end_time }}
-                                                </span>
-                                            </p>
-                                        </div>
+                                                – {{ schedule.end_time }}
+                                            </span>
+                                        </p>
                                     </div>
 
                                     <div class="flex items-center gap-2">
@@ -234,18 +253,6 @@
                                     />
                                 </div>
 
-                                <div
-                                    v-if="
-                                        day.isToday && nowOffset(day) !== null
-                                    "
-                                    class="absolute top-0 z-10 h-full w-px bg-teal-400"
-                                    :style="{ left: `${nowOffset(day)}px` }"
-                                >
-                                    <div
-                                        class="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-teal-500"
-                                    />
-                                </div>
-
                                 <template v-if="schedule.services?.length">
                                     <div
                                         v-for="(
@@ -255,7 +262,7 @@
                                             service.schedule_services_id ??
                                             sIndex
                                         "
-                                        class="group absolute flex cursor-pointer flex-col justify-center gap-1 rounded-xl border-r border-t border-b border-slate-200/60 px-4 py-2.5 text-xs shadow-sm transition-all duration-150 hover:z-10 hover:-translate-y-0.5 hover:shadow-md"
+                                        class="group absolute flex cursor-pointer flex-col justify-center gap-1 rounded-xl border border-slate-200/60 px-4 py-2.5 text-xs shadow-sm transition-all duration-150 hover:z-10 hover:-translate-y-0.5 hover:shadow-md"
                                         :class="
                                             scheduleStatusTheme(schedule.status)
                                                 .card
@@ -263,8 +270,8 @@
                                         :style="{
                                             left: `${getServiceLeft(schedule, sIndex, day)}px`,
                                             width: `${getServiceWidth(service)}px`,
-                                            top: `${8 + sIndex * 110}px`,
-                                            height: '90px',
+                                            top: `${8 + sIndex * SERVICE_STRIDE}px`,
+                                            height: `${SERVICE_HEIGHT}px`,
                                         }"
                                         @click="$emit('view-details', schedule)"
                                     >
@@ -327,7 +334,7 @@
                                                         3,
                                                     )"
                                                     :key="assignee.employee_id"
-                                                    class="flex h-4.5 w-4.5 items-center justify-center overflow-hidden rounded-full border-2 border-white text-[8px] font-bold text-white"
+                                                    class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-primary text-[9px] font-bold text-white"
                                                     :title="assignee.full_name"
                                                 >
                                                     <img
@@ -336,7 +343,7 @@
                                                         :alt="
                                                             assignee.full_name
                                                         "
-                                                        class="h-6 w-6 object-cover"
+                                                        class="h-full w-full object-cover"
                                                     />
                                                     <template v-else>
                                                         {{
@@ -351,7 +358,7 @@
                                                         (service.assignees
                                                             ?.length ?? 0) > 3
                                                     "
-                                                    class="flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-[8px] font-bold text-slate-600"
+                                                    class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-[9px] font-bold text-slate-600"
                                                     :title="
                                                         service.assignees
                                                             .slice(3)
@@ -526,7 +533,6 @@ const {
     hasAnySchedules,
     selectedDate,
     rangeEnd,
-    formatDate,
     schedulesForDay,
     getServiceLeft,
     getServiceWidth,
@@ -555,6 +561,22 @@ watch(
     },
     { immediate: true },
 );
+
+/**
+ * Service cards are absolutely positioned, so the row has to reserve exactly
+ * the space they occupy. The stride and the card height were previously
+ * hardcoded to different values (110 vs 130), which left a dead gap under the
+ * last card in every row.
+ */
+const SERVICE_HEIGHT = 96;
+const SERVICE_STRIDE = 110;
+const ROW_PADDING = 16;
+
+function rowHeight(schedule: ScheduleItem) {
+    const count = schedule.services?.length || 1;
+
+    return (count - 1) * SERVICE_STRIDE + SERVICE_HEIGHT + ROW_PADDING;
+}
 
 const timelineContainers = ref<HTMLElement[]>([]);
 

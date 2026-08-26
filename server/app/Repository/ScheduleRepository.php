@@ -11,9 +11,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ScheduleRepository
 {
-    // Same overlap condition used by getEmployeeAvailable()'s conflict
-    // detection: a schedule's occupied window runs from scheduled_at to
-    // scheduled_at + (its services' durations, or 60 min if unknown).
+
     private const CONFLICT_WINDOW_SQL = 'schedules.scheduled_at + (
         SELECT COALESCE(
             SUM(
@@ -30,14 +28,7 @@ class ScheduleRepository
         WHERE ss.schedule_id = schedules.schedule_id
     ) * INTERVAL \'1 minute\' > ?';
 
-    /**
-     * The hard, server-side gate against double-booking an employee. Unlike
-     * the pre-flight conflict check surfaced to the UI (which can be
-     * bypassed by confirming past the warning, calling the endpoint
-     * directly, or a race between check-time and submit-time), this is
-     * re-verified at the moment of assignment and has no override — if it
-     * returns true, the assignment must not be written.
-     */
+
     public function employeeHasActiveConflict(
         int $employeeId,
         string $excludeScheduleId,
@@ -298,10 +289,34 @@ class ScheduleRepository
         }
 
         if (!empty($payload['search'])) {
-            $search = $payload['search'];
-            $query->whereHas('patient', function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%");
+            $term = '%' . trim($payload['search']) . '%';
+
+            $query->where(function ($outer) use ($term) {
+                $outer
+                    ->where('schedule_code', 'ilike', $term)
+
+                    ->orWhereHas('patient', function ($q) use ($term) {
+                        $q->where('first_name', 'ilike', $term)
+                            ->orWhere('middle_name', 'ilike', $term)
+                            ->orWhere('last_name', 'ilike', $term)
+
+                            ->orWhereRaw(
+                                "concat_ws(' ', first_name, last_name) ilike ?",
+                                [$term]
+                            );
+                    })
+
+                    ->orWhereHas(
+                        'scheduleServices.assigned.employee.employees',
+                        function ($q) use ($term) {
+                            $q->where('first_name', 'ilike', $term)
+                                ->orWhere('last_name', 'ilike', $term)
+                                ->orWhereRaw(
+                                    "concat_ws(' ', first_name, last_name) ilike ?",
+                                    [$term]
+                                );
+                        }
+                    );
             });
         }
 
@@ -368,9 +383,6 @@ class ScheduleRepository
 
         $allowedRoles = ['nurse', 'caregiver'];
 
-        // Only ACTIVE assignments should count toward "busy" — a deactivated
-        // (reassigned-off) assignment no longer reflects the employee's real
-        // schedule.
         $activeScheduleAssignments = function ($query) use ($targetStart, $targetEnd, $scheduleId) {
             $query->where('schedule_assigned.is_active', true)
                 ->whereHas('scheduleService.schedule', function ($q) use ($targetStart, $targetEnd, $scheduleId) {

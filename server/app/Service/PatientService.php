@@ -7,6 +7,7 @@ use App\Http\Resources\PatientReportResource;
 use App\Http\Resources\PatientResource;
 use App\Models\Schedule;
 use App\Models\User;
+use App\Repository\LocationRepository;
 use App\Repository\PatientRepository;
 use App\Repository\UserRepository;
 use Carbon\Carbon;
@@ -18,6 +19,7 @@ class PatientService
     public function __construct(
         private PatientRepository $patientRepository,
         private UserRepository $userRepository,
+        private LocationRepository $locationRepository,
     ) {}
 
     /**
@@ -48,9 +50,19 @@ class PatientService
         $assessment = $payload['assessment'];
         $guardian = $payload['guardian'];
 
+        $patientLocation = $this->locationRepository->create([
+            'full_address' => $patient['address'],
+        ]);
+
+        $scheduleLocation = $this->locationRepository->create([
+            'full_address' => $homecare['address'],
+            'latitude'     => $homecare['latitude'] ?? null,
+            'longitude'    => $homecare['longitude'] ?? null,
+        ]);
+
         $patient = $this->patientRepository->create([
             'branch_id'          => $payload['branch_id'],
-            'address'            => $homecare['address'],
+            'location_id'        => $patientLocation->location_id,
             'first_name'         => $patient['first_name'],
             'middle_name'        => $patient['middle_name'],
             'last_name'          => $patient['last_name'],
@@ -79,6 +91,7 @@ class PatientService
 
         $schedule = $patient->schedules()->create([
             'scheduled_at'          => $scheduledAt,
+            'location_id'           => $scheduleLocation->location_id,
             'status'                => Schedule::STATUS_PENDING,
             'category'              => ucfirst($payload['category']),
         ]);
@@ -128,9 +141,14 @@ class PatientService
         $patient = $payload['patient'];
         $guardian = $payload['guardian'];
         $assessment = $payload['assessment'];
+
+        $patientLocation = $this->locationRepository->create([
+            'full_address' => $patient['address'],
+        ]);
+
         $patient = $this->patientRepository->create([
             'branch_id'          => $payload['branch_id'],
-            'address'            => $patient['address'] ?? null,
+            'location_id'        => $patientLocation->location_id,
             'first_name'         => $patient['first_name'],
             'middle_name'        => $patient['middle_name'],
             'last_name'          => $patient['last_name'],
@@ -254,7 +272,7 @@ class PatientService
         ]);
     }
 
-    private function reportProfile($patient): array
+    private function reportProfile(mixed $patient)
     {
         return [
             'initial_assessment' => $patient->initial_assessment,
@@ -262,7 +280,7 @@ class PatientService
         ];
     }
 
-    private function reportAdmissions($patient): array
+    private function reportAdmissions(mixed $patient)
     {
         return $patient->admissions->map(fn($admission) => [
             'status' => $admission->status,
@@ -276,7 +294,7 @@ class PatientService
         ])->values()->all();
     }
 
-    private function reportBilling($patient): array
+    private function reportBilling(mixed $patient)
     {
         return [
             'summary' => $patient->billing_summary,
@@ -298,7 +316,7 @@ class PatientService
         ];
     }
 
-    private function reportSchedules($patient): array
+    private function reportSchedules(mixed $patient)
     {
         return $patient->schedules->map(fn($schedule) => [
             'schedule_code' => $schedule->schedule_code,
@@ -313,7 +331,7 @@ class PatientService
         ])->values()->all();
     }
 
-    private function reportMedications($patient): array
+    private function reportMedications(mixed $patient)
     {
         return $patient->medications->map(fn($medication) => [
             'name' => $medication->name,
@@ -331,7 +349,7 @@ class PatientService
         ])->values()->all();
     }
 
-    private function reportVitals($patient): array
+    private function reportVitals(mixed $patient)
     {
         return $patient->vitals->map(fn($vital) => [
             'recorded_date' => $vital->recorded_date?->format('Y-m-d'),
@@ -349,7 +367,7 @@ class PatientService
         ])->values()->all();
     }
 
-    private function reportActivities($patient): array
+    private function reportActivities(mixed $patient)
     {
         return $patient->activities->map(fn($activity) => [
             'title' => $activity->title,

@@ -90,15 +90,27 @@
                 />
             </div>
 
+            <!-- The patient's own home address. For homecare this is kept
+                 separate from the service location, since the caregiver may
+                 be sent somewhere other than where the patient lives. -->
             <div class="grid grid-cols-1 gap-6">
                 <BaseInput
-                    v-if="category === 'facility'"
-                    label="Address"
+                    :label="
+                        category === 'facility' ? 'Address' : 'Home Address'
+                    "
                     :model-value="props.model.address"
                     @update:model-value="update('address', $event)"
                     :error="errors?.address"
                     required
                 />
+
+                <p
+                    v-if="category !== 'facility'"
+                    class="-mt-4 text-[11px] text-slate-400"
+                >
+                    Where the patient lives. The address the caregiver visits
+                    is set separately in the service schedule below.
+                </p>
             </div>
 
             <div class="h-px bg-[#E4E0D6]" />

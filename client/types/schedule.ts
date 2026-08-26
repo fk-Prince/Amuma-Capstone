@@ -79,6 +79,23 @@ export interface ScheduleItem {
     total_hours: number;
     total_duration_minutes: number;
 
+    /**
+     * Where the care actually happens. Facility schedules are delivered at the
+     * branch and resolve to "On-site"; homecare ones carry the visit address
+     * from the schedule's own location. Distinct from `patient.address`, which
+     * is the patient's registered home address.
+     */
+    is_onsite?: boolean;
+    address?: string | null;
+
+    /**
+     * Coordinates of the homecare visit, captured by the booking form's map
+     * picker. Null for facility schedules and for older homecare rows booked
+     * before the picker existed.
+     */
+    latitude?: number | null;
+    longitude?: number | null;
+
     patient?: SchedulePatient | null;
 
     services?: ScheduleServiceItem[];

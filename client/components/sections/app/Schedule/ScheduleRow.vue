@@ -154,14 +154,14 @@
                                     assignee, aIndex
                                 ) in service.assignees.slice(0, 3)"
                                 :key="assignee.employee_id"
-                                class="flex h-4.5 w-4.5 items-center justify-center overflow-hidden rounded-full border-2 border-white text-[8px] font-bold text-white"
+                                class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-primary text-[9px] font-bold text-white"
                                 :title="assignee.full_name"
                             >
                                 <img
                                     v-if="assignee.avatar"
                                     :src="assignee.avatar"
                                     :alt="assignee.full_name"
-                                    class="h-6 w-6 object-cover"
+                                    class="h-full w-full object-cover"
                                 />
                                 <template v-else>
                                     {{ initials(assignee.full_name) }}
@@ -169,7 +169,7 @@
                             </span>
                             <span
                                 v-if="(service.assignees?.length ?? 0) > 3"
-                                class="flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-[8px] font-bold text-slate-600"
+                                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-[9px] font-bold text-slate-600"
                                 :title="
                                     service.assignees
                                         .slice(3)

@@ -38,10 +38,9 @@
             <Field label="Phone" :value="patient?.phone_number" />
             <Field label="Occupation" :value="patient?.occupation" />
             <Field label="Allergies" :value="patient?.allergies" />
-            <Field
-                label="Address"
-                :value="patient?.address || booking.homecare?.address"
-            />
+            <!-- The patient's own home address. The homecare visit address is
+                 a separate thing and lives in the service section. -->
+            <Field label="Home Address" :value="patient?.address" />
             <Field
                 class="normal-case"
                 label="Height / Weight"

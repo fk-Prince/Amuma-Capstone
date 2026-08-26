@@ -23,6 +23,7 @@ class Schedule extends Model
 
     protected $fillable = [
         'patient_id',
+        'location_id',
         'scheduled_at',
         'status',
         'category',
@@ -40,9 +41,14 @@ class Schedule extends Model
 
     public function location()
     {
-        return $this->belongsTo(Location::class, 'scheduled_location_id', 'location_id');
+        return $this->belongsTo(Location::class, 'location_id', 'location_id');
     }
 
+    /** Facility care happens at the branch, so it carries no address. */
+    public function isOnsite(): bool
+    {
+        return $this->category === self::CATEGORYFACILITY;
+    }
 
     public function scheduleServices()
     {

@@ -8,6 +8,8 @@ export const homecareData = reactive<HomecareBooking>({
     date: getLocalDateStr(new Date()),
     prefered_time: "",
     address: "",
+    latitude: null,
+    longitude: null,
     time_span: "",
     services: [],
 });
@@ -44,9 +46,14 @@ const baseSchema = z.object({
         .string()
         .min(1, "Preferred time is required"),
 
+    // The map picker fills the address and both coordinates together, so
+    // gating on the address alone is enough to guarantee all three.
     address: z
         .string()
-        .min(5, "Enter a complete address"),
+        .min(5, "Pick the service location on the map"),
+
+    latitude: z.number().nullish(),
+    longitude: z.number().nullish(),
 });
 
 

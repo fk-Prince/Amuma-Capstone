@@ -18,8 +18,10 @@ return new class extends Migration
             $table->string('province')->nullable();
             $table->string('country')->nullable();
             $table->string('full_address')->nullable();
-            $table->decimal('longitude', 10, 3)->nullable();
-            $table->decimal('latitude', 10, 3)->nullable();
+            // 7 decimal places is roughly centimetre precision; 3 would round
+            // a map pin by over 100 metres.
+            $table->decimal('longitude', 10, 7)->nullable();
+            $table->decimal('latitude', 10, 7)->nullable();
         });
     }
 

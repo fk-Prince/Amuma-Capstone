@@ -20,6 +20,14 @@ export interface HomecareBooking {
     prefered_time: string;
     time_span?: string;
     address: string;
+
+    /**
+     * Coordinates of the visit address, captured from the map picker. Stored
+     * on the schedule's own location so the branch can map the visit and open
+     * it in Google Maps.
+     */
+    latitude?: number | null;
+    longitude?: number | null;
 }
 
 export interface BookedService {

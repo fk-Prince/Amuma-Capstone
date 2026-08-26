@@ -79,7 +79,9 @@ class ScheduleService
                 'message' => 'Schedule services have been created successfully.',
                 'data' => new ScheduleResource($schedule->fresh([
                     'scheduleServices.service',
-                    'patient'
+                    'patient',
+                    'location',
+                    'patient.location',
                 ]))
             ]);
         });
@@ -261,7 +263,13 @@ class ScheduleService
 
             return response()->json([
                 'message' => 'Schedule updated successfully.',
-                'data' => new ScheduleResource($schedule->fresh(['scheduleServices.assigned', 'scheduleServices.service', 'patient'])),
+                'data' => new ScheduleResource($schedule->fresh([
+                    'scheduleServices.assigned',
+                    'scheduleServices.service',
+                    'patient',
+                    'location',
+                    'patient.location',
+                ])),
             ]);
         });
     }
@@ -535,7 +543,13 @@ class ScheduleService
 
             return response()->json([
                 'message' => 'Schedule services have been updated successfully.',
-                'data' => new ScheduleResource($schedule->fresh(['scheduleServices.assigned', 'scheduleServices.service', 'patient'])),
+                'data' => new ScheduleResource($schedule->fresh([
+                    'scheduleServices.assigned',
+                    'scheduleServices.service',
+                    'patient',
+                    'location',
+                    'patient.location',
+                ])),
             ]);
         });
     }

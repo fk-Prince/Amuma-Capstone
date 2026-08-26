@@ -8,7 +8,7 @@
             <div class="w-full min-w-0 min-h-0 flex flex-col order-1">
                 <template v-if="!selectedReferenceId">
                     <div
-                        class="rounded-lg shadow-sm border border-[#E4EFED] overflow-visible flex flex-col h-full min-h-0"
+                        class="rounded-xl bg-white shadow-sm border border-[#E4EFED] overflow-visible flex flex-col h-full min-h-0"
                     >
                         <div
                             class="flex flex-col gap-3 px-6 py-4 border-b border-[#E4EFED] shrink-0"
@@ -30,8 +30,11 @@
                         </div>
 
                         <div class="flex-1 min-h-0 overflow-visible">
+                            <!-- Corner-specific radii beat DataTable's own
+                                 `rounded-2xl`, so the table sits flush under
+                                 the filter bar and matches the card below. -->
                             <DataTable
-                                class="rounded-none border-none h-full"
+                                class="rounded-t-none rounded-b-xl border-none h-full"
                                 :columns="columns"
                                 :rows="bookingData ?? []"
                                 :pagination="pagination"
@@ -65,59 +68,91 @@
                                 </template>
 
                                 <template #cell-patient="{ row }">
-                                    <div
-                                        class="flex items-center gap-3 min-w-0"
+                                    <p
+                                        class="font-semibold text-[#16302E] truncate text-sm max-w-[14rem]"
+                                        :title="
+                                            fullName(
+                                                row.patient?.first_name,
+                                                row.patient?.middle_name,
+                                                row.patient?.last_name,
+                                            )
+                                        "
                                     >
-                                        <div class="min-w-0">
-                                            <p
-                                                class="font-semibold text-[#16302E] truncate text-sm"
-                                            >
-                                                {{
-                                                    fullName(
-                                                        row.patient?.first_name,
-                                                        row.patient
-                                                            ?.middle_name,
-                                                        row.patient?.last_name,
-                                                    )
-                                                }}
-                                            </p>
+                                        {{
+                                            fullName(
+                                                row.patient?.first_name,
+                                                row.patient?.middle_name,
+                                                row.patient?.last_name,
+                                            )
+                                        }}
+                                    </p>
+                                </template>
 
-                                            <p
-                                                class="text-xs text-muted truncate"
-                                            >
-                                                {{
-                                                    row.homecare?.address ||
-                                                    row.patient?.address ||
-                                                    ""
-                                                }}
-                                            </p>
-                                        </div>
+                                <template #cell-service="{ row }">
+                                    <div class="flex flex-col gap-1">
+                                        <span
+                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium capitalize w-fit"
+                                            :class="categoryClasses(row.category)"
+                                        >
+                                            {{ row.category ?? "—" }}
+                                        </span>
+
+                                        <span class="text-xs text-muted">
+                                            {{ bookingType(row) }}
+                                        </span>
                                     </div>
                                 </template>
 
-                                <template #cell-category="{ row }">
-                                    <span class="capitalize">
-                                        {{ row.category ?? "—" }}
-                                    </span>
-                                </template>
-
-                                <template #cell-type="{ row }">
-                                    {{ bookingType(row) }}
-                                </template>
-
-                                <template #cell-service_date="{ row }">
-                                    {{ serviceDate(row) }}
-                                </template>
-
-                                <template #cell-valid_until="{ row }">
-                                    <span
-                                        v-if="row.valid_until"
-                                        class="px-3 py-1 rounded-full text-xs font-medium capitalize"
+                                <!-- Facility care is delivered at the branch;
+                                     homecare carries its own visit address,
+                                     which is not the patient's home address. -->
+                                <template #cell-location="{ row }">
+                                    <div
+                                        class="flex items-start gap-1.5 max-w-[16rem]"
+                                        :title="serviceAddress(row)"
                                     >
-                                        {{ stringToDateTime(row.valid_until) }}
-                                    </span>
+                                        <svg
+                                            class="w-3.5 h-3.5 mt-0.5 shrink-0 text-[#6B8A87]"
+                                            viewBox="0 0 20 20"
+                                            fill="none"
+                                        >
+                                            <path
+                                                d="M10 17.5s5.5-4.6 5.5-9a5.5 5.5 0 1 0-11 0c0 4.4 5.5 9 5.5 9Z"
+                                                stroke="currentColor"
+                                                stroke-width="1.5"
+                                                stroke-linejoin="round"
+                                            />
+                                            <circle
+                                                cx="10"
+                                                cy="8.5"
+                                                r="1.75"
+                                                stroke="currentColor"
+                                                stroke-width="1.5"
+                                            />
+                                        </svg>
 
-                                    <span v-else>—</span>
+                                        <span
+                                            class="text-xs text-slate-600 truncate"
+                                        >
+                                            {{ serviceAddress(row) || "—" }}
+                                        </span>
+                                    </div>
+                                </template>
+
+                                <template #cell-schedule="{ row }">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-sm text-[#16302E]">
+                                            {{ serviceDate(row) }}
+                                        </span>
+
+                                        <span
+                                            v-if="row.valid_until"
+                                            class="text-[11px] text-gray-400"
+                                        >
+                                            Valid until
+                                            {{ stringToDateTime(row.valid_until) }}
+                                        </span>
+                                    </div>
                                 </template>
 
                                 <template #cell-status="{ row }">
@@ -673,27 +708,23 @@ const overview = ref<any>(null);
 const columns = [
     {
         key: "reference_id",
-        label: "Reference ID",
+        label: "Reference",
     },
     {
         key: "patient",
         label: "Patient",
     },
     {
-        key: "category",
-        label: "Category",
+        key: "service",
+        label: "Service",
     },
     {
-        key: "type",
-        label: "Type",
+        key: "location",
+        label: "Location",
     },
     {
-        key: "service_date",
-        label: "Service Date",
-    },
-    {
-        key: "valid_until",
-        label: "Valid Until",
+        key: "schedule",
+        label: "Schedule",
     },
     {
         key: "status",
@@ -761,6 +792,12 @@ function formatDate(value?: string) {
     });
 }
 
+function categoryClasses(category?: string) {
+    return (category ?? "").toLowerCase() === "facility"
+        ? "bg-[#EEF2FF] text-[#4338CA]"
+        : "bg-[#EAF4F2] text-[#0E7C7B]";
+}
+
 function statusDotClasses(status?: string) {
     const s = (status ?? "").toLowerCase().replace("-", "_");
 
@@ -805,6 +842,17 @@ const handleNewBooking = (booking: any) => {
     bookingData.value = updated;
     pagination.totalItems.value++;
 };
+
+// Facility care happens at the branch, so it has no visit address — falling
+// back to the patient's home address there would be misleading.
+const serviceAddress = (row: any) => {
+    if (String(row?.category ?? "").toLowerCase() === "facility") {
+        return "On-site";
+    }
+
+    return row?.homecare?.address || row?.patient?.address || "";
+};
+
 
 const rejectTarget = ref<any>(null);
 

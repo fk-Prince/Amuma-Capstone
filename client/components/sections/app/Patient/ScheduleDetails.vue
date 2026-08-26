@@ -11,33 +11,41 @@
 
             <div
                 v-if="schedule"
-                class="relative w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl"
+                class="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl"
             >
                 <div
-                    class="flex items-start justify-between border-b border-slate-100 px-5 py-4"
+                    class="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-6 py-4"
                 >
-                    <div>
+                    <div class="min-w-0">
                         <p
                             class="text-xs font-medium uppercase tracking-wide text-slate-400"
                         >
                             Schedule Details
                         </p>
 
-                        <h2 class="mt-1 text-lg font-semibold text-slate-800">
-                            {{ schedule.schedule_code }}
-                        </h2>
+                        <div class="mt-1 flex flex-wrap items-center gap-2">
+                            <h2 class="text-lg font-semibold text-slate-800">
+                                {{ schedule.schedule_code }}
+                            </h2>
+
+                            <span
+                                class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium capitalize text-slate-600"
+                            >
+                                {{ schedule.category }}
+                            </span>
+                        </div>
                     </div>
 
                     <span
                         v-if="!isEditing"
-                        class="rounded-full px-3 py-1 text-xs font-semibold capitalize"
+                        class="shrink-0 rounded-full px-3 py-1 text-xs font-semibold capitalize"
                         :class="scheduleStatusTheme(schedule.status).badge"
                     >
                         {{ scheduleStatusLabel(schedule.status) }}
                     </span>
                 </div>
 
-                <div class="max-h-[70vh] space-y-4 overflow-y-auto p-5">
+                <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
                     <div
                         class="flex items-center gap-3 rounded-xl bg-slate-50 p-3"
                     >
@@ -57,12 +65,33 @@
                             </svg>
                         </div>
 
-                        <div>
+                        <div class="min-w-0 flex-1">
                             <p class="text-xs text-slate-400">Patient</p>
-                            <p class="font-semibold text-slate-800">
-                                {{ schedule.patient?.full_name }}
+                            <p class="truncate font-semibold text-slate-800">
+                                {{ schedule.patient?.full_name ?? "—" }}
                             </p>
                         </div>
+
+                        <button
+                            v-if="patientUuid"
+                            type="button"
+                            class="flex shrink-0 items-center gap-1.5 rounded-lg border border-primary/20 bg-white px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-primary/5"
+                            @click="viewPatient"
+                        >
+                            View Patient
+
+                            <svg
+                                class="h-3.5 w-3.5"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.75"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M7.5 5 12.5 10 7.5 15" />
+                            </svg>
+                        </button>
                     </div>
 
                     <div
@@ -249,7 +278,7 @@
 
                     <div
                         v-else
-                        class="rounded-xl border border-sky-100 bg-sky-50 p-4"
+                        class="space-y-4 rounded-xl border border-sky-100 bg-sky-50 p-4"
                     >
                         <div class="flex items-start gap-3">
                             <div
@@ -274,19 +303,64 @@
                                 <p
                                     class="text-xs font-medium uppercase tracking-wide text-sky-600"
                                 >
-                                    Homecare Address
+                                    {{
+                                        schedule.is_onsite
+                                            ? "Location"
+                                            : "Homecare Address"
+                                    }}
                                 </p>
 
                                 <p
                                     class="mt-1 text-sm font-semibold text-slate-800"
                                 >
                                     {{
+                                        schedule.address ??
                                         schedule.patient?.address ??
                                         "No address on file"
                                     }}
                                 </p>
+
+                                <a
+                                    v-if="hasCoordinates"
+                                    :href="googleMapsUrl"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700 hover:underline"
+                                >
+                                    Open in Google Maps
+
+                                    <svg
+                                        class="h-3 w-3"
+                                        viewBox="0 0 20 20"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.75"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M8 4H4v12h12v-4" />
+                                        <path d="M12 3h5v5M17 3l-7 7" />
+                                    </svg>
+                                </a>
                             </div>
                         </div>
+
+                        <!-- Coordinates only exist for homecare visits booked
+                             through the map picker. -->
+                        <ClientOnly v-if="hasCoordinates">
+                            <LocationMap
+                                :lat="schedule.latitude!"
+                                :lng="schedule.longitude!"
+                                :label="schedule.address ?? undefined"
+                                height-class="h-[300px]"
+                            />
+
+                            <template #fallback>
+                                <div
+                                    class="h-[300px] w-full animate-pulse rounded-xl border border-sky-100 bg-sky-100/50"
+                                />
+                            </template>
+                        </ClientOnly>
                     </div>
 
                     <div v-if="isEditing" class="space-y-3">
@@ -341,10 +415,16 @@
                             </p>
                         </div>
 
+                        <!-- Category already sits in the header, so this slot
+                             carries the duration instead. -->
                         <div class="rounded-xl border border-slate-100 p-3">
-                            <p class="text-xs text-slate-400">Category</p>
+                            <p class="text-xs text-slate-400">Duration</p>
                             <p class="mt-1 text-sm font-medium text-slate-700">
-                                {{ schedule.category }}
+                                {{
+                                    schedule.total_hours
+                                        ? `${schedule.total_hours} hrs`
+                                        : "—"
+                                }}
                             </p>
                         </div>
                     </div>
@@ -354,7 +434,9 @@
                             Services
                         </p>
 
-                        <div class="space-y-2">
+                        <!-- Full width, not a two-column grid: a single service
+                             would otherwise sit in a half-empty row. -->
+                        <div class="space-y-3">
                             <div
                                 v-for="service in schedule.services"
                                 :key="service.schedule_services_id"
@@ -362,10 +444,16 @@
                             >
                                 <div class="flex items-center justify-between">
                                     <div>
+                                        <!-- ADL bookings carry no service row,
+                                             so the card would be headless
+                                             without a fallback name. -->
                                         <p
                                             class="text-sm font-semibold text-slate-800"
                                         >
-                                            {{ service.service_name }}
+                                            {{
+                                                service.service_name ??
+                                                "Activity of Daily Living"
+                                            }}
                                         </p>
 
                                         <p
@@ -482,7 +570,7 @@
                 </div>
 
                 <div
-                    class="flex justify-end gap-2 border-t border-slate-100 bg-slate-50 px-5 py-3"
+                    class="flex shrink-0 justify-end gap-2 border-t border-slate-100 bg-slate-50 px-6 py-3"
                 >
                     <template v-if="isEditing">
                         <button
@@ -553,6 +641,7 @@ import { ref, computed, watch } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
+import LocationMap from "~/components/ui/LocationMap.vue";
 import { getLocalDateStr } from "~/utils/time";
 import { generateAvailableAmPmTimes } from "~/utils/time-slot";
 import { fullName } from "~/utils/user";
@@ -588,6 +677,49 @@ const emit = defineEmits<{
 
     (e: "start-edit", schedule: ScheduleItem): void;
 }>();
+
+const route = useRoute();
+const router = useRouter();
+
+// Hidden when the modal is already open on that patient's own page.
+const patientUuid = computed(() => {
+    const uuid = props.schedule?.patient?.patient_uuid;
+
+    if (!uuid || uuid === route.params.p_uuid) return null;
+
+    return uuid;
+});
+
+/**
+ * The schedule modal is opened from both the branch schedules board and the
+ * patient page, so the branch uuid comes from the route rather than the
+ * schedule payload.
+ */
+function viewPatient() {
+    if (!patientUuid.value) return;
+
+    router.push({
+        path: `/app/branches/${route.params.uuid}/patients/${patientUuid.value}`,
+    });
+
+    close();
+}
+
+/**
+ * Only homecare visits booked through the map picker carry coordinates, so
+ * the map and the Google Maps link are both gated on them.
+ */
+const hasCoordinates = computed(
+    () =>
+        typeof props.schedule?.latitude === "number" &&
+        typeof props.schedule?.longitude === "number",
+);
+
+const googleMapsUrl = computed(() =>
+    hasCoordinates.value
+        ? `https://www.google.com/maps/search/?api=1&query=${props.schedule?.latitude},${props.schedule?.longitude}`
+        : "",
+);
 
 const { scheduleStatusTheme, scheduleStatusLabel, statusItems } = useSchedule();
 

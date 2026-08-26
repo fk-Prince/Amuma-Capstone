@@ -412,34 +412,35 @@
             <div>
                 <div class="mb-2">
                     <h3 class="text-sm font-semibold text-slate-900">
-                        Patient - Service Location
+                        Homecare Service Address
                         <span class="text-danger">*</span>
                     </h3>
 
                     <p class="mt-0.5 text-xs text-slate-500">
-                        Enter the location where the caregiver or nurse should
-                        visit.
+                        Where the caregiver or nurse should visit. This can
+                        differ from the patient's home address.
                     </p>
                 </div>
 
                 <div class="bg-white">
-                    <BaseInput
-                        v-model="model.address"
-                        :error="errors?.address"
-                        boxClass="pr-3 border-[1.5px] focus-within:ring-2"
-                        required
-                    >
-                        <template #suffix>
-                            <LocationIcon
-                                clickable
-                                @get-location="handleLocation"
+                    <!-- The picker records coordinates alongside the address so
+                         the branch can map the visit later. -->
+                    <ClientOnly>
+                        <LocationSelector
+                            :initial-lat="model.latitude ?? undefined"
+                            :initial-lng="model.longitude ?? undefined"
+                            @location-selected="handleLocationSelected"
+                        />
+
+                        <template #fallback>
+                            <div
+                                class="w-full h-[400px] rounded-xl border border-gray-200 bg-slate-50 animate-pulse"
                             />
                         </template>
-                    </BaseInput>
+                    </ClientOnly>
 
-                    <p class="mt-2 text-[11px] text-slate-400">
-                        You can use your current location to automatically fill
-                        in the address.
+                    <p v-if="errors?.address" class="mt-2 text-xs text-danger">
+                        {{ errors.address }}
                     </p>
                 </div>
             </div>
@@ -461,7 +462,7 @@ import { computed, ref, watch } from "vue";
 import { Check, Stethoscope } from "lucide-vue-next";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
-import LocationIcon from "~/components/icons/location.vue";
+import LocationSelector from "~/components/ui/LocationSelector.vue";
 import ServiceModal from "~/components/sections/booking/provider/ServiceModal.vue";
 import { formatHour, getLocalDateStr } from "~/utils/time";
 import type { HomecareBooking } from "~/types/booking";
@@ -532,14 +533,34 @@ const selectedServicesTotal = computed(() => {
     return selectedService.value ? Number(selectedService.value.price) : 0;
 });
 
-const handleLocation = (data: any) => {
+/**
+ * The picker hands back a resolved label plus coordinates. All three land on
+ * the model in one emit so a partial address/coordinate pair can never be
+ * submitted.
+ */
+const handleLocationSelected = (location: {
+    lat: number;
+    lng: number;
+    label: string;
+    street: string;
+    city: string;
+    province: string;
+    country: string;
+}) => {
     const address =
-        data.address ??
-        [data.street, data.city, data.province, data.country]
+        location.label ||
+        [location.street, location.city, location.province, location.country]
             .filter(Boolean)
             .join(", ");
 
-    update("address", address);
+    emit("update:model", {
+        ...props.model,
+        address,
+        latitude: location.lat,
+        longitude: location.lng,
+    });
+
+    clearError("address");
 };
 
 const adlTotal = computed(() => {

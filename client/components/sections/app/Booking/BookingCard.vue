@@ -31,11 +31,7 @@
                         }}
                     </p>
                     <p class="text-xs text-muted truncate">
-                        {{
-                            booking.homecare?.address ||
-                            booking.patient?.address ||
-                            ""
-                        }}
+                        {{ serviceAddress }}
                     </p>
                 </div>
             </div>
@@ -143,6 +139,20 @@ const emit = defineEmits<{
     (e: "confirm", booking: any): void;
     (e: "view-details", booking: any): void;
 }>();
+
+// Facility care happens at the branch, so it has no visit address — falling
+// back to the patient's home address there would be misleading.
+const serviceAddress = computed(() => {
+    if (String(props.booking?.category ?? "").toLowerCase() === "facility") {
+        return "On-site";
+    }
+
+    return (
+        (props.booking as any)?.homecare?.address ||
+        (props.booking as any)?.patient?.address ||
+        ""
+    );
+});
 
 const route = useRoute();
 const router = useRouter();

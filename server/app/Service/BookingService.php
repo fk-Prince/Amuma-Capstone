@@ -13,7 +13,6 @@ use App\Service\External\XenditService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class BookingService
 {
