@@ -611,8 +611,15 @@ const validateBranch = async (): Promise<boolean> => {
 };
 
 const isLoading = ref(false);
+
 const send = async () => {
-    console.log(checkout.settings);
+    if (isLoading.value) return;
+
+    // The button's spinner and disabled state both hang off this; it was only
+    // ever reset in the finally block, never raised, so validation ran with no
+    // feedback and the button stayed clickable.
+    isLoading.value = true;
+
     try {
         const payload: SubscriptionRequest = {
             plan_code: checkout.selectedPlan.plan_code,

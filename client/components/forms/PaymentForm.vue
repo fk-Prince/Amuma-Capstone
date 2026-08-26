@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { Wallet, Banknote, ShieldCheck, Check } from "lucide-vue-next";
+import {
+    Wallet,
+    Banknote,
+    ShieldCheck,
+    Check,
+    LoaderCircle,
+} from "lucide-vue-next";
 import { computed, reactive, ref, watch } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { paymentSchema } from "~/types/payment";
@@ -501,8 +507,13 @@ watch(isCash, (active) => {
                 <button
                     type="submit"
                     :disabled="processing"
-                    class="flex w-full items-center justify-center rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
                 >
+                    <LoaderCircle
+                        v-if="processing"
+                        class="h-4 w-4 animate-spin"
+                    />
+
                     {{ processing ? processingLabel : submitLabel }}
                 </button>
 
@@ -560,8 +571,13 @@ watch(isCash, (active) => {
                     type="button"
                     @click="onGCashPay"
                     :disabled="processing"
-                    class="flex w-full items-center justify-center rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
+                    <LoaderCircle
+                        v-if="processing"
+                        class="h-4 w-4 animate-spin"
+                    />
+
                     {{ processing ? gcashProcessingLabel : gcashLabel }}
                 </button>
 
@@ -652,8 +668,13 @@ watch(isCash, (active) => {
                     type="button"
                     @click="handleCashPay"
                     :disabled="processing || !cashReceivedAmount"
-                    class="flex w-full items-center justify-center rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
+                    <LoaderCircle
+                        v-if="processing"
+                        class="h-4 w-4 animate-spin"
+                    />
+
                     {{ processing ? cashProcessingLabel : cashLabel }}
                 </button>
             </div>

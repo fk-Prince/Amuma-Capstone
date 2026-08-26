@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class SubscriptionRequest extends FormRequest
 {
@@ -34,7 +35,19 @@ class SubscriptionRequest extends FormRequest
             'agency_city'        => ['nullable', 'string', 'required_with:agency_name'],
             'agency_province'    => ['nullable', 'string', 'required_with:agency_name'],
             'agency_country'     => ['nullable', 'string', 'required_with:agency_name'],
-            'agency_email'       => ['nullable', 'string', 'required_with:agency_name', 'unique:agencies,email'],
+            // Unique only for a *new* agency. When agency_id is supplied the
+            // subscriber already has an agency (adding another branch, or any
+            // subsequent subscription), and its own email must not count as a
+            // collision — that surfaced as "the agency email has already been
+            // taken" straight after a subscription succeeded.
+            // ignore(null) is a no-op, so new agencies stay fully unique.
+            'agency_email'       => [
+                'nullable',
+                'string',
+                'required_with:agency_name',
+                Rule::unique('agencies', 'email')
+                    ->ignore($this->input('agency_id'), 'agency_id'),
+            ],
             'agency_image'       => ['nullable', 'file', 'image', 'max:5120'],
             'agency_id_front'    => ['nullable', 'file', 'image', 'max:5120', 'required_with:agency_name'],
             'agency_id_back'     => ['nullable', 'file', 'image', 'max:5120', 'required_with:agency_name'],

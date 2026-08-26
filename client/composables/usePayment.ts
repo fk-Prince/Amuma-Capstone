@@ -205,6 +205,41 @@ export async function cardPayment({
     };
 
     return new Promise((resolve, reject) => {
+        /**
+         * These guards live at the promise scope on purpose. Xendit.js invokes
+         * its callbacks more than once when `should_authenticate` is set — once
+         * for the initial IN_REVIEW and again once 3DS resolves — so anything
+         * declared inside a callback is re-created fresh on each invocation and
+         * cannot prevent a second submission. That is what produced a success
+         * toast immediately followed by "the agency email has already been
+         * taken": the payment was created twice, and the webhook had already
+         * created the agency from the first one.
+         */
+        let paymentStarted = false;
+        let settled = false;
+
+        /**
+         * Also promise-scoped. Xendit re-invokes the callback below with the
+         * post-3DS status, and that invocation needs to close the modal that
+         * the *first* invocation opened. Declared per-callback it was always
+         * null there, so the modal was left on screen forever.
+         */
+        let popupClose: (() => void) | null = null;
+
+        const settleResolve = (value: any) => {
+            if (settled) return;
+
+            settled = true;
+            resolve(value);
+        };
+
+        const settleReject = (reason: any) => {
+            if (settled) return;
+
+            settled = true;
+            reject(reason);
+        };
+
         window.Xendit.card.createToken(
             {
                 ...cardData,
@@ -214,7 +249,7 @@ export async function cardPayment({
 
             (err: any, token: any) => {
                 if (err) {
-                    reject(err);
+                    settleReject(err);
                     return;
                 }
 
@@ -226,13 +261,23 @@ export async function cardPayment({
 
                     async (err: any, auth: any) => {
                         if (err) {
-                            reject(err);
+                            settleReject(err);
                             return;
                         }
 
-                        let popupClose: (() => void) | null = null;
+                        // A later invocation must not start a second payment
+                        // or open a second 3DS modal. It may still arrive
+                        // after the 3DS message path already submitted, in
+                        // which case that path owns the teardown.
+                        if (paymentStarted || settled) return;
 
+                        // Single choke point: whichever branch gets here
+                        // first (3DS completion or an already-VERIFIED auth)
+                        // marks the payment as started, so the other can
+                        // never submit a second time.
                         const executePayment = async () => {
+                            paymentStarted = true;
+
                             return await createPayment({
                                 token_id: token.id,
                                 authentication_id: auth.id,
@@ -246,7 +291,7 @@ export async function cardPayment({
                                 await onSuccess(result);
                             }
 
-                            resolve(result);
+                            settleResolve(result);
                         };
 
                         try {
@@ -256,6 +301,7 @@ export async function cardPayment({
                             ) {
                                 const {
                                     close,
+                                    setProcessing,
                                     onComplete,
                                     onClose: on3DSClose,
                                 } = handle3DS(
@@ -266,11 +312,13 @@ export async function cardPayment({
                                 popupClose = close;
 
                                 on3DSClose(() => {
-                                    popupClose?.();
+                                    // The modal has already torn itself down
+                                    // by the time this fires.
+                                    on3DSProcessingChange?.(false);
 
                                     onClose?.();
 
-                                    reject(
+                                    settleReject(
                                         new Error(
                                             "Payment Cancelled.",
                                         ),
@@ -278,16 +326,34 @@ export async function cardPayment({
                                 });
 
                                 onComplete(async () => {
+                                    // Ignored silently rather than rejected:
+                                    // the first submission is already in
+                                    // flight, and surfacing this as an error
+                                    // is exactly the stray toast we're
+                                    // avoiding.
+                                    if (paymentStarted) return;
+
+                                    paymentStarted = true;
+
                                     try {
                                         on3DSProcessingChange?.(true);
 
                                         const result = await executePayment();
 
+                                        // finish() closes the modal, so it
+                                        // only stays up while the payment is
+                                        // genuinely in flight.
                                         await finish(result);
                                     } catch (error) {
+                                        // Clear the busy state first so the
+                                        // modal is closable even if teardown
+                                        // is somehow skipped.
+                                        setProcessing(false);
                                         on3DSProcessingChange?.(false);
+
                                         popupClose?.();
-                                        reject(error);
+
+                                        settleReject(error);
                                     }
                                 });
                                 return;
@@ -302,14 +368,14 @@ export async function cardPayment({
                                 return;
                             }
 
-                            reject(
+                            settleReject(
                                 new Error(
                                     `Unhandled auth status: ${auth.status}`,
                                 ),
                             );
                         } catch (error) {
                             popupClose?.();
-                            reject(error);
+                            settleReject(error);
                         }
                     },
                 );
@@ -336,6 +402,24 @@ export async function gcashPayment({
     }
 
     return new Promise((resolve, reject) => {
+        // Same reasoning as cardPayment: the redirect page can report
+        // completion more than once, so settle exactly once.
+        let settled = false;
+
+        const settleResolve = (value: any) => {
+            if (settled) return;
+
+            settled = true;
+            resolve(value);
+        };
+
+        const settleReject = (reason: any) => {
+            if (settled) return;
+
+            settled = true;
+            reject(reason);
+        };
+
         const {
             close,
             onComplete,
@@ -357,14 +441,14 @@ export async function gcashPayment({
                 await onSuccess(result);
             }
 
-            resolve(result);
+            settleResolve(result);
         };
 
 
         on3DSClose(() => {
             close();
             onClose?.();
-            // reject(
+            // settleReject(
             //     new Error("Payment Cancelled."),
             // );
         });
@@ -375,7 +459,7 @@ export async function gcashPayment({
                 await finish(res);
             } catch (error) {
                 close();
-                reject(error);
+                settleReject(error);
             }
         });
     });
