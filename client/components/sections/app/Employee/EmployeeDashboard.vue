@@ -30,7 +30,7 @@
                         <span
                             class="px-2.5 py-1 rounded-full bg-primary-50 text-primary text-xs font-semibold"
                         >
-                            {{ props.totalEmployee ?? 0 }}/160
+                            Staff
                         </span>
                     </div>
 
@@ -46,25 +46,11 @@
                         {{ props.totalEmployee ?? 0 }}
                     </p>
 
-                    <div class="mt-4">
-                        <div
-                            class="h-2 rounded-full bg-slate-100 overflow-hidden"
-                        >
-                            <div
-                                class="h-full rounded-full bg-gradient-to-r from-primary to-primary-400 transition-all duration-700"
-                                :style="{
-                                    width: `${Math.min(((props.totalEmployee ?? 0) / 160) * 100, 100)}%`,
-                                }"
-                            />
-                        </div>
-
-                        <div class="mt-2 flex justify-between text-xs">
-                            <span class="text-slate-400"> Capacity </span>
-
-                            <span class="font-medium text-slate-600">
-                                {{ 160 - (props.totalEmployee ?? 0) }} open
-                            </span>
-                        </div>
+                    <div
+                        class="mt-3 flex items-center gap-2 text-xs text-slate-500"
+                    >
+                        <span class="h-1.5 w-1.5 rounded-full bg-primary" />
+                        Assigned to this branch
                     </div>
                 </div>
             </div>
@@ -168,9 +154,7 @@
                         {{ props.onLeave ?? 0 }}
                     </p>
 
-                    <p class="mt-3 text-xs text-rose-500">
-                        Current leave requests
-                    </p>
+                    <p class="mt-3 text-xs text-rose-500">Current on leave</p>
                 </div>
             </div>
         </div>

@@ -173,42 +173,53 @@ const placeMarker = (lat: number, lng: number): void => {
     }
 };
 
-const useMyLocation = (): void => {
+/**
+ * Wraps geolocation in a promise. The success handler is just `resolve`, so
+ * nothing from this component's scope is referenced inside the callback —
+ * location-spoofing browser extensions re-evaluate that callback in their own
+ * scope, which breaks any closure it depends on.
+ */
+const currentPosition = (): Promise<GeolocationPosition> =>
+    new Promise((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+        }),
+    );
+
+const useMyLocation = async (): Promise<void> => {
     if (!navigator.geolocation) {
         alert("Geolocation is not supported.");
         return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-        async ({ coords: { latitude, longitude } }) => {
-            map?.setView([latitude, longitude], 16);
+    try {
+        const {
+            coords: { latitude, longitude },
+        } = await currentPosition();
 
-            placeMarker(latitude, longitude);
-            await handleLocation(latitude, longitude);
+        map?.setView([latitude, longitude], 16);
 
-            const L = (window as any).L;
+        placeMarker(latitude, longitude);
+        await handleLocation(latitude, longitude);
 
-            if (userMarker) userMarker.remove();
+        const L = (window as any).L;
 
-            userMarker = L.circleMarker([latitude, longitude], {
-                radius: 8,
-                fillColor: "#3b82f6",
-                color: "#fff",
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.9,
-            })
-                .addTo(map!)
-                .bindPopup("<b>You are here</b>")
-                .openPopup();
-        },
-        (error) => {
-            console.warn("Location denied:", error.message);
-        },
-        {
-            enableHighAccuracy: true,
-        },
-    );
+        if (userMarker) userMarker.remove();
+
+        userMarker = L.circleMarker([latitude, longitude], {
+            radius: 8,
+            fillColor: "#3b82f6",
+            color: "#fff",
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.9,
+        })
+            .addTo(map!)
+            .bindPopup("<b>You are here</b>")
+            .openPopup();
+    } catch (error: any) {
+        console.warn("Location unavailable:", error?.message ?? error);
+    }
 };
 
 const clearSelection = (): void => {

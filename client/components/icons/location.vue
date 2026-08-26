@@ -281,7 +281,23 @@ async function reverseGeocode(
     }
 }
 
-function handleClick() {
+/**
+ * Wraps geolocation in a promise. The success handler is just `resolve`, so
+ * nothing from the component's scope is referenced inside the callback —
+ * location-spoofing browser extensions re-evaluate that callback in their own
+ * scope, which breaks any closure it depends on.
+ */
+function currentPosition(): Promise<GeolocationPosition> {
+    return new Promise((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+        }),
+    );
+}
+
+async function handleClick() {
     if (!props.clickable || loading.value) return;
 
     if (!navigator.geolocation) {
@@ -291,34 +307,28 @@ function handleClick() {
 
     setLoading(true);
 
-    navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
+    try {
+        // Runs in the component's own scope rather than inside the callback.
+        const pos = await currentPosition();
 
-            const address = await reverseGeocode(lat, lng);
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
 
-            emit("get-location", {
-                lat,
-                lng,
-                street: address.street,
-                city: address.city,
-                country: address.country,
-                label: address.label,
-            });
+        const address = await reverseGeocode(lat, lng);
 
-            setLoading(false);
-        },
-        (err) => {
-            console.error("Geo error:", err);
-            alert("Unable to get location");
-            setLoading(false);
-        },
-        {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0,
-        },
-    );
+        emit("get-location", {
+            lat,
+            lng,
+            street: address.street,
+            city: address.city,
+            country: address.country,
+            label: address.label,
+        });
+    } catch (err) {
+        console.error("Geo error:", err);
+        alert("Unable to get location");
+    } finally {
+        setLoading(false);
+    }
 }
 </script>
