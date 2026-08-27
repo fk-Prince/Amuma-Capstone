@@ -15,13 +15,9 @@ use Illuminate\Support\Str;
 class CardPayment implements ISubscriptionPayment, IFacilityPayment
 {
     private string $secretKey;
-    private SubscriptionService $subscriptionService;
-    // private BookingService $bookingService; BookingService $bookingService
-    public function __construct(SubscriptionService $subscriptionService,)
+    public function __construct(private SubscriptionService $subscriptionService,)
     {
         $this->secretKey = config('services.xendit.secret_key');
-        $this->subscriptionService = $subscriptionService;
-        // $this->bookingService = $bookingService;
     }
 
     public function subscriptionInvoice(array $payload, array $subscription)

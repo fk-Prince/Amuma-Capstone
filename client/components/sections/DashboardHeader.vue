@@ -195,7 +195,7 @@
                 >
                     <div
                         v-if="branchStore.showModal"
-                        class="bg-white rounded-2xl shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 w-full max-w-md overflow-hidden"
+                        class="bg-white rounded-2xl shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 w-full max-w-4xl overflow-hidden"
                         role="dialog"
                         aria-modal="true"
                         aria-label="Select a branch"
@@ -254,12 +254,12 @@
 
                         <div
                             v-if="branchStore.branches?.length"
-                            class="max-h-[26rem] overflow-y-auto p-2.5 space-y-1.5 branch-scroll"
+                            class="max-h-[30rem] overflow-y-auto p-3 grid gap-2.5 sm:grid-cols-2 branch-scroll"
                         >
                             <button
                                 v-for="branch in branchStore.branches"
                                 :key="branch.uuid"
-                                class="group w-full flex items-center gap-3 p-2.5 rounded-xl text-left border transition-all duration-200"
+                                class="group w-full flex flex-col gap-3 p-3.5 rounded-xl text-left border transition-all duration-200"
                                 :class="
                                     branch.uuid ===
                                     branchStore.activeBranch?.uuid
@@ -268,6 +268,7 @@
                                 "
                                 @click="branchStore.selectBranch(branch)"
                             >
+                                <div class="flex w-full items-center gap-3">
                                 <div
                                     class="relative w-11 h-11 rounded-xl overflow-hidden bg-primary-50 flex items-center justify-center shrink-0 ring-2 ring-primary-100 transition-transform duration-200 group-hover:scale-[1.03]"
                                 >
@@ -304,9 +305,16 @@
                                         class="flex items-center justify-between gap-2"
                                     >
                                         <p
-                                            class="text-[14px] font-semibold text-primary-900 truncate"
+                                            class="flex min-w-0 items-center gap-1 text-[14px] font-semibold text-primary-900"
                                         >
-                                            {{ branch.name }}
+                                            <span class="truncate">
+                                                {{ branch.name }}
+                                            </span>
+
+                                            <BadgeCheck
+                                                v-if="branch.is_verified"
+                                                class="w-3.5 h-3.5 shrink-0 text-emerald-500"
+                                            />
                                         </p>
 
                                         <span
@@ -378,6 +386,78 @@
                                 >
                                     <polyline points="9 18 15 12 9 6" />
                                 </svg>
+                                </div>
+
+                                <div
+                                    class="w-full grid grid-cols-2 gap-x-3 gap-y-1 border-t border-primary-100/70 pt-2.5 text-[11px] text-muted"
+                                >
+                                    <span
+                                        v-if="branch.contact_number"
+                                        class="flex items-center gap-1.5 truncate"
+                                    >
+                                        <Phone
+                                            class="w-3 h-3 shrink-0 text-primary-300"
+                                        />
+                                        <span class="truncate">
+                                            {{ branch.contact_number }}
+                                        </span>
+                                    </span>
+
+                                    <span
+                                        v-if="branch.email"
+                                        class="flex items-center gap-1.5 truncate"
+                                    >
+                                        <Mail
+                                            class="w-3 h-3 shrink-0 text-primary-300"
+                                        />
+                                        <span class="truncate">
+                                            {{ branch.email }}
+                                        </span>
+                                    </span>
+                                </div>
+
+                                <div
+                                    v-if="branch.agency?.name"
+                                    class="w-full flex items-center gap-2 rounded-lg bg-primary-50/60 px-2.5 py-2"
+                                >
+                                    <div
+                                        class="w-7 h-7 shrink-0 overflow-hidden rounded-md bg-white ring-1 ring-primary-100 flex items-center justify-center"
+                                    >
+                                        <img
+                                            v-if="branch.agency.image"
+                                            :src="
+                                                getBranchImage(
+                                                    branch.agency.image,
+                                                )
+                                            "
+                                            class="w-full h-full object-cover"
+                                        />
+
+                                        <Building2
+                                            v-else
+                                            class="w-3.5 h-3.5 text-primary-400"
+                                        />
+                                    </div>
+
+                                    <div class="min-w-0 flex-1">
+                                        <p
+                                            class="text-[9px] font-semibold uppercase tracking-wide text-primary-400"
+                                        >
+                                            Agency
+                                        </p>
+
+                                        <p
+                                            class="truncate text-[12px] font-medium text-primary-900"
+                                        >
+                                            {{ branch.agency.name }}
+                                        </p>
+                                    </div>
+
+                                    <BadgeCheck
+                                        v-if="branch.agency.is_verified"
+                                        class="w-4 h-4 shrink-0 text-emerald-500"
+                                    />
+                                </div>
                             </button>
                         </div>
 
@@ -422,6 +502,7 @@ import { computed, onMounted, ref } from "vue";
 import Notification from "../ui/Notification.vue";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
 import Location from "../icons/location.vue";
+import { BadgeCheck, Building2, Mail, Phone } from "lucide-vue-next";
 
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";

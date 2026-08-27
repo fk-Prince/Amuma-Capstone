@@ -9,14 +9,8 @@ use App\Repository\BranchRepository;
 
 class CategoryService
 {
-    private CategoryRepository $categoryRepository;
-    private BranchRepository $branchRepository;
 
-    public function __construct(CategoryRepository $categoryRepository, BranchRepository $branchRepository)
-    {
-        $this->categoryRepository = $categoryRepository;
-        $this->branchRepository = $branchRepository;
-    }
+    public function __construct(private CategoryRepository $categoryRepository) {}
 
 
     public function listCategory(User $actor, array $payload)

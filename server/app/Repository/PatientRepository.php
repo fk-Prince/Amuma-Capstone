@@ -44,6 +44,12 @@ class PatientRepository
             ])
                 ->where('branch_id', $payload['branch_id'])
                 ->whereHas('latestAdmission')
+                ->when(!empty($payload['assigned_employee_id']), function ($query) use ($payload) {
+                    $query->whereHas('schedules.scheduleServices.assigned', function ($q) use ($payload) {
+                        $q->where('employee_id', $payload['assigned_employee_id'])
+                            ->where('is_active', true);
+                    });
+                })
                 ->when(!empty($payload['search']), function ($query) use ($payload) {
                     $search = $payload['search'];
 
@@ -77,6 +83,12 @@ class PatientRepository
             'schedules.scheduleServices.service',
         ])
             ->where('branch_id', $payload['branch_id'])
+            ->when(!empty($payload['assigned_employee_id']), function ($query) use ($payload) {
+                $query->whereHas('schedules.scheduleServices.assigned', function ($q) use ($payload) {
+                    $q->where('employee_id', $payload['assigned_employee_id'])
+                        ->where('is_active', true);
+                });
+            })
             ->when(!empty($payload['search']), function ($query) use ($payload) {
                 $search = $payload['search'];
 
@@ -159,7 +171,8 @@ class PatientRepository
         }
 
         return Patient::with([
-            'branch',
+            'branch.location',
+            'branch.agencies',
             'location',
 
             'admissions.bed.room',

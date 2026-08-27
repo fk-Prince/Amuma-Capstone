@@ -9,12 +9,7 @@ use App\Models\ScheduleService;
 
 class PortalHelper
 {
-    /**
-     * Mirrors BookingResource's shape (client/types/booking.ts's
-     * BookingRetrieve) so the portal can reuse the exact same
-     * PatientDetails.vue / GuardianAssessmentDetails.vue components the
-     * admin booking detail view already uses.
-     */
+
     public function bookingPayload(Booking $booking): array
     {
         $data = is_string($booking->booking_data)
@@ -66,10 +61,7 @@ class PortalHelper
             'assessment' => $data['assessment'] ?? null,
             'reserved' => $data['reserved'] ?? null,
 
-            // Only surfaced when a payment attempt was actually recorded —
-            // every booking gets a `payment` key at creation time (see
-            // BookingService::createBooking), but most are empty
-            // placeholders until the client actually pays.
+
             'payment' => !empty($payment['payment_status']) ? $payment : null,
 
             'created_at' => $booking->created_at?->format('Y-m-d H:i:s'),

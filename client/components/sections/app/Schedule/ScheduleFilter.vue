@@ -32,9 +32,7 @@
                             </span>
                         </span>
 
-                        <span
-                            class="mt-0.5 block truncate text-xs text-muted"
-                        >
+                        <span class="mt-0.5 block truncate text-xs text-muted">
                             Refine appointments by date, status or service type
                         </span>
                     </span>
@@ -77,9 +75,6 @@
                 </div>
             </div>
 
-            <!-- Search stays out of the collapsible panel: it is the control
-                 people reach for most, and hiding it behind a toggle made
-                 every lookup a two-step. -->
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div class="relative min-w-0 flex-1">
                     <Search
@@ -116,7 +111,6 @@
                 </button>
             </div>
 
-            <!-- What is applied, readable without opening the panel. -->
             <div
                 v-if="!expanded && summaryChips.length"
                 class="flex flex-wrap items-center gap-1.5"
@@ -175,55 +169,83 @@
                         </div>
                     </div>
 
-                    <div>
-                        <p
-                            class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted"
-                        >
-                            <CircleDot class="h-3.5 w-3.5" />
-                            Status
-                        </p>
-
-                        <div class="flex flex-wrap gap-2">
-                            <button
-                                v-for="status in statusOptions"
-                                :key="status.value"
-                                type="button"
-                                class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
-                                :class="
-                                    isStatusActive(status.value)
-                                        ? 'border-primary bg-primary text-white'
-                                        : 'border-muted-light bg-white text-muted hover:border-primary/40 hover:text-primary-600'
-                                "
-                                @click="toggleStatus(status.value)"
+                    <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                        <div>
+                            <p
+                                class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted"
                             >
-                                {{ status.label }}
-                            </button>
+                                <CircleDot class="h-3.5 w-3.5" />
+                                Status
+                            </p>
+
+                            <div class="flex flex-wrap gap-2">
+                                <button
+                                    v-for="status in statusOptions"
+                                    :key="status.value"
+                                    type="button"
+                                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                                    :class="
+                                        isStatusActive(status.value)
+                                            ? 'border-primary bg-primary text-white'
+                                            : 'border-muted-light bg-white text-muted hover:border-primary/40 hover:text-primary-600'
+                                    "
+                                    @click="toggleStatus(status.value)"
+                                >
+                                    {{ status.label }}
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    <div>
-                        <p
-                            class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted"
-                        >
-                            <Layers class="h-3.5 w-3.5" />
-                            Service type
-                        </p>
-
-                        <div class="flex flex-wrap gap-2">
-                            <button
-                                v-for="type in typeOptions"
-                                :key="type.value"
-                                type="button"
-                                class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
-                                :class="
-                                    filters.type.includes(type.value)
-                                        ? 'border-primary bg-primary text-white'
-                                        : 'border-muted-light bg-white text-muted hover:border-primary/40 hover:text-primary-600'
-                                "
-                                @click="toggleType(type.value)"
+                        <div>
+                            <p
+                                class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted"
                             >
-                                {{ type.label }}
-                            </button>
+                                <Layers class="h-3.5 w-3.5" />
+                                Service type
+                            </p>
+
+                            <div class="flex flex-wrap gap-2">
+                                <button
+                                    v-for="type in typeOptions"
+                                    :key="type.value"
+                                    type="button"
+                                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                                    :class="
+                                        filters.type.includes(type.value)
+                                            ? 'border-primary bg-primary text-white'
+                                            : 'border-muted-light bg-white text-muted hover:border-primary/40 hover:text-primary-600'
+                                    "
+                                    @click="toggleType(type.value)"
+                                >
+                                    {{ type.label }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p
+                                class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted"
+                            >
+                                <UserCheck class="h-3.5 w-3.5" />
+                                Caseload
+                            </p>
+
+                            <div class="flex flex-wrap gap-2">
+                                <button
+                                    v-for="option in caseloadOptions"
+                                    :key="option.value"
+                                    type="button"
+                                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                                    :class="
+                                        filters.assignment === option.value
+                                            ? 'border-primary bg-primary text-white'
+                                            : 'border-muted-light bg-white text-muted hover:border-primary/40 hover:text-primary-600'
+                                    "
+                                    @click="setAssignment(option.value)"
+                                >
+                                    {{ option.label }}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -240,6 +262,7 @@ import {
     CalendarDays,
     ChevronDown,
     CircleDot,
+    UserCheck,
     Layers,
     X,
     LayoutGrid,
@@ -256,6 +279,7 @@ export interface ScheduleFilters {
     date_to: string;
     statuses: string[];
     type: string[];
+    assignment: string;
     view: ScheduleView;
 }
 
@@ -317,6 +341,8 @@ function filtersFromQuery(): ScheduleFilters {
             ? toArray(route.query.type)
             : [DEFAULT_TYPE],
 
+        assignment: toStr(route.query.assignment) || "all",
+
         view: (toStr(route.query.view) as ScheduleView) || "card",
     };
 }
@@ -361,6 +387,11 @@ const statusOptions = [
     { label: "Missed", value: "missed" },
 ];
 
+const caseloadOptions = [
+    { label: "All Schedules", value: "all" },
+    { label: "Assigned to me", value: "mine" },
+];
+
 const typeOptions = [
     { label: "Medical Services", value: "medical" },
     { label: "Activities of Daily Living (ADL)", value: "adl" },
@@ -374,17 +405,13 @@ const isDefaultType = computed(
     () => filters.type.length === 1 && filters.type[0] === DEFAULT_TYPE,
 );
 
-/**
- * Only counts what the user actually changed. Counting `type` unconditionally
- * meant the badge never dropped below 1, since the filter always carries a
- * type and defaults to Medical.
- */
 const activeFilterCount = computed(() => {
     let count = 0;
 
     if (filters.search) count++;
     if (!isDefaultDateRange.value) count++;
     if (!isDefaultType.value) count++;
+    if (filters.assignment !== "all") count++;
 
     count += filters.statuses.length;
 
@@ -472,6 +499,11 @@ const toggleType = (value: string) => {
     emitChange(true);
 };
 
+const setAssignment = (value: string) => {
+    filters.assignment = value;
+    emitChange(true);
+};
+
 const onSearchInput = (event: Event) => {
     filters.search = (event.target as HTMLInputElement).value;
     emitChange();
@@ -488,6 +520,7 @@ const resetFilters = () => {
     filters.date_to = nextWeek;
     filters.statuses = [];
     filters.type = [DEFAULT_TYPE];
+    filters.assignment = "all";
     emitChange(true);
 };
 
@@ -511,6 +544,10 @@ function syncQuery() {
     setOrDelete("date_to", filters.date_to);
     setOrDelete("statuses", filters.statuses.join(","));
     setOrDelete("type", filters.type.join(","));
+    setOrDelete(
+        "assignment",
+        filters.assignment === "all" ? "" : filters.assignment,
+    );
     setOrDelete("view", filters.view === "card" ? "" : filters.view);
 
     router.replace({ query });

@@ -2,9 +2,11 @@
 
 namespace App\Service;
 
+use App\Http\Resources\PaymentReceiptResource;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\PatientAccess;
+use App\Models\PaymentReceipt;
 use App\Utils\MaskUtil;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +37,7 @@ class PaymentService
             trim((string) $payload['account_details'])
         );
 
-        return DB::transaction(function () use ($access, $amount, $method, $maskedAccountDetails) {
+        return DB::transaction(function () use ($access, $client, $amount, $method, $maskedAccountDetails) {
             $invoiceIds = $access->patient->patient_invoices
                 ->pluck('invoice_id');
 
@@ -61,6 +63,18 @@ class PaymentService
                 );
             }
 
+            $receipt = PaymentReceipt::create([
+                'branch_id'       => $invoices->first()->branch_id,
+                'patient_id'      => $access->patient_id,
+                'client_id'       => $client->client_id,
+                'payor_name'      => trim(
+                    ($client->first_name ?? '') . ' ' . ($client->last_name ?? '')
+                ) ?: null,
+                'amount_tendered' => $amount,
+                'balance_before'  => $totalBalance,
+                'created_at'      => now(),
+            ]);
+
             $remaining = $amount;
             $paidInvoiceIds = [];
 
@@ -69,39 +83,85 @@ class PaymentService
                     break;
                 }
 
-                $balance = $invoice->balance_due;
+                $priorBalance = $invoice->balance_due;
 
-                if ($balance <= 0) {
+                if ($priorBalance <= 0) {
                     continue;
                 }
 
-                $paymentAmount = round(min($remaining, $balance), 2);
+                $paymentAmount = round(min($remaining, $priorBalance), 2);
 
-                $invoice->payments()->create([
+                $payment = $invoice->payments()->create([
+                    'receipt_id' => $receipt->receipt_id,
                     'amount' => $paymentAmount,
                     'payment_method' => $method,
                     'masked_card_number' => $maskedAccountDetails,
+                    'prior_balance' => $priorBalance,
                 ]);
 
                 $remaining = round($remaining - $paymentAmount, 2);
 
                 $invoice->refresh();
 
+                $status = $invoice->balance_due <= 0
+                    ? Invoice::STATUS_PAID
+                    : Invoice::STATUS_PARTIAL;
+
                 $invoice->update([
-                    'status' => $invoice->balance_due <= 0
-                        ? Invoice::STATUS_PAID
-                        : Invoice::STATUS_PARTIAL,
+                    'status' => $status,
+                ]);
+
+                $payment->update([
+                    'new_balance' => $invoice->balance_due,
                 ]);
 
                 $paidInvoiceIds[] = $invoice->invoice_id;
             }
 
+            $applied = round($amount - $remaining, 2);
+
             return [
                 'success' => true,
                 'message' => 'Payment recorded successfully.',
                 'invoice_ids' => $paidInvoiceIds,
-                'remaining_balance' => round($totalBalance - $amount, 2),
+                'remaining_balance' => round($totalBalance - $applied, 2),
+                'receipt' => new PaymentReceiptResource(
+                    $receipt->load([
+                        'payments.invoice',
+                        'branch.location',
+                        'patient',
+                        'client',
+                    ])
+                ),
             ];
         });
+    }
+
+    public function receipt(Client $client, array $payload): PaymentReceiptResource
+    {
+        $receipt = PaymentReceipt::where('receipt_no', $payload['receipt_no'])
+            ->with([
+                'payments.invoice',
+                'branch.location',
+                'patient',
+                'client',
+                'issuer',
+            ])
+            ->first();
+
+        if (!$receipt) {
+            throw new Exception('Receipt not found.', 404);
+        }
+
+        $hasAccess = PatientAccess::where('patient_id', $receipt->patient_id)
+            ->where('client_id', $client->client_id)
+            ->where('have_access', true)
+            ->exists();
+
+        if (!$hasAccess) {
+            throw new Exception('You do not have access to this receipt.', 403);
+        }
+
+        return new PaymentReceiptResource($receipt);
     }
 }

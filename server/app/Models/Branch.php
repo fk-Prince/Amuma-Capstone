@@ -10,8 +10,6 @@ class Branch extends Model
     use HasUuids;
     protected $primaryKey = 'branch_id';
 
-    public const TERMINATION_FEE = 20;
-
     protected $fillable = [
         'agency_id',
         'name',

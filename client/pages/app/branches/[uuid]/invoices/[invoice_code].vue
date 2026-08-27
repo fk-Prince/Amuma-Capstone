@@ -569,6 +569,12 @@
             @cancel="cancelPayment"
             :allow-short-cash="true"
         />
+
+        <PaymentReceipt
+            v-if="activeReceipt"
+            :receipt="activeReceipt"
+            @close="activeReceipt = null"
+        />
     </div>
 </template>
 
@@ -577,8 +583,10 @@ import { ref, reactive, computed, onMounted, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Stethoscope } from "lucide-vue-next";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
+import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
 import { invoiceService } from "~/api/invoice/InvoiceService";
 import type { InvoiceDetail } from "~/types/invoice";
+import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
 import { useToast } from "~/composables/useToast";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 
@@ -604,6 +612,8 @@ const invoice = ref<InvoiceDetail | null>(null);
 const loading = ref(true);
 const errorLabel = ref("");
 const processingPayment = ref(false);
+
+const activeReceipt = ref<PaymentReceiptData | null>(null);
 
 const showPayment = computed(
     () => !!invoice.value && invoice.value.balance_due > 0,
@@ -658,14 +668,16 @@ async function confirmCashPayment() {
 
         paymentChange.value = Number(res.change ?? 0);
 
+        if (res.receipt) {
+            activeReceipt.value = res.receipt;
+        }
+
         showConfirmPayment.value = false;
         pendingCash.value = null;
 
         await fetchInvoice();
     } catch (err: any) {
-        error(
-            err?.response?.data?.message ?? "Payment failed. Please try again.",
-        );
+        error(err?.message ?? "Payment failed. Please try again.");
     } finally {
         processingPayment.value = false;
     }
@@ -793,7 +805,7 @@ const SectionHeader = (_props: unknown, { slots }: any) =>
     }
 
     @page {
-        size: A4 portrait;
+        size: A4 landscape;
         margin: 10mm;
     }
 }

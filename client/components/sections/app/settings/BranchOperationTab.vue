@@ -10,6 +10,14 @@
             </p>
         </div>
 
+        <div class="border-b border-slate-200 pb-2">
+            <h3 class="text-sm font-semibold text-slate-800">Facility</h3>
+
+            <p class="text-xs text-slate-400 mt-0.5">
+                In-house admission, rooms and resident billing.
+            </p>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white p-1">
                 <BaseInput
@@ -28,16 +36,22 @@
 
             <div class="bg-white p-1">
                 <BaseInput
-                    v-model="setting.minimum_adl_hours"
-                    label="Minimum Homecare Hours"
+                    v-model="setting.termination_fee_percent"
+                    label="Early Discharge Termination Fee (%)"
                     mode="number"
-                    placeholder="Example: 4"
-                    :error="errors.minimum_adl_hours"
-                    @update:modelValue="clearError('minimum_adl_hours')"
+                    placeholder="Example: 0"
+                    :error="errors.termination_fee_percent"
+                    @update:modelValue="clearError('termination_fee_percent')"
                 />
+
+                <p class="text-xs text-slate-400 mt-2">
+                    Percentage kept from what a resident already paid when they
+                    are discharged within 7 days of admission. The rest is
+                    refunded. Leave at 0% to always refund in full.
+                </p>
             </div>
 
-            <div class="bg-white p-1">
+            <div class="bg-white p-1 md:col-span-2">
                 <div class="flex gap-5 items-start">
                     <label class="flex items-start gap-3">
                         <input
@@ -97,7 +111,42 @@
                     Day of the month when payment is due.
                 </p>
             </div> -->
+        </div>
 
+        <div class="border-b border-slate-200 pb-2">
+            <h3 class="text-sm font-semibold text-slate-800">Homecare</h3>
+
+            <p class="text-xs text-slate-400 mt-0.5">
+                Visits delivered at the client's own address.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-1">
+                <BaseInput
+                    v-model="setting.minimum_adl_hours"
+                    label="Minimum Homecare Hours"
+                    mode="number"
+                    placeholder="Example: 4"
+                    :error="errors.minimum_adl_hours"
+                    @update:modelValue="clearError('minimum_adl_hours')"
+                />
+
+                <p class="text-xs text-slate-400 mt-2">
+                    Shortest booking a client may request for a homecare visit.
+                </p>
+            </div>
+        </div>
+
+        <div class="border-b border-slate-200 pb-2">
+            <h3 class="text-sm font-semibold text-slate-800">General</h3>
+
+            <p class="text-xs text-slate-400 mt-0.5">
+                Applies to the whole branch, both facility and homecare.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white p-1">
                 <div class="flex items-center justify-between">
                     <div>
@@ -245,6 +294,8 @@ const setting = reactive<OperationSetting>({
     enable_booking_complete_admission:
         activeBranch.value?.settings?.enable_booking_complete_admission ?? true,
     minimum_adl_hours: activeBranch.value?.settings?.minimum_adl_hours ?? 8,
+    termination_fee_percent:
+        activeBranch.value?.settings?.termination_fee_percent ?? 0,
     // billing_due_date: activeBranch.value?.settings?.billing_due_date ?? 31,
     is_open: activeBranch.value?.settings?.is_open ?? false,
     time_zone: activeBranch.value?.settings?.time_zone ?? "",

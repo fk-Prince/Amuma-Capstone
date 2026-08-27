@@ -1,5 +1,7 @@
 <template>
-    <div class="min-h-screen-header w-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
+    <div
+        class="min-h-screen-header w-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8"
+    >
         <div class="mx-auto max-w-[1600px] space-y-5">
             <div
                 class="flex flex-wrap items-center justify-between gap-3 no-print"
@@ -103,7 +105,7 @@
 
             <template v-else-if="summary">
                 <div
-                    class="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]"
+                    class="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_500px]"
                 >
                     <main class="min-w-0 space-y-5">
                         <section
@@ -1176,6 +1178,12 @@
                 </div>
             </div>
         </Teleport>
+
+        <PaymentReceipt
+            v-if="activeReceipt"
+            :receipt="activeReceipt"
+            @close="activeReceipt = null"
+        />
     </div>
 </template>
 
@@ -1187,10 +1195,12 @@ import { invoiceService } from "~/api/invoice/InvoiceService";
 import PatientAdmissions from "~/components/sections/app/Billing/PatientAdmissions.vue";
 import PatientServices from "~/components/sections/app/Billing/PatientServices.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
+import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
 import { useToast } from "~/composables/useToast";
 import { calculateAge } from "~/utils/user";
 
 import type { PatientAdmission, PatientInvoiceSummary } from "~/types/invoice";
+import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
 
 definePageMeta({
     layout: "dashboard",
@@ -1216,6 +1226,8 @@ const errors = ref("");
 
 const processingPayment = ref(false);
 const processingRefund = ref(false);
+
+const activeReceipt = ref<PaymentReceiptData | null>(null);
 
 const activeTab = ref<"overview" | "admissions" | "services">("overview");
 
@@ -1374,10 +1386,17 @@ async function handleCashPay(cash: number) {
 
         success(response.message);
 
+        if (response.receipt) {
+            activeReceipt.value = response.receipt;
+        }
+
         await fetchSummary();
-    } catch (err) {
+    } catch (err: any) {
         console.error(err);
-        errors.value = "Payment failed. Please try again.";
+
+        // Toast rather than `errors`, which swaps the whole page into its
+        // load-failure state over a payment that merely got rejected.
+        error(err?.message ?? "Payment failed. Please try again.");
     } finally {
         processingPayment.value = false;
     }
@@ -1658,7 +1677,7 @@ EmptyState.props = ["title", "description"];
     }
 
     @page {
-        size: A4 portrait;
+        size: A4 landscape;
         margin: 10mm;
     }
 }

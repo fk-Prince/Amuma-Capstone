@@ -24,6 +24,10 @@ class PaymentService extends BaseService {
         return await this.request(this.resource + '/action', 'POST', payload);
     }
 
+    async receipt(payload: { receipt_no: string }): Promise<any> {
+        return await this.request(this.resource + '/receipt', 'POST', payload);
+    }
+
     private get resource(): string {
         const backend = this.getBackendApi;
         return `${backend}/api/payments`;

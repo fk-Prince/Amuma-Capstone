@@ -154,6 +154,38 @@
                                 <p
                                     class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
                                 >
+                                    <UserCheck
+                                        class="h-3.5 w-3.5 text-slate-400"
+                                    />
+                                    Caseload
+                                </p>
+
+                                <div class="flex flex-wrap gap-2">
+                                    <button
+                                        v-for="item in caseloadFilters"
+                                        :key="item.value"
+                                        type="button"
+                                        class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
+                                        :class="
+                                            localAssignment === item.value
+                                                ? 'border-primary bg-primary text-white'
+                                                : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
+                                        "
+                                        @click="localAssignment = item.value"
+                                    >
+                                        {{ item.label }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="h-px bg-slate-200 my-4" />
+
+                            <div
+                                class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
+                            >
+                                <p
+                                    class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
+                                >
                                     <CalendarRange
                                         class="h-3.5 w-3.5 text-slate-400"
                                     />
@@ -249,12 +281,14 @@ import {
     ChevronDown,
     Layers,
     SlidersHorizontal,
+    UserCheck,
 } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
 
 const props = defineProps<{
     search: string;
     type: string;
+    assignment: string;
     dateFrom: string;
     dateTo: string;
 }>();
@@ -262,6 +296,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: "update:search", value: string): void;
     (e: "update:type", value: string): void;
+    (e: "update:assignment", value: string): void;
     (e: "update:dateFrom", value: string): void;
     (e: "update:dateTo", value: string): void;
 }>();
@@ -270,6 +305,11 @@ const careTypeFilters = [
     { label: "All Category", value: "all" },
     { label: "In-house Facility", value: "facility" },
     { label: "Homecare", value: "homecare" },
+];
+
+const caseloadFilters = [
+    { label: "All Patients", value: "all" },
+    { label: "Assigned to me", value: "mine" },
 ];
 
 const open = ref(false);
@@ -352,6 +392,7 @@ const getLocalDateStr = (date: Date) => {
 };
 
 const localType = ref(props.type);
+const localAssignment = ref(props.assignment);
 const localDateFrom = ref(props.dateFrom);
 const localDateTo = ref(props.dateTo);
 const activePreset = ref<string | null>(
@@ -370,6 +411,7 @@ const activeFilterCount = computed(() => {
     let count = 0;
 
     if (props.type && props.type !== "all") count++;
+    if (props.assignment && props.assignment !== "all") count++;
     if (props.dateFrom || props.dateTo) count++;
 
     return count;
@@ -381,6 +423,13 @@ watch(
     () => props.type,
     (v) => {
         localType.value = v;
+    },
+);
+
+watch(
+    () => props.assignment,
+    (v) => {
+        localAssignment.value = v;
     },
 );
 
@@ -426,6 +475,7 @@ function applyPreset(value: string) {
 
 function resetAll() {
     localType.value = "all";
+    localAssignment.value = "all";
     localDateFrom.value = "";
     localDateTo.value = "";
     activePreset.value = "all";
@@ -433,6 +483,7 @@ function resetAll() {
 
 function applyAndClose() {
     emit("update:type", localType.value);
+    emit("update:assignment", localAssignment.value);
     emit("update:dateFrom", localDateFrom.value);
     emit("update:dateTo", localDateTo.value);
 
@@ -440,8 +491,10 @@ function applyAndClose() {
 }
 
 const typeSummary = computed(() => {
-    const found = careTypeFilters.find((t) => t.value === props.type);
-    return found?.label ?? "All Category";
+    const care = careTypeFilters.find((t) => t.value === props.type);
+    const caseload = props.assignment === "mine" ? "My patients" : null;
+
+    return [caseload, care?.label ?? "All Category"].filter(Boolean).join(" · ");
 });
 
 const periodSummary = computed(() => {

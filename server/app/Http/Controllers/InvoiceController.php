@@ -7,10 +7,7 @@ use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Service\InvoiceService;
-use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 
 class InvoiceController extends Controller
 {
@@ -34,7 +31,15 @@ class InvoiceController extends Controller
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Create);
         BranchGuard::mergeRequest($request, $branch);
-        return $this->invoiceService->storeBooking($request->all());
+        return $this->invoiceService->storeBooking($request->all(), $request->user());
+    }
+
+    public function receipts(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Read);
+        BranchGuard::mergeRequest($request, $branch);
+        return $this->invoiceService->receipts($request->all());
     }
 
     public function show(Request $request)

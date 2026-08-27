@@ -165,6 +165,14 @@ export const settingSchema = z.object({
     //         .max(31, "Billing due date must be between 1 and 31."),
     // ),
 
+    termination_fee_percent: z.preprocess(
+        (value) => (value === "" || value === null ? 0 : value),
+        z.coerce
+            .number({ message: "Termination fee must be a number." })
+            .min(0, "Termination fee cannot be negative.")
+            .max(100, "Termination fee cannot exceed 100%."),
+    ),
+
     is_open: z.boolean(),
 
     currency: z.preprocess(

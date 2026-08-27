@@ -289,12 +289,17 @@ class PatientAccessResource extends JsonResource
             return [];
         }
 
+        // One query for the whole invoice rather than one per payment row.
+        $invoice->payments->loadMissing('receipt');
+
         return $invoice->payments
             ->map(fn($payment) => [
                 'payment_id' => $payment->payment_id,
                 'reference_id' => $payment->reference_id,
+                'receipt_no' => $payment->receipt?->receipt_no,
                 'amount' => (float) $payment->amount,
                 'payment_method' => $payment->payment_method,
+                'masked_card_number' => $payment->masked_card_number,
                 'created_at' => $payment->created_at?->format('Y-m-d H:i:s'),
 
                 'refunds' => $this->formatRefunds($payment),

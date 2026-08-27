@@ -8,12 +8,14 @@ import {
     LayoutGrid,
     List,
     Activity,
+    MoreVertical,
 } from "lucide-vue-next";
 import { calculateAge } from "~/utils/user";
 import { patientService } from "~/api/patient/PatientService";
 import type { PatientRetrieve } from "~/types/patient";
 import PatientCard from "~/components/sections/app/Patient/PatientCard.vue";
 import PatientFilter from "~/components/sections/app/Patient/PatientFilter.vue";
+import BaseDropdownMenu from "~/components/ui/BaseDropdownMenu.vue";
 import { usePagination } from "~/composables/usePagination";
 
 definePageMeta({
@@ -34,6 +36,7 @@ const isFetching = ref(false);
 const searchQuery = ref("");
 const typeFilter = ref("all");
 const statusFilter = ref("all");
+const assignmentFilter = ref("all");
 const dateFrom = ref("");
 const dateTo = ref("");
 
@@ -95,6 +98,7 @@ async function fetchPatients(page = 1) {
             per_page: pagination.pageSize.value,
             search: searchQuery.value.trim() || undefined,
             category: typeFilter.value !== "all" ? typeFilter.value : undefined,
+            assigned_only: assignmentFilter.value === "mine" ? 1 : undefined,
             date_from: dateFrom.value || undefined,
             date_to: dateTo.value || undefined,
         });
@@ -118,9 +122,12 @@ function goToPage(page: number) {
     fetchPatients(page);
 }
 
-watch([typeFilter, statusFilter, dateFrom, dateTo, searchQuery], () => {
-    fetchPatients(1);
-});
+watch(
+    [typeFilter, statusFilter, assignmentFilter, dateFrom, dateTo, searchQuery],
+    () => {
+        fetchPatients(1);
+    },
+);
 
 onMounted(() => {
     fetchPatients(1);
@@ -198,10 +205,12 @@ const emptyStateSubtitle = computed(() =>
                         <PatientFilter
                             :search="searchQuery"
                             :type="typeFilter"
+                            :assignment="assignmentFilter"
                             :date-from="dateFrom"
                             :date-to="dateTo"
                             @update:search="searchQuery = $event"
                             @update:type="typeFilter = $event"
+                            @update:assignment="assignmentFilter = $event"
                             @update:dateFrom="dateFrom = $event"
                             @update:dateTo="dateTo = $event"
                         />
@@ -398,7 +407,7 @@ const emptyStateSubtitle = computed(() =>
 
                                     <td class="py-4 pl-3 pr-6">
                                         <div
-                                            class="flex items-center justify-end gap-1"
+                                            class="hidden items-center justify-end gap-1 xl:flex"
                                         >
                                             <button
                                                 v-for="item in actionMenuItems"
@@ -416,6 +425,58 @@ const emptyStateSubtitle = computed(() =>
                                                     class="h-4 w-4"
                                                 />
                                             </button>
+                                        </div>
+
+                                        <div
+                                            class="flex justify-end xl:hidden"
+                                            @click.stop
+                                        >
+                                            <BaseDropdownMenu
+                                                align="right"
+                                                width="w-56"
+                                            >
+                                                <template
+                                                    #trigger="{ toggle }"
+                                                >
+                                                    <button
+                                                        type="button"
+                                                        title="Actions"
+                                                        class="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                                                        @click.stop="toggle"
+                                                    >
+                                                        <MoreVertical
+                                                            class="h-4 w-4"
+                                                        />
+                                                    </button>
+                                                </template>
+
+                                                <template #default="{ close }">
+                                                    <div
+                                                        class="bg-white py-1.5"
+                                                    >
+                                                        <button
+                                                            v-for="item in actionMenuItems"
+                                                            :key="item.label"
+                                                            type="button"
+                                                            class="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                                                            @click.stop="
+                                                                close();
+                                                                goTo(
+                                                                    item.route(
+                                                                        patient,
+                                                                    ),
+                                                                );
+                                                            "
+                                                        >
+                                                            <component
+                                                                :is="item.icon"
+                                                                class="h-4 w-4 shrink-0 text-slate-400"
+                                                            />
+                                                            {{ item.label }}
+                                                        </button>
+                                                    </div>
+                                                </template>
+                                            </BaseDropdownMenu>
                                         </div>
                                     </td>
                                 </tr>

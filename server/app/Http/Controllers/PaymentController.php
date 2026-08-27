@@ -30,4 +30,19 @@ class PaymentController extends Controller
 
         return $this->paymentService->payBalance($user->client, $validated);
     }
+
+    public function receipt(Request $request)
+    {
+        $user = AuthGuard::requireUser($request->user());
+
+        if (!$user->client) {
+            throw new Exception('Only family/client accounts can view a receipt here.', 403);
+        }
+
+        $validated = $request->validate([
+            'receipt_no' => ['required', 'string', 'max:50'],
+        ]);
+
+        return $this->paymentService->receipt($user->client, $validated);
+    }
 }

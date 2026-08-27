@@ -44,7 +44,25 @@ class UserService
 
 
                 $settings = $branch->settings ?? [];
-                $settings['termination_fee'] = $settings['termination_fee'] ?? 0.20;
+
+                // Older rows stored these as strings ("1", "8"), which leaves
+                // checkboxes unchecked on the client.
+                foreach (
+                    ['enable_booking_pre_admission', 'enable_booking_complete_admission', 'is_open']
+                    as $key
+                ) {
+                    if (array_key_exists($key, $settings)) {
+                        $settings[$key] = filter_var($settings[$key], FILTER_VALIDATE_BOOLEAN);
+                    }
+                }
+
+                foreach (['reserved_walkin_slots', 'minimum_adl_hours'] as $key) {
+                    if (array_key_exists($key, $settings)) {
+                        $settings[$key] = (int) $settings[$key];
+                    }
+                }
+
+                $settings['termination_fee_percent'] = max(0, min(100, (float) ($settings['termination_fee_percent'] ?? 0)));
                 return [
                     'uuid' => $branch?->uuid,
                     'name' => $branch?->name,

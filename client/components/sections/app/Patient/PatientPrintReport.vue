@@ -7,9 +7,33 @@
         >
             <header class="print-header">
                 <div class="print-header-left">
-                    <p class="print-brand">Amuma Care</p>
-                    <p class="print-branch">
-                        {{ report.patient.branch_name ?? "Medical Records" }}
+                    <p class="print-brand">
+                        {{ report.branch?.name ?? "Amuma Care" }}
+                    </p>
+
+                    <p
+                        v-if="report.branch?.agency_name"
+                        class="print-branch"
+                    >
+                        {{ report.branch.agency_name }}
+                    </p>
+
+                    <p
+                        v-if="report.branch?.address"
+                        class="print-branch-line"
+                    >
+                        {{ report.branch.address }}
+                    </p>
+
+                    <p v-if="branchContactLine" class="print-branch-line">
+                        {{ branchContactLine }}
+                    </p>
+
+                    <p
+                        v-if="report.branch?.tin"
+                        class="print-branch-line"
+                    >
+                        TIN {{ report.branch.tin }}
                     </p>
                 </div>
 
@@ -185,6 +209,36 @@
                         </tr>
                     </tbody>
                 </table>
+
+                <template v-if="billingPayments.length">
+                    <h2 class="print-subtitle">Payments Received</h2>
+
+                    <table class="print-table">
+                        <thead>
+                            <tr>
+                                <th>Receipt No.</th>
+                                <th>Invoice</th>
+                                <th>Date</th>
+                                <th>Method</th>
+                                <th>Reference</th>
+                                <th class="right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="(row, i) in billingPayments"
+                                :key="i"
+                            >
+                                <td>{{ row.receipt_no ?? "—" }}</td>
+                                <td>{{ row.invoice_code }}</td>
+                                <td>{{ row.paid_at ?? "—" }}</td>
+                                <td>{{ row.payment_method ?? "—" }}</td>
+                                <td>{{ row.reference_id ?? "—" }}</td>
+                                <td class="right">{{ money(row.amount) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </template>
             </template>
 
             <template v-else-if="section === 'schedule'">
@@ -199,6 +253,7 @@
                             <th>Scheduled</th>
                             <th>Status</th>
                             <th>Services</th>
+                            <th>Address</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -207,6 +262,7 @@
                             <td>{{ row.scheduled_at ?? "—" }}</td>
                             <td class="capitalize">{{ row.status ?? "—" }}</td>
                             <td>{{ serviceSummary(row.services) }}</td>
+                            <td>{{ row.address ?? "—" }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -313,31 +369,33 @@
                 </table>
             </template>
 
-            <div v-if="isLastSection(section)" class="print-signature">
-                <div class="print-sign-block">
-                    <span class="print-sign-line" />
-                    <p class="print-sign-label">Prepared by</p>
+            <div class="print-page-bottom">
+                <div v-if="isLastSection(section)" class="print-signature">
+                    <div class="print-sign-block">
+                        <span class="print-sign-line" />
+                        <p class="print-sign-label">Prepared by</p>
+                    </div>
+                    <div class="print-sign-block">
+                        <span class="print-sign-line" />
+                        <p class="print-sign-label">Reviewed by</p>
+                    </div>
+                    <div class="print-sign-block">
+                        <span class="print-sign-line" />
+                        <p class="print-sign-label">Date</p>
+                    </div>
                 </div>
-                <div class="print-sign-block">
-                    <span class="print-sign-line" />
-                    <p class="print-sign-label">Reviewed by</p>
-                </div>
-                <div class="print-sign-block">
-                    <span class="print-sign-line" />
-                    <p class="print-sign-label">Date</p>
-                </div>
-            </div>
 
-            <footer class="print-footer">
-                <span>
-                    {{ report.patient.full_name }} ·
-                    {{ sectionLabel(section) }}
-                </span>
-                <span>
-                    Generated {{ formatDateTime(report.generated_at) }} ·
-                    Confidential
-                </span>
-            </footer>
+                <footer class="print-footer">
+                    <span>
+                        {{ report.patient.full_name }} ·
+                        {{ sectionLabel(section) }}
+                    </span>
+                    <span>
+                        Generated {{ formatDateTime(report.generated_at) }} ·
+                        Confidential
+                    </span>
+                </footer>
+            </div>
         </section>
     </div>
 </template>
@@ -464,6 +522,23 @@ function isLastSection(key: string) {
     );
 }
 
+const branchContactLine = computed(() =>
+    [props.report?.branch?.contact_number, props.report?.branch?.email]
+        .filter(Boolean)
+        .join(" · "),
+);
+
+const billingPayments = computed(() => {
+    const invoices = props.report?.billing?.invoices ?? [];
+
+    return invoices.flatMap((invoice: any) =>
+        (invoice.payments ?? []).map((payment: any) => ({
+            ...payment,
+            invoice_code: invoice.invoice_code,
+        })),
+    );
+});
+
 function money(value: unknown) {
     const amount = Number(value ?? 0);
     return `PHP ${(Number.isFinite(amount) ? amount : 0).toLocaleString("en-PH", {
@@ -510,16 +585,27 @@ function formatDateTime(value?: string) {
 }
 
 @media print {
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+
     .patient-print-report {
         display: block;
         font-family: ui-sans-serif, system-ui, sans-serif;
         color: #16302e;
     }
 
+    /* Fills the printable area (A4 height less the @page margins) so the
+       footer can be pushed to the bottom edge on short sections. */
     .print-page {
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        min-height: 297mm;
+        padding: 15mm;
         break-after: page;
         page-break-after: always;
-        padding-bottom: 12mm;
     }
 
     .print-page:last-child {
@@ -552,6 +638,12 @@ function formatDateTime(value?: string) {
         margin: 0.8mm 0 0;
     }
 
+    .print-branch-line {
+        font-size: 7.5pt;
+        color: #6b8a87;
+        margin: 0.6mm 0 0;
+    }
+
     .print-header-right {
         text-align: right;
     }
@@ -577,6 +669,13 @@ function formatDateTime(value?: string) {
         margin: 5mm 0 3mm;
         padding-bottom: 1.5mm;
         border-bottom: 0.5pt solid #dcebe9;
+    }
+
+    .print-subtitle {
+        font-size: 10pt;
+        font-weight: 700;
+        margin: 4mm 0 2mm;
+        page-break-after: avoid;
     }
 
     .print-identity {
@@ -737,6 +836,10 @@ function formatDateTime(value?: string) {
         letter-spacing: 0.08em;
         color: #6b8a87;
         margin: 1.5mm 0 0;
+    }
+
+    .print-page-bottom {
+        margin-top: auto;
     }
 
     .print-footer {

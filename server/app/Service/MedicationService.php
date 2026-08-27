@@ -13,10 +13,6 @@ class MedicationService
 {
     public function __construct(private PatientRepository $patientRepository) {}
 
-    /**
-     * Medications are no longer bundled into the main patient fetch — the
-     * Medication tab pulls its own paginated page on demand instead.
-     */
     public function listMedications(array $payload)
     {
         $patient = $this->patientRepository->findByFields([
@@ -160,5 +156,4 @@ class MedicationService
             'status' => $schedule['status'],
         ], 200);
     }
-
 }

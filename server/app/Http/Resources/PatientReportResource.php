@@ -34,6 +34,14 @@ class PatientReportResource extends JsonResource
                 'allergies' => $patient->allergies,
                 'branch_name' => $patient->branch?->name,
             ],
+            'branch' => [
+                'name' => $patient->branch?->name,
+                'address' => $patient->branch?->location?->full_address,
+                'contact_number' => $patient->branch?->contact_number,
+                'email' => $patient->branch?->email,
+                'tin' => data_get($patient->branch?->settings, 'tin'),
+                'agency_name' => $patient->branch?->agencies?->name,
+            ],
             'generated_at' => now()->toIso8601String(),
             'sections' => array_keys($sections),
         ];

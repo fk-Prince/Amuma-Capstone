@@ -4,7 +4,10 @@ import * as LucideIcons from "lucide-vue-next";
 import { patientAccessService } from "~/api/patient-access/PatientAccessService.js";
 import { refundService } from "~/api/refund/RefundService";
 import { paymentService } from "~/api/payment/PaymentService";
+import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
 import { useToast } from "~/composables/useToast";
+
+import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
 
 useHead({ title: "Settings" });
 
@@ -13,7 +16,9 @@ definePageMeta({
 });
 
 type RefundMethod = "GCash" | "Bank Transfer" | "Cash Pickup";
-type PaymentMethod = "GCash" | "Bank Transfer" | "Cash";
+
+// Online only — cash is taken at the branch by a cashier, never here.
+type PaymentMethod = "GCash" | "Bank Transfer";
 
 interface RefundRequest {
     id: number;
@@ -62,6 +67,7 @@ interface Transaction {
     status?: string;
     reason?: string;
     maskedCardNumber?: string | null;
+    receiptNo?: string | null;
 }
 
 interface InvoiceService {
@@ -533,6 +539,7 @@ function buildTransactionsFromInvoices(invoiceList: any[]): Transaction[] {
                 method: payment.payment_method,
                 status: "completed",
                 maskedCardNumber: payment.masked_card_number ?? null,
+                receiptNo: payment.receipt_no ?? null,
             });
 
             for (const refund of payment.refunds || []) {
@@ -790,6 +797,7 @@ const showPaymentModal = ref(false);
 const payAmount = ref(0);
 const paymentError = ref("");
 const isPaying = ref(false);
+const activeReceipt = ref<PaymentReceiptData | null>(null);
 
 const paymentForm = ref({
     method: "GCash" as PaymentMethod,
@@ -835,11 +843,7 @@ async function payBalance() {
     }
 
     if (!paymentForm.value.accountDetails.trim()) {
-        paymentError.value =
-            paymentForm.value === undefined ||
-            paymentForm.value.method === "Cash"
-                ? "Enter a reference or note for this cash payment."
-                : "Enter the account details you're paying from.";
+        paymentError.value = "Enter the account details you're paying from.";
 
         return;
     }
@@ -848,21 +852,93 @@ async function payBalance() {
     paymentError.value = "";
 
     try {
-        await paymentService.pay({
+        const res = await paymentService.pay({
             patient_id: patientId,
             amount: payAmount.value,
             method: paymentForm.value.method,
             account_details: paymentForm.value.accountDetails,
         });
 
-        success("Payment recorded successfully.");
+        const receipt: PaymentReceiptData | null = res?.receipt ?? null;
+
         showPaymentModal.value = false;
 
-        await loadPatientData();
+        if (!receipt) {
+            success(res?.message || "Payment recorded successfully.");
+
+            await loadPatientData();
+
+            return;
+        }
+
+        applyReceiptLocally(receipt);
+
+        activeReceipt.value = receipt;
+
+        success(`Payment recorded. Receipt ${receipt.receipt_no}.`);
     } catch (err: any) {
         paymentError.value = err?.message || "Failed to process payment.";
     } finally {
         isPaying.value = false;
+    }
+}
+
+/**
+ * The receipt already carries the post-payment figures for every invoice it
+ * touched, so the list the user is looking at is patched in place rather than
+ * refetched.
+ */
+function applyReceiptLocally(receipt: PaymentReceiptData) {
+    const issuedAt = formatDateTime(receipt.issued_at ?? undefined);
+
+    const entries: Transaction[] = [];
+
+    for (const line of receipt.lines) {
+        const invoice = invoices.value.find(
+            (item) => item.invoice_code === line.invoice_code,
+        );
+
+        if (invoice) {
+            invoice.amount_paid =
+                Number(invoice.amount_paid) + line.amount_applied;
+            invoice.balance_due = line.new_balance;
+            invoice.status = line.new_balance <= 0 ? "paid" : "partial";
+        }
+
+        entries.push({
+            id: `payment-${line.payment_id ?? `${receipt.receipt_no}-${line.line_no}`}`,
+            invoiceId: line.invoice_id,
+            invoiceCode: line.invoice_code,
+            type: "payment",
+            label: `Payment · ${receipt.payment.method || "Unknown"}`,
+            reference: line.payment_reference ?? receipt.receipt_no,
+            date: issuedAt,
+            amount: line.amount_applied,
+            method: receipt.payment.method ?? undefined,
+            status: "completed",
+            maskedCardNumber: receipt.payment.masked_account,
+            receiptNo: receipt.receipt_no,
+        });
+    }
+
+    transactions.value = [...entries, ...transactions.value];
+
+    billing.value = {
+        ...billing.value,
+        amountPaid: totalPaidAmount.value,
+        balanceDue: currentBalance.value,
+    };
+}
+
+async function openReceipt(receiptNo?: string | null) {
+    if (!receiptNo) return;
+
+    try {
+        const res = await paymentService.receipt({ receipt_no: receiptNo });
+
+        activeReceipt.value = res?.data ?? res ?? null;
+    } catch (err: any) {
+        error(err?.message || "Unable to load that receipt.");
     }
 }
 </script>
@@ -1929,6 +2005,23 @@ async function payBalance() {
                                         <span>
                                             {{ transaction.date }}
                                         </span>
+
+                                        <button
+                                            v-if="transaction.receiptNo"
+                                            type="button"
+                                            class="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2.5 py-1 text-[10px] font-semibold text-brand-600 transition hover:bg-brand-50"
+                                            @click="
+                                                openReceipt(
+                                                    transaction.receiptNo,
+                                                )
+                                            "
+                                        >
+                                            <AppIcon
+                                                name="receipt"
+                                                class="h-3 w-3"
+                                            />
+                                            {{ transaction.receiptNo }}
+                                        </button>
                                     </div>
 
                                     <p
@@ -2238,7 +2331,6 @@ async function payBalance() {
                                 >
                                     <option>GCash</option>
                                     <option>Bank Transfer</option>
-                                    <option>Cash</option>
                                 </select>
 
                                 <AppIcon
@@ -2251,11 +2343,9 @@ async function payBalance() {
                         <div>
                             <label class="text-xs font-semibold text-gray-600">
                                 {{
-                                    paymentForm.method === "Cash"
-                                        ? "Reference / Note"
-                                        : paymentForm.method === "GCash"
-                                          ? "GCash Number"
-                                          : "Bank Account Details"
+                                    paymentForm.method === "GCash"
+                                        ? "GCash Number"
+                                        : "Bank Account Details"
                                 }}
                             </label>
 
@@ -2263,11 +2353,9 @@ async function payBalance() {
                                 v-model="paymentForm.accountDetails"
                                 type="text"
                                 :placeholder="
-                                    paymentForm.method === 'Cash'
-                                        ? 'e.g. Paid at front desk'
-                                        : paymentForm.method === 'GCash'
-                                          ? 'e.g. 0917 123 4567'
-                                          : 'e.g. BDO – 1234 5678 9012'
+                                    paymentForm.method === 'GCash'
+                                        ? 'e.g. 0917 123 4567'
+                                        : 'e.g. BDO – 1234 5678 9012'
                                 "
                                 class="mt-1.5 w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10"
                             />
@@ -2313,6 +2401,12 @@ async function payBalance() {
                 </div>
             </div>
         </Transition>
+
+        <PaymentReceipt
+            v-if="activeReceipt"
+            :receipt="activeReceipt"
+            @close="activeReceipt = null"
+        />
     </div>
 </template>
 

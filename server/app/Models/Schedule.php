@@ -44,7 +44,6 @@ class Schedule extends Model
         return $this->belongsTo(Location::class, 'location_id', 'location_id');
     }
 
-    /** Facility care happens at the branch, so it carries no address. */
     public function isOnsite(): bool
     {
         return $this->category === self::CATEGORYFACILITY;

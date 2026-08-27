@@ -208,6 +208,10 @@ class PatientService
     // DONE RETREIVE PATIETN
     public function retrievePatients(array $payload, User $user)
     {
+        if (!empty($payload['assigned_only'])) {
+            $payload['assigned_employee_id'] = $user->employee?->employee_id;
+        }
+
         return PatientResource::collection($this->patientRepository->getPatient($payload));
     }
 
@@ -310,6 +314,7 @@ class PatientService
                     'amount' => (float) $payment->amount,
                     'payment_method' => $payment->payment_method,
                     'reference_id' => $payment->reference_id,
+                    'receipt_no' => $payment->receipt?->receipt_no,
                     'paid_at' => $payment->created_at?->format('Y-m-d H:i'),
                 ])->values()->all(),
             ])->values()->all(),
@@ -322,8 +327,11 @@ class PatientService
             'schedule_code' => $schedule->schedule_code,
             'status' => $schedule->status,
             'scheduled_at' => $schedule->scheduled_at?->format('Y-m-d H:i'),
+            'address' => $schedule->location?->full_address,
             'services' => $schedule->scheduleServices->map(fn($scheduleService) => [
-                'service_name' => $scheduleService->service?->name,
+                'service_name' => $scheduleService->service_id === null
+                    ? 'Activity of Daily Living (ADL)'
+                    : $scheduleService->service?->service_name,
                 'type' => $scheduleService->type,
                 'hours_booked' => $scheduleService->hours_booked,
                 'duration_minutes' => $scheduleService->service?->maximum_duration,

@@ -304,11 +304,14 @@ async function loadSchedules(opts: { append?: boolean } = {}) {
         page.value = 1;
     }
 
+    const { assignment, ...restQuery } = route.query;
+
     const listParams = {
-        ...route.query,
+        ...restQuery,
         branch_uuid: route.params.uuid as string,
         per_page: perPage,
         page: page.value,
+        ...(assignment === "mine" && { assigned_only: 1 }),
     };
 
     try {

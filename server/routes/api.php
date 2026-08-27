@@ -95,10 +95,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // PORTAL BILLING (family/client-facing)
     Route::post('/refunds/action', [RefundController::class, 'store']);
     Route::post('/payments/action', [PaymentController::class, 'store']);
+    Route::post('/payments/receipt', [PaymentController::class, 'receipt']);
 
     // OVERVIEW / STATS
     Route::post('/bookings/overview', [BookingController::class, 'overview']);
     Route::get('/invoices/overview', [InvoiceController::class, 'overview']);
+    Route::get('/invoices/receipts', [InvoiceController::class, 'receipts']);
     Route::post('/contracts/overview', [BranchContractController::class, 'overview']);
     Route::get('/rooms/overview', [RoomController::class, 'overview']);
 

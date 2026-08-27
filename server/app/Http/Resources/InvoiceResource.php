@@ -175,7 +175,11 @@ class InvoiceResource extends JsonResource
         |--------------------------------------------------------------------------
         */
 
-        $terminationFeePercent = 20;
+        $terminationFeePercent = max(0, min(100, (float) data_get(
+            $this->branch?->settings,
+            'termination_fee_percent',
+            0
+        )));
 
         $terminationFee = round(
             $contractPrice * ($terminationFeePercent / 100),

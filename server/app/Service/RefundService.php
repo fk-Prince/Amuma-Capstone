@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Models\Branch;
 use App\Models\Invoice;
 use App\Models\InvoiceAdjustment;
 use App\Models\InvoiceFacility;
@@ -14,7 +15,22 @@ use Exception;
 class RefundService
 {
     private const TERMINATION_FEE_WINDOW_DAYS = 7;
-    private const TERMINATION_FEE_RATE = 0.20;
+
+
+    private function terminationFeeRate(?int $branchId): float
+    {
+        if (!$branchId) {
+            return 0.0;
+        }
+
+        $percent = (float) data_get(
+            Branch::find($branchId)?->settings,
+            'termination_fee_percent',
+            0
+        );
+
+        return max(0.0, min(100.0, $percent)) / 100;
+    }
 
     private const YEARLY_HALF_REFUND_WINDOW_DAYS = 183;
     private const YEARLY_HALF_REFUND_RATE = 0.50;
@@ -76,7 +92,10 @@ class RefundService
         }
 
         if ($days < self::TERMINATION_FEE_WINDOW_DAYS) {
-            $retain = round($paid * self::TERMINATION_FEE_RATE, 2);
+            $retain = round(
+                $paid * $this->terminationFeeRate($invoice->branch_id),
+                2
+            );
 
             return round(max(0, $paid - $retain), 2);
         }
@@ -115,7 +134,10 @@ class RefundService
         $billingCycle = $this->getBillingCycle($contract);
 
         if ($this->isWithinTerminationFeeWindow($admission)) {
-            return round($price * self::TERMINATION_FEE_RATE,    2);
+            return round(
+                $price * $this->terminationFeeRate($contract->branch_id),
+                2
+            );
         }
 
         if ($billingCycle === 'YEARLY' && $this->isWithinYearlyHalfRefundWindow($admission)) {
@@ -380,7 +402,10 @@ class RefundService
 
         $price = $this->getContractPrice($contract);
 
-        return round($price * self::TERMINATION_FEE_RATE, 2);
+        return round(
+            $price * $this->terminationFeeRate($contract->branch_id),
+            2
+        );
     }
 
     public function getDischargeCalculation(Invoice $invoice,  PatientAdmission $admission,  InvoiceFacility $invoiceFacility)
@@ -412,17 +437,13 @@ class RefundService
         $withinTerminationWindow = $days !== null && $days < self::TERMINATION_FEE_WINDOW_DAYS;
         $withinYearlyHalfWindow = $days !== null && $billingCycle === 'YEARLY' && $days >= self::TERMINATION_FEE_WINDOW_DAYS && $days < self::YEARLY_HALF_REFUND_WINDOW_DAYS;
 
-        // Retention/refund is priced entirely off what was actually paid
-        // (and, for the yearly mid-window tier, off invoiceFacility.price
-        // rather than the branch contract's current price) — not off the
-        // contract price, which may no longer reflect what this period was
-        // actually invoiced for.
         $daysStayedAmount = 0;
 
         if ($withinTerminationWindow) {
+            $rate = $this->terminationFeeRate($invoice->branch_id);
             $feeBaseAmount = $paid;
-            $terminationFeePercent = round(self::TERMINATION_FEE_RATE * 100);
-            $terminationFeeAmount = round($paid * self::TERMINATION_FEE_RATE, 2);
+            $terminationFeePercent = round($rate * 100);
+            $terminationFeeAmount = round($paid * $rate, 2);
             $refundAmount = round(max(0, $paid - $terminationFeeAmount), 2);
         } elseif ($withinYearlyHalfWindow) {
             $feeBaseAmount = (float) $invoiceFacility->price;

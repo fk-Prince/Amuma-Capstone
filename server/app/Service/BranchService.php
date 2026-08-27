@@ -19,14 +19,8 @@ use Illuminate\Support\Facades\Log;
 
 class BranchService
 {
-    private BranchRepository $branchRepository;
-    private NominatimService $nomaticeService;
 
-    public function __construct(BranchRepository $branchRepository, NominatimService $nomaticeService)
-    {
-        $this->branchRepository = $branchRepository;
-        $this->nomaticeService = $nomaticeService;
-    }
+    public function __construct(private BranchRepository $branchRepository, private NominatimService $nomaticeService) {}
 
     public function getBranch(string $uuid)
     {
@@ -159,6 +153,7 @@ class BranchService
             'enable_booking_pre_admission',
             'enable_booking_complete_admission',
             'minimum_adl_hours',
+            'termination_fee_percent',
             'is_open',
             'time_zone',
             'opening',
@@ -166,8 +161,34 @@ class BranchService
             'currency',
         ]);
 
+        // The request delivers these as strings ("1", "8"). Stored raw they
+        // break v-model on the client, where a checkbox compares against true.
+        foreach (
+            ['enable_booking_pre_admission', 'enable_booking_complete_admission', 'is_open']
+            as $key
+        ) {
+            if (array_key_exists($key, $settingPayload)) {
+                $settingPayload[$key] = filter_var(
+                    $settingPayload[$key],
+                    FILTER_VALIDATE_BOOLEAN
+                );
+            }
+        }
+
+        foreach (['reserved_walkin_slots', 'minimum_adl_hours'] as $key) {
+            if (array_key_exists($key, $settingPayload)) {
+                $settingPayload[$key] = (int) $settingPayload[$key];
+            }
+        }
+
+        if (array_key_exists('termination_fee_percent', $settingPayload)) {
+            $settingPayload['termination_fee_percent'] = max(0, min(100, (float) $settingPayload['termination_fee_percent']));
+        }
+
+        // Merged rather than replaced: settings also holds keys this form does
+        // not edit (tin, bir_permit_no), which a plain overwrite would wipe.
         $branch->update([
-            'settings' => $settingPayload,
+            'settings' => array_merge($branch->settings ?? [], $settingPayload),
         ]);
 
         return [
