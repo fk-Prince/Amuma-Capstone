@@ -28,10 +28,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
 
     if (category === "homecare" && !canUseHomecare.value) {
-        return await navigateTo(`/booking/provider/${uuid}`);
+        return navigateTo("/");
     }
 
     if (category === "facility" && !canUseFacility.value) {
-        return await navigateTo(`/booking/provider/${uuid}`);
+        return navigateTo("/");
     }
 });

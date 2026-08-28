@@ -5,6 +5,7 @@ export type ConversationType = "family" | "staff";
 export interface Colleague {
     employee_id: number;
     name: string;
+    email?: string | null;
     avatar: string | null;
     role_name: string | null;
     conversation_id: number | null;
@@ -43,6 +44,7 @@ export interface ChatMessage {
 export interface MessageRecipient {
     client_id: number;
     client_name: string;
+    email?: string | null;
     avatar: string | null;
     patient_name: string | null;
     patient_names: string[];

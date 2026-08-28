@@ -49,10 +49,10 @@ class InvoiceResource extends JsonResource
             ),
 
             'facilities' => $this->whenLoaded(
-                'invoiceFacility',
+                'invoiceAccommodation',
                 fn() =>
-                $this->invoiceFacility->map(fn($facility) => [
-                    'invoice_facility_id'  => $facility->invoice_facility_id,
+                $this->invoiceAccommodation->map(fn($facility) => [
+                    'invoice_accommodation_id'  => $facility->invoice_accommodation_id,
                     'branch_contract_id'   => $facility->branch_contract_id,
                     'price'                => (float) $facility->price,
                     'patient_admission_id' => $facility->patient_admission_id,
@@ -108,7 +108,7 @@ class InvoiceResource extends JsonResource
             */
 
             'discharge_calculation' => $this->when(
-                $this->resource->relationLoaded('invoiceFacility'),
+                $this->resource->relationLoaded('invoiceAccommodation'),
                 fn() => $this->resolveDischargeCalculation()
             ),
         ];
@@ -123,7 +123,7 @@ class InvoiceResource extends JsonResource
      */
     protected function resolveDischargeCalculation(): ?array
     {
-        $facility = $this->invoiceFacility->first();
+        $facility = $this->invoiceAccommodation->first();
 
         if (!$facility) {
             return null;
@@ -378,8 +378,8 @@ class InvoiceResource extends JsonResource
     {
         $patient = null;
 
-        if ($this->resource->relationLoaded('invoiceFacility')) {
-            $patient = $this->invoiceFacility
+        if ($this->resource->relationLoaded('invoiceAccommodation')) {
+            $patient = $this->invoiceAccommodation
                 ->first()?->patientAdmission?->patient;
         }
 

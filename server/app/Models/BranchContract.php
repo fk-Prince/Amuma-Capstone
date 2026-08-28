@@ -44,6 +44,6 @@ class BranchContract extends Model
 
     public function invoices()
     {
-        return $this->hasMany(InvoiceFacility::class, 'branch_contract_id', 'branch_contract_id');
+        return $this->hasMany(InvoiceAccommodation::class, 'branch_contract_id', 'branch_contract_id');
     }
 }

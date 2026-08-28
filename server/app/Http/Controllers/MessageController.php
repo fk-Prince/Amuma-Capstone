@@ -99,7 +99,7 @@ class MessageController extends Controller
             'conversation_id' => ['required', 'integer'],
         ]);
 
-        return $this->messageService->thread($user, $validated);
+        return $this->messageService->thread($user, $validated, $request->boolean('as_staff'));
     }
 
     public function send(Request $request)
@@ -110,6 +110,6 @@ class MessageController extends Controller
             'patient_id' => ['nullable', 'integer'],
             'body' => ['required', 'string', 'max:5000'],
         ]);
-        return $this->messageService->send($user, $validated);
+        return $this->messageService->send($user, $validated, $request->boolean('as_staff'));
     }
 }

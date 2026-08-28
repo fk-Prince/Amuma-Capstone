@@ -227,8 +227,8 @@ class PatientAccessResource extends JsonResource
 
     private function formatInvoiceSource(object $invoice): ?array
     {
-        if ($invoice->invoiceFacility && $invoice->invoiceFacility->isNotEmpty()) {
-            $facility = $invoice->invoiceFacility->first();
+        if ($invoice->invoiceAccommodation && $invoice->invoiceAccommodation->isNotEmpty()) {
+            $facility = $invoice->invoiceAccommodation->first();
 
             return [
                 'type' => 'Facility Admission',

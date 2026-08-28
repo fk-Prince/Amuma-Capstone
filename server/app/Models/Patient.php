@@ -165,8 +165,8 @@ class Patient extends Model
                 'invoiceAdjustments',
                 'invoiceServices.scheduleService.service',
                 'invoiceServices.scheduleService.schedule',
-                'invoiceFacility.patientAdmission',
-                'invoiceFacility.branchContract',
+                'invoiceAccommodation.patientAdmission',
+                'invoiceAccommodation.branchContract',
             ])
             ->orderByDesc('invoice_id')
             ->get()
@@ -184,7 +184,7 @@ class Patient extends Model
 
     private function getPatientInvoiceIds()
     {
-        $admissionInvoiceIds = InvoiceFacility::whereHas('patientAdmission', function ($query) {
+        $admissionInvoiceIds = InvoiceAccommodation::whereHas('patientAdmission', function ($query) {
             $query->where('patient_id', $this->patient_id);
         })->pluck('invoice_id');
 

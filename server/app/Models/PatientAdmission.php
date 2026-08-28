@@ -56,18 +56,18 @@ class PatientAdmission extends Model
     public function invoiceAdmission()
     {
         return $this->hasMany(
-            InvoiceFacility::class,
+            InvoiceAccommodation::class,
             'patient_admission_id',
             'patient_admission_id'
         );
     }
 
-    public function currentInvoiceFacility()
+    public function currentInvoiceAccommodation()
     {
         $now = now();
 
         return $this->hasOne(
-            InvoiceFacility::class,
+            InvoiceAccommodation::class,
             'patient_admission_id',
             'patient_admission_id'
         )

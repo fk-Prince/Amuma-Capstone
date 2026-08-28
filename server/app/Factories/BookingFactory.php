@@ -52,7 +52,7 @@ class BookingFactory
         ]);
 
 
-        $invoice->invoiceFacility()->create([
+        $invoice->invoiceAccommodation()->create([
             'price' => $payload['payment']['total_amount'],
             'patient_admission_id' => $admission['patient_admission_id'],
             'branch_contract_id' => $payload['reserved']['contract_id']

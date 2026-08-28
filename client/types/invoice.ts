@@ -10,8 +10,8 @@
 //     service_name: string | null;
 // }
 
-// export interface InvoiceFacilityLine {
-//     invoice_facility_id: number;
+// export interface InvoiceAccommodationLine {
+//     invoice_accommodation_id: number;
 //     branch_contract_id: number;
 //     price: number;
 //     patient_admission_id: number;
@@ -75,7 +75,7 @@
 //     patient: InvoicePatient | null;
 //     branch?: InvoiceBranch;
 //     services?: InvoiceServiceLine[];
-//     facilities?: InvoiceFacilityLine[];
+//     facilities?: InvoiceAccommodationLine[];
 //     payments?: InvoicePayment[];
 // }
 
@@ -93,7 +93,7 @@
 //     created_at: string | null;
 //     branch?: InvoiceBranch;
 //     services?: InvoiceServiceLine[];
-//     facilities?: InvoiceFacilityLine[];
+//     facilities?: InvoiceAccommodationLine[];
 //     payments?: InvoicePayment[];
 // }
 
@@ -126,8 +126,8 @@ export interface InvoiceServiceLine {
     hours_booked?: number | null;
 }
 
-export interface InvoiceFacilityLine {
-    invoice_facility_id: number;
+export interface InvoiceAccommodationLine {
+    invoice_accommodation_id: number;
     branch_contract_id: number;
     price: number;
     patient_admission_id: number;
@@ -249,7 +249,7 @@ export interface InvoiceDetail {
     patient: InvoicePatient | null;
     branch?: InvoiceBranch;
     services?: InvoiceServiceLine[];
-    facilities?: InvoiceFacilityLine[];
+    facilities?: InvoiceAccommodationLine[];
     payments?: InvoicePayment[];
     adjustments?: InvoiceAdjustmentDetail[];
 }
@@ -268,7 +268,7 @@ export interface PatientInvoiceItem {
     created_at: string | null;
     branch?: InvoiceBranch;
     services?: InvoiceServiceLine[];
-    facilities?: InvoiceFacilityLine[];
+    facilities?: InvoiceAccommodationLine[];
     payments?: InvoicePayment[];
 }
 

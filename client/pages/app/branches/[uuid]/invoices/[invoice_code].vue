@@ -250,7 +250,7 @@
                         <div class="space-y-3">
                             <div
                                 v-for="facility in invoice.facilities"
-                                :key="facility.invoice_facility_id"
+                                :key="facility.invoice_accommodation_id"
                                 class="rounded-xl border border-[#EDF4F3] px-5 py-4"
                             >
                                 <div

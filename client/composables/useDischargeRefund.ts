@@ -22,7 +22,7 @@ export function useDischargeRefund(admission: Ref<Admission | undefined>) {
     );
 
     // The amount the termination-fee % was actually applied to — paid
-    // amount for the <7-day tier, invoiceFacility.price for the yearly
+    // amount for the <7-day tier, invoiceAccommodation.price for the yearly
     // 7-day-to-6-month tier. Not the same as currentContractPrice, which
     // is just the branch contract's price and may not match either.
     const feeBaseAmount = computed(() =>
@@ -53,7 +53,7 @@ export function useDischargeRefund(admission: Ref<Admission | undefined>) {
         getNumber(calculation.value?.termination_fee_amount),
     );
 
-    // Value of the days already stayed (priced off invoiceFacility.price),
+    // Value of the days already stayed (priced off invoiceAccommodation.price),
     // subtracted from half the fee base to arrive at the actual refund —
     // shown separately so the retained amount isn't mistaken for a flat 50%.
     const daysStayedAmount = computed(() =>

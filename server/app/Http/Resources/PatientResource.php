@@ -66,7 +66,7 @@ class PatientResource extends JsonResource
 
     private function formatAdmission(mixed $admission, bool $includeDischargeCalculation = false): array
     {
-        $currentInvoice = $admission->currentInvoiceFacility;
+        $currentInvoice = $admission->currentInvoiceAccommodation;
 
         $invoice = $currentInvoice
             ?? $admission->invoiceAdmission
@@ -97,7 +97,7 @@ class PatientResource extends JsonResource
 
             'current_contract' => $this->formatContract($contract),
 
-            'current_invoice' => $this->formatInvoiceFacility($currentInvoice),
+            'current_invoice' => $this->formatInvoiceAccommodation($currentInvoice),
 
             'discharge_calculation' => ($includeDischargeCalculation && $invoice && $contract)
                 ? app(RefundService::class)->getDischargeCalculation(
@@ -109,23 +109,23 @@ class PatientResource extends JsonResource
 
             'invoices' => $admission->relationLoaded('invoiceAdmission')
                 ? $admission->invoiceAdmission
-                ->map(fn($invoice) => $this->formatInvoiceFacility($invoice))
+                ->map(fn($invoice) => $this->formatInvoiceAccommodation($invoice))
                 ->values()
                 : [],
         ];
     }
 
-    private function formatInvoiceFacility(mixed $invoiceFacility): ?array
+    private function formatInvoiceAccommodation(mixed $invoiceAccommodation): ?array
     {
-        if (!$invoiceFacility) {
+        if (!$invoiceAccommodation) {
             return null;
         }
 
-        $invoice = $invoiceFacility->invoice;
+        $invoice = $invoiceAccommodation->invoice;
 
         return [
-            'invoice_facility_id' => $invoiceFacility->invoice_facility_id,
-            'invoice_id' => $invoiceFacility->invoice_id,
+            'invoice_accommodation_id' => $invoiceAccommodation->invoice_accommodation_id,
+            'invoice_id' => $invoiceAccommodation->invoice_id,
             'invoice_code' => $invoice?->invoice_code,
             'status' => $invoice?->status,
             'price' => $invoice?->total,
@@ -135,10 +135,10 @@ class PatientResource extends JsonResource
             'net_paid_amount' => $invoice?->net_paid_amount ?? 0,
             'refund_status' => $invoice?->refund_status ?? 'none',
 
-            'start_date' => $invoiceFacility->start_date,
-            'end_date' => $invoiceFacility->end_date,
+            'start_date' => $invoiceAccommodation->start_date,
+            'end_date' => $invoiceAccommodation->end_date,
 
-            'contract' => $this->formatContract($invoiceFacility->branchContract),
+            'contract' => $this->formatContract($invoiceAccommodation->branchContract),
         ];
     }
 

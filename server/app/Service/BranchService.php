@@ -15,7 +15,6 @@ use App\Service\Geo\NominatimService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class BranchService
 {
@@ -37,10 +36,10 @@ class BranchService
     public function getBranchesByFilter(array $payload)
     {
         $city = null;
-        if (!empty($payload['lat']) && !empty($payload['long'])) {
-            $city = $this->nomaticeService->getCityByCoords($payload['lat'], $payload['long']);
-        } elseif (!empty($payload['location'])) {
+        if (!empty($payload['location'])) {
             $city = $payload['location'];
+        } elseif (!empty($payload['lat']) && !empty($payload['long'])) {
+            $city = $this->nomaticeService->getCityByCoords($payload['lat'], $payload['long']);
         }
         // else {
         //     $position = Location::get('8.8.8.8'); // TEST IP

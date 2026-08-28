@@ -263,9 +263,34 @@
                                 </button>
                             </div>
 
+                            <div class="border-b border-slate-100 p-2.5">
+                                <BaseInput
+                                    v-model="composerSearch"
+                                    placeholder="Search by name or email..."
+                                    is-search
+                                    @update:model-value="onComposerSearch"
+                                />
+                            </div>
+
                             <div
                                 class="max-h-[70dvh] overflow-y-auto p-2.5 overscroll-contain sm:max-h-[24rem]"
                             >
+                                <p
+                                    v-if="
+                                        !loadingRecipients &&
+                                        composerSearch.trim() &&
+                                        ((tab === 'colleagues' &&
+                                            !colleagues.length) ||
+                                            (tab !== 'colleagues' &&
+                                                !recipients.length))
+                                    "
+                                    class="px-3 py-8 text-center text-sm text-slate-400"
+                                >
+                                    No one found matching "{{
+                                        composerSearch
+                                    }}".
+                                </p>
+
                                 <p
                                     v-if="loadingRecipients"
                                     class="px-3 py-8 text-center text-sm text-slate-400"
@@ -275,7 +300,10 @@
 
                                 <template v-else-if="tab === 'colleagues'">
                                     <p
-                                        v-if="!colleagues.length"
+                                        v-if="
+                                            !colleagues.length &&
+                                            !composerSearch.trim()
+                                        "
                                         class="px-3 py-8 text-center text-sm text-slate-400"
                                     >
                                         No other staff at this branch yet.
@@ -328,6 +356,13 @@
                                                         )
                                                     }}
                                                 </p>
+
+                                                <p
+                                                    v-if="row.email"
+                                                    class="mt-0.5 truncate text-xs text-slate-400"
+                                                >
+                                                    {{ row.email }}
+                                                </p>
                                             </div>
                                         </div>
                                     </button>
@@ -335,7 +370,10 @@
 
                                 <template v-else>
                                     <p
-                                        v-if="!recipients.length"
+                                        v-if="
+                                            !recipients.length &&
+                                            !composerSearch.trim()
+                                        "
                                         class="px-3 py-8 text-center text-sm text-slate-400"
                                     >
                                         You have no families to message yet.
@@ -385,6 +423,13 @@
                                                             row.patient_names,
                                                         )
                                                     }}
+                                                </p>
+
+                                                <p
+                                                    v-if="row.email"
+                                                    class="mt-0.5 truncate text-xs text-slate-400"
+                                                >
+                                                    {{ row.email }}
                                                 </p>
                                             </div>
                                         </div>
@@ -465,6 +510,7 @@ const tabs: { label: string; value: Tab }[] = [
 const tab = ref<Tab>("families");
 
 const composerOpen = ref(false);
+const composerSearch = ref("");
 const loadingRecipients = ref(false);
 const recipients = ref<MessageRecipient[]>([]);
 const colleagues = ref<Colleague[]>([]);
@@ -479,14 +525,14 @@ async function switchTab(value: Tab) {
     await fetchConversations();
 }
 
-async function openComposer() {
-    composerOpen.value = true;
+async function loadComposerList(search = "") {
     loadingRecipients.value = true;
 
     try {
         if (tab.value === "colleagues") {
             const res = await messageService.colleagues({
                 branch_uuid: uuid.value,
+                search,
             });
 
             colleagues.value = res ?? [];
@@ -494,6 +540,7 @@ async function openComposer() {
         } else {
             const res = await messageService.recipients({
                 branch_uuid: uuid.value,
+                search,
             });
 
             recipients.value = res ?? [];
@@ -506,6 +553,23 @@ async function openComposer() {
     } finally {
         loadingRecipients.value = false;
     }
+}
+
+let composerSearchTimer: ReturnType<typeof setTimeout> | null = null;
+
+function onComposerSearch(value: string) {
+    if (composerSearchTimer) clearTimeout(composerSearchTimer);
+
+    composerSearchTimer = setTimeout(() => {
+        loadComposerList(value.trim());
+    }, 300);
+}
+
+async function openComposer() {
+    composerOpen.value = true;
+    composerSearch.value = "";
+
+    await loadComposerList();
 }
 
 async function startColleagueConversation(row: Colleague) {
@@ -611,6 +675,7 @@ async function openThread(conversationId: number) {
     try {
         const res = await messageService.thread({
             conversation_id: conversationId,
+            as_staff: true,
         });
 
         messages.value = res?.messages ?? [];
@@ -637,6 +702,7 @@ async function sendMessage(body: string) {
         const res = await messageService.send({
             conversation_id: activeId.value,
             body,
+            as_staff: true,
         });
 
         if (res?.message) {

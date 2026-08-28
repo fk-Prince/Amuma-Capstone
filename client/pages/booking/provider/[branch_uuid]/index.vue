@@ -211,6 +211,7 @@ import LocationPin from "~/components/ui/LocationPin.vue";
 import Location from "~/components/icons/location.vue";
 import Breadcrumb from "~/components/ui/Breadcrumb.vue";
 import { useBranch } from "~/composables/useBranchProvider";
+import { useToast } from "~/composables/useToast";
 useHead({ title: "Search Homecare" });
 definePageMeta({
     navVariant: 4,

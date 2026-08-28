@@ -6,7 +6,7 @@ use App\Http\Resources\BookingResource;
 use App\Models\Bed;
 use App\Models\Booking;
 use App\Models\Invoice;
-use App\Models\InvoiceFacility;
+use App\Models\InvoiceAccommodation;
 use App\Models\Patient;
 use App\Models\PatientAdmission;
 use App\Models\Room;
@@ -164,7 +164,7 @@ class PatientAdmissionService
                 'status'         => Invoice::STATUS_PENDING,
             ]);
 
-            InvoiceFacility::create([
+            InvoiceAccommodation::create([
                 'invoice_id'           => $invoice->invoice_id,
                 'patient_admission_id' => $admission->patient_admission_id,
                 'branch_contract_id'   => $contract['branch_contract_id'],
@@ -199,7 +199,7 @@ class PatientAdmissionService
                 $admission->load('invoiceAdmission');
 
                 $initialFacility = $admission->invoiceAdmission()
-                    ->latest('invoice_facility_id')
+                    ->latest('invoice_accommodation_id')
                     ->first();
 
                 $admittedAt = isset($payload['admitted_at'])
@@ -256,11 +256,11 @@ class PatientAdmissionService
         }
 
         return DB::transaction(function () use ($admission, $payload) {
-            $currentInvoiceFacility = $admission->currentInvoiceFacility()
+            $currentInvoiceAccommodation = $admission->currentInvoiceAccommodation()
                 ->with('branchContract')
                 ->first();
 
-            $currentInvoiceId = $currentInvoiceFacility?->invoice_id;
+            $currentInvoiceId = $currentInvoiceAccommodation?->invoice_id;
 
             $dischargedAt = now();
 
@@ -284,7 +284,7 @@ class PatientAdmissionService
             if ($invoiceIds->isNotEmpty()) {
                 $invoices = Invoice::with([
                     'payments.refunds',
-                    'invoiceFacility.branchContract',
+                    'invoiceAccommodation.branchContract',
                 ])
                     ->whereIn('invoice_id', $invoiceIds)
                     ->get();
@@ -293,12 +293,12 @@ class PatientAdmissionService
                     if (
                         $currentInvoiceId !== null &&
                         $invoice->invoice_id === $currentInvoiceId &&
-                        $currentInvoiceFacility
+                        $currentInvoiceAccommodation
                     ) {
                         $this->refundService->createRefundCurrentInvoice(
                             $invoice,
                             $admission,
-                            $currentInvoiceFacility
+                            $currentInvoiceAccommodation
                         );
 
                         continue;
@@ -417,13 +417,13 @@ class PatientAdmissionService
 
             $today = Carbon::today();
 
-            $currentInvoiceFacility = $admission
+            $currentInvoiceAccommodation = $admission
                 ->invoiceAdmission()
                 ->orderByDesc('end_date')
                 ->first();
 
-            $invoiceEndDate = $currentInvoiceFacility->end_date
-                ? Carbon::parse($currentInvoiceFacility->end_date)
+            $invoiceEndDate = $currentInvoiceAccommodation->end_date
+                ? Carbon::parse($currentInvoiceAccommodation->end_date)
                 : null;
 
             $startDate = $invoiceEndDate
@@ -478,7 +478,7 @@ class PatientAdmissionService
                 'original_total' => $contract['price'],
             ]);
 
-            InvoiceFacility::create([
+            InvoiceAccommodation::create([
                 'invoice_id'           => $invoice->invoice_id,
                 'patient_admission_id' => $admission->patient_admission_id,
                 'branch_contract_id'   => $contract['branch_contract_id'],
@@ -688,7 +688,7 @@ class PatientAdmissionService
                 'original_total' => $payload['payment']['total_amount'],
             ]);
 
-            $invoice->invoiceFacility()->create([
+            $invoice->invoiceAccommodation()->create([
                 'patient_admission_id' => $admission['patient_admission_id'],
                 'branch_contract_id'   => $payload['reserved']['contract_id'],
                 'price'                => $payload['payment']['total_amount'],
@@ -719,7 +719,7 @@ class PatientAdmissionService
             'status'    => Invoice::STATUS_PENDING,
         ]);
 
-        $invoice->invoiceFacility()->create([
+        $invoice->invoiceAccommodation()->create([
             'price'                 => $payload['payment']['total_amount'],
             'patient_admission_id'  => $admission['patient_admission_id'],
             'branch_contract_id'    => $payload['reserved']['contract_id'],

@@ -13,16 +13,16 @@ class PatientAdmissionResource extends JsonResource
             return [];
         }
 
-        $currentInvoice = $this->currentInvoiceFacility;
+        $currentInvoice = $this->currentInvoiceAccommodation;
 
-        $invoiceFacilities = $this->relationLoaded('invoiceAdmission')
+        $invoiceAccommodations = $this->relationLoaded('invoiceAdmission')
             ? $this->invoiceAdmission
             : collect();
 
-        $allFacilities = $invoiceFacilities;
+        $allFacilities = $invoiceAccommodations;
 
         if ($currentInvoice && !$allFacilities->contains(
-            fn($f) => $f->invoice_facility_id === $currentInvoice->invoice_facility_id
+            fn($f) => $f->invoice_accommodation_id === $currentInvoice->invoice_accommodation_id
         )) {
             $allFacilities = $allFacilities->push($currentInvoice);
         }
@@ -54,7 +54,7 @@ class PatientAdmissionResource extends JsonResource
             ],
 
             'current_contract' => new BranchContractResource($currentInvoice?->branchContract),
-            'current_invoice'  => $this->formatInvoiceFacility($currentInvoice),
+            'current_invoice'  => $this->formatInvoiceAccommodation($currentInvoice),
 
             'total_amount'   => $totalAmount,
             'total_paid'     => $totalPaid,
@@ -67,23 +67,23 @@ class PatientAdmissionResource extends JsonResource
                 default             => 'Pending',
             },
 
-            'invoices' => $invoiceFacilities
-                ->map(fn($f) => $this->formatInvoiceFacility($f))
+            'invoices' => $invoiceAccommodations
+                ->map(fn($f) => $this->formatInvoiceAccommodation($f))
                 ->values(),
         ];
     }
 
-    private function formatInvoiceFacility(mixed $invoiceFacility): ?array
+    private function formatInvoiceAccommodation(mixed $invoiceAccommodation): ?array
     {
-        if (!$invoiceFacility) {
+        if (!$invoiceAccommodation) {
             return null;
         }
 
-        $invoice = $invoiceFacility->invoice;
+        $invoice = $invoiceAccommodation->invoice;
 
         return [
-            'invoice_facility_id' => $invoiceFacility->invoice_facility_id,
-            'invoice_id'          => $invoiceFacility->invoice_id,
+            'invoice_accommodation_id' => $invoiceAccommodation->invoice_accommodation_id,
+            'invoice_id'          => $invoiceAccommodation->invoice_id,
             'invoice_code'        => $invoice?->invoice_code,
             'status'              => $invoice?->status,
             'price'               => $invoice?->total,
@@ -92,10 +92,10 @@ class PatientAdmissionResource extends JsonResource
             'refunded_amount' => $invoice?->refunded_amount ?? 0,
             'net_paid_amount' => $invoice?->net_paid_amount ?? 0,
 
-            'start_date' => $invoiceFacility->start_date,
-            'end_date'   => $invoiceFacility->end_date,
+            'start_date' => $invoiceAccommodation->start_date,
+            'end_date'   => $invoiceAccommodation->end_date,
 
-            'contract' => new BranchContractResource($invoiceFacility->branchContract),
+            'contract' => new BranchContractResource($invoiceAccommodation->branchContract),
         ];
     }
 }

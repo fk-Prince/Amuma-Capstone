@@ -86,28 +86,30 @@ class NominatimService
 
     public function getCityByCoords(float $lat, float $lon)
     {
-        $response = $this->client()->get("{$this->url}/reverse", [
-            'lat' => $lat,
-            'lon' => $lon,
-            'format' => 'json',
-        ]);
+        $cacheKey = "city_by_coords:" . round($lat, 5) . ":" . round($lon, 5);
 
-
-        if ($response->failed()) {
-            Log::warning('Nominatim reverse failed', [
+        return Cache::remember($cacheKey, now()->addDays(7), function () use ($lat, $lon) {
+            $response = $this->client()->get("{$this->url}/reverse", [
                 'lat' => $lat,
                 'lon' => $lon,
+                'format' => 'json',
             ]);
 
-            return null;
-        }
+            if ($response->failed()) {
+                Log::warning('Nominatim reverse failed', [
+                    'lat' => $lat,
+                    'lon' => $lon,
+                ]);
 
+                return null;
+            }
 
-        $data = $response->json();
+            $data = $response->json();
 
-        return $data['address']['city']
-            ?? $data['address']['town']
-            ?? $data['address']['village']
-            ?? null;
+            return $data['address']['city']
+                ?? $data['address']['town']
+                ?? $data['address']['village']
+                ?? null;
+        });
     }
 }

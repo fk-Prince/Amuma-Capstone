@@ -56,10 +56,10 @@ class Invoice extends Model
         );
     }
 
-    public function invoiceFacility(): HasMany
+    public function invoiceAccommodation(): HasMany
     {
         return $this->hasMany(
-            InvoiceFacility::class,
+            InvoiceAccommodation::class,
             'invoice_id',
             'invoice_id'
         );
@@ -279,10 +279,10 @@ class Invoice extends Model
 //         );
 //     }
 
-//     public function invoiceFacility(): HasMany
+//     public function invoiceAccommodation(): HasMany
 //     {
 //         return $this->hasMany(
-//             InvoiceFacility::class,
+//             InvoiceAccommodation::class,
 //             'invoice_id',
 //             'invoice_id'
 //         );

@@ -431,7 +431,7 @@
                                     >
                                         <div
                                             v-for="invoice in futureInvoices"
-                                            :key="invoice.invoice_facility_id"
+                                            :key="invoice.invoice_accommodation_id"
                                             class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
                                         >
                                             <div
@@ -728,7 +728,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import type { Admission, InvoiceFacility } from "~/types/patient";
+import type { Admission, InvoiceAccommodation } from "~/types/patient";
 import { INVOICE_STATUS } from "~/types/invoice";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
@@ -738,7 +738,7 @@ const props = withDefaults(
     defineProps<{
         open: boolean;
         admission?: Admission;
-        futureInvoices?: InvoiceFacility[];
+        futureInvoices?: InvoiceAccommodation[];
         loading?: boolean;
     }>(),
     {
@@ -801,7 +801,7 @@ function getNumber(value: unknown, fallback = 0): number {
     return Number.isFinite(number) ? number : fallback;
 }
 
-function getNetPaid(invoice?: InvoiceFacility | null): number {
+function getNetPaid(invoice?: InvoiceAccommodation | null): number {
     if (!invoice) {
         return 0;
     }
@@ -809,7 +809,7 @@ function getNetPaid(invoice?: InvoiceFacility | null): number {
     return Math.max(0, getNumber(invoice.net_paid_amount));
 }
 
-function isRefundable(invoice?: InvoiceFacility | null): boolean {
+function isRefundable(invoice?: InvoiceAccommodation | null): boolean {
     return getNetPaid(invoice) > 0;
 }
 

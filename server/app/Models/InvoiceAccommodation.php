@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class InvoiceFacility extends Model
+class InvoiceAccommodation extends Model
 {
-    protected $table = 'invoice_facilities';
+    protected $table = 'invoice_accommodations';
 
-    protected $primaryKey = 'invoice_facility_id';
+    protected $primaryKey = 'invoice_accommodation_id';
 
     protected $fillable = [
         'branch_contract_id',

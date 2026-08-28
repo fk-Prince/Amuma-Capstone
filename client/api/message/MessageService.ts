@@ -23,7 +23,7 @@ class MessageService extends BaseService {
         return await this.request(`${this.resource}/branch-conversations`, 'GET', payload);
     }
 
-    async thread(payload: { conversation_id: number }): Promise<any> {
+    async thread(payload: { conversation_id: number; as_staff?: boolean }): Promise<any> {
         return await this.request(`${this.resource}/thread`, 'GET', payload);
     }
 
@@ -57,6 +57,7 @@ class MessageService extends BaseService {
         conversation_id?: number | null;
         patient_id?: number | null;
         body: string;
+        as_staff?: boolean;
     }): Promise<any> {
         return await this.request(this.resource, 'POST', payload);
     }

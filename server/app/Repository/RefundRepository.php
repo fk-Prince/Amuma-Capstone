@@ -46,7 +46,7 @@ class RefundRepository
         return Refund::query()
             ->with('payment.invoice')
             ->whereHas(
-                'payment.invoice.invoiceFacility.patientAdmission.patient',
+                'payment.invoice.invoiceAccommodation.patientAdmission.patient',
                 function ($query) use ($patientUuid) {
                     $query->where('uuid', $patientUuid);
                 }

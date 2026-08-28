@@ -104,15 +104,15 @@ export interface Admission {
     note?: string | null;
     bed?: Bed;
     room?: Room;
-    invoices: InvoiceFacility[];
+    invoices: InvoiceAccommodation[];
     current_contract?: Contract | null;
-    current_invoice?: InvoiceFacility | null;
+    current_invoice?: InvoiceAccommodation | null;
     discharge_calculation?: DischargeCalculation | null;
     room_transfers?: RoomTransfer[];
 }
 
-export interface InvoiceFacility {
-    invoice_facility_id: number;
+export interface InvoiceAccommodation {
+    invoice_accommodation_id: number;
     invoice_code: string;
     invoice_id: number;
     price: string;

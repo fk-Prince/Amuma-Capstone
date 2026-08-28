@@ -85,7 +85,7 @@
                                 v-for="invoice in sortedInvoices(
                                     admission.invoices,
                                 ).filter(isInvoiceVisible)"
-                                :key="invoice.invoice_facility_id"
+                                :key="invoice.invoice_accommodation_id"
                                 class="group relative"
                             >
                                 <div
@@ -128,8 +128,8 @@
                                                             'discharged' &&
                                                         admission
                                                             .current_invoice
-                                                            ?.invoice_facility_id ===
-                                                            invoice.invoice_facility_id
+                                                            ?.invoice_accommodation_id ===
+                                                            invoice.invoice_accommodation_id
                                                     "
                                                     class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
                                                 >
@@ -279,7 +279,7 @@
 import { computed, ref, watch } from "vue";
 import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
-import type { Admission, InvoiceFacility } from "~/types/patient";
+import type { Admission, InvoiceAccommodation } from "~/types/patient";
 import { INVOICE_STATUS } from "~/types/invoice";
 
 const props = defineProps<{
@@ -307,7 +307,7 @@ const orderedInvoiceIds = computed(() => {
 
     for (const admission of sortedAdmissions.value) {
         for (const invoice of sortedInvoices(admission.invoices ?? [])) {
-            ids.push(invoice.invoice_facility_id);
+            ids.push(invoice.invoice_accommodation_id);
         }
     }
 
@@ -322,10 +322,10 @@ const visibleInvoiceIdSet = computed(() => {
     return new Set(orderedInvoiceIds.value.slice(0, DEFAULT_VISIBLE_COUNT));
 });
 
-function isInvoiceVisible(invoice: InvoiceFacility) {
+function isInvoiceVisible(invoice: InvoiceAccommodation) {
     return (
         visibleInvoiceIdSet.value === null ||
-        visibleInvoiceIdSet.value.has(invoice.invoice_facility_id)
+        visibleInvoiceIdSet.value.has(invoice.invoice_accommodation_id)
     );
 }
 
@@ -373,7 +373,7 @@ function isCurrent(admission: Admission) {
     return admission.patient_admission_id === currentAdmissionId.value;
 }
 
-function sortedInvoices(invoices: InvoiceFacility[]) {
+function sortedInvoices(invoices: InvoiceAccommodation[]) {
     return [...invoices].sort(
         (a, b) =>
             new Date(a.start_date ?? 0).getTime() -

@@ -44,9 +44,9 @@ class InvoiceRepository
         return Invoice::with([
             'branch',
             'invoiceServices.scheduleService.service',
-            'invoiceFacility.patientAdmission.patient',
-            'invoiceFacility.patientAdmission.bed.room',
-            'invoiceFacility.branchContract',
+            'invoiceAccommodation.patientAdmission.patient',
+            'invoiceAccommodation.patientAdmission.bed.room',
+            'invoiceAccommodation.branchContract',
             'payments.refunds',
             'invoiceAdjustments',
         ])
@@ -67,9 +67,9 @@ class InvoiceRepository
                 'payments.refunds',
                 'invoiceServices.scheduleService.schedule.patient',
                 'invoiceServices.scheduleService.service',
-                'invoiceFacility.patientAdmission.patient',
-                'invoiceFacility.patientAdmission.bed.room',
-                'invoiceFacility.branchContract',
+                'invoiceAccommodation.patientAdmission.patient',
+                'invoiceAccommodation.patientAdmission.bed.room',
+                'invoiceAccommodation.branchContract',
             ]);
 
         if (!empty($search)) {
@@ -117,7 +117,7 @@ class InvoiceRepository
                 'invoiceServices.scheduleService.schedule.patient',
                 fn($p) => $p->where('uuid', $patientUuid)
             )->orWhereHas(
-                'invoiceFacility.patientAdmission.patient',
+                'invoiceAccommodation.patientAdmission.patient',
                 fn($p) => $p->where('uuid', $patientUuid)
             );
         })
@@ -132,9 +132,9 @@ class InvoiceRepository
             'payments.refunds',
             'invoiceServices.scheduleService.schedule.patient',
             'invoiceServices.scheduleService.service',
-            'invoiceFacility.patientAdmission.patient',
-            'invoiceFacility.patientAdmission.bed.room',
-            'invoiceFacility.branchContract',
+            'invoiceAccommodation.patientAdmission.patient',
+            'invoiceAccommodation.patientAdmission.bed.room',
+            'invoiceAccommodation.branchContract',
         ]);
 
         $invoices = $query->get();
@@ -166,7 +166,7 @@ class InvoiceRepository
                         ["%" . strtolower($search) . "%"]
                     )
             )->orWhereHas(
-                'invoiceFacility.patientAdmission.patient',
+                'invoiceAccommodation.patientAdmission.patient',
                 fn($p) => $p
                     ->whereRaw(
                         'LOWER(first_name) LIKE ?',
@@ -189,9 +189,9 @@ class InvoiceRepository
             'payments.refunds',
             'invoiceServices.scheduleService.schedule.patient',
             'invoiceServices.scheduleService.service',
-            'invoiceFacility.patientAdmission.patient',
-            'invoiceFacility.patientAdmission.bed.room',
-            'invoiceFacility.branchContract',
+            'invoiceAccommodation.patientAdmission.patient',
+            'invoiceAccommodation.patientAdmission.bed.room',
+            'invoiceAccommodation.branchContract',
         ]);
 
         $invoices = $query->get();
@@ -208,7 +208,7 @@ class InvoiceRepository
                 ?->schedule
                 ?->patient
                 ??
-                $invoice->invoiceFacility
+                $invoice->invoiceAccommodation
                 ->first()
                 ?->patientAdmission
                 ?->patient;
@@ -242,7 +242,7 @@ class InvoiceRepository
                     ?->schedule
                     ?->patient
                     ??
-                    $invoice->invoiceFacility
+                    $invoice->invoiceAccommodation
                     ->first()
                     ?->patientAdmission
                     ?->patient
@@ -349,11 +349,11 @@ class InvoiceRepository
         $admissions = $patientInvoices
             ->flatMap(
                 fn($invoice) =>
-                $invoice->invoiceFacility->map(
-                    fn($invoiceFacility) => [
-                        'admission' => $invoiceFacility->patientAdmission,
+                $invoice->invoiceAccommodation->map(
+                    fn($invoiceAccommodation) => [
+                        'admission' => $invoiceAccommodation->patientAdmission,
                         'invoice' => $invoice,
-                        'invoice_facility' => $invoiceFacility,
+                        'invoice_accommodation' => $invoiceAccommodation,
                     ]
                 )
             )
@@ -503,7 +503,7 @@ class InvoiceRepository
      * Patient
      *   -> Admission
      *      -> Invoice
-     *         -> InvoiceFacility
+     *         -> InvoiceAccommodation
      *
      * The calculation is based on the latest admission
      * that has an invoice facility.
@@ -514,11 +514,11 @@ class InvoiceRepository
         $admissionItems = $patientInvoices
             ->flatMap(
                 fn($invoice) =>
-                $invoice->invoiceFacility->map(
-                    fn($invoiceFacility) => [
+                $invoice->invoiceAccommodation->map(
+                    fn($invoiceAccommodation) => [
                         'invoice' => $invoice,
-                        'invoice_facility' => $invoiceFacility,
-                        'admission' => $invoiceFacility->patientAdmission,
+                        'invoice_accommodation' => $invoiceAccommodation,
+                        'admission' => $invoiceAccommodation->patientAdmission,
                     ]
                 )
             )
@@ -542,7 +542,7 @@ class InvoiceRepository
         return $this->refundService->getDischargeCalculation(
             $item['invoice'],
             $item['admission'],
-            $item['invoice_facility']
+            $item['invoice_accommodation']
         );
     }
 
@@ -555,7 +555,7 @@ class InvoiceRepository
             ?->schedule
             ?->patient
             ??
-            $invoice->invoiceFacility
+            $invoice->invoiceAccommodation
             ->first()
             ?->patientAdmission
             ?->patient;
@@ -570,7 +570,7 @@ class InvoiceRepository
             $category[] = 'Homecare';
         }
 
-        if ($invoice->invoiceFacility->isNotEmpty()) {
+        if ($invoice->invoiceAccommodation->isNotEmpty()) {
             $category[] = 'Facility';
         }
 
@@ -743,7 +743,7 @@ class InvoiceRepository
                 fn($p) =>
                 $p->where('uuid', $patientUuid)
             )->orWhereHas(
-                'invoiceFacility.patientAdmission.patient',
+                'invoiceAccommodation.patientAdmission.patient',
                 fn($p) =>
                 $p->where('uuid', $patientUuid)
             );

@@ -5,7 +5,7 @@ namespace App\Service;
 use App\Models\Branch;
 use App\Models\Invoice;
 use App\Models\InvoiceAdjustment;
-use App\Models\InvoiceFacility;
+use App\Models\InvoiceAccommodation;
 use App\Models\PatientAdmission;
 use App\Models\Refund;
 use App\Utils\MaskUtil;
@@ -73,7 +73,7 @@ class RefundService
     public function getCancellationRefundAmount(
         Invoice $invoice,
         PatientAdmission $admission,
-        InvoiceFacility $invoiceFacility
+        InvoiceAccommodation $invoiceAccommodation
     ): float {
         $paid = $this->getNetPaidAmount($invoice);
 
@@ -100,14 +100,14 @@ class RefundService
             return round(max(0, $paid - $retain), 2);
         }
 
-        $contract = $invoiceFacility->branchContract;
+        $contract = $invoiceAccommodation->branchContract;
         $billingCycle = $contract ? $this->getBillingCycle($contract) : '';
 
         if ($billingCycle === 'YEARLY' && $days < self::YEARLY_HALF_REFUND_WINDOW_DAYS) {
             $half = round($paid / 2, 2);
 
             $daysStayedAmount = round(
-                ($days / 365) * (float) $invoiceFacility->price,
+                ($days / 365) * (float) $invoiceAccommodation->price,
                 2
             );
 
@@ -117,9 +117,9 @@ class RefundService
         return 0;
     }
 
-    public function getRequiredPaymentAmount(InvoiceFacility $invoiceFacility,  PatientAdmission $admission)
+    public function getRequiredPaymentAmount(InvoiceAccommodation $invoiceAccommodation,  PatientAdmission $admission)
     {
-        $contract = $invoiceFacility->branchContract;
+        $contract = $invoiceAccommodation->branchContract;
 
         if (!$contract) {
             return 0;
@@ -155,12 +155,12 @@ class RefundService
         return 0;
     }
 
-    public function validateRequiredPayment(Invoice $invoice,  InvoiceFacility $invoiceFacility, PatientAdmission $admission)
+    public function validateRequiredPayment(Invoice $invoice,  InvoiceAccommodation $invoiceAccommodation, PatientAdmission $admission)
     {
         $paid = $this->getNetPaidAmount($invoice);
 
         $required = $this->getRequiredPaymentAmount(
-            $invoiceFacility,
+            $invoiceAccommodation,
             $admission
         );
 
@@ -174,17 +174,17 @@ class RefundService
         }
     }
 
-    public function hasRequiredPayment(Invoice $invoice, InvoiceFacility $invoiceFacility, PatientAdmission $admission)
+    public function hasRequiredPayment(Invoice $invoice, InvoiceAccommodation $invoiceAccommodation, PatientAdmission $admission)
     {
-        return $this->getNetPaidAmount($invoice) >= $this->getRequiredPaymentAmount($invoiceFacility, $admission);
+        return $this->getNetPaidAmount($invoice) >= $this->getRequiredPaymentAmount($invoiceAccommodation, $admission);
     }
 
-    public function createRefundCurrentInvoice(Invoice $invoice,    PatientAdmission $admission,  InvoiceFacility $invoiceFacility)
+    public function createRefundCurrentInvoice(Invoice $invoice,    PatientAdmission $admission,  InvoiceAccommodation $invoiceAccommodation)
     {
         $calculation = $this->getDischargeCalculation(
             $invoice,
             $admission,
-            $invoiceFacility
+            $invoiceAccommodation
         );
 
         if (!$calculation['eligible_for_refund']) {
@@ -408,9 +408,9 @@ class RefundService
         );
     }
 
-    public function getDischargeCalculation(Invoice $invoice,  PatientAdmission $admission,  InvoiceFacility $invoiceFacility)
+    public function getDischargeCalculation(Invoice $invoice,  PatientAdmission $admission,  InvoiceAccommodation $invoiceAccommodation)
     {
-        $contract = $invoiceFacility->branchContract;
+        $contract = $invoiceAccommodation->branchContract;
 
         $admissionDate = $admission->admitted_at
             ? Carbon::parse($admission->admitted_at)
@@ -446,7 +446,7 @@ class RefundService
             $terminationFeeAmount = round($paid * $rate, 2);
             $refundAmount = round(max(0, $paid - $terminationFeeAmount), 2);
         } elseif ($withinYearlyHalfWindow) {
-            $feeBaseAmount = (float) $invoiceFacility->price;
+            $feeBaseAmount = (float) $invoiceAccommodation->price;
             $half = round($feeBaseAmount / 2, 2);
             $daysStayedAmount = round(($days / 365) * $feeBaseAmount, 2);
             $refundAmount = round(max(0, min($paid, $half - $daysStayedAmount)), 2);

@@ -35,8 +35,8 @@ class PatientRepository
                 'currentAdmission.bed.room',
                 // 'currentAdmission.admissionContract',
                 'currentAdmission.invoiceAdmission.branchContract',
-                'currentAdmission.currentInvoiceFacility.branchContract',
-                'currentAdmission.currentInvoiceFacility.invoice',
+                'currentAdmission.currentInvoiceAccommodation.branchContract',
+                'currentAdmission.currentInvoiceAccommodation.invoice',
                 'latestAdmission.bed.room',
                 // 'latestAdmission.admissionContract',
                 'latestAdmission.invoiceAdmission.branchContract',
@@ -71,12 +71,12 @@ class PatientRepository
             },
             'admissions.bed.room',
             // 'admissions.admissionContract',
-            'admissions.currentInvoiceFacility.branchContract',
-            'admissions.currentInvoiceFacility.invoice',
+            'admissions.currentInvoiceAccommodation.branchContract',
+            'admissions.currentInvoiceAccommodation.invoice',
             'currentAdmission.bed.room',
             // 'currentAdmission.admissionContract',
-            'currentAdmission.currentInvoiceFacility.branchContract',
-            'currentAdmission.currentInvoiceFacility.invoice',
+            'currentAdmission.currentInvoiceAccommodation.branchContract',
+            'currentAdmission.currentInvoiceAccommodation.invoice',
             'latestAdmission.bed.room',
             // 'latestAdmission.admissionContract',
             'schedules.location',
@@ -132,9 +132,9 @@ class PatientRepository
             'admissions.invoiceAdmission.invoice',
             'admissions.invoiceAdmission.invoice.payments.refunds',
 
-            'admissions.currentInvoiceFacility.branchContract',
-            'admissions.currentInvoiceFacility.invoice',
-            'admissions.currentInvoiceFacility.invoice.payments.refunds',
+            'admissions.currentInvoiceAccommodation.branchContract',
+            'admissions.currentInvoiceAccommodation.invoice',
+            'admissions.currentInvoiceAccommodation.invoice.payments.refunds',
 
             'currentAdmission.bed.room',
 
@@ -142,9 +142,9 @@ class PatientRepository
             'currentAdmission.invoiceAdmission.invoice',
             'currentAdmission.invoiceAdmission.invoice.payments.refunds',
 
-            'currentAdmission.currentInvoiceFacility.branchContract',
-            'currentAdmission.currentInvoiceFacility.invoice',
-            'currentAdmission.currentInvoiceFacility.invoice.payments.refunds',
+            'currentAdmission.currentInvoiceAccommodation.branchContract',
+            'currentAdmission.currentInvoiceAccommodation.invoice',
+            'currentAdmission.currentInvoiceAccommodation.invoice.payments.refunds',
 
             'latestAdmission.bed.room',
 
@@ -152,9 +152,9 @@ class PatientRepository
             'latestAdmission.invoiceAdmission.invoice',
             'latestAdmission.invoiceAdmission.invoice.payments.refunds',
 
-            'latestAdmission.currentInvoiceFacility.branchContract',
-            'latestAdmission.currentInvoiceFacility.invoice',
-            'latestAdmission.currentInvoiceFacility.invoice.payments.refunds',
+            'latestAdmission.currentInvoiceAccommodation.branchContract',
+            'latestAdmission.currentInvoiceAccommodation.invoice',
+            'latestAdmission.currentInvoiceAccommodation.invoice.payments.refunds',
 
             'schedules.location',
             'schedules.scheduleServices.service',

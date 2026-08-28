@@ -211,11 +211,11 @@ class InvoiceService
     private function resolvePatient(Invoice $invoice): ?Patient
     {
         $invoice->loadMissing([
-            'invoiceFacility.patientAdmission.patient',
+            'invoiceAccommodation.patientAdmission.patient',
             'invoiceServices.scheduleService.schedule.patient',
         ]);
 
-        $patient = $invoice->invoiceFacility
+        $patient = $invoice->invoiceAccommodation
             ->first()?->patientAdmission?->patient;
 
         if ($patient) {
