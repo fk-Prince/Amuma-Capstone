@@ -546,6 +546,7 @@ import type { RoomContract, Reserved } from "~/types/contract";
 import type { Bed } from "~/types/bed";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import { toLocalDateString } from "~/utils/time";
+import { formatCurrency } from "~/utils/currency";
 
 type ApiBed = Bed;
 type ApiRoom = Room;
@@ -755,7 +756,7 @@ function formatPrice(type: string | null | undefined) {
 
     if (!contract) return "N/A";
 
-    return `₱${contract.price.toLocaleString("en-PH")}`;
+    return formatCurrency(contract.price);
 }
 
 function roomsFor(type: string): ApiRoom[] {

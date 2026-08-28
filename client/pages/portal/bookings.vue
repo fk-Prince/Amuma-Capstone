@@ -18,6 +18,7 @@ import Pagination from "~/components/ui/Pagination.vue";
 import PatientDetails from "~/components/sections/app/Booking/PatientDetails.vue";
 import GuardianAssessmentDetails from "~/components/sections/app/Booking/GuardianAssessmentDetails.vue";
 import { patientAccessService } from "../../api/patient-access/PatientAccessService";
+import { formatCurrency } from "~/utils/currency";
 import type { BookingRetrieve } from "~/types/booking";
 import { fullName } from "~/utils/user";
 
@@ -50,16 +51,7 @@ function toggleExpanded(bookingId: number) {
 }
 
 function formatMoney(value: number | string | null | undefined) {
-    if (value === null || value === undefined || value === "") return "—";
-
-    const amount = Number(value);
-
-    if (Number.isNaN(amount)) return "—";
-
-    return `₱${amount.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    })}`;
+    return formatCurrency(value);
 }
 
 function statusConfig(status: string) {

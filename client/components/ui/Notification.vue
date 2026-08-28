@@ -1,6 +1,7 @@
 <template>
     <div v-if="isMounted" class="relative" ref="dropdownRef">
         <button
+            ref="buttonRef"
             @click="toggle"
             class="relative w-[38px] h-[38px] flex items-center justify-center rounded-lg hover:bg-gray-50 text-gray-500"
         >
@@ -37,7 +38,8 @@
         >
             <div
                 v-if="open"
-                class="absolute right-0 mt-2 w-[360px] bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
+                class="fixed bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
+                :style="dropdownStyle"
             >
                 <div
                     class="flex items-center justify-between px-4 py-3 border-b border-gray-100"
@@ -88,7 +90,9 @@
                             <p class="text-xs text-gray-500 truncate">
                                 {{ notif.message }}
                             </p>
-                            <p class="text-[11px] text-gray-400 mt-0.5">
+                            <p
+                                class="text-[11px] text-gray-400 mt-0.5 capitalize"
+                            >
                                 {{ notifcationFormatDate(notif.created_at) }}
                             </p>
                         </div>
@@ -115,7 +119,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import {
+    ref,
+    computed,
+    nextTick,
+    onMounted,
+    onBeforeUnmount,
+    watch,
+} from "vue";
 import { onClickOutside } from "@vueuse/core";
 import { notificationService } from "~/api/notification/NotificationService";
 import type { Notification } from "~/types/notification";
@@ -131,16 +142,60 @@ const { $echo } = useNuxtApp();
 const isMounted = ref(false);
 const open = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
+const buttonRef = ref<HTMLElement | null>(null);
+const dropdownStyle = ref<Record<string, string>>({});
 
 const notifications = ref<Notification[]>([]);
 
 let channel: any = null;
+let handler: ((e: any) => void) | null = null;
 
 const unreadCount = computed(
     () => notifications.value.filter((n) => n.unread).length,
 );
 
-const toggle = () => (open.value = !open.value);
+const DROPDOWN_MARGIN = 16;
+const DROPDOWN_MAX_WIDTH = 360;
+
+function updatePosition() {
+    const btn = buttonRef.value;
+    if (!btn) return;
+
+    const rect = btn.getBoundingClientRect();
+    const width = Math.min(
+        DROPDOWN_MAX_WIDTH,
+        window.innerWidth - DROPDOWN_MARGIN * 2,
+    );
+
+    const maxLeft = window.innerWidth - DROPDOWN_MARGIN - width;
+    const left = Math.min(
+        Math.max(rect.right - width, DROPDOWN_MARGIN),
+        maxLeft,
+    );
+
+    dropdownStyle.value = {
+        top: `${rect.bottom + 8}px`,
+        left: `${left}px`,
+        width: `${width}px`,
+    };
+}
+
+const toggle = async () => {
+    open.value = !open.value;
+
+    if (open.value) {
+        await nextTick();
+        updatePosition();
+    }
+};
+
+watch(open, (isOpen) => {
+    if (isOpen) {
+        window.addEventListener("resize", updatePosition);
+    } else {
+        window.removeEventListener("resize", updatePosition);
+    }
+});
 
 const markRead = async (id: number) => {
     const n = notifications.value.find((n) => n.id === id);
@@ -198,29 +253,30 @@ const bindChannel = (branchUuid?: string) => {
 
     if (!uuid || !$echo) return;
 
-    if (channel) {
-        channel.stopListening(".NotificationEvent");
-        $echo.leave(`private-Notification.${uuid}`);
+    if (channel && handler) {
+        channel.stopListening(".NotificationEvent", handler);
         channel = null;
     }
 
+    handler = (e: any) => {
+        if (branchUuid && e.branch_uuid !== branchUuid) return;
+
+        announce({
+            id: Date.now(),
+            uuid: generateId(),
+            message: e.message,
+            message_type: e.message_type,
+            created_at: new Date().toISOString(),
+            unread: true,
+            icon: "ti-bell",
+            bg: "#EAF4F2",
+            color: "#0E7C7B",
+        });
+    };
+
     channel = $echo
         .private(`Notification.${uuid}`)
-        .listen(".NotificationEvent", (e: any) => {
-            if (branchUuid && e.branch_uuid !== branchUuid) return;
-
-            announce({
-                id: Date.now(),
-                uuid: generateId(),
-                message: e.message,
-                message_type: e.message_type,
-                created_at: new Date().toISOString(),
-                unread: true,
-                icon: "ti-bell",
-                bg: "#EAF4F2",
-                color: "#0E7C7B",
-            });
-        });
+        .listen(".NotificationEvent", handler);
 };
 
 const currentBranchUuid = () => {
@@ -228,32 +284,6 @@ const currentBranchUuid = () => {
     const uuid = Array.isArray(value) ? value[0] : value;
 
     return (uuid as string | undefined) || undefined;
-};
-
-const POLL_MS = 15000;
-let poll: ReturnType<typeof setInterval> | null = null;
-
-const refresh = async () => {
-    const known = new Set(notifications.value.map((n) => n.id));
-
-    try {
-        const res = await notificationService.list({
-            per_page: 4,
-            branch_uuid: currentBranchUuid(),
-        });
-
-        const rows: Notification[] = Array.isArray(res?.data) ? res.data : [];
-
-        const fresh = rows.filter((n) => n.unread && !known.has(n.id));
-
-        notifications.value = rows;
-
-        if (known.size) {
-            fresh.forEach((n) => info("New Notification", n.message));
-        }
-    } catch (err) {
-        console.error(err);
-    }
 };
 
 watch(
@@ -269,26 +299,13 @@ function generateId(): string {
 }
 onMounted(() => {
     isMounted.value = true;
-
-    poll = setInterval(refresh, POLL_MS);
-
-    // Catch up immediately on returning to the tab rather than waiting out
-    // the interval.
-    document.addEventListener("visibilitychange", onVisible);
 });
 
-const onVisible = () => {
-    if (document.visibilityState === "visible") refresh();
-};
-
 onBeforeUnmount(() => {
-    if (poll) clearInterval(poll);
+    window.removeEventListener("resize", updatePosition);
 
-    document.removeEventListener("visibilitychange", onVisible);
-
-    if (channel && $echo) {
-        channel.stopListening(".NotificationEvent");
-        $echo.leave(`Notification.${user.value?.uuid}`);
+    if (channel && handler) {
+        channel.stopListening(".NotificationEvent", handler);
     }
 });
 </script>

@@ -96,7 +96,7 @@ export const employeeSchema = z.object({
     phone_number: z
         .string()
         .min(1, "Phone number is required")
-        .regex(/^[0-9+\-\s()]{7,20}$/, "Enter a valid phone number"),
+        .regex(/^[0-9\-\s()]{7,20}$/, "Enter a valid phone number"),
     email: z
         .string()
         .min(1, "Email is required")

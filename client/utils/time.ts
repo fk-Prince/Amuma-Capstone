@@ -1,23 +1,23 @@
 import type { BranchRetrieve } from "~/types/branch";
 
-// GENERATE 00:00 to 00:00
+function minutesToHHMM(totalMinutes: number): string {
+    const hour = Math.floor(totalMinutes / 60) % 24;
+    const minute = totalMinutes % 60;
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+// GENERATE 00:00 to 23:00
 export function generate24HourTimes(stepMinutes = 60): string[] {
     const times: string[] = [];
 
     for (let totalMinutes = 0; totalMinutes < 24 * 60; totalMinutes += stepMinutes) {
-        const hour = Math.floor(totalMinutes / 60);
-        const minutes = totalMinutes % 60;
-
-        const hStr = String(hour).padStart(2, "0");
-        const mStr = String(minutes).padStart(2, "0");
-
-        times.push(`${hStr}:${mStr}`);
+        times.push(minutesToHHMM(totalMinutes));
     }
 
     return times;
 }
 
-//TIME ZONE
+// TIME ZONE
 export function getTimeZone() {
     return [
         { label: 'Asia / Manila', value: 'Asia/Manila' },
@@ -25,18 +25,6 @@ export function getTimeZone() {
 }
 
 // FORMAT 00:00 to AM : PM
-// export function format24To12(time: string | undefined | null) {
-//     if (!time) return "";
-
-//     const [hourStr, minute] = time.split(":");
-//     let hour = Number(hourStr);
-
-//     const ampm = hour >= 12 ? "PM" : "AM";
-//     hour = hour % 12 || 12;
-
-//     return `${hour}:${minute} ${ampm}`;
-// }
-
 export function format24To12(time: string | undefined | null) {
     if (!time) return "";
 
@@ -54,7 +42,78 @@ export function format24To12(time: string | undefined | null) {
     return `${String(hour).padStart(2, "0")}:${minute} ${ampm}`;
 }
 
-// DISPLAY TIME 
+// GENERATE {label, value} PAIRS FOR EVERY STEP IN A DAY
+export function generateAmPmTimes(stepMinutes = 60): { label: string; value: string }[] {
+    return generate24HourTimes(stepMinutes).map((value) => ({
+        value,
+        label: format24To12(value),
+    }));
+}
+
+// TIMESPAN BUT REMOVE THE PAST TIME
+export function generateAvailableAmPmTimes(
+    selectedDate: string,
+    stepMinutes = 60,
+    now: Date = new Date(),
+) {
+    const times = generateAmPmTimes(stepMinutes);
+
+    if (!selectedDate) return times;
+
+    const isToday = selectedDate === getLocalDateStr(now);
+
+    if (!isToday) return times;
+
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    return times.filter((time) => {
+        const [hour = 0, minute = 0] = time.value.split(":").map(Number);
+        return hour * 60 + minute > currentMinutes;
+    });
+}
+
+// SAME BRANCH OPEN/CLOSE 00:00 - 00:00
+export function generateAvailableAmPmTimesBySchedule(
+    openingTime: string,
+    closingTime: string,
+    selectedDate: string,
+    stepMinutes = 60,
+    now: Date = new Date(),
+) {
+    let openingMinutes = 0;
+    let closingMinutes = 24 * 60;
+
+    // Not 24 hours
+    if (!(openingTime === "00:00" && closingTime === "00:00")) {
+        const [openHour = 0, openMinute = 0] = openingTime.split(":").map(Number);
+        const [closeHour = 0, closeMinute = 0] = closingTime.split(":").map(Number);
+
+        openingMinutes = openHour * 60 + openMinute;
+        closingMinutes = closeHour * 60 + closeMinute;
+    }
+
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const isToday = selectedDate === getLocalDateStr(now);
+
+    const times: { label: string; value: string }[] = [];
+
+    for (
+        let totalMinutes = openingMinutes;
+        totalMinutes < closingMinutes;
+        totalMinutes += stepMinutes
+    ) {
+        if (isToday && totalMinutes <= currentMinutes) {
+            continue;
+        }
+
+        const value = minutesToHHMM(totalMinutes);
+        times.push({ value, label: format24To12(value) });
+    }
+
+    return times;
+}
+
+// DISPLAY TIME
 export function getBranchTimeDisplay(
     availability: BranchRetrieve["settings"] | undefined
 ): {
@@ -106,9 +165,6 @@ export function getBranchTimeDisplay(
     };
 }
 
-
-
-
 // FOR TIME 00:00 - 23:59
 export const parseHourString = (t: string | null | undefined,): number => {
     if (!t) return 0;
@@ -116,42 +172,7 @@ export const parseHourString = (t: string | null | undefined,): number => {
     return Number(h) + Number(m) / 60;
 };
 
-// GENERATE TIME SLOTS 
-// export const getTimeSlots = (
-//     openingTime: string | null | undefined,
-//     closingTime: string | null | undefined,
-//     slotLengthHours: number,
-// ) => {
-//     let openingHour = parseHourString(openingTime);
-//     let closingHour = parseHourString(closingTime);
-
-
-//     if (openingTime === "00:00" && closingTime === "00:00") {
-//         openingHour = 0;
-//         closingHour = 24;
-//     }
-//     const slots = [];
-
-//     for (
-//         let h = openingHour;
-//         h + slotLengthHours <= closingHour;
-//         h += slotLengthHours
-//     ) {
-
-//         const end = h + slotLengthHours;
-//         const displayEnd = end === 24 ? 23.9833 : end;
-//         const displayStart = h === 0 ? 0 : h;
-//         slots.push({
-//             value: `${formatHour(displayStart)} - ${formatHour(displayEnd)}`,
-//             label: `${formatHour(displayStart)} - ${formatHour(displayEnd)}`,
-//             start: h,
-//             end,
-//         });
-//     }
-
-//     return slots;
-// };
-
+// GENERATE TIME SLOTS
 export const getTimeSlots = (
     openingTime: string | null | undefined,
     closingTime: string | null | undefined,
@@ -185,6 +206,7 @@ export const getTimeSlots = (
 
     return slots;
 };
+
 export const formatHour1 = (hours: number): string => {
     const h = Math.floor(hours);
     const m = Math.round((hours - h) * 60);
@@ -199,11 +221,9 @@ export const formatHour = (hours: number): string => {
     const h = Math.floor(hours);
     const m = Math.round((hours - h) * 60);
 
-
     if (h === 0) {
         return `00:${String(m).padStart(2, "0")} AM`;
     }
-
 
     const period = h >= 12 ? "PM" : "AM";
     const hour12 = h % 12 || 12;
@@ -211,43 +231,22 @@ export const formatHour = (hours: number): string => {
     return `${String(hour12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${period}`;
 };
 
-
-
-// GENERATE TIMESLOT PER DATE
-// export const filterAvailableSlots = (
-//     slots: any[],
-//     selectedDate: string,
-//     now: Date = new Date(),
-// ): any[] => {
-//     if (!selectedDate) return slots;
-
-//     const isToday = selectedDate === getLocalDateStr(now);
-//     if (!isToday) return slots;
-
-//     const currentHour = now.getHours() + now.getMinutes() / 60;
-
-//     return slots.filter((slot) => slot.start > currentHour);
-// };
-
 // GENERATE TIMESLOT PER DATE
 export const filterAvailableSlots = (
     slots: any[],
     selectedDate: string,
     now: Date = new Date(),
 ): any[] => {
-
     if (!selectedDate) return slots;
+
     const isToday = selectedDate === getLocalDateStr(now);
-    const today = getLocalDateStr(now);
     if (!isToday) return slots;
+
     const currentHour = now.getHours() + now.getMinutes() / 60;
     return slots.filter((slot) => slot.start > currentHour);
 };
 
-
-
-
-//TIME CONVERTER 00:30:00 TO 30 || 30 TO 00:30:00
+// TIME CONVERTER 00:30:00 TO 30 || 30 TO 00:30:00
 export const timeConverter = (
     value: string | number,
     to: "minutes" | "time",
@@ -281,8 +280,6 @@ export const timeConverter = (
     return hours * 60 + minutes + Math.floor(seconds / 60);
 };
 
-
-
 export const getLocalDateStr = (d: Date): string => {
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -290,17 +287,6 @@ export const getLocalDateStr = (d: Date): string => {
     return `${year}-${month}-${day}`;
 };
 
-
-
-
-
-
-
-
-// ----------------- FINAL // 
-
-
-// RESULT 2026-07-31
 export function toLocalDateString(d: Date) {
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -339,17 +325,9 @@ export const stringToDateTime = (
     }).format(new Date(date));
 };
 
-
 // RESULT 18:45 -> 6:45 PM
 export function formatTime(time?: string | number | null): string {
     if (!time) return "";
-
-    // return new Date(`1970-01-01T${time}`).toLocaleTimeString(undefined, {
-    //     hour: "numeric",
-    //     minute: "2-digit",
-    //     hour12: true,
-    // });
-
 
     const timeString =
         typeof time === "number"
@@ -366,13 +344,9 @@ export function formatTime(time?: string | number | null): string {
     );
 }
 
-
 // RESULT 00:00 AM ── 11:59 PM
 export function formatHourLabel(hour24: number): string {
     const minutes = hour24 === 23 ? 59 : 0;
-    // if (hour24 === 0 || hour24 === 24) {
-    //     return "00:00 AM";
-    // }
     const date = new Date(1970, 0, 1, hour24, minutes);
     return date.toLocaleTimeString(undefined, {
         hour: "numeric",

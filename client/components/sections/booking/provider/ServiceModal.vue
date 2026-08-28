@@ -83,9 +83,8 @@
                         class="flex items-center justify-between border-b border-primary/10 bg-primary/5 px-6 py-2"
                     >
                         <p class="text-xs font-medium text-primary">
-                            1 service selected · ₱{{
-                                Number(selectedService.price).toFixed(2)
-                            }}
+                            1 service selected ·
+                            {{ formatCurrency(selectedService.price) }}
                         </p>
 
                         <button
@@ -180,7 +179,7 @@
                                 <div
                                     class="whitespace-nowrap pl-3 text-sm font-semibold text-primary"
                                 >
-                                    ₱{{ Number(service.price).toFixed(2) }}
+                                    {{ formatCurrency(service.price) }}
                                 </div>
                             </label>
                         </div>
@@ -195,7 +194,7 @@
                             </p>
 
                             <p class="text-base font-semibold text-gray-900">
-                                ₱{{ selectedTotal.toFixed(2) }}
+                                {{ formatCurrency(selectedTotal) }}
                             </p>
                         </div>
 
@@ -230,6 +229,7 @@ import { Check, PackageSearch, Search, X } from "lucide-vue-next";
 import type { Service } from "~/types/service";
 import type { BookedService } from "~/types/booking";
 import Combobox from "~/components/ui/Combobox.vue";
+import { formatCurrency } from "~/utils/currency";
 
 const props = withDefaults(
     defineProps<{

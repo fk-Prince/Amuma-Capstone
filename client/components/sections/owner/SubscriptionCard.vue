@@ -321,7 +321,7 @@
 
             <div class="flex items-center gap-2 text-[11px]">
                 <span class="font-semibold text-secondary">
-                    ₱{{ latestPayment.price.toLocaleString() }}
+                    {{ formatCurrency(latestPayment.price) }}
                 </span>
 
                 <span
@@ -398,6 +398,7 @@
 
 <script setup lang="ts">
 import DocumentLink from "~/components/ui/DocumentLink.vue";
+import { formatCurrency } from "~/utils/currency";
 import type { SubscriptionPaymentRecord } from "~/types/subscription";
 
 interface SubscriptionCardData {

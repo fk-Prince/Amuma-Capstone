@@ -53,6 +53,20 @@ export default defineNuxtPlugin(() => {
         },
     })
 
+    // Subscription failures are otherwise silent: the socket just never
+    // delivers and the UI looks like it simply is not updating.
+    if (import.meta.dev) {
+        const connection = (echo as any).connector?.pusher?.connection
+
+        connection?.bind('state_change', (states: any) => {
+            console.info('[echo] connection', states.previous, '->', states.current)
+        })
+
+        connection?.bind('error', (err: any) => {
+            console.error('[echo] connection error', err)
+        })
+    }
+
     return {
         provide: {
             echo,

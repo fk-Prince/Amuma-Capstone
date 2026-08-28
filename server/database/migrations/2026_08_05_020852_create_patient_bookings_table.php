@@ -19,8 +19,6 @@ return new class extends Migration
                 ->constrained('bookings', 'booking_id')
                 ->cascadeOnDelete();
 
-
-
             $table->foreignId('invoice_id')
                 ->nullable()
                 ->constrained('invoices', 'invoice_id')

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
 import {
     CheckCircle,
     Loader,
@@ -7,6 +7,8 @@ import {
     Info,
     CalendarDays,
     MapPin,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-vue-next";
 import { patientAccessService } from "../../api/patient-access/PatientAccessService";
 import { useSchedule } from "~/composables/useSchedule";
@@ -38,6 +40,56 @@ const isLoading = ref(true);
 const loadError = ref<string | null>(null);
 const lovedOnes = ref<LovedOne[]>([]);
 const selectedIndex = ref(0);
+
+const lovedOnesScrollRef = ref<HTMLElement | null>(null);
+const canScrollLovedOnesLeft = ref(false);
+const canScrollLovedOnesRight = ref(false);
+
+function updateLovedOnesScrollState() {
+    const el = lovedOnesScrollRef.value;
+
+    if (!el) {
+        canScrollLovedOnesLeft.value = false;
+        canScrollLovedOnesRight.value = false;
+        return;
+    }
+
+    canScrollLovedOnesLeft.value = el.scrollLeft > 4;
+    canScrollLovedOnesRight.value =
+        el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+}
+
+function scrollLovedOnes(direction: 1 | -1) {
+    lovedOnesScrollRef.value?.scrollBy({
+        left: direction * 240,
+        behavior: "smooth",
+    });
+}
+
+const dayChipsScrollRef = ref<HTMLElement | null>(null);
+const canScrollDaysLeft = ref(false);
+const canScrollDaysRight = ref(false);
+
+function updateDayChipsScrollState() {
+    const el = dayChipsScrollRef.value;
+
+    if (!el) {
+        canScrollDaysLeft.value = false;
+        canScrollDaysRight.value = false;
+        return;
+    }
+
+    canScrollDaysLeft.value = el.scrollLeft > 4;
+    canScrollDaysRight.value =
+        el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+}
+
+function scrollDays(direction: 1 | -1) {
+    dayChipsScrollRef.value?.scrollBy({
+        left: direction * 180,
+        behavior: "smooth",
+    });
+}
 
 const activeScheduleType = ref<"adl" | "medical">("adl");
 const scheduleLogs = ref<ScheduleItem[]>([]);
@@ -328,9 +380,30 @@ async function initialLoad() {
     if (lovedOnes.value.length) {
         await Promise.all([loadPatientSchedule(), loadScheduleLogs()]);
     }
+
+    await nextTick();
+    updateLovedOnesScrollState();
+    updateDayChipsScrollState();
 }
 
-onMounted(initialLoad);
+watch(dayChips, async () => {
+    await nextTick();
+    updateDayChipsScrollState();
+});
+
+function updateAllScrollStates() {
+    updateLovedOnesScrollState();
+    updateDayChipsScrollState();
+}
+
+onMounted(() => {
+    initialLoad();
+    window.addEventListener("resize", updateAllScrollStates);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener("resize", updateAllScrollStates);
+});
 </script>
 
 <template>
@@ -490,10 +563,22 @@ onMounted(initialLoad);
                     </div>
                 </div>
 
-                <div
-                    v-if="lovedOnes.length"
-                    class="flex gap-3 overflow-x-auto p-4 no-scrollbar"
-                >
+                <div v-if="lovedOnes.length" class="relative">
+                    <button
+                        v-if="canScrollLovedOnesLeft"
+                        type="button"
+                        aria-label="Scroll left"
+                        class="absolute left-1 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-500 shadow-md transition hover:bg-gray-50"
+                        @click="scrollLovedOnes(-1)"
+                    >
+                        <ChevronLeft class="h-4 w-4" />
+                    </button>
+
+                    <div
+                        ref="lovedOnesScrollRef"
+                        class="flex gap-3 overflow-x-auto scroll-smooth p-4 scrollbar-none"
+                        @scroll="updateLovedOnesScrollState"
+                    >
                     <button
                         v-for="(lo, idx) in lovedOnes"
                         :key="lo.patient_id"
@@ -564,6 +649,17 @@ onMounted(initialLoad);
                                 }}
                             </span>
                         </span>
+                    </button>
+                    </div>
+
+                    <button
+                        v-if="canScrollLovedOnesRight"
+                        type="button"
+                        aria-label="Scroll right"
+                        class="absolute right-1 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-500 shadow-md transition hover:bg-gray-50"
+                        @click="scrollLovedOnes(1)"
+                    >
+                        <ChevronRight class="h-4 w-4" />
                     </button>
                 </div>
             </section>
@@ -722,10 +818,22 @@ onMounted(initialLoad);
                     </div>
 
                     <div class="border-b border-gray-100 px-5 py-4">
-                        <div
-                            v-if="dayChips.length"
-                            class="flex gap-2 overflow-x-auto pb-1 no-scrollbar"
-                        >
+                        <div v-if="dayChips.length" class="relative">
+                            <button
+                                v-if="canScrollDaysLeft"
+                                type="button"
+                                aria-label="Scroll left"
+                                class="absolute left-0 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-500 shadow-md transition hover:bg-gray-50"
+                                @click="scrollDays(-1)"
+                            >
+                                <ChevronLeft class="h-3.5 w-3.5" />
+                            </button>
+
+                            <div
+                                ref="dayChipsScrollRef"
+                                class="flex gap-2 overflow-x-auto scroll-smooth pb-1 scrollbar-none"
+                                @scroll="updateDayChipsScrollState"
+                            >
                             <button
                                 v-for="day in dayChips"
                                 :key="day.iso"
@@ -758,6 +866,17 @@ onMounted(initialLoad);
                                 >
                                     {{ day.month }}
                                 </span>
+                            </button>
+                            </div>
+
+                            <button
+                                v-if="canScrollDaysRight"
+                                type="button"
+                                aria-label="Scroll right"
+                                class="absolute right-0 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-500 shadow-md transition hover:bg-gray-50"
+                                @click="scrollDays(1)"
+                            >
+                                <ChevronRight class="h-3.5 w-3.5" />
                             </button>
                         </div>
 

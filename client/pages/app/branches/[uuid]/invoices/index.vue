@@ -194,6 +194,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import DataTable, { type DataTableColumn } from "~/components/ui/DataTable.vue";
+import { formatAmount } from "~/utils/currency";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import InvoiceOverview from "~/components/sections/app/Billing/InvoiceOverview.vue";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
@@ -372,9 +373,7 @@ function totalRefunded(row: PatientSummaryRow) {
 }
 
 function formatMoney(amount: number | string | null | undefined) {
-    return Number(amount ?? 0).toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-    });
+    return formatAmount(amount, { treatMissingAsZero: true });
 }
 
 function formatDateTime(value: string | null | undefined) {

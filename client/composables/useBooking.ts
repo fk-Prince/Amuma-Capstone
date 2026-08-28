@@ -1,6 +1,7 @@
 import { ref } from "vue";
 import type { ZodType } from "zod";
 import { Stethoscope, Users } from "lucide-vue-next";
+import { formatCurrency } from "~/utils/currency";
 
 function flattenErrors(fieldErrors: Record<string, string[] | undefined>) {
     return Object.fromEntries(
@@ -66,10 +67,10 @@ export function useMedicalServices(
         const max = Math.max(...prices);
 
         if (min === max) {
-            return `₱${min.toLocaleString()}`;
+            return formatCurrency(min);
         }
 
-        return `₱${min.toLocaleString()} - ₱${max.toLocaleString()}`;
+        return `${formatCurrency(min)} - ${formatCurrency(max)}`;
     });
 
     const medicalDescription = computed(() => {
@@ -167,7 +168,7 @@ export function useMedicalServices(
                     adlDescription ||
                     "Assistance with daily living activities",
                 icon: Users,
-                rateLabel: `₱${adlRate.toLocaleString()} / hour`,
+                rateLabel: `${formatCurrency(adlRate)} / hour`,
                 visible: adlRate > 0,
             },
         ];

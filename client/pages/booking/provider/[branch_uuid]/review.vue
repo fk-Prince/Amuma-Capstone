@@ -160,7 +160,7 @@ useHead({ title: "Review Booking" });
 definePageMeta({
     navVariant: 4,
     navTheme: "dark",
-    middleware: ["auth-client", "booking-review-guard"],
+    middleware: ["auth-client", "prevent-staff-booking", "booking-review-guard"],
 });
 
 const route = useRoute();

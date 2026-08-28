@@ -20,6 +20,7 @@ use App\Http\Controllers\PatientAccessController;
 use App\Http\Controllers\PatientAdmissionController;
 use App\Http\Controllers\PatientActivityController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\RefundController;
@@ -112,6 +113,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/subscriptions-renew',  [SubscriptionController::class, 'renew']);
 
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);
+
+    // MESSAGING (family portal <-> branch staff)
+    Route::get('/messages/conversations', [MessageController::class, 'clientIndex']);
+    Route::get('/messages/branch-conversations', [MessageController::class, 'branchIndex']);
+    Route::get('/messages/staff-conversations', [MessageController::class, 'staffIndex']);
+    Route::get('/messages/colleagues', [MessageController::class, 'colleagues']);
+    Route::post('/messages/open-staff', [MessageController::class, 'openWithStaff']);
+    Route::get('/messages/recipients', [MessageController::class, 'recipients']);
+    Route::post('/messages/open', [MessageController::class, 'openWith']);
+    Route::get('/messages/thread', [MessageController::class, 'thread']);
+    Route::post('/messages', [MessageController::class, 'send']);
 
     Route::get('/users/branches',  [UserController::class, 'getUserBranch']);
     Route::get('/profile',  [UserController::class, 'profile']);

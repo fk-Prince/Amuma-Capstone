@@ -23,6 +23,7 @@ export interface CardDetails {
 import visaIcon from "@/assets/icons/visa.png";
 import gcashIcon from "@/assets/icons/gcash.png";
 import LabelInput from "../ui/BaseInput.vue";
+import { formatAmount } from "~/utils/currency";
 
 type PaymentMethod = "CREDIT-CARD" | "GCASH" | "CASH";
 
@@ -215,11 +216,7 @@ const handleCardPay = () => {
 const cashReceivedInput = ref("");
 const cashError = ref("");
 
-const formatMoney = (value: number) =>
-    value.toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+const formatMoney = (value: number) => formatAmount(value);
 
 const handleCashAmountInput = (value: string | number) => {
     const raw = String(value ?? "");

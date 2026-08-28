@@ -133,6 +133,7 @@ definePageMeta({
     layout: "default",
     navVariant: 4,
     navTheme: "dark",
+    middleware: ["prevent-staff-booking"],
 });
 useHead({ title: "Search Homecare" });
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
+import PhoneInput from "~/components/ui/PhoneInput.vue";
 import {
     employeeAssignmentTypes,
     employeePositions,
@@ -333,7 +334,7 @@ init();
                                     :disabled="isViewMode"
                                     required
                                 />
-                                <BaseInput
+                                <PhoneInput
                                     v-model="employee.phone_number"
                                     label="Phone Number"
                                     required

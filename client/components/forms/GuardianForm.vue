@@ -104,6 +104,7 @@
 import { reactive, computed, onMounted } from "vue";
 import { Lock } from "lucide-vue-next";
 import BaseInput from "@/components/ui/BaseInput.vue";
+import PhoneInput from "@/components/ui/PhoneInput.vue";
 import type { Guardian } from "~/types/patient";
 import type { User } from "~/types/auth";
 defineOptions({
@@ -243,7 +244,7 @@ onMounted(() => {
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <BaseInput
+                <PhoneInput
                     label="Phone Number"
                     :model-value="props.model.phone_number"
                     @update:model-value="update('phone_number', $event)"
@@ -300,6 +301,7 @@ onMounted(() => {
 import { reactive, computed, onMounted } from "vue";
 import { Lock } from "lucide-vue-next";
 import BaseInput from "@/components/ui/BaseInput.vue";
+import PhoneInput from "@/components/ui/PhoneInput.vue";
 import type { Guardian } from "~/types/patient";
 import type { User } from "~/types/auth";
 

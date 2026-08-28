@@ -65,7 +65,10 @@ const branchStore = useBranchStore();
 
 onMounted(async () => {
     if (!branchStore.branches.length) {
-        await branchStore.fetchBranches();
+        const uuidParam = route.params.uuid;
+        await branchStore.fetchBranches(
+            Array.isArray(uuidParam) ? uuidParam[0] : uuidParam,
+        );
     }
     let uuid = branchStore.activeBranch?.uuid ?? branchStore.branches[0]?.uuid;
 

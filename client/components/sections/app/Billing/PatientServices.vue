@@ -110,6 +110,7 @@
 <script setup lang="ts">
 import { Stethoscope } from "lucide-vue-next";
 
+import { formatAmount } from "~/utils/currency";
 import type { InvoiceServiceLine } from "~/types/invoice";
 
 defineProps<{
@@ -117,10 +118,7 @@ defineProps<{
 }>();
 
 function formatMoney(amount: number | string | null | undefined) {
-    return Number(amount ?? 0).toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+    return formatAmount(amount, { treatMissingAsZero: true });
 }
 
 function isAdl(service: InvoiceServiceLine) {

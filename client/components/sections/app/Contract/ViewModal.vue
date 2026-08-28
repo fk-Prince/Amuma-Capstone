@@ -126,11 +126,7 @@
                                         <p
                                             class="text-sm font-bold text-secondary"
                                         >
-                                            ₱{{
-                                                Number(
-                                                    plan.price,
-                                                ).toLocaleString()
-                                            }}
+                                            {{ formatCurrency(plan.price) }}
                                         </p>
 
                                         <button
@@ -173,6 +169,7 @@ import { ref, computed } from "vue";
 import { X, Building2 } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
+import { formatCurrency } from "~/utils/currency";
 
 const props = defineProps<{
     open: boolean;

@@ -442,7 +442,6 @@
                 </div>
             </div> -->
             <div v-if="loading || model.type === 'Complete'" class="space-y-6">
-                <!-- Billing Cycle -->
                 <div>
                     <div class="mb-3">
                         <h3 class="text-sm font-semibold text-slate-900">
@@ -614,13 +613,15 @@
                                         class="mt-0.5 text-lg font-bold text-primary-600"
                                     >
                                         ₱{{
-                                            getFacilityPrice(
-                                                facilityList,
-                                                model.billing_cycle as
-                                                    | "Monthly"
-                                                    | "Yearly",
-                                                room.value,
-                                            ).toLocaleString()
+                                            formatAmount(
+                                                getFacilityPrice(
+                                                    facilityList,
+                                                    model.billing_cycle as
+                                                        | "Monthly"
+                                                        | "Yearly",
+                                                    room.value,
+                                                ),
+                                            )
                                         }}
                                     </p>
                                 </div>
@@ -675,16 +676,21 @@
             </div>
 
             <div v-if="model.type === 'Complete' && !loading" class="max-w-xs">
-                <BaseInput
+                <DatePickerField
                     label="Admission Date"
                     :model-value="model.admission_date"
                     @update:model-value="update('admission_date', $event)"
-                    mode="date"
                     :min="todayStr"
                     :max="maxDateStr"
-                    :error="errors?.admission_date"
+                    placeholder="Select admission date"
                     required
                 />
+                <p
+                    v-if="errors?.admission_date"
+                    class="mt-1.5 text-xs text-red-500"
+                >
+                    {{ errors.admission_date }}
+                </p>
             </div>
         </div>
     </section>
@@ -695,9 +701,10 @@ import { computed, watch } from "vue";
 import type { Component } from "vue";
 import { getLocalDateStr } from "~/utils/time";
 import { getFacilityPrice, getAnnualDiscount } from "~/utils/calculation";
+import { formatAmount } from "~/utils/currency";
 import type { FacilityBooking } from "~/types/booking";
 import type { BranchImage, BranchRetrieve } from "~/types/branch";
-import BaseInput from "~/components/ui/BaseInput.vue";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 import {
     Star,
     CalendarDays,
@@ -869,7 +876,7 @@ function getPrice(plan: "Monthly" | "Yearly") {
     );
 
     const price = Number(facility?.price ?? 0);
-    return isNaN(price) ? "0" : price.toLocaleString();
+    return isNaN(price) ? "0" : formatAmount(price);
 }
 
 watch(

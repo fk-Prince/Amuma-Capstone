@@ -24,11 +24,9 @@ export const createPatientSchema = (
             .string()
             .optional()
             .refine(
-                (val) =>
-                    !val ||
-                    /^(?:\+?\d)(?:[\d\s-]{6,17})$/.test(val),
+                (val) => !val || /^9\d{2}[\s-]?\d{3}[\s-]?\d{4}$/.test(val),
                 {
-                    message: "Enter a valid phone number",
+                    message: "Enter a valid PH mobile number (e.g. 912 345 6789)",
                 },
             ),
         marital_status: z.string().min(1, "Marital status is required"),
@@ -65,21 +63,9 @@ export const guardianSchema = z.object({
         .string()
         .min(1, "Phone number is required")
         .regex(
-            /^(?:\+?\d)(?:[\d\s-]{6,17})$/,
-            "Enter a valid phone number",
+            /^9\d{2}[\s-]?\d{3}[\s-]?\d{4}$/,
+            "Enter a valid PH mobile number (e.g. 912 345 6789)",
         ),
-
-    // phone_number: z
-    //     .string()
-    //     .optional()
-    //     .refine(
-    //         (val) =>
-    //             !val ||
-    //             /^(?:\+63\s?|63|0)9\d{2}\s?\d{3}\s?\d{4}$/.test(val),
-    //         {
-    //             message: "Enter a valid Philippine mobile number",
-    //         },
-    //     ),
     email: z.string().min(1, "Email is required").email("Enter a valid email"),
     relationship: z.string().min(1, "Relationship is required"),
     occupation: z.string().min(1, "Occupation is required"),
@@ -192,7 +178,7 @@ export const patientData = reactive<Patient>({
     citizenship: "vasd",
     occupation: "Engineer",
     date_of_birth: "1995-06-15",
-    phone_number: "+63 912 345 6789",
+    phone_number: "912 345 6789",
     marital_status: "Single",
     height: "175",
     weight: "70",
@@ -206,7 +192,7 @@ export const guardianData = reactive<Guardian>({
     first_name: "Maria",
     middle_name: "Santos",
     last_name: "Cruz",
-    phone_number: "09771171913",
+    phone_number: "977 117 1913",
     email: "maria.cruz@example.com",
     relationship: "Mother",
     occupation: "Engineer",

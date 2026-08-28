@@ -349,11 +349,13 @@
                                     <span
                                         class="font-bold text-lg text-primary whitespace-nowrap"
                                     >
-                                        ₱{{
-                                            checkout.selectedInterval ===
-                                            "yearly"
-                                                ? plan.yearly_price
-                                                : plan.monthly_price
+                                        {{
+                                            formatCurrency(
+                                                checkout.selectedInterval ===
+                                                    "yearly"
+                                                    ? plan.yearly_price
+                                                    : plan.monthly_price,
+                                            )
                                         }}
                                     </span>
                                 </div>
@@ -510,6 +512,7 @@ import { agencySchema } from "~/schema/agency-schema";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { type SubscriptionRequest } from "~/types/subscription";
 import BranchForm from "~/components/forms/BranchForm.vue";
+import { formatCurrency } from "~/utils/currency";
 import AgencyForm from "~/components/forms/AgencyForm.vue";
 import SubcriptionConfigure from "~/components/forms/SubcriptionConfigure.vue";
 const props = defineProps<{

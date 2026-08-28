@@ -41,7 +41,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
 
         branch: {
             name: "AMUMA Davao City",
-            contact_number: "+63 900 000 0000",
+            contact_number: "9000000000",
             image: undefined as any,
             description:
                 "AMUMA Davao City provides compassionate and dependable caregiving services, offering personalized support for daily living, personal care, companionship, and other essential needs.",

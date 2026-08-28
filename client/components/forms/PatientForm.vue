@@ -82,7 +82,7 @@
                     :error="errors?.date_of_birth"
                     required
                 />
-                <BaseInput
+                <PhoneInput
                     label="Phone Number"
                     :model-value="model.phone_number"
                     @update:model-value="update('phone_number', $event)"
@@ -196,6 +196,7 @@
 
 <script setup lang="ts">
 import BaseInput from "../ui/BaseInput.vue";
+import PhoneInput from "../ui/PhoneInput.vue";
 import Combobox from "../ui/Combobox.vue";
 import type { Patient } from "~/types/patient";
 import { getLocalDateStr } from "~/utils/time";

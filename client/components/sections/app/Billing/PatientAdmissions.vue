@@ -338,6 +338,8 @@
 </template>
 
 <script setup lang="ts">
+import { formatAmount } from "~/utils/currency";
+import { formatDate } from "~/utils/time";
 import type { DischargeCalculation, PatientAdmission } from "~/types/invoice";
 
 const props = defineProps<{
@@ -415,29 +417,9 @@ function refundAmount(invoice: any) {
 }
 
 function formatMoney(amount: number | string | null | undefined) {
-    return Number(amount ?? 0).toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+    return formatAmount(amount, { treatMissingAsZero: true });
 }
 
-function formatDate(value: string | null | undefined) {
-    if (!value) {
-        return "—";
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return "—";
-    }
-
-    return date.toLocaleDateString("en-PH", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-    });
-}
 
 function statusClasses(status: string | null | undefined) {
     switch (status?.toLowerCase()) {

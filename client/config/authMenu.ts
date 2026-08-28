@@ -11,7 +11,8 @@ import {
     ClipboardMinus,
     Settings,
     CreditCard,
-    BookOpen
+    BookOpen,
+    MessageSquare
 } from 'lucide-vue-next';
 
 export interface MenuItems {
@@ -52,6 +53,11 @@ export const authMenuList: MenuItems[] = [
         icon: Users,
         to: "/app/branches/[uuid]/patients",
         modules: ["Patients"],
+    },
+    {
+        label: "Messages",
+        icon: MessageSquare,
+        to: "/app/branches/[uuid]/messages",
     },
     {
         label: "Contracts",

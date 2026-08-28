@@ -5,6 +5,7 @@ import { patientAccessService } from "~/api/patient-access/PatientAccessService.
 import { refundService } from "~/api/refund/RefundService";
 import { paymentService } from "~/api/payment/PaymentService";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
+import { formatCurrency } from "~/utils/currency";
 import { useToast } from "~/composables/useToast";
 
 import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
@@ -17,7 +18,6 @@ definePageMeta({
 
 type RefundMethod = "GCash" | "Bank Transfer" | "Cash Pickup";
 
-// Online only — cash is taken at the branch by a cashier, never here.
 type PaymentMethod = "GCash" | "Bank Transfer";
 
 interface RefundRequest {
@@ -320,13 +320,7 @@ function formatDateTime(dateStr?: string): string {
 }
 
 function peso(amount: number) {
-    return (
-        "₱" +
-        Number(amount || 0).toLocaleString("en-PH", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        })
-    );
+    return formatCurrency(amount, { treatMissingAsZero: true });
 }
 
 function formatStatus(status?: string) {
@@ -883,11 +877,6 @@ async function payBalance() {
     }
 }
 
-/**
- * The receipt already carries the post-payment figures for every invoice it
- * touched, so the list the user is looking at is patched in place rather than
- * refetched.
- */
 function applyReceiptLocally(receipt: PaymentReceiptData) {
     const issuedAt = formatDateTime(receipt.issued_at ?? undefined);
 
@@ -946,9 +935,7 @@ async function openReceipt(receiptNo?: string | null) {
 <template>
     <div class="min-h-full bg-slate-50/60 p-5">
         <div class="space-y-5">
-            <!-- Title and subtitle live in the portal header; this keeps only
-                 the loved-one context the page itself needs. -->
-            <div
+            <!-- <div
                 v-if="selectedLovedOne"
                 class="inline-flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
             >
@@ -978,7 +965,7 @@ async function openReceipt(receiptNo?: string | null) {
                         }}
                     </p>
                 </div>
-            </div>
+            </div> -->
 
             <div
                 class="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(420px,0.85fr)]"

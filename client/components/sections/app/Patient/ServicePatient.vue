@@ -206,11 +206,7 @@
                                         <span
                                             class="shrink-0 text-sm font-semibold text-primary"
                                         >
-                                            ₱{{
-                                                Number(
-                                                    service.price,
-                                                ).toLocaleString()
-                                            }}
+                                            {{ formatCurrency(service.price) }}
                                         </span>
                                     </button>
                                 </div>
@@ -361,7 +357,7 @@
                             }})
                         </span>
                         <span class="font-medium tabular-nums text-slate-700">
-                            ₱{{ totalPrice.toLocaleString() }}
+                            {{ formatCurrency(totalPrice) }}
                         </span>
                     </div>
 
@@ -372,7 +368,7 @@
                         <span
                             class="text-xl font-bold tabular-nums text-primary"
                         >
-                            ₱{{ totalPrice.toLocaleString() }}
+                            {{ formatCurrency(totalPrice) }}
                         </span>
                     </div>
 
@@ -429,9 +425,13 @@ import {
 } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
-import { formatDate, getLocalDateStr, getTimeSlots } from "~/utils/time";
-
-import { generateAvailableAmPmTimes } from "~/utils/time-slot";
+import {
+    formatDate,
+    getLocalDateStr,
+    getTimeSlots,
+    generateAvailableAmPmTimes,
+} from "~/utils/time";
+import { formatCurrency } from "~/utils/currency";
 
 import type { PatientRetrieve } from "~/types/patient";
 import type { Service } from "~/types/service";

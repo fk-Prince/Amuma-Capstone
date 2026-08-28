@@ -24,7 +24,7 @@ class Patient extends Model
         'date_of_birth',
         'phone_number',
         'citizenship',
-        'initial_assessment',
+        'assessment',
         'allergies',
     ];
 
@@ -32,7 +32,7 @@ class Patient extends Model
         'date_of_birth' => 'date',
         'height' => 'decimal:2',
         'weight' => 'decimal:2',
-        'initial_assessment' => 'array',
+        'assessment' => 'array',
         'allergies' => 'array',
     ];
 

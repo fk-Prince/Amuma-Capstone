@@ -84,7 +84,7 @@ export interface PatientRetrieve {
     citizenship?: string;
     allergies?: string[];
     has_homecare?: boolean;
-    initial_assessment?: Assessment | Assessment[] | null;
+    assessment?: Assessment | Assessment[] | null;
     medications_count?: number;
     vitals_count?: number;
     location?: {

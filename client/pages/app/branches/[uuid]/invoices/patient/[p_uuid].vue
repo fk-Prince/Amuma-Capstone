@@ -1192,6 +1192,7 @@ import { computed, h, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { invoiceService } from "~/api/invoice/InvoiceService";
+import { formatAmount } from "~/utils/currency";
 import PatientAdmissions from "~/components/sections/app/Billing/PatientAdmissions.vue";
 import PatientServices from "~/components/sections/app/Billing/PatientServices.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
@@ -1477,10 +1478,7 @@ function statusClasses(status: string | null | undefined) {
 }
 
 function formatMoney(amount: number | string | null | undefined) {
-    return Number(amount ?? 0).toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+    return formatAmount(amount, { treatMissingAsZero: true });
 }
 
 function formatDate(value: string | null | undefined) {

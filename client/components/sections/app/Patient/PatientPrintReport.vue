@@ -95,10 +95,10 @@
                     </tbody>
                 </table>
 
-                <h2 class="print-subhead">Initial Assessment</h2>
+                <h2 class="print-subhead">Assessment</h2>
 
                 <p v-if="!assessments.length" class="print-empty">
-                    No initial assessment recorded.
+                    No assessment recorded.
                 </p>
 
                 <template v-else>
@@ -402,6 +402,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { formatAmount } from "~/utils/currency";
 
 const props = defineProps<{ report: any }>();
 
@@ -478,7 +479,7 @@ function humanizeValue(value: unknown): string {
 }
 
 const assessments = computed(() => {
-    const raw = props.report?.profile?.initial_assessment;
+    const raw = props.report?.profile?.assessment;
     if (!raw) return [];
 
     const entries = Array.isArray(raw) ? raw : [raw];
@@ -541,10 +542,7 @@ const billingPayments = computed(() => {
 
 function money(value: unknown) {
     const amount = Number(value ?? 0);
-    return `PHP ${(Number.isFinite(amount) ? amount : 0).toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    })}`;
+    return `PHP ${formatAmount(Number.isFinite(amount) ? amount : 0)}`;
 }
 
 function dosage(row: any) {

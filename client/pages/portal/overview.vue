@@ -874,6 +874,7 @@ import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleServi
 import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
 import { formatDuration } from "~/utils/time";
+import { formatCurrency } from "~/utils/currency";
 import QrCodeModal from "~/components/ui/QrCodeModal.vue";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import type { PatientActivity } from "~/types/patient-activity";
@@ -1146,12 +1147,7 @@ onUnmounted(() => {
 });
 
 function peso(amount: number) {
-    return (
-        "\u20b1" +
-        Number(amount || 0).toLocaleString("en-PH", {
-            minimumFractionDigits: 2,
-        })
-    );
+    return formatCurrency(amount, { treatMissingAsZero: true });
 }
 
 function statusStyle(status: string) {

@@ -218,6 +218,7 @@ const currentPage = ref(1);
 const lastPage = ref(1);
 
 let channel: any = null;
+let handler: ((event: any) => void) | null = null;
 
 const TONES: Record<string, { icon: any; wrapper: string }> = {
     Booking: {
@@ -327,19 +328,21 @@ const markAllRead = async () => {
 const bindChannel = () => {
     if (!user.value?.uuid || !$echo) return;
 
+    handler = (event: any) => {
+        notifications.value.unshift({
+            id: Date.now(),
+            message: event.message,
+            message_type: event.message_type,
+            created_at: new Date().toISOString(),
+            unread: true,
+        } as Notification);
+
+        unreadCount.value += 1;
+    };
+
     channel = $echo
         .private(`Notification.${user.value.uuid}`)
-        .listen(".NotificationEvent", (event: any) => {
-            notifications.value.unshift({
-                id: Date.now(),
-                message: event.message,
-                message_type: event.message_type,
-                created_at: new Date().toISOString(),
-                unread: true,
-            } as Notification);
-
-            unreadCount.value += 1;
-        });
+        .listen(".NotificationEvent", handler);
 };
 
 onMounted(async () => {
@@ -348,9 +351,8 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-    if (!channel || !user.value?.uuid) return;
+    if (!channel || !handler) return;
 
-    channel.stopListening(".NotificationEvent");
-    $echo.leave(`private-Notification.${user.value.uuid}`);
+    channel.stopListening(".NotificationEvent", handler);
 });
 </script>

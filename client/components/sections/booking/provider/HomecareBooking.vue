@@ -187,15 +187,24 @@
 
                     <template v-else>
                         <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-                            <BaseInput
-                                label="Date"
-                                :model-value="model.date"
-                                @update:model-value="update('date', $event)"
-                                mode="date"
-                                :min="todayStr"
-                                :error="errors?.date"
-                                required
-                            />
+                            <div>
+                                <DatePickerField
+                                    label="Date"
+                                    :model-value="model.date"
+                                    @update:model-value="
+                                        update('date', $event)
+                                    "
+                                    :min="todayStr"
+                                    placeholder="Select a date"
+                                    required
+                                />
+                                <p
+                                    v-if="errors?.date"
+                                    class="mt-1.5 text-xs text-red-500"
+                                >
+                                    {{ errors.date }}
+                                </p>
+                            </div>
 
                             <div class="flex flex-col gap-1.5">
                                 <Combobox
@@ -212,24 +221,43 @@
 
                                 <div
                                     v-if="model.type === 'Medical'"
-                                    class="mt-1"
+                                    class="mt-1.5"
                                 >
                                     <span
-                                        v-if="operatingHours === 'Open 24 hrs'"
-                                        class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-600"
+                                        v-if="branchStatus.is24Hours"
+                                        class="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-50 to-violet-50 py-1 pl-2 pr-3 text-[11px] font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-100"
                                     >
-                                        <span
-                                            class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"
-                                        />
+                                        <Infinity class="h-3.5 w-3.5" />
+                                        {{ branchStatus.label }}
+                                    </span>
 
-                                        Open 24 hrs
+                                    <span
+                                        v-else-if="branchStatus.isOpen"
+                                        class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 py-1 pl-2 pr-3 text-[11px] font-semibold text-emerald-600"
+                                    >
+                                        <span class="relative flex h-2 w-2">
+                                            <span
+                                                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+                                            />
+                                            <span
+                                                class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"
+                                            />
+                                        </span>
+
+                                        Open now · {{ branchStatus.label }}
                                     </span>
 
                                     <span
                                         v-else
-                                        class="text-[11px] text-slate-400"
+                                        class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 py-1 pl-2 pr-3 text-[11px] font-semibold text-slate-500"
                                     >
-                                        {{ operatingHours }}
+                                        <Clock class="h-3 w-3" />
+
+                                        {{
+                                            scheduledHoursLabel
+                                                ? `${branchStatus.label} · ${scheduledHoursLabel}`
+                                                : branchStatus.label
+                                        }}
                                     </span>
                                 </div>
                             </div>
@@ -286,7 +314,7 @@
                                 v-if="selectedService"
                                 class="mt-0.5 text-[11px] text-slate-400"
                             >
-                                ₱{{ Number(selectedService.price).toFixed(2) }}
+                                {{ formatCurrency(selectedService.price) }}
                             </p>
                         </div>
                     </div>
@@ -311,7 +339,7 @@
                     </span>
 
                     <span class="text-sm font-bold text-primary">
-                        ₱{{ Number(selectedService.price).toFixed(2) }}
+                        {{ formatCurrency(selectedService.price) }}
                     </span>
                 </div>
             </div>
@@ -382,7 +410,7 @@
                         <span class="text-slate-500">Hourly Rate</span>
 
                         <span class="font-semibold text-slate-700">
-                            ₱{{ adlRatePerHour.toLocaleString() }} / hour
+                            {{ formatCurrency(adlRatePerHour) }} / hour
                         </span>
                     </div>
 
@@ -403,7 +431,7 @@
                         </span>
 
                         <span class="text-base font-bold text-primary">
-                            ₱{{ adlTotal.toLocaleString() }}
+                            {{ formatCurrency(adlTotal) }}
                         </span>
                     </div>
                 </div>
@@ -459,17 +487,23 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { Check, Stethoscope } from "lucide-vue-next";
+import { Check, Stethoscope, Clock, Infinity } from "lucide-vue-next";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 import LocationSelector from "~/components/ui/LocationSelector.vue";
 import ServiceModal from "~/components/sections/booking/provider/ServiceModal.vue";
-import { formatHour, getLocalDateStr } from "~/utils/time";
+import {
+    getLocalDateStr,
+    generateAvailableAmPmTimesBySchedule,
+    getBranchTimeDisplay,
+    format24To12,
+} from "~/utils/time";
+import { formatCurrency } from "~/utils/currency";
 import type { HomecareBooking } from "~/types/booking";
 import type { Service } from "~/types/service";
 import type { BranchSettings, BranchHomecare } from "~/types/branch";
 import { useMedicalServices } from "~/composables/useBooking";
-import { generateAvailableAmPmTimesBySchedule } from "~/utils/time-slot";
 
 const props = defineProps<{
     model: HomecareBooking;
@@ -573,17 +607,19 @@ const adlTotal = computed(() => {
     return hours * adlRatePerHour.value;
 });
 
-const operatingHours = computed(() => {
-    const opening = props.settings?.opening ?? "00:00";
-    const closing = props.settings?.closing ?? "00:00";
+const branchStatus = computed(() => getBranchTimeDisplay(props.settings));
 
-    if (opening === "00:00" && closing === "00:00") {
-        return "Open 24 hrs";
-    }
+// Shown alongside a "Closed" badge so the user still knows when to expect
+// the branch to reopen, since getBranchTimeDisplay's label drops the hours
+// once the branch is marked closed.
+const scheduledHoursLabel = computed(() => {
+    const opening = props.settings?.opening;
+    const closing = props.settings?.closing;
 
-    return `Open ${formatHour(parseHourString(opening))} – ${formatHour(
-        parseHourString(closing),
-    )}`;
+    if (!opening || !closing) return null;
+    if (opening === "00:00" && closing === "00:00") return null;
+
+    return `${format24To12(opening)} – ${format24To12(closing)}`;
 });
 
 const isServiceModalOpen = ref(false);

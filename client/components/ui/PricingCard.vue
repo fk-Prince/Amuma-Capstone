@@ -53,7 +53,7 @@
                     featured ? 'text-white' : 'text-secondary',
                 ]"
             >
-                ₱{{ price?.toLocaleString() ?? "—" }}
+                {{ formatCurrency(price) }}
             </span>
             <span
                 :class="[
@@ -140,6 +140,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { formatCurrency } from "~/utils/currency";
 
 const props = defineProps<{
     planLabel: string;

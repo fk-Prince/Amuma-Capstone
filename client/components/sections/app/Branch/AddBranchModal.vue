@@ -442,6 +442,7 @@ import {
 } from "lucide-vue-next";
 
 import BranchForm from "~/components/forms/BranchForm.vue";
+import { formatAmount } from "~/utils/currency";
 import SubcriptionConfigure from "~/components/forms/SubcriptionConfigure.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 
@@ -761,11 +762,7 @@ const requestClose = () => {
     emit("close");
 };
 
-const formatMoney = (value: number) =>
-    value.toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+const formatMoney = (value: number) => formatAmount(value);
 
 // Switching the billing cycle changes what is owed, so refresh the total when
 // the user goes back and flips it after it has already been fetched.

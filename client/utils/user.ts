@@ -87,7 +87,6 @@ export function calculateAge(date?: string, ba = true) {
     if (ba) {
         return `${formatDate(date)} (${ageText})`;
     }
-
     return ageText;
 }
 

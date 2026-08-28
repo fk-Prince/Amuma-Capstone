@@ -71,6 +71,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { RoomTransfer } from "~/types/room";
+import { formatDate } from "~/utils/time";
 
 const props = defineProps<{
     transfers?: RoomTransfer[] | null;
@@ -83,14 +84,4 @@ const sortedTransfers = computed(() =>
     ),
 );
 
-function formatDate(value?: string | null) {
-    if (!value) return "—";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-    });
-}
 </script>

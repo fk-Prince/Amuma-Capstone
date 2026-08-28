@@ -1040,6 +1040,7 @@
 
 <script setup lang="ts">
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
+import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 import StatusBadge from "~/components/ui/StatusBadge.vue";
 import {
     ArcElement,
@@ -1517,11 +1518,10 @@ const initStatusChart = () => {
 const formatCurrency = (value: number | string) => {
     const num = typeof value === "string" ? parseFloat(value) : value;
 
-    return new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP",
+    return formatCurrencyUtil(num || 0, {
+        minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-    }).format(num || 0);
+    });
 };
 
 const formatDate = (date: string) => {

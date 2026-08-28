@@ -582,6 +582,7 @@
 import { ref, reactive, computed, onMounted, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Stethoscope } from "lucide-vue-next";
+import { formatAmount } from "~/utils/currency";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
 import { invoiceService } from "~/api/invoice/InvoiceService";
@@ -735,9 +736,7 @@ function formatAdjustmentType(type: string) {
 }
 
 function formatMoney(amount: number | string | null | undefined) {
-    return Number(amount ?? 0).toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-    });
+    return formatAmount(amount, { treatMissingAsZero: true });
 }
 
 function formatDate(value: string | null | undefined) {

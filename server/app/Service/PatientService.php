@@ -73,7 +73,7 @@ class PatientService
             'date_of_birth'      => $patient['date_of_birth'] ?? null,
             'phone_number'       => $patient['phone_number'] ?? null,
             'citizenship'        => $patient['citizenship'] ?? null,
-            'initial_assessment' => $assessment,
+            'assessment'         => $assessment,
             'allergies'          => $this->parseAllergies($patient['allergies'] ?? null),
         ]);
 
@@ -161,7 +161,7 @@ class PatientService
             'citizenship'        => $patient['citizenship'] ?? null,
             'occupation'         => $patient['occupation'] ?? null,
             'marital_status'     => $patient['marital_status'] ?? null,
-            'initial_assessment' => $assessment,
+            'assessment'         => $assessment,
             'allergies'          => $this->parseAllergies($patient['allergies'] ?? null),
         ]);
 
@@ -279,7 +279,7 @@ class PatientService
     private function reportProfile(mixed $patient)
     {
         return [
-            'initial_assessment' => $patient->initial_assessment,
+            'assessment' => $patient->assessment,
             'allergies' => $patient->allergies ?? [],
         ];
     }

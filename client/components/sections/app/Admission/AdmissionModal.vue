@@ -29,7 +29,7 @@
                         aria-modal="true"
                         aria-label="Patient details"
                     >
-                        <!-- Header -->
+                        <!-- Header-->
                         <div
                             class="flex items-start justify-between px-5 py-4 border-b border-primary-100/80 bg-primary-50/40 shrink-0"
                         >
@@ -84,7 +84,6 @@
                             </button>
                         </div>
 
-                        <!-- Loading -->
                         <div
                             v-if="loading"
                             class="flex-1 flex flex-col items-center justify-center gap-2 py-16"
@@ -113,12 +112,10 @@
                             </p>
                         </div>
 
-                        <!-- Body -->
                         <div
                             v-else-if="patient"
                             class="flex-1 overflow-y-auto p-5 space-y-5 patient-scroll"
                         >
-                            <!-- Status + admission summary -->
                             <div
                                 v-if="admission"
                                 class="rounded-xl border border-primary-100 bg-primary-50/40 p-4 flex items-center justify-between gap-3"
@@ -254,50 +251,6 @@
                                     />
                                 </div>
                             </section>
-
-                            <section v-if="admission?.latest_invoice">
-                                <h3
-                                    class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2"
-                                >
-                                    Latest invoice
-                                </h3>
-                                <div
-                                    class="flex items-center justify-between rounded-xl border border-primary-100 p-4"
-                                >
-                                    <div>
-                                        <p
-                                            class="text-sm font-semibold text-primary-900"
-                                        >
-                                            Invoice #{{
-                                                admission.latest_invoice
-                                                    .invoice_id
-                                            }}
-                                        </p>
-                                        <p
-                                            v-if="
-                                                admission.latest_invoice
-                                                    .contract
-                                                    ?.accommodation_type
-                                            "
-                                            class="text-xs text-muted mt-0.5"
-                                        >
-                                            {{
-                                                admission.latest_invoice
-                                                    .contract.accommodation_type
-                                            }}
-                                        </p>
-                                    </div>
-                                    <p
-                                        class="text-sm font-semibold text-primary-900"
-                                    >
-                                        {{
-                                            formatCurrency(
-                                                admission.latest_invoice.price,
-                                            )
-                                        }}
-                                    </p>
-                                </div>
-                            </section>
                         </div>
 
                         <!-- Empty -->
@@ -313,7 +266,6 @@
                             </p>
                         </div>
 
-                        <!-- Footer -->
                         <div
                             class="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-primary-100/80 shrink-0"
                         >
@@ -341,6 +293,8 @@
 
 <script setup lang="ts">
 import { computed, defineComponent, h } from "vue";
+import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
+import { formatDate } from "~/utils/time";
 import type { PatientRetrieve, Admission } from "~/types/patient";
 
 const props = defineProps<{
@@ -358,8 +312,8 @@ const admission = computed<Admission | undefined>(
     () => props.patient?.latest_admission,
 );
 
-const initialAssessment = computed(() => {
-    const value = props.patient?.initial_assessment;
+const assessment = computed(() => {
+    const value = props.patient?.assessment;
     if (!value) return null;
     return Array.isArray(value) ? (value[0] ?? null) : value;
 });
@@ -373,11 +327,11 @@ const VITAL_KEYS = [
 ];
 
 const vitalEntries = computed(() =>
-    toEntries(initialAssessment.value, (key) => VITAL_KEYS.includes(key)),
+    toEntries(assessment.value, (key) => VITAL_KEYS.includes(key)),
 );
 const medicationEntries = computed(() =>
     toEntries(
-        initialAssessment.value,
+        assessment.value,
         (key) => !VITAL_KEYS.includes(key) && key !== "diagnosis_file",
     ),
 );
@@ -388,7 +342,9 @@ function toEntries(
 ): [string, string][] {
     if (!value || typeof value !== "object") return [];
     return Object.entries(value as Record<string, unknown>)
-        .filter(([k, v]) => include(k) && v !== null && v !== undefined && v !== "")
+        .filter(
+            ([k, v]) => include(k) && v !== null && v !== undefined && v !== "",
+        )
         .map(([k, v]) => [k, String(v)]);
 }
 
@@ -396,25 +352,11 @@ function formatKey(key: string) {
     return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function formatDate(value?: string | null) {
-    if (!value) return "—";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-    });
-}
-
 function formatCurrency(value?: string | number) {
     if (value === undefined || value === null || value === "") return "—";
     const num = Number(value);
     if (Number.isNaN(num)) return String(value);
-    return num.toLocaleString(undefined, {
-        style: "currency",
-        currency: "PHP",
-    });
+    return formatCurrencyUtil(num);
 }
 
 function statusBadgeClass(status?: string) {

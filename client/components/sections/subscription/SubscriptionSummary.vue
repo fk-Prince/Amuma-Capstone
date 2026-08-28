@@ -198,9 +198,7 @@
 
             <span class="text-2xl font-bold text-primary">
                 {{
-                    checkout.selectedPrice != null
-                        ? `₱${checkout.selectedPrice}`
-                        : "—"
+                    formatCurrency(checkout.selectedPrice)
                 }}
             </span>
         </div>
@@ -239,6 +237,7 @@
 <script setup lang="ts">
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { branchFields, agencyFields } from "~/utils/fields";
+import { formatCurrency } from "~/utils/currency";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { type SubscriptionRequest } from "~/types/subscription";
 const isLoading = ref(false);

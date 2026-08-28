@@ -9,6 +9,7 @@ import {
 } from "lucide-vue-next";
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
+import { formatCurrency } from "~/utils/currency";
 import type { Service } from "~/types/service";
 
 const { canCreate } = usePermissions();
@@ -48,8 +49,6 @@ const averagePrice = computed(() => {
     return sum / props.services.length;
 });
 
-const formatPrice = (price: number) => `₱${price.toFixed(2)}`;
-
 const stats = computed(() => [
     {
         label: "Total Services",
@@ -74,7 +73,7 @@ const stats = computed(() => [
         value: categoryCount.value,
         icon: Layers,
         accent: "bg-violet-50 text-violet-600",
-        extra: `Avg ${formatPrice(averagePrice.value)}`,
+        extra: `Avg ${formatCurrency(averagePrice.value)}`,
     },
 ]);
 </script>

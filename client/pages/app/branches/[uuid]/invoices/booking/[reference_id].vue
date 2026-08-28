@@ -440,6 +440,7 @@
 import { ref, computed, onMounted, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Stethoscope } from "lucide-vue-next";
+import { formatAmount } from "~/utils/currency";
 import { invoiceService } from "~/api/invoice/InvoiceService";
 import { useToast } from "~/composables/useToast";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
@@ -547,9 +548,7 @@ function statusClasses(status: string) {
 }
 
 function formatMoney(amount: number | string | null | undefined) {
-    return Number(amount ?? 0).toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-    });
+    return formatAmount(amount, { treatMissingAsZero: true });
 }
 
 function formatDate(value: string | null | undefined) {

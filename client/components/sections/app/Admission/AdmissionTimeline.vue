@@ -277,6 +277,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
+import { formatDate } from "~/utils/time";
 import type { Admission, InvoiceFacility } from "~/types/patient";
 import { INVOICE_STATUS } from "~/types/invoice";
 
@@ -379,22 +381,6 @@ function sortedInvoices(invoices: InvoiceFacility[]) {
     );
 }
 
-function formatDate(value?: string | null) {
-    if (!value) return "—";
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return value;
-    }
-
-    return date.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-    });
-}
-
 function formatCurrency(value?: string | number | null) {
     if (value === undefined || value === null || value === "") {
         return "—";
@@ -406,10 +392,7 @@ function formatCurrency(value?: string | number | null) {
         return String(value);
     }
 
-    return num.toLocaleString(undefined, {
-        style: "currency",
-        currency: "PHP",
-    });
+    return formatCurrencyUtil(num);
 }
 
 function statusBadgeClass(status?: string) {

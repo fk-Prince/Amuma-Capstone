@@ -203,6 +203,7 @@ class PortalHelper
     private function organization(object $patient)
     {
         return [
+            'branch_id' => $patient->branch_id,
             'name' => $patient->branch?->name,
             'full_address' => $patient->branch?->location?->full_address,
         ];

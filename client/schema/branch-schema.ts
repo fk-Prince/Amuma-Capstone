@@ -16,10 +16,9 @@ export const branchImageSchema = z.object({
         .trim()
         .min(1, "Contact number is required")
         .regex(
-            /^\+?[0-9]{10,15}$/,
+            /^[0-9]{10,15}$/,
             "Enter a valid contact number"
         ),
-
     email:
         z.string()
             .trim()
@@ -71,7 +70,7 @@ export const branchSchema = z.object({
         .trim()
         .min(1, "Contact number is required")
         .regex(
-            /^\+?[0-9]{10,15}$/,
+            /^[0-9]{10,15}$/,
             "Enter a valid contact number"
         ),
 

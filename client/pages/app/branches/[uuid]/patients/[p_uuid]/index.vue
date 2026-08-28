@@ -9,6 +9,7 @@ import ActionPatientActivityModal from "~/components/sections/app/Patient/Action
 import PatientActivityTable from "~/components/sections/app/Patient/PatientActivityTable.vue";
 import { useToast } from "~/composables/useToast";
 import Overview from "~/components/sections/app/Patient/Overview.vue";
+import PatientAssessment from "~/components/sections/app/Patient/PatientAssessment.vue";
 import ServicePatient from "~/components/sections/app/Patient/ServicePatient.vue";
 import AssignEmployeeModal from "~/components/sections/app/Patient/AssignEmployeeModal.vue";
 import type { ScheduleItem } from "~/types/schedule";
@@ -90,6 +91,7 @@ function goBack() {
 
 const tabs = [
     "Overview",
+    "Assessment",
     "Admission",
     "Schedule",
     "Service",
@@ -101,6 +103,7 @@ type Tab = (typeof tabs)[number];
 
 const tabSlugMap: Record<Tab, string> = {
     Overview: "overview",
+    Assessment: "assessment",
     Schedule: "schedule",
     Service: "service",
     Medication: "medication",
@@ -714,6 +717,10 @@ onMounted(async () => {
 
                     <Overview
                         v-if="activeTab === 'Overview' && patientData"
+                        :patient="patientData"
+                    />
+                    <PatientAssessment
+                        v-if="activeTab === 'Assessment' && patientData"
                         :patient="patientData"
                     />
                     <PatientAdmission

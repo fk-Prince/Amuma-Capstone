@@ -3,6 +3,7 @@ import { ref } from "vue";
 import type { Service } from "~/types/service";
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
+import { formatCurrency } from "~/utils/currency";
 import {
     ChevronDown,
     Pencil,
@@ -65,7 +66,7 @@ const formatDuration = (duration: string) => {
 
 const formatPrice = (price: number | string) => {
     const num = Number(price);
-    return isNaN(num) ? price : `₱${num.toFixed(2)}`;
+    return isNaN(num) ? price : formatCurrency(num);
 };
 
 type CategoryStyle = { bg: string; text: string; dot: string };

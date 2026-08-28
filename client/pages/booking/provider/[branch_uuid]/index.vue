@@ -215,6 +215,7 @@ useHead({ title: "Search Homecare" });
 definePageMeta({
     navVariant: 4,
     navTheme: "dark",
+    middleware: ["prevent-staff-booking"],
 });
 
 const route = useRoute();

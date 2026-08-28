@@ -669,6 +669,7 @@ import { useRoute, useRouter } from "vue-router";
 import type { PatientRetrieve, Admission } from "~/types/patient";
 import type { RoomContract, Reserved } from "~/types/contract";
 import { patientService } from "~/api/patient/PatientService";
+import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 import { admissionService } from "~/api/admission/AdmissionService";
 import { useToast } from "~/composables/useToast";
 import { toLocalDateString } from "~/utils/time";
@@ -1062,10 +1063,7 @@ function formatCurrency(value?: string | number) {
     if (value === undefined || value === null || value === "") return "—";
     const num = Number(value);
     if (Number.isNaN(num)) return String(value);
-    return num.toLocaleString(undefined, {
-        style: "currency",
-        currency: "PHP",
-    });
+    return formatCurrencyUtil(num);
 }
 
 function statusBadgeClass(status?: string) {

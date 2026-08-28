@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from "vue";
 import {
     Info,
     Pill,
     HeartPulse,
     ClipboardList,
     UserRound,
+    ChevronLeft,
     ChevronRight,
     ShieldCheck,
     Clock3,
@@ -62,6 +63,31 @@ const patientCount = computed(() => lovedOnes.value.length);
 
 function selectPatient(index: number) {
     selectedIndex.value = index;
+}
+
+const lovedOnesScrollRef = ref<HTMLElement | null>(null);
+const canScrollLovedOnesLeft = ref(false);
+const canScrollLovedOnesRight = ref(false);
+
+function updateLovedOnesScrollState() {
+    const el = lovedOnesScrollRef.value;
+
+    if (!el) {
+        canScrollLovedOnesLeft.value = false;
+        canScrollLovedOnesRight.value = false;
+        return;
+    }
+
+    canScrollLovedOnesLeft.value = el.scrollLeft > 4;
+    canScrollLovedOnesRight.value =
+        el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+}
+
+function scrollLovedOnes(direction: 1 | -1) {
+    lovedOnesScrollRef.value?.scrollBy({
+        left: direction * 220,
+        behavior: "smooth",
+    });
 }
 
 function splitRecordsByCategory(rawRecords: any[] | null | undefined) {
@@ -124,10 +150,18 @@ async function loadPatientData() {
     } finally {
         isLoading.value = false;
     }
+
+    await nextTick();
+    updateLovedOnesScrollState();
 }
 
 onMounted(() => {
     loadPatientData();
+    window.addEventListener("resize", updateLovedOnesScrollState);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener("resize", updateLovedOnesScrollState);
 });
 </script>
 
@@ -259,51 +293,75 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <div
-                    class="flex gap-2 overflow-x-auto px-5 py-4 no-scrollbar sm:px-6"
-                >
+                <div class="relative">
                     <button
-                        v-for="(lo, idx) in lovedOnes"
-                        :key="lo.patient_id"
+                        v-if="canScrollLovedOnesLeft"
                         type="button"
-                        @click="selectPatient(idx)"
-                        class="group flex min-w-fit items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-all"
-                        :class="
-                            selectedIndex === idx
-                                ? 'border-brand-500 bg-brand-50 shadow-sm'
-                                : 'border-gray-100 bg-gray-50 hover:border-gray-200 hover:bg-white'
-                        "
+                        aria-label="Scroll left"
+                        class="absolute left-1 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-500 shadow-md transition hover:bg-gray-50"
+                        @click="scrollLovedOnes(-1)"
                     >
-                        <span
-                            class="flex h-8 w-8 items-center justify-center rounded-lg"
+                        <ChevronLeft class="h-4 w-4" />
+                    </button>
+
+                    <div
+                        ref="lovedOnesScrollRef"
+                        class="flex gap-2 overflow-x-auto scroll-smooth px-5 py-4 scrollbar-none sm:px-6"
+                        @scroll="updateLovedOnesScrollState"
+                    >
+                        <button
+                            v-for="(lo, idx) in lovedOnes"
+                            :key="lo.patient_id"
+                            type="button"
+                            @click="selectPatient(idx)"
+                            class="group flex min-w-fit items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-all"
                             :class="
                                 selectedIndex === idx
-                                    ? 'bg-brand-500 text-white'
-                                    : 'bg-white text-gray-400 ring-1 ring-gray-100'
+                                    ? 'border-brand-500 bg-brand-50 shadow-sm'
+                                    : 'border-gray-100 bg-gray-50 hover:border-gray-200 hover:bg-white'
                             "
                         >
-                            <UserRound class="h-4 w-4" />
-                        </span>
+                            <span
+                                class="flex h-8 w-8 items-center justify-center rounded-lg"
+                                :class="
+                                    selectedIndex === idx
+                                        ? 'bg-brand-500 text-white'
+                                        : 'bg-white text-gray-400 ring-1 ring-gray-100'
+                                "
+                            >
+                                <UserRound class="h-4 w-4" />
+                            </span>
 
-                        <span
-                            class="max-w-40 truncate text-xs font-semibold"
-                            :class="
-                                selectedIndex === idx
-                                    ? 'text-brand-700'
-                                    : 'text-gray-600'
-                            "
-                        >
-                            {{ lo.name }}
-                        </span>
+                            <span
+                                class="max-w-40 truncate text-xs font-semibold"
+                                :class="
+                                    selectedIndex === idx
+                                        ? 'text-brand-700'
+                                        : 'text-gray-600'
+                                "
+                            >
+                                {{ lo.name }}
+                            </span>
 
-                        <ChevronRight
-                            class="h-3.5 w-3.5 transition-transform"
-                            :class="
-                                selectedIndex === idx
-                                    ? 'text-brand-500'
-                                    : 'text-gray-300'
-                            "
-                        />
+                            <ChevronRight
+                                class="h-3.5 w-3.5 transition-transform"
+                                :class="
+                                    selectedIndex === idx
+                                        ? 'text-brand-500'
+                                        : 'text-gray-300'
+                                "
+                            />
+                        </button>
+                    </div>
+
+                    <button
+                        v-if="canScrollLovedOnesRight"
+                        type="button"
+                        aria-label="Scroll right"
+                        class="absolute right-1 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-500 shadow-md transition hover:bg-gray-50"
+                        @click="scrollLovedOnes(1)"
+                    >
+                        <ChevronRight class="h-4 w-4" />
                     </button>
                 </div>
             </div>

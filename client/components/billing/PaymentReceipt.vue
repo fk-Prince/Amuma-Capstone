@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted } from "vue";
 
+import { formatAmount } from "~/utils/currency";
 import type { PaymentReceipt } from "~/types/receipt";
 
 const props = defineProps<{
@@ -34,10 +35,7 @@ const vatExemptSales = computed(() =>
 );
 
 function peso(amount: number | string | null | undefined) {
-    return Number(amount ?? 0).toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+    return formatAmount(amount, { treatMissingAsZero: true });
 }
 
 function longDateTime(value: string | null | undefined) {

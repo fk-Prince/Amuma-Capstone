@@ -237,6 +237,7 @@ import type { Patient, Guardian, Assessment } from "~/types/patient";
 import type { Service } from "~/types/service";
 import type { BranchFacility, BranchHomecare } from "~/types/branch";
 import { useMedicalServices } from "~/composables/useBooking";
+import { formatCurrency } from "~/utils/currency";
 
 const props = defineProps<{
     category: "homecare" | "facility" | null;
@@ -355,9 +356,9 @@ const bookingRows = computed<Row[]>(() => {
 
             rows.push({
                 label: "Estimated Total",
-                value: `₱${Number(selectedServicesTotal.value ?? 0).toFixed(
-                    2,
-                )}`,
+                value: formatCurrency(selectedServicesTotal.value, {
+                    treatMissingAsZero: true,
+                }),
             });
         }
 
@@ -382,15 +383,15 @@ const bookingRows = computed<Row[]>(() => {
 
             rows.push({
                 label: "Total",
-                value: `₱${amount.toFixed(2)}`,
+                value: formatCurrency(amount),
                 span: true,
             });
         } else if (hc.type === "Medical") {
             rows.push({
                 label: "Total",
-                value: `₱${Number(selectedServicesTotal.value ?? 0).toFixed(
-                    2,
-                )}`,
+                value: formatCurrency(selectedServicesTotal.value, {
+                    treatMissingAsZero: true,
+                }),
                 span: true,
             });
         }
@@ -423,10 +424,7 @@ const bookingRows = computed<Row[]>(() => {
             },
             {
                 label: "Total",
-                value: `₱${facilityTotal.value.toLocaleString("en-PH", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                })}`,
+                value: formatCurrency(facilityTotal.value),
                 span: true,
             },
         );

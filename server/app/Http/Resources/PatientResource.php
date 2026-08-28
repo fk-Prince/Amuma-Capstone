@@ -38,7 +38,7 @@ class PatientResource extends JsonResource
                 'full_address' => $this->location?->full_address,
             ]),
 
-            'initial_assessment' => $this->initial_assessment,
+            'assessment' => $this->assessment,
 
             'medications_count' => $this->medications_count ?? 0,
             'vitals_count' => $this->vitals_count ?? 0,

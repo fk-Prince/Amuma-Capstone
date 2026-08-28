@@ -470,6 +470,7 @@ import { admissionService } from "~/api/admission/AdmissionService";
 import type { RoomContract } from "~/types/contract";
 import type { Admission } from "~/types/patient";
 import type { Room } from "~/types/room";
+import { formatCurrency } from "~/utils/currency";
 import type { Bed } from "~/types/bed";
 
 const route = useRoute();
@@ -584,7 +585,7 @@ function formatPrice(type: string) {
             billingCycle.value === "monthly" ? "yearly" : "monthly",
         );
     if (!contract) return "N/A";
-    return `₱${Number(contract.price).toLocaleString("en-PH")}`;
+    return formatCurrency(contract.price);
 }
 
 const roomsForSelection = computed<Room[]>(

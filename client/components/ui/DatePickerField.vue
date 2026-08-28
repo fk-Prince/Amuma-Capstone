@@ -29,7 +29,7 @@
         <Transition name="popup">
             <div
                 v-if="open"
-                class="absolute left-0 top-full z-20 mt-2 w-[300px] rounded-2xl border border-slate-100 bg-white p-4 shadow-xl select-none"
+                class="absolute left-0 top-full z-[9999] mt-2 w-[300px] rounded-2xl border border-slate-100 bg-white p-4 shadow-xl select-none"
             >
                 <!-- Header -->
                 <div class="mb-4 flex items-center justify-between">

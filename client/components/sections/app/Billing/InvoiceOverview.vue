@@ -217,6 +217,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 
 import {
     Wallet,
@@ -289,11 +290,10 @@ function shiftMonth(delta: number) {
 }
 
 const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP",
+    return formatCurrencyUtil(value, {
         minimumFractionDigits: 0,
-    }).format(value);
+        maximumFractionDigits: 2,
+    });
 };
 
 const trendColor = (trend: string) => {

@@ -321,6 +321,7 @@ import { useRouter } from "vue-router";
 import type { PatientRetrieve, Admission } from "~/types/patient";
 
 import AdmissionTimeline from "~/components/sections/app/Admission/AdmissionTimeline.vue";
+import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 
 definePageMeta({
     layout: "dashboard",
@@ -453,10 +454,7 @@ function formatCurrency(value?: string | number | null) {
         return String(value);
     }
 
-    return amount.toLocaleString(undefined, {
-        style: "currency",
-        currency: "PHP",
-    });
+    return formatCurrencyUtil(amount);
 }
 
 function statusBadgeClass(status?: string) {

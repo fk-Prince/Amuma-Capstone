@@ -39,7 +39,7 @@
                         :error="errors?.branch_description"
                     />
 
-                    <LabelInput
+                    <PhoneInput
                         v-model="branch.contact_number"
                         label="Contact Number"
                         @update:modelValue="clearError('branch_contact_number')"
@@ -387,6 +387,7 @@
 import { ref, computed } from "vue";
 import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
+import PhoneInput from "../ui/PhoneInput.vue";
 import type { Branch } from "~/types/branch";
 
 const props = defineProps<{

@@ -318,6 +318,7 @@ const props = defineProps<{
     overview?: any;
 }>();
 let channel: any = null;
+let handler: ((e: any) => void) | null = null;
 
 const branchUuid = computed(() => route.params.uuid as string);
 
@@ -336,22 +337,24 @@ const formatTime = (value?: string) => {
 const bindNotification = () => {
     if (!user.value?.uuid) return;
 
+    handler = (e: any) => {
+        if (e.branch_uuid !== branchUuid.value) {
+            return;
+        }
+
+        if (!e.schedule) return;
+
+        props.overview.schedule.upcoming_list = [
+            e.schedule,
+            ...(props.overview.schedule.upcoming_list ?? []),
+        ].slice(0, 5);
+
+        emit("newSchedule", e.schedule);
+    };
+
     channel = $echo
         .private(`Notification.${user.value.uuid}`)
-        .listen(".NotificationEvent", (e: any) => {
-            if (e.branch_uuid !== branchUuid.value) {
-                return;
-            }
-
-            console.log("new schedule item:", e.schedule);
-
-            props.overview.schedule.upcoming_list = [
-                e.schedule,
-                ...(props.overview.schedule.upcoming_list ?? []),
-            ].slice(0, 5);
-
-            emit("newSchedule", e.schedule);
-        });
+        .listen(".NotificationEvent", handler);
 };
 
 const emit = defineEmits<{
@@ -374,12 +377,13 @@ onMounted(() => {
     bindNotification();
 });
 
+// stopListening with the stored handler, not leave(): the header bell and
+// other components share this channel and leave() would tear it down for all.
 onBeforeUnmount(() => {
     window.removeEventListener("resize", checkScreen);
 
-    if (channel) {
-        channel.stopListening(".NotificationEvent");
-        $echo.leave(`Notification.${user.value?.uuid}`);
+    if (channel && handler) {
+        channel.stopListening(".NotificationEvent", handler);
     }
 });
 </script>

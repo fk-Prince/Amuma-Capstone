@@ -236,6 +236,8 @@ import { Pencil } from "lucide-vue-next";
 import type { Patient, Guardian, Assessment } from "~/types/patient";
 import type { RoomContract, Reserved } from "~/types/contract";
 import { CircleCheck } from "lucide-vue-next";
+import { formatCurrency } from "~/utils/currency";
+import { formatDate as formatDateUtil } from "~/utils/time";
 const props = defineProps<{
     reserved: Reserved;
     roomContract?: RoomContract[];
@@ -252,14 +254,7 @@ defineEmits<{
 type Row = { label: string; value: string; span?: boolean };
 
 function formatDate(value?: string) {
-    if (!value) return "";
-    const date = new Date(`${value}T00:00:00`);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-    });
+    return formatDateUtil(value, undefined, "");
 }
 
 function fullName(parts: (string | undefined)[]) {
@@ -305,7 +300,7 @@ const admissionRows = computed<Row[]>(() => {
     if (contract) {
         rows.push({
             label: "Total",
-            value: `₱${contract.price.toLocaleString()}`,
+            value: formatCurrency(contract.price),
             span: true,
         });
     }

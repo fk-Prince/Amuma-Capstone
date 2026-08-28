@@ -87,6 +87,7 @@
                     </div>
 
                     <div v-else class="flex items-center gap-3">
+                        <MessageBell />
                         <Notification />
                         <NavbarProfileDropdown v-if="user" :user="user" />
                     </div>
@@ -181,31 +182,33 @@
         >
             <div
                 v-if="branchStore.showModal"
-                class="fixed inset-0 bg-primary-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-primary-900/50 p-3 backdrop-blur-sm sm:items-center sm:p-4"
                 @click.self="branchStore.closeModal"
             >
                 <Transition
                     appear
                     enter-active-class="transition duration-200 ease-out"
-                    enter-from-class="opacity-0 scale-95 translate-y-2"
-                    enter-to-class="opacity-100 scale-100 translate-y-0"
+                    enter-from-class="translate-y-2 scale-95 opacity-0"
+                    enter-to-class="translate-y-0 scale-100 opacity-100"
                     leave-active-class="transition duration-150 ease-in"
-                    leave-from-class="opacity-100 scale-100"
-                    leave-to-class="opacity-0 scale-95"
+                    leave-from-class="scale-100 opacity-100"
+                    leave-to-class="scale-95 opacity-0"
                 >
                     <div
                         v-if="branchStore.showModal"
-                        class="bg-white rounded-2xl shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 w-full max-w-4xl overflow-hidden"
+                        class="w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60"
                         role="dialog"
                         aria-modal="true"
                         aria-label="Select a branch"
                     >
                         <div
-                            class="flex items-start justify-between px-5 py-4 border-b border-primary-100/80 bg-primary-50/40"
+                            class="flex items-start justify-between gap-3 border-b border-primary-100/80 bg-primary-50/40 px-4 py-3.5 sm:px-5 sm:py-4"
                         >
-                            <div class="flex items-center gap-3">
+                            <div
+                                class="flex min-w-0 items-center gap-2.5 sm:gap-3"
+                            >
                                 <div
-                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
+                                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:h-10 sm:w-10"
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -213,20 +216,23 @@
                                         fill="none"
                                         stroke="currentColor"
                                         stroke-width="1.5"
-                                        class="w-5 h-5"
+                                        class="h-4.5 w-4.5 sm:h-5 sm:w-5"
                                     >
                                         <path
                                             d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01"
                                         />
                                     </svg>
                                 </div>
-                                <div>
+
+                                <div class="min-w-0">
                                     <h2
-                                        class="text-base font-semibold leading-tight text-primary-900"
+                                        class="truncate text-sm font-semibold leading-tight text-primary-900 sm:text-base"
                                     >
                                         Select a branch
                                     </h2>
-                                    <p class="text-xs text-muted mt-0.5">
+                                    <p
+                                        class="mt-0.5 truncate text-[11px] text-muted sm:text-xs"
+                                    >
                                         Choose which branch you want to manage
                                     </p>
                                 </div>
@@ -234,9 +240,10 @@
 
                             <button
                                 v-if="branchStore.activeBranch"
+                                type="button"
                                 aria-label="Close dialog"
-                                class="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-primary-400 transition-colors duration-200 hover:bg-primary-100 hover:text-primary-700"
-                                @click="branchStore.showModal = false"
+                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-primary-400 transition-colors duration-200 hover:bg-primary-100 hover:text-primary-700"
+                                @click="branchStore.closeModal"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -244,7 +251,7 @@
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="2"
-                                    class="w-4 h-4"
+                                    class="h-4 w-4"
                                 >
                                     <line x1="18" y1="6" x2="6" y2="18" />
                                     <line x1="6" y1="6" x2="18" y2="18" />
@@ -254,12 +261,13 @@
 
                         <div
                             v-if="branchStore.branches?.length"
-                            class="max-h-[30rem] overflow-y-auto p-3 grid gap-2.5 sm:grid-cols-2 branch-scroll"
+                            class="branch-scroll grid max-h-[calc(100vh-8rem)] gap-2.5 overflow-y-auto p-2.5 sm:max-h-[30rem] sm:grid-cols-2 sm:p-3"
                         >
                             <button
                                 v-for="branch in branchStore.branches"
                                 :key="branch.uuid"
-                                class="group w-full flex flex-col gap-3 p-3.5 rounded-xl text-left border transition-all duration-200"
+                                type="button"
+                                class="group w-full min-w-0 rounded-xl border p-3 text-left transition-all duration-200 sm:p-3.5"
                                 :class="
                                     branch.uuid ===
                                     branchStore.activeBranch?.uuid
@@ -268,149 +276,169 @@
                                 "
                                 @click="branchStore.selectBranch(branch)"
                             >
-                                <div class="flex w-full items-center gap-3">
                                 <div
-                                    class="relative w-11 h-11 rounded-xl overflow-hidden bg-primary-50 flex items-center justify-center shrink-0 ring-2 ring-primary-100 transition-transform duration-200 group-hover:scale-[1.03]"
+                                    class="flex w-full min-w-0 items-start gap-2.5 sm:gap-3"
                                 >
-                                    <img
-                                        v-if="branch.image"
-                                        :src="getBranchImage(branch.image)"
-                                        class="w-full h-full object-cover"
-                                    />
-                                    <svg
-                                        v-else
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="1.5"
-                                        class="w-5 h-5 text-primary-400"
-                                    >
-                                        <path
-                                            d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01"
-                                        />
-                                    </svg>
-
-                                    <span
-                                        v-if="
-                                            branch.uuid ===
-                                            branchStore.activeBranch?.uuid
-                                        "
-                                        class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full"
-                                    />
-                                </div>
-
-                                <div class="flex-1 min-w-0">
                                     <div
-                                        class="flex items-center justify-between gap-2"
+                                        class="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-primary-50 ring-2 ring-primary-100 transition-transform duration-200 group-hover:scale-[1.03] sm:h-11 sm:w-11"
                                     >
-                                        <p
-                                            class="flex min-w-0 items-center gap-1 text-[14px] font-semibold text-primary-900"
-                                        >
-                                            <span class="truncate">
-                                                {{ branch.name }}
-                                            </span>
+                                        <img
+                                            v-if="branch.image"
+                                            :src="getBranchImage(branch.image)"
+                                            :alt="branch.name"
+                                            class="h-full w-full object-cover"
+                                        />
 
-                                            <BadgeCheck
-                                                v-if="branch.is_verified"
-                                                class="w-3.5 h-3.5 shrink-0 text-emerald-500"
-                                            />
-                                        </p>
+                                        <div
+                                            v-else
+                                            class="flex h-full w-full items-center justify-center"
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="1.5"
+                                                class="h-5 w-5 text-primary-400"
+                                            >
+                                                <path
+                                                    d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01"
+                                                />
+                                            </svg>
+                                        </div>
 
                                         <span
                                             v-if="
                                                 branch.uuid ===
                                                 branchStore.activeBranch?.uuid
                                             "
-                                            class="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-primary-100 text-primary-600 font-semibold"
-                                        >
-                                            Active
-                                        </span>
+                                            class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-400"
+                                        />
                                     </div>
 
-                                    <p
-                                        class="text-[12px] text-muted truncate mt-0.5 flex items-center gap-1"
-                                    >
-                                        <Location class="shrink-0 w-3 h-3" />
-                                        <span class="truncate">{{
-                                            branch.location?.address
-                                        }}</span>
-                                    </p>
-
-                                    <div
-                                        class="flex justify-between items-center mt-1.5"
-                                    >
-                                        <div class="flex flex-wrap gap-1">
-                                            <span
-                                                v-for="plan in branch.plan"
-                                                :key="plan.plan_code"
-                                                class="text-[11px] px-2 py-0.5 rounded-full font-medium border"
-                                                :class="{
-                                                    'bg-primary-50 text-primary border-primary-200':
-                                                        plan.plan_code === 'A',
-                                                    'bg-green-50 text-accent border-green-200':
-                                                        plan.plan_code === 'B',
-                                                    'bg-orange-50 text-secondary border-orange-200':
-                                                        plan.plan_code === 'C',
-                                                }"
+                                    <div class="min-w-0 flex-1">
+                                        <div
+                                            class="flex min-w-0 items-start justify-between gap-2"
+                                        >
+                                            <p
+                                                class="flex min-w-0 flex-1 items-center gap-1 text-[13px] font-semibold text-primary-900 sm:text-sm"
                                             >
-                                                {{ plan.name }}
+                                                <span class="min-w-0 truncate">
+                                                    {{ branch.name }}
+                                                </span>
+
+                                                <BadgeCheck
+                                                    v-if="branch.is_verified"
+                                                    class="h-3.5 w-3.5 shrink-0 text-emerald-500"
+                                                />
+                                            </p>
+
+                                            <span
+                                                v-if="
+                                                    branch.uuid ===
+                                                    branchStore.activeBranch
+                                                        ?.uuid
+                                                "
+                                                class="shrink-0 rounded-full bg-primary-100 px-1.5 py-0.5 text-[9px] font-semibold text-primary-600 sm:px-2 sm:text-[10px]"
+                                            >
+                                                Active
                                             </span>
                                         </div>
 
-                                        <span
-                                            class="text-[11px] px-2 py-0.5 rounded-full font-medium border"
-                                            :class="
-                                                roleMeta[
-                                                    branch?.role_name ?? ''
-                                                ]?.class ||
-                                                'bg-primary-50 text-primary-600 border-primary-200'
-                                            "
+                                        <p
+                                            v-if="branch.location?.address"
+                                            class="mt-1 flex w-full min-w-0 items-start gap-1.5 text-[11px] leading-4 text-muted sm:text-xs"
                                         >
-                                            {{
-                                                formatRole(
-                                                    branch?.role_name ?? "",
-                                                )
-                                            }}
-                                        </span>
-                                    </div>
-                                </div>
+                                            <Location
+                                                class="mt-0.5 h-3.5 w-3.5 shrink-0"
+                                            />
 
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    class="w-4 h-4 shrink-0 text-primary-300 opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0"
-                                >
-                                    <polyline points="9 18 15 12 9 6" />
-                                </svg>
+                                            <span
+                                                class="min-w-0 flex-1 overflow-hidden text-ellipsis line-clamp-2"
+                                            >
+                                                {{ branch.location.address }}
+                                            </span>
+                                        </p>
+
+                                        <div
+                                            class="mt-2 flex min-w-0 items-start justify-between gap-2"
+                                        >
+                                            <div
+                                                class="flex min-w-0 flex-1 flex-wrap gap-1"
+                                            >
+                                                <span
+                                                    v-for="plan in branch.plan"
+                                                    :key="plan.plan_code"
+                                                    class="rounded-full border px-1.5 py-0.5 text-[10px] font-medium sm:px-2 sm:text-[11px]"
+                                                    :class="{
+                                                        'border-primary-200 bg-primary-50 text-primary':
+                                                            plan.plan_code ===
+                                                            'A',
+                                                        'border-green-200 bg-green-50 text-accent':
+                                                            plan.plan_code ===
+                                                            'B',
+                                                        'border-orange-200 bg-orange-50 text-secondary':
+                                                            plan.plan_code ===
+                                                            'C',
+                                                    }"
+                                                >
+                                                    {{ plan.name }}
+                                                </span>
+                                            </div>
+
+                                            <span
+                                                class="max-w-[45%] shrink-0 truncate rounded-full border px-1.5 py-0.5 text-[10px] font-medium sm:max-w-[50%] sm:px-2 sm:text-[11px]"
+                                                :class="
+                                                    roleMeta[
+                                                        branch?.role_name ?? ''
+                                                    ]?.class ||
+                                                    'bg-primary-50 text-primary-600 border-primary-200'
+                                                "
+                                            >
+                                                {{
+                                                    formatRole(
+                                                        branch?.role_name ?? "",
+                                                    )
+                                                }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        class="mt-1 hidden h-4 w-4 shrink-0 text-primary-300 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100 sm:block sm:-translate-x-1"
+                                    >
+                                        <polyline points="9 18 15 12 9 6" />
+                                    </svg>
                                 </div>
 
                                 <div
-                                    class="w-full grid grid-cols-2 gap-x-3 gap-y-1 border-t border-primary-100/70 pt-2.5 text-[11px] text-muted"
+                                    class="mt-2.5 grid w-full min-w-0 grid-cols-1 gap-x-3 gap-y-1 border-t border-primary-100/70 pt-2.5 text-[10px] text-muted sm:grid-cols-2 sm:text-[11px]"
                                 >
                                     <span
                                         v-if="branch.contact_number"
-                                        class="flex items-center gap-1.5 truncate"
+                                        class="flex min-w-0 items-center gap-1.5"
                                     >
                                         <Phone
-                                            class="w-3 h-3 shrink-0 text-primary-300"
+                                            class="h-3 w-3 shrink-0 text-primary-300"
                                         />
-                                        <span class="truncate">
+                                        <span class="min-w-0 truncate">
                                             {{ branch.contact_number }}
                                         </span>
                                     </span>
 
                                     <span
                                         v-if="branch.email"
-                                        class="flex items-center gap-1.5 truncate"
+                                        class="flex min-w-0 items-center gap-1.5"
                                     >
                                         <Mail
-                                            class="w-3 h-3 shrink-0 text-primary-300"
+                                            class="h-3 w-3 shrink-0 text-primary-300"
                                         />
-                                        <span class="truncate">
+                                        <span class="min-w-0 truncate">
                                             {{ branch.email }}
                                         </span>
                                     </span>
@@ -418,10 +446,10 @@
 
                                 <div
                                     v-if="branch.agency?.name"
-                                    class="w-full flex items-center gap-2 rounded-lg bg-primary-50/60 px-2.5 py-2"
+                                    class="mt-2.5 flex w-full min-w-0 items-center gap-2 rounded-lg bg-primary-50/60 px-2 py-1.5 sm:px-2.5 sm:py-2"
                                 >
                                     <div
-                                        class="w-7 h-7 shrink-0 overflow-hidden rounded-md bg-white ring-1 ring-primary-100 flex items-center justify-center"
+                                        class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white ring-1 ring-primary-100 sm:h-7 sm:w-7"
                                     >
                                         <img
                                             v-if="branch.agency.image"
@@ -430,24 +458,25 @@
                                                     branch.agency.image,
                                                 )
                                             "
-                                            class="w-full h-full object-cover"
+                                            :alt="branch.agency.name"
+                                            class="h-full w-full object-cover"
                                         />
 
                                         <Building2
                                             v-else
-                                            class="w-3.5 h-3.5 text-primary-400"
+                                            class="h-3.5 w-3.5 text-primary-400"
                                         />
                                     </div>
 
                                     <div class="min-w-0 flex-1">
                                         <p
-                                            class="text-[9px] font-semibold uppercase tracking-wide text-primary-400"
+                                            class="text-[8px] font-semibold uppercase tracking-wide text-primary-400 sm:text-[9px]"
                                         >
                                             Agency
                                         </p>
 
                                         <p
-                                            class="truncate text-[12px] font-medium text-primary-900"
+                                            class="truncate text-[11px] font-medium text-primary-900 sm:text-xs"
                                         >
                                             {{ branch.agency.name }}
                                         </p>
@@ -455,7 +484,7 @@
 
                                     <BadgeCheck
                                         v-if="branch.agency.is_verified"
-                                        class="w-4 h-4 shrink-0 text-emerald-500"
+                                        class="h-4 w-4 shrink-0 text-emerald-500"
                                     />
                                 </div>
                             </button>
@@ -463,10 +492,10 @@
 
                         <div
                             v-else
-                            class="flex flex-col items-center justify-center gap-2 py-10 px-6 text-center"
+                            class="flex flex-col items-center justify-center gap-2 px-6 py-10 text-center"
                         >
                             <div
-                                class="w-11 h-11 rounded-xl bg-primary-50 flex items-center justify-center text-primary-400"
+                                class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50 text-primary-400"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -474,17 +503,19 @@
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="1.5"
-                                    class="w-5 h-5"
+                                    class="h-5 w-5"
                                 >
                                     <path
                                         d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01"
                                     />
                                 </svg>
                             </div>
+
                             <p class="text-sm font-medium text-primary-900">
                                 No branches yet
                             </p>
-                            <p class="text-xs text-muted max-w-[220px]">
+
+                            <p class="max-w-[220px] text-xs text-muted">
                                 You don't have access to any branches at the
                                 moment.
                             </p>
@@ -500,6 +531,7 @@
 import logo from "assets/logo/logo.png";
 import { computed, onMounted, ref } from "vue";
 import Notification from "../ui/Notification.vue";
+import MessageBell from "../ui/MessageBell.vue";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
 import Location from "../icons/location.vue";
 import { BadgeCheck, Building2, Mail, Phone } from "lucide-vue-next";

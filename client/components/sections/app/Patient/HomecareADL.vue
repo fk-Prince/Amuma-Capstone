@@ -104,12 +104,14 @@
                                     {{ formatDateTime(log.scheduled_at) }}
                                 </p>
                                 <p
-                                    class="text-[13px] text-muted truncate flex gap-3 ite"
+                                    class="flex min-w-0 items-center gap-1.5 text-[13px] text-muted"
                                 >
                                     <MapPinned
                                         class="w-3.5 h-3.5 text-muted shrink-0"
                                     />
-                                    {{ log.address }}
+                                    <span class="min-w-0 truncate">{{
+                                        log.address
+                                    }}</span>
                                 </p>
                                 <p
                                     v-if="variant === 3 && latestCheckIn(log)"

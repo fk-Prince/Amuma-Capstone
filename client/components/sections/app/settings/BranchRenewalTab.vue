@@ -351,6 +351,7 @@ import {
 } from "lucide-vue-next";
 
 import PaymentForm from "~/components/forms/PaymentForm.vue";
+import { formatAmount } from "~/utils/currency";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { planService } from "~/api/plan/PlanService";
 import { cardPayment } from "~/composables/usePayment";
@@ -582,10 +583,7 @@ const formatDate = (date?: string | null) => {
 };
 
 const formatMoney = (value: number | string) =>
-    (Number(value) || 0).toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+    formatAmount(value, { treatMissingAsZero: true });
 
 onMounted(fetchSubscription);
 </script>

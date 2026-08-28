@@ -161,7 +161,7 @@
                             />
 
                             <div class="grid gap-5 sm:grid-cols-2">
-                                <BaseInput
+                                <PhoneInput
                                     v-if="canEditPhone"
                                     v-model="form.phone_number"
                                     label="Contact number"
@@ -441,6 +441,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { LoaderCircle, MapPin } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
+import PhoneInput from "~/components/ui/PhoneInput.vue";
 import LocationSelector from "~/components/ui/LocationSelector.vue";
 import { userService } from "~/api/user/UserService";
 import { useToast } from "~/composables/useToast";
