@@ -72,13 +72,13 @@
                     </p>
                 </div>
 
-                <BaseInput
+                <DatePickerField
                     label="Date of Birth"
                     :model-value="model.date_of_birth"
-                    mode="date"
                     :max="todayStr"
+                    :default-to-today="false"
                     @update:model-value="update('date_of_birth', $event)"
-                    placeholder="YYYY-MM-DD"
+                    placeholder="Select date of birth"
                     :error="errors?.date_of_birth"
                     required
                 />
@@ -198,6 +198,7 @@
 import BaseInput from "../ui/BaseInput.vue";
 import PhoneInput from "../ui/PhoneInput.vue";
 import Combobox from "../ui/Combobox.vue";
+import DatePickerField from "../ui/DatePickerField.vue";
 import type { Patient } from "~/types/patient";
 import { getLocalDateStr } from "~/utils/time";
 const props = defineProps<{

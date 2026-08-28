@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import PhoneInput from "~/components/ui/PhoneInput.vue";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 import {
     employeeAssignmentTypes,
     employeePositions,
@@ -70,6 +71,7 @@ const {
 
 const activeTab = ref("information");
 const fileInput = ref<HTMLInputElement | null>(null);
+const todayStr = new Date().toISOString().split("T")[0];
 
 const tabs = [
     { label: "Employee Information", value: "information" },
@@ -325,11 +327,12 @@ init();
                             </div>
 
                             <div class="grid gap-6 md:grid-cols-3">
-                                <BaseInput
+                                <DatePickerField
                                     v-model="employee.birth_date"
                                     label="Birth Date"
-                                    mode="date"
-                                    :schema="employeeSchema.shape.birth_date"
+                                    :max="todayStr"
+                                    :default-to-today="false"
+                                    placeholder="Select date of birth"
                                     :error="errors.birth_date"
                                     :disabled="isViewMode"
                                     required

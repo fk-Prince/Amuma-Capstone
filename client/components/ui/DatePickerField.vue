@@ -11,13 +11,17 @@
         <!-- Trigger input -->
         <button
             type="button"
-            class="flex w-full items-center justify-between rounded-lg border-[1.5px] bg-slate-50 px-3.5 py-2.5 text-left text-sm transition"
-            :class="
-                open
-                    ? 'border-blue-500 ring-2 ring-blue-500/15'
-                    : 'border-slate-200'
-            "
-            @click="open = !open"
+            class="flex w-full items-center justify-between rounded-lg border-[1.5px] px-3.5 py-2.5 text-left text-sm transition"
+            :class="[
+                disabled ? 'cursor-not-allowed bg-slate-100' : 'bg-slate-50',
+                error
+                    ? 'border-red-400'
+                    : open
+                      ? 'border-blue-500 ring-2 ring-blue-500/15'
+                      : 'border-slate-200',
+            ]"
+            :disabled="disabled"
+            @click="open = disabled ? false : !open"
         >
             <span :class="displayLabel ? 'text-slate-800' : 'text-slate-400'">
                 {{ displayLabel || placeholder }}
@@ -25,13 +29,15 @@
             <Calendar class="h-4 w-4 flex-shrink-0 text-slate-400" />
         </button>
 
-        <!-- Popup -->
+        <p v-if="error" class="mt-0.5 text-xs text-red-500">
+            {{ error }}
+        </p>
+
         <Transition name="popup">
             <div
                 v-if="open"
                 class="absolute left-0 top-full z-[9999] mt-2 w-[300px] rounded-2xl border border-slate-100 bg-white p-4 shadow-xl select-none"
             >
-                <!-- Header -->
                 <div class="mb-4 flex items-center justify-between">
                     <button
                         type="button"
@@ -195,11 +201,13 @@ const props = defineProps({
     placeholder: { type: String, default: "Please select a period." },
     required: { type: Boolean, default: false },
     className: { type: String, default: "" },
+    defaultToToday: { type: Boolean, default: true },
+    error: { type: String, default: "" },
+    disabled: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["update:modelValue", "apply"]);
 
-// ---- icons (inline, no external deps) ----
 const icon =
     (d: string): FunctionalComponent<{ class?: string }> =>
     (p) =>
@@ -238,7 +246,6 @@ const Calendar: FunctionalComponent<{ class?: string }> = (p) =>
         ],
     );
 
-// ---- state ----
 const rootEl = ref<HTMLElement | null>(null);
 const open = ref(false);
 
@@ -277,9 +284,14 @@ function toValueString(date: Date | null): string {
 
 const today = new Date();
 
-// Default to today when no modelValue is passed in.
-const selectedDate = ref<Date | null>(toDate(props.modelValue) ?? today);
-const appliedDate = ref<Date | null>(toDate(props.modelValue) ?? today);
+const fallbackDate = computed(() => (props.defaultToToday ? today : null));
+
+const selectedDate = ref<Date | null>(
+    toDate(props.modelValue) ?? fallbackDate.value,
+);
+const appliedDate = ref<Date | null>(
+    toDate(props.modelValue) ?? fallbackDate.value,
+);
 
 const viewYear = ref(selectedDate.value?.getFullYear() ?? today.getFullYear());
 const viewMonth = ref(selectedDate.value?.getMonth() ?? today.getMonth());
@@ -290,7 +302,7 @@ const maxDate = computed(() => toDate(props.max));
 watch(
     () => props.modelValue,
     (val) => {
-        const resolved = toDate(val) ?? today;
+        const resolved = toDate(val) ?? fallbackDate.value;
         selectedDate.value = resolved;
         appliedDate.value = resolved;
     },
@@ -299,7 +311,7 @@ watch(
 // Let the parent's v-model know about the default immediately,
 // so the field and the bound value start in sync.
 onMounted(() => {
-    if (!toDate(props.modelValue)) {
+    if (!toDate(props.modelValue) && props.defaultToToday) {
         emit("update:modelValue", toValueString(today));
     }
 });
@@ -343,8 +355,10 @@ function toggleMonthMenu() {
 
 const yearOptions = computed(() => {
     const base = today.getFullYear();
+    const lower = minDate.value ? minDate.value.getFullYear() : base - 100;
+    const upper = maxDate.value ? maxDate.value.getFullYear() : base + 5;
     const years = [];
-    for (let y = base - 5; y <= base + 5; y++) years.push(y);
+    for (let y = upper; y >= lower; y--) years.push(y);
     return years;
 });
 
