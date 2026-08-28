@@ -228,21 +228,15 @@ export function useBookingFlowValidation(opts: {
         | "step4"
         | null {
 
-        if (!validateStep1()) {
-            return "step1";
-        }
+        const step1Ok = validateStep1();
+        const step2Ok = patient.validate();
+        const step3Ok = guardian.validate();
+        const step4Ok = validateAssessment();
 
-        if (!patient.validate()) {
-            return "step2";
-        }
-
-        if (!guardian.validate()) {
-            return "step3";
-        }
-
-        if (!validateAssessment()) {
-            return "step4";
-        }
+        if (!step1Ok) return "step1";
+        if (!step2Ok) return "step2";
+        if (!step3Ok) return "step3";
+        if (!step4Ok) return "step4";
 
         return null;
     }

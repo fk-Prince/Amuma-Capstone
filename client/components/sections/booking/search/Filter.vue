@@ -229,85 +229,109 @@
     <header
         class="md:hidden border-b border-slate-200/50 bg-white shadow-sm sticky top-0 z-40"
     >
-        <div class="p-4 space-y-4">
-            <div>
-                <BaseInput
-                    v-model="searchName"
-                    :is-search="true"
-                    placeholder="Search provider name"
-                    input-class="px-4 py-2.5 rounded-lg"
-                />
-            </div>
-
-            <div>
-                <label
-                    class="mb-2 block text-xs font-semibold text-slate-600 uppercase tracking-wide"
-                    >Location</label
-                >
-                <BaseInput
-                    :model-value="searchLocation"
-                    @update:model-value="onLocationInput"
-                    :placeholder="locating ? 'Locating...' : 'Enter your city'"
-                    input-class="px-4 py-2.5 rounded-lg w-full"
-                    :readonly="locating"
-                >
-                    <template #suffix>
-                        <span class="pr-3 flex items-center">
-                            <Location
-                                clickable
-                                @get-location="handleLocation"
-                                @loading="locating = $event"
-                            />
-                        </span>
-                    </template>
-                </BaseInput>
-            </div>
-
-            <div>
-                <label
-                    class="mb-2 block text-xs font-semibold text-slate-600 uppercase tracking-wide"
-                    >Care Type</label
-                >
-                <Combobox
-                    v-model="planCodeType"
-                    :items="planCodeList"
-                    input-class="px-4 py-2.5 rounded-lg"
-                    :search-bar="false"
-                    @update:modelValue="updateQuery"
-                />
-            </div>
-
-            <div>
-                <label
-                    class="mb-2 block text-xs font-semibold text-slate-600 uppercase tracking-wide"
-                    >Sort by</label
-                >
-                <div class="flex gap-2 flex-wrap">
-                    <button
-                        v-for="sort in sortOptions"
-                        :key="sort.value"
-                        type="button"
-                        class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
-                        :class="
-                            activeSortOption === sort.value
-                                ? 'bg-primary text-white border-primary'
-                                : 'bg-white text-slate-600 border-slate-300 hover:border-primary hover:text-primary'
-                        "
-                        @click="activeSortOption = sort.value"
-                    >
-                        {{ sort.label }}
-                    </button>
+        <div class="p-4 space-y-3">
+            <div class="flex items-center gap-2">
+                <div class="flex-1">
+                    <BaseInput
+                        v-model="searchName"
+                        :is-search="true"
+                        placeholder="Search provider name"
+                        input-class="px-4 py-2.5 rounded-lg"
+                    />
                 </div>
-            </div>
 
-            <div class="pt-2">
                 <button
                     type="button"
-                    class="w-full py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg transition"
-                    @click="resetFilters"
+                    class="relative flex h-[42px] shrink-0 items-center gap-1.5 rounded-lg border px-3.5 text-sm font-medium transition-colors"
+                    :class="
+                        hasActiveFilters
+                            ? 'border-primary/30 bg-primary/5 text-primary'
+                            : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                    "
+                    @click="mobileFiltersOpen = !mobileFiltersOpen"
                 >
-                    Reset
+                    <SlidersHorizontal class="h-4 w-4" />
+                    Filters
+                    <span
+                        v-if="hasActiveFilters"
+                        class="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary"
+                    />
                 </button>
+            </div>
+
+            <div v-if="mobileFiltersOpen" class="space-y-4 pt-1">
+                <div>
+                    <label
+                        class="mb-2 block text-xs font-semibold text-slate-600 uppercase tracking-wide"
+                        >Location</label
+                    >
+                    <BaseInput
+                        :model-value="searchLocation"
+                        @update:model-value="onLocationInput"
+                        :placeholder="
+                            locating ? 'Locating...' : 'Enter your city'
+                        "
+                        input-class="px-4 py-2.5 rounded-lg w-full"
+                        :readonly="locating"
+                    >
+                        <template #suffix>
+                            <span class="pr-3 flex items-center">
+                                <Location
+                                    clickable
+                                    @get-location="handleLocation"
+                                    @loading="locating = $event"
+                                />
+                            </span>
+                        </template>
+                    </BaseInput>
+                </div>
+
+                <div>
+                    <label
+                        class="mb-2 block text-xs font-semibold text-slate-600 uppercase tracking-wide"
+                        >Care Type</label
+                    >
+                    <Combobox
+                        v-model="planCodeType"
+                        :items="planCodeList"
+                        input-class="px-4 py-2.5 rounded-lg"
+                        :search-bar="false"
+                        @update:modelValue="updateQuery"
+                    />
+                </div>
+
+                <div>
+                    <label
+                        class="mb-2 block text-xs font-semibold text-slate-600 uppercase tracking-wide"
+                        >Sort by</label
+                    >
+                    <div class="flex gap-2 flex-wrap">
+                        <button
+                            v-for="sort in sortOptions"
+                            :key="sort.value"
+                            type="button"
+                            class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+                            :class="
+                                activeSortOption === sort.value
+                                    ? 'bg-primary text-white border-primary'
+                                    : 'bg-white text-slate-600 border-slate-300 hover:border-primary hover:text-primary'
+                            "
+                            @click="activeSortOption = sort.value"
+                        >
+                            {{ sort.label }}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button
+                        type="button"
+                        class="w-full py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg transition"
+                        @click="resetFilters"
+                    >
+                        Reset
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -319,12 +343,18 @@ import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import Location from "~/components/icons/location.vue";
 import Dropdown from "~/components/icons/dropdown.vue";
-import { MapPin, HeartPulse, ArrowUpDown } from "lucide-vue-next";
+import {
+    MapPin,
+    HeartPulse,
+    ArrowUpDown,
+    SlidersHorizontal,
+} from "lucide-vue-next";
 
 const route = useRoute();
 const router = useRouter();
 
 const dropdownOpen = ref(false);
+const mobileFiltersOpen = ref(false);
 const locating = ref(false);
 
 const props = defineProps<{

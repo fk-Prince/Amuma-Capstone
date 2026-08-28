@@ -15,7 +15,7 @@
         </div>
 
         <div class="flex-1 overflow-hidden">
-            <div class="mx-auto max-w-[100rem] px-4 py-8 h-full">
+            <div class="mx-auto max-w-[100rem] md:px-4 py-8 h-full">
                 <div
                     class="flex flex-col lg:flex-row gap-8 h-full items-stretch"
                 >
@@ -133,7 +133,6 @@ definePageMeta({
     layout: "default",
     navVariant: 4,
     navTheme: "dark",
-    middleware: ["prevent-staff-booking"],
 });
 useHead({ title: "Search Homecare" });
 

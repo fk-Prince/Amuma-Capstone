@@ -1,4 +1,3 @@
-<!-- pages/booking/provider/[branch_uuid]/index.vue -->
 <template>
     <div
         class="min-h-screen grid grid-cols-1 lg:grid-cols-[280px_1fr] bg-gray-50"
@@ -11,7 +10,7 @@
                 height: `calc(100vh - ${sidebarTop}px)`,
             }"
         >
-            <div class="relative z-10 flex h-full min-h-0 flex-col">
+            <div class="relative z-50 flex h-full min-h-0 flex-col">
                 <div class="shrink-0 border-b border-gray-100/80 px-6 py-6">
                     <div class="flex items-center justify-between">
                         <div>
@@ -120,27 +119,94 @@
                 </p>
             </header>
 
-            <div class="lg:hidden mb-6">
-                <div class="flex items-center gap-2">
+            <div
+                class="sticky top-0 z-[50] -mx-5 mb-3 bg-gray-50/95 px-5 py-3 backdrop-blur-sm sm:-mx-10 sm:px-10 lg:hidden"
+            >
+                <button
+                    type="button"
+                    class="flex w-full items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 text-left shadow-sm"
+                    @click="stepsSheetOpen = true"
+                >
                     <div
-                        class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden"
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600"
                     >
-                        <div
-                            class="h-full rounded-full bg-primary transition-all duration-300"
-                            :style="{ width: `${progress}%` }"
-                        ></div>
+                        <ClipboardCheck class="h-4 w-4" />
                     </div>
-                    <span class="text-xs font-medium text-gray-400 shrink-0">
-                        {{ Math.round(progress) }}%
-                    </span>
-                </div>
+
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-semibold text-gray-900">
+                                Booking Progress
+                            </span>
+                            <span class="text-xs font-bold text-primary-600">
+                                {{ Math.round(progress) }}%
+                            </span>
+                        </div>
+
+                        <div
+                            class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-gray-100"
+                        >
+                            <div
+                                class="h-full rounded-full bg-primary transition-all duration-300"
+                                :style="{ width: `${progress}%` }"
+                            />
+                        </div>
+                    </div>
+
+                    <ChevronRight class="h-4 w-4 shrink-0 text-gray-400" />
+                </button>
             </div>
+
+            <Teleport to="body">
+                <Transition name="sheet-fade">
+                    <div
+                        v-if="stepsSheetOpen"
+                        class="fixed inset-0 z-[999] bg-gray-900/50 lg:hidden"
+                        @click.self="stepsSheetOpen = false"
+                    >
+                        <Transition name="sheet-slide" appear>
+                            <div
+                                class="fixed inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-3xl bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+                            >
+                                <div
+                                    class="mx-auto mb-4 h-1.5 w-10 rounded-full bg-gray-200"
+                                />
+
+                                <div
+                                    class="mb-4 flex items-center justify-between"
+                                >
+                                    <p
+                                        class="text-base font-semibold text-gray-900"
+                                    >
+                                        Booking Progress
+                                    </p>
+
+                                    <button
+                                        type="button"
+                                        class="text-gray-400 hover:text-gray-600"
+                                        aria-label="Close"
+                                        @click="stepsSheetOpen = false"
+                                    >
+                                        <X class="h-5 w-5" />
+                                    </button>
+                                </div>
+
+                                <BookingSteps
+                                    :active="activeStep"
+                                    :completed="completedSteps"
+                                    @go="goToStepMobile"
+                                />
+                            </div>
+                        </Transition>
+                    </div>
+                </Transition>
+            </Teleport>
 
             <div class="flex flex-col">
                 <section
                     id="step1"
                     ref="step1"
-                    class="scroll-mt-8 border-t rounded-t-2xl border-x border-gray-100 bg-white shadow-sm"
+                    class="scroll-mt-28 lg:scroll-mt-8 border-t rounded-t-2xl border-x border-gray-100 bg-white shadow-sm"
                 >
                     <HomecareBooking
                         v-if="category === 'homecare'"
@@ -169,7 +235,7 @@
                 <section
                     id="step2"
                     ref="step2"
-                    class="scroll-mt-8 border-x border-gray-100 bg-white shadow-sm"
+                    class="scroll-mt-28 lg:scroll-mt-8 border-x border-gray-100 bg-white shadow-sm"
                 >
                     <PatientForm
                         :category="category"
@@ -184,7 +250,7 @@
                 <section
                     id="step3"
                     ref="step3"
-                    class="scroll-mt-8 border border-gray-100 bg-white shadow-sm"
+                    class="scroll-mt-28 lg:scroll-mt-8 border border-gray-100 bg-white shadow-sm"
                 >
                     <GuardianForm
                         :model="guardianData"
@@ -199,7 +265,7 @@
                 <section
                     id="step4"
                     ref="step4"
-                    class="scroll-mt-8 border-x rounded-b-2xl border-b border-gray-100 bg-white shadow-sm"
+                    class="scroll-mt-28 lg:scroll-mt-8 border-x rounded-b-2xl border-b border-gray-100 bg-white shadow-sm"
                 >
                     <AssessmentForm
                         :model="assessmentData"
@@ -256,11 +322,10 @@
     </div>
 </template>
 <script lang="ts" setup>
-import { computed, ref, onMounted, toRaw } from "vue";
+import { computed, ref, onMounted, nextTick, toRaw } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ShieldCheck, BellRing } from "lucide-vue-next";
-import { useToast } from "~/composables/useToast";
-import { ClipboardCheck, Info } from "lucide-vue-next";
+import { ClipboardCheck, Info, ChevronRight, X } from "lucide-vue-next";
 import { useBookingFlowValidation } from "~/composables/useBookingFlowValidation";
 
 import BookingSteps from "~/components/sections/booking/provider/BookingSteps.vue";
@@ -401,15 +466,42 @@ const step3 = ref<HTMLElement | null>(null);
 const step4 = ref<HTMLElement | null>(null);
 const activeStep = ref("step1");
 
-const scrollTo = (step: string) => {
+const scrollTo = async (step: string) => {
     if (step === "step5") {
         submit();
         return;
     }
     activeStep.value = step;
-    const map: Record<string, any> = { step1, step2, step3, step4 };
-    map[step]?.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    await nextTick();
+
+    setTimeout(() => {
+        const map: Record<string, any> = {
+            step1,
+            step2,
+            step3,
+            step4,
+        };
+        const el = map[step]?.value as HTMLElement | undefined;
+        if (!el) return;
+
+        const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+        const offset = isDesktop ? 32 : 112;
+        const top =
+            el.getBoundingClientRect().top +
+            window.scrollY -
+            offset;
+
+        window.scrollTo({ top, behavior: "smooth" });
+    }, 50);
 };
+
+const stepsSheetOpen = ref(false);
+
+function goToStepMobile(step: string) {
+    scrollTo(step);
+    stepsSheetOpen.value = false;
+}
 
 const sidebarTop = ref(90);
 
@@ -426,6 +518,7 @@ const handleScroll = () => {
         sidebarTop.value = 0;
     } else {
         sidebarTop.value = 90;
+        sidebarTop.value = 90;
     }
 };
 
@@ -441,3 +534,25 @@ onBeforeUnmount(() => {
     window.removeEventListener("scroll", handleScroll);
 });
 </script>
+
+<style scoped>
+.sheet-fade-enter-active,
+.sheet-fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+
+.sheet-fade-enter-from,
+.sheet-fade-leave-to {
+    opacity: 0;
+}
+
+.sheet-slide-enter-active,
+.sheet-slide-leave-active {
+    transition: transform 0.25s ease-out;
+}
+
+.sheet-slide-enter-from,
+.sheet-slide-leave-to {
+    transform: translateY(100%);
+}
+</style>

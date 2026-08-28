@@ -12,12 +12,11 @@
                     : 'hover:bg-muted-light'
             "
         >
-            <!-- Step indicator -->
             <div
                 class="relative flex h-full w-10 shrink-0 flex-col items-center"
             >
                 <div
-                    class="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold transition-all duration-200"
+                    class="relative z-[999] flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold transition-all duration-200"
                     :class="
                         isCompleted(step.key) && active !== step.key
                             ? 'border-primary-500 bg-primary-500 text-white shadow-sm shadow-primary-500/20'
@@ -39,16 +38,15 @@
                 <!-- Connector -->
                 <div
                     v-if="index < steps.length - 1"
-                    class="absolute left-1/2 top-10 h-[48px] w-px -translate-x-1/2 transition-colors duration-300"
+                    class="absolute left-1/2 top-10 h-[48px] w-0.5 -translate-x-1/2 transition-colors duration-300"
                     :class="
                         isCompleted(step.key)
-                            ? 'bg-primary-200'
-                            : 'bg-muted-light'
+                            ? 'bg-primary-300'
+                            : 'bg-gray-200'
                     "
                 />
             </div>
 
-            <!-- Content -->
             <div class="min-w-0 flex-1 py-0.5">
                 <div class="flex items-center justify-between gap-2">
                     <span

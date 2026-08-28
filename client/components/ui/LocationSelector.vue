@@ -173,12 +173,6 @@ const placeMarker = (lat: number, lng: number): void => {
     }
 };
 
-/**
- * Wraps geolocation in a promise. The success handler is just `resolve`, so
- * nothing from this component's scope is referenced inside the callback —
- * location-spoofing browser extensions re-evaluate that callback in their own
- * scope, which breaks any closure it depends on.
- */
 const currentPosition = (): Promise<GeolocationPosition> =>
     new Promise((resolve, reject) =>
         navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -381,7 +375,7 @@ onUnmounted(() => {
 
         <div
             id="location-map"
-            class="w-full h-[400px] rounded-xl overflow-hidden border border-gray-200 shadow-sm"
+            class="w-full h-[400px] z-20 rounded-xl overflow-hidden border border-gray-200 shadow-sm"
         />
 
         <div class="flex gap-2">

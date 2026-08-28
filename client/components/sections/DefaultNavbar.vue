@@ -40,9 +40,9 @@ const header = computed(() => {
             return [
                 "fixed top-0 left-0 z-50 w-full h-[90px] ",
                 "md:px-[5%] lg:px-[10%]",
-                "transition-all duration-300 ease-out",
+                "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? "bg-white/90 backdrop-blur-md shadow-sm border-b border-muted-light"
+                    ? "bg-white border-b border-muted-light"
                     : "bg-transparent border-b border-transparent",
             ]
                 .filter(Boolean)
@@ -51,21 +51,21 @@ const header = computed(() => {
         case 2:
             return [
                 "fixed top-4 left-1/2 -translate-x-1/2 z-50",
-                "w-[92%] md:w-[80%] rounded-2xl h-[90px] ",
-                "transition-all duration-300 ease-out",
+                "w-[92%] md:w-[80%] rounded-xl h-[90px] ",
+                "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? "border border-primary-100 bg-light/90 backdrop-blur-xl shadow-lg shadow-primary-100/40"
-                    : "border border-transparent bg-transparent shadow-none",
+                    ? "border border-muted-light bg-light"
+                    : "border border-transparent bg-transparent",
             ]
                 .filter(Boolean)
                 .join(" ");
         case 3:
             return [
                 "fixed top-4 left-1/2 -translate-x-1/2 z-50",
-                "w-[92%] md:w-[80%] h-[90px] rounded-2xl",
-                "transition-all duration-300 ease-out",
+                "w-[92%] md:w-[80%] h-[90px] rounded-xl",
+                "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? "border border-primary-100 bg-light/90 backdrop-blur-xl shadow-lg shadow-primary-100/40"
+                    ? "border border-muted-light bg-light"
                     : navTheme.value === "dark"
                       ? "border border-light/20 bg-light/10 "
                       : "border border-muted-light bg-light/90 ",
@@ -237,14 +237,14 @@ watch(
                             class="shrink-0"
                         >
                             <BaseButton
-                                buttonClass="px-[18px] lg:px-[28px] h-11 rounded-xl whitespace-nowrap min-w-fit transition-all duration-300"
+                                buttonClass="px-[18px] lg:px-[28px] h-11 rounded-lg whitespace-nowrap min-w-fit transition-colors duration-200"
                                 :class="
                                     variant === 1 && !scrolled
-                                        ? 'bg-primary text-white border border-primary shadow-[0_6px_20px_rgba(37,99,235,0.25)] hover:bg-primary/90 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(37,99,235,0.35)]'
+                                        ? 'bg-primary text-white border border-primary hover:bg-primary/90'
                                         : ''
                                 "
                             >
-                                SIGN IN
+                                Sign In
                             </BaseButton>
                         </NuxtLink>
 
@@ -254,30 +254,14 @@ watch(
                         >
                             <BaseButton
                                 variant="secondary"
-                                class="h-11 rounded-xl border px-[20px] lg:px-[24px] whitespace-nowrap min-w-fit transition-all duration-300"
+                                class="h-11 rounded-lg border px-[20px] lg:px-[24px] whitespace-nowrap min-w-fit transition-colors duration-200"
                                 :class="
                                     variant === 1 && !scrolled
-                                        ? 'border-white/20 bg-white/[0.06] text-white backdrop-blur-md hover:border-white/30 hover:bg-white/10 hover:-translate-y-0.5'
+                                        ? 'border-white/20 bg-transparent text-white hover:bg-white/10'
                                         : 'border-muted-dark bg-transparent hover:bg-primary/10'
                                 "
                             >
-                                <span>Get Started</span>
-
-                                <svg
-                                    width="18"
-                                    height="18"
-                                    viewBox="0 0 16 16"
-                                    fill="none"
-                                    class="ml-1.5 transition-transform duration-300 group-hover:translate-x-0.5"
-                                >
-                                    <path
-                                        d="M3 8h10M9 4l4 4-4 4"
-                                        stroke="currentColor"
-                                        stroke-width="1.8"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    />
-                                </svg>
+                                Get Started
                             </BaseButton>
                         </NuxtLink>
                     </template>

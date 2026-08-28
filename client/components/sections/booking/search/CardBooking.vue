@@ -125,9 +125,11 @@
 
     <div
         v-else-if="variant === 2"
-        class="group flex overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300 cursor-pointer"
+        class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300 cursor-pointer sm:flex-row"
     >
-        <div class="relative w-64 shrink-0 overflow-hidden bg-slate-100">
+        <div
+            class="relative h-48 w-full shrink-0 overflow-hidden bg-slate-100 sm:h-auto sm:w-64"
+        >
             <img
                 v-if="branch?.image"
                 :src="branch.image"

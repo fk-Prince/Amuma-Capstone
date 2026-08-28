@@ -451,8 +451,6 @@
                 </div>
 
                 <div class="bg-white">
-                    <!-- The picker records coordinates alongside the address so
-                         the branch can map the visit later. -->
                     <ClientOnly>
                         <LocationSelector
                             :initial-lat="model.latitude ?? undefined"
