@@ -37,6 +37,10 @@ class BranchRepository
             'location',
             'contracts',
         ])
+            ->where('is_verified', true)
+            ->whereHas('agencies', function ($q) {
+                $q->where('is_verified', true);
+            })
             ->withAvg('reviews', 'rate')
             ->orderByDesc('reviews_avg_rate')
             ->latest()
@@ -59,6 +63,10 @@ class BranchRepository
             'location',
             'contracts',
         ])
+            ->where('is_verified', true)
+            ->whereHas('agencies', function ($q) {
+                $q->where('is_verified', true);
+            })
             ->withAvg('reviews', 'rate')
             ->withCount('reviews')
             ->withCount('bookings')
@@ -102,7 +110,9 @@ class BranchRepository
         } elseif ($sort === 'most_popular') {
             $query->orderByDesc('bookings_count');
         } else {
-            $query->orderByDesc('reviews_avg_rate')->orderByDesc('reviews_count');
+            $query->orderByDesc('reviews_avg_rate')
+                ->orderByDesc('bookings_count')
+                ->orderByDesc('reviews_count');
         }
 
         return $query->paginate($perPage);
