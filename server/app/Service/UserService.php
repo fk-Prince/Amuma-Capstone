@@ -12,6 +12,7 @@ use App\Service\External\SupabaseService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 
@@ -211,8 +212,8 @@ class UserService
             $locationId = $this->syncLocation($user, $payload);
 
             $shared = array_filter([
-                'first_name' => $payload['first_name'] ?? null,
-                'last_name'  => $payload['last_name'] ?? null,
+                'first_name' => isset($payload['first_name']) ? Str::title($payload['first_name']) : null,
+                'last_name'  => isset($payload['last_name']) ? Str::title($payload['last_name']) : null,
                 'avatar'     => $avatarUrl,
             ], fn($value) => $value !== null);
 

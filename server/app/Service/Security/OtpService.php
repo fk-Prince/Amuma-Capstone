@@ -3,6 +3,7 @@
 namespace App\Service\Security;
 
 use App\Mail\OtpMailer;
+use App\Repository\UserRepository;
 use App\Service\AuthService;
 use Exception;
 use Illuminate\Support\Facades\Cache;
@@ -12,14 +13,22 @@ use Illuminate\Support\Str;
 class OtpService
 {
     private AuthService $authService;
+    private UserRepository $userRepository;
 
-    public function __construct(AuthService $authService)
+    public function __construct(AuthService $authService, UserRepository $userRepository)
     {
         $this->authService = $authService;
+        $this->userRepository = $userRepository;
     }
+
+    private const OTP_TTL_MINUTES = 5;
 
     public function send(array $payload)
     {
+        if ($this->userRepository->findByField('email', $payload['email'])) {
+            throw new Exception(__('Email already exists.'), 409);
+        }
+
         $otp = rand(100000, 999999);
 
         $key = Str::random(32);
@@ -30,7 +39,7 @@ class OtpService
                 'otp' => $otp,
                 'email' => $payload['email'],
             ],
-            now()->addMinutes(3)
+            now()->addMinutes(self::OTP_TTL_MINUTES)
         );
 
         Mail::to($payload['email'])->send(
@@ -44,6 +53,7 @@ class OtpService
             'status' => true,
             'message' => __('OTP sent to your email.'),
             'otp_key' => $key,
+            'expires_in' => self::OTP_TTL_MINUTES * 60,
         ]);
     }
 

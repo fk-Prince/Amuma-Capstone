@@ -30,6 +30,7 @@ const showPassword = ref(false);
 const loading = ref(false);
 const otpLoading = ref(false);
 const showOtpDialog = ref(false);
+const otpExpiresIn = ref(300);
 
 watch(
     () => signupData.value.email,
@@ -120,12 +121,12 @@ async function handleSignUp() {
         const res = await otpService.createOtp({
             email: signupData.value.email,
         });
-        console.log(res);
 
         if (res?.otp_key) {
             localStorage.setItem("otp_key", res.otp_key);
         }
 
+        otpExpiresIn.value = res?.expires_in ?? 300;
         showOtpDialog.value = true;
         success("OTP sent to your email.");
     } catch (err: any) {
@@ -172,32 +173,34 @@ async function verifyOtp(code: string) {
     }
 }
 
-// async function resendOtp() {
-//     try {
-//         const res = await otpService.createOtp({
-//             email: signupData.value.email,
-//         });
+async function resendOtp() {
+    try {
+        const res = await otpService.createOtp({
+            email: signupData.value.email,
+        });
 
-//         if (res?.key) {
-//             localStorage.setItem("otp_key", res.key);
-//         }
+        if (res?.otp_key) {
+            localStorage.setItem("otp_key", res.otp_key);
+        }
 
-//         success("OTP resent.");
-//     } catch (err: any) {
-//         error(err?.message || "Failed to resend OTP.");
-//     }
-// }
+        otpExpiresIn.value = res?.expires_in ?? 300;
+        success("OTP resent.");
+    } catch (err: any) {
+        error(err?.message || "Failed to resend OTP.");
+    }
+}
 </script>
 
 <template>
     <div
         class="w-full max-w-[460px] rounded-2xl bg-white px-10 py-11 shadow-xl"
     >
-        <!-- @resend="resendOtp" -->
         <OtpDialog
             v-if="showOtpDialog"
             :loading="otpLoading"
+            :expires-in-seconds="otpExpiresIn"
             @verify="verifyOtp"
+            @resend="resendOtp"
             @close="showOtpDialog = false"
         />
 

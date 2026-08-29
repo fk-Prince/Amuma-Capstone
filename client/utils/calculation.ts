@@ -1,5 +1,4 @@
 import type { BranchFacility } from "~/types/branch";
-import type { FacilityPlan } from "~/types/contract";
 
 export function getAnnualDiscount(
     facilities: BranchFacility[],

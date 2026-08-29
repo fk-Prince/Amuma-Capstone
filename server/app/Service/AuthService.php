@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
 class AuthService
@@ -73,8 +74,8 @@ class AuthService
         );
 
         $user->client()->create([
-            'first_name' => $payload['first_name'],
-            'last_name' => $payload['last_name'],
+            'first_name' => Str::title($payload['first_name']),
+            'last_name' => Str::title($payload['last_name']),
             'avatar' => 'https://ui-avatars.com/api/?name=' . $initials,
         ]);
 
@@ -122,8 +123,8 @@ class AuthService
             ]);
 
             $user->client()->create([
-                'first_name' => $firstName,
-                'last_name' => $lastName,
+                'first_name' => Str::title($firstName),
+                'last_name' => Str::title($lastName),
                 'avatar' => $googleUser->getAvatar(),
             ]);
         } elseif ($user->provider !== 'google') {
