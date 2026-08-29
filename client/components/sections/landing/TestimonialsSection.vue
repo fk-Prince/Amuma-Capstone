@@ -9,30 +9,64 @@
         <div class="relative z-10">
             <!-- Header -->
 
-            <div class="mb-12">
-                <h2
-                    class="mb-3 text-[clamp(2rem,3vw,3rem)] font-black leading-tight text-secondary dark:text-white"
-                >
-                    Trusted by
-
-                    <span
-                        class="bg-gradient-to-br from-primary to-blue-700 bg-clip-text text-transparent"
+            <div class="mb-12 flex flex-wrap items-end justify-between gap-6">
+                <div>
+                    <h2
+                        class="mb-3 text-[clamp(2rem,3vw,3rem)] font-black leading-tight text-secondary dark:text-white"
                     >
-                        Care Teams
-                    </span>
+                        Trusted by
 
-                    Across the Philippines
-                </h2>
+                        <span
+                            class="bg-gradient-to-br from-primary to-blue-700 bg-clip-text text-transparent"
+                        >
+                            Care Teams
+                        </span>
 
-                <p class="text-muted dark:text-gray-400">
-                    — here's what agencies say after switching to AMUMA.
-                </p>
+                        Across the Philippines
+                    </h2>
+
+                    <p class="text-muted dark:text-gray-400">
+                        — here's what agencies say after switching to AMUMA.
+                    </p>
+                </div>
+
+                <div class="hidden shrink-0 items-center gap-2 sm:flex">
+                    <button
+                        type="button"
+                        aria-label="Previous testimonials"
+                        class="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-secondary shadow-sm transition-colors hover:bg-primary-50 hover:text-primary dark:border-white/10 dark:bg-secondary dark:text-white dark:hover:bg-white/10"
+                        @click="go(-1)"
+                    >
+                        <ChevronLeft class="h-5 w-5" />
+                    </button>
+
+                    <button
+                        type="button"
+                        aria-label="Next testimonials"
+                        class="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-secondary shadow-sm transition-colors hover:bg-primary-50 hover:text-primary dark:border-white/10 dark:bg-secondary dark:text-white dark:hover:bg-white/10"
+                        @click="go(1)"
+                    >
+                        <ChevronRight class="h-5 w-5" />
+                    </button>
+                </div>
             </div>
 
             <!-- Cards -->
 
             <div
-                class="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-none"
+                ref="track"
+                class="flex gap-5 overflow-x-auto pb-4 scrollbar-none"
+                :class="[
+                    isDragging
+                        ? 'cursor-grabbing select-none'
+                        : 'cursor-grab snap-x snap-mandatory',
+                ]"
+                @pointerdown="onPointerDown"
+                @pointermove="onPointerMove"
+                @pointerup="onPointerUp"
+                @pointercancel="onPointerUp"
+                @mouseenter="stopAutoplay"
+                @mouseleave="onMouseLeave"
             >
                 <div
                     v-for="t in testimonials"
@@ -87,6 +121,9 @@
 </template>
 
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from "vue";
+import { ChevronLeft, ChevronRight } from "lucide-vue-next";
+
 const testimonials = [
     {
         name: "Dr. Barbie Santos",
@@ -168,4 +205,92 @@ const testimonials = [
         quote: `"ROI became visible within two months. Less admin work, fewer errors, and happier staff."`,
     },
 ];
+
+const AUTOPLAY_INTERVAL = 4000;
+
+const track = ref<HTMLElement | null>(null);
+const isDragging = ref(false);
+
+let dragStartX = 0;
+let dragStartScroll = 0;
+let autoplayTimer: ReturnType<typeof setInterval> | null = null;
+
+function cardStep() {
+    const el = track.value;
+    if (!el) return 0;
+
+    const card = el.firstElementChild as HTMLElement | null;
+    if (!card) return el.clientWidth;
+
+    const gap = parseFloat(getComputedStyle(el).columnGap || "0");
+    return card.offsetWidth + gap;
+}
+
+function go(direction: number) {
+    const el = track.value;
+    if (!el) return;
+
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+    const atStart = el.scrollLeft <= 4;
+
+    if (direction > 0 && atEnd) {
+        el.scrollTo({ left: 0, behavior: "smooth" });
+    } else if (direction < 0 && atStart) {
+        el.scrollTo({ left: el.scrollWidth, behavior: "smooth" });
+    } else {
+        el.scrollBy({ left: direction * cardStep(), behavior: "smooth" });
+    }
+}
+
+function startAutoplay() {
+    stopAutoplay();
+    autoplayTimer = setInterval(() => go(1), AUTOPLAY_INTERVAL);
+}
+
+function stopAutoplay() {
+    if (autoplayTimer) {
+        clearInterval(autoplayTimer);
+        autoplayTimer = null;
+    }
+}
+
+function onMouseLeave() {
+    if (!isDragging.value) startAutoplay();
+}
+
+function onPointerDown(e: PointerEvent) {
+    if (e.pointerType !== "mouse") return;
+
+    const el = track.value;
+    if (!el) return;
+
+    isDragging.value = true;
+    dragStartX = e.clientX;
+    dragStartScroll = el.scrollLeft;
+    el.setPointerCapture(e.pointerId);
+    stopAutoplay();
+    e.preventDefault();
+}
+
+function onPointerMove(e: PointerEvent) {
+    if (!isDragging.value) return;
+
+    const el = track.value;
+    if (!el) return;
+
+    el.scrollLeft = dragStartScroll - (e.clientX - dragStartX);
+}
+
+function onPointerUp(e: PointerEvent) {
+    const el = track.value;
+    if (el?.hasPointerCapture(e.pointerId)) {
+        el.releasePointerCapture(e.pointerId);
+    }
+
+    isDragging.value = false;
+    startAutoplay();
+}
+
+onMounted(startAutoplay);
+onBeforeUnmount(stopAutoplay);
 </script>
