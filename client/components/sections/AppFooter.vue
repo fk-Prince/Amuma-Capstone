@@ -21,11 +21,11 @@
                     <h4
                         class="text-xs font-semibold tracking-widest text-white uppercase"
                     >
-                        Product
+                        Navigate
                     </h4>
                     <nav class="flex flex-col gap-3">
                         <NuxtLink
-                            v-for="item in productLinks"
+                            v-for="item in navList"
                             :key="item.to"
                             :to="item.to"
                             class="text-gray-400 text-sm hover:text-white transition-colors"
@@ -129,15 +129,9 @@
 <script setup lang="ts">
 import logoAmuma from "~/assets/logo/logoAmuma.png";
 import { computed } from "vue";
+import { navList } from "~/config/publicMenu";
 
 const currentYear = computed(() => new Date().getFullYear());
-
-const productLinks = [
-    { label: "Product", to: "/" },
-    { label: "Booking", to: "/" },
-    { label: "Company", to: "/" },
-    { label: "Docs", to: "/" },
-];
 
 const companyLinks = [
     { label: "About", to: "/" },

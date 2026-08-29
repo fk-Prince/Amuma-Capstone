@@ -6,7 +6,7 @@ definePageMeta({
     footer: false,
 });
 useHead({
-    title: "Sign Up - AMUMA",
+    title: "Sign up - AMUMA",
 });
 </script>
 

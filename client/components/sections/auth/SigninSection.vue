@@ -48,15 +48,11 @@ import signinLogo from "~/assets/logo/signinLogo.png";
                         dashboard.
                     </p>
                 </div>
-
-                <ul class="space-y-3">
-                    <!-- list items unchanged -->
-                </ul>
             </div>
         </section>
 
         <section
-            class="relative z-10 flex flex-col items-center justify-center px-4 sm:px-6 py-4 h-full overflow-y-auto"
+            class="relative z-10 flex flex-col items-center justify-center px-4 sm:px-6 pt-[106px] pb-4 h-full overflow-y-auto"
         >
             <div
                 class="bg-white dark:bg-secondary rounded-2xl shadow-xl px-6 sm:px-10 py-6 sm:py-8 w-full max-w-[460px] my-auto"

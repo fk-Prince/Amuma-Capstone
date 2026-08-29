@@ -30,7 +30,7 @@
             >
                 <aside
                     v-if="open && !isDesktop"
-                    class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-secondary shadow-[0_0_40px_rgba(10,40,87,0.15)] z-[70] flex flex-col lg:hidden"
+                    class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-secondary shadow-[0_0_40px_rgba(10,40,87,0.15)] z-[70] flex flex-col"
                 >
                     <div
                         class="flex items-center justify-between px-5 h-[72px] border-b border-primary-100/80 dark:border-white/10"
@@ -435,9 +435,11 @@ const props = withDefaults(
         }>;
         user?: any | null;
         variant?: 1 | 2;
+        desktopBreakpoint?: number;
     }>(),
     {
         variant: 1,
+        desktopBreakpoint: 1024,
     },
 );
 
@@ -464,7 +466,7 @@ const initials = computed(() => {
 });
 
 const checkScreen = () => {
-    isDesktop.value = window.innerWidth >= 1024;
+    isDesktop.value = window.innerWidth >= props.desktopBreakpoint;
     if (isDesktop.value) {
         emit("close");
     } else {

@@ -13,6 +13,6 @@ definePageMeta({
 });
 
 useHead({
-    title: "Sign In - AMUMA",
+    title: "Sign in - AMUMA",
 });
 </script>

@@ -86,8 +86,11 @@ const header = computed(() => {
                 .join(" ");
         case 5:
             return [
-                "fixed top-0 left-0 z-50 w-full  h-[90px] flex items-center justify-start",
-                "transition-all duration-300 ease-out",
+                "fixed top-0 left-0 z-50 w-full h-[90px] flex items-center",
+                "transition-colors duration-200 ease-out",
+                scrolled.value
+                    ? "bg-white dark:bg-secondary border-b border-muted-light dark:border-white/10"
+                    : "bg-transparent border-b border-transparent",
             ]
                 .filter(Boolean)
                 .join(" ");
@@ -221,7 +224,7 @@ watch(
 
                     <div
                         v-if="variant === 1 || variant === 2 || variant === 3"
-                        class="relative hidden lg:flex items-center gap-1"
+                        class="relative hidden 2xl:flex items-center gap-1"
                     >
                         <span
                             class="absolute inset-y-1 left-0 z-0 rounded-lg transition-all duration-300 ease-out"
@@ -261,7 +264,7 @@ watch(
 
                         <NuxtLink
                             :to="hydrated ? '/auth/signin' : undefined"
-                            class="shrink-0"
+                            class="hidden sm:block shrink-0"
                         >
                             <BaseButton
                                 buttonClass="px-[18px] lg:px-[28px] h-11 rounded-lg whitespace-nowrap min-w-fit shadow-sm shadow-primary-500/25 transition-all duration-200 hover:shadow-md hover:shadow-primary-500/30 active:scale-[0.97]"
@@ -299,7 +302,7 @@ watch(
 
                     <button
                         v-if="variant === 1 || variant === 2 || variant === 3"
-                        class="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors duration-300"
+                        class="2xl:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors duration-300"
                         :class="menuIconClass"
                         aria-label="Open menu"
                         @click="mobileMenuOpen = true"
@@ -327,6 +330,7 @@ watch(
                 :logo="logoAmuma"
                 :authMenu="navList"
                 :user="user"
+                :desktop-breakpoint="1536"
                 @close="mobileMenuOpen = false"
             />
         </ClientOnly>

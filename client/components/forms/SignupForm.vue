@@ -193,7 +193,7 @@ async function resendOtp() {
 
 <template>
     <div
-        class="w-full max-w-[460px] rounded-2xl bg-white dark:bg-secondary px-10 py-11 shadow-xl"
+        class="w-full max-w-[460px] rounded-2xl bg-white dark:bg-secondary px-6 sm:px-10 py-8 sm:py-11 shadow-xl"
     >
         <OtpDialog
             v-if="showOtpDialog"

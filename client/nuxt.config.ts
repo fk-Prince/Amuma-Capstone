@@ -56,6 +56,9 @@ export default defineNuxtConfig({
     head: {
       script: [
         {
+          innerHTML: `(function(){try{var t=localStorage.getItem('theme');if(t?t==='dark':true)document.documentElement.classList.add('dark')}catch(e){}})()`,
+        },
+        {
           src: 'https://js.xendit.co/v1/xendit.min.js',
           defer: true
         }
