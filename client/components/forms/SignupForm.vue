@@ -205,12 +205,17 @@ async function resendOtp() {
         />
 
         <div class="mb-10 text-center">
-            <h2 class="text-[1.85rem] font-extrabold text-slate-900 dark:text-white">
+            <h2
+                class="text-[1.85rem] font-extrabold text-slate-900 dark:text-white"
+            >
                 Create an Account
             </h2>
             <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
                 Join
-                <span class="font-semibold text-blue-600 dark:text-blue-400">AMUMA</span> today
+                <span class="font-semibold text-blue-600 dark:text-blue-400"
+                    >AMUMA</span
+                >
+                today
             </p>
         </div>
 
@@ -391,10 +396,12 @@ async function resendOtp() {
                 class="mt-3"
                 @click="handleSignUp"
             >
-                {{ loading ? "Sign Up..." : "Sign Up" }}
+                {{ loading ? "Sign up..." : "Sign up" }}
             </BaseButton>
 
-            <p class="mt-2 text-center text-sm text-slate-500 dark:text-gray-400">
+            <p
+                class="mt-2 text-center text-sm text-slate-500 dark:text-gray-400"
+            >
                 Already have an account?
                 <NuxtLink
                     to="/auth/signin"

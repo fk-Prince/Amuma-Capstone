@@ -198,7 +198,7 @@ async function googleUrl() {
                 :disabled="loading || redirecting"
                 @click="handleSignIn"
             >
-                <span>{{ loading ? "Signing in…" : "Sign In" }}</span>
+                <span>{{ loading ? "Signing in…" : "Sign in" }}</span>
             </BaseButton>
 
             <div class="flex items-center gap-3">
