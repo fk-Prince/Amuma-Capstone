@@ -45,6 +45,6 @@ class ReviewService
     public function retrieveReview(array $payload)
     {
         $branch =  BranchGuard::resolveBranch($payload['branch_uuid']);
-        return $this->reviewRepository->paginate($payload['per_page'],  $branch->uuid,  $payload['rate'] ?? null,   $payload['withComments'] ?? false);
+        return $this->reviewRepository->paginate($payload['per_page'],  $branch->uuid,  $payload['rate'] ?? null,   $payload['withComments'] ?? false,   $payload['withMedia'] ?? false);
     }
 }

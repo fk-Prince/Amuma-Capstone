@@ -1,6 +1,6 @@
 <template>
     <header
-        class="hidden md:block sticky top-0 z-50 border-b border-slate-200/50 bg-white/95 backdrop-blur-md shadow-sm"
+        class="hidden md:block sticky top-0 z-50 border-b border-slate-200/50 bg-white/95 backdrop-blur-md shadow-sm dark:bg-secondary/95 dark:border-white/10"
     >
         <div class="relative px-6 lg:px-10 py-4">
             <div class="flex gap-4 items-center flex-1">
@@ -20,27 +20,27 @@
                         :class="
                             hasActiveFilters
                                 ? 'border-primary/30 bg-primary/5 hover:bg-primary/10'
-                                : 'border-slate-300 bg-white hover:bg-slate-50'
+                                : 'border-slate-300 bg-white hover:bg-slate-50 dark:bg-secondary dark:border-white/10 dark:hover:bg-white/5'
                         "
                         @click="dropdownOpen = !dropdownOpen"
                     >
-                        <span class="flex items-center gap-1.5 text-slate-600">
-                            <MapPin class="h-3.5 w-3.5 text-slate-400" />
-                            <span class="text-slate-900 font-medium">{{
+                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-gray-300">
+                            <MapPin class="h-3.5 w-3.5 text-slate-400 dark:text-gray-500" />
+                            <span class="text-slate-900 font-medium dark:text-white">{{
                                 locationLabel
                             }}</span>
                         </span>
-                        <span class="text-slate-300">|</span>
-                        <span class="flex items-center gap-1.5 text-slate-600">
-                            <HeartPulse class="h-3.5 w-3.5 text-slate-400" />
-                            <span class="text-slate-900 font-medium">{{
+                        <span class="text-slate-300 dark:text-white/10">|</span>
+                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-gray-300">
+                            <HeartPulse class="h-3.5 w-3.5 text-slate-400 dark:text-gray-500" />
+                            <span class="text-slate-900 font-medium dark:text-white">{{
                                 careTypeLabel
                             }}</span>
                         </span>
-                        <span class="text-slate-300">|</span>
-                        <span class="flex items-center gap-1.5 text-slate-600">
-                            <ArrowUpDown class="h-3.5 w-3.5 text-slate-400" />
-                            <span class="text-slate-900 font-medium">{{
+                        <span class="text-slate-300 dark:text-white/10">|</span>
+                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-gray-300">
+                            <ArrowUpDown class="h-3.5 w-3.5 text-slate-400 dark:text-gray-500" />
+                            <span class="text-slate-900 font-medium dark:text-white">{{
                                 sortLabel
                             }}</span>
                         </span>
@@ -62,18 +62,18 @@
                     <transition name="fade-slide">
                         <div
                             v-if="dropdownOpen"
-                            class="absolute right-0 z-30 mt-2 w-[650px] max-w-[90vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
+                            class="absolute right-0 z-30 mt-2 w-[650px] max-w-[90vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:bg-secondary dark:border-white/10"
                         >
                             <div
-                                class="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/80 px-6 py-4"
+                                class="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/80 px-6 py-4 dark:border-white/10 dark:bg-white/5"
                             >
                                 <div>
                                     <p
-                                        class="text-sm font-semibold text-slate-900"
+                                        class="text-sm font-semibold text-slate-900 dark:text-white"
                                     >
                                         Refine Your Search
                                     </p>
-                                    <p class="mt-0.5 text-xs text-slate-500">
+                                    <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                                         Narrow providers down by location, care
                                         type, and how results are sorted.
                                     </p>
@@ -81,7 +81,7 @@
 
                                 <button
                                     type="button"
-                                    class="shrink-0 text-slate-400 hover:text-slate-600"
+                                    class="shrink-0 text-slate-400 hover:text-slate-600 dark:text-gray-500"
                                     @click="dropdownOpen = false"
                                 >
                                     <svg
@@ -100,10 +100,10 @@
                             <div class="p-6">
                                 <div class="flex items-start gap-6 py-2">
                                     <p
-                                        class="flex w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
+                                        class="flex w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900 dark:text-white"
                                     >
                                         <MapPin
-                                            class="h-3.5 w-3.5 text-slate-400"
+                                            class="h-3.5 w-3.5 text-slate-400 dark:text-gray-500"
                                         />
                                         Location
                                     </p>
@@ -140,14 +140,14 @@
                                     </div>
                                 </div>
 
-                                <div class="h-px bg-slate-200 my-4" />
+                                <div class="h-px bg-slate-200 my-4 dark:bg-white/10" />
 
                                 <div class="flex items-start gap-6 py-2">
                                     <p
-                                        class="flex w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
+                                        class="flex w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900 dark:text-white"
                                     >
                                         <HeartPulse
-                                            class="h-3.5 w-3.5 text-slate-400"
+                                            class="h-3.5 w-3.5 text-slate-400 dark:text-gray-500"
                                         />
                                         Care Type
                                     </p>
@@ -160,7 +160,7 @@
                                             :class="
                                                 planCodeType === item.value
                                                     ? 'border-primary bg-primary text-white'
-                                                    : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
+                                                    : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-gray-300'
                                             "
                                             @click="planCodeType = item.value"
                                         >
@@ -169,14 +169,14 @@
                                     </div>
                                 </div>
 
-                                <div class="h-px bg-slate-200 my-4" />
+                                <div class="h-px bg-slate-200 my-4 dark:bg-white/10" />
 
                                 <div class="flex items-start gap-6 py-2">
                                     <p
-                                        class="flex w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
+                                        class="flex w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900 dark:text-white"
                                     >
                                         <ArrowUpDown
-                                            class="h-3.5 w-3.5 text-slate-400"
+                                            class="h-3.5 w-3.5 text-slate-400 dark:text-gray-500"
                                         />
                                         Sort by
                                     </p>
@@ -189,7 +189,7 @@
                                             :class="
                                                 activeSortOption === sort.value
                                                     ? 'border-primary bg-primary text-white'
-                                                    : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
+                                                    : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-gray-300'
                                             "
                                             @click="
                                                 activeSortOption = sort.value
@@ -200,12 +200,12 @@
                                     </div>
                                 </div>
 
-                                <div class="h-px bg-slate-200 my-4" />
+                                <div class="h-px bg-slate-200 my-4 dark:bg-white/10" />
 
                                 <div class="flex justify-end gap-3">
                                     <button
                                         type="button"
-                                        class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition"
+                                        class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition dark:text-gray-300 dark:hover:text-white"
                                         @click="resetFilters"
                                     >
                                         Reset
@@ -227,7 +227,7 @@
     </header>
 
     <header
-        class="md:hidden border-b border-slate-200/50 bg-white shadow-sm sticky top-0 z-40"
+        class="md:hidden border-b border-slate-200/50 bg-white shadow-sm sticky top-0 z-40 dark:bg-secondary dark:border-white/10"
     >
         <div class="p-4 space-y-3">
             <div class="flex items-center gap-2">
@@ -246,7 +246,7 @@
                     :class="
                         hasActiveFilters
                             ? 'border-primary/30 bg-primary/5 text-primary'
-                            : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                            : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:bg-secondary dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5'
                     "
                     @click="mobileFiltersOpen = !mobileFiltersOpen"
                 >
@@ -262,7 +262,7 @@
             <div v-if="mobileFiltersOpen" class="space-y-4 pt-1">
                 <div>
                     <label
-                        class="mb-2 block text-xs font-semibold text-slate-600 uppercase tracking-wide"
+                        class="mb-2 block text-xs font-semibold text-slate-600 uppercase tracking-wide dark:text-gray-300"
                         >Location</label
                     >
                     <BaseInput
@@ -288,7 +288,7 @@
 
                 <div>
                     <label
-                        class="mb-2 block text-xs font-semibold text-slate-600 uppercase tracking-wide"
+                        class="mb-2 block text-xs font-semibold text-slate-600 uppercase tracking-wide dark:text-gray-300"
                         >Care Type</label
                     >
                     <Combobox
@@ -302,7 +302,7 @@
 
                 <div>
                     <label
-                        class="mb-2 block text-xs font-semibold text-slate-600 uppercase tracking-wide"
+                        class="mb-2 block text-xs font-semibold text-slate-600 uppercase tracking-wide dark:text-gray-300"
                         >Sort by</label
                     >
                     <div class="flex gap-2 flex-wrap">
@@ -314,7 +314,7 @@
                             :class="
                                 activeSortOption === sort.value
                                     ? 'bg-primary text-white border-primary'
-                                    : 'bg-white text-slate-600 border-slate-300 hover:border-primary hover:text-primary'
+                                    : 'bg-white text-slate-600 border-slate-300 hover:border-primary hover:text-primary dark:bg-secondary dark:text-gray-300 dark:border-white/10'
                             "
                             @click="activeSortOption = sort.value"
                         >
@@ -326,7 +326,7 @@
                 <div class="pt-2">
                     <button
                         type="button"
-                        class="w-full py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg transition"
+                        class="w-full py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg transition dark:text-gray-300 dark:border-white/10 dark:hover:text-white"
                         @click="resetFilters"
                     >
                         Reset

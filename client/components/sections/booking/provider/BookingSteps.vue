@@ -8,8 +8,8 @@
             class="group relative flex min-h-[88px] w-full items-start gap-4 rounded-2xl p-3 text-left transition-all duration-200"
             :class="
                 active === step.key
-                    ? 'bg-primary-50 shadow-sm ring-1 ring-primary-200'
-                    : 'hover:bg-muted-light'
+                    ? 'bg-primary-50 shadow-sm ring-1 ring-primary-200 dark:bg-primary-500/10 dark:ring-primary-500/20'
+                    : 'hover:bg-muted-light dark:hover:bg-white/5'
             "
         >
             <div
@@ -21,8 +21,8 @@
                         isCompleted(step.key) && active !== step.key
                             ? 'border-primary-500 bg-primary-500 text-white shadow-sm shadow-primary-500/20'
                             : active === step.key
-                              ? 'border-primary-500 bg-primary-500 text-white shadow-md shadow-primary-500/20 ring-4 ring-primary-100'
-                              : 'border-muted-light bg-white text-muted group-hover:border-primary-200 group-hover:bg-primary-50 group-hover:text-primary-600'
+                              ? 'border-primary-500 bg-primary-500 text-white shadow-md shadow-primary-500/20 ring-4 ring-primary-100 dark:ring-primary-500/20'
+                              : 'border-muted-light bg-white text-muted group-hover:border-primary-200 group-hover:bg-primary-50 group-hover:text-primary-600 dark:border-white/10 dark:bg-secondary dark:text-gray-400 dark:group-hover:border-primary-500/40 dark:group-hover:bg-primary-500/10 dark:group-hover:text-primary-400'
                     "
                 >
                     <Check
@@ -42,7 +42,7 @@
                     :class="
                         isCompleted(step.key)
                             ? 'bg-primary-300'
-                            : 'bg-gray-200'
+                            : 'bg-gray-200 dark:bg-white/10'
                     "
                 />
             </div>
@@ -55,8 +55,8 @@
                             active === step.key
                                 ? 'text-primary-600'
                                 : isCompleted(step.key)
-                                  ? 'text-secondary'
-                                  : 'text-muted-dark'
+                                  ? 'text-secondary dark:text-white'
+                                  : 'text-muted-dark dark:text-gray-400'
                         "
                     >
                         {{ step.title }}
@@ -64,19 +64,19 @@
 
                     <span
                         v-if="active === step.key"
-                        class="hidden shrink-0 rounded-full bg-primary-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-600 sm:inline-flex"
+                        class="hidden shrink-0 rounded-full bg-primary-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-600 sm:inline-flex dark:bg-primary-500/15 dark:text-primary-400"
                     >
                         Current
                     </span>
                 </div>
 
-                <p class="mt-1 text-xs leading-4 text-muted">
+                <p class="mt-1 text-xs leading-4 text-muted dark:text-gray-400">
                     {{ step.desc }}
                 </p>
 
                 <span
                     v-if="step.optional"
-                    class="mt-1.5 inline-flex rounded-md bg-accent-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent-600"
+                    class="mt-1.5 inline-flex rounded-md bg-accent-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent-600 dark:bg-accent-500/15 dark:text-accent-400"
                 >
                     Optional
                 </span>

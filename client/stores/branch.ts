@@ -47,10 +47,7 @@ export const useBranchStore = defineStore("branch", () => {
             const res = await userService.userBranch();
             branches.value = res.data?.branches ?? [];
 
-            // Route middleware calls this before the global route object has
-            // committed to the destination, so routeUuid can still reflect
-            // the page being navigated away from. The caller's own target
-            // uuid (e.g. `to.params.uuid`) is the reliable one.
+
             const uuid = targetUuid ?? routeUuid.value;
             const first = branches.value[0];
 

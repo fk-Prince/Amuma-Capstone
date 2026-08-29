@@ -1,26 +1,26 @@
 <template>
     <div
-        class="min-h-screen grid grid-cols-1 lg:grid-cols-[280px_1fr] bg-gray-50"
+        class="min-h-screen grid grid-cols-1 lg:grid-cols-[280px_1fr] bg-gray-50 dark:bg-secondary"
     >
         <aside
-            class="hidden lg:flex flex-col bg-white border-r sticky top-0 h-screen"
+            class="hidden lg:flex flex-col bg-white border-r sticky top-0 h-screen dark:bg-secondary dark:border-white/10"
         >
-            <div class="px-6 py-6 border-b">
+            <div class="px-6 py-6 border-b dark:border-white/10">
                 <p
-                    class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+                    class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500"
                 >
                     Booking Progress
                 </p>
                 <div class="mt-3 flex items-center gap-2">
                     <div
-                        class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden"
+                        class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden dark:bg-white/10"
                     >
                         <div
                             class="h-full rounded-full bg-primary transition-all duration-300"
                             :style="{ width: `${progress}%` }"
                         ></div>
                     </div>
-                    <span class="text-xs font-medium text-gray-400 shrink-0">
+                    <span class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500">
                         {{ Math.round(progress) }}%
                     </span>
                 </div>
@@ -55,14 +55,14 @@
             <div class="lg:hidden mb-6">
                 <div class="flex items-center gap-2">
                     <div
-                        class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden"
+                        class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden dark:bg-white/10"
                     >
                         <div
                             class="h-full rounded-full bg-primary transition-all duration-300"
                             :style="{ width: `${progress}%` }"
                         ></div>
                     </div>
-                    <span class="text-xs font-medium text-gray-400 shrink-0">
+                    <span class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500">
                         {{ Math.round(progress) }}%
                     </span>
                 </div>
@@ -77,7 +77,7 @@
             >
                 <div>
                     <div
-                        class="rounded-2xl border border-gray-100 bg-white shadow-sm"
+                        class="rounded-2xl border border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
                     >
                         <ReviewSection
                             :category="bookingStore.category"
@@ -100,7 +100,7 @@
 
                     <div
                         v-if="!showPayment"
-                        class="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-6"
+                        class="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-6 dark:bg-secondary dark:border-white/10"
                     >
                         <BaseButton
                             variant="primary"
@@ -119,7 +119,7 @@
 
                 <div v-if="showPayment" class="xl:sticky xl:top-8">
                     <div
-                        class="rounded-2xl border border-gray-100 bg-white shadow-sm p-6"
+                        class="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 dark:bg-secondary dark:border-white/10"
                     >
                         <PaymentForm
                             :card="card"

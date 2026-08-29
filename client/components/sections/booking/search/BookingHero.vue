@@ -82,7 +82,7 @@
 
                 <!-- search card -->
                 <div
-                    class="bg-white rounded-3xl shadow-xl border border-black/5 p-6 md:p-8 w-full max-w-lg lg:ml-auto"
+                    class="bg-white rounded-3xl shadow-xl border border-black/5 p-6 md:p-8 w-full max-w-lg lg:ml-auto dark:bg-secondary"
                 >
                     <div class="mb-6">
                         <div class="flex items-center gap-2">
@@ -90,15 +90,15 @@
                                 class="w-1.5 h-1.5 rounded-full bg-accent"
                             ></span>
                             <span
-                                class="text-xs font-medium tracking-[0.14em] uppercase text-muted"
+                                class="text-xs font-medium tracking-[0.14em] uppercase text-muted dark:text-gray-400"
                             >
                                 Trusted care services
                             </span>
                         </div>
-                        <h2 class="mt-3 text-2xl font-medium text-secondary">
+                        <h2 class="mt-3 text-2xl font-medium text-secondary dark:text-white">
                             Find care near you
                         </h2>
-                        <p class="mt-2 text-sm text-muted">
+                        <p class="mt-2 text-sm text-muted dark:text-gray-400">
                             Search verified caregivers, home-care services, and
                             residential care facilities tailored to your needs.
                         </p>
@@ -107,7 +107,7 @@
                     <div class="grid gap-5">
                         <div>
                             <label
-                                class="mb-2 block text-xs font-medium text-muted uppercase tracking-wide"
+                                class="mb-2 block text-xs font-medium text-muted uppercase tracking-wide dark:text-gray-400"
                             >
                                 Search
                             </label>
@@ -120,7 +120,7 @@
                         </div>
                         <div>
                             <label
-                                class="mb-2 block text-xs font-medium text-muted uppercase tracking-wide"
+                                class="mb-2 block text-xs font-medium text-muted uppercase tracking-wide dark:text-gray-400"
                             >
                                 Location
                             </label>
@@ -147,7 +147,7 @@
                         </div>
                         <div>
                             <label
-                                class="mb-2 block text-xs font-medium text-muted uppercase tracking-wide"
+                                class="mb-2 block text-xs font-medium text-muted uppercase tracking-wide dark:text-gray-400"
                             >
                                 Care type
                             </label>
@@ -180,7 +180,7 @@
                     </BaseButton>
 
                     <div
-                        class="mt-6 border-t border-muted-light pt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted"
+                        class="mt-6 border-t border-muted-light pt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted dark:text-gray-400 dark:border-white/10"
                     >
                         <span
                             v-for="trust in trustPoints"

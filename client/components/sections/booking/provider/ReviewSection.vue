@@ -10,7 +10,7 @@
                             : "Review & Submit"
                     }}
                 </h2>
-                <p class="text-[13px] text-muted">
+                <p class="text-[13px] text-muted dark:text-gray-400">
                     {{
                         category === "facility" && facility.type === "Complete"
                             ? "Check that everything below is correct, then complete payment to confirm your reservation."
@@ -21,11 +21,11 @@
         </div>
 
         <div class="space-y-6">
-            <div class="rounded-xl border border-slate-200">
+            <div class="rounded-xl border border-slate-200 dark:border-white/10">
                 <div
-                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100"
+                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
                         Booking Details
                     </h3>
                     <button
@@ -45,11 +45,11 @@
                     >
                         <dd
                             v-if="row.label === 'Total'"
-                            class="mt-2 rounded-lg border border-slate-200 bg-slate-50 pl-4 pr-5 py-4"
+                            class="mt-2 rounded-lg border border-slate-200 bg-slate-50 pl-4 pr-5 py-4 dark:bg-secondary dark:border-white/10"
                         >
                             <div class="flex items-center justify-between">
                                 <span
-                                    class="text-xs font-medium uppercase tracking-wide text-slate-500"
+                                    class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                 >
                                     Total Amount
                                 </span>
@@ -61,26 +61,26 @@
                             </div>
                             <p
                                 v-if="showPayment"
-                                class="mt-1.5 text-[11px] text-slate-400"
+                                class="mt-1.5 text-[11px] text-slate-400 dark:text-gray-500"
                             >
                                 * Your payment will be fully refunded once it is
                                 rejected.
                             </p>
-                            <p v-else class="mt-1.5 text-[11px] text-slate-400">
+                            <p v-else class="mt-1.5 text-[11px] text-slate-400 dark:text-gray-500">
                                 * Prices are estimates and may change without
                                 further notice.
                             </p>
                         </dd>
 
                         <div v-else>
-                            <dt class="text-xs text-slate-400">
+                            <dt class="text-xs text-slate-400 dark:text-gray-500">
                                 {{ row.label }}
                             </dt>
                             <dd
                                 :class="
                                     row.value
-                                        ? 'text-sm font-medium text-slate-800 mt-0.5 break-words'
-                                        : 'text-sm text-slate-300 mt-0.5'
+                                        ? 'text-sm font-medium text-slate-800 mt-0.5 break-words dark:text-white'
+                                        : 'text-sm text-slate-300 mt-0.5 dark:text-gray-600'
                                 "
                             >
                                 {{ row.value || "Not provided" }}
@@ -90,11 +90,11 @@
                 </dl>
             </div>
 
-            <div class="rounded-xl border border-slate-200">
+            <div class="rounded-xl border border-slate-200 dark:border-white/10">
                 <div
-                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100"
+                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
                         Patient Information
                     </h3>
                     <button
@@ -112,14 +112,14 @@
                         :key="row.label"
                         :class="row.span ? 'sm:col-span-2' : ''"
                     >
-                        <dt class="text-xs text-slate-400">
+                        <dt class="text-xs text-slate-400 dark:text-gray-500">
                             {{ row.label }}
                         </dt>
                         <dd
                             :class="
                                 row.value
-                                    ? 'text-sm font-medium text-slate-800 mt-0.5 break-words'
-                                    : 'text-sm text-slate-300 mt-0.5'
+                                    ? 'text-sm font-medium text-slate-800 mt-0.5 break-words dark:text-white'
+                                    : 'text-sm text-slate-300 mt-0.5 dark:text-gray-600'
                             "
                         >
                             {{ row.value || "Not provided" }}
@@ -128,11 +128,11 @@
                 </dl>
             </div>
 
-            <div class="rounded-xl border border-slate-200">
+            <div class="rounded-xl border border-slate-200 dark:border-white/10">
                 <div
-                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100"
+                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
                         Guardian Information
                     </h3>
                     <button
@@ -150,14 +150,14 @@
                         :key="row.label"
                         :class="row.span ? 'sm:col-span-2' : ''"
                     >
-                        <dt class="text-xs text-slate-400">
+                        <dt class="text-xs text-slate-400 dark:text-gray-500">
                             {{ row.label }}
                         </dt>
                         <dd
                             :class="
                                 row.value
-                                    ? 'text-sm font-medium text-slate-800 mt-0.5 break-words'
-                                    : 'text-sm text-slate-300 mt-0.5'
+                                    ? 'text-sm font-medium text-slate-800 mt-0.5 break-words dark:text-white'
+                                    : 'text-sm text-slate-300 mt-0.5 dark:text-gray-600'
                             "
                         >
                             {{ row.value || "Not provided" }}
@@ -166,14 +166,14 @@
                 </dl>
             </div>
 
-            <div class="rounded-xl border border-slate-200">
+            <div class="rounded-xl border border-slate-200 dark:border-white/10">
                 <div
-                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100"
+                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
                         Assessment
                         <span
-                            class="ml-1 text-[11px] font-medium uppercase tracking-wide text-slate-400"
+                            class="ml-1 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
                             >(Optional)</span
                         >
                     </h3>
@@ -189,7 +189,7 @@
                 <div class="p-5">
                     <p
                         v-if="!assessments.length"
-                        class="text-sm text-slate-400"
+                        class="text-sm text-slate-400 dark:text-gray-500"
                     >
                         No assessment details were provided.
                     </p>
@@ -197,10 +197,10 @@
                         <div
                             v-for="(assessment, index) in assessments"
                             :key="index"
-                            class="pb-6 border-b border-slate-100 last:pb-0 last:border-b-0"
+                            class="pb-6 border-b border-slate-100 last:pb-0 last:border-b-0 dark:border-white/10"
                         >
                             <h4
-                                class="text-xs font-semibold text-slate-600 mb-3"
+                                class="text-xs font-semibold text-slate-600 mb-3 dark:text-gray-300"
                             >
                                 Assessment {{ index + 1 }}
                             </h4>
@@ -211,11 +211,11 @@
                                     v-for="row in getAssessmentRows(assessment)"
                                     :key="row.label"
                                 >
-                                    <dt class="text-xs text-slate-400">
+                                    <dt class="text-xs text-slate-400 dark:text-gray-500">
                                         {{ row.label }}
                                     </dt>
                                     <dd
-                                        class="text-sm font-medium text-slate-800 mt-0.5 break-words"
+                                        class="text-sm font-medium text-slate-800 mt-0.5 break-words dark:text-white"
                                     >
                                         {{ row.value }}
                                     </dd>

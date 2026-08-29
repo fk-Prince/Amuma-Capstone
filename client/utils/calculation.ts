@@ -36,7 +36,7 @@ export function getFacilityPrice(
     facilities: BranchFacility[],
     billingCycle: "Monthly" | "Yearly",
     accommodationType: string,
-): string {
+): number {
     const facility = facilities.find(
         (item) =>
             (item.accommodation_type || "").toUpperCase() ===
@@ -47,5 +47,5 @@ export function getFacilityPrice(
 
     const price = Number(facility?.price ?? 0);
 
-    return isNaN(price) ? "0" : price.toLocaleString();
+    return isNaN(price) ? 0 : price;
 }

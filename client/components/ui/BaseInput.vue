@@ -72,7 +72,7 @@
                 v-if="hasSuffix || isSearch"
                 :class="[
                     'flex flex-shrink-0 items-center',
-                    isSearch ? 'pr-3' : '',
+                    isSearch ? 'pr-3 text-slate-400 dark:text-gray-500' : '',
                 ]"
             >
                 <slot v-if="hasSuffix" name="suffix" />

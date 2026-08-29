@@ -1,10 +1,10 @@
 <template>
     <div
-        class="min-h-[calc(100vh-90px)] bg-slate-200 flex items-center justify-center px-5 py-12"
+        class="min-h-[calc(100vh-90px)] bg-slate-200 dark:bg-secondary flex items-center justify-center px-5 py-12"
     >
         <div class="max-w-lg w-full">
             <div
-                class="rounded-2xl border border-gray-100 bg-white shadow-sm p-8 md:p-10 text-center"
+                class="rounded-2xl border border-gray-100 bg-white shadow-sm p-8 md:p-10 text-center dark:bg-secondary dark:border-white/10"
             >
                 <div
                     class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10"
@@ -12,11 +12,11 @@
                     <CheckCircle2 class="h-9 w-9 text-primary" />
                 </div>
 
-                <h1 class="font-serif text-2xl text-gray-900 mt-6">
+                <h1 class="font-serif text-2xl text-gray-900 mt-6 dark:text-white">
                     Booking Request Submitted
                 </h1>
 
-                <p class="text-[15px] text-gray-500 mt-2 leading-relaxed">
+                <p class="text-[15px] text-gray-500 mt-2 leading-relaxed dark:text-gray-400">
                     Thank you. Your
                     {{
                         category === "facility"
@@ -28,17 +28,17 @@
 
                 <div
                     v-if="referenceId"
-                    class="mt-6 inline-flex items-center gap-2 rounded-full bg-gray-50 border border-gray-100 px-4 py-2"
+                    class="mt-6 inline-flex items-center gap-2 rounded-full bg-gray-50 border border-gray-100 px-4 py-2 dark:bg-white/5 dark:border-white/10"
                 >
-                    <span class="text-xs text-gray-400">Reference No.</span>
-                    <span class="text-sm font-semibold text-gray-700">
+                    <span class="text-xs text-gray-400 dark:text-gray-500">Reference No.</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
                         {{ referenceId }}
                     </span>
                 </div>
 
                 <div class="mt-8 flex flex-col gap-3">
                     <div
-                        class="flex items-start gap-3 text-[13px] text-gray-500 text-left"
+                        class="flex items-start gap-3 text-[13px] text-gray-500 text-left dark:text-gray-400"
                     >
                         <BellRing
                             class="h-4 w-4 shrink-0 mt-0.5 text-primary"
@@ -49,7 +49,7 @@
                         </span>
                     </div>
                     <div
-                        class="flex items-start gap-3 text-[13px] text-gray-500 text-left"
+                        class="flex items-start gap-3 text-[13px] text-gray-500 text-left dark:text-gray-400"
                     >
                         <ShieldCheck
                             class="h-4 w-4 shrink-0 mt-0.5 text-primary"

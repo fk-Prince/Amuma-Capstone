@@ -1,11 +1,11 @@
 <template>
-    <section class="rounded-2xl border-muted-light bg-white p-6 md:p-8">
+    <section class="rounded-2xl border-muted-light bg-white p-6 md:p-8 dark:bg-secondary dark:border-white/10">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-                <h2 class="text-3xl font-bold text-secondary">
+                <h2 class="text-3xl font-bold text-secondary dark:text-white">
                     Ratings & Reviews
                 </h2>
-                <p class="mt-1 text-sm text-muted">
+                <p class="mt-1 text-sm text-muted dark:text-gray-400">
                     See what families are saying about their experience with
                     this provider.
                 </p>
@@ -22,12 +22,12 @@
         </div>
 
         <div
-            class="mt-6 mb-6 grid grid-cols-1 gap-6 rounded-2xl border border-primary/10 bg-gradient-to-br from-light to-white p-6 md:grid-cols-[auto_1fr] md:gap-10"
+            class="mt-6 mb-6 grid grid-cols-1 gap-6 rounded-2xl border border-primary/10 bg-gradient-to-br from-light to-white p-6 md:grid-cols-[auto_1fr] md:gap-10 dark:bg-none dark:bg-white/5 dark:border-white/10"
         >
             <div
                 class="flex flex-col items-center border-primary/10 pb-6 text-center md:items-start md:border-r md:pb-0 md:pr-10 md:text-left"
             >
-                <span class="text-5xl font-extrabold leading-none text-secondary">
+                <span class="text-5xl font-extrabold leading-none text-secondary dark:text-white">
                     {{ (averageRating ?? 0).toFixed(1) }}
                 </span>
 
@@ -44,7 +44,7 @@
                     />
                 </div>
 
-                <p class="mt-2 text-xs text-muted">
+                <p class="mt-2 text-xs text-muted dark:text-gray-400">
                     Based on {{ total }}
                     {{ total === 1 ? "review" : "reviews" }}
                 </p>
@@ -64,14 +64,14 @@
                     <span
                         class="w-11 shrink-0 text-xs font-medium"
                         :class="
-                            activeFilter === star ? 'text-primary' : 'text-muted'
+                            activeFilter === star ? 'text-primary' : 'text-muted dark:text-gray-400'
                         "
                     >
                         {{ star }} star
                     </span>
 
                     <span
-                        class="h-2 flex-1 overflow-hidden rounded-full bg-muted-light"
+                        class="h-2 flex-1 overflow-hidden rounded-full bg-muted-light dark:bg-white/10"
                     >
                         <span
                             class="block h-full rounded-full bg-amber-400 transition-all"
@@ -79,7 +79,7 @@
                         />
                     </span>
 
-                    <span class="w-6 shrink-0 text-right text-xs text-muted">
+                    <span class="w-6 shrink-0 text-right text-xs text-muted dark:text-gray-400">
                         {{ ratingBreakdown[star] ?? 0 }}
                     </span>
                 </button>
@@ -95,6 +95,22 @@
             </button>
 
             <button
+                v-for="star in [5, 4, 3, 2, 1]"
+                :key="star"
+                @click="setFilter(star)"
+                :class="btnClass(activeFilter === star)"
+            >
+                {{ star }} Star ({{ ratingBreakdown[star] ?? 0 }})
+            </button>
+
+            <button
+                @click="setFilter('media')"
+                :class="btnClass(activeFilter === 'media')"
+            >
+                With Media ({{ withMediaCounts }})
+            </button>
+
+            <button
                 @click="setFilter('comments')"
                 :class="btnClass(activeFilter === 'comments')"
             >
@@ -107,17 +123,17 @@
                 <div
                     v-for="i in 3"
                     :key="i"
-                    class="py-5 border-b border-muted-light"
+                    class="py-5 border-b border-muted-light dark:border-white/10"
                 >
-                    <div class="h-4 w-32 bg-muted-light rounded mb-2"></div>
+                    <div class="h-4 w-32 bg-muted-light rounded mb-2 dark:bg-white/10"></div>
 
-                    <div class="h-4 w-24 bg-muted-light rounded mb-2"></div>
+                    <div class="h-4 w-24 bg-muted-light rounded mb-2 dark:bg-white/10"></div>
 
-                    <div class="h-3 w-28 bg-muted-light rounded mb-3"></div>
+                    <div class="h-3 w-28 bg-muted-light rounded mb-3 dark:bg-white/10"></div>
 
                     <div class="space-y-2">
-                        <div class="h-3 bg-muted-light rounded w-full"></div>
-                        <div class="h-3 bg-muted-light rounded w-5/6"></div>
+                        <div class="h-3 bg-muted-light rounded w-full dark:bg-white/10"></div>
+                        <div class="h-3 bg-muted-light rounded w-5/6 dark:bg-white/10"></div>
                     </div>
                 </div>
             </div>
@@ -128,9 +144,9 @@
                 <div
                     v-for="review in reviews"
                     :key="review.review_id"
-                    class="py-5 border-b border-muted-light"
+                    class="py-5 border-b border-muted-light dark:border-white/10"
                 >
-                    <p class="text-sm font-medium text-secondary">
+                    <p class="text-sm font-medium text-secondary dark:text-white">
                         {{ fullName(review.user) }}
                     </p>
 
@@ -139,11 +155,11 @@
                         }}{{ "☆".repeat(5 - review.rate) }}
                     </div>
 
-                    <p class="text-xs text-muted">
+                    <p class="text-xs text-muted dark:text-gray-400">
                         {{ formatDate(review.created_at) }}
                     </p>
 
-                    <p class="mt-2 text-sm text-secondary/80">
+                    <p class="mt-2 text-sm text-secondary/80 dark:text-gray-300">
                         {{ review.description }}
                     </p>
 
@@ -151,7 +167,7 @@
                         v-if="review.image"
                         :src="review.image"
                         alt="Review photo"
-                        class="mt-3 h-28 w-28 rounded-lg object-cover ring-1 ring-muted-light"
+                        class="mt-3 h-28 w-28 rounded-lg object-cover ring-1 ring-muted-light dark:ring-white/10"
                     />
                 </div>
 
@@ -159,7 +175,7 @@
                     <button
                         @click="loadMore"
                         :disabled="loadingMore"
-                        class="px-5 py-2 text-sm border border-muted-light rounded-lg text-secondary hover:bg-light/60"
+                        class="px-5 py-2 text-sm border border-muted-light rounded-lg text-secondary hover:bg-light/60 dark:text-white dark:border-white/10"
                     >
                         {{ loadingMore ? "Loading..." : "See More Reviews" }}
                     </button>
@@ -171,16 +187,16 @@
                 class="flex flex-col items-center justify-center py-12 text-center"
             >
                 <div
-                    class="flex h-16 w-16 items-center justify-center rounded-full bg-light"
+                    class="flex h-16 w-16 items-center justify-center rounded-full bg-light dark:bg-white/5"
                 >
                     <Star class="h-8 w-8 text-amber-500 fill-amber-400" />
                 </div>
 
-                <h3 class="mt-4 text-lg font-semibold text-secondary">
+                <h3 class="mt-4 text-lg font-semibold text-secondary dark:text-white">
                     No reviews yet
                 </h3>
 
-                <p class="mt-2 max-w-sm text-sm text-muted">
+                <p class="mt-2 max-w-sm text-sm text-muted dark:text-gray-400">
                     This provider does not have any patient reviews yet. Be the
                     first one to share your experience.
                 </p>
@@ -215,16 +231,16 @@
                     role="dialog"
                     aria-modal="true"
                     aria-label="Write a Review"
-                    class="w-full max-w-xl max-h-[90dvh] overflow-y-auto rounded-2xl bg-white p-8 shadow-2xl ring-1 ring-black/5"
+                    class="w-full max-w-xl max-h-[90dvh] overflow-y-auto rounded-2xl bg-white p-8 shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
                 >
                     <div class="flex items-start justify-between gap-3">
-                        <h3 class="text-lg font-semibold text-secondary">
+                        <h3 class="text-lg font-semibold text-secondary dark:text-white">
                             Write a Review
                         </h3>
 
                         <button
                             type="button"
-                            class="rounded-full p-1.5 text-muted hover:bg-light/60"
+                            class="rounded-full p-1.5 text-muted hover:bg-light/60 dark:text-gray-400 dark:hover:bg-white/5"
                             :disabled="submitting"
                             @click="closeForm"
                         >
@@ -233,7 +249,7 @@
                     </div>
 
                     <template v-if="!user">
-                        <p class="mt-4 text-sm text-muted">
+                        <p class="mt-4 text-sm text-muted dark:text-gray-400">
                             Please sign in to leave a review for this
                             provider.
                         </p>
@@ -247,7 +263,7 @@
                     </template>
 
                     <template v-else>
-                        <p class="mt-4 text-sm font-medium text-secondary">
+                        <p class="mt-4 text-sm font-medium text-secondary dark:text-white">
                             Your Rating
                         </p>
 
@@ -264,7 +280,7 @@
                                     :class="
                                         n <= form.rate
                                             ? 'text-amber-500 fill-amber-400'
-                                            : 'text-muted-light'
+                                            : 'text-muted-light dark:text-white/10'
                                     "
                                 />
                             </button>
@@ -275,12 +291,12 @@
                         </p>
 
                         <label
-                            class="mt-5 block text-sm font-medium text-secondary"
+                            class="mt-5 block text-sm font-medium text-secondary dark:text-white"
                         >
                             Your Review
                         </label>
 
-                        <p class="mt-0.5 text-xs text-muted">
+                        <p class="mt-0.5 text-xs text-muted dark:text-gray-400">
                             Tell other families what stood out — the care
                             team, communication, cleanliness, or anything
                             that helped you decide.
@@ -290,7 +306,7 @@
                             v-model="form.description"
                             rows="8"
                             placeholder="Share your experience with this provider..."
-                            class="mt-2 w-full rounded-lg border border-muted-light p-3 text-sm text-secondary focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary"
+                            class="mt-2 w-full rounded-lg border border-muted-light p-3 text-sm text-secondary focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary dark:text-white dark:border-white/10"
                         />
 
                         <p
@@ -301,21 +317,21 @@
                         </p>
 
                         <label
-                            class="mt-5 block text-sm font-medium text-secondary"
+                            class="mt-5 block text-sm font-medium text-secondary dark:text-white"
                         >
                             Add a Photo
-                            <span class="font-normal text-muted">
+                            <span class="font-normal text-muted dark:text-gray-400">
                                 (optional)
                             </span>
                         </label>
 
                         <div
                             v-if="!imagePreviewUrl"
-                            class="mt-2 flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border border-dashed border-muted-light bg-light/40 p-5 text-center transition hover:border-primary/40 hover:bg-primary/5"
+                            class="mt-2 flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border border-dashed border-muted-light bg-light/40 p-5 text-center transition hover:border-primary/40 hover:bg-primary/5 dark:border-white/10 dark:bg-white/5"
                             @click="imageInput?.click()"
                         >
-                            <ImagePlus class="h-5 w-5 text-muted" />
-                            <span class="text-xs text-muted">
+                            <ImagePlus class="h-5 w-5 text-muted dark:text-gray-400" />
+                            <span class="text-xs text-muted dark:text-gray-400">
                                 Click to upload a photo (max 5MB)
                             </span>
                         </div>
@@ -324,7 +340,7 @@
                             <img
                                 :src="imagePreviewUrl"
                                 alt="Selected review photo"
-                                class="h-20 w-20 rounded-lg object-cover ring-1 ring-muted-light"
+                                class="h-20 w-20 rounded-lg object-cover ring-1 ring-muted-light dark:ring-white/10"
                             />
 
                             <button
@@ -368,7 +384,7 @@
 
                             <button
                                 type="button"
-                                class="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-light/60"
+                                class="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-light/60 dark:text-gray-400 dark:hover:bg-white/5"
                                 :disabled="submitting"
                                 @click="closeForm"
                             >
@@ -521,6 +537,7 @@ async function submitReview() {
 const reviews = ref<Review[]>([]);
 const averageRating = ref<number | null>(null);
 const withCommentCounts = ref<number | null>(null);
+const withMediaCounts = ref<number | null>(null);
 
 const ratingBreakdown = ref<Record<number, number>>({
     1: 0,
@@ -536,7 +553,7 @@ const loadingMore = ref(false);
 const page = ref(1);
 const total = ref(0);
 
-const activeFilter = ref<"all" | "comments" | number>("all");
+const activeFilter = ref<"all" | "comments" | "media" | number>("all");
 
 const fetchReviews = async (reset = true) => {
     if (!props.branchUuid) return;
@@ -559,6 +576,7 @@ const fetchReviews = async (reset = true) => {
                     ? activeFilter.value
                     : undefined,
             withComments: activeFilter.value === "comments" || undefined,
+            withMedia: activeFilter.value === "media" || undefined,
         });
 
         reviews.value = reset
@@ -569,6 +587,7 @@ const fetchReviews = async (reset = true) => {
         averageRating.value = res.average_rating;
         ratingBreakdown.value = res.rating_breakdown;
         withCommentCounts.value = res.with_comments_count;
+        withMediaCounts.value = res.with_media_count;
     } finally {
         loading.value = false;
         loadingMore.value = false;
@@ -602,9 +621,14 @@ function syncNewReview(
         withCommentCounts.value = (withCommentCounts.value ?? 0) + 1;
     }
 
+    if (image) {
+        withMediaCounts.value = (withMediaCounts.value ?? 0) + 1;
+    }
+
     const matchesFilter =
         activeFilter.value === "all" ||
         (activeFilter.value === "comments" && !!description) ||
+        (activeFilter.value === "media" && !!image) ||
         activeFilter.value === roundedRate;
 
     if (matchesFilter && user.value) {
@@ -630,7 +654,7 @@ watch(
     { immediate: true },
 );
 
-const setFilter = (filter: "all" | "comments" | number) => {
+const setFilter = (filter: "all" | "comments" | "media" | number) => {
     activeFilter.value = filter;
     fetchReviews(true);
 };
@@ -671,7 +695,7 @@ function formatDate(dateStr: string) {
 const btnClass = (active: boolean) =>
     `px-3 py-1.5 text-sm rounded-lg border transition ${
         active
-            ? "border-amber-400 text-amber-500 bg-white"
-            : "border-muted-light text-muted hover:border-primary/30"
+            ? "border-amber-400 text-amber-500 bg-white dark:bg-secondary"
+            : "border-muted-light text-muted hover:border-primary/30 dark:border-white/10 dark:text-gray-400"
     }`;
 </script>

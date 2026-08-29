@@ -5,17 +5,17 @@
                 <div class="flex items-center gap-2.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
                     <span
-                        class="text-xs font-medium tracking-[0.16em] uppercase text-muted"
+                        class="text-xs font-medium tracking-[0.16em] uppercase text-muted dark:text-gray-400"
                     >
                         Featured
                     </span>
                 </div>
                 <h2
-                    class="mt-3 text-3xl md:text-4xl font-medium text-secondary leading-tight"
+                    class="mt-3 text-3xl md:text-4xl font-medium text-secondary leading-tight dark:text-white"
                 >
                     Most trusted homecare
                 </h2>
-                <p class="mt-2 text-muted text-sm leading-relaxed max-w-md">
+                <p class="mt-2 text-muted text-sm leading-relaxed max-w-md dark:text-gray-400">
                     Explore highly rated caregiving branches based on reviews,
                     availability, and service quality.
                 </p>
@@ -28,17 +28,17 @@
                 <div
                     v-for="n in 3"
                     :key="n"
-                    class="border border-muted-light rounded-2xl overflow-hidden animate-pulse"
+                    class="border border-muted-light rounded-2xl overflow-hidden animate-pulse dark:border-white/10"
                 >
-                    <div class="h-32 bg-muted-light"></div>
+                    <div class="h-32 bg-muted-light dark:bg-white/10"></div>
                     <div class="p-4 space-y-3">
-                        <div class="h-4 bg-muted-light rounded w-3/4"></div>
-                        <div class="h-3 bg-muted-light rounded w-1/2"></div>
+                        <div class="h-4 bg-muted-light rounded w-3/4 dark:bg-white/10"></div>
+                        <div class="h-3 bg-muted-light rounded w-1/2 dark:bg-white/10"></div>
                         <div class="flex justify-between mt-4">
                             <div
-                                class="h-6 w-16 bg-muted-light rounded-full"
+                                class="h-6 w-16 bg-muted-light rounded-full dark:bg-white/10"
                             ></div>
-                            <div class="h-3 w-20 bg-muted-light rounded"></div>
+                            <div class="h-3 w-20 bg-muted-light rounded dark:bg-white/10"></div>
                         </div>
                     </div>
                 </div>
@@ -58,7 +58,7 @@
                 v-if="!loading && branches && branches.length === 0"
                 class="text-center py-16"
             >
-                <p class="text-sm text-muted">No branches available.</p>
+                <p class="text-sm text-muted dark:text-gray-400">No branches available.</p>
             </div>
         </div>
     </section>

@@ -41,17 +41,9 @@ export const createPatientSchema = (
             .optional(),
         blood_type: z.string().optional(),
         allergies: z.string().optional(),
-
-        // The patient's home address. Homecare bookings also carry a service
-        // location on the schedule; the two are deliberately separate.
         address: z
             .string()
-            .min(
-                1,
-                category === "facility"
-                    ? "Address is required"
-                    : "Home address is required",
-            ),
+            .min(1, "Address is required"),
     });
 
 

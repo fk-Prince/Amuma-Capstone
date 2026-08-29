@@ -28,16 +28,20 @@ class ReviewRepository
         );
     }
 
-    public function paginate(int $perPage, string $branch_uuid,  ?int $rate = null,  bool $withComments = false)
+    public function paginate(int $perPage, string $branch_uuid,  ?int $rate = null,  bool $withComments = false,  bool $withMedia = false)
     {
         $all = $this->loadReviews($branch_uuid);
 
-        $filtered = $all->filter(function ($review) use ($rate, $withComments) {
+        $filtered = $all->filter(function ($review) use ($rate, $withComments, $withMedia) {
             if ($rate !== null && (int) round($review->rate) !== $rate) {
                 return false;
             }
 
             if ($withComments && empty($review->description)) {
+                return false;
+            }
+
+            if ($withMedia && empty($review->image)) {
                 return false;
             }
 
@@ -72,11 +76,16 @@ class ReviewRepository
             ->filter(fn($review) => !empty($review->description))
             ->count();
 
+        $withMediaCount = $all
+            ->filter(fn($review) => !empty($review->image))
+            ->count();
+
         return [
             'paginator' => $reviews,
             'average_rating' => round($all->avg('rate') ?? 0, 2),
             'rating_breakdown' => $ratingBreakdown,
             'with_comments_count' => $withCommentsCount,
+            'with_media_count' => $withMediaCount,
         ];
     }
 

@@ -263,14 +263,12 @@ watch(
                             class="hidden sm:block shrink-0"
                         >
                             <BaseButton
-                                variant="secondary"
+                                variant="outline"
                                 class="h-11 rounded-lg border px-[20px] lg:px-[24px] whitespace-nowrap min-w-fit transition-colors duration-200"
                                 :class="
-                                    variant === 1 && !scrolled
+                                    !isChromeSolid
                                         ? 'border-white/20 bg-transparent text-white hover:bg-white/10'
-                                        : isChromeSolid
-                                          ? 'border-muted-dark bg-transparent hover:bg-primary/10 dark:border-white/20 dark:text-white dark:hover:bg-white/10'
-                                          : 'border-muted-dark bg-transparent hover:bg-primary/10'
+                                        : 'border-muted-dark text-muted-dark bg-transparent hover:bg-primary/10 dark:border-white/20 dark:text-white dark:hover:bg-white/10'
                                 "
                             >
                                 Get Started

@@ -4,7 +4,7 @@
             <span class="text-2xl text-primary">03</span>
             <div>
                 <h2 class="text-xl text-primary">Guardian Information</h2>
-                <p class="text-[13px] text-muted">
+                <p class="text-[13px] text-muted dark:text-gray-400">
                     The person responsible for this patient
                 </p>
             </div>
@@ -77,7 +77,7 @@
                     required
                 />
             </div>
-            <div class="h-px bg-[#E4E0D6]" />
+            <div class="h-px bg-[#E4E0D6] dark:bg-white/10" />
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <BaseInput
@@ -197,7 +197,7 @@ onMounted(() => {
             <span class="text-2xl text-primary">03</span>
             <div>
                 <h2 class="text-xl text-primary">Guardian Information</h2>
-                <p class="text-[13px] text-muted">
+                <p class="text-[13px] text-muted dark:text-gray-400">
                     The person responsible for this patient
                 </p>
             </div>
@@ -274,7 +274,7 @@ onMounted(() => {
                 />
             </div>
 
-            <div class="h-px bg-[#E4E0D6]" />
+            <div class="h-px bg-[#E4E0D6] dark:bg-white/10" />
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <BaseInput

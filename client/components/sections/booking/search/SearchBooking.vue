@@ -4,15 +4,15 @@
             <div
                 v-for="n in 2"
                 :key="n"
-                class="border rounded-2xl overflow-hidden animate-pulse"
+                class="border rounded-2xl overflow-hidden animate-pulse dark:border-white/10"
             >
-                <div class="h-32 bg-gray-200"></div>
+                <div class="h-32 bg-gray-200 dark:bg-white/10"></div>
                 <div class="p-4 space-y-3">
-                    <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div class="h-4 bg-gray-200 rounded w-3/4 dark:bg-white/10"></div>
+                    <div class="h-3 bg-gray-200 rounded w-1/2 dark:bg-white/10"></div>
                     <div class="flex justify-between mt-4">
-                        <div class="h-6 w-16 bg-gray-200 rounded-full"></div>
-                        <div class="h-3 w-20 bg-gray-200 rounded"></div>
+                        <div class="h-6 w-16 bg-gray-200 rounded-full dark:bg-white/10"></div>
+                        <div class="h-3 w-20 bg-gray-200 rounded dark:bg-white/10"></div>
                     </div>
                 </div>
             </div>
@@ -30,7 +30,7 @@
 
         <div
             v-if="isMounted && !props.loading && props.branches.length === 0"
-            class="text-center py-16 text-slate-400"
+            class="text-center py-16 text-slate-400 dark:text-gray-500"
         >
             No branches found.
         </div>

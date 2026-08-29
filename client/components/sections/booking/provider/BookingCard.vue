@@ -2,7 +2,7 @@
     <div>
         <div
             v-if="loading"
-            class="hidden lg:block sticky top-24 rounded-2xl border border-gray-200 p-5 animate-pulse"
+            class="hidden lg:block sticky top-24 rounded-2xl border border-gray-200 p-5 animate-pulse dark:border-white/10"
         >
             <div class="h-4 w-32 rounded bg-gray-200"></div>
             <div class="mt-4 flex flex-col gap-3">
@@ -14,11 +14,11 @@
 
         <div
             v-else
-            class="hidden lg:block sticky top-24 rounded-2xl border border-gray-200 bg-white p-5 shadow-xl shadow-gray-100"
+            class="hidden lg:block sticky top-24 rounded-2xl border border-gray-200 bg-white p-5 shadow-xl shadow-gray-100 dark:bg-secondary dark:border-white/10"
         >
             <div class="w-full flex justify-between items-center">
                 <p
-                    class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+                    class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500"
                 >
                     Choose a service
                 </p>
@@ -50,7 +50,7 @@
                         Open 24 Hours
                     </span>
 
-                    <span v-else class="font-medium text-slate-600">
+                    <span v-else class="font-medium text-slate-600 dark:text-gray-300">
                         {{ getBranchTimeDisplay(branch?.settings).label }}
                     </span>
                 </div>
@@ -66,7 +66,7 @@
                     :class="[
                         selected === 'homecare'
                             ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                            : 'border-gray-200',
+                            : 'border-gray-200 dark:border-white/10',
                         canUseHomecare
                             ? 'hover:border-primary cursor-pointer'
                             : 'cursor-not-allowed opacity-60',
@@ -79,17 +79,17 @@
                     </span>
 
                     <span class="flex-1">
-                        <span class="block text-sm font-semibold text-gray-900">
+                        <span class="block text-sm font-semibold text-gray-900 dark:text-white">
                             Homecare Services
                         </span>
 
-                        <span class="block text-sm text-gray-500">
+                        <span class="block text-sm text-gray-500 dark:text-gray-400">
                             Care delivered at your home
                         </span>
 
                         <span
                             v-if="!canUseHomecare"
-                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200"
+                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/20"
                         >
                             <span
                                 class="h-1.5 w-1.5 rounded-full bg-amber-500"
@@ -114,8 +114,8 @@
                     class="flex items-center gap-3 rounded-xl border p-4 text-left transition-all"
                     :class="[
                         selected === 'facility'
-                            ? 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600/20'
-                            : 'border-gray-200',
+                            ? 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600/20 dark:bg-emerald-500/10'
+                            : 'border-gray-200 dark:border-white/10',
                         canUseFacility
                             ? 'hover:border-emerald-300 cursor-pointer'
                             : 'cursor-not-allowed opacity-60',
@@ -128,17 +128,17 @@
                     </span>
 
                     <span class="flex-1">
-                        <span class="block text-sm font-semibold text-gray-900">
+                        <span class="block text-sm font-semibold text-gray-900 dark:text-white">
                             Facility Admission
                         </span>
 
-                        <span class="block text-sm text-gray-500">
+                        <span class="block text-sm text-gray-500 dark:text-gray-400">
                             In-house, facility-based care
                         </span>
 
                         <span
                             v-if="branch?.facility.length === 0"
-                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200"
+                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/20"
                         >
                             <span
                                 class="h-1.5 w-1.5 rounded-full bg-amber-500"
@@ -148,20 +148,20 @@
 
                         <span
                             v-else-if="availableSlots > 0"
-                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200"
+                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:ring-emerald-500/20"
                         >
                             <span
                                 class="h-1.5 w-1.5 rounded-full bg-emerald-500"
                             ></span>
 
                             {{ availableSlots }}
-                            slot {{ availableSlots === 1 ? "" : "s" }}
+                            slot{{ availableSlots === 1 ? "" : "s" }}
                             available
                         </span>
 
                         <span
                             v-else
-                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200"
+                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200 dark:bg-white/10 dark:text-gray-300"
                         >
                             <span
                                 class="h-1.5 w-1.5 rounded-full bg-gray-400"
@@ -181,7 +181,7 @@
 
                 <p
                     v-if="!hasHomecare && !hasFacility"
-                    class="rounded-xl border border-dashed border-gray-200 p-4 text-sm text-gray-400"
+                    class="rounded-xl border border-dashed border-gray-200 p-4 text-sm text-gray-400 dark:border-white/10 dark:text-gray-500"
                 >
                     No services are currently listed for this branch.
                 </p>
@@ -200,12 +200,12 @@
 
         <div
             v-if="!loading && serviceOptions.length"
-            class="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white p-4"
+            class="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white p-4 dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center gap-3">
                 <button
                     type="button"
-                    class="flex flex-1 items-center gap-3 rounded-xl border border-gray-200 px-4 py-2.5 text-left transition hover:border-gray-300"
+                    class="flex flex-1 items-center gap-3 rounded-xl border border-gray-200 px-4 py-2.5 text-left transition hover:border-gray-300 dark:border-white/10"
                     @click="mobileSheetOpen = true"
                 >
                     <span
@@ -222,17 +222,17 @@
                     </span>
 
                     <span class="min-w-0 flex-1">
-                        <span class="block text-[11px] text-gray-400">
+                        <span class="block text-[11px] text-gray-400 dark:text-gray-500">
                             Service
                         </span>
                         <span
-                            class="block truncate text-sm font-semibold text-gray-900"
+                            class="block truncate text-sm font-semibold text-gray-900 dark:text-white"
                         >
                             {{ selectedLabel || "Choose a service" }}
                         </span>
                     </span>
 
-                    <ChevronUp class="h-4 w-4 shrink-0 text-gray-400" />
+                    <ChevronUp class="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
                 </button>
 
                 <button
@@ -255,20 +255,20 @@
                 >
                     <Transition name="sheet-slide" appear>
                         <div
-                            class="fixed inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-3xl bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+                            class="fixed inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-3xl bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] dark:bg-secondary"
                         >
                             <div
                                 class="mx-auto mb-4 h-1.5 w-10 rounded-full bg-gray-200"
                             />
 
                             <div class="flex items-center justify-between">
-                                <p class="text-base font-semibold text-gray-900">
+                                <p class="text-base font-semibold text-gray-900 dark:text-white">
                                     Choose a service
                                 </p>
 
                                 <button
                                     type="button"
-                                    class="text-gray-400 hover:text-gray-600"
+                                    class="text-gray-400 hover:text-gray-600 dark:text-gray-500"
                                     aria-label="Close"
                                     @click="mobileSheetOpen = false"
                                 >
@@ -286,7 +286,7 @@
                                     :class="[
                                         selected === 'homecare'
                                             ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                                            : 'border-gray-200',
+                                            : 'border-gray-200 dark:border-white/10',
                                         canUseHomecare
                                             ? 'cursor-pointer'
                                             : 'cursor-not-allowed opacity-60',
@@ -300,20 +300,20 @@
 
                                     <span class="flex-1">
                                         <span
-                                            class="block text-sm font-semibold text-gray-900"
+                                            class="block text-sm font-semibold text-gray-900 dark:text-white"
                                         >
                                             Homecare Services
                                         </span>
 
                                         <span
-                                            class="block text-sm text-gray-500"
+                                            class="block text-sm text-gray-500 dark:text-gray-400"
                                         >
                                             Care delivered at your home
                                         </span>
 
                                         <span
                                             v-if="!canUseHomecare"
-                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200"
+                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/20"
                                         >
                                             <span
                                                 class="h-1.5 w-1.5 rounded-full bg-amber-500"
@@ -341,8 +341,8 @@
                                     class="flex items-center gap-3 rounded-xl border p-4 text-left transition-all"
                                     :class="[
                                         selected === 'facility'
-                                            ? 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600/20'
-                                            : 'border-gray-200',
+                                            ? 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600/20 dark:bg-emerald-500/10'
+                                            : 'border-gray-200 dark:border-white/10',
                                         canUseFacility
                                             ? 'cursor-pointer'
                                             : 'cursor-not-allowed opacity-60',
@@ -356,20 +356,20 @@
 
                                     <span class="flex-1">
                                         <span
-                                            class="block text-sm font-semibold text-gray-900"
+                                            class="block text-sm font-semibold text-gray-900 dark:text-white"
                                         >
                                             Facility Admission
                                         </span>
 
                                         <span
-                                            class="block text-sm text-gray-500"
+                                            class="block text-sm text-gray-500 dark:text-gray-400"
                                         >
                                             In-house, facility-based care
                                         </span>
 
                                         <span
                                             v-if="branch?.facility.length === 0"
-                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200"
+                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/20"
                                         >
                                             <span
                                                 class="h-1.5 w-1.5 rounded-full bg-amber-500"
@@ -379,20 +379,20 @@
 
                                         <span
                                             v-else-if="availableSlots > 0"
-                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200"
+                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:ring-emerald-500/20"
                                         >
                                             <span
                                                 class="h-1.5 w-1.5 rounded-full bg-emerald-500"
                                             ></span>
 
                                             {{ availableSlots }}
-                                            slot {{ availableSlots === 1 ? "" : "s" }}
+                                            slot{{ availableSlots === 1 ? "" : "s" }}
                                             available
                                         </span>
 
                                         <span
                                             v-else
-                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200"
+                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200 dark:bg-white/10 dark:text-gray-300"
                                         >
                                             <span
                                                 class="h-1.5 w-1.5 rounded-full bg-gray-400"

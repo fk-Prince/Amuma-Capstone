@@ -1,9 +1,9 @@
 <template>
     <div
-        class="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50"
+        class="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-secondary dark:via-secondary dark:to-secondary"
     >
         <div
-            class="w-full z-40 border-b border-slate-200/50 bg-white backdrop-blur-sm"
+            class="w-full z-40 border-b border-slate-200/50 bg-white backdrop-blur-sm dark:bg-secondary dark:border-white/10"
         >
             <div class="mx-auto max-w-[100rem] px-4 pt-4">
                 <Breadcrumb :items="[{ label: 'Find a Provider' }]" />
@@ -20,7 +20,7 @@
                     class="flex flex-col lg:flex-row gap-8 h-full items-stretch"
                 >
                     <div
-                        class="w-full lg:w-[60%] flex flex-col overflow-hidden rounded-2xl bg-white"
+                        class="w-full lg:w-[60%] flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-secondary"
                     >
                         <div class="flex-1 overflow-y-auto">
                             <SearchBooking
@@ -36,7 +36,7 @@
                                     type="button"
                                     :disabled="loadingMore"
                                     @click="loadMore"
-                                    class="inline-flex items-center gap-3 px-6 py-3 rounded-full border border-slate-300 bg-white text-sm font-medium text-slate-700 shadow-sm hover:shadow-md hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="inline-flex items-center gap-3 px-6 py-3 rounded-full border border-slate-300 bg-white text-sm font-medium text-slate-700 shadow-sm hover:shadow-md hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-secondary dark:text-gray-300 dark:border-white/10"
                                 >
                                     <svg
                                         v-if="loadingMore"
@@ -62,7 +62,7 @@
                     </div>
 
                     <div
-                        class="relative w-full lg:w-[40%] z-20 flex flex-col rounded-2xl overflow-hidden bg-white shadow-sm border border-slate-200/50"
+                        class="relative w-full lg:w-[40%] z-20 flex flex-col rounded-2xl overflow-hidden bg-white shadow-sm border border-slate-200/50 dark:bg-secondary dark:border-white/10"
                     >
                         <LocationPin
                             class="flex-1 h-full w-full z-20"
@@ -74,7 +74,7 @@
                         <Transition name="fade">
                             <div
                                 v-if="loading && locations.length === 0"
-                                class="absolute inset-0 z-30 flex items-center justify-center bg-gradient-to-b from-white/80 to-white/60 backdrop-blur-md"
+                                class="absolute inset-0 z-30 flex items-center justify-center bg-gradient-to-b from-white/80 to-white/60 backdrop-blur-md dark:from-secondary/80 dark:to-secondary/60"
                             >
                                 <div class="flex flex-col items-center gap-4">
                                     <div
@@ -100,11 +100,11 @@
                                     </div>
                                     <div class="text-center">
                                         <p
-                                            class="text-sm font-semibold text-slate-700"
+                                            class="text-sm font-semibold text-slate-700 dark:text-gray-300"
                                         >
                                             Finding care near you
                                         </p>
-                                        <p class="text-xs text-slate-500 mt-1">
+                                        <p class="text-xs text-slate-500 mt-1 dark:text-gray-400">
                                             Please wait while we search
                                         </p>
                                     </div>

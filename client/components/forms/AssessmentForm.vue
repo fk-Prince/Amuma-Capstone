@@ -8,13 +8,13 @@
                 <h2 class="text-xl text-primary">
                     Patient Assessment
                     <span
-                        class="ml-1 align-middle text-[11px] font-medium uppercase tracking-wide text-slate-400"
+                        class="ml-1 align-middle text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
                     >
                         (Optional)
                     </span>
                 </h2>
 
-                <p class="text-[13px] text-muted">
+                <p class="text-[13px] text-muted dark:text-gray-400">
                     Recent diagnosis, vital status, and mental / cognitive state
                     — share whatever you already know
                 </p>
@@ -33,7 +33,7 @@
                 :class="
                     index === activeIndex
                         ? 'bg-primary text-white'
-                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100 dark:bg-secondary dark:text-gray-400 dark:border dark:border-white/10 dark:hover:bg-white/5'
                 "
                 @click="activeIndex = index"
             >
@@ -42,7 +42,7 @@
                     :class="
                         index === activeIndex
                             ? 'bg-white/20 text-white'
-                            : 'bg-white text-slate-400'
+                            : 'bg-white text-slate-400 dark:bg-white/10 dark:text-gray-500'
                     "
                 >
                     {{ index + 1 }}
@@ -56,7 +56,7 @@
                     :class="
                         index === activeIndex
                             ? 'text-white/80 hover:text-white'
-                            : 'text-slate-400 hover:text-red-500'
+                            : 'text-slate-400 hover:text-red-500 dark:text-gray-500'
                     "
                     @click.stop="removeAssessment(index)"
                 />
@@ -64,7 +64,7 @@
 
             <button
                 type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition hover:bg-primary/10 hover:text-primary"
+                class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition hover:bg-primary/10 hover:text-primary dark:bg-secondary dark:text-gray-500"
                 @click="addAssessment"
             >
                 <PlusIcon class="h-4 w-4" />
@@ -84,14 +84,14 @@
                             {{ activeIndex + 1 }}
                         </span>
 
-                        <h3 class="text-sm font-semibold text-slate-700">
+                        <h3 class="text-sm font-semibold text-slate-700 dark:text-gray-300">
                             Assessment {{ activeIndex + 1 }}
                         </h3>
                     </div>
 
                     <button
                         type="button"
-                        class="text-sm font-medium text-slate-400 transition hover:text-red-500"
+                        class="text-sm font-medium text-slate-400 transition hover:text-red-500 dark:text-gray-500"
                         @click="removeAssessment(activeIndex)"
                     >
                         Remove
@@ -100,7 +100,7 @@
 
                 <div class="space-y-6">
                     <h4
-                        class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                        class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                     >
                         Recent Diagnosis
                     </h4>
@@ -139,23 +139,23 @@
                     />
 
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-sm font-semibold text-slate-700">
+                        <label class="text-sm font-semibold text-slate-700 dark:text-gray-300">
                             Supporting Document
                         </label>
 
-                        <p class="text-[13px] text-muted">
+                        <p class="text-[13px] text-muted dark:text-gray-400">
                             Upload a lab result, medical certificate, or report
                             (PDF, PNG, or JPG, up to 10MB)
                         </p>
 
                         <label
-                            class="group flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl p-6 text-center transition-colors border-2 border-dashed"
+                            class="group flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl p-6 text-center transition-colors border-2 border-dashed border-slate-200 dark:border-white/10"
                             :class="
                                 errors?.[`diagnosis_file.${activeIndex}`]
-                                    ? 'bg-red-50/70'
+                                    ? 'bg-red-50/70 dark:bg-red-500/10'
                                     : activeAssessment.diagnosis_file_name
-                                      ? 'bg-primary/5'
-                                      : 'bg-slate-50 hover:bg-primary/5'
+                                      ? 'bg-primary/5 dark:bg-primary-500/10'
+                                      : 'bg-slate-50 hover:bg-primary/5 dark:bg-white/5 dark:hover:bg-primary-500/10'
                             "
                         >
                             <input
@@ -171,7 +171,7 @@
                                 <FileText class="h-6 w-6 text-primary" />
 
                                 <span
-                                    class="max-w-full truncate px-4 text-sm font-medium text-slate-800"
+                                    class="max-w-full truncate px-4 text-sm font-medium text-slate-800 dark:text-white"
                                 >
                                     {{ activeAssessment.diagnosis_file_name }}
                                 </span>
@@ -187,10 +187,10 @@
 
                             <template v-else>
                                 <UploadCloud
-                                    class="h-6 w-6 text-slate-400 transition-colors group-hover:text-primary"
+                                    class="h-6 w-6 text-slate-400 transition-colors group-hover:text-primary dark:text-gray-500"
                                 />
 
-                                <span class="text-sm text-slate-500">
+                                <span class="text-sm text-slate-500 dark:text-gray-400">
                                     <span class="font-medium text-primary">
                                         Click to upload
                                     </span>
@@ -210,7 +210,7 @@
 
                 <div class="space-y-6">
                     <h4
-                        class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                        class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                     >
                         Vital Signs (if known)
                     </h4>
@@ -279,7 +279,7 @@
 
                 <div class="space-y-6">
                     <h4
-                        class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                        class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                     >
                         Mental / Cognitive State
                     </h4>
@@ -380,7 +380,7 @@
 
             <button
                 type="button"
-                class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 py-4 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-primary/5"
+                class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 py-4 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-primary/5 dark:border-white/10"
                 @click="
                     addAssessment();
                     scrollToAssessmentTop();

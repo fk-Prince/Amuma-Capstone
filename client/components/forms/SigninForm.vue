@@ -57,7 +57,7 @@ async function handleSignIn() {
             loading.value = true;
             user.value = res.user;
             await navigateTo("/");
-            await branch.fetchBranches();
+            await branch.refreshBranch();
         }, 1500);
     } catch (err: any) {
         showAlert(

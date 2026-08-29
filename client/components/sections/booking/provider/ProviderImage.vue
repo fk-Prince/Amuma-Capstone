@@ -6,21 +6,21 @@
             <div
                 class="hidden sm:flex gap-[3px] h-[420px] overflow-hidden rounded-2xl"
             >
-                <div class="flex-1 bg-gray-200" />
+                <div class="flex-1 bg-gray-200 dark:bg-white/10" />
 
                 <div class="flex w-40 flex-col gap-[3px]">
-                    <div class="flex-1 bg-gray-200 rounded-tr-2xl" />
-                    <div class="flex-1 bg-gray-200" />
-                    <div class="flex-1 bg-gray-200 rounded-br-2xl" />
+                    <div class="flex-1 bg-gray-200 rounded-tr-2xl dark:bg-white/10" />
+                    <div class="flex-1 bg-gray-200 dark:bg-white/10" />
+                    <div class="flex-1 bg-gray-200 rounded-br-2xl dark:bg-white/10" />
                 </div>
             </div>
 
-            <div class="sm:hidden h-[240px] w-full rounded-2xl bg-gray-200" />
+            <div class="sm:hidden h-[240px] w-full rounded-2xl bg-gray-200 dark:bg-white/10" />
         </div>
 
         <div
             v-else-if="!hasImages"
-            class="flex h-[240px] sm:h-[420px] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-gray-400"
+            class="flex h-[240px] sm:h-[420px] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-gray-400 dark:border-white/10 dark:bg-white/5 dark:text-gray-500"
         >
             <ImageOff class="h-8 w-8" />
             <p class="text-sm font-medium">No photos available</p>
@@ -86,7 +86,7 @@
             <button
                 type="button"
                 @click="openImage(0)"
-                class="hidden sm:inline-flex absolute bottom-8 right-3 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50"
+                class="hidden sm:inline-flex absolute bottom-8 right-3 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 dark:border-white/10 dark:bg-secondary dark:text-white dark:hover:bg-white/5"
             >
                 <LayoutGrid class="h-4 w-4" />
                 Show all photos
@@ -96,7 +96,7 @@
                 <button
                     type="button"
                     @click="openImage(selectedIndex)"
-                    class="relative block h-[240px] w-full overflow-hidden rounded-2xl bg-gray-100"
+                    class="relative block h-[240px] w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-white/10"
                 >
                     <img
                         :src="heroImage?.image_url"
@@ -138,14 +138,14 @@
             <button
                 @click="emit('share')"
                 aria-label="Share"
-                class="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white"
+                class="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white dark:bg-white/10 dark:text-white dark:ring-1 dark:ring-white/20 dark:hover:bg-white/20"
             >
                 <Share2 class="h-4 w-4" />
             </button>
             <button
                 @click="emit('favorite')"
                 aria-label="Add to favorites"
-                class="group flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white"
+                class="group flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white dark:bg-white/10 dark:text-white dark:ring-1 dark:ring-white/20 dark:hover:bg-white/20"
             >
                 <Heart
                     class="h-4 w-4 transition-colors group-hover:fill-red-500 group-hover:text-red-500"

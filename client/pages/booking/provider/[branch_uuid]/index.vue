@@ -1,6 +1,6 @@
 <template>
-    <div class="min-h-screen flex flex-col bg-slate-50 relative">
-        <div class="mx-auto w-full md:px-[5%] lg:px-[8%] bg-white">
+    <div class="min-h-screen flex flex-col bg-slate-50 relative dark:bg-secondary">
+        <div class="mx-auto w-full md:px-[5%] lg:px-[8%] bg-white dark:bg-secondary">
             <!-- <div class="px-6 sm:px-12">
                 <Navbar @change="scrollToSection" />
             </div> -->
@@ -26,7 +26,7 @@
             <div class="px-6 sm:px-12 pb-28 lg:pb-16">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-2">
                     <div
-                        class="lg:col-span-2 flex flex-col divide-y divide-gray-100"
+                        class="lg:col-span-2 flex flex-col divide-y divide-gray-100 dark:divide-white/10"
                     >
                         <HeroSection :branch="branch" :loading="loading" />
 
@@ -39,26 +39,26 @@
                                 class="flex flex-col gap-5 animate-pulse"
                             >
                                 <div
-                                    class="h-[260px] w-full rounded-2xl bg-gray-200"
+                                    class="h-[260px] w-full rounded-2xl bg-gray-200 dark:bg-white/10"
                                 />
 
                                 <div class="flex items-start gap-3">
                                     <div
-                                        class="h-11 w-11 shrink-0 rounded-full bg-gray-200"
+                                        class="h-11 w-11 shrink-0 rounded-full bg-gray-200 dark:bg-white/10"
                                     />
 
                                     <div class="flex-1 space-y-2">
                                         <div
-                                            class="h-5 w-48 rounded-md bg-gray-200"
+                                            class="h-5 w-48 rounded-md bg-gray-200 dark:bg-white/10"
                                         />
                                         <div
-                                            class="h-4 w-full rounded bg-gray-200"
+                                            class="h-4 w-full rounded bg-gray-200 dark:bg-white/10"
                                         />
                                         <div
-                                            class="h-4 w-full rounded bg-gray-200"
+                                            class="h-4 w-full rounded bg-gray-200 dark:bg-white/10"
                                         />
                                         <div
-                                            class="h-4 w-3/5 rounded bg-gray-200"
+                                            class="h-4 w-3/5 rounded bg-gray-200 dark:bg-white/10"
                                         />
                                     </div>
                                 </div>
@@ -83,22 +83,22 @@
 
                                     <div class="flex-1">
                                         <h3
-                                            class="text-lg font-semibold text-gray-900"
+                                            class="text-lg font-semibold text-gray-900 dark:text-white"
                                         >
                                             Visit Our Location
                                         </h3>
 
                                         <p
-                                            class="mt-2 text-sm leading-7 text-gray-600"
+                                            class="mt-2 text-sm leading-7 text-gray-600 dark:text-gray-300"
                                         >
                                             <span
-                                                class="font-medium text-gray-900"
+                                                class="font-medium text-gray-900 dark:text-white"
                                             >
                                                 {{ branch.name }}
                                             </span>
                                             is conveniently located at
                                             <span
-                                                class="font-medium text-gray-900"
+                                                class="font-medium text-gray-900 dark:text-white"
                                             >
                                                 {{ branch.location.street }},
                                                 {{ branch.location.city }},
@@ -121,16 +121,16 @@
                             v-if="loading"
                             class="py-8 flex flex-col gap-5 animate-pulse"
                         >
-                            <div class="h-6 w-40 rounded-md bg-gray-200" />
+                            <div class="h-6 w-40 rounded-md bg-gray-200 dark:bg-white/10" />
 
                             <div class="flex items-center gap-4">
                                 <div
-                                    class="h-14 w-14 shrink-0 rounded-xl bg-gray-200"
+                                    class="h-14 w-14 shrink-0 rounded-xl bg-gray-200 dark:bg-white/10"
                                 />
                                 <div class="flex-1 space-y-2">
-                                    <div class="h-4 w-32 rounded bg-gray-200" />
+                                    <div class="h-4 w-32 rounded bg-gray-200 dark:bg-white/10" />
                                     <div
-                                        class="h-3 w-full rounded bg-gray-200"
+                                        class="h-3 w-full rounded bg-gray-200 dark:bg-white/10"
                                     />
                                 </div>
                             </div>
@@ -138,18 +138,18 @@
                             <div
                                 v-for="n in 2"
                                 :key="n"
-                                class="flex gap-3 border-t border-gray-100 pt-5"
+                                class="flex gap-3 border-t border-gray-100 pt-5 dark:border-white/10"
                             >
                                 <div
-                                    class="h-10 w-10 shrink-0 rounded-full bg-gray-200"
+                                    class="h-10 w-10 shrink-0 rounded-full bg-gray-200 dark:bg-white/10"
                                 />
                                 <div class="flex-1 space-y-2">
-                                    <div class="h-4 w-28 rounded bg-gray-200" />
+                                    <div class="h-4 w-28 rounded bg-gray-200 dark:bg-white/10" />
                                     <div
-                                        class="h-3 w-full rounded bg-gray-200"
+                                        class="h-3 w-full rounded bg-gray-200 dark:bg-white/10"
                                     />
                                     <div
-                                        class="h-3 w-4/5 rounded bg-gray-200"
+                                        class="h-3 w-4/5 rounded bg-gray-200 dark:bg-white/10"
                                     />
                                 </div>
                             </div>
@@ -163,27 +163,27 @@
                     <div class="lg:col-span-1">
                         <div
                             v-if="loading"
-                            class="animate-pulse rounded-2xl border border-gray-100 p-6 shadow-sm"
+                            class="animate-pulse rounded-2xl border border-gray-100 p-6 shadow-sm dark:border-white/10"
                         >
-                            <div class="h-7 w-32 rounded-md bg-gray-200" />
-                            <div class="mt-2 h-4 w-24 rounded bg-gray-200" />
+                            <div class="h-7 w-32 rounded-md bg-gray-200 dark:bg-white/10" />
+                            <div class="mt-2 h-4 w-24 rounded bg-gray-200 dark:bg-white/10" />
 
                             <div class="mt-6 space-y-3">
                                 <div
-                                    class="h-[72px] w-full rounded-xl bg-gray-200"
+                                    class="h-[72px] w-full rounded-xl bg-gray-200 dark:bg-white/10"
                                 />
                                 <div
-                                    class="h-[72px] w-full rounded-xl bg-gray-200"
+                                    class="h-[72px] w-full rounded-xl bg-gray-200 dark:bg-white/10"
                                 />
                             </div>
 
                             <div
-                                class="mt-6 h-11 w-full rounded-xl bg-gray-200"
+                                class="mt-6 h-11 w-full rounded-xl bg-gray-200 dark:bg-white/10"
                             />
 
                             <div class="mt-4 space-y-2">
-                                <div class="h-3 w-full rounded bg-gray-200" />
-                                <div class="h-3 w-2/3 rounded bg-gray-200" />
+                                <div class="h-3 w-full rounded bg-gray-200 dark:bg-white/10" />
+                                <div class="h-3 w-2/3 rounded bg-gray-200 dark:bg-white/10" />
                             </div>
                         </div>
 

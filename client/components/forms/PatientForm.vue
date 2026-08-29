@@ -4,7 +4,7 @@
             <span class="text-2xl text-primary">02</span>
             <div>
                 <h2 class="text-xl text-primary">Patient Information</h2>
-                <p class="text-[13px] text-muted">
+                <p class="text-[13px] text-muted dark:text-gray-400">
                     Details about the person receiving care
                 </p>
             </div>
@@ -36,11 +36,13 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-semibold text-slate-700">
+                    <label
+                        class="text-sm font-semibold text-slate-700 dark:text-gray-300"
+                    >
                         Gender <span class="text-danger">*</span>
                     </label>
                     <div
-                        class="inline-flex h-11 items-center rounded-lg border border-slate-200 bg-slate-50 p-1"
+                        class="inline-flex h-11 items-center rounded-lg border border-slate-200 bg-slate-50 p-1 dark:bg-secondary dark:border-white/10"
                     >
                         <button
                             type="button"
@@ -48,8 +50,8 @@
                             class="flex-1 h-full rounded-md px-4 text-sm font-medium transition-colors"
                             :class="
                                 model.gender === 'Female'
-                                    ? 'bg-white text-primary shadow-sm'
-                                    : 'text-muted hover:text-slate-700'
+                                    ? 'bg-white text-primary shadow-sm dark:bg-white/10'
+                                    : 'text-muted hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
                             "
                         >
                             Female
@@ -60,8 +62,8 @@
                             class="flex-1 h-full rounded-md px-4 text-sm font-medium transition-colors"
                             :class="
                                 model.gender === 'Male'
-                                    ? 'bg-white text-primary shadow-sm'
-                                    : 'text-muted hover:text-slate-700'
+                                    ? 'bg-white text-primary shadow-sm dark:bg-white/10'
+                                    : 'text-muted hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
                             "
                         >
                             Male
@@ -90,30 +92,17 @@
                 />
             </div>
 
-            <!-- The patient's own home address. For homecare this is kept
-                 separate from the service location, since the caregiver may
-                 be sent somewhere other than where the patient lives. -->
             <div class="grid grid-cols-1 gap-6">
                 <BaseInput
-                    :label="
-                        category === 'facility' ? 'Address' : 'Home Address'
-                    "
+                    label="Address"
                     :model-value="props.model.address"
                     @update:model-value="update('address', $event)"
                     :error="errors?.address"
                     required
                 />
-
-                <p
-                    v-if="category !== 'facility'"
-                    class="-mt-4 text-[11px] text-slate-400"
-                >
-                    Where the patient lives. The address the caregiver visits
-                    is set separately in the service schedule below.
-                </p>
             </div>
 
-            <div class="h-px bg-[#E4E0D6]" />
+            <div class="h-px bg-[#E4E0D6] dark:bg-white/10" />
 
             <div class="grid grid-cols-3 gap-6">
                 <BaseInput

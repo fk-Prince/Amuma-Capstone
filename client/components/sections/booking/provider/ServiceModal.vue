@@ -26,17 +26,17 @@
             >
                 <div
                     v-if="open"
-                    class="relative flex max-h-[85vh] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl"
+                    class="relative flex max-h-[85vh] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl dark:bg-secondary"
                 >
                     <div
-                        class="flex items-center justify-between border-b border-gray-100 px-6 py-4"
+                        class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-white/10"
                     >
                         <div>
-                            <h2 class="text-lg font-semibold text-gray-900">
+                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                                 Select Service
                             </h2>
 
-                            <p class="mt-0.5 text-xs text-gray-400">
+                            <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                                 Select one service for this booking
                             </p>
                         </div>
@@ -44,7 +44,7 @@
                         <button
                             type="button"
                             @click="$emit('close')"
-                            class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                            class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300"
                             aria-label="Close"
                         >
                             <X class="h-4 w-4" />
@@ -52,18 +52,18 @@
                     </div>
 
                     <div
-                        class="flex flex-col gap-3 border-b border-gray-100 px-6 py-3 sm:flex-row sm:items-center"
+                        class="flex flex-col gap-3 border-b border-gray-100 px-6 py-3 sm:flex-row sm:items-center dark:border-white/10"
                     >
                         <div class="relative flex-1">
                             <Search
-                                class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                                class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                             />
 
                             <input
                                 v-model="searchQuery"
                                 type="text"
                                 placeholder="Search services..."
-                                class="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                class="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-white/10 dark:bg-secondary dark:text-white dark:placeholder-gray-500"
                             />
                         </div>
 
@@ -89,7 +89,7 @@
 
                         <button
                             type="button"
-                            class="text-xs font-medium text-gray-500 transition-colors hover:text-red-500"
+                            class="text-xs font-medium text-gray-500 transition-colors hover:text-red-500 dark:text-gray-400"
                             @click="localSelected = null"
                         >
                             Clear
@@ -101,13 +101,13 @@
                             v-if="!filteredServices.length"
                             class="flex flex-col items-center gap-2 py-14 text-center"
                         >
-                            <PackageSearch class="h-6 w-6 text-gray-300" />
+                            <PackageSearch class="h-6 w-6 text-gray-300 dark:text-gray-600" />
 
-                            <p class="text-sm font-medium text-gray-500">
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
                                 No services found
                             </p>
 
-                            <p class="text-xs text-gray-400">
+                            <p class="text-xs text-gray-400 dark:text-gray-500">
                                 Try a different search term or category.
                             </p>
                         </div>
@@ -119,7 +119,7 @@
                         >
                             <p
                                 v-if="groupedServices.length > 1"
-                                class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+                                class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500"
                             >
                                 {{ group.category }}
                             </p>
@@ -130,8 +130,8 @@
                                 class="flex cursor-pointer items-center justify-between rounded-xl border p-3 transition-all"
                                 :class="
                                     isChecked(service)
-                                        ? 'border-primary/40 bg-primary/5 ring-1 ring-primary/20'
-                                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                        ? 'border-primary/40 bg-primary/5 ring-1 ring-primary/20 dark:bg-primary-500/10'
+                                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-white/10 dark:hover:border-white/20 dark:hover:bg-white/5'
                                 "
                             >
                                 <div class="flex min-w-0 items-center gap-3">
@@ -140,7 +140,7 @@
                                         :class="
                                             isChecked(service)
                                                 ? 'border-primary bg-primary text-white'
-                                                : 'border-gray-300 bg-white'
+                                                : 'border-gray-300 bg-white dark:border-white/20 dark:bg-white/5'
                                         "
                                     >
                                         <Check
@@ -159,7 +159,7 @@
 
                                     <div class="min-w-0">
                                         <p
-                                            class="truncate text-sm font-medium leading-tight text-gray-900"
+                                            class="truncate text-sm font-medium leading-tight text-gray-900 dark:text-white"
                                         >
                                             {{ service.service_name }}
                                         </p>
@@ -169,7 +169,7 @@
                                                 groupedServices.length <= 1 &&
                                                 service.category_name
                                             "
-                                            class="mt-0.5 text-xs text-gray-400"
+                                            class="mt-0.5 text-xs text-gray-400 dark:text-gray-500"
                                         >
                                             {{ service.category_name }}
                                         </p>
@@ -186,14 +186,14 @@
                     </div>
 
                     <div
-                        class="flex items-center justify-between gap-2 rounded-b-2xl border-t border-gray-100 bg-gray-50/60 px-6 py-4"
+                        class="flex items-center justify-between gap-2 rounded-b-2xl border-t border-gray-100 bg-gray-50/60 px-6 py-4 dark:border-white/10 dark:bg-white/5"
                     >
                         <div class="flex items-center gap-3">
-                            <p class="text-xs leading-tight text-gray-400">
+                            <p class="text-xs leading-tight text-gray-400 dark:text-gray-500">
                                 Total
                             </p>
 
-                            <p class="text-base font-semibold text-gray-900">
+                            <p class="text-base font-semibold text-gray-900 dark:text-white">
                                 {{ formatCurrency(selectedTotal) }}
                             </p>
                         </div>
@@ -201,7 +201,7 @@
                         <div class="flex gap-2">
                             <button
                                 type="button"
-                                class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100"
+                                class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
                                 @click="$emit('close')"
                             >
                                 Cancel

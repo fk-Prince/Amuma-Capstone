@@ -5,20 +5,20 @@
                 <div class="flex items-center justify-center gap-2.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
                     <span
-                        class="text-xs font-medium tracking-[0.16em] uppercase text-muted"
+                        class="text-xs font-medium tracking-[0.16em] uppercase text-muted dark:text-gray-400"
                     >
                         Care services
                     </span>
                 </div>
 
                 <h2
-                    class="mt-3 text-2xl md:text-3xl font-medium text-secondary"
+                    class="mt-3 text-2xl md:text-3xl font-medium text-secondary dark:text-white"
                 >
                     Everything you need for quality homecare
                 </h2>
 
                 <p
-                    class="mt-4 text-sm text-muted max-w-xl mx-auto leading-relaxed"
+                    class="mt-4 text-sm text-muted max-w-xl mx-auto leading-relaxed dark:text-gray-400"
                 >
                     Easily find caregivers, book services, monitor care
                     activities, and manage payments all in one simple and secure
@@ -30,7 +30,7 @@
                 <div
                     v-for="module in modules"
                     :key="module.title"
-                    class="group border border-muted-light rounded-2xl p-5 bg-white hover:border-primary-200 hover:shadow-md hover:-translate-y-1 transition-all"
+                    class="group border border-muted-light rounded-2xl p-5 bg-white hover:border-primary-200 hover:shadow-md hover:-translate-y-1 transition-all dark:bg-secondary dark:border-white/10"
                 >
                     <div
                         class="w-10 h-10 rounded-lg flex items-center justify-center"
@@ -44,11 +44,11 @@
                     </div>
 
                     <div class="mt-4">
-                        <h3 class="text-sm font-medium text-secondary">
+                        <h3 class="text-sm font-medium text-secondary dark:text-white">
                             {{ module.title }}
                         </h3>
 
-                        <p class="text-xs text-muted mt-1.5 leading-relaxed">
+                        <p class="text-xs text-muted mt-1.5 leading-relaxed dark:text-gray-400">
                             {{ module.description }}
                         </p>
                     </div>
@@ -64,7 +64,7 @@ import { Search, CalendarCheck, Bell, CreditCard } from "lucide-vue-next";
 const modules = [
     {
         icon: Search,
-        iconBg: "bg-primary-50",
+        iconBg: "bg-primary-50 dark:bg-primary-500/10",
         iconColor: "text-primary-600",
         title: "Find care services",
         description:
@@ -72,7 +72,7 @@ const modules = [
     },
     {
         icon: CalendarCheck,
-        iconBg: "bg-accent-50",
+        iconBg: "bg-accent-50 dark:bg-accent-500/10",
         iconColor: "text-accent-600",
         title: "Book appointments",
         description:
@@ -80,7 +80,7 @@ const modules = [
     },
     {
         icon: Bell,
-        iconBg: "bg-primary-50",
+        iconBg: "bg-primary-50 dark:bg-primary-500/10",
         iconColor: "text-primary-600",
         title: "Stay updated",
         description:
@@ -88,7 +88,7 @@ const modules = [
     },
     {
         icon: CreditCard,
-        iconBg: "bg-accent-50",
+        iconBg: "bg-accent-50 dark:bg-accent-500/10",
         iconColor: "text-accent-600",
         title: "Payments",
         description:

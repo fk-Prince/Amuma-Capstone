@@ -1,6 +1,6 @@
 <template>
     <section
-        class="rounded-2xl bg-white p-6 md:p-8"
+        class="rounded-2xl bg-white p-6 md:p-8 dark:bg-secondary"
         :class="{ 'animate-pulse': loading }"
     >
         <div
@@ -18,7 +18,7 @@
                     <span class="text-2xl text-primary">01</span>
                     <div>
                         <h2 class="text-xl text-primary">Booking Request</h2>
-                        <p class="text-[13px] text-muted">
+                        <p class="text-[13px] text-muted dark:text-gray-400">
                             Select your admission type and schedule.
                         </p>
                     </div>
@@ -28,19 +28,18 @@
             <div v-if="!loading" class="shrink-0">
                 <span
                     v-if="maxAvailableSlots > 0"
-                    class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
                 >
                     <span
                         class="h-1.5 w-1.5 rounded-full bg-emerald-500"
                     ></span>
                     {{ maxAvailableSlots }} slot{{
                         maxAvailableSlots === 1 ? "" : "s"
-                    }}
-                    available
+                    }} available
                 </span>
                 <span
                     v-else
-                    class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 dark:bg-white/10 dark:text-gray-400"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
                     No slots available
@@ -62,7 +61,7 @@
                                     class="h-4 w-28 bg-slate-200 rounded"
                                 ></div>
                                 <div
-                                    class="h-3 w-40 bg-slate-100 rounded"
+                                    class="h-3 w-40 bg-slate-100 rounded dark:bg-secondary"
                                 ></div>
                             </div>
                             <div class="h-9 w-9 rounded-lg bg-slate-200"></div>
@@ -71,7 +70,7 @@
                 </div>
 
                 <template v-else>
-                    <h3 class="font-semibold text-sm text-slate-900 mb-3">
+                    <h3 class="font-semibold text-sm text-slate-900 mb-3 dark:text-white">
                         Admission Type <span class="text-danger">*</span>
                     </h3>
 
@@ -82,8 +81,8 @@
                             class="group relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             :class="
                                 model.type === 'Pre-Admission'
-                                    ? 'border-primary-300 bg-primary-50/60 shadow-sm ring-2 ring-primary-100'
-                                    : 'border-slate-200 bg-white hover:border-primary-200 hover:bg-primary-50/30 hover:shadow-sm'
+                                    ? 'border-primary-300 bg-primary-50/60 shadow-sm ring-2 ring-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20'
+                                    : 'border-slate-200 bg-white hover:border-primary-200 hover:bg-primary-50/30 hover:shadow-sm dark:bg-secondary dark:border-white/10 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/5'
                             "
                         >
                             <div class="flex items-start justify-between gap-4">
@@ -92,7 +91,7 @@
                                     :class="
                                         model.type === 'Pre-Admission'
                                             ? 'bg-primary-500 text-white shadow-sm'
-                                            : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100 group-hover:bg-primary-100'
+                                            : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100 group-hover:bg-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20 dark:group-hover:bg-primary-500/20'
                                     "
                                 >
                                     <ClipboardCheck class="h-5 w-5" />
@@ -107,12 +106,12 @@
                             </div>
 
                             <div class="mt-4">
-                                <h3 class="text-sm font-bold text-slate-900">
+                                <h3 class="text-sm font-bold text-slate-900 dark:text-white">
                                     Pre-Admission
                                 </h3>
 
                                 <p
-                                    class="mt-1 text-xs leading-5 text-slate-500"
+                                    class="mt-1 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                 >
                                     Submit your requirements and patient
                                     information before admission is finalized.
@@ -123,23 +122,23 @@
                                 class="mt-5 flex items-center gap-2 border-t pt-4"
                                 :class="
                                     model.type === 'Pre-Admission'
-                                        ? 'border-primary-100'
-                                        : 'border-slate-100'
+                                        ? 'border-primary-100 dark:border-primary-500/20'
+                                        : 'border-slate-100 dark:border-white/10'
                                 "
                             >
                                 <span
                                     class="flex h-5 w-5 items-center justify-center rounded-full"
                                     :class="
                                         model.type === 'Pre-Admission'
-                                            ? 'bg-primary-100 text-primary-600'
-                                            : 'bg-slate-100 text-slate-400'
+                                            ? 'bg-primary-100 text-primary-600 dark:bg-primary-500/15 dark:text-primary-400'
+                                            : 'bg-slate-100 text-slate-400 dark:bg-white/10 dark:text-gray-500'
                                     "
                                 >
                                     <Check class="h-3 w-3" />
                                 </span>
 
                                 <span
-                                    class="text-[11px] font-medium text-slate-500"
+                                    class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
                                 >
                                     Complete the patient information now and
                                     continue the admission process when you
@@ -154,8 +153,8 @@
                             class="group relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             :class="
                                 model.type === 'Complete'
-                                    ? 'border-primary-300 bg-primary-50/60 shadow-sm ring-2 ring-primary-100'
-                                    : 'border-slate-200 bg-white hover:border-primary-200 hover:bg-primary-50/30 hover:shadow-sm'
+                                    ? 'border-primary-300 bg-primary-50/60 shadow-sm ring-2 ring-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20'
+                                    : 'border-slate-200 bg-white hover:border-primary-200 hover:bg-primary-50/30 hover:shadow-sm dark:bg-secondary dark:border-white/10 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/5'
                             "
                         >
                             <div class="flex items-start justify-between gap-4">
@@ -164,7 +163,7 @@
                                     :class="
                                         model.type === 'Complete'
                                             ? 'bg-primary-500 text-white shadow-sm'
-                                            : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100 group-hover:bg-primary-100'
+                                            : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100 group-hover:bg-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20 dark:group-hover:bg-primary-500/20'
                                     "
                                 >
                                     <Building2 class="h-5 w-5" />
@@ -181,14 +180,14 @@
                             <div class="mt-4">
                                 <div class="flex items-center gap-2">
                                     <h3
-                                        class="text-sm font-bold text-slate-900"
+                                        class="text-sm font-bold text-slate-900 dark:text-white"
                                     >
                                         Complete Admission
                                     </h3>
                                 </div>
 
                                 <p
-                                    class="mt-1 text-xs leading-5 text-slate-500"
+                                    class="mt-1 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                 >
                                     Complete the admission process in one step,
                                     including accommodation and payment.
@@ -199,23 +198,23 @@
                                 class="mt-5 flex items-center gap-2 border-t pt-4"
                                 :class="
                                     model.type === 'Complete'
-                                        ? 'border-primary-100'
-                                        : 'border-slate-100'
+                                        ? 'border-primary-100 dark:border-primary-500/20'
+                                        : 'border-slate-100 dark:border-white/10'
                                 "
                             >
                                 <span
                                     class="flex h-5 w-5 items-center justify-center rounded-full"
                                     :class="
                                         model.type === 'Complete'
-                                            ? 'bg-primary-100 text-primary-600'
-                                            : 'bg-slate-100 text-slate-400'
+                                            ? 'bg-primary-100 text-primary-600 dark:bg-primary-500/15 dark:text-primary-400'
+                                            : 'bg-slate-100 text-slate-400 dark:bg-white/10 dark:text-gray-500'
                                     "
                                 >
                                     <Check class="h-3 w-3" />
                                 </span>
 
                                 <span
-                                    class="text-[11px] font-medium text-slate-500"
+                                    class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
                                 >
                                     Choose your accommodation, billing cycle,
                                     and admission details to complete your
@@ -245,7 +244,7 @@
                                         class="h-4 w-28 bg-slate-200 rounded"
                                     ></div>
                                     <div
-                                        class="h-3 w-40 bg-slate-100 rounded"
+                                        class="h-3 w-40 bg-slate-100 rounded dark:bg-secondary"
                                     ></div>
                                 </div>
                                 <div
@@ -256,7 +255,7 @@
                     </div>
 
                     <template v-else>
-                        <h3 class="font-semibold text-sm text-slate-900 mb-3">
+                        <h3 class="font-semibold text-sm text-slate-900 mb-3 dark:text-white">
                             Accommodation Type
                             <span class="text-danger">*</span>
                         </h3>
@@ -281,7 +280,7 @@
                                             {{ room.title }}
                                         </h3>
                                         <p
-                                            class="text-xs text-slate-500 mt-0.5"
+                                            class="text-xs text-slate-500 mt-0.5 dark:text-gray-400"
                                         >
                                             {{ room.description }}
                                         </p>
@@ -353,7 +352,7 @@
                                         class="h-4 w-28 bg-slate-200 rounded"
                                     ></div>
                                     <div
-                                        class="h-3 w-40 bg-slate-100 rounded"
+                                        class="h-3 w-40 bg-slate-100 rounded dark:bg-secondary"
                                     ></div>
                                 </div>
                                 <div
@@ -364,7 +363,7 @@
                     </div>
 
                     <template v-else>
-                        <h3 class="font-semibold text-sm text-slate-900 mb-3">
+                        <h3 class="font-semibold text-sm text-slate-900 mb-3 dark:text-white">
                             Admission Plan <span class="text-danger">*</span>
                         </h3>
 
@@ -387,7 +386,7 @@
                                             {{ plan.title }}
                                         </h3>
                                         <p
-                                            class="text-xs text-slate-500 mt-0.5"
+                                            class="text-xs text-slate-500 mt-0.5 dark:text-gray-400"
                                         >
                                             {{ plan.description }}
                                         </p>
@@ -444,17 +443,17 @@
             <div v-if="loading || model.type === 'Complete'" class="space-y-6">
                 <div>
                     <div class="mb-3">
-                        <h3 class="text-sm font-semibold text-slate-900">
+                        <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
                             Billing Cycle
                         </h3>
 
-                        <p class="mt-0.5 text-xs text-slate-500">
+                        <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                             Choose how often you would like to be billed.
                         </p>
                     </div>
 
                     <div
-                        class="relative inline-flex items-center rounded-full border border-primary-200 bg-muted-light/40 p-1"
+                        class="relative inline-flex items-center rounded-full border border-primary-200 bg-muted-light/40 p-1 dark:border-white/10 dark:bg-white/5"
                     >
                         <span
                             class="absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-full bg-primary shadow-sm transition-all duration-300 ease-in-out"
@@ -471,7 +470,7 @@
                             :class="
                                 model.billing_cycle === 'Monthly'
                                     ? 'text-white'
-                                    : 'text-muted hover:text-secondary'
+                                    : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
                             "
                             @click="update('billing_cycle', 'Monthly')"
                         >
@@ -484,7 +483,7 @@
                             :class="
                                 model.billing_cycle === 'Yearly'
                                     ? 'text-white'
-                                    : 'text-muted hover:text-secondary'
+                                    : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
                             "
                             @click="update('billing_cycle', 'Yearly')"
                         >
@@ -492,7 +491,7 @@
                         </button>
                     </div>
 
-                    <p class="mt-2 text-xs text-muted">
+                    <p class="mt-2 text-xs text-muted dark:text-gray-400">
                         {{
                             model.billing_cycle === "Yearly"
                                 ? "Billed annually — save more compared to monthly billing."
@@ -503,12 +502,12 @@
                 <!-- Accommodation -->
                 <div v-if="model.billing_cycle">
                     <div class="mb-3">
-                        <h3 class="text-sm font-semibold text-slate-900">
+                        <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
                             Accommodation Type
                             <span class="text-danger">*</span>
                         </h3>
 
-                        <p class="mt-0.5 text-xs text-slate-500">
+                        <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                             Select the accommodation that best suits your needs.
                         </p>
                     </div>
@@ -517,7 +516,7 @@
                         <div
                             v-for="i in 2"
                             :key="i"
-                            class="h-40 animate-pulse rounded-2xl border border-slate-200 bg-slate-50"
+                            class="h-40 animate-pulse rounded-2xl border border-slate-200 bg-slate-50 dark:bg-secondary dark:border-white/10"
                         />
                     </div>
 
@@ -531,8 +530,8 @@
                             class="group relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
                             :class="
                                 model.plan === room.value
-                                    ? 'border-primary-300 bg-primary-50/60 shadow-sm ring-2 ring-primary-100'
-                                    : 'border-slate-200 bg-white hover:border-primary-200 hover:bg-primary-50/30 hover:shadow-sm'
+                                    ? 'border-primary-300 bg-primary-50/60 shadow-sm ring-2 ring-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20'
+                                    : 'border-slate-200 bg-white hover:border-primary-200 hover:bg-primary-50/30 hover:shadow-sm dark:bg-secondary dark:border-white/10 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/5'
                             "
                         >
                             <div class="flex items-start justify-between gap-4">
@@ -562,7 +561,7 @@
                                                 room.value,
                                             ) > 0
                                         "
-                                        class="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-600"
+                                        class="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
                                     >
                                         Save
                                         {{
@@ -583,23 +582,23 @@
                             </div>
 
                             <div class="mt-4">
-                                <h4 class="text-sm font-bold text-slate-900">
+                                <h4 class="text-sm font-bold text-slate-900 dark:text-white">
                                     {{ room.title }}
                                 </h4>
 
                                 <p
-                                    class="mt-1 text-xs leading-5 text-slate-500"
+                                    class="mt-1 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                 >
                                     {{ getRoomDescription(room.value) }}
                                 </p>
                             </div>
 
                             <div
-                                class="mt-5 flex items-end justify-between border-t border-slate-100 pt-4"
+                                class="mt-5 flex items-end justify-between border-t border-slate-100 pt-4 dark:border-white/10"
                             >
                                 <div>
                                     <p
-                                        class="text-[10px] font-medium uppercase tracking-wide text-slate-400"
+                                        class="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
                                     >
                                         {{
                                             model.billing_cycle.toLowerCase() ===
@@ -651,21 +650,21 @@
 
                 <div v-else>
                     <div
-                        class="flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-4"
+                        class="flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-4 dark:border-white/10 dark:bg-white/5"
                     >
                         <div
-                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-500"
+                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-500 dark:bg-primary-500/10"
                         >
                             <CalendarRange class="h-4 w-4" />
                         </div>
 
                         <div>
-                            <p class="text-xs font-semibold text-slate-700">
+                            <p class="text-xs font-semibold text-slate-700 dark:text-gray-300">
                                 Select a billing interval first
                             </p>
 
                             <p
-                                class="mt-0.5 text-[11px] leading-4 text-slate-500"
+                                class="mt-0.5 text-[11px] leading-4 text-slate-500 dark:text-gray-400"
                             >
                                 Choose Monthly or Yearly to view the available
                                 accommodation options and pricing.

@@ -23,7 +23,9 @@ const baseClass =
 const variantClass = computed(() => {
     switch (props.variant) {
         case "secondary":
-            return "bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-200";
+            return "bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-200 dark:bg-white/10 dark:text-white dark:border-white/10 dark:hover:bg-white/20";
+        case "outline":
+            return "bg-transparent";
         case "danger":
             return "bg-red-600 text-white hover:bg-red-700";
         default:
