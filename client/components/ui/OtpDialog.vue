@@ -160,17 +160,17 @@ onBeforeUnmount(() => {
     <div
         class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 backdrop-blur-sm px-4"
     >
-        <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
+        <div class="w-full max-w-md rounded-2xl bg-white dark:bg-secondary p-8 shadow-2xl">
             <div class="text-center">
                 <div
-                    class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 text-primary"
+                    class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-500/10 text-primary"
                 >
                     <MailCheck class="h-7 w-7" />
                 </div>
 
-                <h2 class="text-2xl font-bold text-secondary">Verify Email</h2>
+                <h2 class="text-2xl font-bold text-secondary dark:text-white">Verify Email</h2>
 
-                <p class="mt-2 text-sm text-muted">
+                <p class="mt-2 text-sm text-muted dark:text-gray-400">
                     Enter the 6-digit verification code sent to your email
                     address.
                 </p>
@@ -185,7 +185,7 @@ onBeforeUnmount(() => {
                     v-else
                     class="mt-3 inline-flex items-center gap-1.5 text-xs font-medium"
                     :class="
-                        expirySecondsLeft <= 30 ? 'text-red-500' : 'text-muted'
+                        expirySecondsLeft <= 30 ? 'text-red-500' : 'text-muted dark:text-gray-400'
                     "
                 >
                     <TimerReset class="h-3.5 w-3.5" />
@@ -204,11 +204,11 @@ onBeforeUnmount(() => {
                     autocomplete="one-time-code"
                     type="text"
                     :disabled="loading || isExpired"
-                    class="h-12 w-12 rounded-xl border-[1.5px] text-center text-lg font-semibold outline-none transition focus:ring-2 disabled:opacity-50"
+                    class="h-12 w-12 rounded-xl border-[1.5px] bg-transparent text-center text-lg font-semibold text-slate-800 outline-none transition focus:ring-2 disabled:opacity-50 dark:text-white"
                     :class="
                         error
                             ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-                            : 'border-slate-200 focus:border-primary focus:ring-primary-100'
+                            : 'border-slate-200 dark:border-white/10 focus:border-primary focus:ring-primary-100'
                     "
                     @input="handleInput(index, $event)"
                     @keydown="handleBackspace(index, $event)"
@@ -232,7 +232,7 @@ onBeforeUnmount(() => {
                 </BaseButton>
 
                 <div class="flex items-center justify-center gap-2 text-sm">
-                    <span class="text-muted">Didn't get the code?</span>
+                    <span class="text-muted dark:text-gray-400">Didn't get the code?</span>
 
                     <button
                         type="button"
@@ -240,7 +240,7 @@ onBeforeUnmount(() => {
                         :class="
                             canResend
                                 ? 'text-primary hover:underline'
-                                : 'cursor-not-allowed text-muted'
+                                : 'cursor-not-allowed text-muted dark:text-gray-400'
                         "
                         :disabled="!canResend"
                         @click="handleResend"
@@ -250,7 +250,7 @@ onBeforeUnmount(() => {
 
                     <span
                         v-if="!canResend"
-                        class="inline-flex items-center gap-1 rounded-full bg-light px-2.5 py-1 text-xs font-semibold tabular-nums text-primary"
+                        class="inline-flex items-center gap-1 rounded-full bg-light dark:bg-primary-500/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-primary"
                     >
                         <Clock class="h-3 w-3" />
                         {{ resendCountdownLabel }}
@@ -259,7 +259,7 @@ onBeforeUnmount(() => {
 
                 <button
                     type="button"
-                    class="w-full text-sm text-muted transition hover:text-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                    class="w-full text-sm text-muted dark:text-gray-400 transition hover:text-secondary dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                     :disabled="loading"
                     @click="emit('close')"
                 >

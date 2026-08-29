@@ -167,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { LogOut, LoaderCircle, Sun, Moon } from "lucide-vue-next";
 import BaseDropdownMenu from "../ui/BaseDropdownMenu.vue";
 import DropdownItem from "../ui/DropdownItem.vue";
@@ -197,21 +197,7 @@ const props = withDefaults(
 
 const { success, error } = useToast();
 const loggingOut = ref(false);
-const isDark = ref(false);
-
-const THEME_KEY = "theme";
-
-const setTheme = (dark: boolean) => {
-    isDark.value = dark;
-    document.documentElement.classList.toggle("dark", dark);
-    localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
-};
-
-onMounted(() => {
-    const stored = localStorage.getItem(THEME_KEY);
-
-    setTheme(stored ? stored === "dark" : true);
-});
+const isDark = useIsDark();
 
 const visibleMenuItems = computed(() =>
     profileMenuDropDownList.filter((item) => {

@@ -119,19 +119,12 @@ export function useMedicalServices(
         return value;
     });
 
-    /**
-     * Selected service label
-     */
+
     const selectedServiceLabel = computed(() => {
         return selectedService.value?.service_name ?? "";
     });
 
-    /**
-     * Selected service total
-     *
-     * Because only ONE service can be selected,
-     * this is simply that service's price.
-     */
+
     const selectedServicesTotal = computed(() => {
         if (!selectedService.value) {
             return 0;
@@ -140,9 +133,7 @@ export function useMedicalServices(
         return Number(selectedService.value.price || 0);
     });
 
-    /**
-     * Booking types
-     */
+
     const bookingTypes = computed(() => {
         const list = serviceList.value;
 
@@ -155,9 +146,6 @@ export function useMedicalServices(
                 description: medicalDescription.value,
                 icon: Stethoscope,
                 rateLabel: medicalRateLabel.value,
-
-                // IMPORTANT:
-                // Use the resolved array.
                 visible: list.length > 0,
             },
 

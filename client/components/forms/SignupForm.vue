@@ -193,7 +193,7 @@ async function resendOtp() {
 
 <template>
     <div
-        class="w-full max-w-[460px] rounded-2xl bg-white px-10 py-11 shadow-xl"
+        class="w-full max-w-[460px] rounded-2xl bg-white dark:bg-secondary px-10 py-11 shadow-xl"
     >
         <OtpDialog
             v-if="showOtpDialog"
@@ -205,12 +205,12 @@ async function resendOtp() {
         />
 
         <div class="mb-10 text-center">
-            <h2 class="text-[1.85rem] font-extrabold text-slate-900">
+            <h2 class="text-[1.85rem] font-extrabold text-slate-900 dark:text-white">
                 Create an Account
             </h2>
-            <p class="mt-1 text-sm text-slate-500">
+            <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
                 Join
-                <span class="font-semibold text-blue-600">AMUMA</span> today
+                <span class="font-semibold text-blue-600 dark:text-blue-400">AMUMA</span> today
             </p>
         </div>
 
@@ -240,7 +240,7 @@ async function resendOtp() {
             >
                 <template #prefix>
                     <svg
-                        class="w-[1.05rem] h-[1.05rem] text-slate-400"
+                        class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -261,7 +261,7 @@ async function resendOtp() {
             >
                 <template #prefix>
                     <svg
-                        class="w-[1.05rem] h-[1.05rem] text-slate-400"
+                        class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -281,7 +281,7 @@ async function resendOtp() {
                 <template #suffix>
                     <button
                         type="button"
-                        class="flex items-center px-3 text-slate-400 hover:text-blue-500 transition-colors"
+                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors"
                         @click="showPassword = !showPassword"
                     >
                         <svg
@@ -326,7 +326,7 @@ async function resendOtp() {
             >
                 <template #prefix>
                     <svg
-                        class="w-[1.05rem] h-[1.05rem] text-slate-400"
+                        class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -346,7 +346,7 @@ async function resendOtp() {
                 <template #suffix>
                     <button
                         type="button"
-                        class="flex items-center px-3 text-slate-400 hover:text-blue-500 transition-colors"
+                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors"
                         @click="showPassword = !showPassword"
                     >
                         <svg
@@ -394,11 +394,11 @@ async function resendOtp() {
                 {{ loading ? "Sign Up..." : "Sign Up" }}
             </BaseButton>
 
-            <p class="mt-2 text-center text-sm text-slate-500">
+            <p class="mt-2 text-center text-sm text-slate-500 dark:text-gray-400">
                 Already have an account?
                 <NuxtLink
                     to="/auth/signin"
-                    class="font-semibold text-blue-600 hover:underline"
+                    class="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
                 >
                     Sign in
                 </NuxtLink>

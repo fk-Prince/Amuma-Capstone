@@ -5,7 +5,7 @@ import signinLogo from "~/assets/logo/signinLogo.png";
 
 <template>
     <div
-        class="grid grid-cols-1 lg:grid-cols-[55%_40%] bg-slate-100 font-primary min-h-screen"
+        class="grid grid-cols-1 lg:grid-cols-[55%_40%] bg-slate-100 dark:bg-secondary font-primary min-h-screen"
     >
         <img
             :src="signinLogo"
@@ -16,9 +16,8 @@ import signinLogo from "~/assets/logo/signinLogo.png";
             class="absolute inset-0 lg:hidden bg-gradient-to-br from-slate-900/75 via-blue-950/60 to-blue-900/50"
         />
 
-        <section
-            class="relative hidden overflow-hidden lg:flex rounded-r-[280px]"
-        >
+        <!-- rounded-r-[280px] -->
+        <section class="relative hidden overflow-hidden lg:flex">
             <img
                 :src="signinLogo"
                 alt="Background"

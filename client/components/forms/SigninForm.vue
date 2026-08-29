@@ -103,7 +103,7 @@ async function googleUrl() {
             >
                 <template #prefix>
                     <svg
-                        class="w-[1.05rem] h-[1.05rem] text-slate-400"
+                        class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -124,7 +124,7 @@ async function googleUrl() {
             >
                 <template #prefix>
                     <svg
-                        class="w-[1.05rem] h-[1.05rem] text-slate-400"
+                        class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -144,7 +144,7 @@ async function googleUrl() {
                 <template #suffix>
                     <button
                         type="button"
-                        class="flex items-center px-3 text-slate-400 hover:text-blue-500 transition-colors"
+                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors"
                         @click="showPassword = !showPassword"
                     >
                         <svg
@@ -202,12 +202,12 @@ async function googleUrl() {
             </BaseButton>
 
             <div class="flex items-center gap-3">
-                <span class="flex-1 h-px bg-slate-200" />
+                <span class="flex-1 h-px bg-slate-200 dark:bg-white/10" />
                 <span
-                    class="text-xs text-slate-400 font-medium uppercase tracking-widest"
+                    class="text-xs text-slate-400 dark:text-gray-500 font-medium uppercase tracking-widest"
                     >or</span
                 >
-                <span class="flex-1 h-px bg-slate-200" />
+                <span class="flex-1 h-px bg-slate-200 dark:bg-white/10" />
             </div>
 
             <BaseButton
@@ -225,11 +225,11 @@ async function googleUrl() {
                 Continue with Google
             </BaseButton>
 
-            <p class="text-center text-sm text-slate-500">
+            <p class="text-center text-sm text-slate-500 dark:text-gray-400">
                 Dont have an account?
                 <NuxtLink
                     to="/auth/signup"
-                    class="text-blue-600 font-semibold hover:underline"
+                    class="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
                 >
                     Sign up
                 </NuxtLink>

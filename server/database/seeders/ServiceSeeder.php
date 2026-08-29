@@ -9,43 +9,45 @@ use Illuminate\Database\Seeder;
 
 class ServiceSeeder extends Seeder
 {
-    private const CATEGORY_NAME = 'Medical Services';
-
-    // Medical-type schedule services select from this catalog (see
-    // ScheduleService::TYPE_MEDICAL) — ADL schedule services have no
-    // catalog Service at all (schedule_services.service_id is nullable).
     private const SERVICES = [
         [
+            'category_name' => 'Wound Care',
             'service_name' => 'Wound Care',
             'price' => 850.00,
             'maximum_duration' => '01:00:00',
         ],
         [
+            'category_name' => 'Rehabilitation Services',
             'service_name' => 'Physical Therapy',
             'price' => 1200.00,
             'maximum_duration' => '01:30:00',
         ],
         [
+            'category_name' => 'Nursing Care',
             'service_name' => 'Nursing Care',
             'price' => 950.00,
             'maximum_duration' => '02:00:00',
         ],
         [
+            'category_name' => 'Medication Services',
             'service_name' => 'Medication Management',
             'price' => 500.00,
             'maximum_duration' => '00:30:00',
         ],
         [
+            'category_name' => 'Nursing Care',
             'service_name' => 'Vital Signs Monitoring',
             'price' => 400.00,
             'maximum_duration' => '00:30:00',
         ],
         [
+            'category_name' => 'Medication Services',
             'service_name' => 'IV Therapy',
             'price' => 1100.00,
             'maximum_duration' => '01:00:00',
         ],
         [
+            'category_name' => 'Post-Surgical Care',
             'service_name' => 'Post-Surgical Care',
             'price' => 1500.00,
             'maximum_duration' => '02:00:00',
@@ -62,19 +64,25 @@ class ServiceSeeder extends Seeder
         }
 
         foreach ($branches as $branch) {
-            $category = Category::firstOrCreate([
-                'branch_id' => $branch->branch_id,
-                'category_name' => self::CATEGORY_NAME,
-            ]);
+            $categories = [];
 
             foreach (self::SERVICES as $service) {
+                $categoryName = $service['category_name'];
+
+                if (!isset($categories[$categoryName])) {
+                    $categories[$categoryName] = Category::firstOrCreate([
+                        'branch_id' => $branch->branch_id,
+                        'category_name' => $categoryName,
+                    ]);
+                }
+
                 Service::firstOrCreate(
                     [
                         'branch_id' => $branch->branch_id,
-                        'category_id' => $category->category_id,
                         'service_name' => $service['service_name'],
                     ],
                     [
+                        'category_id' => $categories[$categoryName]->category_id,
                         'price' => $service['price'],
                         'maximum_duration' => $service['maximum_duration'],
                         'is_available' => true,

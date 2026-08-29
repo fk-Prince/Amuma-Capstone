@@ -5,6 +5,7 @@ import logoAmuma from "~/assets/logo/logoAmuma.png";
 import BaseButton from "../ui/BaseButton.vue";
 import { useAuthUser } from "~/composables/useAuthUser";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
+import ThemeToggle from "../ui/ThemeToggle.vue";
 import DynamicSidebar from "./DynamicSidebar.vue";
 
 const user = useAuthUser();
@@ -185,7 +186,7 @@ watch(
         <nav class="flex justify-between items-center w-full px-6 h-[90px]">
             <nav
                 v-if="variant === 5"
-                class="flex justify-start items-center w-full px-6 h-[90px]"
+                class="flex justify-between items-center w-full px-6 h-[90px]"
             >
                 <NuxtLink to="/" class="shrink-0">
                     <img
@@ -194,6 +195,12 @@ watch(
                         class="w-[180px] object-contain transition-all duration-300"
                     />
                 </NuxtLink>
+
+                <ClientOnly>
+                    <ThemeToggle
+                        class="text-slate-500 hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-white/10"
+                    />
+                </ClientOnly>
             </nav>
             <template
                 v-if="
@@ -242,19 +249,25 @@ watch(
 
                 <div class="flex items-center gap-3">
                     <template v-if="!hydrated || !user">
+                        <ClientOnly>
+                            <ThemeToggle
+                                :class="
+                                    !isChromeSolid
+                                        ? 'text-white hover:bg-white/10'
+                                        : 'text-muted-dark hover:bg-primary/10 dark:text-white dark:hover:bg-white/10'
+                                "
+                            />
+                        </ClientOnly>
+
                         <NuxtLink
                             :to="hydrated ? '/auth/signin' : undefined"
                             class="shrink-0"
                         >
                             <BaseButton
-                                buttonClass="px-[18px] lg:px-[28px] h-11 rounded-lg whitespace-nowrap min-w-fit transition-colors duration-200"
-                                :class="
-                                    variant === 1 && !scrolled
-                                        ? 'bg-primary text-white border border-primary hover:bg-primary/90'
-                                        : ''
-                                "
+                                buttonClass="px-[18px] lg:px-[28px] h-11 rounded-lg whitespace-nowrap min-w-fit shadow-sm shadow-primary-500/25 transition-all duration-200 hover:shadow-md hover:shadow-primary-500/30 active:scale-[0.97]"
+                                class="bg-primary text-white border border-primary hover:bg-primary-600"
                             >
-                                Sign In
+                                Sign in
                             </BaseButton>
                         </NuxtLink>
 
@@ -264,14 +277,14 @@ watch(
                         >
                             <BaseButton
                                 variant="outline"
-                                class="h-11 rounded-lg border px-[20px] lg:px-[24px] whitespace-nowrap min-w-fit transition-colors duration-200"
+                                class="h-11 rounded-lg border-[1.5px] px-[20px] lg:px-[24px] whitespace-nowrap min-w-fit font-semibold transition-all duration-200 active:scale-[0.97]"
                                 :class="
                                     !isChromeSolid
-                                        ? 'border-white/20 bg-transparent text-white hover:bg-white/10'
-                                        : 'border-muted-dark text-muted-dark bg-transparent hover:bg-primary/10 dark:border-white/20 dark:text-white dark:hover:bg-white/10'
+                                        ? 'border-white/30 bg-white/5 text-white hover:bg-white/15'
+                                        : 'border-primary/30 text-primary bg-primary-50/60 hover:bg-primary-50 hover:border-primary/50 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-300 dark:hover:bg-primary-500/20'
                                 "
                             >
-                                Get Started
+                                Sign up
                             </BaseButton>
                         </NuxtLink>
                     </template>
