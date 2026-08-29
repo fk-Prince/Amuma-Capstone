@@ -302,7 +302,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
 import { CalendarDays, Clock, CalendarClock, UserCheck } from "lucide-vue-next";
 import { useRoute } from "vue-router";
 import { notifcationFormatDate } from "~/utils/notification-time";
@@ -335,7 +335,14 @@ const formatTime = (value?: string) => {
 };
 
 const bindNotification = () => {
-    if (!user.value?.uuid) return;
+    const uuid = user.value?.uuid;
+
+    if (channel && handler) {
+        channel.stopListening(".NotificationEvent", handler);
+        channel = null;
+    }
+
+    if (!uuid || !$echo) return;
 
     handler = (e: any) => {
         if (e.branch_uuid !== branchUuid.value) {
@@ -353,9 +360,11 @@ const bindNotification = () => {
     };
 
     channel = $echo
-        .private(`Notification.${user.value.uuid}`)
+        .private(`Notification.${uuid}`)
         .listen(".NotificationEvent", handler);
 };
+
+watch(() => user.value?.uuid, bindNotification, { immediate: true });
 
 const emit = defineEmits<{
     (e: "newSchedule", schedule: any): void;
@@ -374,7 +383,6 @@ const checkScreen = () => {
 onMounted(() => {
     checkScreen();
     window.addEventListener("resize", checkScreen);
-    bindNotification();
 });
 
 // stopListening with the stored handler, not leave(): the header bell and

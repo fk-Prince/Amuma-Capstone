@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Calendar, Clock, MessagesSquare, Menu } from "lucide-vue-next";
 import NavbarProfileDropdown from "~/components/ui/NavbarProfileDropdown.vue";
@@ -192,14 +192,16 @@ async function loadConversations() {
 let messageChannel = "";
 let messageHandler: ((payload: any) => void) | null = null;
 
-onMounted(async () => {
-    clockTimer = setInterval(() => {
-        now.value = new Date();
-    }, 1000 * 30);
-
-    await loadConversations();
-
+function bindMessages() {
     const uuid = (user.value as any)?.uuid;
+
+    if ($echo && messageChannel && messageHandler) {
+        ($echo as any)
+            .private(messageChannel)
+            .stopListening(".MessageSent", messageHandler);
+        messageChannel = "";
+        messageHandler = null;
+    }
 
     if (!$echo || !uuid) return;
 
@@ -221,6 +223,16 @@ onMounted(async () => {
     };
 
     ($echo as any).private(messageChannel).listen(".MessageSent", messageHandler);
+}
+
+watch(() => (user.value as any)?.uuid, bindMessages, { immediate: true });
+
+onMounted(async () => {
+    clockTimer = setInterval(() => {
+        now.value = new Date();
+    }, 1000 * 30);
+
+    await loadConversations();
 });
 
 // stopListening, not leave: the messages page shares this channel and leave()

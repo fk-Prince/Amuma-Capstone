@@ -170,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import {
     Bell,
     CalendarClock,
@@ -326,7 +326,14 @@ const markAllRead = async () => {
 };
 
 const bindChannel = () => {
-    if (!user.value?.uuid || !$echo) return;
+    const uuid = user.value?.uuid;
+
+    if (channel && handler) {
+        channel.stopListening(".NotificationEvent", handler);
+        channel = null;
+    }
+
+    if (!uuid || !$echo) return;
 
     handler = (event: any) => {
         notifications.value.unshift({
@@ -341,13 +348,14 @@ const bindChannel = () => {
     };
 
     channel = $echo
-        .private(`Notification.${user.value.uuid}`)
+        .private(`Notification.${uuid}`)
         .listen(".NotificationEvent", handler);
 };
 
+watch(() => user.value?.uuid, bindChannel, { immediate: true });
+
 onMounted(async () => {
     await fetchNotifications(1);
-    bindChannel();
 });
 
 onBeforeUnmount(() => {

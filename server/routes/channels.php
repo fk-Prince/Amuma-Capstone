@@ -24,6 +24,10 @@ Broadcast::channel('Client.Messages.{uuid}', function ($user, string $uuid) {
     return (string) $user->uuid === (string) $uuid;
 });
 
+Broadcast::channel('User.Messages.{uuid}', function ($user, string $uuid) {
+    return (string) $user->uuid === (string) $uuid;
+});
+
 Broadcast::channel('Branch.Messages.{branchUuid}', function ($user, string $branchUuid) {
     $branch = Branch::where('uuid', $branchUuid)->first();
 

@@ -22,7 +22,7 @@ class NotificationService
     ) {}
 
 
-    private const BOOKING_ROLES = ['admission', 'branch_owner', 'administrator'];
+    private const BOOKING_ROLES = ['admissioen', 'branch_owner', 'administrator'];
 
     public function sendNotification(array $payload, object $booking)
     {

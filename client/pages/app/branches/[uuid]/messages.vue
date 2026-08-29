@@ -457,7 +457,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { MessageCircle } from "lucide-vue-next";
 
@@ -744,12 +744,16 @@ function onIncoming(message: ChatMessage) {
 let joined = "";
 let listHandler: ((payload: any) => void) | null = null;
 
-onMounted(async () => {
-    await fetchConversations();
+function bindList(channel: string | null) {
+    if ($echo && joined && listHandler) {
+        ($echo as any).private(joined).stopListening(".MessageSent", listHandler);
+        joined = "";
+        listHandler = null;
+    }
 
-    if (!$echo) return;
+    if (!$echo || !channel || channel.endsWith("undefined")) return;
 
-    joined = listChannel.value;
+    joined = channel;
 
     listHandler = (payload: any) => {
         const row = conversations.value.find(
@@ -778,6 +782,12 @@ onMounted(async () => {
     };
 
     ($echo as any).private(joined).listen(".MessageSent", listHandler);
+}
+
+watch(listChannel, bindList, { immediate: true });
+
+onMounted(async () => {
+    await fetchConversations();
 });
 
 onBeforeUnmount(() => {

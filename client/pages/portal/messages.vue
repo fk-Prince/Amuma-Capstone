@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { MessageCircle } from "lucide-vue-next";
 
 import MessageThread from "~/components/messaging/MessageThread.vue";
@@ -217,12 +217,18 @@ function onIncoming(message: ChatMessage) {
 let channelName = "";
 let listHandler: ((payload: any) => void) | null = null;
 
-onMounted(async () => {
-    await load();
+function bindChannel(channel: string | null) {
+    if ($echo && channelName && listHandler) {
+        ($echo as any)
+            .private(channelName)
+            .stopListening(".MessageSent", listHandler);
+        channelName = "";
+        listHandler = null;
+    }
 
-    if (!$echo || !clientChannel.value) return;
+    if (!$echo || !channel) return;
 
-    channelName = clientChannel.value;
+    channelName = channel;
 
     listHandler = (payload: any) => {
         const row = rows.value.find(
@@ -242,6 +248,12 @@ onMounted(async () => {
     };
 
     ($echo as any).private(channelName).listen(".MessageSent", listHandler);
+}
+
+watch(clientChannel, bindChannel, { immediate: true });
+
+onMounted(async () => {
+    await load();
 });
 
 onBeforeUnmount(() => {

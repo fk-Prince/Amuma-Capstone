@@ -23,7 +23,7 @@ export default defineNuxtPlugin(() => {
         wsPort: 8080,
         wssPort: 9443,
         forceTLS: isSecure,
-        enabledTransports: isSecure ? ['wss'] : ['ws'],
+        enabledTransports: ['ws', 'wss'],
         authorizer: (channel: any) => {
             return {
                 authorize: (socketId: string, callback: Function) => {
@@ -42,10 +42,16 @@ export default defineNuxtPlugin(() => {
                     })
                         .then(async (res) => {
                             const text = await res.text()
+
+                            if (!res.ok) {
+                                console.error('[echo] auth failed', res.status, channel.name, text.slice(0, 300))
+                            }
+
                             return JSON.parse(text)
                         })
                         .then((data) => callback(null, data))
                         .catch((err) => {
+                            console.error('[echo] auth error', channel.name, err)
                             callback(err, null)
                         })
                 },
@@ -53,19 +59,34 @@ export default defineNuxtPlugin(() => {
         },
     })
 
-    // Subscription failures are otherwise silent: the socket just never
-    // delivers and the UI looks like it simply is not updating.
-    if (import.meta.dev) {
-        const connection = (echo as any).connector?.pusher?.connection
+    // console.info('[echo] init', {
+    //     wsHost: backendUrl.hostname,
+    //     wsPort: 8080,
+    //     wssPort: 9443,
+    //     forceTLS: isSecure,
+    // })
 
-        connection?.bind('state_change', (states: any) => {
-            console.info('[echo] connection', states.previous, '->', states.current)
-        })
+    const pusher = (echo as any).connector?.pusher
+    const connection = pusher?.connection
 
-        connection?.bind('error', (err: any) => {
-            console.error('[echo] connection error', err)
-        })
-    }
+    // console.info('[echo] connector exists?', !!(echo as any).connector, 'pusher exists?', !!pusher, 'connection exists?', !!connection)
+    // console.info('[echo] connection state right now =', connection?.state)
+
+    connection?.bind('state_change', (states: any) => {
+        // console.info('[echo] connection', states.previous, '->', states.current)
+    })
+
+    connection?.bind('error', (err: any) => {
+        // console.error('[echo] connection error', JSON.stringify(err))
+    })
+
+    connection?.bind('connected', () => {
+        // console.info('[echo] connected, socket_id =', connection.socket_id)
+    })
+
+    // setTimeout(() => {
+    //     // console.info('[echo] state after 5s =', connection?.state)
+    // }, 5000)
 
     return {
         provide: {

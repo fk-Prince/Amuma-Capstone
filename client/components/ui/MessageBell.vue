@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { messageService } from "~/api/message/MessageService";
@@ -49,10 +49,14 @@ function goToMessages() {
 let channelName = "";
 let handler: ((payload: any) => void) | null = null;
 
-onMounted(async () => {
-    isMounted.value = true;
-
-    await load();
+function bindChannel() {
+    if ($echo && channelName && handler) {
+        ($echo as any)
+            .private(channelName)
+            .stopListening(".MessageSent", handler);
+        channelName = "";
+        handler = null;
+    }
 
     if (!$echo || !branchUuid.value) return;
 
@@ -75,6 +79,15 @@ onMounted(async () => {
     };
 
     ($echo as any).private(channelName).listen(".MessageSent", handler);
+}
+
+watch(branchUuid, () => {
+    load();
+    bindChannel();
+}, { immediate: true });
+
+onMounted(() => {
+    isMounted.value = true;
 });
 
 // stopListening, not leave: the messages page shares this channel and leave()

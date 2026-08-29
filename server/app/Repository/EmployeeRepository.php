@@ -24,10 +24,7 @@ class EmployeeRepository
         return Employee::where($conditioins)->first();
     }
 
-    /**
-     * Active staff holding any of the given roles at a branch, reduced to what
-     * notifications need: who to write the row for and who to broadcast to.
-     */
+
     public function getBranchStaffByRoles(array $roles, string $branchId)
     {
         return Employee::query()
