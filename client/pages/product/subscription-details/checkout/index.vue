@@ -1,11 +1,11 @@
 <template>
-    <div class="min-h-screen bg-slate-50 w-full pt-[100px]">
+    <div class="min-h-screen bg-slate-50 w-full pt-[100px] dark:bg-secondary">
         <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <div class="mb-8">
-                <h1 class="text-2xl font-bold text-slate-800">
+                <h1 class="text-2xl font-bold text-slate-800 dark:text-white">
                     Confirm your subscription
                 </h1>
-                <p class="text-sm text-slate-500 mt-1">
+                <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                     Review your branch and plan details, then choose how you'd
                     like to pay.
                 </p>

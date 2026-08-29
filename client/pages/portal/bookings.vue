@@ -117,7 +117,7 @@ function categoryIcon(category: string) {
 function categoryStyle(category: string) {
     return category === "facility"
         ? "bg-violet-50 text-violet-700 ring-violet-100"
-        : "bg-brand-50 text-brand-700 ring-brand-100";
+        : "bg-primary-50 text-primary-700 ring-primary-100";
 }
 
 function isFacility(booking: PortalBooking) {
@@ -221,7 +221,7 @@ onMounted(() => {
             class="inline-flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
         >
             <span
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600"
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600"
             >
                 <ClipboardList class="h-5 w-5" />
             </span>
@@ -303,7 +303,7 @@ onMounted(() => {
                 <button
                     type="button"
                     @click="loadBookings()"
-                    class="mt-5 inline-flex items-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                    class="mt-5 inline-flex items-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                 >
                     Try again
                 </button>
@@ -317,7 +317,7 @@ onMounted(() => {
             >
                 <div class="flex flex-col items-center px-6 py-16 text-center">
                     <div
-                        class="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 text-brand-600"
+                        class="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-50 text-primary-600"
                     >
                         <ClipboardList class="h-8 w-8" />
                     </div>
@@ -340,7 +340,7 @@ onMounted(() => {
                     class="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-200 hover:border-gray-200 hover:shadow-md"
                     :class="
                         expandedId === booking.booking_id
-                            ? 'ring-1 ring-brand-100'
+                            ? 'ring-1 ring-primary-100'
                             : ''
                     "
                 >
@@ -358,7 +358,7 @@ onMounted(() => {
                                         :class="
                                             isFacility(booking)
                                                 ? 'bg-violet-50 text-violet-600'
-                                                : 'bg-brand-50 text-brand-600'
+                                                : 'bg-primary-50 text-primary-600'
                                         "
                                     >
                                         <component
@@ -444,7 +444,7 @@ onMounted(() => {
                                     </span>
 
                                     <span
-                                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50 text-gray-400 transition-colors group-hover:bg-brand-50 group-hover:text-brand-600"
+                                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50 text-gray-400 transition-colors group-hover:bg-primary-50 group-hover:text-primary-600"
                                     >
                                         <ChevronDown
                                             class="h-4 w-4 transition-transform duration-200"
@@ -531,7 +531,7 @@ onMounted(() => {
                             <div class="space-y-6 p-5 sm:p-6">
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600"
+                                        class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-600"
                                     >
                                         <ClipboardList class="h-4 w-4" />
                                     </div>

@@ -2,7 +2,6 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import logoAmuma from "~/assets/logo/logoAmuma.png";
-import logoWhite from "~/assets/logo/logoWhite.png";
 import BaseButton from "../ui/BaseButton.vue";
 import { useAuthUser } from "~/composables/useAuthUser";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
@@ -42,8 +41,10 @@ const header = computed(() => {
                 "md:px-[5%] lg:px-[10%]",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? "bg-white border-b border-muted-light"
-                    : "bg-transparent border-b border-transparent",
+                    ? "bg-white dark:bg-secondary border-b border-muted-light dark:border-white/10"
+                    : navTheme.value === "dark"
+                      ? "bg-transparent border-b border-transparent"
+                      : "bg-transparent border-b border-transparent dark:bg-secondary/95 dark:border-white/10 dark:backdrop-blur-md",
             ]
                 .filter(Boolean)
                 .join(" ");
@@ -55,7 +56,9 @@ const header = computed(() => {
                 "transition-colors duration-200 ease-out",
                 scrolled.value
                     ? "border border-muted-light bg-light"
-                    : "border border-transparent bg-transparent",
+                    : navTheme.value === "dark"
+                      ? "border border-transparent bg-transparent"
+                      : "border border-transparent bg-transparent dark:border-white/10 dark:bg-secondary/95 dark:backdrop-blur-md",
             ]
                 .filter(Boolean)
                 .join(" ");
@@ -65,10 +68,10 @@ const header = computed(() => {
                 "w-[92%] md:w-[80%] h-[90px] rounded-xl",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? "border border-muted-light bg-light"
+                    ? "border border-muted-light dark:border-white/10 bg-light dark:bg-secondary"
                     : navTheme.value === "dark"
                       ? "border border-light/20 bg-light/10 "
-                      : "border border-muted-light bg-light/90 ",
+                      : "border border-muted-light dark:border-white/10 bg-light/90 dark:bg-secondary backdrop-blur-md",
             ]
                 .filter(Boolean)
                 .join(" ");
@@ -76,7 +79,7 @@ const header = computed(() => {
             return [
                 "relative w-full h-[70px] flex items-center",
                 "md:px-[5%] lg:px-[8%]",
-                "transition-all duration-300 ease-out bg-primary",
+                "transition-all duration-300 ease-out bg-secondary",
             ]
                 .filter(Boolean)
                 .join(" ");
@@ -96,25 +99,37 @@ const isActive = (to: string) => {
 };
 const navTheme = computed(() => route.meta.navTheme ?? "light");
 
+const isChromeSolid = computed(
+    () => scrolled.value || navTheme.value !== "dark",
+);
+
 const navLinkClass = (to: string) => {
     if (isActive(to)) return "text-primary";
 
     if (scrolled.value) {
-        return "text-secondary/80 hover:text-secondary";
+        return "text-secondary/80 hover:text-secondary dark:text-white/80 dark:hover:text-white";
     }
 
-    return navTheme.value === "dark"
-        ? "text-light/90 hover:text-light"
+    if (navTheme.value === "dark") {
+        return "text-light/90 hover:text-light";
+    }
+
+    return isChromeSolid.value
+        ? "text-secondary/80 hover:text-secondary dark:text-white/80 dark:hover:text-white"
         : "text-secondary/80 hover:text-secondary";
 };
 
 const menuIconClass = computed(() => {
     if (scrolled.value) {
-        return "text-secondary hover:bg-primary-50";
+        return "text-secondary hover:bg-primary-50 dark:text-white dark:hover:bg-white/10";
     }
 
-    return navTheme.value === "dark"
-        ? "text-light hover:bg-light/10"
+    if (navTheme.value === "dark") {
+        return "text-light hover:bg-light/10";
+    }
+
+    return isChromeSolid.value
+        ? "text-secondary hover:bg-primary-50 dark:text-white dark:hover:bg-white/10"
         : "text-secondary hover:bg-primary-50";
 });
 
@@ -191,16 +206,9 @@ watch(
                 <div class="flex items-center gap-8">
                     <NuxtLink to="/" class="shrink-0">
                         <img
-                            :src="variant === 4 ? logoWhite : logoAmuma"
+                            :src="logoAmuma"
                             alt="AMUMA logo"
                             class="w-[180px] object-contain transition-all duration-300"
-                            :class="
-                                !scrolled &&
-                                navTheme === 'dark' &&
-                                variant !== 1
-                                    ? 'brightness-0 invert'
-                                    : ''
-                            "
                         />
                     </NuxtLink>
 
@@ -211,9 +219,11 @@ watch(
                         <span
                             class="absolute inset-y-1 left-0 z-0 rounded-lg transition-all duration-300 ease-out"
                             :class="
-                                scrolled || navTheme !== 'dark'
-                                    ? 'bg-primary-50'
-                                    : 'bg-light/15'
+                                navTheme === 'dark' && !scrolled
+                                    ? 'bg-light/15'
+                                    : isChromeSolid
+                                      ? 'bg-primary-50 dark:bg-primary-500/10'
+                                      : 'bg-primary-50'
                             "
                             :style="pillStyle"
                         />
@@ -258,7 +268,9 @@ watch(
                                 :class="
                                     variant === 1 && !scrolled
                                         ? 'border-white/20 bg-transparent text-white hover:bg-white/10'
-                                        : 'border-muted-dark bg-transparent hover:bg-primary/10'
+                                        : isChromeSolid
+                                          ? 'border-muted-dark bg-transparent hover:bg-primary/10 dark:border-white/20 dark:text-white dark:hover:bg-white/10'
+                                          : 'border-muted-dark bg-transparent hover:bg-primary/10'
                                 "
                             >
                                 Get Started
@@ -271,6 +283,7 @@ watch(
                         :user="user"
                         :scrolled="scrolled"
                         :navTheme="navTheme"
+                        :theme-aware="isChromeSolid"
                     />
 
                     <button

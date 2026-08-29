@@ -44,7 +44,7 @@ export default defineNuxtPlugin(() => {
                             const text = await res.text()
 
                             if (!res.ok) {
-                                console.error('[echo] auth failed', res.status, channel.name, text.slice(0, 300))
+                                // console.error('[echo] auth failed', res.status, channel.name, text.slice(0, 300))
                             }
 
                             return JSON.parse(text)

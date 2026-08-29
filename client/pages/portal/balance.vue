@@ -5,6 +5,7 @@ import { patientAccessService } from "~/api/patient-access/PatientAccessService.
 import { refundService } from "~/api/refund/RefundService";
 import { paymentService } from "~/api/payment/PaymentService";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
+import EmptyState from "~/components/ui/EmptyState.vue";
 import { formatCurrency } from "~/utils/currency";
 import { useToast } from "~/composables/useToast";
 
@@ -141,6 +142,7 @@ const { success, error } = useToast();
 
 const isLoading = ref(true);
 const loadError = ref<string | null>(null);
+const noPatients = ref(false);
 const rawRecords = ref<any[]>([]);
 const lovedOnes = ref<LovedOne[]>([]);
 const selectedIndex = ref(0);
@@ -691,6 +693,7 @@ function prevLovedOne() {
 async function loadPatientData() {
     isLoading.value = true;
     loadError.value = null;
+    noPatients.value = false;
 
     try {
         const res = await patientAccessService.retrieveAction({
@@ -705,7 +708,7 @@ async function loadPatientData() {
             rawRecords.value = records;
             updateBillingFromRecord(records[0]);
         } else {
-            loadError.value = "No patient data returned.";
+            noPatients.value = true;
         }
     } catch (err: any) {
         console.error("Error loading patient data:", err);
@@ -719,7 +722,7 @@ onMounted(loadPatientData);
 
 function statusClasses(status: RefundRequest["status"]) {
     if (status === "Pending") return "bg-amber-50 text-amber-600";
-    if (status === "Approved") return "bg-brand-50 text-brand-600";
+    if (status === "Approved") return "bg-primary-50 text-primary-600";
     if (status === "Released") return "bg-emerald-50 text-emerald-600";
     return "bg-rose-50 text-rose-500";
 }
@@ -933,14 +936,118 @@ async function openReceipt(receiptNo?: string | null) {
 </script>
 
 <template>
-    <div class="min-h-full bg-slate-50/60 p-5">
-        <div class="space-y-5">
-            <!-- <div
-                v-if="selectedLovedOne"
-                class="inline-flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
+    <div class="min-h-full bg-slate-50/60 p-5 dark:bg-[#0b0f1a]">
+        <div v-if="isLoading" class="space-y-5">
+            <div
+                class="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(420px,0.85fr)]"
+            >
+                <section
+                    class="overflow-hidden rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
+                >
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="h-8 w-8 animate-pulse rounded-xl bg-gray-100 dark:bg-white/10"
+                        />
+                        <div
+                            class="h-4 w-32 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                        />
+                    </div>
+
+                    <div
+                        class="mt-5 rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-5 dark:border-white/10 dark:from-transparent dark:to-transparent"
+                    >
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="h-14 w-14 shrink-0 animate-pulse rounded-2xl bg-gray-100 dark:bg-white/10"
+                            />
+                            <div class="flex-1 space-y-2">
+                                <div
+                                    class="h-4 w-2/3 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-3 w-1/3 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section
+                    class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                >
+                    <div class="flex items-center justify-center p-14">
+                        <div
+                            class="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-primary-500 dark:border-white/10"
+                        />
+                    </div>
+                </section>
+            </div>
+
+            <div
+                class="grid grid-cols-1 gap-px overflow-hidden rounded-3xl border border-gray-100 bg-gray-100 shadow-sm dark:border-white/10 dark:bg-white/10 sm:grid-cols-2 xl:grid-cols-4"
             >
                 <div
-                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-bold text-brand-600"
+                    v-for="n in 4"
+                    :key="n"
+                    class="space-y-3 bg-white p-5 dark:bg-secondary sm:p-6"
+                >
+                    <div
+                        class="h-10 w-10 animate-pulse rounded-xl bg-gray-100 dark:bg-white/10"
+                    />
+                    <div
+                        class="h-3 w-16 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                    />
+                    <div
+                        class="h-6 w-20 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                    />
+                </div>
+            </div>
+
+            <section
+                class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
+            >
+                <div
+                    class="h-4 w-24 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                />
+                <div class="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div
+                        v-for="n in 2"
+                        :key="n"
+                        class="h-40 animate-pulse rounded-2xl border border-gray-100 bg-gray-50 dark:border-white/10 dark:bg-white/5"
+                    />
+                </div>
+            </section>
+
+            <section
+                class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
+            >
+                <div
+                    class="h-4 w-32 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                />
+                <div class="mt-5 space-y-2">
+                    <div
+                        v-for="n in 3"
+                        :key="n"
+                        class="h-14 animate-pulse rounded-2xl bg-gray-50 dark:bg-white/5"
+                    />
+                </div>
+            </section>
+        </div>
+
+        <EmptyState
+            v-else-if="noPatients"
+            title="You currently have no patients"
+            cta-label="Book a Service"
+            cta-to="/booking/search"
+        />
+
+        <div v-else class="space-y-5">
+            <!-- <div
+                v-if="selectedLovedOne"
+                class="inline-flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm dark:bg-secondary dark:border-white/10"
+            >
+                <div
+                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-sm font-bold text-primary-600 dark:bg-primary-500/10"
                 >
                     {{
                         selectedLovedOne.full_name
@@ -952,11 +1059,11 @@ async function openReceipt(receiptNo?: string | null) {
                 </div>
 
                 <div class="min-w-0">
-                    <p class="truncate text-sm font-semibold text-gray-900">
+                    <p class="truncate text-sm font-semibold text-gray-900 dark:text-white">
                         {{ selectedLovedOne.full_name }}
                     </p>
 
-                    <p class="mt-0.5 text-xs text-gray-400">
+                    <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                         {{
                             selectedLovedOne.room_label ||
                             selectedLovedOne.location_type === "homecare"
@@ -971,24 +1078,24 @@ async function openReceipt(receiptNo?: string | null) {
                 class="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(420px,0.85fr)]"
             >
                 <section
-                    class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm"
+                    class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
                 >
-                    <div class="border-b border-gray-100 px-5 py-5 sm:px-6">
+                    <div class="border-b border-gray-100 px-5 py-5 sm:px-6 dark:border-white/10">
                         <div class="flex items-center justify-between gap-4">
                             <div>
                                 <div class="flex items-center gap-2">
                                     <div
-                                        class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-50 text-brand-600"
+                                        class="flex h-8 w-8 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-500/10"
                                     >
                                         <AppIcon name="users" class="h-4 w-4" />
                                     </div>
 
-                                    <p class="text-sm font-bold text-gray-900">
+                                    <p class="text-sm font-bold text-gray-900 dark:text-white">
                                         My Loved Ones
                                     </p>
                                 </div>
 
-                                <p class="mt-1 pl-10 text-xs text-gray-400">
+                                <p class="mt-1 pl-10 text-xs text-gray-400 dark:text-gray-500">
                                     {{ lovedOnes.length }} resident{{
                                         lovedOnes.length === 1 ? "" : "s"
                                     }}
@@ -997,11 +1104,11 @@ async function openReceipt(receiptNo?: string | null) {
 
                             <div
                                 v-if="lovedOnes.length > 1"
-                                class="flex items-center gap-1 rounded-full border border-gray-100 bg-gray-50 p-1"
+                                class="flex items-center gap-1 rounded-full border border-gray-100 bg-gray-50 p-1 dark:bg-white/5 dark:border-white/10"
                             >
                                 <button
                                     @click="prevLovedOne"
-                                    class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-white hover:text-gray-700 hover:shadow-sm"
+                                    class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-white hover:text-gray-700 hover:shadow-sm dark:text-gray-500"
                                 >
                                     <AppIcon
                                         name="chevron-left"
@@ -1010,7 +1117,7 @@ async function openReceipt(receiptNo?: string | null) {
                                 </button>
 
                                 <span
-                                    class="min-w-8 text-center text-[11px] font-semibold text-gray-500"
+                                    class="min-w-8 text-center text-[11px] font-semibold text-gray-500 dark:text-gray-400"
                                 >
                                     {{ selectedIndex + 1 }}/{{
                                         lovedOnes.length
@@ -1019,7 +1126,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                                 <button
                                     @click="nextLovedOne"
-                                    class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-white hover:text-gray-700 hover:shadow-sm"
+                                    class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-white hover:text-gray-700 hover:shadow-sm dark:text-gray-500"
                                 >
                                     <AppIcon
                                         name="chevron-right"
@@ -1044,7 +1151,7 @@ async function openReceipt(receiptNo?: string | null) {
                                     class="w-full shrink-0"
                                 >
                                     <div
-                                        class="rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-5"
+                                        class="rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-5 dark:border-white/10"
                                     >
                                         <div
                                             class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between"
@@ -1053,7 +1160,7 @@ async function openReceipt(receiptNo?: string | null) {
                                                 class="flex min-w-0 items-center gap-4"
                                             >
                                                 <div
-                                                    class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-lg font-bold text-brand-700"
+                                                    class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-100 text-lg font-bold text-primary-700 dark:bg-primary-500/15"
                                                 >
                                                     {{
                                                         lo.full_name
@@ -1066,7 +1173,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                                                 <div class="min-w-0">
                                                     <p
-                                                        class="truncate text-lg font-bold text-gray-900"
+                                                        class="truncate text-lg font-bold text-gray-900 dark:text-white"
                                                     >
                                                         {{ lo.full_name }}
                                                     </p>
@@ -1076,7 +1183,7 @@ async function openReceipt(receiptNo?: string | null) {
                                                     >
                                                         <span
                                                             v-if="lo.room_label"
-                                                            class="flex items-center gap-1 text-xs text-gray-500"
+                                                            class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400"
                                                         >
                                                             <AppIcon
                                                                 name="home"
@@ -1089,7 +1196,7 @@ async function openReceipt(receiptNo?: string | null) {
                                                             v-else-if="
                                                                 lo.full_address
                                                             "
-                                                            class="flex items-center gap-1 text-xs text-gray-500"
+                                                            class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400"
                                                         >
                                                             <AppIcon
                                                                 name="map-pin"
@@ -1102,7 +1209,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                                                         <span
                                                             v-if="lo.room_type"
-                                                            class="text-xs text-brand-600"
+                                                            class="text-xs text-primary-600"
                                                         >
                                                             {{ lo.room_type }}
                                                         </span>
@@ -1122,7 +1229,7 @@ async function openReceipt(receiptNo?: string | null) {
                                             </div>
 
                                             <div
-                                                class="hidden h-16 w-px bg-gray-100 sm:block"
+                                                class="hidden h-16 w-px bg-gray-100 sm:block dark:bg-white/10"
                                             />
 
                                             <div
@@ -1134,7 +1241,7 @@ async function openReceipt(receiptNo?: string | null) {
                                                         lo.location_type ===
                                                         'homecare'
                                                             ? 'bg-blue-50 text-blue-600'
-                                                            : 'bg-brand-50 text-brand-600'
+                                                            : 'bg-primary-50 text-primary-600'
                                                     "
                                                 >
                                                     <AppIcon
@@ -1150,13 +1257,13 @@ async function openReceipt(receiptNo?: string | null) {
 
                                                 <div>
                                                     <p
-                                                        class="text-[10px] font-semibold uppercase tracking-wide text-gray-400"
+                                                        class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500"
                                                     >
                                                         Care Type
                                                     </p>
 
                                                     <p
-                                                        class="mt-0.5 text-sm font-semibold text-gray-800"
+                                                        class="mt-0.5 text-sm font-semibold text-gray-800 dark:text-white"
                                                     >
                                                         {{
                                                             lo.location_type ===
@@ -1182,9 +1289,9 @@ async function openReceipt(receiptNo?: string | null) {
                         >
                             <div class="text-center">
                                 <div
-                                    class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-brand-500"
+                                    class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-primary-500 dark:border-white/10"
                                 />
-                                <p class="mt-3 text-sm text-gray-400">
+                                <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
                                     Loading patient data...
                                 </p>
                             </div>
@@ -1192,7 +1299,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                         <div
                             v-else-if="loadError"
-                            class="rounded-2xl bg-rose-50 p-6 text-center"
+                            class="rounded-2xl bg-rose-50 p-6 text-center dark:bg-rose-500/10"
                         >
                             <div
                                 class="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-500"
@@ -1206,7 +1313,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                             <button
                                 @click="loadPatientData"
-                                class="mt-3 rounded-full bg-white px-4 py-2 text-xs font-semibold text-brand-600 shadow-sm ring-1 ring-gray-100 transition hover:bg-gray-50"
+                                class="mt-3 rounded-full bg-white px-4 py-2 text-xs font-semibold text-primary-600 shadow-sm ring-1 ring-gray-100 transition hover:bg-gray-50 dark:bg-secondary"
                             >
                                 Try Again
                             </button>
@@ -1214,15 +1321,12 @@ async function openReceipt(receiptNo?: string | null) {
 
                         <div
                             v-else
-                            class="rounded-2xl bg-gray-50 p-8 text-center"
                         >
-                            <AppIcon
-                                name="users"
-                                class="mx-auto h-8 w-8 text-gray-300"
+                            <EmptyState
+                                title="You currently have no patients"
+                                cta-label="Book a Service"
+                                cta-to="/booking/search"
                             />
-                            <p class="mt-2 text-sm text-gray-400">
-                                No loved ones found.
-                            </p>
                         </div>
 
                         <div
@@ -1236,7 +1340,7 @@ async function openReceipt(receiptNo?: string | null) {
                                 class="h-1.5 rounded-full transition-all"
                                 :class="
                                     selectedIndex === idx
-                                        ? 'w-6 bg-brand-500'
+                                        ? 'w-6 bg-primary-500'
                                         : 'w-1.5 bg-gray-200 hover:bg-gray-300'
                                 "
                             />
@@ -1245,16 +1349,16 @@ async function openReceipt(receiptNo?: string | null) {
                 </section>
 
                 <section
-                    class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm"
+                    class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
                 >
-                    <div class="border-b border-gray-100 px-5 py-5 sm:px-6">
+                    <div class="border-b border-gray-100 px-5 py-5 sm:px-6 dark:border-white/10">
                         <div
                             class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
                         >
                             <div>
                                 <div class="flex items-center gap-2">
                                     <div
-                                        class="flex h-8 w-8 items-center justify-center rounded-xl bg-gray-100 text-gray-600"
+                                        class="flex h-8 w-8 items-center justify-center rounded-xl bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300"
                                     >
                                         <AppIcon
                                             name="wallet"
@@ -1262,22 +1366,22 @@ async function openReceipt(receiptNo?: string | null) {
                                         />
                                     </div>
 
-                                    <p class="text-sm font-bold text-gray-900">
+                                    <p class="text-sm font-bold text-gray-900 dark:text-white">
                                         Financial Summary
                                     </p>
                                 </div>
 
-                                <p class="mt-1 pl-10 text-xs text-gray-400">
+                                <p class="mt-1 pl-10 text-xs text-gray-400 dark:text-gray-500">
                                     Your current billing and payment overview
                                 </p>
                             </div>
 
                             <span
                                 v-if="billing.invoiceCount"
-                                class="inline-flex w-fit items-center gap-1.5 rounded-full bg-gray-50 px-3 py-1.5 text-[11px] font-semibold text-gray-500"
+                                class="inline-flex w-fit items-center gap-1.5 rounded-full bg-gray-50 px-3 py-1.5 text-[11px] font-semibold text-gray-500 dark:bg-white/5 dark:text-gray-400"
                             >
                                 <span
-                                    class="h-1.5 w-1.5 rounded-full bg-brand-500"
+                                    class="h-1.5 w-1.5 rounded-full bg-primary-500"
                                 />
                                 {{ billing.invoiceCount }} invoice{{
                                     billing.invoiceCount === 1 ? "" : "s"
@@ -1287,34 +1391,34 @@ async function openReceipt(receiptNo?: string | null) {
                     </div>
 
                     <div
-                        class="grid grid-cols-1 gap-px bg-gray-100 sm:grid-cols-2 xl:grid-cols-4"
+                        class="grid grid-cols-1 gap-px bg-gray-100 sm:grid-cols-2 xl:grid-cols-4 dark:bg-white/10"
                     >
-                        <div class="bg-white p-5 sm:p-6">
+                        <div class="bg-white p-5 sm:p-6 dark:bg-secondary">
                             <div class="flex items-start justify-between">
                                 <div
-                                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600"
+                                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300"
                                 >
                                     <AppIcon name="file-text" class="h-5 w-5" />
                                 </div>
                             </div>
 
-                            <p class="mt-5 text-xs font-medium text-gray-400">
+                            <p class="mt-5 text-xs font-medium text-gray-400 dark:text-gray-500">
                                 Total Invoices
                             </p>
 
-                            <p class="mt-1 text-2xl font-bold text-gray-900">
+                            <p class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
                                 {{ billing.invoiceCount || 0 }}
                             </p>
 
-                            <p class="mt-1 text-[11px] text-gray-400">
+                            <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
                                 Billing records
                             </p>
                         </div>
 
-                        <div class="bg-white p-5 sm:p-6">
+                        <div class="bg-white p-5 sm:p-6 dark:bg-secondary">
                             <div class="flex items-start justify-between">
                                 <div
-                                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600"
+                                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-primary-500/10"
                                 >
                                     <AppIcon name="receipt" class="h-5 w-5" />
                                 </div>
@@ -1330,7 +1434,7 @@ async function openReceipt(receiptNo?: string | null) {
                                 </span>
                             </div>
 
-                            <p class="mt-5 text-xs font-medium text-gray-400">
+                            <p class="mt-5 text-xs font-medium text-gray-400 dark:text-gray-500">
                                 Total Billed
                             </p>
 
@@ -1340,13 +1444,13 @@ async function openReceipt(receiptNo?: string | null) {
                                 "
                             >
                                 <p
-                                    class="mt-1 text-xs text-gray-400 line-through"
+                                    class="mt-1 text-xs text-gray-400 line-through dark:text-gray-500"
                                 >
                                     {{ peso(totalInvoiceAmount) }}
                                 </p>
 
                                 <p
-                                    class="mt-0.5 text-2xl font-bold text-gray-900"
+                                    class="mt-0.5 text-2xl font-bold text-gray-900 dark:text-white"
                                 >
                                     {{ peso(totalAdjustedAmount) }}
                                 </p>
@@ -1354,18 +1458,18 @@ async function openReceipt(receiptNo?: string | null) {
 
                             <p
                                 v-else
-                                class="mt-1 text-2xl font-bold text-gray-900"
+                                class="mt-1 text-2xl font-bold text-gray-900 dark:text-white"
                             >
                                 {{ peso(totalInvoiceAmount) }}
                             </p>
 
-                            <p class="mt-1 text-[11px] text-gray-400">
+                            <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
                                 Adjusted billing total
                             </p>
                         </div>
 
                         <div
-                            class="relative overflow-hidden bg-white p-5 sm:p-6"
+                            class="relative overflow-hidden bg-white p-5 sm:p-6 dark:bg-secondary"
                             :class="hasBalanceDue ? 'bg-rose-50/30' : ''"
                         >
                             <div class="flex items-start justify-between">
@@ -1395,7 +1499,7 @@ async function openReceipt(receiptNo?: string | null) {
                                 </span>
                             </div>
 
-                            <p class="mt-5 text-xs font-medium text-gray-400">
+                            <p class="mt-5 text-xs font-medium text-gray-400 dark:text-gray-500">
                                 Total Balance
                             </p>
 
@@ -1413,7 +1517,7 @@ async function openReceipt(receiptNo?: string | null) {
                             <button
                                 v-if="hasBalanceDue"
                                 @click="openPaymentModal"
-                                class="mt-4 inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700"
+                                class="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-primary-600/20 transition hover:bg-primary-700"
                             >
                                 Pay Now
                                 <AppIcon
@@ -1427,7 +1531,7 @@ async function openReceipt(receiptNo?: string | null) {
                             </p>
                         </div>
 
-                        <div class="bg-white p-5 sm:p-6">
+                        <div class="bg-white p-5 sm:p-6 dark:bg-secondary">
                             <div class="flex items-start justify-between">
                                 <div
                                     class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"
@@ -1446,7 +1550,7 @@ async function openReceipt(receiptNo?: string | null) {
                                 </span>
                             </div>
 
-                            <p class="mt-5 text-xs font-medium text-gray-400">
+                            <p class="mt-5 text-xs font-medium text-gray-400 dark:text-gray-500">
                                 Available Refund
                             </p>
 
@@ -1468,23 +1572,23 @@ async function openReceipt(receiptNo?: string | null) {
 
                             <p
                                 v-else-if="advanceBalance > 0"
-                                class="mt-1 line-clamp-2 text-[11px] leading-4 text-gray-400"
+                                class="mt-1 line-clamp-2 text-[11px] leading-4 text-gray-400 dark:text-gray-500"
                             >
                                 {{ refundReason }}
                             </p>
 
-                            <p v-else class="mt-1 text-[11px] text-gray-400">
+                            <p v-else class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
                                 No refundable balance
                             </p>
                         </div>
                     </div>
 
-                    <div class="border-t border-gray-100 p-5 sm:p-6">
+                    <div class="border-t border-gray-100 p-5 sm:p-6 dark:border-white/10">
                         <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
                             <div>
                                 <div class="flex items-center justify-between">
                                     <p
-                                        class="text-xs font-medium text-gray-400"
+                                        class="text-xs font-medium text-gray-400 dark:text-gray-500"
                                     >
                                         Amount Paid
                                     </p>
@@ -1505,7 +1609,7 @@ async function openReceipt(receiptNo?: string | null) {
                             <div>
                                 <div class="flex items-center justify-between">
                                     <p
-                                        class="text-xs font-medium text-gray-400"
+                                        class="text-xs font-medium text-gray-400 dark:text-gray-500"
                                     >
                                         Refunded
                                     </p>
@@ -1524,20 +1628,20 @@ async function openReceipt(receiptNo?: string | null) {
                             <div>
                                 <div class="flex items-center justify-between">
                                     <p
-                                        class="text-xs font-medium text-gray-400"
+                                        class="text-xs font-medium text-gray-400 dark:text-gray-500"
                                     >
                                         Payment Progress
                                     </p>
 
                                     <span
-                                        class="text-xs font-semibold text-gray-500"
+                                        class="text-xs font-semibold text-gray-500 dark:text-gray-400"
                                     >
                                         {{ paymentProgress }}%
                                     </span>
                                 </div>
 
                                 <div
-                                    class="mt-3 h-2 overflow-hidden rounded-full bg-gray-100"
+                                    class="mt-3 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10"
                                 >
                                     <div
                                         class="h-full rounded-full bg-emerald-500 transition-all duration-500"
@@ -1547,7 +1651,7 @@ async function openReceipt(receiptNo?: string | null) {
                                     />
                                 </div>
 
-                                <p class="mt-1.5 text-[11px] text-gray-400">
+                                <p class="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500">
                                     {{ peso(netPaidAmount) }} of
                                     {{ peso(totalAdjustedAmount) }} paid
                                 </p>
@@ -1559,32 +1663,32 @@ async function openReceipt(receiptNo?: string | null) {
 
             <section
                 v-if="invoices.length"
-                class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6"
+                class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6 dark:bg-secondary dark:border-white/10"
             >
                 <div
-                    class="flex flex-col gap-2 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between"
+                    class="flex flex-col gap-2 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"
                 >
                     <div>
                         <div class="flex items-center gap-2">
                             <div
-                                class="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600"
+                                class="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-primary-500/10"
                             >
                                 <AppIcon name="file-text" class="h-4 w-4" />
                             </div>
 
-                            <p class="text-sm font-bold text-gray-900">
+                            <p class="text-sm font-bold text-gray-900 dark:text-white">
                                 Invoices
                             </p>
                         </div>
 
-                        <p class="mt-1 pl-10 text-xs text-gray-400">
+                        <p class="mt-1 pl-10 text-xs text-gray-400 dark:text-gray-500">
                             Detailed billing records for
                             {{ selectedLovedOne?.full_name || "this resident" }}
                         </p>
                     </div>
 
                     <span
-                        class="w-fit rounded-full bg-gray-50 px-3 py-1.5 text-[11px] font-semibold text-gray-500"
+                        class="w-fit rounded-full bg-gray-50 px-3 py-1.5 text-[11px] font-semibold text-gray-500 dark:bg-white/5 dark:text-gray-400"
                     >
                         {{ invoices.length }} invoice{{
                             invoices.length === 1 ? "" : "s"
@@ -1596,7 +1700,7 @@ async function openReceipt(receiptNo?: string | null) {
                     <article
                         v-for="invoice in invoices"
                         :key="invoice.invoice_id"
-                        class="group overflow-hidden rounded-2xl border border-gray-100 bg-white transition hover:border-gray-200 hover:shadow-md"
+                        class="group overflow-hidden rounded-2xl border border-gray-100 bg-white transition hover:border-gray-200 hover:shadow-md dark:bg-secondary dark:border-white/10"
                     >
                         <div class="p-5">
                             <div class="flex items-start justify-between gap-4">
@@ -1605,7 +1709,7 @@ async function openReceipt(receiptNo?: string | null) {
                                         class="flex flex-wrap items-center gap-2"
                                     >
                                         <p
-                                            class="text-sm font-bold text-gray-900"
+                                            class="text-sm font-bold text-gray-900 dark:text-white"
                                         >
                                             {{ invoice.invoice_code }}
                                         </p>
@@ -1634,7 +1738,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                                     <div
                                         v-if="invoice.source_type"
-                                        class="mt-2 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-medium text-blue-600"
+                                        class="mt-2 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-medium text-blue-600 dark:bg-primary-500/10"
                                     >
                                         {{
                                             getSourceTypeLabel(
@@ -1643,7 +1747,7 @@ async function openReceipt(receiptNo?: string | null) {
                                         }}
                                     </div>
 
-                                    <p class="mt-2 text-[11px] text-gray-400">
+                                    <p class="mt-2 text-[11px] text-gray-400 dark:text-gray-500">
                                         {{ formatDateTime(invoice.created_at) }}
                                     </p>
                                 </div>
@@ -1654,7 +1758,7 @@ async function openReceipt(receiptNo?: string | null) {
                                             invoice.adjusted_total !==
                                             invoice.total
                                         "
-                                        class="text-[11px] text-gray-400 line-through"
+                                        class="text-[11px] text-gray-400 line-through dark:text-gray-500"
                                     >
                                         {{ peso(invoice.total) }}
                                     </p>
@@ -1674,9 +1778,9 @@ async function openReceipt(receiptNo?: string | null) {
                             </div>
 
                             <div class="mt-5 grid grid-cols-2 gap-3">
-                                <div class="rounded-xl bg-gray-50 p-3">
+                                <div class="rounded-xl bg-gray-50 p-3 dark:bg-white/5">
                                     <p
-                                        class="text-[10px] font-medium text-gray-400"
+                                        class="text-[10px] font-medium text-gray-400 dark:text-gray-500"
                                     >
                                         Paid
                                     </p>
@@ -1726,15 +1830,15 @@ async function openReceipt(receiptNo?: string | null) {
                                     invoice.end_date ||
                                     invoice.billing_cycle
                                 "
-                                class="mt-3 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3"
+                                class="mt-3 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3 dark:border-white/10"
                             >
                                 <div>
-                                    <p class="text-[10px] text-gray-400">
+                                    <p class="text-[10px] text-gray-400 dark:text-gray-500">
                                         Billing Period
                                     </p>
 
                                     <p
-                                        class="mt-1 text-xs font-medium text-gray-700"
+                                        class="mt-1 text-xs font-medium text-gray-700 dark:text-gray-300"
                                     >
                                         {{
                                             invoice.start_date &&
@@ -1746,12 +1850,12 @@ async function openReceipt(receiptNo?: string | null) {
                                 </div>
 
                                 <div>
-                                    <p class="text-[10px] text-gray-400">
+                                    <p class="text-[10px] text-gray-400 dark:text-gray-500">
                                         Cycle
                                     </p>
 
                                     <p
-                                        class="mt-1 text-xs font-medium text-gray-700"
+                                        class="mt-1 text-xs font-medium text-gray-700 dark:text-gray-300"
                                     >
                                         {{ invoice.billing_cycle || "N/A" }}
                                     </p>
@@ -1781,7 +1885,7 @@ async function openReceipt(receiptNo?: string | null) {
                                     class="flex items-start justify-between gap-3 border-t border-amber-100 py-2 first:border-t-0 first:pt-0 last:pb-0"
                                 >
                                     <p
-                                        class="text-[10px] leading-4 text-gray-600"
+                                        class="text-[10px] leading-4 text-gray-600 dark:text-gray-300"
                                     >
                                         {{ adj.reason }}
                                     </p>
@@ -1796,10 +1900,10 @@ async function openReceipt(receiptNo?: string | null) {
 
                             <div
                                 v-if="invoice.services.length"
-                                class="mt-4 border-t border-gray-100 pt-4"
+                                class="mt-4 border-t border-gray-100 pt-4 dark:border-white/10"
                             >
                                 <p
-                                    class="mb-2 text-[10px] font-bold uppercase tracking-wide text-gray-400"
+                                    class="mb-2 text-[10px] font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500"
                                 >
                                     Services
                                 </p>
@@ -1815,7 +1919,7 @@ async function openReceipt(receiptNo?: string | null) {
                                     >
                                         <div class="min-w-0">
                                             <p
-                                                class="truncate text-xs font-medium text-gray-700"
+                                                class="truncate text-xs font-medium text-gray-700 dark:text-gray-300"
                                             >
                                                 {{
                                                     service.service
@@ -1829,7 +1933,7 @@ async function openReceipt(receiptNo?: string | null) {
                                                     service.schedule
                                                         ?.scheduled_at
                                                 "
-                                                class="mt-0.5 text-[10px] text-gray-400"
+                                                class="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500"
                                             >
                                                 {{
                                                     formatDateTime(
@@ -1841,7 +1945,7 @@ async function openReceipt(receiptNo?: string | null) {
                                         </div>
 
                                         <p
-                                            class="shrink-0 text-xs font-semibold text-gray-700"
+                                            class="shrink-0 text-xs font-semibold text-gray-700 dark:text-gray-300"
                                         >
                                             {{ peso(service.price) }}
                                         </p>
@@ -1849,7 +1953,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                                     <p
                                         v-if="invoice.services.length > 3"
-                                        class="pt-1 text-[10px] font-medium text-brand-600"
+                                        class="pt-1 text-[10px] font-medium text-primary-600"
                                     >
                                         +{{ invoice.services.length - 3 }} more
                                         service{{
@@ -1866,10 +1970,10 @@ async function openReceipt(receiptNo?: string | null) {
             </section>
 
             <section
-                class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6"
+                class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6 dark:bg-secondary dark:border-white/10"
             >
                 <div
-                    class="flex flex-col gap-2 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between"
+                    class="flex flex-col gap-2 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"
                 >
                     <div>
                         <div class="flex items-center gap-2">
@@ -1879,19 +1983,19 @@ async function openReceipt(receiptNo?: string | null) {
                                 <AppIcon name="activity" class="h-4 w-4" />
                             </div>
 
-                            <p class="text-sm font-bold text-gray-900">
+                            <p class="text-sm font-bold text-gray-900 dark:text-white">
                                 Transaction History
                             </p>
                         </div>
 
-                        <p class="mt-1 pl-10 text-xs text-gray-400">
+                        <p class="mt-1 pl-10 text-xs text-gray-400 dark:text-gray-500">
                             All billing transactions and payment activity
                         </p>
                     </div>
 
                     <span
                         v-if="invoiceTransactions.length"
-                        class="w-fit rounded-full bg-gray-50 px-3 py-1.5 text-[11px] font-semibold text-gray-500"
+                        class="w-fit rounded-full bg-gray-50 px-3 py-1.5 text-[11px] font-semibold text-gray-500 dark:bg-white/5 dark:text-gray-400"
                     >
                         {{ invoiceTransactions.length }} transaction{{
                             invoiceTransactions.length === 1 ? "" : "s"
@@ -1906,23 +2010,23 @@ async function openReceipt(receiptNo?: string | null) {
                     class="py-14 text-center"
                 >
                     <div
-                        class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50"
+                        class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 dark:bg-white/5"
                     >
                         <AppIcon name="receipt" class="h-7 w-7 text-gray-300" />
                     </div>
 
-                    <p class="mt-4 text-sm font-medium text-gray-600">
+                    <p class="mt-4 text-sm font-medium text-gray-600 dark:text-gray-300">
                         No transactions yet
                     </p>
 
-                    <p class="mt-1 text-xs text-gray-400">
+                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
                         Your billing activity will appear here.
                     </p>
                 </div>
 
                 <div
                     v-else
-                    class="mt-5 divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-100"
+                    class="mt-5 divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-100 dark:border-white/10 dark:divide-white/10"
                 >
                     <div
                         v-for="transaction in invoiceTransactions"
@@ -1948,7 +2052,7 @@ async function openReceipt(receiptNo?: string | null) {
                                         class="flex flex-wrap items-center gap-2"
                                     >
                                         <p
-                                            class="text-sm font-semibold text-gray-800"
+                                            class="text-sm font-semibold text-gray-800 dark:text-white"
                                         >
                                             {{ transaction.label }}
                                         </p>
@@ -1969,7 +2073,7 @@ async function openReceipt(receiptNo?: string | null) {
                                     </div>
 
                                     <div
-                                        class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400"
+                                        class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400 dark:text-gray-500"
                                     >
                                         <span
                                             v-if="
@@ -1996,7 +2100,7 @@ async function openReceipt(receiptNo?: string | null) {
                                         <button
                                             v-if="transaction.receiptNo"
                                             type="button"
-                                            class="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2.5 py-1 text-[10px] font-semibold text-brand-600 transition hover:bg-brand-50"
+                                            class="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2.5 py-1 text-[10px] font-semibold text-primary-600 transition hover:bg-primary-50 dark:bg-white/5"
                                             @click="
                                                 openReceipt(
                                                     transaction.receiptNo,
@@ -2013,7 +2117,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                                     <p
                                         v-if="transaction.reason"
-                                        class="mt-2 rounded-lg bg-gray-50 px-2.5 py-1.5 text-[11px] text-gray-500"
+                                        class="mt-2 rounded-lg bg-gray-50 px-2.5 py-1.5 text-[11px] text-gray-500 dark:bg-white/5 dark:text-gray-400"
                                     >
                                         {{ transaction.reason }}
                                     </p>
@@ -2034,7 +2138,7 @@ async function openReceipt(receiptNo?: string | null) {
                                         }}{{ peso(transaction.amount) }}
                                     </p>
 
-                                    <p class="mt-1 text-[10px] text-gray-400">
+                                    <p class="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
                                         {{
                                             transaction.type === "invoice"
                                                 ? "Billed"
@@ -2058,7 +2162,7 @@ async function openReceipt(receiptNo?: string | null) {
                 @click.self="closeModal"
             >
                 <div
-                    class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl"
+                    class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-secondary"
                 >
                     <div
                         class="bg-gradient-to-br from-emerald-500 to-emerald-600 px-6 py-5 text-white"
@@ -2120,14 +2224,14 @@ async function openReceipt(receiptNo?: string | null) {
                         </div>
 
                         <div>
-                            <label class="text-xs font-semibold text-gray-600">
+                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
                                 Refund Method
                             </label>
 
                             <div class="relative mt-1.5">
                                 <select
                                     v-model="form.method"
-                                    class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-3.5 py-3 pr-10 text-sm text-gray-800 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10"
+                                    class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-3.5 py-3 pr-10 text-sm text-gray-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:bg-secondary dark:border-white/10 dark:text-white"
                                 >
                                     <option>GCash</option>
                                     <option>Bank Transfer</option>
@@ -2136,13 +2240,13 @@ async function openReceipt(receiptNo?: string | null) {
 
                                 <AppIcon
                                     name="chevron-down"
-                                    class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                                    class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label class="text-xs font-semibold text-gray-600">
+                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
                                 {{
                                     form.method === "Cash Pickup"
                                         ? "Authorized Pickup Name"
@@ -2162,13 +2266,13 @@ async function openReceipt(receiptNo?: string | null) {
                                           ? 'e.g. 0917 123 4567'
                                           : 'e.g. BDO – 1234 5678 9012'
                                 "
-                                class="mt-1.5 w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10"
+                                class="mt-1.5 w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:border-white/10 dark:text-white"
                             />
                         </div>
 
                         <div
                             v-if="formError"
-                            class="flex items-start gap-2 rounded-xl bg-rose-50 p-3 text-xs text-rose-600"
+                            class="flex items-start gap-2 rounded-xl bg-rose-50 p-3 text-xs text-rose-600 dark:bg-rose-500/10"
                         >
                             <AppIcon
                                 name="alert-circle"
@@ -2180,7 +2284,7 @@ async function openReceipt(receiptNo?: string | null) {
                         <div class="flex gap-2.5 pt-1">
                             <button
                                 @click="closeModal"
-                                class="flex-1 rounded-full border border-gray-200 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
+                                class="flex-1 rounded-full border border-gray-200 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 dark:border-white/10 dark:text-gray-300"
                             >
                                 Cancel
                             </button>
@@ -2213,10 +2317,10 @@ async function openReceipt(receiptNo?: string | null) {
                 @click.self="closePaymentModal"
             >
                 <div
-                    class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl"
+                    class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-secondary"
                 >
                     <div
-                        class="bg-gradient-to-br from-brand-600 to-brand-700 px-6 py-5 text-white"
+                        class="bg-gradient-to-br from-primary-600 to-primary-700 px-6 py-5 text-white"
                     >
                         <div class="flex items-center justify-between">
                             <div
@@ -2243,7 +2347,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                     <div class="space-y-5 p-6">
                         <div
-                            class="rounded-2xl border border-rose-100 bg-rose-50 p-4"
+                            class="rounded-2xl border border-rose-100 bg-rose-50 p-4 dark:bg-rose-500/10"
                         >
                             <div class="flex items-center justify-between">
                                 <p
@@ -2266,14 +2370,14 @@ async function openReceipt(receiptNo?: string | null) {
                         <div>
                             <div class="flex items-center justify-between">
                                 <label
-                                    class="text-xs font-semibold text-gray-600"
+                                    class="text-xs font-semibold text-gray-600 dark:text-gray-300"
                                 >
                                     Payment Amount
                                 </label>
 
                                 <button
                                     @click="payAmount = currentBalance"
-                                    class="text-[11px] font-semibold text-brand-600 transition hover:text-brand-700"
+                                    class="text-[11px] font-semibold text-primary-600 transition hover:text-primary-700"
                                 >
                                     Pay full balance
                                 </button>
@@ -2281,7 +2385,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                             <div class="relative mt-1.5">
                                 <span
-                                    class="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400"
+                                    class="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400 dark:text-gray-500"
                                 >
                                     ₱
                                 </span>
@@ -2292,29 +2396,29 @@ async function openReceipt(receiptNo?: string | null) {
                                     min="0"
                                     :max="currentBalance"
                                     step="0.01"
-                                    class="w-full rounded-xl border border-gray-200 py-3 pl-8 pr-3 text-sm font-medium text-gray-800 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10"
+                                    class="w-full rounded-xl border border-gray-200 py-3 pl-8 pr-3 text-sm font-medium text-gray-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:border-white/10 dark:text-white"
                                 />
                             </div>
 
                             <div
-                                class="mt-2 flex items-center justify-between text-[10px] text-gray-400"
+                                class="mt-2 flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500"
                             >
                                 <span>Maximum payment</span>
-                                <span class="font-medium text-gray-500">
+                                <span class="font-medium text-gray-500 dark:text-gray-400">
                                     {{ peso(currentBalance) }}
                                 </span>
                             </div>
                         </div>
 
                         <div>
-                            <label class="text-xs font-semibold text-gray-600">
+                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
                                 Payment Method
                             </label>
 
                             <div class="relative mt-1.5">
                                 <select
                                     v-model="paymentForm.method"
-                                    class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-3.5 py-3 pr-10 text-sm text-gray-800 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10"
+                                    class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-3.5 py-3 pr-10 text-sm text-gray-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:bg-secondary dark:border-white/10 dark:text-white"
                                 >
                                     <option>GCash</option>
                                     <option>Bank Transfer</option>
@@ -2322,13 +2426,13 @@ async function openReceipt(receiptNo?: string | null) {
 
                                 <AppIcon
                                     name="chevron-down"
-                                    class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                                    class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label class="text-xs font-semibold text-gray-600">
+                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
                                 {{
                                     paymentForm.method === "GCash"
                                         ? "GCash Number"
@@ -2344,13 +2448,13 @@ async function openReceipt(receiptNo?: string | null) {
                                         ? 'e.g. 0917 123 4567'
                                         : 'e.g. BDO – 1234 5678 9012'
                                 "
-                                class="mt-1.5 w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10"
+                                class="mt-1.5 w-full rounded-xl border border-gray-200 px-3.5 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:border-white/10 dark:text-white"
                             />
                         </div>
 
                         <div
                             v-if="paymentError"
-                            class="flex items-start gap-2 rounded-xl bg-rose-50 p-3 text-xs text-rose-600"
+                            class="flex items-start gap-2 rounded-xl bg-rose-50 p-3 text-xs text-rose-600 dark:bg-rose-500/10"
                         >
                             <AppIcon
                                 name="alert-circle"
@@ -2362,7 +2466,7 @@ async function openReceipt(receiptNo?: string | null) {
                         <div class="flex gap-2.5 pt-1">
                             <button
                                 @click="closePaymentModal"
-                                class="flex-1 rounded-full border border-gray-200 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
+                                class="flex-1 rounded-full border border-gray-200 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 dark:border-white/10 dark:text-gray-300"
                             >
                                 Cancel
                             </button>
@@ -2370,7 +2474,7 @@ async function openReceipt(receiptNo?: string | null) {
                             <button
                                 @click="payBalance"
                                 :disabled="isPaying"
-                                class="flex flex-1 items-center justify-center gap-2 rounded-full bg-brand-600 py-3 text-sm font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                class="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary-600 py-3 text-sm font-semibold text-white shadow-sm shadow-primary-600/20 transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 <span
                                     v-if="isPaying"

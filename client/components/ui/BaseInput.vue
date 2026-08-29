@@ -1,6 +1,6 @@
 <template>
     <div class="flex flex-col gap-1.5 font-primary" :class="[className]">
-        <label v-if="label" class="text-sm font-semibold text-slate-700">
+        <label v-if="label" class="text-sm font-semibold text-slate-700 dark:text-gray-300">
             {{ label }}
             <span v-if="required" class="text-danger ml-0.5">*</span>
         </label>
@@ -10,18 +10,18 @@
             :class="[
                 currentError
                     ? 'border-red-400 focus-within:ring-red-500/15'
-                    : 'border-slate-200 focus-within:border-blue-500 focus-within:ring-blue-500/15',
+                    : 'border-slate-200 dark:border-white/10 focus-within:border-blue-500 focus-within:ring-blue-500/15',
                 disabled
-                    ? 'bg-slate-100'
+                    ? 'bg-slate-100 dark:bg-white/5'
                     : readonly
-                      ? 'bg-slate-50'
-                      : 'bg-white',
+                      ? 'bg-slate-50 dark:bg-white/5'
+                      : 'bg-white dark:bg-secondary',
                 boxClass,
             ]"
         >
             <span
                 v-if="hasPrefix"
-                class="flex items-center pl-3.5 text-slate-400 flex-shrink-0"
+                class="flex items-center pl-3.5 text-slate-400 dark:text-gray-500 flex-shrink-0"
             >
                 <slot name="prefix" />
             </span>
@@ -35,7 +35,7 @@
                 :disabled="disabled"
                 :readonly="readonly"
                 :class="[
-                    'flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400',
+                    'flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 dark:text-white bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-gray-500',
                     allowResize ? 'resize-y' : 'resize-none',
                     readonly ? 'cursor-default' : '',
                     inputClass,
@@ -50,7 +50,7 @@
                 :min="min || undefined"
                 :max="max || undefined"
                 :placeholder="placeholder"
-                class="flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 bg-transparent outline-none placeholder:text-slate-400"
+                class="flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 dark:text-white bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-gray-500"
                 :class="[
                     hasPrefix ? 'pl-2' : '',
                     readonly ? 'cursor-default' : '',

@@ -14,6 +14,7 @@ import { patientAccessService } from "../../api/patient-access/PatientAccessServ
 import { useSchedule } from "~/composables/useSchedule";
 import HomecareADL from "~/components/sections/app/Patient/HomecareADL.vue";
 import MedicalSchedule from "~/components/portal/MedicalSchedule.vue";
+import EmptyState from "~/components/ui/EmptyState.vue";
 import type {
     ScheduleItem,
     ScheduleServiceItem,
@@ -38,6 +39,7 @@ interface LovedOne {
 
 const isLoading = ref(true);
 const loadError = ref<string | null>(null);
+const noPatients = ref(false);
 const lovedOnes = ref<LovedOne[]>([]);
 const selectedIndex = ref(0);
 
@@ -212,8 +214,8 @@ function statusStyle(status: string) {
             dot: "bg-blue-500",
         },
         homecare: {
-            badge: "bg-brand-50 text-brand-700 border-brand-100",
-            dot: "bg-brand-500",
+            badge: "bg-primary-50 text-primary-700 border-primary-100",
+            dot: "bg-primary-500",
         },
         discharged: {
             badge: "bg-gray-100 text-gray-600 border-gray-200",
@@ -330,6 +332,7 @@ watch(activeScheduleType, loadScheduleLogs);
 async function loadPatients() {
     isLoading.value = true;
     loadError.value = null;
+    noPatients.value = false;
 
     try {
         const res = await patientAccessService.retrieveAction({
@@ -364,7 +367,7 @@ async function loadPatients() {
 
             selectedIndex.value = 0;
         } else {
-            loadError.value = "No patients found.";
+            noPatients.value = true;
         }
     } catch (err: any) {
         console.error("Error loading patients:", err);
@@ -503,6 +506,14 @@ onBeforeUnmount(() => {
             </div>
         </template>
 
+        <template v-else-if="noPatients">
+            <EmptyState
+                title="You currently have no patients"
+                cta-label="Book a Service"
+                cta-to="/booking/search"
+            />
+        </template>
+
         <template v-else-if="loadError">
             <div
                 class="rounded-2xl border border-gray-100 bg-white px-6 py-12 text-center shadow-sm"
@@ -524,7 +535,7 @@ onBeforeUnmount(() => {
                 <button
                     type="button"
                     @click="initialLoad"
-                    class="mt-5 rounded-xl bg-brand-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-600"
+                    class="mt-5 rounded-xl bg-primary-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-primary-600"
                 >
                     Try again
                 </button>
@@ -587,7 +598,7 @@ onBeforeUnmount(() => {
                         class="group flex min-w-[220px] shrink-0 items-center gap-3 rounded-2xl border p-3 text-left transition-all"
                         :class="
                             selectedIndex === idx
-                                ? 'border-brand-200 bg-brand-50 shadow-sm'
+                                ? 'border-primary-200 bg-primary-50 shadow-sm'
                                 : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50'
                         "
                     >
@@ -595,7 +606,7 @@ onBeforeUnmount(() => {
                             class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-4"
                             :class="
                                 selectedIndex === idx
-                                    ? 'bg-brand-500 text-white ring-brand-100'
+                                    ? 'bg-primary-500 text-white ring-primary-100'
                                     : 'bg-gray-100 text-gray-500 ring-gray-50'
                             "
                         >
@@ -607,7 +618,7 @@ onBeforeUnmount(() => {
                                 class="block truncate text-xs font-semibold"
                                 :class="
                                     selectedIndex === idx
-                                        ? 'text-brand-700'
+                                        ? 'text-primary-700'
                                         : 'text-gray-800'
                                 "
                             >
@@ -770,7 +781,7 @@ onBeforeUnmount(() => {
                     >
                         <div class="flex items-center gap-3">
                             <div
-                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600"
+                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600"
                             >
                                 <CalendarDays class="h-5 w-5" />
                             </div>
@@ -795,7 +806,7 @@ onBeforeUnmount(() => {
                                 class="flex-1 rounded-lg px-4 py-2 text-xs font-semibold transition-all lg:flex-none"
                                 :class="
                                     activeScheduleType === 'adl'
-                                        ? 'bg-white text-brand-600 shadow-sm'
+                                        ? 'bg-white text-primary-600 shadow-sm'
                                         : 'text-gray-500 hover:text-gray-700'
                                 "
                             >
@@ -808,7 +819,7 @@ onBeforeUnmount(() => {
                                 class="flex-1 rounded-lg px-4 py-2 text-xs font-semibold transition-all lg:flex-none"
                                 :class="
                                     activeScheduleType === 'medical'
-                                        ? 'bg-white text-brand-600 shadow-sm'
+                                        ? 'bg-white text-primary-600 shadow-sm'
                                         : 'text-gray-500 hover:text-gray-700'
                                 "
                             >
@@ -842,7 +853,7 @@ onBeforeUnmount(() => {
                                 class="flex w-14 shrink-0 flex-col items-center rounded-xl border px-2 py-2 transition-all"
                                 :class="
                                     selectedDate === day.iso
-                                        ? 'border-brand-500 bg-brand-500 text-white shadow-sm'
+                                        ? 'border-primary-500 bg-primary-500 text-white shadow-sm'
                                         : 'border-gray-100 bg-white text-gray-500 hover:border-gray-200 hover:bg-gray-50'
                                 "
                             >

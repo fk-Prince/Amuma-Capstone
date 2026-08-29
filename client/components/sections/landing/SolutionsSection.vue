@@ -1,6 +1,6 @@
 <template>
     <section
-        class="relative overflow-hidden bg-white px-[6%] py-24 text-center"
+        class="relative overflow-hidden bg-white px-[6%] py-24 text-center dark:bg-secondary"
     >
         <div
             class="pointer-events-none absolute top-1/2 left-1/2 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-200 opacity-30 blur-[80px]"
@@ -14,7 +14,7 @@
             </p>
 
             <h2
-                class="mx-auto mb-4 max-w-4xl text-4xl font-black text-secondary md:text-5xl"
+                class="mx-auto mb-4 max-w-4xl text-4xl font-black text-secondary md:text-5xl dark:text-white"
             >
                 Modular Solutions for
                 <span
@@ -25,17 +25,17 @@
                 Model
             </h2>
 
-            <p class="mx-auto mb-14 max-w-2xl text-sm leading-7 text-muted">
+            <p class="mx-auto mb-14 max-w-2xl text-sm leading-7 text-muted dark:text-gray-400">
                 Choose the modules your agency needs. Run home care, facility
                 care, or both — AMUMA adapts to your exact workflow.
             </p>
 
             <div class="grid gap-6 lg:grid-cols-3">
                 <div
-                    class="rounded-[20px] border border-gray-200 bg-white p-8 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-[0_20px_40px_rgba(49,130,237,0.08),0_4px_12px_rgba(15,23,42,0.04)]"
+                    class="rounded-[20px] border border-gray-200 bg-white p-8 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-[0_20px_40px_rgba(49,130,237,0.08),0_4px_12px_rgba(15,23,42,0.04)] dark:bg-secondary dark:border-white/10"
                 >
                     <div
-                        class="mb-6 flex h-14 w-14 items-center justify-center rounded-[14px] bg-light text-primary"
+                        class="mb-6 flex h-14 w-14 items-center justify-center rounded-[14px] bg-light text-primary dark:bg-white/5"
                     >
                         <svg
                             width="28"
@@ -52,11 +52,11 @@
                         </svg>
                     </div>
 
-                    <h3 class="mb-3 text-lg font-bold text-secondary">
+                    <h3 class="mb-3 text-lg font-bold text-secondary dark:text-white">
                         Home Care Services
                     </h3>
 
-                    <p class="mb-6 text-sm leading-7 text-muted">
+                    <p class="mb-6 text-sm leading-7 text-muted dark:text-gray-400">
                         Professional caregivers visit patients at home for
                         personalized care, medication management, and daily
                         living assistance.
@@ -76,10 +76,10 @@
                 </div>
 
                 <div
-                    class="rounded-[20px] border border-gray-200 bg-white p-8 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-[0_20px_40px_rgba(49,130,237,0.08),0_4px_12px_rgba(15,23,42,0.04)]"
+                    class="rounded-[20px] border border-gray-200 bg-white p-8 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-[0_20px_40px_rgba(49,130,237,0.08),0_4px_12px_rgba(15,23,42,0.04)] dark:bg-secondary dark:border-white/10"
                 >
                     <div
-                        class="mb-6 flex h-14 w-14 items-center justify-center rounded-[14px] bg-light text-primary"
+                        class="mb-6 flex h-14 w-14 items-center justify-center rounded-[14px] bg-light text-primary dark:bg-white/5"
                     >
                         <svg
                             width="28"
@@ -94,11 +94,11 @@
                         </svg>
                     </div>
 
-                    <h3 class="mb-3 text-lg font-bold text-secondary">
+                    <h3 class="mb-3 text-lg font-bold text-secondary dark:text-white">
                         In-House Facility
                     </h3>
 
-                    <p class="mb-6 text-sm leading-7 text-muted">
+                    <p class="mb-6 text-sm leading-7 text-muted dark:text-gray-400">
                         Complete elderly care facility management with room
                         assignments, 24/7 monitoring, and comprehensive patient
                         care.
@@ -118,10 +118,10 @@
                 </div>
 
                 <div
-                    class="rounded-[20px] border border-gray-200 bg-white p-8 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-[0_20px_40px_rgba(49,130,237,0.08),0_4px_12px_rgba(15,23,42,0.04)]"
+                    class="rounded-[20px] border border-gray-200 bg-white p-8 text-left transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-[0_20px_40px_rgba(49,130,237,0.08),0_4px_12px_rgba(15,23,42,0.04)] dark:bg-secondary dark:border-white/10"
                 >
                     <div
-                        class="mb-6 flex h-14 w-14 items-center justify-center rounded-[14px] bg-light text-primary"
+                        class="mb-6 flex h-14 w-14 items-center justify-center rounded-[14px] bg-light text-primary dark:bg-white/5"
                     >
                         <svg
                             width="28"
@@ -137,11 +137,11 @@
                         </svg>
                     </div>
 
-                    <h3 class="mb-3 text-lg font-bold text-secondary">
+                    <h3 class="mb-3 text-lg font-bold text-secondary dark:text-white">
                         Hybrid Solution
                     </h3>
 
-                    <p class="mb-6 text-sm leading-7 text-muted">
+                    <p class="mb-6 text-sm leading-7 text-muted dark:text-gray-400">
                         Seamlessly manage both home care services and facility
                         operations from a single integrated platform.
                     </p>

@@ -49,5 +49,5 @@ export const profileMenuDropDownList = [
         to: "/app/owner/dashboard",
         types: ["isSystemOwner"],
     },
-    { icon: "user", label: "Settings", to: "/" },
+    // { icon: "user", label: "Settings", to: "/" },
 ];

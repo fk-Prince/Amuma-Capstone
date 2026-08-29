@@ -136,16 +136,24 @@
         </div>
     </div>
 
+    <div v-else-if="noPatients" class="p-4 sm:p-6 lg:p-8">
+        <EmptyState
+            title="You currently have no patients"
+            cta-label="Book a Service"
+            cta-to="/booking/search"
+        />
+    </div>
+
     <div v-else-if="loadError" class="p-8">
         <div
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center"
+            class="bg-white dark:bg-secondary rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm p-8 text-center"
         >
             <p class="text-rose-500 text-sm">
                 {{ loadError }}
             </p>
             <button
                 @click="loadPatientData"
-                class="mt-2 text-xs text-brand-600 font-medium"
+                class="mt-2 text-xs text-primary-600 font-medium"
             >
                 Retry
             </button>
@@ -204,7 +212,7 @@
                             {{ lo.full_name }}
                         </p>
 
-                        <p class="text-xs font-medium text-brand-600 mt-1">
+                        <p class="text-xs font-medium text-primary-600 mt-1">
                             {{ lo.branch_name }}
                         </p>
 
@@ -234,7 +242,7 @@
 
                         <NuxtLink
                             to="/portal/loved-ones"
-                            class="mt-4 w-full border border-brand-600 text-brand-600 text-sm font-medium py-2 rounded-full transition-colors hover:bg-brand-500 hover:text-white hover:border-brand-500 text-center"
+                            class="mt-4 w-full border border-primary-600 text-primary-600 text-sm font-medium py-2 rounded-full transition-colors hover:bg-primary-500 hover:text-white hover:border-primary-500 text-center"
                         >
                             View Full Profile
                         </NuxtLink>
@@ -243,7 +251,7 @@
             </div>
 
             <div v-else class="text-center py-8">
-                <p class="text-gray-500">No loved ones found.</p>
+                <p class="text-gray-500">You currently have no patients.</p>
             </div>
 
             <div
@@ -257,7 +265,7 @@
                     class="h-1.5 rounded-full transition-all"
                     :class="
                         selectedIndex === idx
-                            ? 'w-5 bg-brand-500'
+                            ? 'w-5 bg-primary-500'
                             : 'w-1.5 bg-gray-200 hover:bg-gray-300'
                     "
                 />
@@ -282,9 +290,9 @@
                     </span>
 
                     <span
-                        class="flex items-center gap-1 text-brand-600 font-medium"
+                        class="flex items-center gap-1 text-primary-600 font-medium"
                     >
-                        <span class="w-1.5 h-1.5 rounded-full bg-brand-500" />
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary-500" />
                         Live
                     </span>
                 </div>
@@ -412,7 +420,7 @@
 
                             <span
                                 v-else
-                                class="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 text-xs font-semibold shrink-0"
+                                class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-xs font-semibold shrink-0"
                             >
                                 <UserRound
                                     v-if="!primaryAssignee(service)"
@@ -460,7 +468,7 @@
 
                                     <span
                                         v-else
-                                        class="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 text-[10px] font-semibold ring-2 ring-gray-50"
+                                        class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-[10px] font-semibold ring-2 ring-gray-50"
                                     >
                                         {{ initials(assignee.full_name) }}
                                     </span>
@@ -603,7 +611,7 @@
                     <button
                         @click="generateAttendanceQr('in')"
                         :disabled="isGeneratingQr"
-                        class="border border-brand-600 text-brand-600 text-sm font-medium py-2 rounded-full hover:bg-brand-500 hover:text-white hover:border-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="border border-primary-600 text-primary-600 text-sm font-medium py-2 rounded-full hover:bg-primary-500 hover:text-white hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {{
                             isGeneratingQr && qrDirection === "in"
@@ -615,7 +623,7 @@
                     <button
                         @click="generateAttendanceQr('out')"
                         :disabled="isGeneratingQr"
-                        class="border border-brand-600 text-brand-600 text-sm font-medium py-2 rounded-full hover:bg-brand-500 hover:text-white hover:border-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="border border-primary-600 text-primary-600 text-sm font-medium py-2 rounded-full hover:bg-primary-500 hover:text-white hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {{
                             isGeneratingQr && qrDirection === "out"
@@ -662,7 +670,7 @@
                             :class="
                                 u.highlighted
                                     ? 'bg-violet-100 text-violet-600'
-                                    : 'bg-brand-50 text-brand-600'
+                                    : 'bg-primary-50 text-primary-600'
                             "
                         >
                             <Pill v-if="u.icon === 'med'" class="w-4 h-4" />
@@ -737,7 +745,7 @@
 
             <div class="flex gap-5 items-stretch w-full">
                 <div
-                    class="flex-1 bg-brand-50 rounded-xl p-4 flex items-center justify-between"
+                    class="flex-1 bg-primary-50 rounded-xl p-4 flex items-center justify-between"
                 >
                     <div>
                         <p class="text-xs text-gray-400">Overall Balance</p>
@@ -748,7 +756,7 @@
                     </div>
 
                     <span
-                        class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 shrink-0"
+                        class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 shrink-0"
                     >
                         <Calendar class="w-[18px] h-[18px]" />
                     </span>
@@ -800,7 +808,7 @@
 
             <NuxtLink
                 to="/portal/balance"
-                class="mt-4 w-full border border-brand-600 text-brand-600 text-sm font-medium py-2 rounded-full transition-colors hover:bg-brand-500 hover:text-white hover:border-brand-500 text-center block"
+                class="mt-4 w-full border border-primary-600 text-primary-600 text-sm font-medium py-2 rounded-full transition-colors hover:bg-primary-500 hover:text-white hover:border-primary-500 text-center block"
             >
                 View Bill Date
             </NuxtLink>
@@ -816,7 +824,7 @@
 
                 <NuxtLink
                     to="/portal/balance"
-                    class="text-xs text-brand-600 font-medium"
+                    class="text-xs text-primary-600 font-medium"
                 >
                     View All
                 </NuxtLink>
@@ -858,7 +866,7 @@
 
             <NuxtLink
                 to="/portal/balance"
-                class="mt-auto pt-4 text-xs text-brand-600 font-medium flex items-center gap-1"
+                class="mt-auto pt-4 text-xs text-primary-600 font-medium flex items-center gap-1"
             >
                 View All Transactions →
             </NuxtLink>
@@ -876,6 +884,7 @@ import { useToast } from "~/composables/useToast";
 import { formatDuration } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
 import QrCodeModal from "~/components/ui/QrCodeModal.vue";
+import EmptyState from "~/components/ui/EmptyState.vue";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import type { PatientActivity } from "~/types/patient-activity";
 
@@ -976,6 +985,8 @@ const formattedTime = computed(() =>
 const isLoading = ref(true);
 
 const loadError = ref<string | null>(null);
+
+const noPatients = ref(false);
 
 const rawRecords = ref<any[]>([]);
 
@@ -1165,7 +1176,7 @@ function statusStyle(status: string) {
         },
 
         homecare: {
-            badge: "bg-brand-50 text-brand-600",
+            badge: "bg-primary-50 text-primary-600",
         },
 
         discharged: {
@@ -1411,6 +1422,8 @@ async function loadPatientData() {
 
     loadError.value = null;
 
+    noPatients.value = false;
+
     try {
         const res = await patientAccessService.retrieveAction({
             action: "overview",
@@ -1424,7 +1437,7 @@ async function loadPatientData() {
 
             rawRecords.value = [];
 
-            loadError.value = "No patient data returned.";
+            noPatients.value = true;
 
             return;
         }

@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen pt-[50px]">
+    <div class="min-h-screen pt-[50px] bg-white dark:bg-secondary">
         <main class="max-w-6xl mx-auto px-6 py-16">
             <div class="text-center mb-10">
                 <p
@@ -9,7 +9,7 @@
                 </p>
 
                 <h1
-                    class="font-display font-extrabold text-4xl md:text-5xl text-gray-900 leading-tight"
+                    class="font-display font-extrabold text-4xl md:text-5xl text-gray-900 leading-tight dark:text-white"
                 >
                     One calm price. All the
                     <span class="text-primary">features</span> you need.
@@ -27,7 +27,7 @@
                 <div
                     v-for="i in 3"
                     :key="i"
-                    class="rounded-3xl border border-gray-200 p-8 animate-pulse"
+                    class="rounded-3xl border border-gray-200 p-8 animate-pulse dark:border-white/10"
                 >
                     <div class="h-4 w-20 bg-gray-200 rounded mb-6"></div>
 

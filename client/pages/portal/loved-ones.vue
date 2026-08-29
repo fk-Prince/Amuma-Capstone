@@ -154,16 +154,23 @@
             </div>
         </div>
 
+        <EmptyState
+            v-else-if="noPatients"
+            title="You currently have no patients"
+            cta-label="Book a Service"
+            cta-to="/booking/search"
+        />
+
         <div
             v-else-if="loadError"
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 sm:p-10 text-center"
+            class="bg-white dark:bg-secondary rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm p-8 sm:p-10 text-center"
         >
             <p class="text-sm text-rose-500">{{ loadError }}</p>
 
             <button
                 type="button"
                 @click="loadPatientData"
-                class="mt-2 text-xs text-brand-600 font-medium hover:text-brand-700"
+                class="mt-2 text-xs text-primary-600 font-medium hover:text-primary-700"
             >
                 Retry
             </button>
@@ -178,7 +185,7 @@
                     type="button"
                     :disabled="selectedIndex === 0"
                     @click="scrollCarousel(-1)"
-                    class="shrink-0 w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-brand-600 hover:border-brand-300 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                    class="shrink-0 w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-primary-600 hover:border-primary-300 transition-colors disabled:opacity-30 disabled:pointer-events-none"
                 >
                     <ChevronLeft class="w-4 h-4" />
                 </button>
@@ -201,7 +208,7 @@
                                 class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover object-top border-2 transition-colors"
                                 :class="
                                     selectedIndex === idx
-                                        ? 'border-brand-500'
+                                        ? 'border-primary-500'
                                         : 'border-transparent group-hover:border-gray-200'
                                 "
                                 alt=""
@@ -209,7 +216,7 @@
 
                             <span
                                 v-if="selectedIndex === idx"
-                                class="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full bg-brand-500 border-2 border-white flex items-center justify-center"
+                                class="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full bg-primary-500 border-2 border-white flex items-center justify-center"
                             >
                                 <Check class="w-2.5 h-2.5 text-white" />
                             </span>
@@ -219,7 +226,7 @@
                             class="max-w-[64px] truncate text-xs font-medium transition-colors"
                             :class="
                                 selectedIndex === idx
-                                    ? 'text-brand-600'
+                                    ? 'text-primary-600'
                                     : 'text-gray-500'
                             "
                         >
@@ -232,7 +239,7 @@
                     type="button"
                     :disabled="selectedIndex === lovedOnes.length - 1"
                     @click="scrollCarousel(1)"
-                    class="shrink-0 w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-brand-600 hover:border-brand-300 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                    class="shrink-0 w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-primary-600 hover:border-primary-300 transition-colors disabled:opacity-30 disabled:pointer-events-none"
                 >
                     <ChevronRight class="w-4 h-4" />
                 </button>
@@ -253,7 +260,7 @@
 
                         <button
                             type="button"
-                            class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-brand-500 text-white flex items-center justify-center border-2 border-white hover:bg-brand-600"
+                            class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center border-2 border-white hover:bg-primary-600"
                         >
                             <Pencil class="w-3.5 h-3.5" />
                         </button>
@@ -287,7 +294,7 @@
 
                         <p
                             v-if="lovedOne.branchName !== 'N/A'"
-                            class="text-sm font-medium text-brand-600 mt-1.5 flex items-start gap-1.5"
+                            class="text-sm font-medium text-primary-600 mt-1.5 flex items-start gap-1.5"
                         >
                             <Building2 class="w-3.5 h-3.5 shrink-0 mt-0.5" />
                             <span class="break-words">{{
@@ -307,7 +314,7 @@
 
                         <p
                             v-if="lovedOne.status === 'Admitted'"
-                            class="text-sm text-brand-500 font-medium mt-1"
+                            class="text-sm text-primary-500 font-medium mt-1"
                         >
                             {{ lovedOne.roomLabel }} / {{ lovedOne.bedLabel }}
                         </p>
@@ -346,7 +353,7 @@
                         <div class="flex items-center gap-2.5 flex-wrap mt-4">
                             <NuxtLink
                                 to="/portal/messages"
-                                class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-brand-500 text-brand-600 text-sm font-medium hover:bg-brand-500 hover:text-white transition-colors"
+                                class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-primary-500 text-primary-600 text-sm font-medium hover:bg-primary-500 hover:text-white transition-colors"
                             >
                                 <MessageSquare class="w-3.5 h-3.5" />
                                 Message Caregiver
@@ -354,7 +361,7 @@
 
                             <NuxtLink
                                 to="/portal/schedule"
-                                class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-brand-500 text-brand-600 text-sm font-medium hover:bg-brand-500 hover:text-white transition-colors"
+                                class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-primary-500 text-primary-600 text-sm font-medium hover:bg-primary-500 hover:text-white transition-colors"
                             >
                                 <Calendar class="w-3.5 h-3.5" />
                                 Schedule
@@ -362,7 +369,7 @@
 
                             <NuxtLink
                                 to="/portal/balance"
-                                class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-brand-500 text-brand-600 text-sm font-medium hover:bg-brand-500 hover:text-white transition-colors"
+                                class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-primary-500 text-primary-600 text-sm font-medium hover:bg-primary-500 hover:text-white transition-colors"
                             >
                                 <CreditCard class="w-3.5 h-3.5" />
                                 View Billing
@@ -383,7 +390,7 @@
                     <ul class="space-y-4">
                         <li class="flex items-start gap-3 min-w-0">
                             <span
-                                class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"
+                                class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0"
                             >
                                 <Cake class="w-4 h-4" />
                             </span>
@@ -403,7 +410,7 @@
 
                         <li class="flex items-start gap-3 min-w-0">
                             <span
-                                class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"
+                                class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0"
                             >
                                 <Droplet class="w-4 h-4" />
                             </span>
@@ -420,7 +427,7 @@
 
                         <li class="flex items-start gap-3 min-w-0">
                             <span
-                                class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"
+                                class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0"
                             >
                                 <Phone class="w-4 h-4" />
                             </span>
@@ -429,7 +436,7 @@
                                 <a
                                     v-if="isValidPhone(lovedOne.contactNumber)"
                                     :href="`tel:${lovedOne.contactNumber}`"
-                                    class="text-sm font-medium text-gray-800 hover:text-brand-600 transition-colors break-all"
+                                    class="text-sm font-medium text-gray-800 hover:text-primary-600 transition-colors break-all"
                                 >
                                     {{ lovedOne.contactNumber }}
                                 </a>
@@ -448,7 +455,7 @@
 
                         <li class="flex items-start gap-3 min-w-0">
                             <span
-                                class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"
+                                class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0"
                             >
                                 <Home class="w-4 h-4" />
                             </span>
@@ -476,7 +483,7 @@
 
                     <div class="flex items-center gap-3 min-w-0">
                         <span
-                            class="w-10 h-10 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"
+                            class="w-10 h-10 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center shrink-0"
                         >
                             <UserRound class="w-5 h-5" />
                         </span>
@@ -496,7 +503,7 @@
 
                     <li class="flex items-start gap-3 min-w-0 mt-4">
                         <span
-                            class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"
+                            class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0"
                         >
                             <Phone class="w-4 h-4" />
                         </span>
@@ -505,7 +512,7 @@
                             <a
                                 v-if="isValidPhone(lovedOne.client.phone)"
                                 :href="`tel:${lovedOne.client.phone}`"
-                                class="text-sm font-medium text-gray-800 hover:text-brand-600 transition-colors break-all"
+                                class="text-sm font-medium text-gray-800 hover:text-primary-600 transition-colors break-all"
                             >
                                 <span class="break-all">{{
                                     lovedOne.client.phone
@@ -528,7 +535,7 @@
                             class="flex items-start gap-3 min-w-0"
                         >
                             <span
-                                class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"
+                                class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0"
                             >
                                 <Mail class="w-4 h-4" />
                             </span>
@@ -548,7 +555,7 @@
                             class="flex items-start gap-3 min-w-0"
                         >
                             <span
-                                class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"
+                                class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0"
                             >
                                 <ShieldCheck class="w-4 h-4" />
                             </span>
@@ -586,7 +593,7 @@
                                 :class="
                                     lovedOne.status === 'Discharged'
                                         ? 'bg-gray-100 text-gray-500'
-                                        : 'bg-brand-50 text-brand-600'
+                                        : 'bg-primary-50 text-primary-600'
                                 "
                             >
                                 <Calendar class="w-4 h-4" />
@@ -613,7 +620,7 @@
                             class="flex items-start gap-3 min-w-0"
                         >
                             <span
-                                class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"
+                                class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0"
                             >
                                 <BedDouble class="w-4 h-4" />
                             </span>
@@ -638,7 +645,7 @@
                             class="flex items-start gap-3 min-w-0"
                         >
                             <span
-                                class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"
+                                class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0"
                             >
                                 <Home class="w-4 h-4" />
                             </span>
@@ -715,7 +722,7 @@
                             class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap"
                             :class="
                                 activeHealthTab === 'medications'
-                                    ? 'bg-white text-brand-600 shadow-sm'
+                                    ? 'bg-white text-primary-600 shadow-sm'
                                     : 'text-gray-500 hover:text-gray-700'
                             "
                         >
@@ -728,7 +735,7 @@
                             class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap"
                             :class="
                                 activeHealthTab === 'vitals'
-                                    ? 'bg-white text-brand-600 shadow-sm'
+                                    ? 'bg-white text-primary-600 shadow-sm'
                                     : 'text-gray-500 hover:text-gray-700'
                             "
                         >
@@ -739,7 +746,7 @@
                     <NuxtLink
                         v-if="activeHealthTab === 'medications'"
                         to="/portal/medications"
-                        class="text-xs text-brand-600 font-medium whitespace-nowrap"
+                        class="text-xs text-primary-600 font-medium whitespace-nowrap"
                     >
                         View All
                     </NuxtLink>
@@ -747,7 +754,7 @@
                     <NuxtLink
                         v-else
                         to="/portal/vitals"
-                        class="text-xs text-brand-600 font-medium whitespace-nowrap"
+                        class="text-xs text-primary-600 font-medium whitespace-nowrap"
                     >
                         View All
                     </NuxtLink>
@@ -868,6 +875,7 @@
 import { ref, computed, onMounted, watch, nextTick } from "vue";
 import MedicationTable from "~/components/sections/app/Patient/MedicationTable.vue";
 import VitalSignsTable from "~/components/sections/app/Patient/VitalSignsTable.vue";
+import EmptyState from "~/components/ui/EmptyState.vue";
 import {
     Pencil,
     Crown,
@@ -1011,6 +1019,7 @@ function fallbackLovedOne(): LovedOne {
 
 const isLoading = ref(true);
 const loadError = ref<string | null>(null);
+const noPatients = ref(false);
 const lovedOnes = ref<LovedOne[]>([]);
 const selectedIndex = ref(0);
 const activeHealthTab = ref<"medications" | "vitals">("medications");
@@ -1104,7 +1113,7 @@ function statusStyle(status: string) {
             badge: "bg-amber-50 text-amber-600",
         },
         homecare: {
-            badge: "bg-brand-50 text-brand-600",
+            badge: "bg-primary-50 text-primary-600",
         },
         discharged: {
             badge: "bg-gray-100 text-gray-500",
@@ -1247,6 +1256,7 @@ function mapPatientRecord(item: any): LovedOne {
 async function loadPatientData() {
     isLoading.value = true;
     loadError.value = null;
+    noPatients.value = false;
 
     try {
         const res = await patientAccessService.retrieveAction({
@@ -1261,7 +1271,7 @@ async function loadPatientData() {
             selectedIndex.value = 0;
         } else {
             lovedOnes.value = [];
-            loadError.value = "No patient data returned.";
+            noPatients.value = true;
         }
     } catch (err: any) {
         console.error("Error loading loved ones:", err);

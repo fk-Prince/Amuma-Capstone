@@ -23,6 +23,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: "location-selected", payload: Location): void;
+    (e: "location-cleared"): void;
 }>();
 
 const selectedLocation = ref<Location | null>(null);
@@ -228,7 +229,11 @@ const clearSelection = (): void => {
     }
 
     selectedLocation.value = null;
+
+    emit("location-cleared");
 };
+
+defineExpose({ clearSelection });
 
 onMounted(async () => {
     const L = (L_module as any).default ?? L_module;
@@ -324,11 +329,11 @@ onUnmounted(() => {
 <template>
     <div class="flex flex-col gap-2 w-full z-20">
         <div
-            class="flex items-start gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm shadow-sm min-h-[48px]"
+            class="flex items-start gap-2 bg-white dark:bg-secondary border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm shadow-sm min-h-[48px]"
         >
             <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="w-4 h-4 text-gray-400 shrink-0 mt-2"
+                class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0 mt-2"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -342,7 +347,7 @@ onUnmounted(() => {
             </svg>
 
             <span
-                class="text-gray-600 flex-1 whitespace-normal break-words mt-1"
+                class="text-gray-600 dark:text-gray-300 flex-1 whitespace-normal break-words mt-1"
             >
                 {{
                     selectedLocation?.label ||
@@ -353,7 +358,7 @@ onUnmounted(() => {
             <button
                 v-if="selectedLocation"
                 @click="clearSelection"
-                class="text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                class="text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors shrink-0"
                 title="Clear"
             >
                 <svg
@@ -375,13 +380,13 @@ onUnmounted(() => {
 
         <div
             id="location-map"
-            class="w-full h-[400px] z-20 rounded-xl overflow-hidden border border-gray-200 shadow-sm"
+            class="w-full h-[400px] z-20 rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm"
         />
 
         <div class="flex gap-2">
             <button
                 @click="useMyLocation"
-                class="flex items-center gap-2 px-5 py-2 text-sm bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+                class="flex items-center gap-2 px-5 py-2 text-sm bg-white dark:bg-secondary dark:text-white border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors shadow-sm"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"

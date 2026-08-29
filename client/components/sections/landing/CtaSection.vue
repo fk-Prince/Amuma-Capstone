@@ -1,6 +1,6 @@
 <template>
     <section
-        class="relative overflow-hidden bg-gradient-to-br from-blue-100 to-light px-[6%] py-16"
+        class="relative overflow-hidden bg-gradient-to-br from-blue-100 to-light px-[6%] py-16 dark:from-secondary dark:to-secondary"
     >
         <!-- Blob -->
         <div
@@ -27,7 +27,7 @@
                 </div>
 
                 <button
-                    class="group flex items-center gap-2 rounded-xl bg-white px-[5rem] py-4 font-bold text-primary transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                    class="group flex items-center gap-2 rounded-xl bg-white px-[5rem] py-4 font-bold text-primary transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-secondary"
                 >
                     Get Started
 

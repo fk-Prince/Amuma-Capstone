@@ -5,20 +5,23 @@
                 <button
                     @click="toggle"
                     class="flex items-center gap-2.5 px-2 py-1.5 rounded-xl transition-colors focus:outline-none"
-                    :class="
+                    :class="[
                         scrolled || navTheme !== 'dark'
                             ? 'hover:bg-primary-50'
-                            : 'hover:bg-light/10'
-                    "
+                            : 'hover:bg-light/10',
+                        themeAware ? 'dark:hover:bg-white/10' : '',
+                    ]"
                 >
                     <div class="relative">
                         <img
                             :src="user.avatar"
                             class="w-9 h-9 rounded-full border-2 border-white shadow-sm object-cover"
+                            :class="themeAware ? 'dark:border-white/20' : ''"
                             alt="Profile"
                         />
                         <span
                             class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-white rounded-full"
+                            :class="themeAware ? 'dark:border-secondary' : ''"
                         />
                     </div>
 
@@ -27,21 +30,23 @@
                     >
                         <span
                             class="text-sm font-medium transition-colors duration-300"
-                            :class="
+                            :class="[
                                 scrolled || navTheme !== 'dark'
                                     ? 'text-secondary/80'
-                                    : 'text-light'
-                            "
+                                    : 'text-light',
+                                themeAware ? 'dark:text-white' : '',
+                            ]"
                         >
                             {{ user.first_name }} {{ user.last_name }}
                         </span>
                         <span
                             class="text-xs transition-colors duration-300"
-                            :class="
+                            :class="[
                                 scrolled || navTheme !== 'dark'
                                     ? 'text-muted'
-                                    : 'text-light/70'
-                            "
+                                    : 'text-light/70',
+                                themeAware ? 'dark:text-gray-400' : '',
+                            ]"
                         >
                             View profile
                         </span>
@@ -50,11 +55,12 @@
                     <ChevronIcon
                         :isOpen="open"
                         class="block w-4 h-4 transition-colors duration-300"
-                        :class="
+                        :class="[
                             scrolled || navTheme !== 'dark'
                                 ? 'text-muted'
-                                : 'text-light/80'
-                        "
+                                : 'text-light/80',
+                            themeAware ? 'dark:text-white/60' : '',
+                        ]"
                     />
                 </button>
             </template>
@@ -180,10 +186,12 @@ const props = withDefaults(
         user: User;
         scrolled?: boolean;
         navTheme?: any;
+        themeAware?: boolean;
     }>(),
     {
         scrolled: true,
         navTheme: "light",
+        themeAware: false,
     },
 );
 
@@ -201,11 +209,8 @@ const setTheme = (dark: boolean) => {
 
 onMounted(() => {
     const stored = localStorage.getItem(THEME_KEY);
-    const prefersDark = window.matchMedia?.(
-        "(prefers-color-scheme: dark)",
-    ).matches;
 
-    setTheme(stored ? stored === "dark" : !!prefersDark);
+    setTheme(stored ? stored === "dark" : true);
 });
 
 const visibleMenuItems = computed(() =>

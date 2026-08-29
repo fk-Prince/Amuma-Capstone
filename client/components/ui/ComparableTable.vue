@@ -1,43 +1,43 @@
 <template>
     <div class="mt-20">
         <h2
-            class="font-display font-bold text-2xl text-center text-gray-900 mb-2"
+            class="font-display font-bold text-2xl text-center text-gray-900 mb-2 dark:text-white"
         >
             Compare Features
         </h2>
-        <p class="text-center text-gray-500 text-sm mb-8">
+        <p class="text-center text-gray-500 text-sm mb-8 dark:text-gray-400">
             See what's included in each plan
         </p>
 
         <div
-            class="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm"
+            class="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm dark:border-white/10"
         >
             <table class="w-full text-sm min-w-[560px]">
                 <thead>
-                    <tr class="bg-gray-50 border-b border-gray-100">
+                    <tr class="bg-gray-50 border-b border-gray-100 dark:bg-white/5 dark:border-white/10">
                         <th
-                            class="text-left px-6 py-4 font-semibold text-gray-600 w-1/2"
+                            class="text-left px-6 py-4 font-semibold text-gray-600 w-1/2 dark:text-gray-300"
                         >
                             Features
                         </th>
                         <th
-                            class="text-center px-4 py-4 font-semibold text-gray-600"
+                            class="text-center px-4 py-4 font-semibold text-gray-600 dark:text-gray-300"
                         >
                             Homecare
                         </th>
                         <th
-                            class="text-center px-4 py-4 font-semibold text-gray-600"
+                            class="text-center px-4 py-4 font-semibold text-gray-600 dark:text-gray-300"
                         >
                             Facility
                         </th>
                         <th class="text-center px-4 py-4">
                             <div class="flex flex-col items-center gap-1">
                                 <span
-                                    class="text-[11px] font-bold tracking-wide bg-brand-blue text-primary px-2 py-0.5 rounded-full"
+                                    class="text-[11px] font-bold tracking-wide bg-primary/10 text-primary px-2 py-0.5 rounded-full"
                                 >
                                     Most Popular
                                 </span>
-                                <span class="font-semibold text-brand-blue">
+                                <span class="font-semibold text-primary">
                                     Hybrid
                                 </span>
                             </div>
@@ -49,11 +49,13 @@
                         v-for="(row, i) in features"
                         :key="row.name"
                         :class="[
-                            'group border-b border-gray-50 last:border-b-0 transition-colors hover:bg-blue-50/40',
-                            i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50',
+                            'group border-b border-gray-50 last:border-b-0 transition-colors hover:bg-blue-50/40 dark:border-white/10 dark:hover:bg-white/5',
+                            i % 2 === 0
+                                ? 'bg-white dark:bg-secondary'
+                                : 'bg-gray-50/50 dark:bg-white/[0.03]',
                         ]"
                     >
-                        <td class="px-6 py-4 font-medium text-gray-700">
+                        <td class="px-6 py-4 font-medium text-gray-700 dark:text-gray-300">
                             {{ row.name }}
                         </td>
 
@@ -75,7 +77,7 @@
                             </svg>
                             <svg
                                 v-else
-                                class="w-4 h-4 mx-auto text-gray-300"
+                                class="w-4 h-4 mx-auto text-gray-300 dark:text-gray-600"
                                 viewBox="0 0 16 16"
                                 fill="none"
                             >
@@ -106,7 +108,7 @@
                             </svg>
                             <svg
                                 v-else
-                                class="w-4 h-4 mx-auto text-gray-300"
+                                class="w-4 h-4 mx-auto text-gray-300 dark:text-gray-600"
                                 viewBox="0 0 16 16"
                                 fill="none"
                             >
@@ -120,7 +122,7 @@
                         </td>
 
                         <td
-                            class="text-center px-4 py-4 bg-brand-blue/[0.04] group-hover:bg-brand-blue/[0.07] transition-colors"
+                            class="text-center px-4 py-4 bg-primary/[0.04] group-hover:bg-primary/[0.07] transition-colors"
                         >
                             <svg
                                 v-if="row.hybrid"
@@ -139,7 +141,7 @@
                             </svg>
                             <svg
                                 v-else
-                                class="w-4 h-4 mx-auto text-gray-300"
+                                class="w-4 h-4 mx-auto text-gray-300 dark:text-gray-600"
                                 viewBox="0 0 16 16"
                                 fill="none"
                             >

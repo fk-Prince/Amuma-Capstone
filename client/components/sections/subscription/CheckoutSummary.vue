@@ -1,6 +1,6 @@
 <template>
     <div class="w-full max-w-5xl mx-auto space-y-6">
-        <div class="bg-white rounded-2xl shadow-sm p-6">
+        <div class="bg-white rounded-2xl shadow-sm p-6 dark:bg-secondary">
             <div class="flex items-center justify-between gap-4">
                 <div class="flex items-center gap-4">
                     <div
@@ -14,11 +14,11 @@
                     </div>
 
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900">
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">
                             Review & Confirm
                         </h2>
 
-                        <p class="text-sm text-slate-500 mt-1">
+                        <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                             Review your information before activating your
                             subscription.
                         </p>
@@ -28,7 +28,7 @@
                 <button
                     type="button"
                     @click="router.back()"
-                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shrink-0"
+                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shrink-0 dark:bg-secondary dark:border-white/10 dark:text-gray-300"
                 >
                     <svg
                         class="w-4 h-4"
@@ -48,14 +48,14 @@
             </div>
         </div>
 
-        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5">
+        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5 dark:bg-secondary">
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-base font-semibold text-slate-900">
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">
                         Subscription Details
                     </h3>
 
-                    <p class="text-sm text-slate-500">
+                    <p class="text-sm text-slate-500 dark:text-gray-400">
                         Your selected plan and payment information.
                     </p>
                 </div>
@@ -94,17 +94,17 @@
             </div>
         </section>
 
-        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5">
+        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5 dark:bg-secondary">
             <div>
-                <h3 class="text-base font-semibold text-slate-900">
+                <h3 class="text-base font-semibold text-slate-900 dark:text-white">
                     Agency Information
                 </h3>
 
-                <p class="text-sm text-slate-500">Registered agency details.</p>
+                <p class="text-sm text-slate-500 dark:text-gray-400">Registered agency details.</p>
             </div>
-            <div class="flex gap-5">
+            <div class="flex flex-col sm:flex-row gap-5">
                 <div
-                    class="w-28 h-28 rounded-2xl bg-slate-100 overflow-hidden shrink-0"
+                    class="w-28 h-28 rounded-2xl bg-slate-100 overflow-hidden shrink-0 dark:bg-white/10 dark:bg-secondary"
                 >
                     <img
                         v-if="agencyImagePrevieiw"
@@ -114,7 +114,7 @@
 
                     <div
                         v-else
-                        class="h-full flex items-center justify-center text-xs text-slate-400"
+                        class="h-full flex items-center justify-center text-xs text-slate-400 dark:text-gray-500"
                     >
                         No Image
                     </div>
@@ -140,20 +140,20 @@
             </div>
         </section>
 
-        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5">
+        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5 dark:bg-secondary">
             <div>
-                <h3 class="text-base font-semibold text-slate-900">
+                <h3 class="text-base font-semibold text-slate-900 dark:text-white">
                     Branch Information
                 </h3>
 
-                <p class="text-sm text-slate-500">
+                <p class="text-sm text-slate-500 dark:text-gray-400">
                     Branch details and location.
                 </p>
             </div>
 
-            <div class="flex gap-5">
+            <div class="flex flex-col sm:flex-row gap-5">
                 <div
-                    class="w-28 h-28 rounded-2xl bg-slate-100 overflow-hidden shrink-0"
+                    class="w-28 h-28 rounded-2xl bg-slate-100 overflow-hidden shrink-0 dark:bg-white/10 dark:bg-secondary"
                 >
                     <img
                         v-if="branchImagePreview"
@@ -163,7 +163,7 @@
 
                     <div
                         v-else
-                        class="h-full flex items-center justify-center text-xs text-slate-400"
+                        class="h-full flex items-center justify-center text-xs text-slate-400 dark:text-gray-500"
                     >
                         No Image
                     </div>
@@ -195,13 +195,13 @@
             </div>
         </section>
 
-        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5">
+        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5 dark:bg-secondary">
             <div>
-                <h3 class="text-base font-semibold text-slate-900">
+                <h3 class="text-base font-semibold text-slate-900 dark:text-white">
                     Operation Settings
                 </h3>
 
-                <p class="text-sm text-slate-500">
+                <p class="text-sm text-slate-500 dark:text-gray-400">
                     Branch configuration and working preferences.
                 </p>
             </div>
@@ -241,7 +241,7 @@
             </div>
         </section>
 
-        <div class="flex gap-3 rounded-2xl bg-blue-50 px-5 py-4">
+        <div class="flex gap-3 rounded-2xl bg-blue-50 px-5 py-4 dark:bg-primary-500/10">
             <i class="ti ti-info-circle text-blue-500 text-lg mt-0.5" />
 
             <p class="text-sm text-blue-700 leading-relaxed">

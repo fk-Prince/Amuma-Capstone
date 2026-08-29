@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { locationSchema } from "~/types/branch";
 
 export const branchImageSchema = z.object({
     type: z
@@ -136,6 +137,8 @@ export const branchSchema = z.object({
             message: "Invalid file for Document.",
         });
     }),
+
+    location: locationSchema,
 });
 
 export const settingSchema = z.object({

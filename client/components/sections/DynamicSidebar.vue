@@ -30,10 +30,10 @@
             >
                 <aside
                     v-if="open && !isDesktop"
-                    class="fixed left-0 top-0 h-full w-64 bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] z-[70] flex flex-col lg:hidden"
+                    class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-secondary shadow-[0_0_40px_rgba(10,40,87,0.15)] z-[70] flex flex-col lg:hidden"
                 >
                     <div
-                        class="flex items-center justify-between px-5 h-[72px] border-b border-primary-100/80"
+                        class="flex items-center justify-between px-5 h-[72px] border-b border-primary-100/80 dark:border-white/10"
                     >
                         <!-- <NuxtLink to="/" class="flex items-center gap-2.5">
                             <img
@@ -99,7 +99,7 @@
                         </div>
                     </nav>
 
-                    <div class="border-t border-primary-100/80 px-3 pb-5 pt-3">
+                    <div class="border-t border-primary-100/80 px-3 pb-5 pt-3 dark:border-white/10">
                         <ClientOnly>
                             <template #fallback>
                                 <UserSkeleton />
@@ -121,19 +121,19 @@
                                             />
                                         </div>
                                         <span
-                                            class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-white rounded-full"
+                                            class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-white dark:border-secondary rounded-full"
                                         />
                                     </div>
 
                                     <div class="min-w-0 flex-1">
                                         <p
-                                            class="truncate font-semibold text-[14px] text-primary-900"
+                                            class="truncate font-semibold text-[14px] text-primary-900 dark:text-white"
                                         >
                                             {{ user.first_name }}
                                             {{ user.last_name }}
                                         </p>
                                         <p
-                                            class="truncate text-[12px] text-muted"
+                                            class="truncate text-[12px] text-muted dark:text-gray-400"
                                         >
                                             {{ user.email }}
                                         </p>
@@ -491,7 +491,7 @@ function navClass(to: string, desktop = false) {
         desktop && desktopCollapsed.value ? "justify-center px-0" : "",
         isActive(to)
             ? "bg-primary text-white shadow-md shadow-primary-500/30"
-            : "text-primary-700 hover:bg-primary-50",
+            : "text-primary-700 hover:bg-primary-50 dark:text-white/80 dark:hover:bg-white/10",
     ];
 }
 
@@ -500,7 +500,7 @@ function iconWrapClass(to: string) {
         "w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-colors duration-200",
         isActive(to)
             ? "bg-white/20 text-white"
-            : "bg-primary-50 text-primary-500",
+            : "bg-primary-50 text-primary-500 dark:bg-white/10 dark:text-white/70",
     ];
 }
 

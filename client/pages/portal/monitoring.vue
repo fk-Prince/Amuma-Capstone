@@ -134,8 +134,8 @@ const todaysActivity: ActivityEntry[] = [
         title: "Breakfast",
         subtitle: "Breakfast completed",
         icon: "utensils",
-        iconBg: "bg-brand-50",
-        iconText: "text-brand-600",
+        iconBg: "bg-primary-50",
+        iconText: "text-primary-600",
         status: "Completed",
         statusBg: "bg-emerald-50",
         statusText: "text-emerald-600",
@@ -214,10 +214,10 @@ const todaysActivity: ActivityEntry[] = [
                             </div>
                         </div>
                         <span
-                            class="flex items-center gap-1 text-xs font-medium text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg"
+                            class="flex items-center gap-1 text-xs font-medium text-primary-600 bg-primary-50 px-3 py-1.5 rounded-lg"
                         >
                             <span
-                                class="w-1.5 h-1.5 rounded-full bg-brand-500"
+                                class="w-1.5 h-1.5 rounded-full bg-primary-500"
                             />
                             Live
                         </span>
@@ -361,7 +361,7 @@ const todaysActivity: ActivityEntry[] = [
                         </button>
                     </div>
                     <p
-                        class="flex items-center gap-1.5 text-xs text-brand-600 bg-brand-50 rounded-lg px-3 py-2 mt-3"
+                        class="flex items-center gap-1.5 text-xs text-primary-600 bg-primary-50 rounded-lg px-3 py-2 mt-3"
                     >
                         <Icon
                             name="shield-check"
@@ -538,13 +538,13 @@ const todaysActivity: ActivityEntry[] = [
             </div>
         </div>
 
-        <div class="bg-brand-50 rounded-2xl p-5 flex items-center gap-4">
-            <Icon name="shield-check" class="w-6 h-6 text-brand-600 shrink-0" />
+        <div class="bg-primary-50 rounded-2xl p-5 flex items-center gap-4">
+            <Icon name="shield-check" class="w-6 h-6 text-primary-600 shrink-0" />
             <div class="flex-1">
-                <p class="text-sm font-semibold text-brand-700">
+                <p class="text-sm font-semibold text-primary-700">
                     Your loved one's privacy and safety are our top priority.
                 </p>
-                <p class="text-xs text-brand-600">
+                <p class="text-xs text-primary-600">
                     This live camera is for family viewing only. Please use it
                     responsibly.
                 </p>

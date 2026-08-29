@@ -1,5 +1,5 @@
 <template>
-    <section class="relative overflow-hidden bg-slate-50 px-[6%] py-28">
+    <section class="relative overflow-hidden bg-slate-50 px-[6%] py-28 dark:bg-secondary">
         <div
             class="absolute bottom-0 left-[-100px] h-[400px] w-[400px] rounded-full bg-indigo-200/40 blur-[100px]"
         ></div>
@@ -9,7 +9,7 @@
         >
             <div class="flex flex-col gap-5">
                 <div
-                    class="group flex items-center gap-6 rounded-[24px] border border-gray-200 bg-white px-8 py-7 shadow-[0_2px_12px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_16px_40px_rgba(49,130,237,0.12)]"
+                    class="group flex items-center gap-6 rounded-[24px] border border-gray-200 bg-white px-8 py-7 shadow-[0_2px_12px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_16px_40px_rgba(49,130,237,0.12)] dark:bg-secondary dark:border-white/10"
                 >
                     <div
                         class="min-w-[80px] text-center text-6xl font-black text-primary"
@@ -18,11 +18,11 @@
                     </div>
 
                     <div>
-                        <h4 class="mb-2 text-lg font-bold text-secondary">
+                        <h4 class="mb-2 text-lg font-bold text-secondary dark:text-white">
                             Family books a visit
                         </h4>
 
-                        <p class="text-sm leading-7 text-muted">
+                        <p class="text-sm leading-7 text-muted dark:text-gray-400">
                             Via web portal. AMUMA automatically creates a
                             patient profile and prepares the request for review.
                         </p>
@@ -30,7 +30,7 @@
                 </div>
 
                 <div
-                    class="group flex items-center gap-6 rounded-[24px] border border-gray-200 bg-white px-8 py-7 shadow-[0_2px_12px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_16px_40px_rgba(49,130,237,0.12)]"
+                    class="group flex items-center gap-6 rounded-[24px] border border-gray-200 bg-white px-8 py-7 shadow-[0_2px_12px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_16px_40px_rgba(49,130,237,0.12)] dark:bg-secondary dark:border-white/10"
                 >
                     <div
                         class="min-w-[80px] text-center text-6xl font-black text-primary"
@@ -39,11 +39,11 @@
                     </div>
 
                     <div>
-                        <h4 class="mb-2 text-lg font-bold text-secondary">
+                        <h4 class="mb-2 text-lg font-bold text-secondary dark:text-white">
                             Admission routes the request
                         </h4>
 
-                        <p class="text-sm leading-7 text-muted">
+                        <p class="text-sm leading-7 text-muted dark:text-gray-400">
                             Admission staff assigns a caregiver or admits the
                             patient into an available room with a single click.
                         </p>
@@ -51,7 +51,7 @@
                 </div>
 
                 <div
-                    class="group flex items-center gap-6 rounded-[24px] border border-gray-200 bg-white px-8 py-7 shadow-[0_2px_12px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_16px_40px_rgba(49,130,237,0.12)]"
+                    class="group flex items-center gap-6 rounded-[24px] border border-gray-200 bg-white px-8 py-7 shadow-[0_2px_12px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_16px_40px_rgba(49,130,237,0.12)] dark:bg-secondary dark:border-white/10"
                 >
                     <div
                         class="min-w-[80px] text-center text-6xl font-black text-primary"
@@ -60,11 +60,11 @@
                     </div>
 
                     <div>
-                        <h4 class="mb-2 text-lg font-bold text-secondary">
+                        <h4 class="mb-2 text-lg font-bold text-secondary dark:text-white">
                             Care happens, billing follows
                         </h4>
 
-                        <p class="text-sm leading-7 text-muted">
+                        <p class="text-sm leading-7 text-muted dark:text-gray-400">
                             Nurses complete visits, accounting automatically
                             generates invoices, and balances update instantly.
                         </p>
@@ -80,7 +80,7 @@
                 </p>
 
                 <h2
-                    class="text-[clamp(2.8rem,5vw,5rem)] leading-none font-black tracking-[-0.03em] text-secondary"
+                    class="text-[clamp(2.8rem,5vw,5rem)] leading-none font-black tracking-[-0.03em] text-secondary dark:text-white"
                 >
                     A
 

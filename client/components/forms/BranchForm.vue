@@ -2,11 +2,11 @@
     <div class="max-w-7xl mx-auto space-y-8">
         <div class="space-y-6">
             <div>
-                <h2 class="text-lg font-semibold text-slate-900">
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                     Branch Information
                 </h2>
 
-                <p class="text-sm text-slate-500 mt-1">
+                <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                     Update your branch details and contact information.
                 </p>
             </div>
@@ -18,6 +18,7 @@
                         label="Branch Name"
                         @update:modelValue="clearError('branch_name')"
                         :error="errors?.branch_name"
+                        data-field="branch_name"
                     />
 
                     <LabelInput
@@ -26,6 +27,7 @@
                         type="email"
                         @update:modelValue="clearError('branch_email')"
                         :error="errors?.branch_email"
+                        data-field="branch_email"
                     />
 
                     <LabelInput
@@ -37,6 +39,7 @@
                         :rows="3"
                         @update:modelValue="clearError('branch_description')"
                         :error="errors?.branch_description"
+                        data-field="branch_description"
                     />
 
                     <PhoneInput
@@ -44,12 +47,13 @@
                         label="Contact Number"
                         @update:modelValue="clearError('branch_contact_number')"
                         :error="errors?.branch_contact_number"
+                        data-field="branch_contact_number"
                     />
                 </div>
 
-                <div class="space-y-2">
+                <div class="space-y-2" data-field="branch_image">
                     <div class="flex items-center justify-between">
-                        <label class="text-sm font-semibold text-slate-700">
+                        <label class="text-sm font-semibold text-slate-700 dark:text-gray-300">
                             Branch Image
                         </label>
 
@@ -64,7 +68,7 @@
                     </div>
 
                     <div
-                        class="relative h-52 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group"
+                        class="relative h-52 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
                         @click="branchImageInput?.click()"
                     >
                         <img
@@ -75,7 +79,7 @@
 
                         <div
                             v-else
-                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400"
+                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500"
                         >
                             <div
                                 class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-2xl mb-3"
@@ -111,23 +115,23 @@
 
         <div class="space-y-5">
             <div>
-                <h2 class="text-lg font-semibold text-slate-900">
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                     Verification Document
                 </h2>
 
-                <p class="text-sm text-slate-500 mt-1">
+                <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                     Upload a supporting document for this branch.
                 </p>
             </div>
 
-            <div class="grid grid-cols-2 gap-5">
-                <div class="space-y-2 p-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="space-y-2 p-4" data-field="branch_document">
                     <div class="flex items-center justify-between">
                         <label
-                            class="flex items-center gap-1.5 text-sm font-semibold text-slate-700"
+                            class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
                         >
                             <svg
-                                class="w-4 h-4 text-slate-400"
+                                class="w-4 h-4 text-slate-400 dark:text-gray-500"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -158,7 +162,7 @@
                     </div>
 
                     <div
-                        class="relative h-40 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group"
+                        class="relative h-40 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
                         @click="branchDocumentInput?.click()"
                     >
                         <img
@@ -193,19 +197,19 @@
                             </div>
 
                             <p
-                                class="max-w-full truncate text-sm font-medium text-slate-700"
+                                class="max-w-full truncate text-sm font-medium text-slate-700 dark:text-gray-300"
                             >
                                 {{ branchDocumentName }}
                             </p>
 
-                            <span class="mt-0.5 text-xs text-slate-400">
+                            <span class="mt-0.5 text-xs text-slate-400 dark:text-gray-500">
                                 PDF selected — click to replace
                             </span>
                         </div>
 
                         <div
                             v-else
-                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400"
+                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500"
                         >
                             <div
                                 class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
@@ -272,7 +276,7 @@
 
                         <ul
                             v-if="showBranchDocumentList"
-                            class="mt-2 space-y-1 rounded-lg bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside"
+                            class="mt-2 space-y-1 rounded-lg bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside dark:text-gray-300"
                         >
                             <li
                                 v-for="item in applicableBranchDocuments"
@@ -286,14 +290,17 @@
             </div>
         </div>
 
-        <div class="space-y-5">
-            <div class="flex items-center justify-between">
+        <div
+            class="space-y-5"
+            data-field="location.street location.city location.province location.country location"
+        >
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 class="text-lg font-semibold text-slate-900">
+                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                         Primary Address
                     </h2>
 
-                    <p class="text-sm text-slate-500 mt-1">
+                    <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                         Choose between map location or manual address.
                     </p>
 
@@ -305,17 +312,29 @@
                     </p>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    <span class="text-xs text-slate-500"> Use map </span>
+                <div class="flex items-center gap-3 shrink-0">
+                    <button
+                        type="button"
+                        @click="resetLocation"
+                        class="text-xs font-medium text-red-500 hover:text-red-600 whitespace-nowrap"
+                    >
+                        Reset
+                    </button>
+
+                    <span class="text-xs text-slate-500 dark:text-gray-400 whitespace-nowrap"> Use map </span>
 
                     <button
                         type="button"
                         @click="useGeolocation = !useGeolocation"
                         class="relative inline-flex h-6 w-11 items-center rounded-full transition"
-                        :class="useGeolocation ? 'bg-primary' : 'bg-slate-200'"
+                        :class="
+                            useGeolocation
+                                ? 'bg-primary'
+                                : 'bg-slate-200 dark:bg-white/10'
+                        "
                     >
                         <span
-                            class="h-4 w-4 rounded-full bg-white shadow transition-transform"
+                            class="h-4 w-4 rounded-full bg-white shadow transition-transform dark:bg-secondary"
                             :class="
                                 useGeolocation
                                     ? 'translate-x-6'
@@ -338,11 +357,13 @@
                         "
                         :initial-country="branch.location?.country || undefined"
                         @location-selected="handleLocation"
+                        @location-cleared="clearLocation"
+                        ref="locationSelectorRef"
                     />
 
                     <template #fallback>
                         <div
-                            class="h-64 rounded-xl bg-slate-50 flex items-center justify-center text-sm text-gray-400"
+                            class="h-64 rounded-xl bg-slate-50 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 dark:bg-secondary"
                         >
                             Loading map...
                         </div>
@@ -356,6 +377,7 @@
                     label="Street"
                     @update:modelValue="clearError('location.street')"
                     :error="errors?.['location.street']"
+                    data-field="location.street"
                 />
 
                 <LabelInput
@@ -363,6 +385,7 @@
                     label="City"
                     @update:modelValue="clearError('location.city')"
                     :error="errors?.['location.city']"
+                    data-field="location.city"
                 />
 
                 <LabelInput
@@ -370,6 +393,7 @@
                     label="Province"
                     @update:modelValue="clearError('location.province')"
                     :error="errors?.['location.province']"
+                    data-field="location.province"
                 />
 
                 <LabelInput
@@ -377,6 +401,7 @@
                     label="Country"
                     @update:modelValue="clearError('location.country')"
                     :error="errors?.['location.country']"
+                    data-field="location.country"
                 />
             </div>
         </div>
@@ -384,7 +409,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
 import PhoneInput from "../ui/PhoneInput.vue";
@@ -407,29 +432,37 @@ const branch = computed({
 
 const errors = computed(() => props.errors);
 
-const branchImagePreview = ref<string | null>(
-    typeof props.branch.image === "string" ? props.branch.image : null,
-);
+function initialPreview(value: unknown): string | null {
+    if (typeof value === "string") return value;
+    if (value instanceof File && value.type !== "application/pdf") {
+        return URL.createObjectURL(value);
+    }
+    return null;
+}
+
+const branchImagePreview = ref<string | null>(initialPreview(props.branch.image));
 const branchImageInput = ref<HTMLInputElement | null>(null);
 const useGeolocation = ref(true);
 
 const branchDocumentPreview = ref<string | null>(
-    typeof (props.branch as any).document === "string"
-        ? (props.branch as any).document
-        : null,
+    initialPreview((props.branch as any).document),
 );
 const branchDocumentInput = ref<HTMLInputElement | null>(null);
 const showBranchDocumentList = ref(false);
 
-// A previously saved PDF comes back as a URL string, so derive its name from
-// the path rather than leaving the dropzone looking empty on re-open.
+// A previously saved PDF comes back as a URL string; one picked but not yet
+// uploaded is still a raw File, so derive its name from whichever it is.
 const branchDocumentName = ref<string | null>(
-    typeof (props.branch as any).document === "string" &&
-    (props.branch as any).document.toLowerCase().endsWith(".pdf")
-        ? decodeURIComponent(
-              (props.branch as any).document.split("/").pop() ?? "Document.pdf",
-          )
-        : null,
+    (props.branch as any).document instanceof File &&
+    (props.branch as any).document.type === "application/pdf"
+        ? (props.branch as any).document.name
+        : typeof (props.branch as any).document === "string" &&
+            (props.branch as any).document.toLowerCase().endsWith(".pdf")
+          ? decodeURIComponent(
+                (props.branch as any).document.split("/").pop() ??
+                    "Document.pdf",
+            )
+          : null,
 );
 
 const applicableBranchDocuments = [
@@ -449,6 +482,13 @@ const locationError = computed(() => {
     return keys.some((k) => props.errors?.[k])
         ? "Location is required. Please complete address information."
         : "";
+});
+
+// Manual fields only exist in the DOM with map mode off, so a location error caught on the map would have nowhere to show.
+watch(locationError, (hasError) => {
+    if (hasError) {
+        useGeolocation.value = false;
+    }
 });
 
 const handleLocation = ({
@@ -514,6 +554,32 @@ const handleLocation = ({
     }
 
     emit("update:errors", updatedErrors);
+};
+
+const clearLocation = () => {
+    emit("update:branch", {
+        ...props.branch,
+        location: {
+            street: "",
+            city: "",
+            province: "",
+            country: "",
+            latitude: undefined,
+            longitude: undefined,
+        },
+    });
+};
+
+const locationSelectorRef = ref<InstanceType<typeof LocationSelector> | null>(
+    null,
+);
+
+const resetLocation = () => {
+    if (useGeolocation.value && locationSelectorRef.value) {
+        locationSelectorRef.value.clearSelection();
+    } else {
+        clearLocation();
+    }
 };
 
 const handleBranchImage = (event: Event) => {

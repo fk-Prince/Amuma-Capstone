@@ -1,10 +1,10 @@
 <template>
     <header
-        class="min-h-[88px] sm:min-h-[104px] lg:h-[120px] px-3 sm:px-6 lg:px-8 py-4 sm:py-5 flex items-center justify-between gap-2 sm:gap-4 shrink-0 border-b border-gray-100 bg-white"
+        class="min-h-[88px] sm:min-h-[104px] lg:h-[120px] px-3 sm:px-6 lg:px-8 py-4 sm:py-5 flex items-center justify-between gap-2 sm:gap-4 shrink-0 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-secondary"
     >
         <button
             type="button"
-            class="-ml-1 shrink-0 rounded-lg p-2 text-gray-600 hover:bg-gray-50 hover:text-brand-500 lg:hidden"
+            class="-ml-1 shrink-0 rounded-lg p-2 text-gray-600 hover:bg-gray-50 hover:text-primary-500 dark:text-white/70 dark:hover:bg-white/10 lg:hidden"
             aria-label="Open navigation"
             @click="emit('open')"
         >
@@ -13,7 +13,7 @@
 
         <div class="min-w-0 flex-1">
             <h1
-                class="text-lg sm:text-2xl lg:text-[26px] font-bold text-gray-900 leading-tight truncate"
+                class="text-lg sm:text-2xl lg:text-[26px] font-bold text-gray-900 dark:text-white leading-tight truncate"
             >
                 {{ pageTitle }}
             </h1>
@@ -23,18 +23,18 @@
             </p>
 
             <div
-                class="flex items-center gap-2 sm:gap-3 mt-2 text-[11px] sm:text-xs text-gray-500"
+                class="flex items-center gap-2 sm:gap-3 mt-2 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400"
             >
                 <span class="flex items-center gap-1.5 whitespace-nowrap">
-                    <Calendar class="w-3.5 h-3.5 text-brand-500 shrink-0" />
+                    <Calendar class="w-3.5 h-3.5 text-primary-500 shrink-0" />
                     <span class="hidden sm:inline">{{ formattedDate }}</span>
                     <span class="sm:hidden">{{ formattedShortDate }}</span>
                 </span>
 
-                <span class="w-px h-3 bg-gray-200 shrink-0" />
+                <span class="w-px h-3 bg-gray-200 dark:bg-white/10 shrink-0" />
 
                 <span class="flex items-center gap-1.5 whitespace-nowrap">
-                    <Clock class="w-3.5 h-3.5 text-brand-500 shrink-0" />
+                    <Clock class="w-3.5 h-3.5 text-primary-500 shrink-0" />
                     {{ formattedTime }}
                 </span>
             </div>
@@ -44,19 +44,19 @@
             <button
                 type="button"
                 aria-label="Messages"
-                class="relative w-9 h-9 sm:w-auto sm:h-auto flex items-center justify-center text-gray-700 hover:text-brand-500 transition-colors"
+                class="relative w-9 h-9 sm:w-auto sm:h-auto flex items-center justify-center text-gray-700 hover:text-primary-500 dark:text-gray-300 dark:hover:text-white transition-colors"
                 @click="goToMessages"
             >
                 <MessagesSquare class="w-5 h-5" />
 
                 <span
                     v-if="unreadMessageCount"
-                    class="absolute top-1 right-1 sm:-top-1 sm:-right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white"
+                    class="absolute top-1 right-1 sm:-top-1 sm:-right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-secondary"
                 />
             </button>
 
             <Notification />
-            <NavbarProfileDropdown v-if="user" :user="user" />
+            <NavbarProfileDropdown v-if="user" :user="user" :theme-aware="true" />
         </div>
     </header>
 </template>

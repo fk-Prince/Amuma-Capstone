@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen w-full bg-white">
+    <div class="min-h-screen w-full bg-white dark:bg-secondary">
         <Resources />
     </div>
 </template>

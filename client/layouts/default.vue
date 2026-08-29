@@ -4,7 +4,7 @@
 
         <main class="relative flex-1">
             <div
-                class="pointer-events-none absolute inset-0 overflow-hidden print:hidden w-full h-full"
+                class="pointer-events-none absolute inset-0 overflow-hidden print:hidden w-full h-full dark:opacity-30"
                 aria-hidden="true"
             >
                 <div

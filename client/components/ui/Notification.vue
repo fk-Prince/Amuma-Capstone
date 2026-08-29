@@ -3,7 +3,7 @@
         <button
             ref="buttonRef"
             @click="toggle"
-            class="relative w-[38px] h-[38px] flex items-center justify-center rounded-lg hover:bg-gray-50 text-gray-500"
+            class="relative w-[38px] h-[38px] flex items-center justify-center rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 text-gray-500 dark:text-white/70"
         >
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -38,13 +38,15 @@
         >
             <div
                 v-if="open"
-                class="fixed bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
+                class="fixed bg-white dark:bg-secondary border border-gray-200 dark:border-white/10 rounded-xl shadow-lg dark:shadow-black/30 z-50 overflow-hidden"
                 :style="dropdownStyle"
             >
                 <div
-                    class="flex items-center justify-between px-4 py-3 border-b border-gray-100"
+                    class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-white/10"
                 >
-                    <span class="text-sm font-medium">Notifications</span>
+                    <span class="text-sm font-medium dark:text-white"
+                        >Notifications</span
+                    >
                     <button
                         v-if="unreadCount > 0"
                         @click="markAllRead"
@@ -55,7 +57,7 @@
                 </div>
 
                 <div
-                    class="max-h-[400px] overflow-y-auto divide-y divide-gray-100"
+                    class="max-h-[400px] overflow-y-auto divide-y divide-gray-100 dark:divide-white/10"
                 >
                     <p
                         v-if="!notifications.length"
@@ -68,9 +70,10 @@
                         v-for="notif in notifications"
                         :key="notif.id"
                         @click="markRead(notif.id)"
-                        class="flex gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                        class="flex gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                         :class="{
-                            'bg-blue-50 hover:bg-blue-50/80': notif.unread,
+                            'bg-blue-50 hover:bg-blue-50/80 dark:bg-primary-500/10 dark:hover:bg-primary-500/15':
+                                notif.unread,
                         }"
                     >
                         <div
@@ -84,15 +87,17 @@
                         </div>
 
                         <div class="flex-1 min-w-0">
-                            <p class="text-[13px] font-medium truncate">
+                            <p
+                                class="text-[13px] font-medium truncate dark:text-white"
+                            >
                                 {{ notif.message_type }}
                             </p>
-                            <p class="text-xs text-gray-500 truncate">
+                            <p
+                                class="text-xs text-gray-500 dark:text-gray-400 truncate"
+                            >
                                 {{ notif.message }}
                             </p>
-                            <p
-                                class="text-[11px] text-gray-400 mt-0.5 capitalize"
-                            >
+                            <p class="text-[11px] text-gray-400 mt-0.5">
                                 {{ notifcationFormatDate(notif.created_at) }}
                             </p>
                         </div>
@@ -104,7 +109,9 @@
                     </div>
                 </div>
 
-                <div class="px-4 py-2.5 border-t border-gray-100 text-center">
+                <div
+                    class="px-4 py-2.5 border-t border-gray-100 dark:border-white/10 text-center"
+                >
                     <NuxtLink
                         to="/notifications"
                         class="text-sm text-blue-500 hover:underline"

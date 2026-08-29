@@ -1,14 +1,14 @@
 <template>
-    <div class="bg-white">
+    <div class="bg-white dark:bg-secondary">
         <section
-            class="relative overflow-hidden bg-light/40 px-6 pb-14 pt-28 sm:px-[5%] sm:pb-16 sm:pt-32 lg:px-[10%]"
+            class="relative overflow-hidden bg-light/40 px-6 pb-14 pt-28 sm:px-[5%] sm:pb-16 sm:pt-32 lg:px-[10%] dark:bg-transparent"
         >
             <div
                 class="pointer-events-none absolute -top-24 left-[-100px] h-[380px] w-[380px] rounded-full bg-primary-200/40 blur-[100px]"
             />
 
             <div
-                class="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-white"
+                class="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-white dark:to-secondary"
             />
 
             <div class="relative z-10 mx-auto max-w-3xl text-center">
@@ -18,11 +18,11 @@
                     About Us
                 </p>
 
-                <h1 class="text-3xl font-black text-secondary md:text-4xl">
+                <h1 class="text-3xl font-black text-secondary md:text-4xl dark:text-white">
                     Built to make caregiving simpler
                 </h1>
 
-                <p class="mt-4 text-sm leading-7 text-muted md:text-base">
+                <p class="mt-4 text-sm leading-7 text-muted md:text-base dark:text-gray-400">
                     AMUMA is a centralized platform that brings homecare and
                     in-house facility operations together — patient admissions,
                     scheduling, medication tracking, billing, and family
@@ -41,10 +41,10 @@
                     >
                         Why We Built This
                     </p>
-                    <h2 class="mb-4 text-2xl font-bold text-secondary">
+                    <h2 class="mb-4 text-2xl font-bold text-secondary dark:text-white">
                         Caregiving deserves better than paper and Messenger
                     </h2>
-                    <p class="text-sm leading-7 text-muted">
+                    <p class="text-sm leading-7 text-muted dark:text-gray-400">
                         Most caregiving agencies still run on paper —
                         handwritten admission forms, medication logs kept in
                         notebooks, and family updates sent one conversation at a
@@ -60,12 +60,12 @@
                     <div
                         v-for="stat in stats"
                         :key="stat.label"
-                        class="rounded-2xl border border-gray-200 bg-white p-5 text-center shadow-sm"
+                        class="rounded-2xl border border-gray-200 bg-white p-5 text-center shadow-sm dark:bg-secondary dark:border-white/10"
                     >
                         <p class="text-2xl font-black text-primary md:text-3xl">
                             {{ stat.value }}
                         </p>
-                        <p class="mt-2 text-xs leading-5 text-muted">
+                        <p class="mt-2 text-xs leading-5 text-muted dark:text-gray-400">
                             {{ stat.label }}
                         </p>
                     </div>
@@ -73,26 +73,26 @@
             </div>
 
             <div
-                class="mt-12 rounded-2xl border border-gray-200 bg-light/40 p-6 shadow-sm sm:p-8"
+                class="mt-12 rounded-2xl border border-gray-200 bg-light/40 p-6 shadow-sm sm:p-8 dark:border-white/10 dark:bg-white/5"
             >
                 <p
                     class="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-primary"
                 >
                     Partner Agencies
                 </p>
-                <p class="text-sm leading-7 text-muted">
+                <p class="text-sm leading-7 text-muted dark:text-gray-400">
                     AMUMA was built together with four caregiving agencies in
                     Davao City —
-                    <span class="font-semibold text-secondary"
+                    <span class="font-semibold text-secondary dark:text-white"
                         >ENJ USDI Inc. Corp.</span
                     >,
-                    <span class="font-semibold text-secondary"
+                    <span class="font-semibold text-secondary dark:text-white"
                         >Davao Viel Geriatric Home Care Center</span
                     >,
-                    <span class="font-semibold text-secondary"
+                    <span class="font-semibold text-secondary dark:text-white"
                         >Tahanan Caregiving Care Services</span
                     >, and
-                    <span class="font-semibold text-secondary"
+                    <span class="font-semibold text-secondary dark:text-white"
                         >Riemon Haven's Homecare Nursing Home</span
                     >
                     — whose day-to-day operations shaped every module in the
@@ -109,11 +109,11 @@
                     The Team
                 </p>
 
-                <h2 class="text-2xl font-bold text-secondary md:text-3xl">
+                <h2 class="text-2xl font-bold text-secondary md:text-3xl dark:text-white">
                     Meet the People Behind AMUMA
                 </h2>
 
-                <p class="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted">
+                <p class="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted dark:text-gray-400">
                     The people responsible for the research, design, and
                     development of the platform.
                 </p>
@@ -136,7 +136,7 @@
                         "
                     >
                         <div
-                            class="group relative rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_20px_40px_rgba(49,130,237,0.08),0_4px_12px_rgba(15,23,42,0.04)] sm:p-6"
+                            class="group relative rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_20px_40px_rgba(49,130,237,0.08),0_4px_12px_rgba(15,23,42,0.04)] sm:p-6 dark:bg-secondary dark:border-white/10"
                         >
                             <div
                                 class="absolute top-1/2 hidden h-3 w-3 -translate-y-1/2 rounded-full border-2 border-white bg-primary shadow-[0_0_0_3px_rgba(49,130,237,0.12)] md:block"
@@ -163,7 +163,7 @@
                                     >
                                         <div>
                                             <h3
-                                                class="text-base font-bold text-secondary"
+                                                class="text-base font-bold text-secondary dark:text-white"
                                             >
                                                 {{ member.name }}
                                             </h3>
@@ -177,7 +177,7 @@
                                     </div>
 
                                     <p
-                                        class="mt-3 text-sm leading-6 text-muted"
+                                        class="mt-3 text-sm leading-6 text-muted dark:text-gray-400"
                                     >
                                         {{ member.blurb }}
                                     </p>
@@ -194,7 +194,7 @@
                                     </div>
 
                                     <div
-                                        class="mt-4 flex flex-col gap-2 border-t border-gray-100 pt-4 text-xs text-muted sm:flex-row sm:items-center sm:gap-5"
+                                        class="mt-4 flex flex-col gap-2 border-t border-gray-100 pt-4 text-xs text-muted sm:flex-row sm:items-center sm:gap-5 dark:border-white/10 dark:text-gray-400"
                                     >
                                         <a
                                             :href="`mailto:${member.email}`"

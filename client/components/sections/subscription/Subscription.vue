@@ -33,7 +33,9 @@
 
                 <div class="rounded-2xl p-6 space-y-8">
                     <div class="space-y-3">
-                        <div class="h-6 w-48 rounded-lg bg-primary-100"></div>
+                        <div
+                            class="h-6 w-48 rounded-lg bg-primary-100 dark:bg-primary-500/15"
+                        ></div>
                         <div
                             class="h-4 w-80 max-w-full rounded bg-muted-light/60"
                         ></div>
@@ -102,7 +104,7 @@
                     </div>
 
                     <div
-                        class="flex justify-between border-t border-muted-light pt-6"
+                        class="flex justify-between border-t border-muted-light pt-6 dark:border-white/10"
                     >
                         <div
                             class="h-10 w-24 rounded-xl bg-muted-light/60"
@@ -114,7 +116,7 @@
         </div>
 
         <template v-else>
-            <div class="flex w-full justify-center">
+            <div class="flex w-full justify-center px-2 sm:px-0">
                 <ol class="flex w-full max-w-6xl items-start justify-center">
                     <li
                         v-for="(step, index) in STEPS"
@@ -126,18 +128,18 @@
                     >
                         <div class="flex shrink-0 flex-col items-center">
                             <div
-                                class="flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold transition-all duration-200"
+                                class="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-full border-2 text-xs sm:text-sm font-semibold transition-all duration-200"
                                 :class="
                                     currentStep > index + 1
                                         ? 'border-primary bg-primary text-white'
                                         : currentStep === index + 1
-                                          ? 'border-primary bg-white text-primary shadow-sm ring-4 ring-primary/10'
-                                          : 'border-slate-200 bg-white text-slate-400'
+                                          ? 'border-primary bg-white dark:bg-secondary text-primary shadow-sm ring-4 ring-primary/10'
+                                          : 'border-slate-200 dark:border-white/10 bg-white dark:bg-secondary text-slate-400 dark:text-gray-500'
                                 "
                             >
                                 <Check
                                     v-if="currentStep > index + 1"
-                                    class="h-4 w-4 stroke-[2.5]"
+                                    class="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2.5]"
                                 />
 
                                 <span v-else>
@@ -146,11 +148,11 @@
                             </div>
 
                             <span
-                                class="mt-2 max-w-[7rem] text-center text-xs font-medium leading-tight transition-colors"
+                                class="mt-1.5 sm:mt-2 max-w-[4.25rem] sm:max-w-[7rem] text-center text-[10px] sm:text-xs font-medium leading-tight transition-colors"
                                 :class="
                                     currentStep >= index + 1
-                                        ? 'text-slate-800'
-                                        : 'text-slate-400'
+                                        ? 'text-slate-800 dark:text-white'
+                                        : 'text-slate-400 dark:text-gray-500'
                                 "
                             >
                                 {{ step }}
@@ -160,11 +162,11 @@
                         <!-- Connector -->
                         <div
                             v-if="index < STEPS.length - 1"
-                            class="mx-4 mt-[18px] h-px flex-1 transition-colors duration-200"
+                            class="mx-1.5 sm:mx-4 mt-[14px] sm:mt-[18px] h-px flex-1 transition-colors duration-200"
                             :class="
                                 currentStep > index + 1
                                     ? 'bg-primary'
-                                    : 'bg-slate-200'
+                                    : 'bg-slate-200 dark:bg-white/10'
                             "
                         ></div>
                     </li>
@@ -173,10 +175,10 @@
             <div class="rounded-2xl p-6 space-y-3">
                 <div v-if="currentStep === 1">
                     <!-- <div class="mb-6">
-                        <h2 class="text-xl font-bold text-secondary">
+                        <h2 class="text-xl font-bold text-secondary dark:text-white">
                             Subscription details
                         </h2>
-                        <p class="text-sm text-muted mt-1">
+                        <p class="text-sm text-muted mt-1 dark:text-gray-400">
                             Manage your AMUMA subscription plan and billing
                             preferences.
                         </p>
@@ -192,7 +194,7 @@
                     <div class="mb-8">
                         <div class="flex flex-col items-center justify-center">
                             <div
-                                class="relative inline-flex border border-primary-200 items-center rounded-full bg-muted-light/40 py-1"
+                                class="relative inline-flex border border-primary-200 dark:border-white/10 items-center rounded-full bg-muted-light/40 dark:bg-white/5 py-1"
                             >
                                 <span
                                     class="absolute top-1 bottom-1 left-1 w-[calc(50%-6px)] rounded-full bg-primary shadow-sm transition-all duration-300 ease-in-out"
@@ -209,7 +211,7 @@
                                     :class="
                                         checkout.selectedInterval === 'monthly'
                                             ? 'text-white'
-                                            : 'text-muted hover:text-secondary'
+                                            : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
                                     "
                                     @click="
                                         checkout.selectedInterval = 'monthly'
@@ -224,7 +226,7 @@
                                     :class="
                                         checkout.selectedInterval === 'yearly'
                                             ? 'text-white'
-                                            : 'text-muted hover:text-secondary'
+                                            : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
                                     "
                                     @click="
                                         checkout.selectedInterval = 'yearly'
@@ -234,7 +236,9 @@
                                 </button>
                             </div>
 
-                            <p class="mt-2 text-xs text-muted">
+                            <p
+                                class="mt-2 text-xs text-muted dark:text-gray-400"
+                            >
                                 {{
                                     checkout.selectedInterval === "yearly"
                                         ? "Billed annually — save more compared to monthly billing."
@@ -253,8 +257,8 @@
                             class="relative flex flex-col h-full gap-3 border border-primary/20 p-8 rounded-xl cursor-pointer transition-all"
                             :class="
                                 checkout.selectedPlan?.plan_id === plan.plan_id
-                                    ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20'
-                                    : 'border-muted-light hover:border-primary-200'
+                                    ? 'border-primary bg-primary-50/60 dark:bg-primary-500/10 ring-1 ring-primary/20'
+                                    : 'border-muted-light dark:border-white/10 hover:border-primary-200'
                             "
                         >
                             <input
@@ -274,7 +278,7 @@
                                     checkout.selectedPlan?.plan_id ===
                                     plan.plan_id
                                         ? 'border-primary'
-                                        : 'border-slate-300'
+                                        : 'border-slate-300 dark:border-white/20'
                                 "
                             >
                                 <span
@@ -288,7 +292,7 @@
 
                             <!-- Icon -->
                             <div
-                                class="h-10 w-10 rounded-lg bg-primary-50 border border-primary-100 flex items-center justify-center shrink-0"
+                                class="h-10 w-10 rounded-lg bg-primary-50 border border-primary-100 flex items-center justify-center shrink-0 dark:bg-primary-500/10"
                             >
                                 <component
                                     :is="plan.icon ?? Home"
@@ -299,13 +303,13 @@
                             <!-- Plan information -->
                             <div class="pr-6">
                                 <p
-                                    class="font-semibold text-base text-secondary leading-tight"
+                                    class="font-semibold text-base text-secondary leading-tight dark:text-white"
                                 >
                                     {{ plan.name }}
                                 </p>
 
                                 <p
-                                    class="text-sm text-muted mt-1.5 leading-relaxed"
+                                    class="text-sm text-muted mt-1.5 leading-relaxed dark:text-gray-400"
                                 >
                                     {{ plan.description }}
                                 </p>
@@ -313,9 +317,11 @@
 
                             <!-- Pricing -->
                             <div
-                                class="flex items-center justify-between pt-4 mt-auto border-t border-muted-light/70"
+                                class="flex items-center justify-between pt-4 mt-auto border-t border-muted-light/70 dark:border-white/10"
                             >
-                                <span class="text-sm font-medium text-muted">
+                                <span
+                                    class="text-sm font-medium text-muted dark:text-gray-400"
+                                >
                                     {{
                                         checkout.selectedInterval === "yearly"
                                             ? "/ year"
@@ -364,10 +370,10 @@
                     </div>
                     <!-- 
                     <div>
-                        <h3 class="font-semibold text-secondary mb-1">
+                        <h3 class="font-semibold text-secondary mb-1 dark:text-white">
                             Billing cycle
                         </h3>
-                        <p class="text-sm text-muted mb-3">
+                        <p class="text-sm text-muted mb-3 dark:text-gray-400">
                             Choose how your subscription is billed, monthly or
                             yearly.
                         </p>
@@ -392,11 +398,11 @@
 
                                 <div class="mt-2">
                                     <p
-                                        class="font-semibold text-sm text-secondary"
+                                        class="font-semibold text-sm text-secondary dark:text-white"
                                     >
                                         {{ opt.label }}
                                     </p>
-                                    <p class="text-xs text-muted">
+                                    <p class="text-xs text-muted dark:text-gray-400">
                                         {{ opt.description }}
                                     </p>
                                 </div>
@@ -422,10 +428,12 @@
 
                 <div v-if="currentStep === 4">
                     <div class="mb-6">
-                        <h2 class="text-xl font-bold text-secondary">
+                        <h2
+                            class="text-xl font-bold text-secondary dark:text-white"
+                        >
                             Branch configuration
                         </h2>
-                        <p class="text-sm text-muted mt-1">
+                        <p class="text-sm text-muted mt-1 dark:text-gray-400">
                             Set up the operational preferences for this branch.
                         </p>
                     </div>
@@ -437,7 +445,7 @@
                 </div>
 
                 <div
-                    class="flex items-center justify-between border-t border-slate-200 pt-6"
+                    class="flex items-center justify-between border-t border-slate-200 pt-6 dark:border-white/10"
                 >
                     <button
                         v-if="currentStep > 1"
@@ -446,7 +454,7 @@
                             currentStep--;
                             emit('update:stepCompleted', false);
                         "
-                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98] dark:bg-secondary dark:border-white/10 dark:text-white dark:hover:bg-white/5"
                     >
                         <ChevronLeft class="h-4 w-4" />
                         Previous
@@ -505,7 +513,7 @@
 
 <script setup lang="ts">
 import { Check, ChevronLeft, ChevronRight, Home } from "lucide-vue-next";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { planService } from "@/api/plan/PlanService";
 import { agencySchema } from "~/schema/agency-schema";
@@ -538,6 +546,16 @@ const intervalOptions = [
     { value: "yearly", label: "Yearly", description: "Save more yearly" },
 ];
 
+const scrollToFirstError = async () => {
+    await nextTick();
+
+    const firstKey = Object.keys(checkout.errors ?? {})[0];
+    if (!firstKey) return;
+
+    const el = document.querySelector(`[data-field~="${firstKey}"]`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+};
+
 const nextStep = async () => {
     stepError.value = null;
     checkout.clearAllErrors();
@@ -550,12 +568,18 @@ const nextStep = async () => {
     }
     if (currentStep.value === 2) {
         const isValid = await validateAgency();
-        if (!isValid) return;
+        if (!isValid) {
+            await scrollToFirstError();
+            return;
+        }
     }
 
     if (currentStep.value === 3) {
         const isValid = await validateBranch();
-        if (!isValid) return;
+        if (!isValid) {
+            await scrollToFirstError();
+            return;
+        }
         emit("update:stepCompleted", isValid && currentStep.value === 3);
     }
 
@@ -618,9 +642,6 @@ const isLoading = ref(false);
 const send = async () => {
     if (isLoading.value) return;
 
-    // The button's spinner and disabled state both hang off this; it was only
-    // ever reset in the finally block, never raised, so validation ran with no
-    // feedback and the button stayed clickable.
     isLoading.value = true;
 
     try {
@@ -660,7 +681,6 @@ const send = async () => {
             agency_id_back: checkout.agency.id_back ?? "",
             agency_document: checkout.agency.document ?? "",
         };
-        console.log(payload);
         await subscriptionService.validateSubscription(payload);
         checkout.subscriptionPayload = payload;
         await navigateTo({

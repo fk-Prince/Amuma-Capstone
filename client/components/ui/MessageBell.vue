@@ -106,7 +106,7 @@ onBeforeUnmount(() => {
         v-if="isMounted"
         type="button"
         aria-label="Messages"
-        class="relative w-[38px] h-[38px] flex items-center justify-center rounded-lg hover:bg-gray-50 text-gray-500"
+        class="relative w-[38px] h-[38px] flex items-center justify-center rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 text-gray-500 dark:text-white/70"
         @click="goToMessages"
     >
         <svg
@@ -127,7 +127,7 @@ onBeforeUnmount(() => {
 
         <span
             v-if="unreadCount > 0"
-            class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white"
+            class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white dark:border-secondary"
         />
     </button>
 </template>

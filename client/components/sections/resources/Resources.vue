@@ -1,7 +1,7 @@
 <template>
-    <div class="bg-white">
+    <div class="bg-white dark:bg-secondary relative">
         <section
-            class="relative z-10 w-full overflow-hidden bg-light/40 px-6 pb-12 pt-24 sm:px-[5%] sm:pb-16 sm:pt-32 lg:px-[10%]"
+            class="relative z-10 w-full overflow-hidden bg-light/40 px-6 pb-12 pt-24 sm:px-[5%] sm:pb-16 sm:pt-32 lg:px-[10%] dark:bg-transparent"
         >
             <div
                 class="pointer-events-none absolute -top-24 right-[-100px] h-[380px] w-[380px] rounded-full bg-primary-200/40 blur-[100px]"
@@ -10,7 +10,7 @@
             <img
                 src="~/assets/images/Rectangle_15.png"
                 alt=""
-                class="pointer-events-none absolute inset-y-0 right-0 hidden w-[48%] object-cover object-left lg:block"
+                class="pointer-events-none z-11 absolute inset-y-0 right-0 top-[80px] hidden w-[48%] object-cover object-left lg:block z-11"
                 style="
                     mask-image: linear-gradient(
                         to right,
@@ -26,22 +26,24 @@
             />
 
             <div
-                class="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-white"
+                class="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-white dark:to-secondary"
             />
 
             <div class="relative z-10 mx-auto w-full">
                 <div
-                    class="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary"
+                    class="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary dark:bg-primary-500/10"
                 >
                     <Bookmark class="h-6 w-6" />
                 </div>
 
-                <h1 class="text-3xl font-black text-secondary md:text-4xl">
+                <h1
+                    class="text-3xl font-black text-secondary md:text-4xl dark:text-white"
+                >
                     Resources
                 </h1>
 
                 <p
-                    class="mt-3 max-w-2xl text-sm leading-7 text-muted md:text-base"
+                    class="mt-3 max-w-2xl text-sm leading-7 text-muted md:text-base dark:text-gray-400"
                 >
                     Access healthcare guides, caregiver resources, patient
                     education, FAQs, and support materials — all in one place.
@@ -50,7 +52,7 @@
         </section>
 
         <main
-            class="relative z-0 mx-auto w-full md:px-[5%] lg:px-[10%] space-y-20 bg-white px-6 py-10"
+            class="relative z-0 mx-auto w-full md:px-[5%] lg:px-[10%] space-y-20 bg-white px-6 py-10 dark:bg-secondary"
         >
             <section>
                 <div class="mb-8 flex items-end justify-between gap-4">
@@ -61,7 +63,9 @@
                             Guides
                         </p>
 
-                        <h2 class="text-2xl font-bold text-secondary">
+                        <h2
+                            class="text-2xl font-bold text-secondary dark:text-white"
+                        >
                             Featured Resources
                         </h2>
                     </div>
@@ -83,7 +87,7 @@
                         v-for="item in featuredResources"
                         :key="item.title"
                         :to="item.to"
-                        class="group rounded-3xl border border-gray-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_20px_40px_rgba(49,130,237,0.08),0_4px_12px_rgba(15,23,42,0.04)]"
+                        class="group rounded-3xl border border-gray-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_20px_40px_rgba(49,130,237,0.08),0_4px_12px_rgba(15,23,42,0.04)] dark:bg-secondary dark:border-white/10"
                     >
                         <div
                             class="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl"
@@ -92,11 +96,15 @@
                             <component :is="item.icon" class="h-6 w-6" />
                         </div>
 
-                        <h3 class="mb-2 text-lg font-bold text-secondary">
+                        <h3
+                            class="mb-2 text-lg font-bold text-secondary dark:text-white"
+                        >
                             {{ item.title }}
                         </h3>
 
-                        <p class="mb-6 text-sm leading-6 text-muted">
+                        <p
+                            class="mb-6 text-sm leading-6 text-muted dark:text-gray-400"
+                        >
                             {{ item.description }}
                         </p>
 
@@ -121,7 +129,9 @@
                     Browse
                 </p>
 
-                <h2 class="mb-8 text-2xl font-bold text-secondary">
+                <h2
+                    class="mb-8 text-2xl font-bold text-secondary dark:text-white"
+                >
                     Resource Categories
                 </h2>
 
@@ -130,7 +140,7 @@
                         v-for="cat in categories"
                         :key="cat.title"
                         :to="cat.to"
-                        class="rounded-[20px] border border-gray-200 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_20px_40px_rgba(49,130,237,0.08),0_4px_12px_rgba(15,23,42,0.04)]"
+                        class="rounded-[20px] border border-gray-200 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_20px_40px_rgba(49,130,237,0.08),0_4px_12px_rgba(15,23,42,0.04)] dark:bg-secondary dark:border-white/10"
                     >
                         <div
                             class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl"
@@ -139,7 +149,9 @@
                             <component :is="cat.icon" class="h-5 w-5" />
                         </div>
 
-                        <h3 class="mb-3 text-base font-bold text-secondary">
+                        <h3
+                            class="mb-3 text-base font-bold text-secondary dark:text-white"
+                        >
                             {{ cat.title }}
                         </h3>
 
@@ -147,7 +159,7 @@
                             <li
                                 v-for="point in cat.items"
                                 :key="point"
-                                class="flex items-center gap-2 text-sm text-muted"
+                                class="flex items-center gap-2 text-sm text-muted dark:text-gray-400"
                             >
                                 <CheckCircle2
                                     class="h-3.5 w-3.5 shrink-0"
@@ -180,7 +192,9 @@
                         Support
                     </p>
 
-                    <h2 class="mb-6 text-2xl font-bold text-secondary">
+                    <h2
+                        class="mb-6 text-2xl font-bold text-secondary dark:text-white"
+                    >
                         Frequently Asked Questions
                     </h2>
 
@@ -188,7 +202,7 @@
                         <div
                             v-for="(faq, i) in faqs"
                             :key="faq.q"
-                            class="overflow-hidden rounded-2xl border border-gray-200 transition-colors"
+                            class="overflow-hidden rounded-2xl border border-gray-200 transition-colors dark:border-white/10"
                             :class="openFaq === i ? 'border-primary/30' : ''"
                         >
                             <button
@@ -197,13 +211,13 @@
                                 @click="openFaq = openFaq === i ? null : i"
                             >
                                 <span
-                                    class="text-sm font-semibold text-secondary"
+                                    class="text-sm font-semibold text-secondary dark:text-white"
                                 >
                                     {{ faq.q }}
                                 </span>
 
                                 <ChevronDown
-                                    class="h-4 w-4 shrink-0 text-muted transition-transform duration-200"
+                                    class="h-4 w-4 shrink-0 text-muted transition-transform duration-200 dark:text-gray-400"
                                     :class="
                                         openFaq === i
                                             ? 'rotate-180 text-primary'
@@ -214,7 +228,7 @@
 
                             <div
                                 v-show="openFaq === i"
-                                class="px-5 pb-4 text-sm leading-6 text-muted"
+                                class="px-5 pb-4 text-sm leading-6 text-muted dark:text-gray-400"
                             >
                                 {{ faq.a }}
                             </div>
@@ -224,7 +238,7 @@
 
                 <div class="hidden justify-center lg:flex">
                     <div
-                        class="flex h-64 w-64 items-center justify-center rounded-full bg-light"
+                        class="flex h-64 w-64 items-center justify-center rounded-full bg-light dark:bg-white/5"
                     >
                         <MessageCircleQuestion class="h-24 w-24 text-primary" />
                     </div>
@@ -240,7 +254,9 @@
                             Materials
                         </p>
 
-                        <h2 class="text-2xl font-bold text-secondary">
+                        <h2
+                            class="text-2xl font-bold text-secondary dark:text-white"
+                        >
                             Download Center
                         </h2>
                     </div>
@@ -261,7 +277,7 @@
                     <article
                         v-for="doc in downloads"
                         :key="doc.title"
-                        class="rounded-2xl border border-gray-200 bg-white p-5"
+                        class="rounded-2xl border border-gray-200 bg-white p-5 dark:bg-secondary dark:border-white/10"
                     >
                         <div
                             class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl"
@@ -270,17 +286,19 @@
                             <FileText class="h-5 w-5" />
                         </div>
 
-                        <h3 class="mb-1 text-sm font-bold text-secondary">
+                        <h3
+                            class="mb-1 text-sm font-bold text-secondary dark:text-white"
+                        >
                             {{ doc.title }}
                         </h3>
 
-                        <p class="mb-4 text-xs text-muted">
+                        <p class="mb-4 text-xs text-muted dark:text-gray-400">
                             PDF Document · {{ doc.size }}
                         </p>
 
                         <button
                             type="button"
-                            class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 py-2 text-xs font-semibold text-secondary transition-colors hover:border-primary/30 hover:text-primary"
+                            class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 py-2 text-xs font-semibold text-secondary transition-colors hover:border-primary/30 hover:text-primary dark:border-white/10 dark:text-white"
                         >
                             Download PDF
 
@@ -299,7 +317,9 @@
                             Learn
                         </p>
 
-                        <h2 class="text-2xl font-bold text-secondary">
+                        <h2
+                            class="text-2xl font-bold text-secondary dark:text-white"
+                        >
                             Video Tutorials
                         </h2>
                     </div>
@@ -320,7 +340,7 @@
                     <article
                         v-for="video in videos"
                         :key="video.title"
-                        class="group overflow-hidden rounded-2xl border border-gray-200 bg-white"
+                        class="group overflow-hidden rounded-2xl border border-gray-200 bg-white dark:bg-secondary dark:border-white/10"
                     >
                         <div
                             class="relative flex h-32 items-center justify-center bg-gradient-to-br"
@@ -343,11 +363,15 @@
                         </div>
 
                         <div class="p-4">
-                            <h3 class="mb-1 text-sm font-bold text-secondary">
+                            <h3
+                                class="mb-1 text-sm font-bold text-secondary dark:text-white"
+                            >
                                 {{ video.title }}
                             </h3>
 
-                            <p class="text-xs leading-5 text-muted">
+                            <p
+                                class="text-xs leading-5 text-muted dark:text-gray-400"
+                            >
                                 {{ video.description }}
                             </p>
                         </div>
@@ -363,7 +387,7 @@
                         Quick Access
                     </p>
 
-                    <h2 class="text-2xl font-bold text-secondary">
+                    <h2 class="text-2xl font-bold text-secondary dark:text-white">
                         Helpful Links
                     </h2>
                 </div>
@@ -373,7 +397,7 @@
                         v-for="link in helpfulLinks"
                         :key="link.title"
                         :to="link.to ?? '#'"
-                        class="rounded-2xl border border-gray-200 bg-white p-5 transition-colors hover:border-primary/25"
+                        class="rounded-2xl border border-gray-200 bg-white p-5 transition-colors hover:border-primary/25 dark:bg-secondary dark:border-white/10"
                     >
                         <div
                             class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl"
@@ -382,11 +406,11 @@
                             <component :is="link.icon" class="h-5 w-5" />
                         </div>
 
-                        <h3 class="mb-1 text-sm font-bold text-secondary">
+                        <h3 class="mb-1 text-sm font-bold text-secondary dark:text-white">
                             {{ link.title }}
                         </h3>
 
-                        <p class="mb-4 text-xs leading-5 text-muted">
+                        <p class="mb-4 text-xs leading-5 text-muted dark:text-gray-400">
                             {{ link.description }}
                         </p>
 
@@ -404,27 +428,31 @@
         </main>
 
         <section
-            class="relative overflow-hidden bg-light/50 px-6 py-14 sm:px-[6%]"
+            class="relative overflow-hidden bg-light/50 px-6 py-14 sm:px-[6%] dark:bg-transparent"
         >
             <div
-                class="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-white to-transparent"
+                class="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-white to-transparent dark:from-secondary"
             />
 
             <div
-                class="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 rounded-3xl border border-gray-200 bg-white p-8 md:flex-row md:items-center md:p-10"
+                class="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 rounded-3xl border border-gray-200 bg-white p-8 md:flex-row md:items-center md:p-10 dark:bg-secondary dark:border-white/10"
             >
                 <div>
-                    <h2 class="mb-2 text-2xl font-bold text-secondary">
+                    <h2
+                        class="mb-2 text-2xl font-bold text-secondary dark:text-white"
+                    >
                         Need more help?
                     </h2>
 
-                    <p class="mb-6 max-w-md text-sm leading-6 text-muted">
+                    <p
+                        class="mb-6 max-w-md text-sm leading-6 text-muted dark:text-gray-400"
+                    >
                         Our support team is here for you 24/7 — reach out
                         anytime.
                     </p>
 
                     <div
-                        class="flex flex-wrap gap-x-8 gap-y-3 text-sm text-muted"
+                        class="flex flex-wrap gap-x-8 gap-y-3 text-sm text-muted dark:text-gray-400"
                     >
                         <div class="flex items-center gap-2">
                             <Phone class="h-4 w-4 text-primary" />

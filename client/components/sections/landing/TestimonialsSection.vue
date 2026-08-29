@@ -1,5 +1,5 @@
 <template>
-    <section class="relative overflow-hidden bg-slate-50 px-[6%] py-24">
+    <section class="relative overflow-hidden bg-slate-50 px-[6%] py-24 dark:bg-secondary">
         <!-- Blob -->
 
         <div
@@ -11,7 +11,7 @@
 
             <div class="mb-12">
                 <h2
-                    class="mb-3 text-[clamp(2rem,3vw,3rem)] font-black leading-tight text-secondary"
+                    class="mb-3 text-[clamp(2rem,3vw,3rem)] font-black leading-tight text-secondary dark:text-white"
                 >
                     Trusted by
 
@@ -24,7 +24,7 @@
                     Across the Philippines
                 </h2>
 
-                <p class="text-muted">
+                <p class="text-muted dark:text-gray-400">
                     — here's what agencies say after switching to AMUMA.
                 </p>
             </div>
@@ -37,7 +37,7 @@
                 <div
                     v-for="t in testimonials"
                     :key="t.name"
-                    class="flex w-[320px] shrink-0 snap-start flex-col rounded-[24px] border border-gray-200 bg-white p-7 shadow-[0_2px_16px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(49,130,237,0.10)]"
+                    class="flex w-[320px] shrink-0 snap-start flex-col rounded-[24px] border border-gray-200 bg-white p-7 shadow-[0_2px_16px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(49,130,237,0.10)] dark:bg-secondary dark:border-white/10"
                 >
                     <!-- Quote -->
 
@@ -54,7 +54,7 @@
                     <!-- Content -->
 
                     <p
-                        class="flex-1 text-sm leading-7 text-muted-dark"
+                        class="flex-1 text-sm leading-7 text-muted-dark dark:text-gray-300"
                         v-html="t.quote"
                     ></p>
 

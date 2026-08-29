@@ -16,6 +16,7 @@ import {
 } from "lucide-vue-next";
 import Icon from "./Icon.vue";
 import Pagination from "~/components/ui/Pagination.vue";
+import EmptyState from "~/components/ui/EmptyState.vue";
 import { patientAccessService } from "../../api/patient-access/PatientAccessService";
 import type { PatientActivity } from "~/types/patient-activity";
 
@@ -53,6 +54,7 @@ function fallbackLovedOne(): LovedOne {
 
 const isLoading = ref(true);
 const loadError = ref<string | null>(null);
+const noPatients = ref(false);
 const lovedOnes = ref<LovedOne[]>([]);
 const selectedIndex = ref(0);
 const itemsPerPage = 15;
@@ -118,7 +120,7 @@ function statusConfig(status: string) {
         },
         homecare: {
             label: "Homecare",
-            class: "bg-brand-50 text-brand-700 ring-brand-100",
+            class: "bg-primary-50 text-primary-700 ring-primary-100",
         },
         discharged: {
             label: "Discharged",
@@ -204,8 +206,8 @@ const typeStyles: Record<
     },
     meal: {
         icon: "utensils",
-        bg: "bg-brand-50",
-        text: "text-brand-600",
+        bg: "bg-primary-50",
+        text: "text-primary-600",
         label: "Meal",
     },
     activity: defaultTypeStyle,
@@ -310,6 +312,7 @@ function mapPatientRecord(item: any): LovedOne {
 async function loadPatientData() {
     isLoading.value = true;
     loadError.value = null;
+    noPatients.value = false;
 
     try {
         const res = await patientAccessService.retrieveAction({
@@ -324,7 +327,7 @@ async function loadPatientData() {
             selectedIndex.value = 0;
         } else {
             lovedOnes.value = [];
-            loadError.value = "No patient data returned.";
+            noPatients.value = true;
         }
     } catch (err: any) {
         console.error("Error loading updates:", err);
@@ -396,6 +399,13 @@ onMounted(() => {
             </div>
         </div>
 
+        <EmptyState
+            v-else-if="noPatients"
+            title="You currently have no patients"
+            cta-label="Book a Service"
+            cta-to="/booking/search"
+        />
+
         <div
             v-else-if="loadError"
             class="overflow-hidden rounded-3xl border border-rose-100 bg-white shadow-sm"
@@ -418,7 +428,7 @@ onMounted(() => {
                 <button
                     type="button"
                     @click="loadPatientData"
-                    class="mt-5 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                    class="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                 >
                     <RefreshCw class="h-4 w-4" />
                     Try again
@@ -449,7 +459,7 @@ onMounted(() => {
                                             ? 'bg-violet-500'
                                             : lovedOne.locationType ===
                                                 'homecare'
-                                              ? 'bg-brand-500'
+                                              ? 'bg-primary-500'
                                               : 'bg-gray-400'
                                     "
                                 >
@@ -661,7 +671,7 @@ onMounted(() => {
                 >
                     <div class="flex items-center gap-3">
                         <div
-                            class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600"
+                            class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-600"
                         >
                             <CalendarDays class="h-4 w-4" />
                         </div>

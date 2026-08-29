@@ -16,6 +16,7 @@ import {
 } from "lucide-vue-next";
 import MedicationTable from "~/components/sections/app/Patient/MedicationTable.vue";
 import VitalSignsTable from "~/components/sections/app/Patient/VitalSignsTable.vue";
+import EmptyState from "~/components/ui/EmptyState.vue";
 import { patientAccessService } from "../../api/patient-access/PatientAccessService";
 import type { Medication, Vital } from "~/types/medication";
 
@@ -43,6 +44,7 @@ function fallbackLovedOne(): LovedOne {
 
 const isLoading = ref(true);
 const loadError = ref<string | null>(null);
+const noPatients = ref(false);
 
 const lovedOnes = ref<LovedOne[]>([]);
 const selectedIndex = ref(0);
@@ -127,6 +129,7 @@ function mapPatientRecord(item: any): LovedOne {
 async function loadPatientData() {
     isLoading.value = true;
     loadError.value = null;
+    noPatients.value = false;
 
     try {
         const res = await patientAccessService.retrieveAction({
@@ -141,7 +144,7 @@ async function loadPatientData() {
             selectedIndex.value = 0;
         } else {
             lovedOnes.value = [];
-            loadError.value = "No patient data returned.";
+            noPatients.value = true;
         }
     } catch (err: any) {
         console.error("Error loading medications:", err);
@@ -234,6 +237,13 @@ onBeforeUnmount(() => {
             </div>
         </div>
 
+        <EmptyState
+            v-else-if="noPatients"
+            title="You currently have no patients"
+            cta-label="Book a Service"
+            cta-to="/booking/search"
+        />
+
         <div
             v-else-if="loadError"
             class="overflow-hidden rounded-3xl border border-rose-100 bg-white shadow-sm"
@@ -256,7 +266,7 @@ onBeforeUnmount(() => {
                 <button
                     type="button"
                     @click="loadPatientData"
-                    class="mt-5 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                    class="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                 >
                     <RefreshCw class="h-4 w-4" />
                     Try again
@@ -317,7 +327,7 @@ onBeforeUnmount(() => {
                             class="group flex min-w-fit items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-all"
                             :class="
                                 selectedIndex === idx
-                                    ? 'border-brand-500 bg-brand-50 shadow-sm'
+                                    ? 'border-primary-500 bg-primary-50 shadow-sm'
                                     : 'border-gray-100 bg-gray-50 hover:border-gray-200 hover:bg-white'
                             "
                         >
@@ -325,7 +335,7 @@ onBeforeUnmount(() => {
                                 class="flex h-8 w-8 items-center justify-center rounded-lg"
                                 :class="
                                     selectedIndex === idx
-                                        ? 'bg-brand-500 text-white'
+                                        ? 'bg-primary-500 text-white'
                                         : 'bg-white text-gray-400 ring-1 ring-gray-100'
                                 "
                             >
@@ -336,7 +346,7 @@ onBeforeUnmount(() => {
                                 class="max-w-40 truncate text-xs font-semibold"
                                 :class="
                                     selectedIndex === idx
-                                        ? 'text-brand-700'
+                                        ? 'text-primary-700'
                                         : 'text-gray-600'
                                 "
                             >
@@ -347,7 +357,7 @@ onBeforeUnmount(() => {
                                 class="h-3.5 w-3.5 transition-transform"
                                 :class="
                                     selectedIndex === idx
-                                        ? 'text-brand-500'
+                                        ? 'text-primary-500'
                                         : 'text-gray-300'
                                 "
                             />
@@ -375,7 +385,7 @@ onBeforeUnmount(() => {
                     >
                         <div class="flex items-center gap-3">
                             <div
-                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600"
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600"
                             >
                                 <UserRound class="h-5 w-5" />
                             </div>
@@ -397,16 +407,16 @@ onBeforeUnmount(() => {
 
                         <div class="flex items-center gap-2">
                             <div
-                                class="rounded-xl bg-brand-50 px-3 py-2 text-center"
+                                class="rounded-xl bg-primary-50 px-3 py-2 text-center"
                             >
                                 <p
-                                    class="text-lg font-bold leading-none text-brand-700"
+                                    class="text-lg font-bold leading-none text-primary-700"
                                 >
                                     {{ activeMedicationCount }}
                                 </p>
 
                                 <p
-                                    class="mt-1 text-[10px] font-medium text-brand-600"
+                                    class="mt-1 text-[10px] font-medium text-primary-600"
                                 >
                                     Medications
                                 </p>
@@ -433,7 +443,7 @@ onBeforeUnmount(() => {
 
                 <div class="p-5 sm:p-6">
                     <div class="mb-4 flex items-center gap-2">
-                        <Pill class="h-4 w-4 text-brand-600" />
+                        <Pill class="h-4 w-4 text-primary-600" />
 
                         <h3 class="text-sm font-semibold text-gray-800">
                             Medication Schedule
@@ -566,7 +576,7 @@ onBeforeUnmount(() => {
                             class="flex items-start gap-3 rounded-xl bg-gray-50 p-3.5"
                         >
                             <span
-                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600"
+                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600"
                             >
                                 <Clock3 class="h-4 w-4" />
                             </span>

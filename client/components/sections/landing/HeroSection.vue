@@ -1,5 +1,5 @@
 <template>
-    <section class="relative overflow-visible bg-slate-50 pt-36 pb-40">
+    <section class="relative overflow-visible bg-slate-50 pt-36 pb-40 dark:bg-secondary">
         <div
             class="pointer-events-none absolute -top-[120px] -right-[80px] h-[520px] w-[520px] rounded-full bg-blue-300 opacity-35 blur-[70px]"
         ></div>
@@ -21,7 +21,7 @@
         >
             <div class="max-w-[600px] flex-[0_0_50%]">
                 <h1
-                    class="mt-8 mb-4 max-w-[540px] text-[clamp(3rem,3.8vw,3.8rem)] font-black leading-[0.85] tracking-[-0.045em] text-secondary"
+                    class="mt-8 mb-4 max-w-[540px] text-[clamp(3rem,3.8vw,3.8rem)] font-black leading-[0.85] tracking-[-0.045em] text-secondary dark:text-white"
                 >
                     All-in-One
                     <span
@@ -33,7 +33,7 @@
                     Management System
                 </h1>
 
-                <p class="max-w-[580px] text-sm leading-8 text-muted">
+                <p class="max-w-[580px] text-sm leading-8 text-muted dark:text-gray-400">
                     Streamline home-care bookings, facility management, and
                     patient monitoring — all from one unified platform built for
                     modern care agencies.
@@ -70,9 +70,9 @@
                 </div>
 
                 <div class="mb-8 flex flex-wrap items-center gap-4">
-                    <div class="flex items-center gap-2 text-xs text-muted">
+                    <div class="flex items-center gap-2 text-xs text-muted dark:text-gray-400">
                         <span
-                            class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md"
+                            class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md dark:bg-secondary"
                         >
                             <svg
                                 width="13"
@@ -91,9 +91,9 @@
                         eMAR & Vitals
                     </div>
 
-                    <div class="flex items-center gap-2 text-xs text-muted">
+                    <div class="flex items-center gap-2 text-xs text-muted dark:text-gray-400">
                         <span
-                            class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md"
+                            class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md dark:bg-secondary"
                         >
                             <svg
                                 width="13"
@@ -113,9 +113,9 @@
                         QR Check-in
                     </div>
 
-                    <div class="flex items-center gap-2 text-xs text-muted">
+                    <div class="flex items-center gap-2 text-xs text-muted dark:text-gray-400">
                         <span
-                            class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md"
+                            class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md dark:bg-secondary"
                         >
                             <svg
                                 width="13"
@@ -134,9 +134,9 @@
                         HIPAA Compliant
                     </div>
 
-                    <div class="flex items-center gap-2 text-xs text-muted">
+                    <div class="flex items-center gap-2 text-xs text-muted dark:text-gray-400">
                         <span
-                            class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md"
+                            class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md dark:bg-secondary"
                         >
                             <svg
                                 width="13"
@@ -177,11 +177,11 @@
                     <div>
                         <div class="text-yellow-400">★★★★★</div>
 
-                        <p class="text-sm text-muted-dark">
+                        <p class="text-sm text-muted-dark dark:text-gray-300">
                             <strong>4.9/5</strong> from 128+ reviews
                         </p>
 
-                        <p class="text-xs text-muted">
+                        <p class="text-xs text-muted dark:text-gray-400">
                             Loved by caregivers and agencies
                         </p>
                     </div>
@@ -235,7 +235,7 @@
                         </div>
 
                         <div
-                            class="w-[240px] rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.1)] animate-floatB"
+                            class="w-[240px] rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.1)] animate-floatB dark:bg-secondary dark:border-white/10"
                         >
                             <div class="mb-3 flex items-center gap-3">
                                 <div
@@ -248,12 +248,12 @@
 
                                 <div>
                                     <h4
-                                        class="text-sm font-bold text-secondary"
+                                        class="text-sm font-bold text-secondary dark:text-white"
                                     >
                                         Bunny Wawa
                                     </h4>
 
-                                    <p class="text-xs text-muted">Caregiver</p>
+                                    <p class="text-xs text-muted dark:text-gray-400">Caregiver</p>
 
                                     <span
                                         class="mt-1 inline-flex rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-600"
@@ -263,7 +263,7 @@
                                 </div>
                             </div>
 
-                            <div class="mb-3 text-xs text-muted-dark">
+                            <div class="mb-3 text-xs text-muted-dark dark:text-gray-300">
                                 ⭐ 4.9 (128 reviews)
                             </div>
 
@@ -275,7 +275,7 @@
                                 </button>
 
                                 <button
-                                    class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-primary"
+                                    class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-primary dark:border-white/10"
                                 >
                                     ♥
                                 </button>

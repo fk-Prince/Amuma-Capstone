@@ -1,10 +1,10 @@
 <template>
-    <div class="bg-white rounded-3xl shadow-sm p-6 space-y-6">
+    <div class="bg-white rounded-3xl shadow-sm p-6 space-y-6 dark:bg-secondary">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-xl font-bold text-slate-900">Summary</h2>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Summary</h2>
 
-                <p class="text-sm text-slate-500 mt-1">
+                <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                     Review your subscription details before payment.
                 </p>
             </div>
@@ -17,21 +17,21 @@
         </div>
 
         <section>
-            <h3 class="text-xs uppercase font-semibold text-slate-400 mb-3">
+            <h3 class="text-xs uppercase font-semibold text-slate-400 mb-3 dark:text-gray-500">
                 Subscription Details
             </h3>
 
             <div class="space-y-3 text-sm">
                 <div class="flex justify-between">
-                    <span class="text-slate-500"> Plan </span>
+                    <span class="text-slate-500 dark:text-gray-400"> Plan </span>
 
-                    <span class="font-semibold text-slate-800">
+                    <span class="font-semibold text-slate-800 dark:text-white">
                         {{ checkout.selectedPlan?.name || "—" }}
                     </span>
                 </div>
 
                 <div class="flex justify-between">
-                    <span class="text-slate-500"> Billing </span>
+                    <span class="text-slate-500 dark:text-gray-400"> Billing </span>
 
                     <span class="font-semibold capitalize">
                         {{ checkout.selectedInterval || "—" }}
@@ -39,7 +39,7 @@
                 </div>
 
                 <div class="flex justify-between">
-                    <span class="text-slate-500"> Price </span>
+                    <span class="text-slate-500 dark:text-gray-400"> Price </span>
 
                     <span class="font-bold text-primary">
                         {{
@@ -52,10 +52,10 @@
             </div>
         </section>
 
-        <div class="h-px bg-slate-100" />
+        <div class="h-px bg-slate-100 dark:bg-white/10 dark:bg-secondary" />
 
         <section>
-            <h3 class="text-xs uppercase font-semibold text-slate-400 mb-3">
+            <h3 class="text-xs uppercase font-semibold text-slate-400 mb-3 dark:text-gray-500">
                 Agency Information
             </h3>
 
@@ -65,12 +65,12 @@
                     :key="field.key"
                     class="flex justify-between gap-4"
                 >
-                    <span class="text-slate-500">
+                    <span class="text-slate-500 dark:text-gray-400">
                         {{ field.label }}
                     </span>
 
                     <span
-                        class="font-semibold text-right text-slate-800 max-w-[220px]"
+                        class="font-semibold text-right text-slate-800 max-w-[220px] dark:text-white"
                         :class="
                             field.key === 'address'
                                 ? 'break-words whitespace-normal'
@@ -102,11 +102,11 @@
             </div>
         </section>
 
-        <div class="h-px bg-slate-100" />
+        <div class="h-px bg-slate-100 dark:bg-white/10 dark:bg-secondary" />
 
         <section>
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs uppercase font-semibold text-slate-400">
+                <h3 class="text-xs uppercase font-semibold text-slate-400 dark:text-gray-500">
                     Branch Information
                 </h3>
 
@@ -123,12 +123,12 @@
                     :key="field.key"
                     class="flex justify-between gap-4"
                 >
-                    <span class="text-slate-500">
+                    <span class="text-slate-500 dark:text-gray-400">
                         {{ field.label }}
                     </span>
 
                     <span
-                        class="font-semibold text-right text-slate-800 max-w-[220px]"
+                        class="font-semibold text-right text-slate-800 max-w-[220px] dark:text-white"
                         :class="
                             field.key === 'address'
                                 ? 'break-words whitespace-normal'
@@ -161,7 +161,7 @@
 
             <div class="mt-4 space-y-3 text-sm">
                 <div class="flex justify-between">
-                    <span class="text-slate-500"> Business Hours </span>
+                    <span class="text-slate-500 dark:text-gray-400"> Business Hours </span>
 
                     <span class="font-semibold">
                         {{
@@ -174,7 +174,7 @@
                 </div>
 
                 <div class="flex justify-between">
-                    <span class="text-slate-500"> Currency </span>
+                    <span class="text-slate-500 dark:text-gray-400"> Currency </span>
 
                     <span class="font-semibold">
                         {{ checkout.settings?.currency || "—" }}
@@ -182,7 +182,7 @@
                 </div>
 
                 <div class="flex justify-between">
-                    <span class="text-slate-500"> Time Zone </span>
+                    <span class="text-slate-500 dark:text-gray-400"> Time Zone </span>
 
                     <span class="font-semibold">
                         {{ checkout.settings?.time_zone || "—" }}
@@ -191,10 +191,10 @@
             </div>
         </section>
 
-        <div class="h-px bg-slate-100" />
+        <div class="h-px bg-slate-100 dark:bg-white/10 dark:bg-secondary" />
 
         <div class="flex items-center justify-between">
-            <span class="text-base font-bold text-slate-800"> Total </span>
+            <span class="text-base font-bold text-slate-800 dark:text-white"> Total </span>
 
             <span class="text-2xl font-bold text-primary">
                 {{

@@ -1,6 +1,6 @@
 <template>
     <div class="w-full mx-auto flex flex-col gap-5">
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Combobox
                 v-model="setting.currency"
                 :items="currencies"
@@ -23,13 +23,13 @@
         </div>
 
         <div class="flex flex-col">
-            <label class="text-sm font-semibold mb-1 text-slate-700">
+            <label class="text-sm font-semibold mb-1 text-slate-700 dark:text-gray-300">
                 Business Hours
             </label>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <p class="text-sm mb-1 text-slate-700">Opening Hours</p>
+                    <p class="text-sm mb-1 text-slate-700 dark:text-gray-300">Opening Hours</p>
                     <Combobox
                         v-model="setting.opening"
                         :items="timeItems"
@@ -42,7 +42,7 @@
                 </div>
 
                 <div>
-                    <p class="text-sm mb-1 text-slate-700">Closing Hours</p>
+                    <p class="text-sm mb-1 text-slate-700 dark:text-gray-300">Closing Hours</p>
                     <Combobox
                         v-model="setting.closing"
                         :items="timeItems"

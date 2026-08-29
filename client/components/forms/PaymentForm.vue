@@ -269,11 +269,11 @@ watch(isCash, (active) => {
 <template>
     <div class="w-full max-w-2xl mx-auto">
         <div
-            class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]"
+            class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] dark:bg-secondary dark:border-white/10"
         >
             <!-- Header -->
             <div
-                class="border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white px-6 py-5 sm:px-7"
+                class="border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white px-6 py-5 sm:px-7 dark:border-white/10 dark:from-secondary dark:to-secondary"
             >
                 <div class="flex items-start gap-4">
                     <div
@@ -284,12 +284,12 @@ watch(isCash, (active) => {
 
                     <div class="min-w-0">
                         <h2
-                            class="text-lg font-bold tracking-tight text-slate-900"
+                            class="text-lg font-bold tracking-tight text-slate-900 dark:text-white"
                         >
                             {{ title }}
                         </h2>
 
-                        <p class="mt-1 text-sm leading-5 text-slate-500">
+                        <p class="mt-1 text-sm leading-5 text-slate-500 dark:text-gray-400">
                             {{ description }}
                         </p>
                     </div>
@@ -299,14 +299,14 @@ watch(isCash, (active) => {
             <!-- Payment Methods -->
             <div
                 v-if="methods.length > 1"
-                class="border-b border-slate-100 px-6 py-5"
+                class="border-b border-slate-100 px-6 py-5 dark:border-white/10"
             >
                 <div class="mb-4">
-                    <p class="text-sm font-semibold text-slate-800">
+                    <p class="text-sm font-semibold text-slate-800 dark:text-white">
                         Payment method
                     </p>
 
-                    <p class="mt-1 text-xs text-slate-500">
+                    <p class="mt-1 text-xs text-slate-500 dark:text-gray-400">
                         Choose how you would like to pay.
                     </p>
                 </div>
@@ -321,7 +321,7 @@ watch(isCash, (active) => {
                         :class="
                             checkout.payment_method === method.value
                                 ? 'border-primary bg-primary/[0.04] ring-1 ring-primary/20'
-                                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                                : 'border-slate-200 dark:border-white/10 bg-white dark:bg-secondary hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
                         "
                     >
                         <div
@@ -337,7 +337,7 @@ watch(isCash, (active) => {
                             <component
                                 v-else-if="method.icon"
                                 :is="method.icon"
-                                class="h-5 w-5 text-slate-600"
+                                class="h-5 w-5 text-slate-600 dark:text-gray-300"
                             />
                         </div>
                         <div class="min-w-0 flex-1">
@@ -346,13 +346,13 @@ watch(isCash, (active) => {
                                 :class="
                                     checkout.payment_method === method.value
                                         ? 'text-primary'
-                                        : 'text-slate-800'
+                                        : 'text-slate-800 dark:text-white'
                                 "
                             >
                                 {{ method.label }}
                             </p>
 
-                            <p class="mt-0.5 text-xs text-slate-500">
+                            <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                                 <template v-if="method.value === 'CREDIT-CARD'">
                                     Visa, Mastercard and other cards
                                 </template>
@@ -372,7 +372,7 @@ watch(isCash, (active) => {
                             :class="
                                 checkout.payment_method === method.value
                                     ? 'border-primary bg-primary'
-                                    : 'border-slate-300 bg-white'
+                                    : 'border-slate-300 dark:border-white/20 bg-white dark:bg-secondary'
                             "
                         >
                             <svg
@@ -399,11 +399,11 @@ watch(isCash, (active) => {
                 class="space-y-6 px-6 py-6 sm:px-7 sm:py-7"
             >
                 <div>
-                    <h3 class="text-sm font-bold text-slate-800">
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-white">
                         Card information
                     </h3>
 
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-slate-400 dark:text-gray-500">
                         Enter the card details used for this payment.
                     </p>
                 </div>
@@ -515,7 +515,7 @@ watch(isCash, (active) => {
                 </button>
 
                 <div
-                    class="flex items-center justify-center gap-2 text-[11px] text-slate-400"
+                    class="flex items-center justify-center gap-2 text-[11px] text-slate-400 dark:text-gray-500"
                 >
                     <ShieldCheck class="h-4 w-4" />
                     <span>Secure encrypted payment</span>
@@ -528,11 +528,11 @@ watch(isCash, (active) => {
                 class="space-y-6 px-6 py-6 sm:px-7 sm:py-7"
             >
                 <div
-                    class="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5"
+                    class="rounded-2xl border border-blue-100 dark:border-blue-500/20 bg-gradient-to-br from-blue-50 to-white dark:from-blue-500/10 dark:to-secondary p-5"
                 >
                     <div class="flex items-start gap-4">
                         <div
-                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-blue-100"
+                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-blue-100 dark:bg-secondary"
                         >
                             <img
                                 :src="gcashIcon"
@@ -542,11 +542,11 @@ watch(isCash, (active) => {
                         </div>
 
                         <div>
-                            <h3 class="text-sm font-bold text-slate-800">
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-white">
                                 Pay using GCash
                             </h3>
 
-                            <p class="mt-1 text-sm leading-5 text-slate-500">
+                            <p class="mt-1 text-sm leading-5 text-slate-500 dark:text-gray-400">
                                 You will be redirected to GCash to securely
                                 complete your payment.
                             </p>
@@ -555,11 +555,11 @@ watch(isCash, (active) => {
                 </div>
 
                 <div
-                    class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3"
+                    class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 dark:bg-secondary"
                 >
-                    <span class="text-sm text-slate-500"> Amount to pay </span>
+                    <span class="text-sm text-slate-500 dark:text-gray-400"> Amount to pay </span>
 
-                    <span class="text-base font-bold text-slate-900">
+                    <span class="text-base font-bold text-slate-900 dark:text-white">
                         {{ currency }}{{ formatMoney(totalAmount) }}
                     </span>
                 </div>
@@ -579,7 +579,7 @@ watch(isCash, (active) => {
                 </button>
 
                 <div
-                    class="flex items-center justify-center gap-2 text-[11px] text-slate-400"
+                    class="flex items-center justify-center gap-2 text-[11px] text-slate-400 dark:text-gray-500"
                 >
                     <ShieldCheck class="h-4 w-4" />
                     Secure payment via GCash
@@ -589,21 +589,21 @@ watch(isCash, (active) => {
             <!-- Cash -->
             <div v-else-if="isCash" class="space-y-6 px-6 py-6 sm:px-7 sm:py-7">
                 <div
-                    class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5"
+                    class="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-500/10 dark:to-secondary p-5"
                 >
                     <div class="flex items-start gap-4">
                         <div
-                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100"
+                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100 dark:bg-secondary"
                         >
                             <Banknote class="h-5 w-5" />
                         </div>
 
                         <div>
-                            <h3 class="text-sm font-bold text-slate-800">
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-white">
                                 Pay with cash
                             </h3>
 
-                            <p class="mt-1 text-sm leading-5 text-slate-500">
+                            <p class="mt-1 text-sm leading-5 text-slate-500 dark:text-gray-400">
                                 {{ cashDescription }}
                             </p>
                         </div>
@@ -611,14 +611,14 @@ watch(isCash, (active) => {
                 </div>
 
                 <div
-                    class="rounded-xl border border-slate-200 bg-white divide-y divide-slate-100"
+                    class="rounded-xl border border-slate-200 bg-white divide-y divide-slate-100 dark:bg-secondary dark:border-white/10"
                 >
                     <div class="flex items-center justify-between px-4 py-3.5">
-                        <span class="text-sm text-slate-500">
+                        <span class="text-sm text-slate-500 dark:text-gray-400">
                             Total to pay
                         </span>
 
-                        <span class="text-base font-bold text-slate-900">
+                        <span class="text-base font-bold text-slate-900 dark:text-white">
                             {{ currency }}{{ formatMoney(totalAmount) }}
                         </span>
                     </div>
@@ -627,7 +627,7 @@ watch(isCash, (active) => {
                         v-if="cashReceivedAmount > 0"
                         class="flex items-center justify-between px-4 py-3.5"
                     >
-                        <span class="text-sm text-slate-500">
+                        <span class="text-sm text-slate-500 dark:text-gray-400">
                             {{
                                 isCashSufficient ? "Change due" : "Amount short"
                             }}

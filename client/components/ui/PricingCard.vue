@@ -5,7 +5,7 @@
             'hover:-translate-y-2 hover:scale-[1.015]',
             featured
                 ? 'bg-primary text-white shadow-2xl pt-10 pb-8 px-8 border border-primary hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.45)]'
-                : 'bg-white text-secondary shadow-sm border border-muted-light p-8 hover:border-primary hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)]',
+                : 'bg-white text-secondary shadow-sm border border-muted-light p-8 hover:border-primary hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] dark:bg-secondary dark:text-white dark:border-white/10',
         ]"
     >
         <div
@@ -25,7 +25,7 @@
                     'text-xs font-semibold px-3 py-1 rounded-full transition-colors duration-300',
                     featured
                         ? 'bg-white/20 text-white'
-                        : 'bg-light text-primary group-hover:bg-primary group-hover:text-white',
+                        : 'bg-light text-primary group-hover:bg-primary group-hover:text-white dark:bg-primary-500/10',
                 ]"
             >
                 {{ planLabel }}
@@ -36,12 +36,17 @@
             <h2
                 :class="[
                     'font-display font-bold text-2xl leading-tight mb-1',
-                    featured ? 'text-white' : 'text-secondary',
+                    featured ? 'text-white' : 'text-secondary dark:text-white',
                 ]"
             >
                 {{ title }}
             </h2>
-            <p :class="['text-sm', featured ? 'text-white/70' : 'text-muted']">
+            <p
+                :class="[
+                    'text-sm',
+                    featured ? 'text-white/70' : 'text-muted dark:text-gray-400',
+                ]"
+            >
                 {{ description }}
             </p>
         </div>
@@ -50,7 +55,7 @@
             <span
                 :class="[
                     'font-display font-extrabold text-4xl transition-transform duration-300 group-hover:scale-105 origin-left inline-block',
-                    featured ? 'text-white' : 'text-secondary',
+                    featured ? 'text-white' : 'text-secondary dark:text-white',
                 ]"
             >
                 {{ formatCurrency(price) }}
@@ -58,7 +63,7 @@
             <span
                 :class="[
                     'text-sm font-medium',
-                    featured ? 'text-white/60' : 'text-muted',
+                    featured ? 'text-white/60' : 'text-muted dark:text-gray-400',
                 ]"
             >
                 {{ billingInterval === "yearly" ? "/ year" : "/ month" }}
@@ -78,7 +83,7 @@
                 'w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 mb-6',
                 featured
                     ? 'bg-white text-primary hover:bg-light border border-white'
-                    : 'bg-white text-secondary border border-secondary hover:bg-secondary hover:text-white',
+                    : 'bg-white text-secondary border border-secondary hover:bg-secondary hover:text-white dark:bg-white/5 dark:text-white dark:border-white/20 dark:hover:bg-white/10',
             ]"
         >
             {{ ctaText }}
@@ -104,7 +109,7 @@
                 'w-full h-px mb-5 transition-colors duration-300',
                 featured
                     ? 'bg-white/10'
-                    : 'bg-muted-light group-hover:bg-primary/20',
+                    : 'bg-muted-light group-hover:bg-primary/20 dark:bg-white/10',
             ]"
         />
 
@@ -130,7 +135,11 @@
                     />
                 </svg>
 
-                <span :class="featured ? 'text-white/85' : 'text-muted-dark'">
+                <span
+                    :class="
+                        featured ? 'text-white/85' : 'text-muted-dark dark:text-gray-300'
+                    "
+                >
                     {{ feature }}
                 </span>
             </li>

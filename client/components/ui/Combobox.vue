@@ -344,7 +344,7 @@ onBeforeUnmount(() => {
         <div>
             <label
                 v-if="props.label"
-                class="text-sm font-semibold gap-2 flex mb-1 text-slate-700"
+                class="text-sm font-semibold gap-2 flex mb-1 text-slate-700 dark:text-gray-300"
             >
                 {{ props.label }}
                 <span v-if="props.required" class="text-red-500 ml-0.5">*</span>
@@ -355,12 +355,14 @@ onBeforeUnmount(() => {
                 type="button"
                 :disabled="disabled"
                 :class="[
-                    'w-full border rounded-lg flex items-center gap-2 bg-white text-left transition',
+                    'w-full border rounded-lg flex items-center gap-2 bg-white dark:bg-secondary dark:text-white text-left transition',
                     props.inputClass ?? 'px-4 py-2',
                     currentError
                         ? 'border-red-400 focus-within:ring-red-500/15'
-                        : 'border-slate-200 focus-within:ring-blue-500/15',
-                    disabled ? 'opacity-60 cursor-not-allowed bg-gray-50' : '',
+                        : 'border-slate-200 dark:border-white/10 focus-within:ring-blue-500/15',
+                    disabled
+                        ? 'opacity-60 cursor-not-allowed bg-gray-50 dark:bg-white/5'
+                        : '',
                 ]"
                 @click="toggleOpen"
             >
@@ -374,10 +376,10 @@ onBeforeUnmount(() => {
                     <component
                         v-else-if="selectedOption.iconComponent"
                         :is="selectedOption.iconComponent"
-                        class="h-4 w-4 text-gray-500"
+                        class="h-4 w-4 text-gray-500 dark:text-gray-400"
                     />
 
-                    <span v-if="!selectedOption.label" class="text-gray-400">
+                    <span v-if="!selectedOption.label" class="text-gray-400 dark:text-gray-500">
                         {{ placeholder }}
                     </span>
 
@@ -385,12 +387,12 @@ onBeforeUnmount(() => {
                         {{ selectedOption.label }}
                     </span>
                 </span>
-                <span v-else class="text-gray-400">
+                <span v-else class="text-gray-400 dark:text-gray-500">
                     {{ placeholder }}
                 </span>
 
                 <svg
-                    class="ml-auto w-4 h-4 text-gray-400"
+                    class="ml-auto w-4 h-4 text-gray-400 dark:text-gray-500"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -413,10 +415,10 @@ onBeforeUnmount(() => {
             <div
                 v-if="isOpen"
                 data-combobox-panel
-                class="fixed z-[10000] bg-white border overflow-hidden rounded-lg shadow-lg"
+                class="fixed z-[10000] bg-white dark:bg-secondary dark:border-white/10 border overflow-hidden rounded-lg shadow-lg"
                 :style="dropdownStyle"
             >
-                <div class="p-2 border-b" v-if="searchBar">
+                <div class="p-2 border-b dark:border-white/10" v-if="searchBar">
                     <div class="relative">
                         <input
                             ref="searchInput"
@@ -425,11 +427,11 @@ onBeforeUnmount(() => {
                             :placeholder="
                                 searchBarPlaceHolder || searchPlaceholder
                             "
-                            class="w-full pl-9 pr-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            class="w-full pl-9 pr-3 py-2 text-sm border dark:border-white/10 dark:bg-secondary dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
 
                         <SearchIcon
-                            extraClass="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+                            extraClass="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                         />
                     </div>
                 </div>
@@ -438,9 +440,9 @@ onBeforeUnmount(() => {
                     <li
                         v-for="item in filteredItems"
                         :key="item.value"
-                        class="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-2"
+                        class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:text-white dark:hover:bg-white/5 flex items-center gap-2"
                         :class="{
-                            'bg-gray-50 font-medium': modelValue === item.value,
+                            'bg-gray-50 dark:bg-white/5 font-medium': modelValue === item.value,
                         }"
                         @mousedown.prevent="selectItem(item)"
                     >
@@ -453,7 +455,7 @@ onBeforeUnmount(() => {
                         <component
                             v-else-if="item.iconComponent"
                             :is="item.iconComponent"
-                            class="h-4 w-4 text-gray-500"
+                            class="h-4 w-4 text-gray-500 dark:text-gray-400"
                         />
 
                         <span>{{ item.label }}</span>
@@ -461,14 +463,14 @@ onBeforeUnmount(() => {
 
                     <li
                         v-if="filteredItems.length === 0 && !showCreateOption"
-                        class="px-4 py-2 text-sm text-gray-400"
+                        class="px-4 py-2 text-sm text-gray-400 dark:text-gray-500"
                     >
                         No results
                     </li>
 
                     <li
                         v-if="showCreateOption"
-                        class="px-4 py-2 cursor-pointer text-blue-600 hover:bg-blue-50"
+                        class="px-4 py-2 cursor-pointer text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10"
                         @mousedown.prevent="createItem(search)"
                     >
                         + Add "{{ search }}"

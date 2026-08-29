@@ -2,11 +2,11 @@
     <div class="max-w-7xl mx-auto space-y-8">
         <div class="space-y-6">
             <div>
-                <h2 class="text-lg font-semibold text-slate-900">
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                     Agency Information
                 </h2>
 
-                <p class="text-sm text-slate-500 mt-1">
+                <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                     Configure your agency profile, branding, and agency details.
                 </p>
             </div>
@@ -19,6 +19,7 @@
                         placeholder="Enter agency name"
                         :error="errors?.agency_name"
                         @clear-error="clearError('agency_name')"
+                        data-field="agency_name"
                     />
 
                     <LabelInput
@@ -28,6 +29,7 @@
                         placeholder="Enter agency email address"
                         @update:modelValue="clearError('agency_email')"
                         :error="errors?.agency_email"
+                        data-field="agency_email"
                     />
 
                     <LabelInput
@@ -40,12 +42,13 @@
                         :textMax="1000"
                         :error="errors?.agency_description"
                         @clear-error="clearError('agency_description')"
+                        data-field="agency_description"
                     />
                 </div>
 
-                <div class="space-y-2">
+                <div class="space-y-2" data-field="agency_image">
                     <div class="flex items-center justify-between">
-                        <label class="text-sm font-semibold text-slate-700">
+                        <label class="text-sm font-semibold text-slate-700 dark:text-gray-300">
                             Agency Image
                         </label>
 
@@ -59,7 +62,7 @@
                         </button>
                     </div>
                     <div
-                        class="relative h-52 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group"
+                        class="relative h-52 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
                         @click="agencyImageInput?.click()"
                     >
                         <img
@@ -70,7 +73,7 @@
 
                         <div
                             v-else
-                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400"
+                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500"
                         >
                             <div
                                 class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-2xl mb-3"
@@ -105,24 +108,24 @@
         </div>
         <div class="space-y-5">
             <div>
-                <h2 class="text-lg font-semibold text-slate-900">
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                     Verification Documents
                 </h2>
 
-                <p class="text-sm text-slate-500 mt-1">
+                <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                     Upload a valid ID and a supporting document for
                     verification.
                 </p>
             </div>
 
-            <div class="grid grid-cols-2 gap-5">
-                <div class="space-y-2 p-4">
-                    <div class="flex items-center justify-between">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="space-y-2 p-4" data-field="agency_id_front agency_id_back">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
                         <label
-                            class="flex items-center gap-1.5 text-sm font-semibold text-slate-700"
+                            class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
                         >
                             <svg
-                                class="w-4 h-4 text-slate-400"
+                                class="w-4 h-4 text-slate-400 dark:text-gray-500"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -157,7 +160,7 @@
                             </button>
 
                             <div
-                                class="flex items-center rounded-full bg-slate-100 p-0.5 text-xs font-medium"
+                                class="flex items-center rounded-full bg-slate-100 p-0.5 text-xs font-medium dark:bg-secondary"
                             >
                                 <button
                                     type="button"
@@ -166,7 +169,7 @@
                                     :class="
                                         idSide === 'id_front'
                                             ? 'bg-primary shadow-sm text-white'
-                                            : 'text-slate-500'
+                                            : 'text-slate-500 dark:text-gray-400'
                                     "
                                 >
                                     Front
@@ -179,7 +182,7 @@
                                     :class="
                                         idSide === 'id_back'
                                             ? 'bg-primary shadow-sm text-white'
-                                            : 'text-slate-500'
+                                            : 'text-slate-500 dark:text-gray-400'
                                     "
                                 >
                                     Back
@@ -189,7 +192,7 @@
                     </div>
 
                     <div
-                        class="relative h-40 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group"
+                        class="relative h-40 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
                         @click="idInput?.click()"
                     >
                         <img
@@ -200,7 +203,7 @@
 
                         <div
                             v-else
-                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400"
+                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500"
                         >
                             <div
                                 class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
@@ -286,7 +289,7 @@
 
                         <ul
                             v-if="showIdList"
-                            class="mt-2 space-y-1 rounded-lg bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside"
+                            class="mt-2 space-y-1 rounded-lg bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside dark:text-gray-300"
                         >
                             <li v-for="item in applicableIds" :key="item">
                                 {{ item }}
@@ -295,13 +298,13 @@
                     </div>
                 </div>
 
-                <div class="space-y-2 p-4">
+                <div class="space-y-2 p-4" data-field="agency_document">
                     <div class="flex items-center justify-between">
                         <label
-                            class="flex items-center gap-1.5 text-sm font-semibold text-slate-700"
+                            class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
                         >
                             <svg
-                                class="w-4 h-4 text-slate-400"
+                                class="w-4 h-4 text-slate-400 dark:text-gray-500"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -332,7 +335,7 @@
                     </div>
 
                     <div
-                        class="relative h-40 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group"
+                        class="relative h-40 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
                         @click="documentInput?.click()"
                     >
                         <img
@@ -367,19 +370,19 @@
                             </div>
 
                             <p
-                                class="max-w-full truncate text-sm font-medium text-slate-700"
+                                class="max-w-full truncate text-sm font-medium text-slate-700 dark:text-gray-300"
                             >
                                 {{ fileNames.document }}
                             </p>
 
-                            <span class="mt-0.5 text-xs text-slate-400">
+                            <span class="mt-0.5 text-xs text-slate-400 dark:text-gray-500">
                                 PDF selected — click to replace
                             </span>
                         </div>
 
                         <div
                             v-else
-                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400"
+                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500"
                         >
                             <div
                                 class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
@@ -442,7 +445,7 @@
 
                         <ul
                             v-if="showDocumentList"
-                            class="mt-2 space-y-1 rounded-lg bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside"
+                            class="mt-2 space-y-1 rounded-lg bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside dark:text-gray-300"
                         >
                             <li v-for="item in applicableDocuments" :key="item">
                                 {{ item }}
@@ -452,14 +455,17 @@
                 </div>
             </div>
         </div>
-        <div class="space-y-5">
-            <div class="flex items-center justify-between">
+        <div
+            class="space-y-5"
+            data-field="location.street location.city location.province location.country location"
+        >
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 class="text-lg font-semibold text-slate-900">
+                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                         Primary Address
                     </h2>
 
-                    <p class="text-sm text-slate-500 mt-1">
+                    <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                         Choose between map location or manual address.
                     </p>
 
@@ -471,17 +477,29 @@
                     </p>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    <span class="text-xs text-slate-500"> Use map </span>
+                <div class="flex items-center gap-3 shrink-0">
+                    <button
+                        type="button"
+                        @click="resetLocation"
+                        class="text-xs font-medium text-red-500 hover:text-red-600 whitespace-nowrap"
+                    >
+                        Reset
+                    </button>
+
+                    <span class="text-xs text-slate-500 dark:text-gray-400 whitespace-nowrap"> Use map </span>
 
                     <button
                         type="button"
                         @click="useGeolocation = !useGeolocation"
                         class="relative inline-flex h-6 w-11 items-center rounded-full transition"
-                        :class="useGeolocation ? 'bg-primary' : 'bg-slate-200'"
+                        :class="
+                            useGeolocation
+                                ? 'bg-primary'
+                                : 'bg-slate-200 dark:bg-white/10'
+                        "
                     >
                         <span
-                            class="h-4 w-4 rounded-full bg-white shadow transition-transform"
+                            class="h-4 w-4 rounded-full bg-white shadow transition-transform dark:bg-secondary"
                             :class="
                                 useGeolocation
                                     ? 'translate-x-6'
@@ -504,11 +522,13 @@
                         "
                         :initial-country="agency.location?.country || undefined"
                         @location-selected="handleLocation"
+                        @location-cleared="clearLocation"
+                        ref="locationSelectorRef"
                     />
 
                     <template #fallback>
                         <div
-                            class="h-64 rounded-xl bg-slate-50 flex items-center justify-center text-sm text-gray-400"
+                            class="h-64 rounded-xl bg-slate-50 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 dark:bg-secondary"
                         >
                             Loading map...
                         </div>
@@ -522,6 +542,7 @@
                     label="Street"
                     @update:modelValue="clearError('location.street')"
                     :error="errors?.['location.street']"
+                    data-field="location.street"
                 />
 
                 <LabelInput
@@ -529,6 +550,7 @@
                     label="City"
                     @update:modelValue="clearError('location.city')"
                     :error="errors?.['location.city']"
+                    data-field="location.city"
                 />
 
                 <LabelInput
@@ -536,6 +558,7 @@
                     label="Province"
                     @update:modelValue="clearError('location.province')"
                     :error="errors?.['location.province']"
+                    data-field="location.province"
                 />
 
                 <LabelInput
@@ -543,6 +566,7 @@
                     label="Country"
                     @update:modelValue="clearError('location.country')"
                     :error="errors?.['location.country']"
+                    data-field="location.country"
                 />
             </div>
         </div>
@@ -551,7 +575,7 @@
 
 <script setup lang="ts">
 import { Check } from "lucide-vue-next";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
 import type { Agency } from "~/types/agency";
@@ -574,9 +598,15 @@ const agency = computed({
 
 const errors = computed(() => props.errors);
 
-const agencyImagePreview = ref<string | null>(
-    typeof props.agency.image === "string" ? props.agency.image : null,
-);
+function initialPreview(value: unknown): string | null {
+    if (typeof value === "string") return value;
+    if (value instanceof File && value.type !== "application/pdf") {
+        return URL.createObjectURL(value);
+    }
+    return null;
+}
+
+const agencyImagePreview = ref<string | null>(initialPreview(props.agency.image));
 const agencyImageInput = ref<HTMLInputElement | null>(null);
 const useGeolocation = ref(true);
 
@@ -609,15 +639,9 @@ const applicableDocuments = [
     "DOH / Home Health Agency Accreditation",
 ];
 
-const idFrontPreview = ref<string | null>(
-    typeof props.agency.id_front === "string" ? props.agency.id_front : null,
-);
-const idBackPreview = ref<string | null>(
-    typeof props.agency.id_back === "string" ? props.agency.id_back : null,
-);
-const documentPreview = ref<string | null>(
-    typeof props.agency.document === "string" ? props.agency.document : null,
-);
+const idFrontPreview = ref<string | null>(initialPreview(props.agency.id_front));
+const idBackPreview = ref<string | null>(initialPreview(props.agency.id_back));
+const documentPreview = ref<string | null>(initialPreview(props.agency.document));
 
 const previewRefs: Record<FileField, ReturnType<typeof ref<string | null>>> = {
     id_front: idFrontPreview,
@@ -626,11 +650,17 @@ const previewRefs: Record<FileField, ReturnType<typeof ref<string | null>>> = {
 };
 
 // PDFs have no image preview, so their file name is what gets shown instead.
-// A previously saved PDF arrives as a URL string, so derive the name from it.
-const pdfNameFrom = (value: unknown): string | null =>
-    typeof value === "string" && value.toLowerCase().endsWith(".pdf")
+// A previously saved PDF arrives as a URL string; one picked but not yet
+// uploaded is still a raw File, so derive the name from whichever it is.
+const pdfNameFrom = (value: unknown): string | null => {
+    if (value instanceof File && value.type === "application/pdf") {
+        return value.name;
+    }
+
+    return typeof value === "string" && value.toLowerCase().endsWith(".pdf")
         ? decodeURIComponent(value.split("/").pop() ?? "Document.pdf")
         : null;
+};
 
 const fileNames = ref<Record<FileField, string | null>>({
     id_front: pdfNameFrom(props.agency.id_front),
@@ -664,6 +694,13 @@ const locationError = computed(() => {
     return keys.some((k) => props.errors?.[k])
         ? "Location is required. Please complete address information."
         : "";
+});
+
+// Manual fields only exist in the DOM with map mode off, so a location error caught on the map would have nowhere to show.
+watch(locationError, (hasError) => {
+    if (hasError) {
+        useGeolocation.value = false;
+    }
 });
 
 const handleLocation = ({
@@ -729,6 +766,32 @@ const handleLocation = ({
     }
 
     emit("update:errors", updatedErrors);
+};
+
+const clearLocation = () => {
+    emit("update:agency", {
+        ...agency.value,
+        location: {
+            street: "",
+            city: "",
+            province: "",
+            country: "",
+            latitude: undefined,
+            longitude: undefined,
+        },
+    });
+};
+
+const locationSelectorRef = ref<InstanceType<typeof LocationSelector> | null>(
+    null,
+);
+
+const resetLocation = () => {
+    if (useGeolocation.value && locationSelectorRef.value) {
+        locationSelectorRef.value.clearSelection();
+    } else {
+        clearLocation();
+    }
 };
 
 const handleAgencyImage = (event: Event) => {

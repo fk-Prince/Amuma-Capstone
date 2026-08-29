@@ -4,6 +4,7 @@ import { MessageCircle } from "lucide-vue-next";
 
 import MessageThread from "~/components/messaging/MessageThread.vue";
 import MessageAvatar from "~/components/messaging/MessageAvatar.vue";
+import EmptyState from "~/components/ui/EmptyState.vue";
 import { messageService } from "~/api/message/MessageService";
 import { patientAccessService } from "~/api/patient-access/PatientAccessService.js";
 import { useAuthUser } from "~/composables/useAuthUser";
@@ -267,9 +268,80 @@ onBeforeUnmount(() => {
 
 <template>
     <div
-        class="flex h-[calc(100dvh-88px)] min-h-0 w-full flex-col bg-slate-50/60 p-0 sm:h-[calc(100dvh-104px)] lg:h-[calc(100dvh-160px)] lg:p-5"
+        class="flex h-[calc(100dvh-88px)] min-h-0 w-full flex-col bg-slate-50/60 dark:bg-secondary p-0 sm:h-[calc(100dvh-104px)] lg:h-[calc(100dvh-160px)] lg:p-5"
     >
         <div
+            v-if="loadingList"
+            class="grid h-full min-h-0 w-full flex-1 grid-cols-1 gap-0 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-5"
+        >
+            <aside
+                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-3xl lg:border lg:border-gray-100 lg:shadow-sm"
+            >
+                <div class="shrink-0 border-b border-gray-100 px-5 py-5">
+                    <div class="h-4 w-24 animate-pulse rounded bg-gray-200" />
+                    <div
+                        class="mt-2 h-3 w-40 animate-pulse rounded bg-gray-100"
+                    />
+                </div>
+
+                <div class="min-h-0 flex-1 space-y-2 overflow-y-auto p-2.5">
+                    <div
+                        v-for="n in 4"
+                        :key="n"
+                        class="h-16 animate-pulse rounded-2xl bg-gray-100"
+                    />
+                </div>
+            </aside>
+
+            <div
+                class="hidden min-h-0 flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white lg:flex"
+            >
+                <div
+                    class="flex shrink-0 items-center gap-3 border-b border-gray-100 px-5 py-4"
+                >
+                    <div
+                        class="h-10 w-10 animate-pulse rounded-full bg-gray-200"
+                    />
+                    <div class="space-y-1.5">
+                        <div
+                            class="h-3.5 w-32 animate-pulse rounded bg-gray-200"
+                        />
+                        <div
+                            class="h-3 w-24 animate-pulse rounded bg-gray-100"
+                        />
+                    </div>
+                </div>
+
+                <div class="min-h-0 flex-1 space-y-3 p-5">
+                    <div
+                        class="h-12 w-2/3 animate-pulse rounded-2xl bg-gray-100"
+                    />
+                    <div
+                        class="ml-auto h-12 w-1/2 animate-pulse rounded-2xl bg-gray-100"
+                    />
+                    <div
+                        class="h-12 w-3/5 animate-pulse rounded-2xl bg-gray-100"
+                    />
+                </div>
+
+                <div class="shrink-0 border-t border-gray-100 p-4">
+                    <div
+                        class="h-11 w-full animate-pulse rounded-2xl bg-gray-100"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <EmptyState
+            v-else-if="!rows.length"
+            class="p-4 sm:p-6"
+            title="You currently have no patients"
+            cta-label="Book a Service"
+            cta-to="/booking/search"
+        />
+
+        <div
+            v-else
             class="grid h-full min-h-0 w-full flex-1 grid-cols-1 gap-0 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-5"
         >
             <aside
@@ -284,21 +356,6 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div class="min-h-0 flex-1 overflow-y-auto p-2.5">
-                    <div v-if="loadingList" class="space-y-2">
-                        <div
-                            v-for="n in 3"
-                            :key="n"
-                            class="h-16 animate-pulse rounded-2xl bg-gray-100"
-                        />
-                    </div>
-
-                    <p
-                        v-else-if="!rows.length"
-                        class="px-3 py-10 text-center text-sm text-gray-400"
-                    >
-                        No loved ones linked to your account yet.
-                    </p>
-
                     <button
                         v-for="row in rows"
                         :key="row.branch_id"
@@ -306,7 +363,7 @@ onBeforeUnmount(() => {
                         class="mb-1.5 w-full rounded-2xl border px-3.5 py-3 text-left transition"
                         :class="
                             row.branch_id === activeBranchId
-                                ? 'border-brand-200 bg-brand-50'
+                                ? 'border-primary-200 bg-primary-50'
                                 : 'border-transparent hover:bg-gray-50'
                         "
                         @click="openThread(row.branch_id)"
@@ -329,7 +386,7 @@ onBeforeUnmount(() => {
 
                                     <span
                                         v-if="row.unread_count"
-                                        class="shrink-0 rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-bold text-white"
+                                        class="shrink-0 rounded-full bg-primary-600 px-2 py-0.5 text-[10px] font-bold text-white"
                                     >
                                         {{ row.unread_count }}
                                     </span>

@@ -34,8 +34,8 @@ const typeStyles: Record<
     },
     meal: {
         icon: Utensils,
-        bg: "bg-brand-50",
-        text: "text-brand-600",
+        bg: "bg-primary-50",
+        text: "text-primary-600",
         label: "Meal",
     },
     activity: {

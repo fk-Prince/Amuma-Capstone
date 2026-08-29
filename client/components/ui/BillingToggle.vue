@@ -3,7 +3,9 @@
         <span
             :class="[
                 'text-sm font-medium transition-colors',
-                modelValue === 'monthly' ? 'text-gray-900' : 'text-gray-400',
+                modelValue === 'monthly'
+                    ? 'text-gray-900 dark:text-white'
+                    : 'text-gray-400 dark:text-gray-500',
             ]"
         >
             Monthly
@@ -15,7 +17,7 @@
             @click="toggle"
             :class="[
                 'relative w-12 h-7 rounded-full transition-colors duration-200',
-                modelValue === 'yearly' ? 'bg-primary' : 'bg-gray-300',
+                modelValue === 'yearly' ? 'bg-primary' : 'bg-gray-300 dark:bg-white/20',
             ]"
         >
             <span
@@ -29,7 +31,9 @@
         <span
             :class="[
                 'text-sm font-medium transition-colors',
-                modelValue === 'yearly' ? 'text-gray-900' : 'text-gray-400',
+                modelValue === 'yearly'
+                    ? 'text-gray-900 dark:text-white'
+                    : 'text-gray-400 dark:text-gray-500',
             ]"
         >
             Yearly
