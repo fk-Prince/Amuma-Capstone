@@ -49,7 +49,7 @@ export const createPatientSchema = (
 
 export const guardianSchema = z.object({
     first_name: z.string().min(1, "First name is required"),
-    middle_name: z.string().min(1, "Middle name is required"),
+    middle_name: z.string().optional(),
     last_name: z.string().min(1, "Last name is required"),
     phone_number: z
         .string()

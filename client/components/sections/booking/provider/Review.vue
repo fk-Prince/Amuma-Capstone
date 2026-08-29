@@ -306,7 +306,7 @@
                             v-model="form.description"
                             rows="8"
                             placeholder="Share your experience with this provider..."
-                            class="mt-2 w-full rounded-lg border border-muted-light p-3 text-sm text-secondary focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary dark:text-white dark:border-white/10"
+                            class="mt-2 w-full rounded-lg border border-muted-light p-3 text-sm text-secondary focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary dark:text-white dark:border-white/10 dark:bg-secondary dark:placeholder-gray-500"
                         />
 
                         <p
