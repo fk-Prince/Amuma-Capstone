@@ -14,7 +14,7 @@
             class="flex shrink-0 items-center justify-between px-[19px] pt-4 pb-3"
         >
             <NuxtLink
-                to="/app/owner/dashboard"
+                :to="homeLink"
                 class="flex items-center gap-2.5"
                 @click="emit('close')"
             >
@@ -48,7 +48,7 @@
             class="sidebar-scroll flex-1 px-3.5 space-y-1.5 mt-5 overflow-y-auto overflow-x-hidden"
         >
             <NuxtLink
-                v-for="item in privateMenu"
+                v-for="item in menus"
                 :key="item.to"
                 :to="item.to"
                 class="w-full flex items-center gap-3 lg:justify-center lg:gap-0 lg:px-0 lg:group-hover:justify-start lg:group-hover:gap-3 lg:group-hover:px-[13px] px-[13px] py-3 rounded-xl text-sm font-medium transition-colors"
@@ -61,6 +61,7 @@
             >
                 <component
                     :is="item.icon"
+                    v-if="item.icon"
                     class="w-[18px] h-[18px] shrink-0"
                 />
                 <span
@@ -69,25 +70,60 @@
                 >
             </NuxtLink>
         </nav>
+
+        <div
+            class="px-3.5 pb-6 pt-3 shrink-0 border-t border-gray-50 dark:border-white/10"
+        >
+            <button
+                type="button"
+                :disabled="loadingLogout"
+                class="w-full flex items-center gap-3 px-[13px] py-3 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-white/40 dark:hover:bg-white/5 dark:hover:text-white/80 disabled:opacity-50"
+                @click="logout"
+            >
+                <LogOut class="w-[18px] h-[18px] shrink-0" />
+                <span
+                    class="whitespace-nowrap transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
+                >
+                    {{ loadingLogout ? "Logging out..." : "Logout" }}
+                </span>
+            </button>
+        </div>
     </aside>
 </template>
 
 <script setup lang="ts">
-import { watch } from "vue";
-import { useRoute } from "vue-router";
-import { X } from "lucide-vue-next";
 import logo from "assets/logo/logo.png";
-import { privateMenu } from "~/config/privateMenu";
+import { ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import { LogOut, X } from "lucide-vue-next";
+import { authService } from "~/api/auth/AuthService";
+import { useToast } from "~/composables/useToast";
+import { resetAuth } from "~/composables/useAuthUser";
 
-defineProps<{
-    open?: boolean;
-}>();
+interface MenuItem {
+    label: string;
+    to: string;
+    icon?: any;
+}
+
+withDefaults(
+    defineProps<{
+        open?: boolean;
+        menus?: MenuItem[];
+        homeLink?: string;
+    }>(),
+    {
+        menus: () => [],
+        homeLink: "/",
+    },
+);
 
 const emit = defineEmits<{
     close: [];
 }>();
 
 const route = useRoute();
+const { success } = useToast();
 
 watch(
     () => route.path,
@@ -96,6 +132,27 @@ watch(
 
 function isActive(to: string) {
     return route.path === to || route.path.startsWith(`${to}/`);
+}
+
+const loadingLogout = ref(false);
+
+async function logout() {
+    loadingLogout.value = true;
+
+    // The server call is best-effort — if it fails (expired session, network
+    // blip, stale CSRF token) the user must still be logged out locally and
+    // sent to sign-in, never left stranded on the page they clicked
+    // "Logout" from.
+    try {
+        const res = await authService.logout();
+        success(res.message ?? "Logged out successfully.");
+    } catch (err) {
+        console.error(err);
+    } finally {
+        resetAuth();
+        loadingLogout.value = false;
+        window.location.href = "/auth/signin";
+    }
 }
 </script>
 

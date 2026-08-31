@@ -1,67 +1,69 @@
 ﻿﻿<template>
     <div
-        class="h-screen flex flex-col bg-[#EEF3FB] print:bg-white print:h-auto print:overflow-visible"
+        class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-[#0b0f1a] overflow-hidden print:h-auto print:overflow-visible"
     >
         <div class="print:hidden">
-            <DashboardHeader @open="isOpen = true" />
+            <DashboardSidebar
+                :open="isOpen"
+                :menus="menus"
+                :home-link="homeLink"
+                @close="isOpen = false"
+            />
         </div>
 
-        <div class="flex flex-1 min-h-0">
+        <div class="flex-1 flex flex-col min-w-0 h-full">
             <div class="print:hidden">
-                <DynamicSidebar
-                    :open="isOpen"
-                    :logo="logoAmuma"
-                    :authMenu="menus"
-                    :user="user"
-                    @close="isOpen = false"
-                    :variant="2"
-                />
+                <DashboardHeader @open="isOpen = true" />
             </div>
 
-            <main class="flex-1 min-w-0 overflow-auto p-0 m-0">
+            <main
+                class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative"
+            >
                 <div
                     class="pointer-events-none absolute inset-0 overflow-hidden print:hidden"
                     aria-hidden="true"
                 >
                     <div
-                        class="lg:flex hidden absolute -bottom-0 left-42 h-[520px] w-[520px] rounded-full bg-sky-300/25 blur-[140px]"
+                        class="lg:flex hidden absolute -bottom-0 left-42 h-[520px] w-[520px] rounded-full bg-sky-300/25 dark:bg-primary-500/15 blur-[140px]"
                     ></div>
 
                     <div
-                        class="lg:flex hidden absolute -top-40 -left-42 h-[520px] w-[520px] rounded-full bg-sky-200/25 blur-[140px]"
+                        class="lg:flex hidden absolute -top-40 -left-42 h-[520px] w-[520px] rounded-full bg-sky-200/25 dark:bg-primary-500/10 blur-[140px]"
                     ></div>
                     <div
-                        class="lg:flex hidden absolute -top-40 left-1/2 -translate-x-1/2 h-[520px] w-[520px] rounded-full bg-sky-200/25 blur-[140px]"
+                        class="lg:flex hidden absolute -top-40 left-1/2 -translate-x-1/2 h-[520px] w-[520px] rounded-full bg-sky-200/25 dark:bg-primary-500/10 blur-[140px]"
                     ></div>
                     <div
-                        class="lg:flex hidden absolute -top-90 -right-32 h-[520px] w-[520px] rounded-full bg-sky-200/25 blur-[150px]"
+                        class="lg:flex hidden absolute -top-90 -right-32 h-[520px] w-[520px] rounded-full bg-sky-200/25 dark:bg-primary-500/10 blur-[150px]"
                     ></div>
-                    <!-- <div
-                        class="lg:flex hidden absolute top-1/3 left-1/2 h-[280px] w-[280px] -translate-x-1/2 rounded-full bg-cyan-200/20 blur-[100px]"
-                    ></div> -->
                 </div>
-                <slot />
+
+                <div class="relative min-h-full flex flex-col">
+                    <slot />
+                </div>
             </main>
         </div>
     </div>
 </template>
 <script setup lang="ts">
-import logoAmuma from "~/assets/logo/logoAmuma.png";
-import DynamicSidebar from "~/components/sections/DynamicSidebar.vue";
+import DashboardSidebar from "~/components/sections/DashboardSidebar.vue";
 import DashboardHeader from "~/components/sections/DashboardHeader.vue";
 
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 
 import { authMenuList } from "~/config/authMenu";
 
 const route = useRoute();
-const user = useAuthUser();
 const isOpen = ref(false);
 
 const branchStore = useBranchStore();
+
+const homeLink = computed(() => {
+    const uuid = branchStore.routeUuid;
+    return uuid ? `/app/branches/${uuid}/dashboard` : "/";
+});
 
 onMounted(async () => {
     const uuidParam = route.params.uuid;

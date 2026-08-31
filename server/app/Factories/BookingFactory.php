@@ -4,6 +4,7 @@ namespace App\Factories;
 
 use App\Models\Booking;
 use App\Models\Invoice;
+use App\Models\Patient;
 use App\Repository\InvoiceRepository;
 use App\Service\PatientAdmissionService;
 use App\Service\PatientService;
@@ -77,6 +78,12 @@ class BookingFactory
 
     public function handleHomecareBooking(array $payload)
     {
+        $existingPatientId = $payload['patient']['patient_id'] ?? null;
+
+        if ($existingPatientId) {
+            return $this->handleHomecareBookingForExistingPatient($existingPatientId, $payload);
+        }
+
         $data = $this->patientService->createMedicalPatient($payload);
         $invoiceServices = $data['invoiceServices'];
 
@@ -91,6 +98,35 @@ class BookingFactory
         return [
             'invoice' => $invoice,
             'patient' => $data['patient'],
+        ];
+    }
+
+    /**
+     * The portal's "Book Again" booking — the patient already exists, so
+     * only the visit itself (schedule + invoice) needs creating.
+     */
+    private function handleHomecareBookingForExistingPatient(int $patientId, array $payload)
+    {
+        $patient = Patient::findOrFail($patientId);
+
+        $data = $this->patientService->createHomecareScheduleForExisting(
+            $patient,
+            $payload['homecare'],
+            $payload['category'] ?? 'Homecare',
+            $payload['payment']['total_amount'] ?? null,
+        );
+
+        $invoice = $this->invoiceRepository->create([
+            'total'     => $payload['payment']['total_amount'] ?? 0,
+            'branch_id' => $payload['branch_id'] ?? $patient->branch_id,
+            'status'    => Invoice::STATUS_PENDING,
+        ]);
+
+        $invoice->invoiceServices()->createMany($data['invoiceServices']);
+
+        return [
+            'invoice' => $invoice,
+            'patient' => $patient,
         ];
     }
 }

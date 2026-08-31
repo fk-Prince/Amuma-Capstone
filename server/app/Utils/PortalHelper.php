@@ -32,6 +32,7 @@ class PortalHelper
             'homecare' => $data['homecare'] ?? null,
 
             'patient' => [
+                'patient_id' => $data['patient']['patient_id'] ?? null,
                 'first_name' => $data['patient']['first_name'] ?? null,
                 'middle_name' => $data['patient']['middle_name'] ?? null,
                 'last_name' => $data['patient']['last_name'] ?? null,
@@ -204,6 +205,7 @@ class PortalHelper
     {
         return [
             'branch_id' => $patient->branch_id,
+            'uuid' => $patient->branch?->uuid,
             'name' => $patient->branch?->name,
             'full_address' => $patient->branch?->location?->full_address,
         ];
@@ -291,7 +293,6 @@ class PortalHelper
                                 $q->whereNull('type')
                                     ->orWhere(
                                         'type',
-                                        '!=',
                                         ScheduleService::TYPE_MEDICAL
                                     );
                             });

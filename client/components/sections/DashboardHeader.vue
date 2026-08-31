@@ -1,174 +1,101 @@
 <template>
     <header
-        class="lg:h-[90px] h-[150px] lg:flex-none flex-col w-full bg-white border-b border-primary-100/80 shadow-[0_0_40px_rgba(10,40,87,0.06)] flex items-center justify-between px-6 shrink-0"
+        class="min-h-[88px] sm:min-h-[104px] lg:h-[120px] px-3 sm:px-6 lg:px-8 py-4 sm:py-5 flex items-center justify-between gap-2 sm:gap-4 shrink-0 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-secondary"
     >
-        <div class="flex justify-between items-center h-full w-full">
-            <div class="flex justify-start items-center gap-4">
-                <NuxtLink
-                    to="/"
-                    class="flex items-center pr-5 lg:border-r lg:border-primary-100/80"
-                >
-                    <img
-                        :src="logo"
-                        alt="AMUMA logo"
-                        class="w-[50px] md:w-[50px] object-contain"
-                    />
-                </NuxtLink>
+        <button
+            type="button"
+            class="-ml-1 shrink-0 rounded-lg p-2 text-gray-600 hover:bg-gray-50 hover:text-primary-500 dark:text-white/70 dark:hover:bg-white/10 lg:hidden"
+            aria-label="Open navigation"
+            @click="$emit('open')"
+        >
+            <Menu class="h-5 w-5" />
+        </button>
 
-                <div
-                    v-if="isMounted"
-                    class="items-center lg:flex hidden gap-2.5 cursor-pointer select-none rounded-lg px-2 py-1.5 -ml-2 transition-colors duration-200 hover:bg-primary-50"
-                    @click="branchStore.openModal"
-                >
-                    <div
-                        class="w-9 h-9 rounded-lg overflow-hidden bg-primary-50 shrink-0 flex items-center justify-center ring-2 ring-primary-100"
-                    >
-                        <img
-                            v-if="branchStore.activeBranch?.image"
-                            :src="
-                                getBranchImage(branchStore.activeBranch.image)
-                            "
-                            :alt="branchStore.activeBranch.name"
-                            class="w-full h-full object-cover"
-                        />
-                        <svg
-                            v-else
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.5"
-                            class="w-5 h-5 text-primary-400"
-                        >
-                            <path
-                                d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01"
-                            />
-                        </svg>
-                    </div>
-
-                    <div class="flex flex-col leading-tight">
-                        <span
-                            class="text-[30px] font-bold text-primary-900 tracking-tight"
-                        >
-                            {{
-                                branchStore.activeBranch?.name ||
-                                "Select a branch"
-                            }}
-                        </span>
-                        <span class="text-[13px] text-muted">
-                            {{
-                                branchStore.activeBranch?.location?.address ||
-                                "No branch selected"
-                            }}
-                        </span>
-                    </div>
-
-                    <svg
-                        v-if="branchStore.hasMultipleBranches"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        class="w-4 h-4 text-primary-400 ml-5"
-                    >
-                        <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                </div>
-            </div>
-            <div class="flex gap-2 items-center">
-                <div class="flex items-center gap-3">
-                    <div v-if="!isMounted" class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full skeleton-shimmer" />
-                        <div class="flex flex-col gap-2">
-                            <div class="w-24 h-3 rounded-md skeleton-shimmer" />
-                            <div class="w-14 h-3 rounded-md skeleton-shimmer" />
-                        </div>
-                    </div>
-
-                    <div v-else class="flex items-center gap-3">
-                        <MessageBell />
-                        <Notification />
-                        <NavbarProfileDropdown v-if="user" :user="user" />
-                    </div>
-                </div>
-                <button
-                    @click="$emit('open')"
-                    class="flex lg:hidden items-center justify-center w-10 h-10 rounded-lg text-primary-600 transition-colors duration-200 hover:bg-primary-50"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        class="w-6 h-6"
-                    >
-                        <line x1="3" y1="6" x2="21" y2="6" />
-                        <line x1="3" y1="12" x2="21" y2="12" />
-                        <line x1="3" y1="18" x2="21" y2="18" />
-                    </svg>
-                </button>
-            </div>
+        <div v-if="!isMounted" class="min-w-0 flex-1 space-y-2">
+            <div class="h-6 w-40 rounded-md skeleton-shimmer sm:h-7" />
+            <div class="h-3 w-56 rounded-md skeleton-shimmer" />
         </div>
 
-        <header class="flex items-center justify-between w-full">
+        <button
+            v-else
+            type="button"
+            class="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-1 text-left transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-white/5 sm:-ml-2 sm:px-2"
+            @click="branchStore.openModal"
+        >
             <div
-                v-if="isMounted"
-                class="flex lg:hidden w-fit h-full gap-2.5 mb-3 cursor-pointer rounded-lg px-1 transition-colors duration-200 hover:bg-primary-50"
-                @click="branchStore.openModal"
+                class="hidden h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-50 ring-2 ring-primary-100 dark:bg-white/10 dark:ring-white/10 sm:flex"
             >
-                <div
-                    class="w-9 h-9 rounded-lg bg-primary-50 flex items-center mt-2 justify-center overflow-hidden ring-2 ring-primary-100"
-                >
-                    <img
-                        v-if="branchStore.activeBranch?.image"
-                        :src="getBranchImage(branchStore.activeBranch.image)"
-                        :alt="branchStore.activeBranch.name"
-                        class="w-full h-full object-cover"
-                    />
-                    <svg
-                        v-else
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        class="w-5 h-5 text-primary-400"
-                    >
-                        <path
-                            d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01"
-                        />
-                    </svg>
-                </div>
-
-                <div class="flex flex-col leading-tight">
-                    <span class="text-lg font-bold text-primary-900">
-                        {{
-                            branchStore.activeBranch?.name || "Select a branch"
-                        }}
-                    </span>
-                    <span class="text-xs text-muted">
-                        {{
-                            branchStore.activeBranch?.location?.address ||
-                            "No branch selected"
-                        }}
-                    </span>
-                </div>
-
-                <svg
-                    v-if="branchStore.hasMultipleBranches"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    class="w-4 h-4 text-primary-400 ml-5 mb-2 self-center"
-                >
-                    <polyline points="6 9 12 15 18 9" />
-                </svg>
+                <img
+                    v-if="branchStore.activeBranch?.image"
+                    :src="getBranchImage(branchStore.activeBranch.image)"
+                    :alt="branchStore.activeBranch.name"
+                    class="h-full w-full object-cover"
+                />
+                <Building2 v-else class="h-5 w-5 text-primary-400" />
             </div>
-        </header>
+
+            <div class="min-w-0 flex-1">
+                <h1
+                    class="flex items-center gap-1.5 truncate text-lg sm:text-2xl lg:text-[26px] font-bold text-gray-900 dark:text-white leading-tight"
+                >
+                    {{ branchStore.activeBranch?.name || "Select a branch" }}
+
+                    <ChevronDown
+                        v-if="branchStore.hasMultipleBranches"
+                        class="h-4 w-4 shrink-0 text-gray-400 dark:text-white/40"
+                    />
+                </h1>
+
+                <p class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate">
+                    {{
+                        branchStore.activeBranch?.location?.address ||
+                        "No branch selected"
+                    }}
+                </p>
+
+                <div
+                    class="hidden items-center gap-2 sm:gap-3 mt-2 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 sm:flex"
+                >
+                    <span class="flex items-center gap-1.5 whitespace-nowrap">
+                        <Calendar
+                            class="w-3.5 h-3.5 text-primary-500 shrink-0"
+                        />
+                        {{ formattedDate }}
+                    </span>
+
+                    <span
+                        class="w-px h-3 bg-gray-200 dark:bg-white/10 shrink-0"
+                    />
+
+                    <span class="flex items-center gap-1.5 whitespace-nowrap">
+                        <Clock class="w-3.5 h-3.5 text-primary-500 shrink-0" />
+                        {{ formattedTime }}
+                    </span>
+                </div>
+            </div>
+        </button>
+
+        <div class="flex items-center gap-1 sm:gap-6 lg:gap-8 shrink-0">
+            <div v-if="!isMounted" class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full skeleton-shimmer" />
+            </div>
+
+            <template v-else>
+                <ClientOnly>
+                    <ThemeToggle
+                        class="text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/10"
+                    />
+                </ClientOnly>
+
+                <MessageBell />
+                <Notification />
+                <NavbarProfileDropdown
+                    v-if="user"
+                    :user="user"
+                    :theme-aware="true"
+                />
+            </template>
+        </div>
     </header>
 
     <Teleport to="body">
@@ -528,13 +455,22 @@
 </template>
 
 <script setup lang="ts">
-import logo from "assets/logo/logo.png";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import Notification from "../ui/Notification.vue";
 import MessageBell from "../ui/MessageBell.vue";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
+import ThemeToggle from "../ui/ThemeToggle.vue";
 import Location from "../icons/location.vue";
-import { BadgeCheck, Building2, Mail, Phone } from "lucide-vue-next";
+import {
+    BadgeCheck,
+    Building2,
+    Calendar,
+    ChevronDown,
+    Clock,
+    Mail,
+    Menu,
+    Phone,
+} from "lucide-vue-next";
 
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
@@ -551,6 +487,38 @@ const isMounted = ref(false);
 
 onMounted(() => {
     isMounted.value = true;
+});
+
+const now = ref(new Date());
+
+let clockTimer: ReturnType<typeof setInterval> | undefined;
+
+const formattedDate = computed(() =>
+    now.value.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "2-digit",
+        year: "numeric",
+    }),
+);
+
+const formattedTime = computed(() =>
+    now.value.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+    }),
+);
+
+onMounted(() => {
+    clockTimer = setInterval(() => {
+        now.value = new Date();
+    }, 1000 * 30);
+});
+
+onUnmounted(() => {
+    if (clockTimer) {
+        clearInterval(clockTimer);
+    }
 });
 </script>
 

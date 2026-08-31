@@ -85,6 +85,34 @@ class PatientService
         }
 
 
+        $scheduleData = $this->buildHomecareSchedule(
+            $patient,
+            $scheduleLocation,
+            $homecare,
+            $payload['category'],
+            $payload['payment']['total_amount'] ?? null,
+        );
+
+        return [
+            'invoiceServices' => $scheduleData['invoiceServices'],
+            'schedule'        => $scheduleData['schedule'],
+            'patient'         => $patient,
+        ];
+    }
+
+    public function createHomecareScheduleForExisting(mixed $patient, array $homecare, string $category, ?float $adlPrice = null): array
+    {
+        $scheduleLocation = $this->locationRepository->create([
+            'full_address' => $homecare['address'],
+            'latitude'     => $homecare['latitude'] ?? null,
+            'longitude'    => $homecare['longitude'] ?? null,
+        ]);
+
+        return $this->buildHomecareSchedule($patient, $scheduleLocation, $homecare, $category, $adlPrice);
+    }
+
+    private function buildHomecareSchedule(mixed $patient, mixed  $scheduleLocation, array $homecare, string $category, ?float $adlPrice): array
+    {
         $scheduledAt = Carbon::parse(
             $homecare['date'] . ' ' . $homecare['prefered_time']
         );
@@ -93,7 +121,7 @@ class PatientService
             'scheduled_at'          => $scheduledAt,
             'location_id'           => $scheduleLocation->location_id,
             'status'                => Schedule::STATUS_PENDING,
-            'category'              => ucfirst($payload['category']),
+            'category'              => ucfirst($category),
         ]);
 
         $invoiceServices = [];
@@ -123,15 +151,13 @@ class PatientService
 
             $invoiceServices[] = [
                 'schedule_services_id' => $scheduleService->schedule_services_id,
-                'price' =>  $payload['payment']['total_amount'],
+                'price' =>  $adlPrice ?? 0,
             ];
         }
-
 
         return [
             'invoiceServices' => $invoiceServices,
             'schedule'        => $schedule,
-            'patient'         => $patient,
         ];
     }
 

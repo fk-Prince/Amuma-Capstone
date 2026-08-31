@@ -51,7 +51,7 @@
                 v-for="item in navItems"
                 :key="item.to"
                 :to="item.to"
-                class="w-full flex items-center gap-3 px-[13px] py-3 rounded-xl text-sm font-medium transition-colors"
+                class="w-full flex items-center gap-3 lg:justify-center lg:gap-0 lg:px-0 lg:group-hover:justify-start lg:group-hover:gap-3 lg:group-hover:px-[13px] px-[13px] py-3 rounded-xl text-sm font-medium transition-colors"
                 :class="
                     isActive(item.to)
                         ? 'bg-primary-500 text-white shadow-sm'
@@ -61,7 +61,7 @@
             >
                 <component :is="item.icon" class="w-[18px] h-[18px] shrink-0" />
                 <span
-                    class="flex-1 text-left whitespace-nowrap transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
+                    class="flex-1 lg:flex-none lg:w-0 lg:group-hover:flex-1 lg:group-hover:w-auto text-left whitespace-nowrap overflow-hidden transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
                     >{{ item.label }}</span
                 >
             </NuxtLink>
@@ -139,16 +139,16 @@ function isActive(to: string) {
 <style scoped>
 .sidebar-scroll {
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+    scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
 }
 .sidebar-scroll::-webkit-scrollbar {
-    width: 4px;
+    width: 5px;
 }
 .sidebar-scroll::-webkit-scrollbar-track {
     background: transparent;
 }
 .sidebar-scroll::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: rgba(148, 163, 184, 0.6);
     border-radius: 999px;
 }
 </style>

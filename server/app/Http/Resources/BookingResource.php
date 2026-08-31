@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,6 +17,11 @@ class BookingResource extends JsonResource
             ? json_decode($this->booking_data, true)
             : $this->booking_data;
 
+        $existingPatientId = $data['patient']['patient_id'] ?? null;
+
+        $patientUuid = $this->patientsBooking->first()?->uuid
+            ?? ($existingPatientId ? Patient::find($existingPatientId)?->uuid : null);
+
         return [
             'booking_id' => $this->booking_id,
             'reference_id' => $this->reference_id,
@@ -29,7 +35,8 @@ class BookingResource extends JsonResource
             'homecare' => $data['homecare'] ?? null,
 
             'patient' => [
-                'uuid' => $this->patientsBooking->first()?->uuid,
+                'uuid' => $patientUuid,
+                'patient_id' => $existingPatientId,
                 'first_name' => $data['patient']['first_name'] ?? null,
                 'middle_name' => $data['patient']['middle_name'] ?? null,
                 'last_name' => $data['patient']['last_name'] ?? null,

@@ -34,6 +34,17 @@ class Branch extends Model
             ->exists();
     }
 
+    public function hasHomecareSubscription(): bool
+    {
+        return $this->subscriptions()
+            ->where('status', 'active')
+            ->whereDate('end_date', '>=', now())
+            ->whereHas('plans', function ($q) {
+                $q->whereIn('plan_code', ['A', 'C']);
+            })
+            ->exists();
+    }
+
     protected $casts = [
         'settings' => 'array',
         'is_verified' => 'boolean',

@@ -68,24 +68,33 @@
                                 </template>
 
                                 <template #cell-patient="{ row }">
-                                    <p
-                                        class="font-semibold text-[#16302E] truncate text-sm max-w-[14rem]"
-                                        :title="
-                                            fullName(
-                                                row.patient?.first_name,
-                                                row.patient?.middle_name,
-                                                row.patient?.last_name,
-                                            )
-                                        "
-                                    >
-                                        {{
-                                            fullName(
-                                                row.patient?.first_name,
-                                                row.patient?.middle_name,
-                                                row.patient?.last_name,
-                                            )
-                                        }}
-                                    </p>
+                                    <div class="flex flex-col gap-1">
+                                        <p
+                                            class="font-semibold text-[#16302E] truncate text-sm max-w-[14rem]"
+                                            :title="
+                                                fullName(
+                                                    row.patient?.first_name,
+                                                    row.patient?.middle_name,
+                                                    row.patient?.last_name,
+                                                )
+                                            "
+                                        >
+                                            {{
+                                                fullName(
+                                                    row.patient?.first_name,
+                                                    row.patient?.middle_name,
+                                                    row.patient?.last_name,
+                                                )
+                                            }}
+                                        </p>
+
+                                        <span
+                                            v-if="row.patient?.patient_id"
+                                            class="inline-flex w-fit items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-600"
+                                        >
+                                            Book Again
+                                        </span>
+                                    </div>
                                 </template>
 
                                 <template #cell-service="{ row }">

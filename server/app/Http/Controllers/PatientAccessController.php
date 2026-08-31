@@ -36,4 +36,17 @@ class PatientAccessController extends Controller
             return $this->patientAccessService->bookings($payload);
         }
     }
+
+    public function executeAction(Request $request)
+    {
+        $clientId = $request->user()->client?->client_id;
+
+        $payload = array_merge($request->all(), [
+            'client_id' => $clientId,
+        ]);
+
+        if ($request->action === 'book_again') {
+            return $this->patientAccessService->bookAgain($payload, $request->user());
+        }
+    }
 }

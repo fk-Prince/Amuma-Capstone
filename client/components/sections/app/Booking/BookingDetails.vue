@@ -36,6 +36,13 @@
                                 }}
                             </h2>
 
+                            <span
+                                v-if="booking.patient?.patient_id"
+                                class="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-600"
+                            >
+                                Book Again
+                            </span>
+
                             <button
                                 v-if="hasPatientUuid"
                                 type="button"

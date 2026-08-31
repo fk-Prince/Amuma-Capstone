@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import L_module from "leaflet";
 
 interface Location {
@@ -27,6 +27,7 @@ const emit = defineEmits<{
 }>();
 
 const selectedLocation = ref<Location | null>(null);
+const mapContainerEl = ref<HTMLElement | null>(null);
 
 let map: L_module.Map | null = null;
 let marker: L_module.Marker | null = null;
@@ -240,13 +241,9 @@ onMounted(async () => {
     (window as any).L = L;
 
     await import("leaflet/dist/leaflet.css");
+    await nextTick();
 
-    const mapContainer = document.getElementById("location-map");
-    if (!mapContainer) return;
-
-    if ((mapContainer as any)._leaflet_id) {
-        return;
-    }
+    if (!mapContainerEl.value) return;
 
     delete (L.Icon.Default.prototype as any)._getIconUrl;
 
@@ -263,7 +260,7 @@ onMounted(async () => {
             ? [props.initialLat, props.initialLng]
             : [7.0736, 125.611];
 
-    map = L.map("location-map", { attributionControl: false }).setView(
+    map = L.map(mapContainerEl.value, { attributionControl: false }).setView(
         initialView as [number, number],
         13,
     );
@@ -272,6 +269,13 @@ onMounted(async () => {
         maxZoom: 19,
         attribution: "© OpenStreetMap contributors",
     }).addTo(map);
+
+    // Leaflet measures the container once at creation time. Inside a
+    // modal or any other container that's still transitioning/settling
+    // when this runs, that measurement can come back zero-sized and the
+    // map never repaints on its own afterward.
+    requestAnimationFrame(() => map?.invalidateSize());
+    setTimeout(() => map?.invalidateSize(), 300);
 
     if (props.initialLat && props.initialLng) {
         placeMarker(props.initialLat, props.initialLng);
@@ -379,7 +383,7 @@ onUnmounted(() => {
         </div>
 
         <div
-            id="location-map"
+            ref="mapContainerEl"
             class="w-full h-[400px] z-20 rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm"
         />
 

@@ -68,11 +68,7 @@ class PatientAccessRepository
         ];
     }
 
-    /**
-     * Full ADL / medical schedule history for a patient, used by the
-     * portal's schedule toggle (as opposed to overview(), which only
-     * surfaces the single current schedule per type).
-     */
+
     public function scheduleList(array $payload)
     {
         $access = $this->findAccess($payload);
@@ -124,19 +120,7 @@ class PatientAccessRepository
         ];
     }
 
-    /**
-     * A client's own booking requests — scoped by client_id (never trusted
-     * from the request body, resolved server-side in the controller from
-     * the authenticated user), not by patient_id, since a booking may not
-     * yet have a matched Patient record at all (pending/rejected/expired).
-     */
-    /**
-     * Scoped by user_id (the account that submitted the booking) rather
-     * than client_id — a booking has no Client profile attached to it
-     * until it's approved (see UserRepository::createUpdateTypeUser),
-     * so scoping by client_id would hide a user's own still-pending
-     * bookings from them.
-     */
+
     public function bookings(array $payload)
     {
         if (empty($payload['user_id'])) {
@@ -171,6 +155,11 @@ class PatientAccessRepository
         ];
     }
 
+    public function verifyAccess(array $payload)
+    {
+        return $this->findAccess($payload);
+    }
+
     private function findAccess(array $payload)
     {
         $access = PatientAccess::query()
@@ -186,11 +175,7 @@ class PatientAccessRepository
         return $access;
     }
 
-    /**
-     * `section` may be a single value or a comma-separated list (e.g.
-     * "profile,financials") so a page can pull exactly the sections it
-     * renders instead of the whole payload.
-     */
+
     private function resolveSections(array $payload): array
     {
         $requested = $payload['section'] ?? 'all';
@@ -205,19 +190,13 @@ class PatientAccessRepository
         return $sections ?: ['all'];
     }
 
-    /**
-     * Only eager-load the relations the requested sections actually need,
-     * instead of pulling the full admission/schedule/invoice tree on every call.
-     */
+
     private function patientRelations(array $sections, bool $latestOnly = false): array
     {
         $wantsAll = in_array('all', $sections, true);
         $relations = [];
 
-        // Prefer an ongoing schedule over a pending one, and the most
-        // recently scheduled one after that, so the ADL/medical schedule
-        // that surfaces is the current one rather than an arbitrary
-        // historical row.
+
         $orderSchedules = fn($query) => $query
             ->orderByRaw(
                 'CASE WHEN status = ? THEN 0 WHEN status = ? THEN 1 ELSE 2 END',
@@ -225,12 +204,7 @@ class PatientAccessRepository
             )
             ->orderByDesc('scheduled_at');
 
-        // Medications/vitals are only pulled when the "medication" section
-        // is explicitly requested — not as a side effect of "profile",
-        // which nearly every portal page asks for. A caller that only
-        // needs a preview (e.g. the loved-ones tab) can pass latest_only
-        // to get just the single most recent record of each instead of
-        // the full history.
+
         if ($wantsAll || in_array('medication', $sections, true)) {
             if ($latestOnly) {
                 $relations['medications'] = fn($query) =>
@@ -250,9 +224,7 @@ class PatientAccessRepository
             }
         }
 
-        // Activities are only pulled when the "activity" section is
-        // explicitly requested — mirrors medication/vitals so the portal's
-        // updates page doesn't cost every other page an extra query.
+
         if ($wantsAll || in_array('activity', $sections, true)) {
             $relations['activities'] = fn($query) =>
             $query->orderByDesc('occurred_at')->limit(200);
@@ -266,18 +238,12 @@ class PatientAccessRepository
                 'latestAdmission.bed.room',
             ]);
 
-            // Light load: only enough to detect a homecare fallback in
-            // locationContext(); the full service/assignee tree below
-            // overrides this when the schedule section is also requested.
+
             $relations['schedules'] = fn($query) =>
             $orderSchedules($query->with(['scheduleServices']));
         }
 
         if ($wantsAll || in_array('schedule', $sections, true)) {
-            // schedulePayload() reads $patient->location for the embedded
-            // `patient` sub-object, so load it even when 'profile' wasn't
-            // requested (e.g. the portal's schedule page, which only needs
-            // the schedule section).
             if (!in_array('location', $relations, true)) {
                 $relations[] = 'location';
             }

@@ -374,6 +374,16 @@
                                 <CreditCard class="w-3.5 h-3.5" />
                                 View Billing
                             </NuxtLink>
+
+                            <button
+                                v-if="canBookAgain"
+                                type="button"
+                                class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition-colors"
+                                @click="showBookAgainModal = true"
+                            >
+                                <CalendarPlus class="w-3.5 h-3.5" />
+                                Book Again
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -869,12 +879,21 @@
             </div>
         </template>
     </div>
+
+    <BookAgainModal
+        :open="showBookAgainModal"
+        :patient-id="lovedOne.patient_id"
+        :patient-name="lovedOne.name"
+        :branch-uuid="lovedOne.branchUuid"
+        @close="showBookAgainModal = false"
+    />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from "vue";
 import MedicationTable from "~/components/sections/app/Patient/MedicationTable.vue";
 import VitalSignsTable from "~/components/sections/app/Patient/VitalSignsTable.vue";
+import BookAgainModal from "~/components/sections/app/Patient/BookAgainModal.vue";
 import EmptyState from "~/components/ui/EmptyState.vue";
 import {
     Pencil,
@@ -883,6 +902,7 @@ import {
     MapPin,
     MessageSquare,
     Calendar,
+    CalendarPlus,
     CreditCard,
     Cake,
     Droplet,
@@ -936,6 +956,7 @@ interface LovedOne {
     name: string;
     address: string;
     branchName: string;
+    branchUuid: string | null;
     homeAddress: string;
     status: string;
     photo: string;
@@ -980,6 +1001,7 @@ function fallbackLovedOne(): LovedOne {
         name: "Unnamed Resident",
         address: "N/A",
         branchName: "N/A",
+        branchUuid: null,
         homeAddress: "N/A",
         status: "Unknown",
         photo: PLACEHOLDER_PHOTO,
@@ -1054,6 +1076,17 @@ const lovedOne = computed(
 );
 
 const isVip = computed(() => lovedOne.value.roomType?.toLowerCase() === "vip");
+
+// A new visit only makes sense when the loved one isn't already in the
+// middle of a facility stay — homecare, discharged, or never-admitted are
+// all fine, "Admitted"/"Waiting" already has an active facility booking.
+const canBookAgain = computed(
+    () =>
+        lovedOne.value.status !== "Admitted" &&
+        lovedOne.value.status !== "Waiting",
+);
+
+const showBookAgainModal = ref(false);
 
 function calcAge(dob: string | null | undefined): number {
     if (!dob) return 0;
@@ -1200,6 +1233,7 @@ function mapPatientRecord(item: any): LovedOne {
         name: patient.full_name || "Unnamed Resident",
         address: org.full_address || "N/A",
         branchName: org.name || "N/A",
+        branchUuid: org.uuid || null,
         homeAddress: patient.full_address || "N/A",
         status: statusLabel,
         photo: patient.avatar || PLACEHOLDER_PHOTO,
