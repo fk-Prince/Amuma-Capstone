@@ -14,6 +14,10 @@ class PlanService extends BaseService {
         return await this.request(this.resource, 'GET', params);
     }
 
+    async update(planId: number, payload: object): Promise<any> {
+        return await this.request(`${this.resource}/${planId}`, 'PUT', payload);
+    }
+
     private get resource(): string {
         const config = useRuntimeConfig();
         return `${config.public.backendApi}/api/plans`;

@@ -64,12 +64,11 @@ const isOpen = ref(false);
 const branchStore = useBranchStore();
 
 onMounted(async () => {
-    if (!branchStore.branches.length) {
-        const uuidParam = route.params.uuid;
-        await branchStore.fetchBranches(
-            Array.isArray(uuidParam) ? uuidParam[0] : uuidParam,
-        );
-    }
+    const uuidParam = route.params.uuid;
+    await branchStore.fetchBranches(
+        Array.isArray(uuidParam) ? uuidParam[0] : uuidParam,
+    );
+
     let uuid = branchStore.activeBranch?.uuid ?? branchStore.branches[0]?.uuid;
 
     if (!uuid) {
@@ -96,7 +95,6 @@ const menus = computed(() => {
     const modules = activeModules.value ?? [];
     const uuid = branchStore.routeUuid;
     const branch = branchStore.activeBranch;
-
     if (!branch?.agency?.is_verified || !branch?.is_verified) {
         return authMenuList
             .filter((item) => item.label === "Dashboard")

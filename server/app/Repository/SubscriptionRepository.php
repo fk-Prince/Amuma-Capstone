@@ -8,6 +8,7 @@ use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Http\Resources\SubscriptionResource;
 use App\Models\Plan;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
@@ -90,8 +91,10 @@ class SubscriptionRepository
         ];
     }
 
-    public function overview()
+    public function overview(int $revenueMonths = 6, ?int $revenueYear = null)
     {
+        $revenueMonths = max(1, min($revenueMonths, 24));
+
         $statusCounts = Subscription::query()
             ->select('status')
             ->selectRaw('COUNT(*) as total')
@@ -152,6 +155,52 @@ class SubscriptionRepository
             ->where('status', 'paid')
             ->count();
 
+        if ($revenueYear) {
+            $revenueByMonthRaw = SubscriptionPayment::query()
+                ->where('status', 'paid')
+                ->whereYear('created_at', $revenueYear)
+                ->selectRaw("TO_CHAR(created_at, 'YYYY-MM') as month")
+                ->selectRaw('SUM(price) as total')
+                ->groupBy('month')
+                ->pluck('total', 'month');
+
+            $revenueByMonth = collect(range(0, 11))->map(function (int $month) use ($revenueByMonthRaw, $revenueYear) {
+                $date = Carbon::create($revenueYear, $month + 1, 1);
+
+                return [
+                    'month' => $date->format('M'),
+                    'total' => (float) ($revenueByMonthRaw[$date->format('Y-m')] ?? 0),
+                ];
+            })->values();
+        } else {
+            $revenueByMonthRaw = SubscriptionPayment::query()
+                ->where('status', 'paid')
+                ->where('created_at', '>=', Carbon::now()->subMonths($revenueMonths - 1)->startOfMonth())
+                ->selectRaw("TO_CHAR(created_at, 'YYYY-MM') as month")
+                ->selectRaw('SUM(price) as total')
+                ->groupBy('month')
+                ->pluck('total', 'month');
+
+            $revenueByMonth = collect(range($revenueMonths - 1, 0))->map(function (int $monthsAgo) use ($revenueByMonthRaw) {
+                $date = Carbon::now()->subMonths($monthsAgo)->startOfMonth();
+
+                return [
+                    'month' => $date->format('M Y'),
+                    'total' => (float) ($revenueByMonthRaw[$date->format('Y-m')] ?? 0),
+                ];
+            })->values();
+        }
+
+        $earliestPaymentAt = SubscriptionPayment::query()
+            ->where('status', 'paid')
+            ->min('created_at');
+
+        $earliestYear = $earliestPaymentAt
+            ? Carbon::parse($earliestPaymentAt)->year
+            : Carbon::now()->year;
+
+        $availableYears = collect(range(Carbon::now()->year, $earliestYear))->values();
+
         $recent = Subscription::query()
             ->with([
                 'branch.agencies',
@@ -177,6 +226,8 @@ class SubscriptionRepository
                 'plan_breakdown' => $planBreakdown,
                 'revenue_total' => (float) $revenue,
                 'paid_payments_count' => $paidPaymentsCount,
+                'revenue_by_month' => $revenueByMonth,
+                'available_revenue_years' => $availableYears,
                 'recent' => $recent,
             ],
         ];

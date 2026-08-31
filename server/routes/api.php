@@ -89,6 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/invoices/action', [InvoiceController::class, 'action']);
     Route::post('/admissions/action', [PatientAdmissionController::class, 'action']);
     Route::post('/subscriptions/action', [SubscriptionController::class, 'action']);
+    Route::apiResource('plans', PlanController::class)->only(['update']);
 
     Route::get('/patient-access/action', [PatientAccessController::class, 'retrieveAction']);
     Route::post('/patient-access/action', [PatientAccessController::class, 'executeAction']);

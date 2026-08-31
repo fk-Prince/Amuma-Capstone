@@ -30,7 +30,7 @@
                     role="dialog"
                     aria-modal="true"
                     aria-label="Assign Nurse"
-                    class="relative flex h-[80vh] max-h-[85vh] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+                    class="relative flex h-[85vh] max-h-[90vh] w-full max-w-6xl flex-col rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
                 >
                     <div
                         class="flex items-center justify-between gap-4 border-b border-gray-100 px-6 py-5"

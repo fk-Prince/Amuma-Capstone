@@ -235,6 +235,14 @@ class ScheduleResource extends JsonResource
 
                 'address' => $patient->location?->full_address,
 
+                'guardian' => $patient->primaryGuardian?->client ? [
+                    'full_name' => trim(
+                        "{$patient->primaryGuardian->client->first_name} {$patient->primaryGuardian->client->last_name}"
+                    ),
+                    'phone_number' => $patient->primaryGuardian->client->phone_number,
+                    'relationship' => $patient->primaryGuardian->relationship_type,
+                ] : null,
+
                 'is_admitted' => (bool) $patient->currentAdmission,
 
                 'admission' => $patient->currentAdmission ? [
@@ -286,6 +294,8 @@ class ScheduleResource extends JsonResource
                                         ?->role_name,
 
                                     'avatar' => $employee?->avatar,
+                                    'phone_number' => $employee?->phone_number,
+                                    'email' => $employee?->users?->email,
                                     'note' => $assignment->note,
 
                                     'online' => $assignment->relationLoaded('onlineSchedules')

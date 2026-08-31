@@ -11,12 +11,8 @@ export interface ScheduleAssignee {
     employee_id: number;
     full_name: string;
     avatar: string | null;
-
-    /**
-     * Free-text note about what this person does on this assignment
-     * ("Primary", "Assistance", ...). Distinct from `employee_role`, which is
-     * their actual role at the branch.
-     */
+    phone_number: string | null;
+    email: string | null;
     note: string | null;
 
     online: OnlineScheduleAssignment[];
@@ -66,6 +62,12 @@ export interface SchedulePatient {
     full_name: string;
     address: string | null;
 
+    guardian: {
+        full_name: string;
+        phone_number: string | null;
+        relationship: string | null;
+    } | null;
+
     is_admitted: boolean;
     admission: PatientAdmission | null;
 }
@@ -86,20 +88,9 @@ export interface ScheduleItem {
     total_hours: number;
     total_duration_minutes: number;
 
-    /**
-     * Where the care actually happens. Facility schedules are delivered at the
-     * branch and resolve to "On-site"; homecare ones carry the visit address
-     * from the schedule's own location. Distinct from `patient.address`, which
-     * is the patient's registered home address.
-     */
     is_onsite?: boolean;
     address?: string | null;
 
-    /**
-     * Coordinates of the homecare visit, captured by the booking form's map
-     * picker. Null for facility schedules and for older homecare rows booked
-     * before the picker existed.
-     */
     latitude?: number | null;
     longitude?: number | null;
 
@@ -146,7 +137,6 @@ export interface AuditRow {
     full_name: string | null;
     avatar: string | null;
 
-    /** Assignment note ("Primary", "Assistance", ...) — not a job role. */
     note: string | null;
 
     address: string | null;
@@ -162,6 +152,8 @@ export interface AuditRow {
         full_name: string | null;
         avatar: string | null;
         note: string | null;
+        phone_number: string | null;
+        email: string | null;
     }[];
 
     assigned?: {

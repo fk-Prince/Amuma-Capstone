@@ -10,7 +10,7 @@
         />
 
         <div
-            class="mb-6 flex flex-col gap-4 border-b border-slate-100 pb-6 lg:flex-row lg:items-center lg:justify-between"
+            class="mb-6 flex flex-col gap-4 border-b border-slate-100 dark:border-white/10 pb-6 lg:flex-row lg:items-center lg:justify-between"
         >
             <SubscriptionFilterBar
                 v-model:search="search"
@@ -25,7 +25,7 @@
                 <button
                     type="button"
                     :disabled="loading"
-                    class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                    class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-secondary px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-gray-300 transition hover:bg-slate-50 dark:hover:bg-white/10 disabled:opacity-50"
                     @click="fetchSubscriptions()"
                 >
                     <svg
@@ -71,43 +71,43 @@
             <div
                 v-for="n in 6"
                 :key="n"
-                class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm"
+                class="overflow-hidden rounded-2xl border border-slate-100 dark:border-white/10 bg-white dark:bg-secondary shadow-sm"
             >
-                <div class="animate-pulse space-y-0 divide-y divide-slate-100">
-                    <div class="space-y-2 bg-slate-50/70 p-4">
-                        <div class="h-4 w-2/3 rounded bg-slate-200" />
-                        <div class="h-3 w-1/3 rounded bg-slate-100" />
+                <div class="animate-pulse space-y-0 divide-y divide-slate-100 dark:divide-white/10">
+                    <div class="space-y-2 bg-slate-50/70 dark:bg-white/5 p-4">
+                        <div class="h-4 w-2/3 rounded bg-slate-200 dark:bg-white/10" />
+                        <div class="h-3 w-1/3 rounded bg-slate-100 dark:bg-white/5" />
                     </div>
 
                     <div class="space-y-3 p-4">
-                        <div class="h-3 w-1/4 rounded bg-slate-100" />
+                        <div class="h-3 w-1/4 rounded bg-slate-100 dark:bg-white/5" />
                         <div class="flex gap-3">
                             <div
-                                class="h-9 w-9 shrink-0 rounded-full bg-slate-200"
+                                class="h-9 w-9 shrink-0 rounded-full bg-slate-200 dark:bg-white/10"
                             />
                             <div class="flex-1 space-y-2">
-                                <div class="h-3 w-3/4 rounded bg-slate-200" />
-                                <div class="h-3 w-1/2 rounded bg-slate-100" />
+                                <div class="h-3 w-3/4 rounded bg-slate-200 dark:bg-white/10" />
+                                <div class="h-3 w-1/2 rounded bg-slate-100 dark:bg-white/5" />
                             </div>
                         </div>
                     </div>
 
                     <div class="space-y-3 p-4">
-                        <div class="h-3 w-1/4 rounded bg-slate-100" />
+                        <div class="h-3 w-1/4 rounded bg-slate-100 dark:bg-white/5" />
                         <div class="flex gap-3">
                             <div
-                                class="h-9 w-9 shrink-0 rounded-full bg-slate-200"
+                                class="h-9 w-9 shrink-0 rounded-full bg-slate-200 dark:bg-white/10"
                             />
                             <div class="flex-1 space-y-2">
-                                <div class="h-3 w-3/4 rounded bg-slate-200" />
-                                <div class="h-3 w-1/2 rounded bg-slate-100" />
+                                <div class="h-3 w-3/4 rounded bg-slate-200 dark:bg-white/10" />
+                                <div class="h-3 w-1/2 rounded bg-slate-100 dark:bg-white/5" />
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex gap-2 bg-slate-50/70 p-3">
-                        <div class="h-8 flex-1 rounded-xl bg-slate-200" />
-                        <div class="h-8 flex-1 rounded-xl bg-slate-100" />
+                    <div class="flex gap-2 bg-slate-50/70 dark:bg-white/5 p-3">
+                        <div class="h-8 flex-1 rounded-xl bg-slate-200 dark:bg-white/10" />
+                        <div class="h-8 flex-1 rounded-xl bg-slate-100 dark:bg-white/5" />
                     </div>
                 </div>
             </div>
@@ -115,10 +115,10 @@
 
         <div
             v-else-if="subscriptions.length === 0"
-            class="flex min-h-80 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-6 text-center"
+            class="flex min-h-80 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 px-6 text-center"
         >
             <div
-                class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent-50 text-accent-500 ring-1 ring-inset ring-accent-100"
+                class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent-50 dark:bg-accent-500/10 text-accent-500 dark:text-accent-300 ring-1 ring-inset ring-accent-100 dark:ring-accent-500/20"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -136,17 +136,17 @@
                 </svg>
             </div>
 
-            <h2 class="text-sm font-semibold text-slate-900">
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
                 {{ emptyStateTitle }}
             </h2>
 
-            <p class="mt-1 max-w-sm text-xs text-slate-500">
+            <p class="mt-1 max-w-sm text-xs text-slate-500 dark:text-gray-400">
                 {{ emptyStateDescription }}
             </p>
 
             <button
                 type="button"
-                class="mt-4 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                class="mt-4 inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-secondary px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-gray-300 transition hover:bg-slate-50 dark:hover:bg-white/10"
                 @click="isSearching ? clearSearch() : fetchSubscriptions()"
             >
                 <svg
@@ -203,7 +203,7 @@
                     v-if="hasMore"
                     type="button"
                     :disabled="loadingMore"
-                    class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    class="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-secondary px-5 py-2.5 text-xs font-semibold text-slate-700 dark:text-gray-300 shadow-sm transition hover:bg-slate-50 dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                     @click="loadMore"
                 >
                     <svg

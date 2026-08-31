@@ -29,7 +29,8 @@
                 </h1>
 
                 <p class="mt-3 text-sm text-slate-500 dark:text-gray-400">
-                    Your subscription has been activated successfully.
+                    We'll verify your subscription and notify you of your
+                    request's status within 2-3 business days.
                 </p>
             </template>
 
@@ -95,7 +96,7 @@
 
             <NuxtLink
                 v-if="isSuccess"
-                @click="handleMenuClick"
+                :to="dashboardUrl ?? '/'"
                 class="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
             >
                 View Dashboard
@@ -116,7 +117,6 @@
 import { computed, onMounted } from "vue";
 import { useBranchStore } from "~/stores/branch";
 import { fetchAuthUser } from "~/composables/useAuthUser";
-import { handleMenuClick } from "~/config/profileMenu";
 
 const branchStore = useBranchStore();
 const route = useRoute();

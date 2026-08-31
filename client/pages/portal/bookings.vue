@@ -139,12 +139,6 @@ function serviceDateLabel(booking: PortalBooking) {
     return isFacility(booking) ? "Admission Date" : "Service Date";
 }
 
-function serviceDate(booking: PortalBooking) {
-    return isFacility(booking)
-        ? booking.facility?.admission_date
-        : booking.homecare?.date;
-}
-
 function formatDate(value: string | null | undefined) {
     if (!value) return "—";
 
@@ -159,18 +153,26 @@ function formatDate(value: string | null | undefined) {
     });
 }
 
-function formatDateTime(value: string | null | undefined) {
-    if (!value) return "—";
+function formatServiceDateTime(booking: PortalBooking) {
+    if (isFacility(booking)) {
+        return formatDate(booking.facility?.admission_date);
+    }
 
-    const date = new Date(value);
+    const date = formatDate(booking.homecare?.date);
+    const time = booking.homecare?.prefered_time;
 
-    if (Number.isNaN(date.getTime())) return value;
+    if (!time) return date;
 
-    return date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
+    const parsedTime = new Date(`1970-01-01T${time}`);
+
+    if (Number.isNaN(parsedTime.getTime())) return date;
+
+    const formattedTime = parsedTime.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
     });
+
+    return `${date}, ${formattedTime}`;
 }
 
 function patientName(booking: PortalBooking) {
@@ -492,7 +494,7 @@ onMounted(() => {
                                     <p
                                         class="mt-1.5 text-sm font-semibold text-gray-800"
                                     >
-                                        {{ formatDate(serviceDate(booking)) }}
+                                        {{ formatServiceDateTime(booking) }}
                                     </p>
                                 </div>
 

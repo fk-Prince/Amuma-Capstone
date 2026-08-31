@@ -109,11 +109,7 @@
 
                                         <Clock class="h-3.5 w-3.5" />
                                         <span>
-                                            {{
-                                                service.duration_minutes ??
-                                                schedule?.total_duration_minutes
-                                            }}
-                                            min
+                                            {{ durationLabelFor(service) }}
                                         </span>
 
                                         <span
@@ -172,13 +168,45 @@
                                 class="mt-4 space-y-3"
                             >
                                 <div
-                                    v-for="entry in selectionFor(
+                                    v-for="(entry, entryIndex) in selectionFor(
                                         service.schedule_services_id,
                                     )"
                                     :key="entry.employee_id"
-                                    class="rounded-xl border border-slate-200 bg-white p-3"
+                                    class="rounded-xl border border-slate-200 bg-white p-4"
                                 >
-                                    <div class="flex items-center gap-3">
+                                    <div
+                                        class="flex items-center justify-between gap-3"
+                                    >
+                                        <p
+                                            class="text-sm font-semibold text-slate-800"
+                                        >
+                                            Staff #{{ entryIndex + 1 }}
+                                        </p>
+
+                                        <div class="flex items-center gap-2">
+                                            <span
+                                                class="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-700"
+                                            >
+                                                Assigned
+                                            </span>
+
+                                            <button
+                                                type="button"
+                                                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                                                title="Remove"
+                                                @click="
+                                                    toggleEmployee(
+                                                        service.schedule_services_id,
+                                                        entry.employee_id,
+                                                    )
+                                                "
+                                            >
+                                                <X class="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 flex items-center gap-3">
                                         <span
                                             class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-[11px] font-semibold text-white"
                                         >
@@ -209,9 +237,7 @@
                                             <p
                                                 class="truncate text-sm font-semibold text-slate-800"
                                             >
-                                                {{
-                                                    nameFor(entry.employee_id)
-                                                }}
+                                                {{ nameFor(entry.employee_id) }}
                                             </p>
 
                                             <p
@@ -223,21 +249,47 @@
                                                     )?.role_name ?? "Staff"
                                                 }}
                                             </p>
-                                        </div>
 
-                                        <button
-                                            type="button"
-                                            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
-                                            title="Remove"
-                                            @click="
-                                                toggleEmployee(
-                                                    service.schedule_services_id,
-                                                    entry.employee_id,
-                                                )
-                                            "
-                                        >
-                                            <X class="h-4 w-4" />
-                                        </button>
+                                            <div
+                                                class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-400"
+                                            >
+                                                <span
+                                                    v-if="
+                                                        employeeById(
+                                                            entry.employee_id,
+                                                        )?.phone_number
+                                                    "
+                                                    class="flex items-center gap-1"
+                                                >
+                                                    <Phone class="h-3 w-3" />
+                                                    {{
+                                                        employeeById(
+                                                            entry.employee_id,
+                                                        )?.phone_number
+                                                    }}
+                                                </span>
+
+                                                <span
+                                                    v-if="
+                                                        employeeById(
+                                                            entry.employee_id,
+                                                        )?.email
+                                                    "
+                                                    class="flex min-w-0 items-center gap-1"
+                                                >
+                                                    <Mail
+                                                        class="h-3 w-3 shrink-0"
+                                                    />
+                                                    <span class="truncate">
+                                                        {{
+                                                            employeeById(
+                                                                entry.employee_id,
+                                                            )?.email
+                                                        }}
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div class="mt-3">
@@ -259,7 +311,9 @@
                                             </span>
 
                                             <button
-                                                v-for="preset in NOTE_PRESETS"
+                                                v-for="preset in presetsFor(
+                                                    service,
+                                                )"
                                                 :key="preset"
                                                 type="button"
                                                 class="rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition"
@@ -326,7 +380,9 @@
                             </div>
                         </div>
 
-                        <div class="min-h-0 flex-1 space-y-2 overflow-y-auto px-5 pb-5">
+                        <div
+                            class="min-h-0 flex-1 space-y-2 overflow-y-auto px-5 pb-5"
+                        >
                             <div v-if="isFetching" class="space-y-2">
                                 <div
                                     v-for="i in 4"
@@ -382,25 +438,18 @@
                                     v-for="employee in filteredEmployees"
                                     :key="employee.employee_id"
                                     type="button"
-                                    :disabled="
-                                        employee.is_busy ||
-                                        hasRoleMismatch(employee)
-                                    "
+                                    :disabled="isPickDisabled(employee)"
                                     class="flex w-full items-start gap-3 rounded-2xl border bg-white p-3 text-left transition"
                                     :class="[
                                         isSelected(employee.employee_id)
                                             ? 'border-primary/50 bg-primary/[0.04] ring-1 ring-primary/20'
                                             : 'border-slate-200 hover:border-primary/30 hover:bg-slate-50',
-                                        employee.is_busy ||
-                                        hasRoleMismatch(employee)
+                                        isPickDisabled(employee)
                                             ? 'cursor-not-allowed opacity-60 hover:border-slate-200 hover:bg-white'
                                             : '',
                                     ]"
                                     @click="
-                                        requestToggle(
-                                            activeService,
-                                            employee,
-                                        )
+                                        requestToggle(activeService, employee)
                                     "
                                 >
                                     <span
@@ -426,9 +475,7 @@
                                     </span>
 
                                     <div class="min-w-0 flex-1">
-                                        <div
-                                            class="flex items-center gap-1.5"
-                                        >
+                                        <div class="flex items-center gap-1.5">
                                             <p
                                                 class="truncate text-sm font-semibold text-slate-700"
                                             >
@@ -478,7 +525,9 @@
                                                 v-if="employee.email"
                                                 class="flex min-w-0 items-center gap-1"
                                             >
-                                                <Mail class="h-3 w-3 shrink-0" />
+                                                <Mail
+                                                    class="h-3 w-3 shrink-0"
+                                                />
                                                 <span class="truncate">
                                                     {{ employee.email }}
                                                 </span>
@@ -515,7 +564,10 @@
                                     </span>
 
                                     <span
-                                        v-else-if="!employee.is_assigned"
+                                        v-else-if="
+                                            !employee.is_assigned &&
+                                            !isActiveServiceAdl
+                                        "
                                         class="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500"
                                     >
                                         <CircleHelp class="h-3.5 w-3.5" />
@@ -580,7 +632,7 @@ import { computed, ref, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import { fullName, initials } from "~/utils/user";
-import { formatDate } from "~/utils/time";
+import { formatDate, formatDuration } from "~/utils/time";
 import { useToast } from "~/composables/useToast";
 import {
     X,
@@ -629,7 +681,8 @@ const emit = defineEmits<{
 
 const NOTE_MAX = 255;
 
-const NOTE_PRESETS = [
+const NOTE_PRESETS_ADL = ["AM Shift", "PM Shift", "Full Shift"];
+const NOTE_PRESETS_OTHER = [
     "Primary",
     "Assistance",
     "Supervisor",
@@ -637,12 +690,33 @@ const NOTE_PRESETS = [
     "Stand-by",
 ];
 
+function presetsFor(service: ScheduleServiceItem) {
+    return service.type === "ADL" ? NOTE_PRESETS_ADL : NOTE_PRESETS_OTHER;
+}
+
 const { error: toastError } = useToast();
 
 /** schedule_services_id → the people assigned to it, each with its own note. */
 const assignments = ref<Record<number, AssignmentEntry[]>>({});
 const activeService = ref<number | null>(null);
 const employeeSearch = ref("");
+
+function formatServiceDuration(minutes?: number | null): string {
+    if (!minutes) return "0 hrs";
+
+    const hours = Math.round((minutes / 60) * 100) / 100;
+    const formatted = formatDuration(hours);
+
+    return formatted ? `${formatted} (${hours} hrs)` : `${hours} hrs`;
+}
+
+function durationLabelFor(service: ScheduleServiceItem): string {
+    const minutes = service.duration_minutes ?? props.schedule?.total_duration_minutes;
+
+    if (service.type === "ADL") return formatServiceDuration(minutes);
+
+    return minutes ? `${minutes} min` : "—";
+}
 
 function selectionFor(serviceId: number): AssignmentEntry[] {
     return assignments.value[serviceId] ?? [];
@@ -707,8 +781,7 @@ const filteredEmployees = computed(() => {
 });
 
 const assignedServiceCount = computed(
-    () =>
-        Object.values(assignments.value).filter((list) => list.length).length,
+    () => Object.values(assignments.value).filter((list) => list.length).length,
 );
 
 const totalAssigneeCount = computed(() =>
@@ -730,6 +803,10 @@ function serviceTypeFor(serviceId: number | null): string | null {
         )?.type ?? null
     );
 }
+
+const isActiveServiceAdl = computed(
+    () => serviceTypeFor(activeService.value) === "ADL",
+);
 
 function requiredRoleFor(serviceId: number | null): string | null {
     const type = serviceTypeFor(serviceId);
@@ -771,12 +848,46 @@ function isSelected(employeeId: string | number) {
     );
 }
 
+function isPickDisabled(employee: Employee) {
+    if (isSelected(employee.employee_id)) return false;
+
+    if (employee.is_busy || hasRoleMismatch(employee)) return true;
+
+    return !isActiveServiceAdl.value && !employee.is_assigned;
+}
+
+function isEmployeeClockedIn(
+    serviceId: number,
+    employeeId: string | number | null | undefined,
+) {
+    if (!employeeId) return false;
+
+    const service = props.schedule?.services?.find(
+        (s) => s.schedule_services_id === serviceId,
+    );
+
+    const assignee = service?.assignees?.find(
+        (a) => Number(a.employee_id) === Number(employeeId),
+    );
+
+    return (assignee?.online ?? []).some(
+        (log) => log.in_timestamp && !log.out_timestamp,
+    );
+}
+
 function toggleEmployee(serviceId: number, employeeId: number) {
     const current = selectionFor(serviceId);
 
     const index = current.findIndex(
         (entry) => Number(entry.employee_id) === Number(employeeId),
     );
+
+    if (index !== -1 && isEmployeeClockedIn(serviceId, employeeId)) {
+        toastError(
+            "This staff member is currently clocked in and can't be unassigned.",
+        );
+        return;
+    }
 
     const next =
         index === -1
@@ -794,7 +905,6 @@ function requestToggle(serviceId: number | null, employee: Employee) {
 
     const employeeId = Number(employee.employee_id);
 
-    // Deselecting is always allowed — the guards below only gate adding.
     if (isSelected(employeeId)) {
         toggleEmployee(serviceId, employeeId);
         return;
@@ -811,6 +921,13 @@ function requestToggle(serviceId: number | null, employee: Employee) {
 
     if (requiredRole && hasRoleMismatch(employee, serviceId)) {
         toastError(`Only a ${requiredRole} can be assigned to this service.`);
+        return;
+    }
+
+    if (serviceTypeFor(serviceId) !== "ADL" && !employee.is_assigned) {
+        toastError(
+            `${employeeName(employee)} is not specialized for this service and cannot be assigned.`,
+        );
         return;
     }
 

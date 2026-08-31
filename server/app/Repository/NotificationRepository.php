@@ -36,10 +36,7 @@ class NotificationRepository
             ->count();
     }
 
-    /**
-     * Marks one notification read, or every unread one when no id is given.
-     * Always scoped to the recipient so a stray id cannot touch someone else's.
-     */
+
     public function markRead(string $user_id, ?int $notificationId = null): int
     {
         return Notification::where('to_user_id', $user_id)
@@ -55,34 +52,4 @@ class NotificationRepository
     {
         return Notification::create($payload);
     }
-
-    // public function findByUuid(string $uuid)
-    // {
-    //     return Notification::where('uuid', $uuid)->first();
-    // }
-
-    // public function update(string $uuid, array $payload)
-    // {
-    //     $model = $this->findByUuid($uuid);
-    //     if ($model) {
-    //         $model->update($payload);
-    //     }
-    //     return $model;
-    // }
-
-    // public function delete(string $uuid)
-    // {
-    //     $model = $this->findByUuid($uuid);
-    //     if ($model) {
-    //         return $model->delete();
-    //     }
-    //     return false;
-    // }
-
-    // public function restore(string $uuid)
-    // {
-    //     $model = Notification::withTrashed()->where('uuid', $uuid)->firstOrFail();
-    //     $model->restore();
-    //     return $model;
-    // }
 }

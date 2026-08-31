@@ -72,7 +72,7 @@ class EmployeeSeeder extends Seeder
 
         $modulesByName = Module::all()->keyBy('module_name');
 
-        foreach (self::ROLES as $role) {
+        foreach (self::ROLES as $index => $role) {
             $user = User::firstOrCreate(
                 ['email' => "{$role}@gmail.com"],
                 [
@@ -81,13 +81,15 @@ class EmployeeSeeder extends Seeder
                 ]
             );
 
-            $employee = Employee::firstOrCreate(
+            $employee = Employee::updateOrCreate(
                 ['user_id' => $user->user_id],
                 [
                     'first_name' => Str::title($role),
                     'last_name' => 'Account',
                     'status' => Employee::STATUS_ACTIVE,
                     'avatar' => 'https://ui-avatars.com/api/?name=' . strtoupper(substr($role, 0, 2)),
+                    'birth_date' => now()->subYears(25 + $index)->subDays($index * 30)->toDateString(),
+                    'phone_number' => '0917' . str_pad((string) (1000000 + $index), 7, '0', STR_PAD_LEFT),
                 ]
             );
 

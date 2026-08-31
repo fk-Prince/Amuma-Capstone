@@ -109,6 +109,18 @@ class Patient extends Model
             ->latestOfMany('patient_admission_id');
     }
 
+    public function patientAccess()
+    {
+        return $this->hasMany(PatientAccess::class, 'patient_id', 'patient_id');
+    }
+
+    public function primaryGuardian()
+    {
+        return $this->hasOne(PatientAccess::class, 'patient_id', 'patient_id')
+            ->where('have_access', true)
+            ->oldestOfMany('patient_access_id');
+    }
+
     public function latestHomecareSchedule()
     {
         return $this->hasOne(Schedule::class, 'patient_id', 'patient_id')

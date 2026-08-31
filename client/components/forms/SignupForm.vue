@@ -31,6 +31,7 @@ const loading = ref(false);
 const otpLoading = ref(false);
 const showOtpDialog = ref(false);
 const otpExpiresIn = ref(300);
+const otpErrorMessage = ref<string | null>(null);
 
 watch(
     () => signupData.value.email,
@@ -128,6 +129,7 @@ async function handleSignUp() {
 
         otpExpiresIn.value = res?.expires_in ?? 300;
         showOtpDialog.value = true;
+        otpErrorMessage.value = null;
         success("OTP sent to your email.");
     } catch (err: any) {
         error(err?.message || "Failed to send OTP.");
@@ -138,6 +140,7 @@ async function handleSignUp() {
 
 async function verifyOtp(code: string) {
     otpLoading.value = true;
+    otpErrorMessage.value = null;
 
     try {
         const otp_key = localStorage.getItem("otp_key");
@@ -167,7 +170,7 @@ async function verifyOtp(code: string) {
 
         await navigateTo("/auth/signin");
     } catch (err: any) {
-        error(err?.message || "Invalid OTP.");
+        otpErrorMessage.value = err?.message || "Invalid OTP.";
     } finally {
         otpLoading.value = false;
     }
@@ -184,6 +187,7 @@ async function resendOtp() {
         }
 
         otpExpiresIn.value = res?.expires_in ?? 300;
+        otpErrorMessage.value = null;
         success("OTP resent.");
     } catch (err: any) {
         error(err?.message || "Failed to resend OTP.");
@@ -198,6 +202,7 @@ async function resendOtp() {
         <OtpDialog
             v-if="showOtpDialog"
             :loading="otpLoading"
+            :error="otpErrorMessage"
             :expires-in-seconds="otpExpiresIn"
             @verify="verifyOtp"
             @resend="resendOtp"
@@ -286,7 +291,7 @@ async function resendOtp() {
                 <template #suffix>
                     <button
                         type="button"
-                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors"
+                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary-500/40"
                         @click="showPassword = !showPassword"
                     >
                         <svg
@@ -351,7 +356,7 @@ async function resendOtp() {
                 <template #suffix>
                     <button
                         type="button"
-                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors"
+                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary-500/40"
                         @click="showPassword = !showPassword"
                     >
                         <svg
@@ -405,7 +410,7 @@ async function resendOtp() {
                 Already have an account?
                 <NuxtLink
                     to="/auth/signin"
-                    class="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                    class="font-semibold text-blue-600 dark:text-blue-400 hover:underline outline-none rounded focus-visible:ring-2 focus-visible:ring-primary-500/40"
                 >
                     Sign in
                 </NuxtLink>

@@ -18,7 +18,7 @@ const props = defineProps({
 });
 
 const baseClass =
-    "font-semibold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed";
+    "font-semibold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-secondary";
 
 const variantClass = computed(() => {
     switch (props.variant) {

@@ -182,8 +182,9 @@ class ScheduleRepository
                 'patient.location',
                 'patient.admissions.bed.room',
                 'patient.currentAdmission.bed.room',
+                'patient.primaryGuardian.client',
                 'scheduleServices.service',
-                'scheduleServices.assigned.employee.employees',
+                'scheduleServices.assigned.employee.employees.users',
                 'scheduleServices.assigned.onlineSchedules',
             ]);
 

@@ -1,12 +1,12 @@
 <template>
     <div
-        class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+        class="overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-secondary shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
     >
-        <div class="border-b border-slate-100 px-5 py-4">
+        <div class="border-b border-slate-100 dark:border-white/10 px-5 py-4">
             <div class="flex items-center justify-between gap-4">
                 <div class="flex min-w-0 items-center gap-3">
                     <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary"
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 dark:bg-primary-500/10 text-primary"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -26,19 +26,19 @@
                     <div class="min-w-0">
                         <div class="flex items-center gap-2">
                             <h2
-                                class="truncate text-sm font-semibold text-secondary"
+                                class="truncate text-sm font-semibold text-secondary dark:text-white"
                             >
                                 {{ subscription.plan.name }}
                             </h2>
 
                             <span
-                                class="rounded-md bg-primary-50 px-1.5 py-0.5 text-[9px] font-semibold text-primary"
+                                class="rounded-md bg-primary-50 dark:bg-primary-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary dark:text-primary-300"
                             >
                                 {{ subscription.plan.plan_code }}
                             </span>
                         </div>
 
-                        <p class="mt-0.5 text-[11px] text-muted">
+                        <p class="mt-0.5 text-[11px] text-muted dark:text-gray-400">
                             {{ subscription.billing_interval }} subscription
                         </p>
                     </div>
@@ -52,7 +52,7 @@
                         {{ subscription.status }}
                     </span>
 
-                    <p class="mt-1 text-[10px] text-muted">
+                    <p class="mt-1 text-[10px] text-muted dark:text-gray-400">
                         {{ subscription.start_date }} →
                         {{ subscription.end_date }}
                     </p>
@@ -61,13 +61,13 @@
         </div>
 
         <div
-            class="grid grid-cols-1 divide-y divide-slate-100 md:grid-cols-2 md:divide-x md:divide-y-0"
+            class="grid grid-cols-1 divide-y divide-slate-100 dark:divide-white/10 md:grid-cols-2 md:divide-x md:divide-y-0"
         >
             <section class="p-5">
                 <div class="mb-4 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <div
-                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-50 text-accent"
+                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-50 dark:bg-accent-500/10 text-accent"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -89,23 +89,23 @@
 
                         <div>
                             <p
-                                class="text-[9px] font-semibold uppercase tracking-widest text-accent-600"
+                                class="text-[10px] font-semibold uppercase tracking-widest text-accent-600 dark:text-accent-300"
                             >
                                 Agency
                             </p>
 
-                            <p class="text-[11px] text-muted">
+                            <p class="text-[11px] text-muted dark:text-gray-400">
                                 Registered agency
                             </p>
                         </div>
                     </div>
 
                     <span
-                        class="rounded-full px-2 py-1 text-[9px] font-medium"
+                        class="rounded-full px-2 py-1 text-[10px] font-medium"
                         :class="
                             subscription.branch.agency.is_verified
-                                ? 'bg-accent-50 text-accent-600'
-                                : 'bg-amber-50 text-amber-600'
+                                ? 'bg-accent-50 dark:bg-accent-500/10 text-accent-600 dark:text-accent-300'
+                                : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300'
                         "
                     >
                         {{
@@ -117,16 +117,16 @@
                 </div>
 
                 <div>
-                    <h3 class="truncate text-sm font-semibold text-secondary">
+                    <h3 class="truncate text-sm font-semibold text-secondary dark:text-white">
                         {{ subscription.branch.agency.name }}
                     </h3>
 
-                    <p class="mt-1 truncate text-xs text-muted">
+                    <p class="mt-1 truncate text-xs text-muted dark:text-gray-400">
                         {{ subscription.branch.agency.email }}
                     </p>
 
                     <div
-                        class="mt-2 flex items-start gap-1.5 text-[11px] text-muted"
+                        class="mt-2 flex items-start gap-1.5 text-[11px] text-muted dark:text-gray-400"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -153,7 +153,7 @@
 
                 <div class="mt-4">
                     <p
-                        class="mb-2 text-[9px] font-semibold uppercase tracking-wider text-muted"
+                        class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted dark:text-gray-500"
                     >
                         Documents
                     </p>
@@ -179,7 +179,7 @@
 
                         <span
                             v-if="!hasAgencyDocuments"
-                            class="text-[10px] text-muted"
+                            class="text-[10px] text-muted dark:text-gray-500"
                         >
                             No documents
                         </span>
@@ -191,7 +191,7 @@
                 <div class="mb-4 flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <div
-                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary"
+                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 dark:bg-primary-500/10 text-primary"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -213,23 +213,23 @@
 
                         <div>
                             <p
-                                class="text-[9px] font-semibold uppercase tracking-widest text-primary-600"
+                                class="text-[10px] font-semibold uppercase tracking-widest text-primary-600 dark:text-primary-300"
                             >
                                 Branch
                             </p>
 
-                            <p class="text-[11px] text-muted">
+                            <p class="text-[11px] text-muted dark:text-gray-400">
                                 Subscription branch
                             </p>
                         </div>
                     </div>
 
                     <span
-                        class="rounded-full px-2 py-1 text-[9px] font-medium"
+                        class="rounded-full px-2 py-1 text-[10px] font-medium"
                         :class="
                             subscription.branch.is_verified
-                                ? 'bg-accent-50 text-accent-600'
-                                : 'bg-amber-50 text-amber-600'
+                                ? 'bg-accent-50 dark:bg-accent-500/10 text-accent-600 dark:text-accent-300'
+                                : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300'
                         "
                     >
                         {{
@@ -241,16 +241,16 @@
                 </div>
 
                 <div>
-                    <h3 class="truncate text-sm font-semibold text-secondary">
+                    <h3 class="truncate text-sm font-semibold text-secondary dark:text-white">
                         {{ subscription.branch.name }}
                     </h3>
 
-                    <p class="mt-1 truncate text-xs text-muted">
+                    <p class="mt-1 truncate text-xs text-muted dark:text-gray-400">
                         {{ subscription.branch.email }}
                     </p>
 
                     <div
-                        class="mt-2 flex items-start gap-1.5 text-[11px] text-muted"
+                        class="mt-2 flex items-start gap-1.5 text-[11px] text-muted dark:text-gray-400"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -277,7 +277,7 @@
 
                 <div class="mt-4">
                     <p
-                        class="mb-2 text-[9px] font-semibold uppercase tracking-wider text-muted"
+                        class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted dark:text-gray-500"
                     >
                         Documents
                     </p>
@@ -288,7 +288,7 @@
                         label="Branch Document"
                     />
 
-                    <span v-else class="text-[10px] text-muted">
+                    <span v-else class="text-[10px] text-muted dark:text-gray-500">
                         No document
                     </span>
                 </div>
@@ -297,9 +297,9 @@
 
         <div
             v-if="latestPayment"
-            class="flex items-center justify-between gap-4 border-t border-slate-100 px-5 py-3"
+            class="flex items-center justify-between gap-4 border-t border-slate-100 dark:border-white/10 px-5 py-3"
         >
-            <div class="flex items-center gap-2 text-[11px] text-muted">
+            <div class="flex items-center gap-2 text-[11px] text-muted dark:text-gray-400">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -320,16 +320,16 @@
             </div>
 
             <div class="flex items-center gap-2 text-[11px]">
-                <span class="font-semibold text-secondary">
+                <span class="font-semibold text-secondary dark:text-white">
                     {{ formatCurrency(latestPayment.price) }}
                 </span>
 
                 <span
-                    class="rounded-full px-2 py-0.5 text-[9px] font-medium capitalize"
+                    class="rounded-full px-2 py-0.5 text-[10px] font-medium capitalize"
                     :class="
                         latestPayment.status === 'paid'
-                            ? 'bg-accent-50 text-accent-600'
-                            : 'bg-slate-100 text-slate-500'
+                            ? 'bg-accent-50 dark:bg-accent-500/10 text-accent-600 dark:text-accent-300'
+                            : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-gray-300'
                     "
                 >
                     {{ latestPayment.status }}
@@ -339,12 +339,12 @@
 
         <div
             v-if="canShowActions"
-            class="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-5 py-3"
+            class="flex items-center justify-end gap-2 border-t border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 px-5 py-3"
         >
             <button
                 type="button"
                 :disabled="!!actionLoading"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-danger/30 bg-white px-4 py-2 text-[11px] font-semibold text-danger transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                class="inline-flex items-center gap-1.5 rounded-lg border border-danger/30 bg-white dark:bg-secondary px-4 py-2 text-[11px] font-semibold text-danger transition hover:bg-red-50 dark:hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
                 @click="emit('reject', subscription)"
             >
                 <svg
@@ -480,15 +480,15 @@ const canShowActions = computed(() => isPending.value && props.showActions);
 const statusClass = (status: SubscriptionCardData["status"]) => {
     switch (status) {
         case "pending":
-            return "bg-amber-50 text-amber-600";
+            return "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300";
         case "active":
-            return "bg-accent-50 text-accent-600";
+            return "bg-accent-50 dark:bg-accent-500/10 text-accent-600 dark:text-accent-300";
         case "inactive":
-            return "bg-slate-100 text-slate-500";
+            return "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-gray-300";
         case "expired":
-            return "bg-red-50 text-red-500";
+            return "bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-300";
         default:
-            return "bg-slate-100 text-slate-500";
+            return "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-gray-300";
     }
 };
 </script>

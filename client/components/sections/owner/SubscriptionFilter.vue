@@ -7,7 +7,7 @@
                 fill="none"
                 stroke="currentColor"
                 stroke-width="1.75"
-                class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
             >
                 <circle cx="9" cy="9" r="6" />
                 <path stroke-linecap="round" d="m17 17-4-4" />
@@ -18,7 +18,7 @@
                 :value="search"
                 placeholder="Search by agency or branch name"
                 aria-label="Search by agency or branch name"
-                class="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-9 text-sm text-slate-700 placeholder:text-slate-400 transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-secondary py-2.5 pl-9 pr-9 text-sm text-slate-700 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-500 transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-500/20"
                 @input="
                     emit(
                         'update:search',
@@ -31,7 +31,7 @@
                 v-if="search"
                 type="button"
                 aria-label="Clear search"
-                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500 transition hover:text-slate-600 dark:hover:text-gray-300"
                 @click="emit('update:search', '')"
             >
                 <svg
@@ -48,12 +48,12 @@
             </button>
         </div>
         <div
-            class="relative inline-flex shrink-0 rounded-full bg-slate-100 p-1"
+            class="relative inline-flex shrink-0 rounded-full bg-slate-100 dark:bg-white/5 p-1"
             role="tablist"
             aria-label="Subscription view"
         >
             <span
-                class="absolute inset-y-1 left-1 w-[104px] rounded-full bg-white shadow-sm transition-transform duration-200 ease-out"
+                class="absolute inset-y-1 left-1 w-[104px] rounded-full bg-white dark:bg-white/10 shadow-sm transition-transform duration-200 ease-out"
                 :style="{
                     transform:
                         view === 'approved'
@@ -71,8 +71,8 @@
                 class="relative z-10 w-[104px] rounded-full py-1.5 text-xs font-semibold transition-colors"
                 :class="
                     view === 'requests'
-                        ? 'text-primary-600'
-                        : 'text-slate-500 hover:text-slate-700'
+                        ? 'text-primary-600 dark:text-primary-300'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white'
                 "
                 @click="setView('requests')"
             >
@@ -86,8 +86,8 @@
                 class="relative z-10 w-[104px] rounded-full py-1.5 text-xs font-semibold transition-colors"
                 :class="
                     view === 'approved'
-                        ? 'text-primary-600'
-                        : 'text-slate-500 hover:text-slate-700'
+                        ? 'text-primary-600 dark:text-primary-300'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white'
                 "
                 @click="setView('approved')"
             >
@@ -102,7 +102,7 @@
                 :class="
                     view === 'rejected'
                         ? 'text-danger'
-                        : 'text-slate-500 hover:text-slate-700'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white'
                 "
                 @click="setView('rejected')"
             >

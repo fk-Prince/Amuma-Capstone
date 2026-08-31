@@ -23,12 +23,6 @@ class ServiceSeeder extends Seeder
             'maximum_duration' => '01:30:00',
         ],
         [
-            'category_name' => 'Nursing Care',
-            'service_name' => 'Nursing Care',
-            'price' => 950.00,
-            'maximum_duration' => '02:00:00',
-        ],
-        [
             'category_name' => 'Medication Services',
             'service_name' => 'Medication Management',
             'price' => 500.00,

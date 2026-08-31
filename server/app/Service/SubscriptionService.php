@@ -3,7 +3,10 @@
 namespace App\Service;
 
 use App\Enums\BillingIntervalEnum;
+use App\Events\NotificationEvent;
+use App\Mail\SubscriptionPurchasedMailer;
 use App\Repository\BranchRepository;
+use App\Repository\NotificationRepository;
 use App\Repository\SubscriptionRepository;
 use App\Repository\PlanRepository;
 use Carbon\Carbon;
@@ -11,6 +14,7 @@ use App\Factories\PaymentFactory;
 use App\Guard\AuthGuard;
 use App\Http\Resources\SubscriptionResource;
 use App\Models\EmployeePermission;
+use App\Models\PlatformAdmin;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Models\User;
@@ -24,6 +28,7 @@ use App\Service\Geo\NominatimService;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
@@ -41,7 +46,8 @@ class SubscriptionService
         private LocationRepository $locationRepository,
         private NominatimService $nominatimService,
         private EmployeeRepository $employeeRepository,
-        private ModuleRepository $moduleRepository
+        private ModuleRepository $moduleRepository,
+        private NotificationRepository $notificationRepository
     ) {
         $this->secretKey = config('services.xendit.secret_key');
     }
@@ -63,11 +69,7 @@ class SubscriptionService
         return $paymentMethod->subscriptionInvoice($payload, $renewal);
     }
 
-    /**
-     * Builds the charge metadata for extending an existing branch subscription.
-     * Mirrors createSubscription()'s shape so the payment drivers can stay
-     * generic, but carries type 'renewal' so no branch or agency is created.
-     */
+
     public function createRenewal(?User $user, array $payload)
     {
         $subscription = $this->subscriptionRepository
@@ -77,7 +79,6 @@ class SubscriptionService
             throw new Exception(__('This branch has no subscription to renew.'), 404);
         }
 
-        // Renewing keeps the current plan unless a different one is chosen.
         $planCode = $payload['plan_code'] ?? $subscription->plans?->plan_code;
         $plan = $this->planRepository->findByField('plan_code', $planCode);
 
@@ -93,8 +94,7 @@ class SubscriptionService
             throw new Exception(__('Invalid billing interval.'), 422);
         }
 
-        // Extend from whichever is later: an early renewal should add time on
-        // top of what is left, while a lapsed one restarts from today.
+
         $currentEnd = $subscription->end_date
             ? Carbon::parse($subscription->end_date)
             : Carbon::now();
@@ -431,9 +431,42 @@ class SubscriptionService
                     );
                 }
 
-                // Returned in the same shape AgencyRepository::paginate() uses,
-                // so the client can append the new branch to a list it already
-                // has instead of refetching it.
+                if (!empty($user['email'])) {
+                    Mail::to($user['email'])->send(new SubscriptionPurchasedMailer(
+                        recipientName: trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?: 'there',
+                        planName: $plan['name'] ?? $plan['plan_code'],
+                        branchName: $branchData->name,
+                        amount: $totalAmount,
+                        billingInterval: $billing_interval->value,
+                    ));
+                }
+
+                $adminMessage = "New subscription request from {$branchData->name} is awaiting your review.";
+
+                $admins = User::whereIn(
+                    'user_id',
+                    PlatformAdmin::pluck('user_id')
+                )->get(['user_id', 'uuid']);
+
+                foreach ($admins as $admin) {
+                    $this->notificationRepository->create([
+                        'branch_id' => $branchData->branch_id,
+                        'to_user_id' => $admin->user_id,
+                        'from_user_id' => $user['user_id'],
+                        'message_type' => 'Subscription',
+                        'message' => $adminMessage,
+                    ]);
+
+                    event(new NotificationEvent(
+                        $admin->uuid,
+                        $branchData->uuid,
+                        $adminMessage,
+                        (string) $subscription->subscription_id,
+                        'Subscription',
+                        $subscription
+                    ));
+                }
+
                 return response()->json([
                     'status' => true,
                     'message' => __('Subscription created successfully.'),
@@ -540,7 +573,10 @@ class SubscriptionService
     public function overview(array $payload)
     {
         if ($payload['action'] === 'overview') {
-            return $this->subscriptionRepository->overview();
+            return $this->subscriptionRepository->overview(
+                (int) ($payload['revenue_months'] ?? 6),
+                isset($payload['revenue_year']) ? (int) $payload['revenue_year'] : null
+            );
         } else if ($payload['action'] === 'overview_subscription') {
             return $this->subscriptionRepository->overviewSubscription();
         }

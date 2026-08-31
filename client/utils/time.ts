@@ -325,16 +325,24 @@ export const stringToDateTime = (
     }).format(new Date(date));
 };
 
-// RESULT 18:45 -> 6:45 PM
+// RESULT 18:45 -> 6:45 PM. Accepts a bare time ("14:30"), an hour number, or a
+// full date/datetime string (e.g. a schedule's scheduled_at) transparently.
 export function formatTime(time?: string | number | null): string {
     if (!time) return "";
 
-    const timeString =
-        typeof time === "number"
-            ? `${String(time).padStart(2, "0")}:00`
-            : time;
+    let date: Date;
 
-    return new Date(`1970-01-01T${timeString}`).toLocaleTimeString(
+    if (typeof time === "number") {
+        date = new Date(`1970-01-01T${String(time).padStart(2, "0")}:00`);
+    } else if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(time)) {
+        date = new Date(`1970-01-01T${time}`);
+    } else {
+        date = new Date(time);
+    }
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    return date.toLocaleTimeString(
         undefined,
         {
             hour: "numeric",

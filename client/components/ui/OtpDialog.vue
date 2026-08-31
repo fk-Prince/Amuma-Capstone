@@ -34,6 +34,16 @@ function focusInput(index: number) {
     input?.select();
 }
 
+watch(
+    () => props.error,
+    (value) => {
+        if (!value) return;
+
+        otp.value = ["", "", "", "", "", ""];
+        focusInput(0);
+    },
+);
+
 function handleInput(index: number, event: Event) {
     const target = event.target as HTMLInputElement;
 

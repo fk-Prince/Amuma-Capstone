@@ -144,7 +144,7 @@ async function googleUrl() {
                 <template #suffix>
                     <button
                         type="button"
-                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors"
+                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary-500/40"
                         @click="showPassword = !showPassword"
                     >
                         <svg
@@ -183,7 +183,7 @@ async function googleUrl() {
             <div class="flex justify-end -mt-1">
                 <NuxtLink
                     to="/forgot-password"
-                    class="text-xs font-medium text-blue-600 hover:underline"
+                    class="text-xs font-medium text-blue-600 hover:underline outline-none rounded focus-visible:ring-2 focus-visible:ring-primary-500/40"
                 >
                     Forgot Password?
                 </NuxtLink>
@@ -229,7 +229,7 @@ async function googleUrl() {
                 Dont have an account?
                 <NuxtLink
                     to="/auth/signup"
-                    class="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                    class="text-blue-600 dark:text-blue-400 font-semibold hover:underline outline-none rounded focus-visible:ring-2 focus-visible:ring-primary-500/40"
                 >
                     Sign up
                 </NuxtLink>

@@ -275,40 +275,94 @@
                                         <div
                                             v-for="assignee in log.assignees"
                                             :key="assignee.employee_id"
-                                            class="flex items-center gap-3"
+                                            class="flex items-center justify-between gap-3"
                                         >
-                                            <img
-                                                v-if="assignee.avatar"
-                                                :src="assignee.avatar"
-                                                class="h-10 w-10 rounded-full object-cover"
-                                            />
-                                            <div
-                                                v-else
-                                                class="flex h-10 w-10 items-center justify-center rounded-full bg-muted-light text-sm font-semibold text-muted"
-                                            >
-                                                {{
-                                                    initials(assignee.full_name)
-                                                }}
-                                            </div>
-
-                                            <div>
-                                                <p
-                                                    class="text-sm font-semibold text-secondary"
-                                                >
-                                                    {{ assignee.full_name }}
-                                                </p>
-
-                                                <p
-                                                    v-if="
-                                                        assignee.employee_role
-                                                    "
-                                                    class="text-xs text-muted capitalize"
+                                            <div class="flex items-center gap-3 min-w-0">
+                                                <img
+                                                    v-if="assignee.avatar"
+                                                    :src="assignee.avatar"
+                                                    class="h-10 w-10 rounded-full object-cover"
+                                                />
+                                                <div
+                                                    v-else
+                                                    class="flex h-10 w-10 items-center justify-center rounded-full bg-muted-light text-sm font-semibold text-muted"
                                                 >
                                                     {{
-                                                        assignee.employee_role ??
-                                                        "—"
+                                                        initials(assignee.full_name)
                                                     }}
-                                                </p>
+                                                </div>
+
+                                                <div class="min-w-0">
+                                                    <p
+                                                        class="truncate text-sm font-semibold text-secondary"
+                                                    >
+                                                        {{ assignee.full_name }}
+                                                    </p>
+
+                                                    <p
+                                                        v-if="
+                                                            assignee.employee_role
+                                                        "
+                                                        class="text-xs text-muted capitalize"
+                                                    >
+                                                        {{
+                                                            assignee.employee_role ??
+                                                            "—"
+                                                        }}
+                                                    </p>
+
+                                                    <p
+                                                        v-if="
+                                                            assignee.phone_number
+                                                        "
+                                                        class="flex items-center gap-1 text-[11px] text-muted"
+                                                    >
+                                                        <Phone
+                                                            class="h-3 w-3 shrink-0"
+                                                        />
+                                                        {{
+                                                            assignee.phone_number
+                                                        }}
+                                                    </p>
+
+                                                    <p
+                                                        v-if="assignee.email"
+                                                        class="flex min-w-0 items-center gap-1 text-[11px] text-muted"
+                                                    >
+                                                        <Mail
+                                                            class="h-3 w-3 shrink-0"
+                                                        />
+                                                        <span class="truncate">{{
+                                                            assignee.email
+                                                        }}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div
+                                                class="flex shrink-0 flex-col items-end gap-1"
+                                            >
+                                                <span
+                                                    v-if="
+                                                        isOnDuty(
+                                                            log,
+                                                            assignee.employee_id,
+                                                        )
+                                                    "
+                                                    class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700"
+                                                >
+                                                    <span
+                                                        class="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                                                    />
+                                                    On Duty
+                                                </span>
+
+                                                <span
+                                                    v-if="assignee.note"
+                                                    class="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary"
+                                                >
+                                                    {{ assignee.note }}
+                                                </span>
                                             </div>
                                         </div>
                                     </template>
@@ -538,7 +592,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { ChevronDown, CalendarClock, MapPinned } from "lucide-vue-next";
+import { ChevronDown, CalendarClock, MapPinned, Phone, Mail } from "lucide-vue-next";
 import type { ScheduleItem, AuditRow } from "~/types/schedule";
 import ActionButton from "~/components/ui/ActionButton.vue";
 import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
@@ -719,6 +773,8 @@ const filteredLogs = computed<AuditRow[]>(() => {
                 avatar: assignee.avatar ?? null,
                 note: assignee.note ?? null,
                 employee_role: assignee.employee_role ?? null,
+                phone_number: assignee.phone_number ?? null,
+                email: assignee.email ?? null,
             }));
 
             const online_logs = activeAssignees.flatMap((assignee) =>
@@ -887,6 +943,17 @@ function latestCheckIn(log: AuditRow) {
 function isCurrentlyCheckedIn(log: AuditRow): boolean {
     const latest = latestCheckIn(log);
     return Boolean(latest && !latest.out_timestamp);
+}
+
+function isOnDuty(log: AuditRow, employeeId: string | number | null | undefined): boolean {
+    if (!employeeId) return false;
+
+    return log.online_logs.some(
+        (scan) =>
+            Number(scan.employee_id) === Number(employeeId) &&
+            scan.in_timestamp &&
+            !scan.out_timestamp,
+    );
 }
 
 function workedMinutes(scan: {

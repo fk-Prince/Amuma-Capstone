@@ -17,7 +17,7 @@
             />
 
             <div
-                class="relative z-50 flex max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
+                class="relative z-50 flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
             >
                 <div
                     class="flex items-start justify-between border-b border-slate-100 px-6 py-5"
@@ -26,7 +26,7 @@
                         <p
                             class="text-xs uppercase tracking-wide text-slate-400"
                         >
-                            Assign Medical Staff
+                            Assign Caregiver Staff
                         </p>
 
                         <h2 class="mt-1 text-lg font-semibold text-slate-800">
@@ -76,7 +76,7 @@
                             <p
                                 class="text-xs font-semibold uppercase tracking-wide text-slate-400"
                             >
-                                Assigned Medical Staff
+                                Assigned Caregiver
                             </p>
                             <button
                                 type="button"
@@ -102,7 +102,7 @@
                                 class="flex items-center justify-between gap-3"
                             >
                                 <p class="text-sm font-semibold text-slate-800">
-                                    Staff #{{ index + 1 }}
+                                    Caregiver #{{ index + 1 }}
                                 </p>
 
                                 <div class="flex items-center gap-2">
@@ -130,8 +130,8 @@
 
                             <div class="mt-4" @click.stop>
                                 <Combobox
-                                    label="Assign Staff"
-                                    placeholder="Select staff"
+                                    label="Assign Caregiver"
+                                    placeholder="Select caregiver"
                                     search-bar
                                     :items="availableEmployeeItemsFor(slotId)"
                                     :model-value="slotId"
@@ -140,6 +140,44 @@
                                             assignAdl(index, String(value))
                                     "
                                 />
+                            </div>
+
+                            <div v-if="slotId" class="mt-3" @click.stop>
+                                <input
+                                    v-model="adlNotes[index]"
+                                    type="text"
+                                    :maxlength="NOTE_MAX"
+                                    placeholder="Note for this assignment"
+                                    class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+
+                                <div
+                                    class="mt-2 flex flex-wrap items-center gap-1.5"
+                                >
+                                    <span class="text-[11px] text-slate-400">
+                                        Suggestions:
+                                    </span>
+
+                                    <button
+                                        v-for="preset in NOTE_PRESETS"
+                                        :key="preset"
+                                        type="button"
+                                        class="rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition"
+                                        :class="
+                                            adlNotes[index] === preset
+                                                ? 'border-primary bg-primary text-white'
+                                                : 'border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary'
+                                        "
+                                        @click="
+                                            adlNotes[index] =
+                                                adlNotes[index] === preset
+                                                    ? ''
+                                                    : preset
+                                        "
+                                    >
+                                        {{ preset }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -220,6 +258,25 @@
                                             class="truncate text-xs text-slate-400"
                                         >
                                             {{ employee.role_name }}
+                                        </p>
+
+                                        <p
+                                            v-if="
+                                                employee.phone_number ||
+                                                employee.email
+                                            "
+                                            class="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-slate-400"
+                                        >
+                                            <span v-if="employee.phone_number">
+                                                {{ employee.phone_number }}
+                                            </span>
+
+                                            <span
+                                                v-if="employee.email"
+                                                class="truncate"
+                                            >
+                                                {{ employee.email }}
+                                            </span>
                                         </p>
                                     </div>
 
@@ -402,6 +459,10 @@ import { employeeService } from "~/api/employee/EmployeeService";
 import { useToast } from "~/composables/useToast";
 import type { AuditRow } from "~/types/schedule";
 
+const NOTE_MAX = 255;
+
+const NOTE_PRESETS = ["AM Shift", "PM Shift", "Full Shift"];
+
 const props = defineProps<{
     open: boolean;
     schedule?: AuditRow;
@@ -424,13 +485,12 @@ const employeeData = ref<Employee[]>([]);
 const isFetching = ref(false);
 const { error: toastError } = useToast();
 
-// ADL bookings can only ever be staffed by a caregiver — matches the
-// hard rule the backend enforces unconditionally.
 function isCaregiver(employee: Employee) {
     return (employee.role_name ?? "").toLowerCase() === "caregiver";
 }
 
 const adlEmployeeIds = ref<string[]>([""]);
+const adlNotes = ref<string[]>([""]);
 const activeAdlSlot = ref(0);
 
 const patientName = computed(() => props.schedule?.patient_full_name ?? "");
@@ -501,11 +561,25 @@ function restoreSavedAssignments(schedule: AuditRow) {
         (a) => a.is_active,
     );
 
-    adlEmployeeIds.value = activeAssignments.length
+    const ids = activeAssignments.length
         ? activeAssignments.map((a) => String(a.employee_id))
         : schedule.employee_id
           ? [String(schedule.employee_id)]
           : [""];
+
+    adlEmployeeIds.value = ids;
+
+    adlNotes.value = ids.map((id) => {
+        if (!id) return "";
+
+        const match = schedule.assignees?.find(
+            (a) => String(a.employee_id) === id,
+        );
+
+        if (match) return match.note ?? "";
+
+        return id === String(schedule.employee_id) ? (schedule.note ?? "") : "";
+    });
 
     activeAdlSlot.value = 0;
 }
@@ -526,6 +600,7 @@ watch(
     (schedule) => {
         if (!schedule) {
             adlEmployeeIds.value = [""];
+            adlNotes.value = [""];
             activeAdlSlot.value = 0;
             employeeData.value = [];
             expandedConflicts.value = new Set();
@@ -542,11 +617,36 @@ watch(
 
 function addAdlSlot() {
     adlEmployeeIds.value.push("");
+    adlNotes.value.push("");
     activeAdlSlot.value = adlEmployeeIds.value.length - 1;
+}
+
+// A caregiver mid-visit (clocked in, not yet out) can't be pulled off the
+// booking — that would orphan their open clock-in session.
+function isEmployeeClockedIn(employeeId: string | number | null | undefined) {
+    if (!employeeId) return false;
+
+    const id = Number(employeeId);
+
+    return (props.schedule?.online_logs ?? []).some(
+        (log) =>
+            Number(log.employee_id) === id &&
+            log.in_timestamp &&
+            !log.out_timestamp,
+    );
 }
 
 function removeAdlSlot(index: number) {
     if (adlEmployeeIds.value.length <= 1) return;
+
+    if (isEmployeeClockedIn(adlEmployeeIds.value[index])) {
+        toastError(
+            "This caregiver is currently clocked in and can't be unassigned.",
+        );
+        return;
+    }
+
+    adlNotes.value.splice(index, 1);
     adlEmployeeIds.value.splice(index, 1);
     if (activeAdlSlot.value >= adlEmployeeIds.value.length) {
         activeAdlSlot.value = adlEmployeeIds.value.length - 1;
@@ -554,6 +654,19 @@ function removeAdlSlot(index: number) {
 }
 
 function assignAdl(index: number, employeeId: string) {
+    const currentEmployeeId = adlEmployeeIds.value[index];
+
+    if (
+        currentEmployeeId &&
+        currentEmployeeId !== employeeId &&
+        isEmployeeClockedIn(currentEmployeeId)
+    ) {
+        toastError(
+            "This caregiver is currently clocked in and can't be unassigned.",
+        );
+        return;
+    }
+
     adlEmployeeIds.value[index] = employeeId;
 }
 
@@ -580,10 +693,12 @@ function confirm() {
 
     const scheduleServiceId = props.schedule.schedule_services_id ?? null;
 
-    const assignedIds = adlEmployeeIds.value.filter((id) => id);
+    const assignedSlots = adlEmployeeIds.value
+        .map((employee_id, index) => ({ employee_id, index }))
+        .filter((slot) => slot.employee_id);
 
-    const formattedAssignments = assignedIds.length
-        ? assignedIds.map((employee_id) => {
+    const formattedAssignments = assignedSlots.length
+        ? assignedSlots.map(({ employee_id, index }) => {
               const employee = employeeData.value.find(
                   (e) => String(e.employee_id) === employee_id,
               );
@@ -596,6 +711,7 @@ function confirm() {
                   employee_name: employee
                       ? fullName(employee.first_name, "", employee.last_name)
                       : "",
+                  note: adlNotes.value[index]?.trim() || null,
               };
           })
         : [
