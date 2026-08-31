@@ -7,7 +7,6 @@ use App\Models\Schedule;
 use App\Models\ScheduleAssigned;
 use App\Models\Service;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ScheduleRepository
 {
@@ -78,103 +77,6 @@ class ScheduleRepository
         return Schedule::where($conditions)->first();
     }
 
-    // public function retrievePaginate(array $payload)
-    // {
-    //     $query = Schedule::query()
-    //         ->with([
-    //             'patient.location',
-    //             'patient.admissions.bed.room',
-    //             'patient.currentAdmission.bed.room',
-    //             'scheduleServices.service',
-    //             'scheduleServices.assigned.employee.employees',
-    //             'scheduleServices.assigned.onlineSchedules',
-    //         ]);
-
-    //     if (!empty($payload['patient_uuid'])) {
-    //         $query->whereHas('patient', function ($q) use ($payload) {
-    //             $q->where('uuid', $payload['patient_uuid']);
-    //         });
-    //     }
-
-    //     if (!empty($payload['branch_uuid'])) {
-    //         $query->whereHas('patient.branch', function ($q) use ($payload) {
-    //             $q->where('uuid', $payload['branch_uuid']);
-    //         });
-    //     }
-
-    //     if (!empty($payload['status'])) {
-    //         $query->whereIn('status', (array) $payload['status']);
-    //     }
-
-    //     if (!empty($payload['category'])) {
-    //         $query->whereIn('category', (array) $payload['category']);
-    //     }
-
-    //     if (!empty($payload['date'])) {
-    //         $query->whereDate('scheduled_at', $payload['date']);
-    //     }
-
-    //     if (!empty($payload['type'])) {
-    //         $types = array_map('strtolower', (array) $payload['type']);
-
-    //         $query->whereHas('scheduleServices', function ($q) use ($types) {
-    //             $q->where(function ($sub) use ($types) {
-    //                 if (in_array('medical', $types, true)) {
-    //                     $sub->orWhereNotNull('service_id');
-    //                 }
-    //                 if (in_array('adl', $types, true)) {
-    //                     $sub->orWhereNotNull('hours_booked');
-    //                 }
-    //             });
-    //         });
-    //     }
-
-    //     if (!empty($payload['date_from'])) {
-    //         $query->whereDate('scheduled_at', '>=', $payload['date_from']);
-    //     }
-
-    //     if (!empty($payload['date_to'])) {
-    //         $query->whereDate('scheduled_at', '<=', $payload['date_to']);
-    //     }
-
-    //     if (!empty($payload['search'])) {
-    //         $search = $payload['search'];
-    //         $query->whereHas('patient', function ($q) use ($search) {
-    //             $q->where('first_name', 'like', "%{$search}%")
-    //                 ->orWhere('last_name', 'like', "%{$search}%");
-    //         });
-    //     }
-
-    //     if (!empty($payload['service_id'])) {
-    //         $query->whereHas('scheduleServices', function ($q) use ($payload) {
-    //             $q->where('service_id', $payload['service_id']);
-    //         });
-    //     }
-
-    //     if (!empty($payload['employee_id'])) {
-    //         $query->whereHas('scheduleServices.assigned', function ($q) use ($payload) {
-    //             $q->where('employee_id', $payload['employee_id']);
-    //         });
-    //     }
-
-    //     $sortBy = $payload['sort_by'] ?? 'scheduled_at';
-    //     $sortDir = strtolower($payload['sort_dir'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
-    //     $allowedSorts = ['scheduled_at', 'status', 'category', 'schedule_id'];
-    //     if (!in_array($sortBy, $allowedSorts, true)) {
-    //         $sortBy = 'scheduled_at';
-    //     }
-
-    //     $query->orderBy($sortBy, $sortDir);
-
-    //     // $perPage = min((int) ($payload['per_page'] ?? 15), 100);
-    //     if (isset($payload['per_page'])) {
-    //         $perPage = min((int) $payload['per_page'], 100);
-    //         return $query->paginate($perPage);
-    //     }
-
-    //     // return $query->paginate($perPage)->withQueryString();
-    //     return $query->get();
-    // }
     public function retrievePaginate(array $payload)
     {
         $query = Schedule::query()
@@ -204,13 +106,7 @@ class ScheduleRepository
             $query->whereIn('status', (array) $payload['status']);
         }
 
-        // if (!empty($payload['statuses'])) {
-        //     $statuses = is_array($payload['statuses'])
-        //         ? $payload['statuses']
-        //         : explode(',', (string) $payload['statuses']);
 
-        //     $query->whereIn('status', array_filter($statuses));
-        // }
         if (!empty($payload['statuses'])) {
             $statuses = is_array($payload['statuses'])
                 ? $payload['statuses']
