@@ -58,7 +58,7 @@
                 </div>
 
                 <div
-                    class="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[minmax(0,1fr)_420px]"
+                    class="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[65%_35%]"
                 >
                     <div class="min-h-0 space-y-3 overflow-y-auto bg-white p-6">
                         <p
@@ -103,6 +103,16 @@
                                                     schedule?.scheduled_at,
                                                 )
                                             }}
+                                            <template
+                                                v-if="schedule?.scheduled_at"
+                                            >
+                                                ,
+                                                {{
+                                                    formatTime(
+                                                        schedule.scheduled_at,
+                                                    )
+                                                }}
+                                            </template>
                                         </span>
 
                                         <span class="text-slate-300">•</span>
@@ -177,11 +187,21 @@
                                     <div
                                         class="flex items-center justify-between gap-3"
                                     >
-                                        <p
-                                            class="text-sm font-semibold text-slate-800"
+                                        <div
+                                            class="flex min-w-0 items-center gap-2"
                                         >
-                                            Staff #{{ entryIndex + 1 }}
-                                        </p>
+                                            <span
+                                                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary"
+                                            >
+                                                {{ entryIndex + 1 }}
+                                            </span>
+
+                                            <p
+                                                class="truncate text-sm font-semibold text-slate-800"
+                                            >
+                                                Staff
+                                            </p>
+                                        </div>
 
                                         <div class="flex items-center gap-2">
                                             <span
@@ -565,6 +585,16 @@
 
                                     <span
                                         v-else-if="
+                                            isAssignmentTypeMismatch(employee)
+                                        "
+                                        class="flex shrink-0 items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-600"
+                                    >
+                                        <CircleHelp class="h-3.5 w-3.5" />
+                                        {{ assignmentTypeLabel(employee) }}
+                                    </span>
+
+                                    <span
+                                        v-else-if="
                                             !employee.is_assigned &&
                                             !isActiveServiceAdl
                                         "
@@ -632,7 +662,7 @@ import { computed, ref, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import { fullName, initials } from "~/utils/user";
-import { formatDate, formatDuration } from "~/utils/time";
+import { formatDate, formatTime, formatDuration } from "~/utils/time";
 import { useToast } from "~/composables/useToast";
 import {
     X,
@@ -817,6 +847,27 @@ function requiredRoleFor(serviceId: number | null): string | null {
     return null;
 }
 
+// A homecare visit can only be staffed by an online (homecare) nurse or
+// caregiver, a facility booking only by an in-house one — someone set up for
+// both is eligible either way.
+function requiredAssignmentType(): "online" | "facility" {
+    return props.schedule?.category === "Facility" ? "facility" : "online";
+}
+
+function isAssignmentTypeMismatch(employee: Employee): boolean {
+    const type = employee.assignment_type;
+
+    if (!type || type === "both") return false;
+
+    return type !== requiredAssignmentType();
+}
+
+function assignmentTypeLabel(employee: Employee): string {
+    return employee.assignment_type === "facility"
+        ? "Facility only"
+        : "Homecare only";
+}
+
 function requiredRoleLabelFor(service: ScheduleServiceItem) {
     const role = requiredRoleFor(service.schedule_services_id);
 
@@ -851,7 +902,13 @@ function isSelected(employeeId: string | number) {
 function isPickDisabled(employee: Employee) {
     if (isSelected(employee.employee_id)) return false;
 
-    if (employee.is_busy || hasRoleMismatch(employee)) return true;
+    if (
+        employee.is_busy ||
+        hasRoleMismatch(employee) ||
+        isAssignmentTypeMismatch(employee)
+    ) {
+        return true;
+    }
 
     return !isActiveServiceAdl.value && !employee.is_assigned;
 }
@@ -921,6 +978,13 @@ function requestToggle(serviceId: number | null, employee: Employee) {
 
     if (requiredRole && hasRoleMismatch(employee, serviceId)) {
         toastError(`Only a ${requiredRole} can be assigned to this service.`);
+        return;
+    }
+
+    if (isAssignmentTypeMismatch(employee)) {
+        toastError(
+            `${employeeName(employee)} is ${assignmentTypeLabel(employee).toLowerCase()} and cannot be assigned to this ${requiredAssignmentType() === "facility" ? "facility" : "homecare"} booking.`,
+        );
         return;
     }
 

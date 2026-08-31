@@ -34,7 +34,7 @@ class EmployeeScheduleResource extends JsonResource
             'assignment_type' => $branchInfo?->assignment_type,
             'formatted_assignment_type' => match ($branchInfo?->assignment_type) {
                 'both' => 'Homecare + Inhouse Facility',
-                'homecare' => 'Homecare',
+                'online' => 'Homecare',
                 'facility' => 'Inhouse Facility',
                 default => 'Not yet Assigned',
             },

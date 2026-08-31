@@ -54,7 +54,7 @@
                 </div>
 
                 <div
-                    class="grid flex-1 overflow-hidden lg:grid-cols-[1fr_320px]"
+                    class="grid flex-1 overflow-hidden lg:grid-cols-[65%_35%]"
                 >
                     <div class="overflow-y-auto p-6 space-y-4">
                         <div
@@ -78,345 +78,503 @@
                             >
                                 Assigned Caregiver
                             </p>
-                            <button
-                                type="button"
-                                class="text-xs font-medium text-primary hover:underline"
-                                @click="addAdlSlot"
+
+                            <span
+                                class="flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                                :class="
+                                    assignments.length
+                                        ? 'bg-emerald-50 text-emerald-700'
+                                        : 'bg-rose-50 text-rose-600'
+                                "
                             >
-                                + Add Staff
-                            </button>
+                                {{
+                                    assignments.length
+                                        ? `${assignments.length} assigned`
+                                        : "Needs Assign"
+                                }}
+                            </span>
                         </div>
 
-                        <div
-                            v-for="(slotId, index) in adlEmployeeIds"
-                            :key="index"
-                            class="cursor-pointer rounded-xl border p-4 transition"
-                            :class="
-                                activeAdlSlot === index
-                                    ? 'border-primary bg-primary/5 shadow-sm'
-                                    : 'border-slate-200 bg-white hover:border-primary/30'
-                            "
-                            @click="activeAdlSlot = index"
-                        >
+                        <div v-if="assignments.length" class="space-y-3">
                             <div
-                                class="flex items-center justify-between gap-3"
+                                v-for="(entry, entryIndex) in assignments"
+                                :key="entry.employee_id"
+                                class="rounded-xl border border-slate-200 bg-white p-4"
                             >
-                                <p class="text-sm font-semibold text-slate-800">
-                                    Caregiver #{{ index + 1 }}
-                                </p>
-
-                                <div class="flex items-center gap-2">
-                                    <span
-                                        class="rounded-full px-2 py-1 text-[11px] font-semibold"
-                                        :class="
-                                            slotId
-                                                ? 'bg-emerald-100 text-emerald-700'
-                                                : 'bg-rose-100 text-rose-600'
-                                        "
-                                    >
-                                        {{ slotId ? "Assigned" : "Unassigned" }}
-                                    </span>
-
-                                    <button
-                                        v-if="adlEmployeeIds.length > 1"
-                                        type="button"
-                                        class="text-slate-400 hover:text-rose-500"
-                                        @click.stop="removeAdlSlot(index)"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="mt-4" @click.stop>
-                                <Combobox
-                                    label="Assign Caregiver"
-                                    placeholder="Select caregiver"
-                                    search-bar
-                                    :items="availableEmployeeItemsFor(slotId)"
-                                    :model-value="slotId"
-                                    @update:model-value="
-                                        (value) =>
-                                            assignAdl(index, String(value))
-                                    "
-                                />
-                            </div>
-
-                            <div v-if="slotId" class="mt-3" @click.stop>
-                                <input
-                                    v-model="adlNotes[index]"
-                                    type="text"
-                                    :maxlength="NOTE_MAX"
-                                    placeholder="Note for this assignment"
-                                    class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                />
-
                                 <div
-                                    class="mt-2 flex flex-wrap items-center gap-1.5"
+                                    class="flex items-center justify-between gap-3"
                                 >
-                                    <span class="text-[11px] text-slate-400">
-                                        Suggestions:
+                                    <div class="flex min-w-0 items-center gap-2">
+                                        <span
+                                            class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary"
+                                        >
+                                            {{ entryIndex + 1 }}
+                                        </span>
+
+                                        <p
+                                            class="truncate text-sm font-semibold text-slate-800"
+                                        >
+                                            Caregiver
+                                        </p>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-700"
+                                        >
+                                            Assigned
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                                            title="Remove"
+                                            @click="
+                                                toggleEmployee(
+                                                    entry.employee_id,
+                                                )
+                                            "
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 flex items-center gap-3">
+                                    <span
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-[11px] font-semibold text-white"
+                                    >
+                                        <img
+                                            v-if="
+                                                employeeById(
+                                                    entry.employee_id,
+                                                )?.avatar
+                                            "
+                                            :src="
+                                                employeeById(
+                                                    entry.employee_id,
+                                                )!.avatar
+                                            "
+                                            class="h-full w-full object-cover"
+                                        />
+
+                                        <template v-else>
+                                            {{
+                                                initialsFor(entry.employee_id)
+                                            }}
+                                        </template>
                                     </span>
 
-                                    <button
-                                        v-for="preset in NOTE_PRESETS"
-                                        :key="preset"
-                                        type="button"
-                                        class="rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition"
-                                        :class="
-                                            adlNotes[index] === preset
-                                                ? 'border-primary bg-primary text-white'
-                                                : 'border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary'
-                                        "
-                                        @click="
-                                            adlNotes[index] =
-                                                adlNotes[index] === preset
-                                                    ? ''
-                                                    : preset
-                                        "
+                                    <div class="min-w-0 flex-1">
+                                        <p
+                                            class="truncate text-sm font-semibold text-slate-800"
+                                        >
+                                            {{ nameFor(entry.employee_id) }}
+                                        </p>
+
+                                        <p
+                                            class="truncate text-xs capitalize text-slate-400"
+                                        >
+                                            {{
+                                                employeeById(entry.employee_id)
+                                                    ?.role_name ?? "Caregiver"
+                                            }}
+                                        </p>
+
+                                        <div
+                                            class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-400"
+                                        >
+                                            <span
+                                                v-if="
+                                                    employeeById(
+                                                        entry.employee_id,
+                                                    )?.phone_number
+                                                "
+                                                class="flex items-center gap-1"
+                                            >
+                                                {{
+                                                    employeeById(
+                                                        entry.employee_id,
+                                                    )?.phone_number
+                                                }}
+                                            </span>
+
+                                            <span
+                                                v-if="
+                                                    employeeById(
+                                                        entry.employee_id,
+                                                    )?.email
+                                                "
+                                                class="flex min-w-0 items-center gap-1"
+                                            >
+                                                <span class="truncate">
+                                                    {{
+                                                        employeeById(
+                                                            entry.employee_id,
+                                                        )?.email
+                                                    }}
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <input
+                                        v-model="entry.note"
+                                        type="text"
+                                        :maxlength="NOTE_MAX"
+                                        placeholder="Note for this assignment"
+                                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    />
+
+                                    <div
+                                        class="mt-2 flex flex-wrap items-center gap-1.5"
                                     >
-                                        {{ preset }}
-                                    </button>
+                                        <span
+                                            class="text-[11px] text-slate-400"
+                                        >
+                                            Suggestions:
+                                        </span>
+
+                                        <button
+                                            v-for="preset in NOTE_PRESETS"
+                                            :key="preset"
+                                            type="button"
+                                            class="rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition"
+                                            :class="
+                                                entry.note === preset
+                                                    ? 'border-primary bg-primary text-white'
+                                                    : 'border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary'
+                                            "
+                                            @click="
+                                                entry.note =
+                                                    entry.note === preset
+                                                        ? ''
+                                                        : preset
+                                            "
+                                        >
+                                            {{ preset }}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
+                        <p
+                            v-else
+                            class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-500"
+                        >
+                            Pick staff from the list on the right to assign
+                            them to this booking.
+                        </p>
                     </div>
 
                     <div
-                        class="border-t border-slate-100 bg-slate-50 p-5 lg:border-l lg:border-t-0"
+                        class="flex flex-col overflow-hidden border-t border-slate-100 bg-slate-50 lg:border-l lg:border-t-0"
                     >
-                        <p
-                            class="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400"
-                        >
-                            Employees
-                        </p>
+                        <div class="shrink-0 space-y-3 p-5 pb-3">
+                            <div class="flex items-baseline justify-between">
+                                <p
+                                    class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                                >
+                                    Available Caregivers
+                                </p>
 
-                        <div v-if="isFetching" class="space-y-2">
-                            <div
-                                v-for="i in 4"
-                                :key="i"
-                                class="h-16 animate-pulse rounded-xl bg-white"
-                            />
+                                <span class="text-[11px] text-slate-400">
+                                    {{ filteredEmployees.length }} shown
+                                </span>
+                            </div>
+
+                            <div class="relative">
+                                <input
+                                    v-model="employeeSearch"
+                                    type="text"
+                                    placeholder="Search name"
+                                    class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                            </div>
                         </div>
 
                         <div
-                            v-else
-                            class="space-y-2 overflow-y-auto max-h-[55vh]"
+                            class="min-h-0 flex-1 space-y-2 overflow-y-auto px-5 pb-5"
                         >
-                            <div
-                                v-if="!employeeData.length"
-                                class="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center"
-                            >
-                                <p class="text-sm text-slate-500">
-                                    No employees available
-                                </p>
+                            <div v-if="isFetching" class="space-y-2">
+                                <div
+                                    v-for="i in 4"
+                                    :key="i"
+                                    class="h-16 animate-pulse rounded-xl bg-white"
+                                />
                             </div>
 
-                            <div
-                                v-for="employee in employeeData"
-                                :key="employee.employee_id"
-                                class="rounded-xl border bg-white transition"
-                                :class="[
-                                    isSelected(employee.employee_id)
-                                        ? 'border-primary bg-primary/5'
-                                        : 'border-slate-200 hover:border-primary/40',
-                                    employee.is_busy ||
-                                    isTakenElsewhere(employee.employee_id) ||
-                                    !isCaregiver(employee)
-                                        ? 'opacity-60'
-                                        : '',
-                                ]"
-                            >
-                                <button
-                                    type="button"
-                                    class="flex w-full items-center gap-3 p-3 text-left"
-                                    @click="handleEmployeeClick(employee)"
+                            <div v-else class="space-y-2">
+                                <div
+                                    v-if="!filteredEmployees.length"
+                                    class="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center"
                                 >
-                                    <div
-                                        class="h-10 w-10 overflow-hidden rounded-full bg-[#EAF4F2] flex items-center justify-center shrink-0"
-                                    >
-                                        <img
-                                            v-if="employee.avatar"
-                                            :src="employee.avatar"
-                                            class="h-full w-full object-cover"
-                                        />
-                                    </div>
-
-                                    <div class="flex-1 min-w-0">
-                                        <p
-                                            class="truncate text-sm font-semibold text-slate-700"
-                                        >
-                                            {{
-                                                fullName(
-                                                    employee.first_name,
-                                                    "",
-                                                    employee.last_name,
-                                                )
-                                            }}
-                                        </p>
-                                        <p
-                                            class="truncate text-xs text-slate-400"
-                                        >
-                                            {{ employee.role_name }}
-                                        </p>
-
-                                        <p
-                                            v-if="
-                                                employee.phone_number ||
-                                                employee.email
-                                            "
-                                            class="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-slate-400"
-                                        >
-                                            <span v-if="employee.phone_number">
-                                                {{ employee.phone_number }}
-                                            </span>
-
-                                            <span
-                                                v-if="employee.email"
-                                                class="truncate"
-                                            >
-                                                {{ employee.email }}
-                                            </span>
-                                        </p>
-                                    </div>
-
-                                    <div
-                                        v-if="employee.is_busy"
-                                        class="flex flex-col items-end gap-1"
-                                    >
-                                        <span
-                                            class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700"
-                                        >
-                                            <span
-                                                class="h-1.5 w-1.5 rounded-full bg-amber-500"
-                                            ></span>
-                                            Busy
-                                        </span>
-
-                                        <span
-                                            class="flex items-center gap-1 text-[11px] font-medium text-amber-600 hover:underline"
-                                            @click.stop="
-                                                toggleConflicts(
-                                                    employee.employee_id,
-                                                )
-                                            "
-                                        >
-                                            {{ employee.conflict_count ?? 0 }}
-                                            {{
-                                                employee.conflict_count === 1
-                                                    ? "schedule conflict"
-                                                    : "schedule conflicts"
-                                            }}
-                                            <span
-                                                class="transition-transform"
-                                                :class="
-                                                    expandedConflicts.has(
-                                                        employee.employee_id,
-                                                    )
-                                                        ? 'rotate-180'
-                                                        : ''
-                                                "
-                                            >
-                                                ▾
-                                            </span>
-                                        </span>
-                                    </div>
-                                    <span
-                                        v-else-if="!isCaregiver(employee)"
-                                        class="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-600"
-                                    >
-                                        Caregiver only
-                                    </span>
-                                    <span
-                                        v-else-if="
-                                            isTakenElsewhere(
-                                                employee.employee_id,
-                                            )
-                                        "
-                                        class="rounded-full bg-slate-200 px-2 py-1 text-xs text-slate-500"
-                                    >
-                                        Already assigned
-                                    </span>
-                                    <span
-                                        v-else
-                                        class="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700"
-                                    >
-                                        Available
-                                    </span>
-                                </button>
+                                    <p class="text-sm text-slate-500">
+                                        {{
+                                            employeeSearch
+                                                ? "No caregivers match that search"
+                                                : "No caregivers available"
+                                        }}
+                                    </p>
+                                </div>
 
                                 <div
-                                    v-if="
-                                        employee.is_busy &&
-                                        expandedConflicts.has(
-                                            employee.employee_id,
-                                        ) &&
-                                        employee.conflict_schedules?.length
-                                    "
-                                    class="space-y-2 border-t border-slate-100 bg-slate-50/50 p-3"
+                                    v-for="employee in filteredEmployees"
+                                    :key="employee.employee_id"
+                                    class="rounded-xl border bg-white transition"
+                                    :class="[
+                                        isSelected(employee.employee_id)
+                                            ? 'border-primary bg-primary/5'
+                                            : 'border-slate-200 hover:border-primary/40',
+                                        employee.is_busy ||
+                                        !isCaregiver(employee) ||
+                                        isAssignmentTypeMismatch(employee)
+                                            ? 'opacity-60'
+                                            : '',
+                                    ]"
                                 >
-                                    <div
-                                        v-for="(
-                                            conflict, idx
-                                        ) in employee.conflict_schedules"
-                                        :key="idx"
-                                        class="rounded-lg border border-amber-100 bg-white p-2.5 text-xs"
+                                    <button
+                                        type="button"
+                                        class="flex w-full items-center gap-3 p-3 text-left"
+                                        @click="handleEmployeeClick(employee)"
                                     >
                                         <div
-                                            class="flex items-center justify-between"
+                                            class="h-10 w-10 overflow-hidden rounded-full bg-[#EAF4F2] flex items-center justify-center shrink-0"
+                                        >
+                                            <img
+                                                v-if="employee.avatar"
+                                                :src="employee.avatar"
+                                                class="h-full w-full object-cover"
+                                            />
+
+                                            <template v-else>
+                                                {{
+                                                    initials(
+                                                        fullName(
+                                                            employee.first_name,
+                                                            "",
+                                                            employee.last_name,
+                                                        ),
+                                                    )
+                                                }}
+                                            </template>
+                                        </div>
+
+                                        <div class="flex-1 min-w-0">
+                                            <div
+                                                class="flex items-center gap-1.5"
+                                            >
+                                                <p
+                                                    class="truncate text-sm font-semibold text-slate-700"
+                                                >
+                                                    {{
+                                                        fullName(
+                                                            employee.first_name,
+                                                            "",
+                                                            employee.last_name,
+                                                        )
+                                                    }}
+                                                </p>
+
+                                                <Check
+                                                    v-if="
+                                                        isSelected(
+                                                            employee.employee_id,
+                                                        )
+                                                    "
+                                                    class="h-3.5 w-3.5 shrink-0 text-primary"
+                                                />
+                                            </div>
+
+                                            <p
+                                                class="truncate text-xs text-slate-400"
+                                            >
+                                                {{ employee.role_name }}
+                                            </p>
+
+                                            <p
+                                                v-if="
+                                                    employee.phone_number ||
+                                                    employee.email
+                                                "
+                                                class="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-slate-400"
+                                            >
+                                                <span
+                                                    v-if="
+                                                        employee.phone_number
+                                                    "
+                                                >
+                                                    {{ employee.phone_number }}
+                                                </span>
+
+                                                <span
+                                                    v-if="employee.email"
+                                                    class="truncate"
+                                                >
+                                                    {{ employee.email }}
+                                                </span>
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            v-if="employee.is_busy"
+                                            class="flex flex-col items-end gap-1"
                                         >
                                             <span
-                                                class="font-semibold text-slate-700"
+                                                class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700"
                                             >
-                                                {{ conflict.schedule_code }}
+                                                <span
+                                                    class="h-1.5 w-1.5 rounded-full bg-amber-500"
+                                                ></span>
+                                                Busy
                                             </span>
+
                                             <span
-                                                class="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                                                :class="
-                                                    conflict.category ===
-                                                    'medical'
-                                                        ? 'bg-sky-100 text-sky-700'
-                                                        : 'bg-violet-100 text-violet-700'
+                                                class="flex items-center gap-1 text-[11px] font-medium text-amber-600 hover:underline"
+                                                @click.stop="
+                                                    toggleConflicts(
+                                                        employee.employee_id,
+                                                    )
                                                 "
                                             >
                                                 {{
-                                                    conflict.category ===
-                                                    "medical"
-                                                        ? "Medical"
-                                                        : "ADL"
+                                                    employee.conflict_count ??
+                                                    0
                                                 }}
+                                                {{
+                                                    employee.conflict_count ===
+                                                    1
+                                                        ? "schedule conflict"
+                                                        : "schedule conflicts"
+                                                }}
+                                                <span
+                                                    class="transition-transform"
+                                                    :class="
+                                                        expandedConflicts.has(
+                                                            employee.employee_id,
+                                                        )
+                                                            ? 'rotate-180'
+                                                            : ''
+                                                    "
+                                                >
+                                                    ▾
+                                                </span>
                                             </span>
                                         </div>
-
-                                        <p class="mt-1 text-slate-500">
-                                            {{
-                                                formatDate(
-                                                    conflict.scheduled_at,
-                                                )
-                                            }}
-                                            •
-                                            {{
-                                                formatTime(
-                                                    conflict.scheduled_at,
-                                                )
-                                            }}
-                                            <span
-                                                v-if="conflict.duration_minutes"
-                                            >
-                                                ({{
-                                                    formatDuration(
-                                                        conflict.duration_minutes /
-                                                            60,
-                                                    )
-                                                }})
-                                            </span>
-                                        </p>
-
-                                        <p
-                                            class="mt-1 capitalize text-slate-400"
+                                        <span
+                                            v-else-if="!isCaregiver(employee)"
+                                            class="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-600"
                                         >
-                                            {{ conflict.status }}
-                                        </p>
+                                            Caregiver only
+                                        </span>
+                                        <span
+                                            v-else-if="
+                                                isAssignmentTypeMismatch(
+                                                    employee,
+                                                )
+                                            "
+                                            class="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-600"
+                                        >
+                                            {{
+                                                assignmentTypeLabel(employee)
+                                            }}
+                                        </span>
+                                        <span
+                                            v-else-if="
+                                                isSelected(
+                                                    employee.employee_id,
+                                                )
+                                            "
+                                            class="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700"
+                                        >
+                                            Assigned
+                                        </span>
+                                        <span
+                                            v-else
+                                            class="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700"
+                                        >
+                                            Available
+                                        </span>
+                                    </button>
+
+                                    <div
+                                        v-if="
+                                            employee.is_busy &&
+                                            expandedConflicts.has(
+                                                employee.employee_id,
+                                            ) &&
+                                            employee.conflict_schedules?.length
+                                        "
+                                        class="space-y-2 border-t border-slate-100 bg-slate-50/50 p-3"
+                                    >
+                                        <div
+                                            v-for="(
+                                                conflict, idx
+                                            ) in employee.conflict_schedules"
+                                            :key="idx"
+                                            class="rounded-lg border border-amber-100 bg-white p-2.5 text-xs"
+                                        >
+                                            <div
+                                                class="flex items-center justify-between"
+                                            >
+                                                <span
+                                                    class="font-semibold text-slate-700"
+                                                >
+                                                    {{ conflict.schedule_code }}
+                                                </span>
+                                                <span
+                                                    class="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                                                    :class="
+                                                        conflict.category ===
+                                                        'medical'
+                                                            ? 'bg-sky-100 text-sky-700'
+                                                            : 'bg-violet-100 text-violet-700'
+                                                    "
+                                                >
+                                                    {{
+                                                        conflict.category ===
+                                                        "medical"
+                                                            ? "Medical"
+                                                            : "ADL"
+                                                    }}
+                                                </span>
+                                            </div>
+
+                                            <p class="mt-1 text-slate-500">
+                                                {{
+                                                    formatDate(
+                                                        conflict.scheduled_at,
+                                                    )
+                                                }}
+                                                •
+                                                {{
+                                                    formatTime(
+                                                        conflict.scheduled_at,
+                                                    )
+                                                }}
+                                                <span
+                                                    v-if="
+                                                        conflict.duration_minutes
+                                                    "
+                                                >
+                                                    ({{
+                                                        formatDuration(
+                                                            conflict.duration_minutes /
+                                                                60,
+                                                        )
+                                                    }})
+                                                </span>
+                                            </p>
+
+                                            <p
+                                                class="mt-1 capitalize text-slate-400"
+                                            >
+                                                {{ conflict.status }}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -452,9 +610,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import type { Employee } from "~/types/employee";
-import { fullName } from "~/utils/user";
+import { fullName, initials } from "~/utils/user";
 import { formatDate, formatTime, formatDuration } from "~/utils/time";
-import Combobox from "~/components/ui/Combobox.vue";
+import { Check } from "lucide-vue-next";
 import { employeeService } from "~/api/employee/EmployeeService";
 import { useToast } from "~/composables/useToast";
 import type { AuditRow } from "~/types/schedule";
@@ -462,6 +620,11 @@ import type { AuditRow } from "~/types/schedule";
 const NOTE_MAX = 255;
 
 const NOTE_PRESETS = ["AM Shift", "PM Shift", "Full Shift"];
+
+interface AssignmentEntry {
+    employee_id: string;
+    note: string;
+}
 
 const props = defineProps<{
     open: boolean;
@@ -483,55 +646,76 @@ const emit = defineEmits<{
 
 const employeeData = ref<Employee[]>([]);
 const isFetching = ref(false);
+const employeeSearch = ref("");
 const { error: toastError } = useToast();
 
 function isCaregiver(employee: Employee) {
     return (employee.role_name ?? "").toLowerCase() === "caregiver";
 }
 
-const adlEmployeeIds = ref<string[]>([""]);
-const adlNotes = ref<string[]>([""]);
-const activeAdlSlot = ref(0);
+// A homecare visit can only be staffed by an online (homecare) caregiver, a
+// facility booking only by an in-house one — someone set up for both is
+// eligible either way.
+function requiredAssignmentType(): "online" | "facility" {
+    return props.schedule?.category === "Facility" ? "facility" : "online";
+}
+
+function isAssignmentTypeMismatch(employee: Employee): boolean {
+    const type = employee.assignment_type;
+
+    if (!type || type === "both") return false;
+
+    return type !== requiredAssignmentType();
+}
+
+function assignmentTypeLabel(employee: Employee): string {
+    return employee.assignment_type === "facility"
+        ? "Facility only"
+        : "Homecare only";
+}
+
+/** The caregivers currently assigned to this ADL booking, each with a note. */
+const assignments = ref<AssignmentEntry[]>([]);
 
 const patientName = computed(() => props.schedule?.patient_full_name ?? "");
 
-const allAssignedIds = computed(() => {
-    return adlEmployeeIds.value.filter((id): id is string => !!id);
+const filteredEmployees = computed(() => {
+    const term = employeeSearch.value.trim().toLowerCase();
+
+    if (!term) return employeeData.value;
+
+    return employeeData.value.filter((employee) =>
+        fullName(employee.first_name, "", employee.last_name)
+            .toLowerCase()
+            .includes(term),
+    );
 });
 
-function availableEmployeeItemsFor(currentValue: string) {
-    const takenElsewhere = new Set(
-        allAssignedIds.value.filter((id) => id !== currentValue),
+function employeeById(employeeId: string | number) {
+    return employeeData.value.find(
+        (e) => Number(e.employee_id) === Number(employeeId),
     );
-
-    const items = employeeData.value
-        .filter((employee) => {
-            const id = String(employee.employee_id);
-
-            if (id === currentValue) return true;
-
-            if (takenElsewhere.has(id)) return false;
-            if (employee.is_busy) return false;
-            if (!isCaregiver(employee)) return false;
-
-            return true;
-        })
-        .map((employee) => ({
-            label:
-                fullName(employee.first_name, "", employee.last_name) +
-                (employee.is_busy ? " — Schedule conflict" : ""),
-            value: String(employee.employee_id),
-        }));
-
-    return [{ label: "Unassigned", value: "" }, ...items];
 }
 
-function isTakenElsewhere(employeeId: string | number) {
-    const id = String(employeeId);
+function nameFor(employeeId: string | number) {
+    const employee = employeeById(employeeId);
 
-    return adlEmployeeIds.value.some(
-        (assignedId, index) =>
-            assignedId === id && index !== activeAdlSlot.value,
+    if (employee) return fullName(employee.first_name, "", employee.last_name);
+
+    const assignee = props.schedule?.assignees?.find(
+        (a) => Number(a.employee_id) === Number(employeeId),
+    );
+
+    return assignee?.full_name ?? "Unknown employee";
+}
+
+function initialsFor(employeeId: string | number) {
+    return initials(nameFor(employeeId));
+}
+
+function isSelected(employeeId: string | number) {
+    return assignments.value.some(
+        (entry) => Number(entry.employee_id) === Number(employeeId),
     );
 }
 
@@ -565,23 +749,21 @@ function restoreSavedAssignments(schedule: AuditRow) {
         ? activeAssignments.map((a) => String(a.employee_id))
         : schedule.employee_id
           ? [String(schedule.employee_id)]
-          : [""];
+          : [];
 
-    adlEmployeeIds.value = ids;
-
-    adlNotes.value = ids.map((id) => {
-        if (!id) return "";
-
+    assignments.value = ids.map((id) => {
         const match = schedule.assignees?.find(
             (a) => String(a.employee_id) === id,
         );
 
-        if (match) return match.note ?? "";
+        const note = match
+            ? (match.note ?? "")
+            : id === String(schedule.employee_id)
+              ? (schedule.note ?? "")
+              : "";
 
-        return id === String(schedule.employee_id) ? (schedule.note ?? "") : "";
+        return { employee_id: id, note };
     });
-
-    activeAdlSlot.value = 0;
 }
 
 const expandedConflicts = ref<Set<string | number>>(new Set());
@@ -599,27 +781,21 @@ watch(
     () => props.schedule,
     (schedule) => {
         if (!schedule) {
-            adlEmployeeIds.value = [""];
-            adlNotes.value = [""];
-            activeAdlSlot.value = 0;
+            assignments.value = [];
             employeeData.value = [];
+            employeeSearch.value = "";
             expandedConflicts.value = new Set();
             return;
         }
 
         restoreSavedAssignments(schedule);
+        employeeSearch.value = "";
         expandedConflicts.value = new Set();
 
         fetchEmployees();
     },
     { immediate: true },
 );
-
-function addAdlSlot() {
-    adlEmployeeIds.value.push("");
-    adlNotes.value.push("");
-    activeAdlSlot.value = adlEmployeeIds.value.length - 1;
-}
 
 // A caregiver mid-visit (clocked in, not yet out) can't be pulled off the
 // booking — that would orphan their open clock-in session.
@@ -636,47 +812,33 @@ function isEmployeeClockedIn(employeeId: string | number | null | undefined) {
     );
 }
 
-function removeAdlSlot(index: number) {
-    if (adlEmployeeIds.value.length <= 1) return;
+function toggleEmployee(employeeId: string) {
+    const index = assignments.value.findIndex(
+        (entry) => entry.employee_id === employeeId,
+    );
 
-    if (isEmployeeClockedIn(adlEmployeeIds.value[index])) {
+    if (index === -1) {
+        assignments.value = [...assignments.value, { employee_id: employeeId, note: "" }];
+        return;
+    }
+
+    if (isEmployeeClockedIn(employeeId)) {
         toastError(
             "This caregiver is currently clocked in and can't be unassigned.",
         );
         return;
     }
 
-    adlNotes.value.splice(index, 1);
-    adlEmployeeIds.value.splice(index, 1);
-    if (activeAdlSlot.value >= adlEmployeeIds.value.length) {
-        activeAdlSlot.value = adlEmployeeIds.value.length - 1;
-    }
-}
-
-function assignAdl(index: number, employeeId: string) {
-    const currentEmployeeId = adlEmployeeIds.value[index];
-
-    if (
-        currentEmployeeId &&
-        currentEmployeeId !== employeeId &&
-        isEmployeeClockedIn(currentEmployeeId)
-    ) {
-        toastError(
-            "This caregiver is currently clocked in and can't be unassigned.",
-        );
-        return;
-    }
-
-    adlEmployeeIds.value[index] = employeeId;
-}
-
-function isSelected(employeeId: string | number) {
-    return adlEmployeeIds.value.includes(String(employeeId));
+    assignments.value = assignments.value.filter((_, i) => i !== index);
 }
 
 function handleEmployeeClick(employee: Employee) {
+    if (isSelected(employee.employee_id)) {
+        toggleEmployee(String(employee.employee_id));
+        return;
+    }
+
     if (employee.is_busy) return;
-    if (isTakenElsewhere(employee.employee_id)) return;
 
     if (!isCaregiver(employee)) {
         toastError(
@@ -685,7 +847,14 @@ function handleEmployeeClick(employee: Employee) {
         return;
     }
 
-    assignAdl(activeAdlSlot.value, String(employee.employee_id));
+    if (isAssignmentTypeMismatch(employee)) {
+        toastError(
+            `${fullName(employee.first_name, "", employee.last_name)} is ${assignmentTypeLabel(employee).toLowerCase()} and cannot be assigned to this ${requiredAssignmentType() === "facility" ? "facility" : "homecare"} booking.`,
+        );
+        return;
+    }
+
+    toggleEmployee(String(employee.employee_id));
 }
 
 function confirm() {
@@ -693,25 +862,19 @@ function confirm() {
 
     const scheduleServiceId = props.schedule.schedule_services_id ?? null;
 
-    const assignedSlots = adlEmployeeIds.value
-        .map((employee_id, index) => ({ employee_id, index }))
-        .filter((slot) => slot.employee_id);
-
-    const formattedAssignments = assignedSlots.length
-        ? assignedSlots.map(({ employee_id, index }) => {
-              const employee = employeeData.value.find(
-                  (e) => String(e.employee_id) === employee_id,
-              );
+    const formattedAssignments = assignments.value.length
+        ? assignments.value.map((entry) => {
+              const employee = employeeById(entry.employee_id);
 
               return {
-                  employee_id: Number(employee_id),
+                  employee_id: Number(entry.employee_id),
                   schedule_services_id: scheduleServiceId,
                   avatar: employee?.avatar,
                   role_name: employee?.role_name,
                   employee_name: employee
                       ? fullName(employee.first_name, "", employee.last_name)
                       : "",
-                  note: adlNotes.value[index]?.trim() || null,
+                  note: entry.note.trim() || null,
               };
           })
         : [
@@ -726,6 +889,7 @@ function confirm() {
         assignments: formattedAssignments,
     });
 }
+
 function close() {
     emit("close");
 }

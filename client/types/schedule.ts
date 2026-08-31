@@ -131,6 +131,7 @@ export interface AuditRow {
     scheduled_at?: string | null;
     total_hours: number;
     status: string;
+    category: string | null;
 
     is_active: boolean;
     employee_id: number | null;

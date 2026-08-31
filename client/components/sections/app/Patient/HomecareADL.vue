@@ -804,6 +804,7 @@ const filteredLogs = computed<AuditRow[]>(() => {
 
             return {
                 status: schedule.status,
+                category: schedule.category ?? null,
                 schedule_id: schedule.schedule_id,
                 schedule_code: schedule.schedule_code,
                 scheduled_at: schedule.scheduled_at ?? null,

@@ -786,8 +786,11 @@
                                                             service.type !==
                                                                 'ADL'
                                                         "
-                                                        class="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500"
+                                                        class="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500"
                                                     >
+                                                        <CircleHelp
+                                                            class="h-3.5 w-3.5"
+                                                        />
                                                         Not specialized
                                                     </span>
 
@@ -1105,6 +1108,7 @@ import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import {
     CalendarCheck2,
     Check,
+    CircleHelp,
     LoaderCircle,
     Mail,
     Phone,
