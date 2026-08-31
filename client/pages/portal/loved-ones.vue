@@ -1077,14 +1077,7 @@ const lovedOne = computed(
 
 const isVip = computed(() => lovedOne.value.roomType?.toLowerCase() === "vip");
 
-// A new visit only makes sense when the loved one isn't already in the
-// middle of a facility stay — homecare, discharged, or never-admitted are
-// all fine, "Admitted"/"Waiting" already has an active facility booking.
-const canBookAgain = computed(
-    () =>
-        lovedOne.value.status !== "Admitted" &&
-        lovedOne.value.status !== "Waiting",
-);
+const canBookAgain = computed(() => lovedOne.value.status === "Homecare");
 
 const showBookAgainModal = ref(false);
 
