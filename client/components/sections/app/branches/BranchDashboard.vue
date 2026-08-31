@@ -1,16 +1,16 @@
 <template>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
         <div
-            class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary-200"
+            class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary-200 dark:border-white/10 dark:bg-secondary dark:hover:border-primary-500/40"
         >
             <div
-                class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary-100/40 blur-2xl"
+                class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary-100/40 blur-2xl dark:bg-primary-500/10"
             />
 
             <div class="relative">
                 <div class="flex items-center justify-between">
                     <div
-                        class="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center"
+                        class="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center dark:bg-primary-500/10"
                     >
                         <svg
                             class="h-5 w-5 text-primary"
@@ -28,12 +28,12 @@
                 </div>
 
                 <p
-                    class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                    class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                 >
                     Total Branches
                 </p>
 
-                <p class="mt-1 text-3xl font-bold text-slate-800 tabular-nums">
+                <p class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-white">
                     {{ statsData.total_branches }}
                 </p>
 
@@ -54,16 +54,16 @@
         </div>
 
         <div
-            class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200"
+            class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:border-white/10 dark:bg-secondary dark:hover:border-emerald-500/40"
         >
             <div
-                class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-100/50 blur-2xl"
+                class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-100/50 blur-2xl dark:bg-emerald-500/10"
             />
 
             <div class="relative">
                 <div class="flex items-center justify-between">
                     <div
-                        class="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center"
+                        class="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center dark:bg-emerald-500/10"
                     >
                         <svg
                             class="h-5 w-5 text-emerald-600"
@@ -90,12 +90,12 @@
                 </div>
 
                 <p
-                    class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                    class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                 >
                     Active Branches
                 </p>
 
-                <p class="mt-1 text-3xl font-bold text-slate-800 tabular-nums">
+                <p class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-white">
                     {{ statsData.active_branches }}
                 </p>
 
@@ -109,16 +109,16 @@
         </div>
 
         <div
-            class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-fuchsia-200"
+            class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-fuchsia-200 dark:border-white/10 dark:bg-secondary dark:hover:border-fuchsia-500/40"
         >
             <div
-                class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-fuchsia-100/50 blur-2xl"
+                class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-fuchsia-100/50 blur-2xl dark:bg-fuchsia-500/10"
             />
 
             <div class="relative">
                 <div class="flex items-center justify-between">
                     <div
-                        class="h-10 w-10 rounded-xl bg-fuchsia-50 flex items-center justify-center"
+                        class="h-10 w-10 rounded-xl bg-fuchsia-50 flex items-center justify-center dark:bg-fuchsia-500/10"
                     >
                         <svg
                             class="h-5 w-5 text-fuchsia-600"
@@ -135,28 +135,28 @@
                 </div>
 
                 <p
-                    class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                    class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                 >
                     Expiring Soon
                 </p>
 
-                <p class="mt-1 text-3xl font-bold text-slate-800 tabular-nums">
+                <p class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-white">
                     {{ statsData.expiring_soon }}
                 </p>
             </div>
         </div>
 
         <div
-            class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200"
+            class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200 dark:border-white/10 dark:bg-secondary dark:hover:border-rose-500/40"
         >
             <div
-                class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-rose-100/50 blur-2xl"
+                class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-rose-100/50 blur-2xl dark:bg-rose-500/10"
             />
 
             <div class="relative">
                 <div class="flex items-center justify-between">
                     <div
-                        class="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center"
+                        class="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center dark:bg-rose-500/10"
                     >
                         <svg
                             class="h-5 w-5 text-rose-500"
@@ -174,19 +174,19 @@
                     </div>
 
                     <span
-                        class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-500 text-xs font-semibold"
+                        class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-500 text-xs font-semibold dark:bg-rose-500/10"
                     >
                         Attention
                     </span>
                 </div>
 
                 <p
-                    class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                    class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                 >
                     Maintenance Alerts
                 </p>
 
-                <p class="mt-1 text-3xl font-bold text-slate-800 tabular-nums">
+                <p class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-white">
                     {{ statsData.maintenance_alerts }}
                 </p>
 

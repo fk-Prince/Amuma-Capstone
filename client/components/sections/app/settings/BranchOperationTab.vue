@@ -1,25 +1,25 @@
 <template>
     <div class="w-full space-y-8">
         <div>
-            <h2 class="text-lg font-semibold text-slate-800">
+            <h2 class="text-lg font-semibold text-slate-800 dark:text-white">
                 Operation Settings
             </h2>
 
-            <p class="text-sm text-slate-500 mt-1">
+            <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                 Configure billing and branch operation preferences.
             </p>
         </div>
 
-        <div class="border-b border-slate-200 pb-2">
-            <h3 class="text-sm font-semibold text-slate-800">Facility</h3>
+        <div class="border-b border-slate-200 pb-2 dark:border-white/10">
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-white">Facility</h3>
 
-            <p class="text-xs text-slate-400 mt-0.5">
+            <p class="text-xs text-slate-400 mt-0.5 dark:text-gray-500">
                 In-house admission, rooms and resident billing.
             </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white p-1">
+            <div class="bg-white p-1 dark:bg-transparent">
                 <BaseInput
                     v-model="setting.reserved_walkin_slots"
                     label="Reserved Walk-in Slots"
@@ -29,12 +29,12 @@
                     @update:modelValue="clearError('reserved_walkin_slots')"
                 />
 
-                <p class="text-xs text-slate-400 mt-2">
+                <p class="text-xs text-slate-400 mt-2 dark:text-gray-500">
                     Number of slots reserved for walk-in customers.
                 </p>
             </div>
 
-            <div class="bg-white p-1">
+            <div class="bg-white p-1 dark:bg-transparent">
                 <BaseInput
                     v-model="setting.termination_fee_percent"
                     label="Early Discharge Termination Fee (%)"
@@ -44,29 +44,29 @@
                     @update:modelValue="clearError('termination_fee_percent')"
                 />
 
-                <p class="text-xs text-slate-400 mt-2">
+                <p class="text-xs text-slate-400 mt-2 dark:text-gray-500">
                     Percentage kept from what a resident already paid when they
-                    are discharged within 7 days of admission. The rest is
-                    refunded. Leave at 0% to always refund in full.
+                    are discharged within 7 days of admission. Leave at 0% to
+                    always refund in full.
                 </p>
             </div>
 
-            <div class="bg-white p-1 md:col-span-2">
+            <div class="bg-white p-1 md:col-span-2 dark:bg-transparent">
                 <div class="flex gap-5 items-start">
                     <label class="flex items-start gap-3">
                         <input
                             type="checkbox"
                             v-model="setting.enable_booking_pre_admission"
                             @change="clearError('enable_booking_pre_admission')"
-                            class="h-4 w-4 mt-1 rounded border-slate-300 text-primary focus:ring-primary"
+                            class="h-4 w-4 mt-1 rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
                         />
 
                         <div>
-                            <p class="text-sm font-medium text-slate-700">
+                            <p class="text-sm font-medium text-slate-700 dark:text-gray-300">
                                 Enable Booking Pre-Admission
                             </p>
 
-                            <p class="text-xs text-slate-400">
+                            <p class="text-xs text-slate-400 dark:text-gray-500">
                                 Allow client to fill up required details before
                                 admission online.
                             </p>
@@ -80,15 +80,15 @@
                             @change="
                                 clearError('enable_booking_complete_admission')
                             "
-                            class="h-4 w-4 mt-1 rounded border-slate-300 text-primary focus:ring-primary"
+                            class="h-4 w-4 mt-1 rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
                         />
 
                         <div>
-                            <p class="text-sm font-medium text-slate-700">
+                            <p class="text-sm font-medium text-slate-700 dark:text-gray-300">
                                 Enable Booking Complete Admission
                             </p>
 
-                            <p class="text-xs text-slate-400">
+                            <p class="text-xs text-slate-400 dark:text-gray-500">
                                 Allow bookings with payment and room reservation
                                 before admission approval online.
                             </p>
@@ -97,7 +97,7 @@
                 </div>
             </div>
 
-            <!-- <div class="bg-white p-1">
+            <!-- <div class="bg-white p-1 dark:bg-transparent">
                 <BaseInput
                     v-model="setting.billing_due_date"
                     label="Billing Due Date"
@@ -107,22 +107,22 @@
                     @update:modelValue="clearError('billing_due_date')"
                 />
 
-                <p class="text-xs text-slate-400 mt-2">
+                <p class="text-xs text-slate-400 mt-2 dark:text-gray-500">
                     Day of the month when payment is due.
                 </p>
             </div> -->
         </div>
 
-        <div class="border-b border-slate-200 pb-2">
-            <h3 class="text-sm font-semibold text-slate-800">Homecare</h3>
+        <div class="border-b border-slate-200 pb-2 dark:border-white/10">
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-white">Homecare</h3>
 
-            <p class="text-xs text-slate-400 mt-0.5">
+            <p class="text-xs text-slate-400 mt-0.5 dark:text-gray-500">
                 Visits delivered at the client's own address.
             </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white p-1">
+            <div class="bg-white p-1 dark:bg-transparent">
                 <BaseInput
                     v-model="setting.minimum_adl_hours"
                     label="Minimum Homecare Hours"
@@ -132,29 +132,29 @@
                     @update:modelValue="clearError('minimum_adl_hours')"
                 />
 
-                <p class="text-xs text-slate-400 mt-2">
+                <p class="text-xs text-slate-400 mt-2 dark:text-gray-500">
                     Shortest booking a client may request for a homecare visit.
                 </p>
             </div>
         </div>
 
-        <div class="border-b border-slate-200 pb-2">
-            <h3 class="text-sm font-semibold text-slate-800">General</h3>
+        <div class="border-b border-slate-200 pb-2 dark:border-white/10">
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-white">General</h3>
 
-            <p class="text-xs text-slate-400 mt-0.5">
+            <p class="text-xs text-slate-400 mt-0.5 dark:text-gray-500">
                 Applies to the whole branch, both facility and homecare.
             </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white p-1">
+            <div class="bg-white p-1 dark:bg-transparent">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-semibold text-slate-700">
+                        <p class="text-sm font-semibold text-slate-700 dark:text-gray-300">
                             Branch Status
                         </p>
 
-                        <p class="text-xs text-slate-400 mt-1">
+                        <p class="text-xs text-slate-400 mt-1 dark:text-gray-500">
                             Open or close branch operation.
                         </p>
                     </div>
@@ -166,7 +166,7 @@
                             clearError('is_open');
                         "
                         class="relative inline-flex h-6 w-11 items-center rounded-full transition"
-                        :class="setting.is_open ? 'bg-primary' : 'bg-slate-300'"
+                        :class="setting.is_open ? 'bg-primary' : 'bg-slate-300 dark:bg-white/10'"
                     >
                         <span
                             class="h-4 w-4 rounded-full bg-white shadow transition-transform"
@@ -184,8 +184,8 @@
                         class="inline-flex rounded-full px-3 py-1 text-xs font-medium"
                         :class="
                             setting.is_open
-                                ? 'bg-green-50 text-green-600'
-                                : 'bg-red-50 text-red-500'
+                                ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'
+                                : 'bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400'
                         "
                     >
                         {{ setting.is_open ? "Open" : "Closed" }}
@@ -218,13 +218,13 @@
             </div>
 
             <div class="flex flex-col mt-3">
-                <label class="text-sm font-semibold mb-1 text-slate-700">
+                <label class="text-sm font-semibold mb-1 text-slate-700 dark:text-gray-300">
                     Business Hours
                 </label>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <p class="text-sm mb-1 text-slate-700">Opening Hours</p>
+                        <p class="text-sm mb-1 text-slate-700 dark:text-gray-300">Opening Hours</p>
                         <Combobox
                             v-model="setting.opening"
                             :items="timeItems"
@@ -237,7 +237,7 @@
                     </div>
 
                     <div>
-                        <p class="text-sm mb-1 text-slate-700">Closing Hours</p>
+                        <p class="text-sm mb-1 text-slate-700 dark:text-gray-300">Closing Hours</p>
                         <Combobox
                             v-model="setting.closing"
                             :items="timeItems"
@@ -336,6 +336,9 @@ async function save() {
                 ...setting,
             },
         );
+
+        await branchStore.refreshBranch();
+
         success(res.message ?? res);
     } catch (err: any) {
         error(err.message);

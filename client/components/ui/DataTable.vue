@@ -1,10 +1,10 @@
 <template>
     <div
-        class="h-full rounded-2xl border border-[#E4EFED] bg-white shadow-sm overflow-hidden flex flex-col"
+        class="h-full rounded-2xl border border-[#E4EFED] bg-white shadow-sm overflow-hidden flex flex-col dark:border-white/10 dark:bg-secondary"
     >
         <div
             v-if="searchable || $slots.actions"
-            class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-[#E4EFED] shrink-0"
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-[#E4EFED] shrink-0 dark:border-white/10"
         >
             <div v-if="searchable" class="w-full sm:max-w-sm">
                 <BaseInput
@@ -23,15 +23,15 @@
         <div class="flex-1 min-h-0 overflow-auto">
             <table class="w-full min-w-[42rem] text-sm">
                 <thead class="sticky top-0 z-10">
-                    <tr class="bg-slate-50/70">
+                    <tr class="bg-slate-50/70 dark:bg-white/5">
                         <th
                             v-for="col in columns"
                             :key="col.key"
-                            class="px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 whitespace-nowrap bg-slate-50/70"
+                            class="px-3 sm:px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 whitespace-nowrap bg-slate-50/70 dark:text-gray-400 dark:bg-white/5"
                             :class="[
                                 alignClass(col.align),
                                 col.sortable
-                                    ? 'cursor-pointer select-none hover:text-slate-700'
+                                    ? 'cursor-pointer select-none hover:text-slate-700 dark:hover:text-gray-200'
                                     : '',
                             ]"
                             @click="col.sortable && toggleSort(col.key)"
@@ -41,7 +41,7 @@
 
                                 <span
                                     v-if="col.sortable"
-                                    class="text-slate-300"
+                                    class="text-slate-300 dark:text-gray-600"
                                 >
                                     <span v-if="sortKey === col.key">
                                         {{ sortDir === "asc" ? "↑" : "↓" }}
@@ -54,7 +54,7 @@
                     </tr>
                 </thead>
 
-                <tbody class="divide-y divide-[#EEF3F1]">
+                <tbody class="divide-y divide-[#EEF3F1] dark:divide-white/10">
                     <!-- <template v-if="loading">
                         <tr
                             v-for="n in pagination.pageSize.value"
@@ -94,7 +94,7 @@
                                 class="px-5 py-4"
                             >
                                 <div
-                                    class="h-4 rounded bg-slate-200 animate-pulse"
+                                    class="h-4 rounded bg-slate-200 dark:bg-white/10 animate-pulse"
                                     :style="{
                                         width: `${50 + ((n * 17 + columns.indexOf(col) * 23) % 51)}%`,
                                     }"
@@ -105,13 +105,13 @@
                     <tr v-else-if="!sortedRows.length">
                         <td :colspan="columns.length" class="px-5 py-14">
                             <div class="flex flex-col items-center text-center">
-                                <p class="text-sm font-medium text-slate-600">
+                                <p class="text-sm font-medium text-slate-600 dark:text-gray-300">
                                     {{ emptyTitle }}
                                 </p>
 
                                 <p
                                     v-if="emptyDescription"
-                                    class="text-sm text-slate-400 mt-1"
+                                    class="text-sm text-slate-400 mt-1 dark:text-gray-500"
                                 >
                                     {{ emptyDescription }}
                                 </p>
@@ -123,14 +123,14 @@
                         <tr
                             v-for="row in sortedRows"
                             :key="String(rowKey(row))"
-                            class="hover:bg-slate-50/60 transition"
+                            class="hover:bg-slate-50/60 dark:hover:bg-white/5 transition"
                             :class="onRowClick ? 'cursor-pointer' : ''"
                             @click="onRowClick?.(row)"
                         >
                             <td
                                 v-for="col in columns"
                                 :key="col.key"
-                                class="px-3 sm:px-5 py-3.5 text-slate-700 whitespace-nowrap"
+                                class="px-3 sm:px-5 py-3.5 text-slate-700 dark:text-gray-300 whitespace-nowrap"
                                 :class="alignClass(col.align)"
                             >
                                 <slot
@@ -149,19 +149,19 @@
 
         <div
             v-if="!loading && pagination.totalItems.value > 0"
-            class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-[#E4EFED] bg-white shrink-0"
+            class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-[#E4EFED] bg-white shrink-0 dark:border-white/10 dark:bg-secondary"
         >
-            <p class="text-xs text-slate-400">
+            <p class="text-xs text-slate-400 dark:text-gray-500">
                 Showing
-                <span class="font-medium text-slate-600">
+                <span class="font-medium text-slate-600 dark:text-gray-300">
                     {{ pagination.rangeStart.value }}
                 </span>
                 –
-                <span class="font-medium text-slate-600">
+                <span class="font-medium text-slate-600 dark:text-gray-300">
                     {{ pagination.rangeEnd.value }}
                 </span>
                 of
-                <span class="font-medium text-slate-600">
+                <span class="font-medium text-slate-600 dark:text-gray-300">
                     {{ pagination.totalItems.value }}
                 </span>
             </p>
@@ -169,7 +169,7 @@
             <div class="flex items-center gap-1">
                 <button
                     type="button"
-                    class="h-8 w-8 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                    class="h-8 w-8 rounded-lg hover:bg-slate-100 disabled:opacity-30 dark:text-gray-300 dark:hover:bg-white/10"
                     :disabled="!pagination.canGoPrev.value"
                     @click="goTo(pagination.currentPage.value - 1)"
                 >
@@ -178,13 +178,13 @@
 
                 <button
                     v-if="firstPageNumber > 1"
-                    class="h-8 min-w-8 px-2 rounded-lg hover:bg-slate-100"
+                    class="h-8 min-w-8 px-2 rounded-lg hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-white/10"
                     @click="goTo(1)"
                 >
                     1
                 </button>
 
-                <span v-if="firstPageNumber > 2" class="text-slate-300 px-1">
+                <span v-if="firstPageNumber > 2" class="text-slate-300 px-1 dark:text-gray-600">
                     …
                 </span>
 
@@ -195,7 +195,7 @@
                     :class="
                         page === pagination.currentPage.value
                             ? 'bg-primary text-white'
-                            : 'hover:bg-slate-100'
+                            : 'hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-white/10'
                     "
                     @click="goTo(page)"
                 >
@@ -204,14 +204,14 @@
 
                 <span
                     v-if="lastPageNumber < pagination.totalPages.value - 1"
-                    class="text-slate-300 px-1"
+                    class="text-slate-300 px-1 dark:text-gray-600"
                 >
                     …
                 </span>
 
                 <button
                     v-if="lastPageNumber < pagination.totalPages.value"
-                    class="h-8 min-w-8 px-2 rounded-lg hover:bg-slate-100"
+                    class="h-8 min-w-8 px-2 rounded-lg hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-white/10"
                     @click="goTo(pagination.totalPages.value)"
                 >
                     {{ pagination.totalPages.value }}
@@ -219,7 +219,7 @@
 
                 <button
                     type="button"
-                    class="h-8 w-8 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                    class="h-8 w-8 rounded-lg hover:bg-slate-100 disabled:opacity-30 dark:text-gray-300 dark:hover:bg-white/10"
                     :disabled="!pagination.canGoNext.value"
                     @click="goTo(pagination.currentPage.value + 1)"
                 >

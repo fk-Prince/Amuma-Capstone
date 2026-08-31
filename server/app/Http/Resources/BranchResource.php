@@ -253,6 +253,7 @@ class BranchResource extends JsonResource
                 'enable_booking_pre_admission' => $settings['enable_booking_pre_admission'] ?? false,
                 'enable_booking_complete_admission' => $settings['enable_booking_complete_admission'] ?? false,
                 'minimum_adl_hours' => $settings['minimum_adl_hours'] ?? 8,
+                'termination_fee_percent' => $settings['termination_fee_percent'] ?? 0,
                 'currency' => $settings['currency'] ?? 'PHP',
             ],
 

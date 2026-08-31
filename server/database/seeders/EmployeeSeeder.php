@@ -29,12 +29,12 @@ class EmployeeSeeder extends Seeder
             'Rooms & Beds' => ['can_read', 'can_create', 'can_update'],
             'Contracts' => ['can_read', 'can_create', 'can_update'],
             'Services' => ['can_read', 'can_create', 'can_update', 'can_assign'],
-            'Employee Management' => ['can_read', 'can_create', 'can_update'],
+            'Employee Management' => ['can_read'],
             'Bookings' => ['can_read'],
             'Admissions' => ['can_read'],
             'Billing & Invoices' => ['can_read'],
-            'Manage Branches' =>  ['can_read', 'can_create', 'can_update'],
-            'Branch Settings' =>  ['can_read', 'can_create', 'can_update'],
+            'Manage Branches' =>  ['can_read'],
+            'Branch Settings' =>  ['can_read'],
             'Schedules' => ['can_read']
         ],
         'admission' => [

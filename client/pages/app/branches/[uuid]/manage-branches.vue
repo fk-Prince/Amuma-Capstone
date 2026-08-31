@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen-header bg-slate-50 px-4 py-8 lg:px-8">
+    <div class="min-h-screen-header bg-slate-50 px-4 py-8 lg:px-8 dark:bg-secondary">
         <BranchDashboard :stats-data="statsData" />
 
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -10,7 +10,7 @@
                     fill="none"
                     stroke="currentColor"
                     stroke-width="2"
-                    class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                    class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
                 >
                     <circle cx="11" cy="11" r="7" />
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -20,13 +20,13 @@
                     v-model="search"
                     type="text"
                     placeholder="Search by name, address, email or contact..."
-                    class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-11 pr-4 text-sm placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-11 pr-4 text-sm placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500"
                 />
             </div>
 
             <button
                 type="button"
-                class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+                class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-300"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -71,7 +71,7 @@
             </button>
         </div>
 
-        <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-secondary">
             <div
                 class="mb-6 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between"
             >
@@ -108,7 +108,7 @@
 
                     <div v-if="agency" class="min-w-0">
                         <h1
-                            class="truncate text-xl font-semibold text-slate-800"
+                            class="truncate text-xl font-semibold text-slate-800 dark:text-white"
                         >
                             {{ agency.name }}
                         </h1>
@@ -125,7 +125,7 @@
                         >
                             <span
                                 v-if="agency.email"
-                                class="flex items-center gap-2 text-sm text-slate-500"
+                                class="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -133,7 +133,7 @@
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="2"
-                                    class="h-4 w-4 shrink-0 text-slate-400"
+                                    class="h-4 w-4 shrink-0 text-slate-400 dark:text-gray-500"
                                 >
                                     <rect
                                         x="2"
@@ -150,7 +150,7 @@
 
                             <span
                                 v-if="agency.location"
-                                class="flex items-center gap-2 text-sm text-slate-500"
+                                class="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -158,7 +158,7 @@
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="2"
-                                    class="h-4 w-4 shrink-0 text-slate-400"
+                                    class="h-4 w-4 shrink-0 text-slate-400 dark:text-gray-500"
                                 >
                                     <path
                                         d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11Z"
@@ -173,7 +173,7 @@
                 </div>
 
                 <div
-                    class="inline-flex w-fit shrink-0 items-center rounded-xl border border-slate-200 bg-slate-50 p-1"
+                    class="inline-flex w-fit shrink-0 items-center rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-white/10 dark:bg-white/5"
                 >
                     <button
                         type="button"
@@ -181,8 +181,8 @@
                         class="flex h-8 w-8 items-center justify-center rounded-lg transition"
                         :class="
                             viewMode === 'list'
-                                ? 'bg-white text-slate-700 shadow-sm'
-                                : 'text-slate-400 hover:text-slate-600'
+                                ? 'bg-white text-slate-700 shadow-sm dark:bg-white/10 dark:text-white'
+                                : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'
                         "
                         @click="viewMode = 'list'"
                     >
@@ -207,7 +207,7 @@
                         :class="
                             viewMode === 'grid'
                                 ? 'bg-primary text-white shadow-sm'
-                                : 'text-slate-400 hover:text-slate-600'
+                                : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300'
                         "
                         @click="viewMode = 'grid'"
                     >
@@ -228,13 +228,13 @@
                 </div>
             </div>
 
-            <div class="mb-6 border-t border-slate-100 pt-5">
+            <div class="mb-6 border-t border-slate-100 pt-5 dark:border-white/10">
                 <div>
-                    <h2 class="text-lg font-semibold text-slate-900">
+                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                         Branch Directory
                     </h2>
 
-                    <p class="mt-1 text-sm text-slate-500">
+                    <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
                         Manage and view branches under this agency.
                     </p>
                 </div>
@@ -247,26 +247,26 @@
                 <div
                     v-for="n in 4"
                     :key="n"
-                    class="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 animate-pulse"
+                    class="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 animate-pulse dark:border-white/10 dark:bg-white/5"
                 >
                     <div class="flex items-start gap-3">
                         <div
-                            class="h-14 w-14 shrink-0 rounded-xl bg-slate-200"
+                            class="h-14 w-14 shrink-0 rounded-xl bg-slate-200 dark:bg-white/10"
                         ></div>
 
                         <div class="flex-1 space-y-2">
-                            <div class="h-4 w-2/3 rounded bg-slate-200"></div>
-                            <div class="h-3 w-1/3 rounded bg-slate-200"></div>
+                            <div class="h-4 w-2/3 rounded bg-slate-200 dark:bg-white/10"></div>
+                            <div class="h-3 w-1/3 rounded bg-slate-200 dark:bg-white/10"></div>
                         </div>
                     </div>
 
                     <div class="space-y-2">
-                        <div class="h-3 w-full rounded bg-slate-200"></div>
-                        <div class="h-3 w-4/5 rounded bg-slate-200"></div>
-                        <div class="h-3 w-3/5 rounded bg-slate-200"></div>
+                        <div class="h-3 w-full rounded bg-slate-200 dark:bg-white/10"></div>
+                        <div class="h-3 w-4/5 rounded bg-slate-200 dark:bg-white/10"></div>
+                        <div class="h-3 w-3/5 rounded bg-slate-200 dark:bg-white/10"></div>
                     </div>
 
-                    <div class="h-9 rounded-lg bg-slate-200"></div>
+                    <div class="h-9 rounded-lg bg-slate-200 dark:bg-white/10"></div>
                 </div>
             </div>
 
@@ -275,7 +275,7 @@
                 class="flex flex-col items-center justify-center py-16 text-center"
             >
                 <div
-                    class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400"
+                    class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-white/10 dark:text-gray-500"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -290,11 +290,11 @@
                     </svg>
                 </div>
 
-                <p class="text-sm font-medium text-slate-600">
+                <p class="text-sm font-medium text-slate-600 dark:text-gray-300">
                     No branches found
                 </p>
 
-                <p class="mt-1 text-xs text-slate-400">
+                <p class="mt-1 text-xs text-slate-400 dark:text-gray-500">
                     Try adjusting your search or filters.
                 </p>
             </div>
@@ -328,7 +328,7 @@
                 <button
                     type="button"
                     :disabled="loadingMore"
-                    class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
                     @click="fetchBranches(currentPage + 1)"
                 >
                     {{ loadingMore ? "Loading..." : "Load More" }}

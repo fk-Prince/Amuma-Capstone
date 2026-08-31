@@ -11,13 +11,13 @@
                 enter-to-class="opacity-100 scale-100 translate-y-0"
             >
                 <div
-                    class="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+                    class="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
                     role="dialog"
                     aria-modal="true"
                     aria-label="Add branch"
                 >
                     <div
-                        class="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 px-6 py-5"
+                        class="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
                     >
                         <div class="flex items-center gap-3">
                             <div
@@ -28,14 +28,14 @@
 
                             <div class="min-w-0">
                                 <h2
-                                    class="text-lg font-semibold leading-tight text-gray-900"
+                                    class="text-lg font-semibold leading-tight text-gray-900 dark:text-white"
                                 >
                                     Add a new branch
                                 </h2>
 
-                                <p class="mt-0.5 text-sm text-gray-500">
+                                <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
                                     Connecting to
-                                    <span class="font-medium text-secondary">
+                                    <span class="font-medium text-secondary dark:text-white">
                                         {{ agencyName }}
                                     </span>
                                 </p>
@@ -45,7 +45,7 @@
                         <button
                             type="button"
                             aria-label="Close dialog"
-                            class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40"
+                            class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-200"
                             :disabled="processing"
                             @click="requestClose"
                         >
@@ -53,7 +53,7 @@
                         </button>
                     </div>
 
-                    <div class="shrink-0 border-b border-gray-100 px-6 py-4">
+                    <div class="shrink-0 border-b border-gray-100 px-6 py-4 dark:border-white/10">
                         <ol class="flex w-full items-start">
                             <li
                                 v-for="(step, index) in STEPS"
@@ -74,8 +74,8 @@
                                             currentStep > index + 1
                                                 ? 'border-primary bg-primary text-white'
                                                 : currentStep === index + 1
-                                                  ? 'border-primary bg-white text-primary ring-4 ring-primary/10'
-                                                  : 'border-slate-200 bg-white text-slate-400'
+                                                  ? 'border-primary bg-white text-primary ring-4 ring-primary/10 dark:bg-secondary'
+                                                  : 'border-slate-200 bg-white text-slate-400 dark:border-white/10 dark:bg-secondary dark:text-gray-500'
                                         "
                                     >
                                         <Check
@@ -89,8 +89,8 @@
                                         class="mt-1.5 max-w-[6rem] text-center text-[11px] font-medium leading-tight"
                                         :class="
                                             currentStep >= index + 1
-                                                ? 'text-slate-800'
-                                                : 'text-slate-400'
+                                                ? 'text-slate-800 dark:text-white'
+                                                : 'text-slate-400 dark:text-gray-500'
                                         "
                                     >
                                         {{ step }}
@@ -103,7 +103,7 @@
                                     :class="
                                         currentStep > index + 1
                                             ? 'bg-primary'
-                                            : 'bg-slate-200'
+                                            : 'bg-slate-200 dark:bg-white/10'
                                     "
                                 />
                             </li>
@@ -113,7 +113,7 @@
                     <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
                         <p
                             v-if="stepError"
-                            class="mb-4 rounded-lg border border-danger/20 bg-danger/5 px-4 py-2 text-sm text-danger"
+                            class="mb-4 rounded-lg border border-danger/20 bg-danger/5 px-4 py-2 text-sm text-danger dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400"
                         >
                             {{ stepError }}
                         </p>
@@ -122,13 +122,13 @@
                         <div v-if="currentStep === 1">
                             <div v-if="loadingPlans" class="space-y-4">
                                 <div
-                                    class="mx-auto h-10 w-56 animate-pulse rounded-full bg-slate-100"
+                                    class="mx-auto h-10 w-56 animate-pulse rounded-full bg-slate-100 dark:bg-white/10"
                                 />
                                 <div class="grid gap-4 sm:grid-cols-3">
                                     <div
                                         v-for="n in 3"
                                         :key="n"
-                                        class="h-56 animate-pulse rounded-xl bg-slate-100"
+                                        class="h-56 animate-pulse rounded-xl bg-slate-100 dark:bg-white/10"
                                     />
                                 </div>
                             </div>
@@ -138,7 +138,7 @@
                                     class="mb-6 flex flex-col items-center justify-center"
                                 >
                                     <div
-                                        class="relative inline-flex items-center rounded-full border border-primary-200 bg-muted-light/40 py-1"
+                                        class="relative inline-flex items-center rounded-full border border-primary-200 bg-muted-light/40 py-1 dark:border-primary-500/30 dark:bg-white/5"
                                     >
                                         <span
                                             class="absolute bottom-1 left-1 top-1 w-[calc(50%-6px)] rounded-full bg-primary shadow-sm transition-all duration-300"
@@ -157,7 +157,7 @@
                                             :class="
                                                 form.interval === option
                                                     ? 'text-white'
-                                                    : 'text-muted hover:text-secondary'
+                                                    : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
                                             "
                                             @click="form.interval = option"
                                         >
@@ -165,7 +165,7 @@
                                         </button>
                                     </div>
 
-                                    <p class="mt-2 text-xs text-muted">
+                                    <p class="mt-2 text-xs text-muted dark:text-gray-400">
                                         {{
                                             form.interval === "yearly"
                                                 ? "Billed annually — save more compared to monthly billing."
@@ -183,8 +183,8 @@
                                         class="relative flex h-full cursor-pointer flex-col gap-3 rounded-xl border p-5 transition-all"
                                         :class="
                                             form.plan?.plan_id === plan.plan_id
-                                                ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20'
-                                                : 'border-muted-light hover:border-primary-200'
+                                                ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20 dark:bg-primary-500/10'
+                                                : 'border-muted-light hover:border-primary-200 dark:border-white/10 dark:hover:border-primary-500/40'
                                         "
                                     >
                                         <input
@@ -203,7 +203,7 @@
                                                 form.plan?.plan_id ===
                                                 plan.plan_id
                                                     ? 'border-primary'
-                                                    : 'border-slate-300'
+                                                    : 'border-slate-300 dark:border-white/20'
                                             "
                                         >
                                             <span
@@ -216,7 +216,7 @@
                                         </span>
 
                                         <div
-                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary-100 bg-primary-50"
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary-100 bg-primary-50 dark:border-primary-500/20 dark:bg-primary-500/10"
                                         >
                                             <Home
                                                 class="h-4 w-4 text-primary"
@@ -225,23 +225,23 @@
 
                                         <div class="pr-6">
                                             <p
-                                                class="text-sm font-semibold leading-tight text-secondary"
+                                                class="text-sm font-semibold leading-tight text-secondary dark:text-white"
                                             >
                                                 {{ plan.name }}
                                             </p>
 
                                             <p
-                                                class="mt-1 text-xs leading-relaxed text-muted"
+                                                class="mt-1 text-xs leading-relaxed text-muted dark:text-gray-400"
                                             >
                                                 {{ plan.description }}
                                             </p>
                                         </div>
 
                                         <div
-                                            class="mt-auto flex items-center justify-between border-t border-muted-light/70 pt-3"
+                                            class="mt-auto flex items-center justify-between border-t border-muted-light/70 pt-3 dark:border-white/10"
                                         >
                                             <span
-                                                class="text-xs font-medium text-muted"
+                                                class="text-xs font-medium text-muted dark:text-gray-400"
                                             >
                                                 {{
                                                     form.interval === "yearly"
@@ -289,11 +289,11 @@
                         <div v-else-if="currentStep === 3">
                             <div class="mb-5">
                                 <h3
-                                    class="text-lg font-semibold text-slate-900"
+                                    class="text-lg font-semibold text-slate-900 dark:text-white"
                                 >
                                     Branch configuration
                                 </h3>
-                                <p class="mt-1 text-sm text-slate-500">
+                                <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
                                     Set up the operational preferences for this
                                     branch.
                                 </p>
@@ -309,7 +309,7 @@
                         <!-- Step 4 — plan recap + payment -->
                         <div v-else-if="currentStep === 4">
                             <div
-                                class="mx-auto mb-5 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.06)]"
+                                class="mx-auto mb-5 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-secondary"
                             >
                                 <div class="flex items-center gap-3">
                                     <div
@@ -320,13 +320,13 @@
 
                                     <div class="min-w-0 flex-1">
                                         <p
-                                            class="truncate text-base font-bold text-secondary"
+                                            class="truncate text-base font-bold text-secondary dark:text-white"
                                         >
                                             {{ form.plan?.name }}
                                         </p>
 
                                         <p
-                                            class="mt-0.5 text-xs capitalize text-muted"
+                                            class="mt-0.5 text-xs capitalize text-muted dark:text-gray-400"
                                         >
                                             Billed {{ form.interval }}
                                         </p>
@@ -338,14 +338,14 @@
                                         >
                                             <span
                                                 v-if="loadingTotal"
-                                                class="inline-block h-5 w-20 animate-pulse rounded bg-slate-200 align-middle"
+                                                class="inline-block h-5 w-20 animate-pulse rounded bg-slate-200 dark:bg-white/10 align-middle"
                                             />
                                             <template v-else>
                                                 ₱{{ formatMoney(total) }}
                                             </template>
                                         </p>
 
-                                        <p class="text-[11px] text-muted">
+                                        <p class="text-[11px] text-muted dark:text-gray-400">
                                             {{
                                                 form.interval === "yearly"
                                                     ? "/ year"
@@ -357,7 +357,7 @@
 
                                 <p
                                     v-if="form.plan?.description"
-                                    class="mt-3 border-t border-slate-100 pt-3 text-xs leading-relaxed text-muted"
+                                    class="mt-3 border-t border-slate-100 pt-3 text-xs leading-relaxed text-muted dark:border-white/10 dark:text-gray-400"
                                 >
                                     {{ form.plan.description }}
                                 </p>
@@ -379,12 +379,12 @@
 
                     <div
                         v-if="currentStep < STEPS.length"
-                        class="flex shrink-0 items-center justify-between border-t border-gray-100 px-6 py-4"
+                        class="flex shrink-0 items-center justify-between border-t border-gray-100 px-6 py-4 dark:border-white/10"
                     >
                         <button
                             v-if="currentStep > 1"
                             type="button"
-                            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:border-white/20 dark:hover:bg-white/10"
                             @click="previousStep"
                         >
                             <ChevronLeft class="h-4 w-4" />
@@ -410,12 +410,12 @@
 
                     <div
                         v-else
-                        class="flex shrink-0 items-center justify-between border-t border-gray-100 px-6 py-4"
+                        class="flex shrink-0 items-center justify-between border-t border-gray-100 px-6 py-4 dark:border-white/10"
                     >
                         <button
                             type="button"
                             :disabled="processing"
-                            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-40"
+                            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:border-white/20 dark:hover:bg-white/10 disabled:opacity-40"
                             @click="previousStep"
                         >
                             <ChevronLeft class="h-4 w-4" />

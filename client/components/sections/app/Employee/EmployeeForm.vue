@@ -56,6 +56,9 @@ const {
     loadEmployee,
     onFileSelected,
     removePhoto: removePhotoState,
+    addDocument,
+    removeDocument,
+    onDocumentFileSelected,
     avatarPreview,
     initials,
     validate,
@@ -104,9 +107,9 @@ init();
 </script>
 
 <template>
-    <div class="flex w-full flex-col relative bg-slate-50/40">
+    <div class="flex w-full flex-col relative bg-slate-50/40 dark:bg-secondary">
         <div
-            class="flex flex-wrap items-center justify-between gap-4 border-b bg-white px-8 py-6"
+            class="flex flex-wrap items-center justify-between gap-4 border-b bg-white px-8 py-6 dark:border-white/10 dark:bg-secondary"
         >
             <div class="flex items-center gap-4">
                 <div
@@ -122,10 +125,10 @@ init();
                 </div>
 
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
                         {{ pageTitle }}
                     </h1>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         {{ pageSubtitle }}
                     </p>
                 </div>
@@ -144,7 +147,7 @@ init();
                 <button
                     @click="emit('back')"
                     type="button"
-                    class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-slate-100 hover:text-gray-900"
+                    class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-slate-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
                 >
                     <MoveLeft class="w-4 h-4" /> Back
                 </button>
@@ -153,14 +156,14 @@ init();
 
         <div
             v-if="initialLoading"
-            class="flex flex-1 items-center justify-center py-24 text-sm text-slate-400"
+            class="flex flex-1 items-center justify-center py-24 text-sm text-slate-400 dark:text-gray-500"
         >
             Loading employee...
         </div>
 
         <div
             v-else-if="initialLoadError"
-            class="mx-8 mt-6 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600"
+            class="mx-8 mt-6 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400"
         >
             {{ initialLoadError }}
             <button
@@ -173,7 +176,7 @@ init();
         </div>
 
         <template v-else>
-            <div class="border-b bg-white px-8">
+            <div class="border-b bg-white px-8 dark:border-white/10 dark:bg-secondary">
                 <div class="flex gap-10">
                     <button
                         v-for="(tab, index) in tabs"
@@ -189,7 +192,7 @@ init();
                                     ? 'border-primary bg-primary text-white'
                                     : index === 0 && activeTab === 'permissions'
                                       ? 'border-primary bg-primary text-white'
-                                      : 'border-slate-300 bg-white text-slate-400 group-hover:border-slate-400',
+                                      : 'border-slate-300 bg-white text-slate-400 group-hover:border-slate-400 dark:border-white/20 dark:bg-secondary dark:text-gray-500 dark:group-hover:border-white/40',
                             ]"
                         >
                             <Check
@@ -204,8 +207,8 @@ init();
                         <span
                             :class="
                                 activeTab === tab.value
-                                    ? 'text-gray-900'
-                                    : 'text-gray-500 group-hover:text-gray-700'
+                                    ? 'text-gray-900 dark:text-white'
+                                    : 'text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-200'
                             "
                         >
                             {{ tab.label }}
@@ -240,7 +243,7 @@ init();
                             type="button"
                             @click="openFilePicker"
                             :disabled="isViewMode"
-                            class="group relative flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-slate-300 bg-white transition hover:border-primary hover:bg-primary/5 disabled:hover:border-slate-300 disabled:hover:bg-white"
+                            class="group relative flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-slate-300 bg-white transition hover:border-primary hover:bg-primary/5 disabled:hover:border-slate-300 disabled:hover:bg-white dark:border-white/20 dark:bg-secondary dark:hover:bg-primary-500/10 dark:disabled:hover:border-white/20 dark:disabled:hover:bg-secondary"
                         >
                             <img
                                 v-if="avatarPreview"
@@ -249,7 +252,7 @@ init();
                             />
                             <span
                                 v-else
-                                class="flex flex-col items-center gap-2 text-slate-400 group-hover:text-primary"
+                                class="flex flex-col items-center gap-2 text-slate-400 group-hover:text-primary dark:text-gray-500"
                             >
                                 <Camera class="h-6 w-6" />
                                 <span class="text-xs font-medium"
@@ -280,22 +283,108 @@ init();
                             v-if="employee.avatar && !isViewMode"
                             type="button"
                             @click="removePhoto"
-                            class="flex items-center gap-1 text-xs font-medium text-slate-400 transition hover:text-red-500"
+                            class="flex items-center gap-1 text-xs font-medium text-slate-400 transition hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
                         >
                             <X class="h-3 w-3" /> Remove photo
                         </button>
                         <p
                             v-else-if="!isViewMode"
-                            class="max-w-[10rem] text-center text-xs text-slate-400"
+                            class="max-w-[10rem] text-center text-xs text-slate-400 dark:text-gray-500"
                         >
                             PNG or JPG, at least 400×400px
                         </p>
+
+                        <div class="w-full space-y-2 border-t pt-4 dark:border-white/10">
+                            <div class="flex items-center justify-between">
+                                <p
+                                    class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                                >
+                                    Documents
+                                </p>
+
+                                <button
+                                    v-if="!isViewMode"
+                                    type="button"
+                                    @click="addDocument"
+                                    class="text-xs font-medium text-primary hover:underline"
+                                >
+                                    + Add file
+                                </button>
+                            </div>
+
+                            <p
+                                v-if="!employee.documents.length"
+                                class="text-xs text-slate-400 dark:text-gray-500"
+                            >
+                                No files attached.
+                            </p>
+
+                            <div
+                                v-for="(doc, index) in employee.documents"
+                                :key="index"
+                                class="space-y-1.5 rounded-lg border border-slate-200 p-2.5 dark:border-white/10"
+                            >
+                                <BaseInput
+                                    v-model="doc.label"
+                                    placeholder="Label (e.g. Resume, Valid ID)"
+                                    :disabled="isViewMode"
+                                />
+
+                                <div class="flex items-center gap-2">
+                                    <label
+                                        class="flex-1 truncate rounded-md border border-dashed border-slate-300 px-2 py-1.5 text-center text-xs text-slate-500 dark:border-white/20 dark:text-gray-400"
+                                        :class="
+                                            isViewMode
+                                                ? 'cursor-default'
+                                                : 'cursor-pointer hover:border-primary hover:text-primary'
+                                        "
+                                    >
+                                        {{
+                                            doc.file?.name ||
+                                            (doc.url
+                                                ? "File attached"
+                                                : "Choose file")
+                                        }}
+                                        <input
+                                            type="file"
+                                            class="hidden"
+                                            :disabled="isViewMode"
+                                            @change="
+                                                onDocumentFileSelected(
+                                                    index,
+                                                    $event,
+                                                )
+                                            "
+                                        />
+                                    </label>
+
+                                    <a
+                                        v-if="doc.url"
+                                        :href="doc.url"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="shrink-0 text-xs font-medium text-primary hover:underline"
+                                    >
+                                        View
+                                    </a>
+
+                                    <button
+                                        v-if="!isViewMode"
+                                        type="button"
+                                        @click="removeDocument(index)"
+                                        class="shrink-0 text-slate-400 transition hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
+                                    >
+                                        <X class="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="space-y-10 lg:col-span-3">
                         <section class="space-y-4">
                             <h2
-                                class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400"
+                                class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                             >
                                 <User class="h-3.5 w-3.5" />
                                 Personal Details
@@ -357,9 +446,9 @@ init();
                             </div>
                         </section>
 
-                        <section class="space-y-4 border-t pt-8">
+                        <section class="space-y-4 border-t pt-8 dark:border-white/10">
                             <h2
-                                class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400"
+                                class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                             >
                                 <MapPin class="h-3.5 w-3.5" />
                                 Address
@@ -415,9 +504,9 @@ init();
                             </div>
                         </section>
 
-                        <section class="space-y-4 border-t pt-8">
+                        <section class="space-y-4 border-t pt-8 dark:border-white/10">
                             <h2
-                                class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400"
+                                class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                             >
                                 <Briefcase class="h-3.5 w-3.5" />
                                 Employment Details
@@ -447,7 +536,7 @@ init();
 
                                     <p
                                         v-if="errors.position"
-                                        class="mt-1 text-xs text-red-500"
+                                        class="mt-1 text-xs text-red-500 dark:text-red-400"
                                     >
                                         {{ errors.position }}
                                     </p>
@@ -463,7 +552,7 @@ init();
                                     />
                                     <p
                                         v-if="errors.assignment_type"
-                                        class="mt-1 text-xs text-red-500"
+                                        class="mt-1 text-xs text-red-500 dark:text-red-400"
                                     >
                                         {{ errors.assignment_type }}
                                     </p>
@@ -477,7 +566,7 @@ init();
                     <div
                         class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <div class="flex items-center gap-2 text-gray-700">
+                        <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                             <ShieldCheck class="h-4 w-4 text-primary" />
                             <p class="text-sm">
                                 Choose what this employee can access in the
@@ -488,13 +577,13 @@ init();
                         <div class="flex items-center gap-3">
                             <div class="relative">
                                 <Search
-                                    class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                                    class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
                                 />
                                 <input
                                     v-model="moduleSearch"
                                     type="text"
                                     placeholder="Search modules..."
-                                    class="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 sm:w-56"
+                                    class="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 sm:w-56 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500"
                                 />
                             </div>
 
@@ -515,14 +604,14 @@ init();
 
                     <div
                         v-if="modulesLoading"
-                        class="py-10 text-center text-sm text-slate-400"
+                        class="py-10 text-center text-sm text-slate-400 dark:text-gray-500"
                     >
                         Loading modules...
                     </div>
 
                     <div
                         v-else-if="modulesError"
-                        class="flex items-center justify-between rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600"
+                        class="flex items-center justify-between rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400"
                     >
                         {{ modulesError }}
                         <button
@@ -536,14 +625,14 @@ init();
 
                     <div
                         v-else-if="!filteredModules.length"
-                        class="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-400"
+                        class="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
                     >
                         No modules match “{{ moduleSearch }}”.
                     </div>
 
                     <div
                         v-else
-                        class="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                        class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-white/10 dark:bg-secondary"
                     >
                         <div
                             v-for="(module, i) in filteredModules"
@@ -551,11 +640,11 @@ init();
                             class="flex flex-col gap-4 px-5 py-4 transition sm:flex-row sm:items-center sm:justify-between"
                             :class="[
                                 i !== filteredModules.length - 1
-                                    ? 'border-b border-slate-100'
+                                    ? 'border-b border-slate-100 dark:border-white/10'
                                     : '',
                                 permissions[module.module_id]?.can_read
                                     ? 'bg-primary/5'
-                                    : 'hover:bg-slate-50',
+                                    : 'hover:bg-slate-50 dark:hover:bg-white/5',
                             ]"
                         >
                             <div class="flex items-center gap-4">
@@ -572,7 +661,7 @@ init();
                                             permissions[module.module_id]
                                                 ?.can_read
                                                 ? 'bg-primary'
-                                                : 'bg-slate-200'
+                                                : 'bg-slate-200 dark:bg-white/10'
                                         "
                                     />
                                     <span
@@ -588,11 +677,11 @@ init();
 
                                 <div>
                                     <h3
-                                        class="text-sm font-semibold text-gray-900"
+                                        class="text-sm font-semibold text-gray-900 dark:text-white"
                                     >
                                         {{ module.module_name }}
                                     </h3>
-                                    <p class="text-xs text-slate-400">
+                                    <p class="text-xs text-slate-400 dark:text-gray-500">
                                         {{
                                             module.description ??
                                             "Manage access to this module."
@@ -607,7 +696,7 @@ init();
                             >
                                 <label
                                     v-if="module.has_read"
-                                    class="flex items-center gap-2 text-sm text-gray-600"
+                                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
                                 >
                                     <input
                                         :disabled="isViewMode"
@@ -622,13 +711,13 @@ init();
                                                 'can_read',
                                             )
                                         "
-                                        class="rounded border-slate-300 text-primary focus:ring-primary"
+                                        class="rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
                                     />
                                     Read
                                 </label>
                                 <label
                                     v-if="module.has_create"
-                                    class="flex items-center gap-2 text-sm text-gray-600"
+                                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
                                 >
                                     <input
                                         :disabled="isViewMode"
@@ -643,13 +732,13 @@ init();
                                                 'can_create',
                                             )
                                         "
-                                        class="rounded border-slate-300 text-primary focus:ring-primary"
+                                        class="rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
                                     />
                                     Create
                                 </label>
                                 <label
                                     v-if="module.has_update"
-                                    class="flex items-center gap-2 text-sm text-gray-600"
+                                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
                                 >
                                     <input
                                         :disabled="isViewMode"
@@ -664,13 +753,13 @@ init();
                                                 'can_update',
                                             )
                                         "
-                                        class="rounded border-slate-300 text-primary focus:ring-primary"
+                                        class="rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
                                     />
                                     Update
                                 </label>
                                 <label
                                     v-if="module.has_approve"
-                                    class="flex items-center gap-2 text-sm text-gray-600"
+                                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
                                 >
                                     <input
                                         :disabled="isViewMode"
@@ -685,13 +774,13 @@ init();
                                                 'can_approve',
                                             )
                                         "
-                                        class="rounded border-slate-300 text-primary focus:ring-primary"
+                                        class="rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
                                     />
                                     Approve
                                 </label>
                                 <label
                                     v-if="module.has_assign"
-                                    class="flex items-center gap-2 text-sm text-gray-600"
+                                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
                                 >
                                     <input
                                         :disabled="isViewMode"
@@ -706,7 +795,7 @@ init();
                                                 'can_assign',
                                             )
                                         "
-                                        class="rounded border-slate-300 text-primary focus:ring-primary"
+                                        class="rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
                                     />
                                     Assign
                                 </label>
@@ -717,17 +806,17 @@ init();
             </Transition>
 
             <div
-                class="sticky bottom-0 mt-auto flex items-center justify-between gap-3 border-t bg-white/95 px-8 py-5 shadow-[0_-4px_12px_-8px_rgba(0,0,0,0.15)] backdrop-blur"
+                class="sticky bottom-0 mt-auto flex items-center justify-between gap-3 border-t bg-white/95 px-8 py-5 shadow-[0_-4px_12px_-8px_rgba(0,0,0,0.15)] backdrop-blur dark:border-white/10 dark:bg-secondary/95"
             >
                 <button
                     v-if="activeTab === 'permissions'"
                     type="button"
                     @click="activeTab = 'information'"
-                    class="rounded-lg border border-slate-300 px-6 py-2.5 text-sm font-medium transition hover:bg-slate-50"
+                    class="rounded-lg border border-slate-300 px-6 py-2.5 text-sm font-medium transition hover:bg-slate-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
                 >
                     Back
                 </button>
-                <span v-else class="text-xs text-slate-400">
+                <span v-else class="text-xs text-slate-400 dark:text-gray-500">
                     Step {{ activeTab === "information" ? 1 : 2 }} of 2
                 </span>
 
@@ -735,7 +824,7 @@ init();
                     <button
                         @click="emit('back')"
                         type="button"
-                        class="rounded-lg border border-slate-300 px-6 py-2.5 text-sm font-medium transition hover:bg-slate-50"
+                        class="rounded-lg border border-slate-300 px-6 py-2.5 text-sm font-medium transition hover:bg-slate-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
                     >
                         Cancel
                     </button>

@@ -163,44 +163,44 @@
 <script setup>
 const features = [
     {
-        name: "Home visits & caregivers",
+        name: "Homecare visits scheduling",
         homecare: true,
         facility: false,
         hybrid: true,
     },
     {
-        name: "Admissions & rooms",
+        name: "Admissions, rooms & beds",
         homecare: false,
         facility: true,
         hybrid: true,
     },
     {
-        name: "Online Bookings",
+        name: "Online & walk-in bookings",
         homecare: true,
         facility: true,
         hybrid: true,
     },
     {
-        name: "Electronic Medication Administration Record (eMAR) & Vitals Signs",
+        name: "Caregiver & nurse QR clock-in tracking",
+        homecare: true,
+        facility: false,
+        hybrid: true,
+    },
+    {
+        name: "Electronic Medication Administration Record (eMAR) & vital signs",
         homecare: true,
         facility: true,
         hybrid: true,
     },
     {
-        name: "Family portal",
+        name: "Family portal & messaging",
         homecare: true,
         facility: true,
         hybrid: true,
     },
     {
-        name: "Multiple branches",
-        homecare: true,
-        facility: true,
-        hybrid: true,
-    },
-    {
-        name: "Services",
-        homecare: true,
+        name: "VIP & Common room contracts",
+        homecare: false,
         facility: true,
         hybrid: true,
     },
@@ -211,7 +211,13 @@ const features = [
         hybrid: true,
     },
     {
-        name: "Billing & invoices",
+        name: "Multiple branches & staff management",
+        homecare: true,
+        facility: true,
+        hybrid: true,
+    },
+    {
+        name: "Billing, invoices & online payments",
         homecare: true,
         facility: true,
         hybrid: true,

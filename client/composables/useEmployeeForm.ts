@@ -44,6 +44,9 @@ const ROLE_DEFAULT_PERMISSIONS: Record<
         [Modules.RoomsAndBeds]: ADD_UPDATE_READ,
         [Modules.Contracts]: ADD_UPDATE_READ,
         [Modules.Services]: ADD_UPDATE_READ,
+        [Modules.ManageBranches]: READ_ONLY,
+        [Modules.BranchSettings]: READ_ONLY,
+        [Modules.EmployeeManagement]: READ_ONLY,
     },
     admission: {
         [Modules.Patients]: ALL_ACTIONS,
@@ -230,6 +233,11 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             ...createEmployee(),
             ...current,
             phone_number: current.phone_number ?? "",
+            documents: (current.documents ?? []).map((doc) => ({
+                label: doc.label,
+                url: doc.url ?? null,
+                file: null,
+            })),
             location: {
                 ...createEmployee().location,
                 ...(current.location ?? {}),
@@ -266,6 +274,22 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
 
         if (fileInput) {
             fileInput.value = "";
+        }
+    }
+
+    function addDocument() {
+        employee.value.documents.push({ label: "", file: null, url: null });
+    }
+
+    function removeDocument(index: number) {
+        employee.value.documents.splice(index, 1);
+    }
+
+    function onDocumentFileSelected(index: number, e: Event) {
+        const file = (e.target as HTMLInputElement).files?.[0];
+
+        if (file) {
+            employee.value.documents[index].file = file;
         }
     }
 
@@ -326,6 +350,9 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
 
         const payload = {
             ...employee.value,
+            documents: employee.value.documents.filter(
+                (doc) => doc.label.trim() && (doc.file || doc.url),
+            ),
             permissions: permissionPayload,
             type: "employee",
             branch_uuid: uuid,
@@ -407,6 +434,9 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         loadEmployee,
         onFileSelected,
         removePhoto,
+        addDocument,
+        removeDocument,
+        onDocumentFileSelected,
         avatarPreview,
         initials,
         validate,

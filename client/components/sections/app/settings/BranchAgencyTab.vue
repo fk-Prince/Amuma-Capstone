@@ -1,7 +1,11 @@
 <template>
     <div v-if="localValue" class="space-y-6 w-full">
         <ClientOnly>
-            <AgencyForm v-model:agency="localValue" v-model:errors="errors" />
+            <AgencyForm
+                v-model:agency="localValue"
+                v-model:errors="errors"
+                hide-documents
+            />
         </ClientOnly>
 
         <div class="flex justify-end">
@@ -16,7 +20,7 @@
         </div>
     </div>
 
-    <div v-else class="py-12 text-center text-sm text-gray-400">
+    <div v-else class="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
         Loading agency information...
     </div>
 </template>

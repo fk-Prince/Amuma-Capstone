@@ -1,34 +1,34 @@
 <template>
     <div class="space-y-6">
         <div>
-            <h2 class="text-lg font-semibold text-slate-900">
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                 Subscription &amp; Renewal
             </h2>
 
-            <p class="mt-1 text-sm text-slate-500">
+            <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
                 Review this branch's plan and extend it before it lapses.
             </p>
         </div>
 
         <div v-if="loading" class="space-y-4">
-            <div class="h-36 animate-pulse rounded-2xl bg-slate-100" />
-            <div class="h-24 animate-pulse rounded-2xl bg-slate-100" />
+            <div class="h-36 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/10" />
+            <div class="h-24 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/10" />
         </div>
 
         <div
             v-else-if="!subscription"
-            class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50/60 px-6 py-12 text-center"
+            class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50/60 px-6 py-12 text-center dark:border-white/10 dark:bg-white/5"
         >
             <div
-                class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400"
+                class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400 dark:bg-white/10 dark:text-gray-500"
             >
                 <CalendarX class="h-5 w-5" />
             </div>
 
-            <p class="mt-2 text-sm font-semibold text-slate-800">
+            <p class="mt-2 text-sm font-semibold text-slate-800 dark:text-white">
                 No subscription found
             </p>
-            <p class="mt-0.5 max-w-sm text-xs text-slate-500">
+            <p class="mt-0.5 max-w-sm text-xs text-slate-500 dark:text-gray-400">
                 This branch has no subscription record to renew yet.
             </p>
         </div>
@@ -44,7 +44,7 @@
                     >
                         <div class="flex items-start gap-3">
                             <div
-                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm"
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-secondary"
                                 :class="statusTone.icon"
                             >
                                 <component :is="statusTone.glyph" class="h-5 w-5" />
@@ -52,13 +52,13 @@
 
                             <div class="min-w-0">
                                 <p
-                                    class="text-base font-bold text-slate-900"
+                                    class="text-base font-bold text-slate-900 dark:text-white"
                                 >
                                     {{ subscription.plan?.name ?? "—" }}
                                 </p>
 
                                 <p
-                                    class="mt-0.5 text-xs capitalize text-slate-500"
+                                    class="mt-0.5 text-xs capitalize text-slate-500 dark:text-gray-400"
                                 >
                                     Billed
                                     {{
@@ -88,12 +88,12 @@
                     >
                         <div>
                             <p
-                                class="text-[10px] font-bold uppercase tracking-wider text-slate-400"
+                                class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                             >
                                 Started
                             </p>
                             <p
-                                class="mt-0.5 text-sm font-semibold text-slate-800"
+                                class="mt-0.5 text-sm font-semibold text-slate-800 dark:text-white"
                             >
                                 {{ formatDate(subscription.start_date) }}
                             </p>
@@ -101,12 +101,12 @@
 
                         <div>
                             <p
-                                class="text-[10px] font-bold uppercase tracking-wider text-slate-400"
+                                class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                             >
                                 {{ isExpired ? "Expired on" : "Renews on" }}
                             </p>
                             <p
-                                class="mt-0.5 text-sm font-semibold text-slate-800"
+                                class="mt-0.5 text-sm font-semibold text-slate-800 dark:text-white"
                             >
                                 {{ formatDate(subscription.end_date) }}
                             </p>
@@ -114,7 +114,7 @@
 
                         <div>
                             <p
-                                class="text-[10px] font-bold uppercase tracking-wider text-slate-400"
+                                class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                             >
                                 {{ isExpired ? "Overdue by" : "Time left" }}
                             </p>
@@ -131,17 +131,17 @@
             </div>
 
             <div
-                class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div
                     class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
                 >
                     <div>
-                        <h3 class="text-sm font-bold text-slate-900">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">
                             Renew this branch
                         </h3>
 
-                        <p class="mt-1 max-w-lg text-xs leading-5 text-slate-500">
+                        <p class="mt-1 max-w-lg text-xs leading-5 text-slate-500 dark:text-gray-400">
                             Renewing early adds time on top of what's left — you
                             never lose the days you've already paid for.
                         </p>
@@ -158,7 +158,7 @@
                 </div>
 
                 <div
-                    class="mt-4 grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2"
+                    class="mt-4 grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2 dark:border-white/10"
                 >
                     <label
                         v-for="option in INTERVALS"
@@ -166,8 +166,8 @@
                         class="flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 transition"
                         :class="
                             renewInterval === option.value
-                                ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20'
-                                : 'border-slate-200 hover:border-primary-200'
+                                ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20 dark:bg-primary-500/10'
+                                : 'border-slate-200 hover:border-primary-200 dark:border-white/10 dark:hover:border-primary-500/40'
                         "
                     >
                         <div class="flex items-center gap-2.5">
@@ -176,7 +176,7 @@
                                 :class="
                                     renewInterval === option.value
                                         ? 'border-primary'
-                                        : 'border-slate-300'
+                                        : 'border-slate-300 dark:border-white/20'
                                 "
                             >
                                 <span
@@ -186,7 +186,7 @@
                             </span>
 
                             <span
-                                class="text-sm font-medium text-slate-800"
+                                class="text-sm font-medium text-slate-800 dark:text-white"
                             >
                                 {{ option.label }}
                             </span>
@@ -209,10 +209,10 @@
 
             <div
                 v-if="payments.length"
-                class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
-                <div class="border-b border-slate-100 px-5 py-3">
-                    <h3 class="text-sm font-bold text-slate-900">
+                <div class="border-b border-slate-100 px-5 py-3 dark:border-white/10">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">
                         Payment history
                     </h3>
                 </div>
@@ -220,7 +220,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full min-w-[520px]">
                         <thead>
-                            <tr class="bg-slate-50/60">
+                            <tr class="bg-slate-50/60 dark:bg-white/5">
                                 <th
                                     v-for="head in [
                                         'Reference',
@@ -230,40 +230,40 @@
                                         'Status',
                                     ]"
                                     :key="head"
-                                    class="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400"
+                                    class="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                                 >
                                     {{ head }}
                                 </th>
                             </tr>
                         </thead>
 
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-slate-100 dark:divide-white/10">
                             <tr
                                 v-for="payment in payments"
                                 :key="payment.subscription_payment_id"
-                                class="transition hover:bg-slate-50/60"
+                                class="transition hover:bg-slate-50/60 dark:hover:bg-white/5"
                             >
                                 <td
-                                    class="px-4 py-2.5 text-xs font-medium text-slate-700"
+                                    class="px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-gray-300"
                                 >
                                     {{ payment.payment_reference_id ?? "—" }}
                                 </td>
-                                <td class="px-4 py-2.5 text-xs text-slate-500">
+                                <td class="px-4 py-2.5 text-xs text-slate-500 dark:text-gray-400">
                                     {{ payment.masked_card_number ?? "—" }}
                                 </td>
                                 <td
-                                    class="whitespace-nowrap px-4 py-2.5 text-xs font-semibold text-slate-800"
+                                    class="whitespace-nowrap px-4 py-2.5 text-xs font-semibold text-slate-800 dark:text-white"
                                 >
                                     ₱{{ formatMoney(payment.price) }}
                                 </td>
                                 <td
-                                    class="whitespace-nowrap px-4 py-2.5 text-xs text-slate-500"
+                                    class="whitespace-nowrap px-4 py-2.5 text-xs text-slate-500 dark:text-gray-400"
                                 >
                                     {{ formatDate(payment.created_at) }}
                                 </td>
                                 <td class="px-4 py-2.5">
                                     <span
-                                        class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-600"
+                                        class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
                                     >
                                         {{ payment.status }}
                                     </span>
@@ -282,13 +282,13 @@
                 @click.self="closeRenew"
             >
                 <div
-                    class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+                    class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
                     role="dialog"
                     aria-modal="true"
                     aria-label="Renew subscription"
                 >
                     <div
-                        class="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5"
+                        class="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
                     >
                         <div class="flex items-center gap-3">
                             <div
@@ -299,11 +299,11 @@
 
                             <div>
                                 <h2
-                                    class="text-lg font-semibold text-gray-900"
+                                    class="text-lg font-semibold text-gray-900 dark:text-white"
                                 >
                                     Renew subscription
                                 </h2>
-                                <p class="mt-0.5 text-sm text-gray-500">
+                                <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
                                     Extends to
                                     {{ formatDate(projectedEndDate) }}
                                 </p>
@@ -314,7 +314,7 @@
                             type="button"
                             aria-label="Close dialog"
                             :disabled="processing"
-                            class="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40"
+                            class="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-200"
                             @click="closeRenew"
                         >
                             <X class="h-5 w-5" />
@@ -428,39 +428,39 @@ const statusLabel = computed(() => {
 const statusTone = computed(() => {
     if (isExpired.value) {
         return {
-            border: "border-rose-200",
-            bg: "bg-rose-50/60",
-            divider: "border-rose-200/70",
+            border: "border-rose-200 dark:border-rose-500/30",
+            bg: "bg-rose-50/60 dark:bg-rose-500/10",
+            divider: "border-rose-200/70 dark:border-rose-500/20",
             icon: "text-rose-600",
             glyph: TriangleAlert,
-            badge: "bg-rose-100 text-rose-700",
+            badge: "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300",
             dot: "bg-rose-500",
-            text: "text-rose-600",
+            text: "text-rose-600 dark:text-rose-400",
         };
     }
 
     if (isExpiringSoon.value) {
         return {
-            border: "border-amber-200",
-            bg: "bg-amber-50/60",
-            divider: "border-amber-200/70",
+            border: "border-amber-200 dark:border-amber-500/30",
+            bg: "bg-amber-50/60 dark:bg-amber-500/10",
+            divider: "border-amber-200/70 dark:border-amber-500/20",
             icon: "text-amber-600",
             glyph: Clock,
-            badge: "bg-amber-100 text-amber-700",
+            badge: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300",
             dot: "bg-amber-500",
-            text: "text-amber-600",
+            text: "text-amber-600 dark:text-amber-400",
         };
     }
 
     return {
-        border: "border-emerald-200",
-        bg: "bg-emerald-50/60",
-        divider: "border-emerald-200/70",
+        border: "border-emerald-200 dark:border-emerald-500/30",
+        bg: "bg-emerald-50/60 dark:bg-emerald-500/10",
+        divider: "border-emerald-200/70 dark:border-emerald-500/20",
         icon: "text-emerald-600",
         glyph: CheckCircle2,
-        badge: "bg-emerald-100 text-emerald-700",
+        badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
         dot: "bg-emerald-500",
-        text: "text-emerald-600",
+        text: "text-emerald-600 dark:text-emerald-400",
     };
 });
 

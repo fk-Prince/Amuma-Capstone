@@ -72,8 +72,11 @@ class BranchRepository
             ->withCount('bookings')
 
             ->when(!empty($filters['city']), function ($query) use ($filters) {
-                $query->whereHas('location', function ($q) use ($filters) {
-                    $q->where('city', 'ILIKE', '%' . $filters['city'] . '%');
+                $search = trim($filters['city']);
+
+                $query->whereHas('location', function ($q) use ($search) {
+                    $q->where('city', 'ILIKE', '%' . $search . '%')
+                        ->orWhereRaw('? ILIKE \'%\' || city || \'%\'', [$search]);
                 });
             })
             ->when(!empty($filters['provider_name']), function ($query) use ($filters) {

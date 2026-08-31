@@ -25,6 +25,11 @@ class Employee extends Model
         'phone_number',
         'status',
         'avatar',
+        'documents',
+    ];
+
+    protected $casts = [
+        'documents' => 'array',
     ];
 
     protected function fullName()

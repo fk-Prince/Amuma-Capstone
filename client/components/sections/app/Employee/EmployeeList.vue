@@ -85,13 +85,13 @@ const handlePageChange = (page: number) => {
 
 const statusColor = (status: string | null) => {
     const colors: Record<string, string> = {
-        active: "bg-emerald-100 text-emerald-700",
-        inactive: "bg-rose-100 text-rose-700",
-        on_call: "bg-primary-100 text-primary-700",
-        on_leave: "bg-amber-100 text-amber-700",
+        active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
+        inactive: "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400",
+        on_call: "bg-primary-100 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400",
+        on_leave: "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
     };
 
-    return colors[status ?? ""] ?? "bg-slate-100 text-slate-600";
+    return colors[status ?? ""] ?? "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300";
 };
 
 const formatStatus = (status: string | null | undefined) => {
@@ -125,8 +125,8 @@ const formatStatus = (status: string | null | undefined) => {
                     />
 
                     <div>
-                        <p class="font-medium text-slate-800">{{ row.name }}</p>
-                        <p class="text-xs text-slate-400">{{ row.role }}</p>
+                        <p class="font-medium text-slate-800 dark:text-white">{{ row.name }}</p>
+                        <p class="text-xs text-slate-400 dark:text-gray-500">{{ row.role }}</p>
                     </div>
                 </div>
             </template>
@@ -144,13 +144,13 @@ const formatStatus = (status: string | null | undefined) => {
                 <div class="flex justify-end items-center gap-3">
                     <button
                         v-if="canUpdate(Modules.EmployeeManagement)"
-                        class="text-slate-400 hover:text-slate-700"
+                        class="text-slate-400 hover:text-slate-700 dark:text-gray-500 dark:hover:text-gray-200"
                         @click="updateEmployee(row.raw)"
                     >
                         <Pencil class="w-4 h-4" />
                     </button>
 
-                    <button class="text-slate-400 hover:text-slate-700">
+                    <button class="text-slate-400 hover:text-slate-700 dark:text-gray-500 dark:hover:text-gray-200">
                         <Calendar class="w-4 h-4" />
                     </button>
                 </div>

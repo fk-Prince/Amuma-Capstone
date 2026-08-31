@@ -2,11 +2,11 @@
     <div class="w-full space-y-6">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-xl font-semibold text-gray-900">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
                     Branch Images
                 </h2>
 
-                <p class="text-sm text-gray-500 mt-1">
+                <p class="text-sm text-gray-500 mt-1 dark:text-gray-400">
                     Upload and manage branch images by category.
                 </p>
             </div>
@@ -28,7 +28,7 @@
             <div
                 v-for="image in images"
                 :key="image.branch_image_id"
-                class="relative group rounded-2xl overflow-hidden border border-[#E4EFED] bg-white shadow-sm hover:shadow-xl transition"
+                class="relative group rounded-2xl overflow-hidden border border-[#E4EFED] bg-white shadow-sm hover:shadow-xl transition dark:border-white/10 dark:bg-secondary"
             >
                 <img
                     :src="image.image_url"
@@ -66,15 +66,15 @@
 
         <div
             v-else-if="!loading"
-            class="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 py-16 flex flex-col items-center justify-center"
+            class="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 py-16 flex flex-col items-center justify-center dark:border-white/10 dark:bg-white/5"
         >
             <div
-                class="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center text-primary"
+                class="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center text-primary dark:bg-primary-500/10"
             >
                 <ImageIcon class="w-7 h-7" />
             </div>
 
-            <p class="mt-4 text-sm text-gray-500">No images uploaded yet.</p>
+            <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">No images uploaded yet.</p>
 
             <button
                 type="button"
@@ -94,7 +94,7 @@
                 type="button"
                 :disabled="loading"
                 @click="loadMore"
-                class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium hover:bg-gray-50 transition disabled:opacity-50"
+                class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium hover:bg-gray-50 transition disabled:opacity-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
             >
                 {{ loading ? "Loading..." : "Load More" }}
             </button>
@@ -106,15 +106,15 @@
                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             >
                 <div
-                    class="w-full max-w-lg rounded-2xl bg-white shadow-xl border border-[#E4EFED]"
+                    class="w-full max-w-lg rounded-2xl bg-white shadow-xl border border-[#E4EFED] dark:bg-secondary dark:border-white/10"
                 >
-                    <div class="flex items-center justify-between p-5 border-b">
+                    <div class="flex items-center justify-between p-5 border-b dark:border-white/10">
                         <div>
-                            <h3 class="font-semibold text-gray-900">
+                            <h3 class="font-semibold text-gray-900 dark:text-white">
                                 Add Image
                             </h3>
 
-                            <p class="text-sm text-gray-500">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
                                 Upload a branch image and provide a description.
                             </p>
                         </div>
@@ -122,7 +122,7 @@
                         <button
                             type="button"
                             @click="closeModal"
-                            class="text-gray-400 hover:text-gray-700 text-lg"
+                            class="text-gray-400 hover:text-gray-700 text-lg dark:text-gray-500 dark:hover:text-gray-200"
                         >
                             ✕
                         </button>
@@ -152,7 +152,7 @@
 
                         <div>
                             <label
-                                class="block text-sm font-medium text-gray-700 mb-2"
+                                class="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300"
                             >
                                 Image
                             </label>
@@ -162,7 +162,7 @@
                                 type="file"
                                 accept="image/*"
                                 @change="handleFile"
-                                class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-4 file:py-2 file:text-white hover:file:opacity-90"
+                                class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-4 file:py-2 file:text-white hover:file:opacity-90 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
                             />
 
                             <p
@@ -175,7 +175,7 @@
 
                         <div
                             v-if="preview"
-                            class="rounded-xl overflow-hidden border"
+                            class="rounded-xl overflow-hidden border dark:border-white/10"
                         >
                             <img
                                 :src="preview"
@@ -191,7 +191,7 @@
                             <button
                                 type="button"
                                 @click="closeModal"
-                                class="rounded-xl border border-gray-200 px-4 py-3 text-sm hover:bg-gray-50 transition"
+                                class="rounded-xl border border-gray-200 px-4 py-3 text-sm hover:bg-gray-50 transition dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
                             >
                                 Cancel
                             </button>

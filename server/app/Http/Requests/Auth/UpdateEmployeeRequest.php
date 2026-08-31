@@ -56,6 +56,11 @@ class UpdateEmployeeRequest extends FormRequest
             'permissions.*.can_read' => ['required', 'boolean'],
             'permissions.*.can_create' => ['required', 'boolean'],
             'permissions.*.can_update' => ['required', 'boolean'],
+
+            'documents' => ['nullable', 'array'],
+            'documents.*.label' => ['required', 'string', 'max:255'],
+            'documents.*.file' => ['nullable', 'file', 'max:10240'],
+            'documents.*.url' => ['nullable', 'string'],
         ];
     }
 }

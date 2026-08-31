@@ -115,20 +115,26 @@ const formattedPlans = computed(() =>
         ctaText: `Subscribe to ${plan.name}`,
         featured: index === checkout.plans.length - 1,
         features: plan.name.includes("Home")
-            ? ["Daily home care visits", "Live-in caregivers", "Family portal"]
+            ? [
+                  "Homecare visits scheduling",
+                  "Caregiver & nurse assignment with QR clock-in",
+                  "eMAR & vital signs tracking",
+                  "Family portal & messaging",
+                  "Billing, invoices & online payments",
+              ]
             : plan.name.includes("In-house")
               ? [
-                    "Facility Management",
-                    "Admission & rooms",
-                    "eMAR & vitals",
+                    "Admissions & discharge management",
+                    "VIP & Common room contracts",
+                    "eMAR & vital signs tracking",
                     "VIP CCTV access",
-                    "Family Portal",
-                    "VIP & Common Rooms",
+                    "Family portal & messaging",
+                    "Billing, invoices & online payments",
                 ]
               : [
-                    "All Home Care features",
+                    "All Homecare features",
                     "All Facility features",
-                    "All in one solution",
+                    "One subscription for both services",
                 ],
     })),
 );

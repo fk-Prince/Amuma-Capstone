@@ -113,7 +113,7 @@
             </div>
         </div>
 
-        <div class="space-y-5">
+        <div v-if="!hideDocument" class="space-y-5">
             <div>
                 <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                     Verification Document
@@ -418,6 +418,7 @@ import type { Branch } from "~/types/branch";
 const props = defineProps<{
     branch: Branch;
     errors?: Record<string, string> | null;
+    hideDocument?: boolean;
 }>();
 
 const emit = defineEmits<{

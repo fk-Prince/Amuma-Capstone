@@ -1,19 +1,19 @@
 <template>
     <div class="w-full mx-auto p-4 md:p-6 space-y-6">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900">Branch Settings</h1>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Branch Settings</h1>
 
-            <p class="text-sm text-slate-500 mt-1">
+            <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                 Manage your branch information, agency details, images, and
                 operation settings.
             </p>
         </div>
 
         <div
-            class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+            class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden dark:bg-secondary dark:border-white/10"
         >
             <div
-                class="border-b border-slate-200 bg-slate-50/50 px-6 overflow-x-auto"
+                class="border-b border-slate-200 bg-slate-50/50 px-6 overflow-x-auto dark:border-white/10 dark:bg-white/5"
             >
                 <div class="flex gap-2">
                     <button
@@ -25,7 +25,7 @@
                         :class="
                             activeTab === tab.value
                                 ? 'text-primary'
-                                : 'text-slate-500 hover:text-slate-800'
+                                : 'text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
                         "
                     >
                         <component :is="tab.icon" class="w-4 h-4" />

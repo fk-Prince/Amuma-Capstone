@@ -106,7 +106,7 @@
                 </div>
             </div>
         </div>
-        <div class="space-y-5">
+        <div v-if="!hideDocuments" class="space-y-5">
             <div>
                 <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                     Verification Documents
@@ -584,6 +584,7 @@ const props = defineProps<{
     agency: Agency | any;
     errors?: Record<string, string> | null;
     mode?: "new" | "edit";
+    hideDocuments?: boolean;
 }>();
 
 const emit = defineEmits<{

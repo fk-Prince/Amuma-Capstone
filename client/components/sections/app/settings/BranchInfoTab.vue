@@ -1,7 +1,11 @@
 <template>
     <div v-if="localValue" class="space-y-6 w-full">
         <ClientOnly>
-            <BranchForm v-model:branch="localValue" v-model:errors="errors" />
+            <BranchForm
+                v-model:branch="localValue"
+                v-model:errors="errors"
+                hide-document
+            />
         </ClientOnly>
 
         <div class="flex justify-end">
@@ -16,7 +20,7 @@
         </div>
     </div>
 
-    <div v-else class="py-12 text-center text-sm text-gray-400">
+    <div v-else class="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
         Loading branch information...
     </div>
 </template>

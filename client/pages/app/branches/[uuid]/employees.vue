@@ -1,48 +1,31 @@
 <template>
-    <div class="w-full h-full max-w-8xl mx-auto p-4 bg-slate-50 lg:space-y-5">
-        <div
-            v-if="!addEmployeeTab"
-            class="h-full grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-4 items-stretch"
-        >
-            <div class="flex flex-col min-h-0">
-                <EmployeeDashboard
-                    :total-employee="totalEmployee"
-                    :on-duty="onDuty"
-                    :on-leave="onLeave"
+    <div class="h-full w-full mx-auto p-4 bg-slate-50 dark:bg-secondary lg:space-y-5">
+        <div v-if="!addEmployeeTab" class="h-full flex flex-col min-h-0">
+            <EmployeeDashboard
+                :total-employee="totalEmployee"
+                :on-duty="onDuty"
+                :on-leave="onLeave"
+            />
+
+            <ClientOnly>
+                <EmployeeSearch
+                    @addEmployee="openAddEmployee"
+                    v-model="searchData"
+                    v-model:activeTab="activeTab"
                 />
+            </ClientOnly>
 
-                <ClientOnly>
-                    <EmployeeSearch
-                        @addEmployee="openAddEmployee"
-                        v-model="searchData"
-                        v-model:activeTab="activeTab"
-                    />
-                </ClientOnly>
-
-                <div class="flex-1 min-h-0 mt-2">
-                    <EmployeeList
-                        class="h-full"
-                        :employees="employees"
-                        :loading="loading"
-                        :current-page="currentPage"
-                        :total-pages="totalPages"
-                        :total-items="totalEmployee"
-                        @select="updateEmployee"
-                        @page-change="handlePageChange"
-                    />
-                </div>
-            </div>
-
-            <div class="hidden lg:flex flex-col gap-4 w-[280px]">
-                <Calendar />
-
-                <div class="rounded-2xl border bg-white p-4 shadow-sm">
-                    UPCOMING SCHEDULES
-                </div>
-
-                <div class="rounded-2xl border bg-white p-4 shadow-sm">
-                    UPCOMING SCHEDULES
-                </div>
+            <div class="flex-1 min-h-0 mt-2">
+                <EmployeeList
+                    class="h-full"
+                    :employees="employees"
+                    :loading="loading"
+                    :current-page="currentPage"
+                    :total-pages="totalPages"
+                    :total-items="totalEmployee"
+                    @select="updateEmployee"
+                    @page-change="handlePageChange"
+                />
             </div>
         </div>
 
@@ -65,7 +48,6 @@ import EmployeeForm from "~/components/sections/app/Employee/EmployeeForm.vue";
 import EmployeeDashboard from "~/components/sections/app/Employee/EmployeeDashboard.vue";
 import EmployeeSearch from "~/components/sections/app/Employee/EmployeeSearch.vue";
 import EmployeeList from "~/components/sections/app/Employee/EmployeeList.vue";
-import Calendar from "~/components/ui/Calendar.vue";
 import type { Employee } from "~/types/employee";
 import { employeeService } from "~/api/employee/EmployeeService";
 

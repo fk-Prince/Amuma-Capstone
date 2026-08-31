@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue";
+import { onMounted, ref } from "vue";
 import CheckoutSummary from "~/components/sections/subscription/CheckoutSummary.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
@@ -51,17 +51,7 @@ definePageMeta({
     navVariant: 1,
 });
 
-// const card = reactive<CardDetails>({
-//     number: "",
-//     expMonth: "",
-//     expYear: "",
-//     cvc: "",
-//     firstName: "",
-//     lastName: "",
-//     email: "",
-// });
-
-const card = reactive<CardDetails>({
+const card = ref<CardDetails>({
     number: "4000000000002503",
     expMonth: "04",
     expYear: "29",
@@ -125,7 +115,7 @@ const payCard = async () => {
         const payload = buildSubscriptionPayload();
 
         await cardPayment({
-            card,
+            card: card.value,
             amount: total.value,
 
             onClose: () => {

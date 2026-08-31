@@ -43,7 +43,7 @@ const filteredTabs = computed(() => {
             <div class="relative flex-1 min-w-[220px] max-w-sm">
                 <svg
                     viewBox="0 0 24 24"
-                    class="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2"
+                    class="w-4 h-4 text-slate-400 dark:text-gray-500 absolute left-4 top-1/2 -translate-y-1/2"
                     fill="none"
                     stroke="currentColor"
                     stroke-width="2"

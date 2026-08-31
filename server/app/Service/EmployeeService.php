@@ -37,6 +37,29 @@ class EmployeeService
         $this->locationRepository = $locationRepository;
     }
 
+    private function resolveDocuments(array $payload): array
+    {
+        $documents = [];
+
+        foreach ($payload['documents'] ?? [] as $document) {
+            if (!empty($document['file']) && $document['file'] instanceof UploadedFile) {
+                $uploaded = SupabaseService::store($document['file']);
+
+                $documents[] = [
+                    'label' => $document['label'],
+                    'url' => $uploaded['url'],
+                ];
+            } elseif (!empty($document['url'])) {
+                $documents[] = [
+                    'label' => $document['label'],
+                    'url' => $document['url'],
+                ];
+            }
+        }
+
+        return $documents;
+    }
+
     public function createEmployee(array $payload, User $user)
     {
 
@@ -86,6 +109,7 @@ class EmployeeService
                 'phone_number' => $payload['phone_number'],
                 'birth_date' => $payload['birth_date'],
                 'avatar' => $image,
+                'documents' => $this->resolveDocuments($payload),
             ]);
 
             if (!$employee) {
@@ -176,7 +200,8 @@ class EmployeeService
                 'phone_number' => $payload['phone_number'],
                 'birth_date' => $payload['birth_date'],
                 'avatar' => $image,
-                'location_id' => $employee->location_id
+                'location_id' => $employee->location_id,
+                'documents' => $this->resolveDocuments($payload),
             ]);
 
 
