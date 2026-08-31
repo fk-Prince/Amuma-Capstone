@@ -46,20 +46,25 @@
                 </div>
 
                 <div class="min-h-0 flex-1 overflow-y-auto">
-                    <div
-                        v-if="loadingBranch"
-                        class="space-y-4 p-8"
-                    >
-                        <div class="h-5 w-40 animate-pulse rounded bg-slate-200 dark:bg-white/10" />
-                        <div class="h-28 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/5" />
-                        <div class="h-28 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/5" />
+                    <div v-if="loadingBranch" class="space-y-4 p-8">
+                        <div
+                            class="h-5 w-40 animate-pulse rounded bg-slate-200 dark:bg-white/10"
+                        />
+                        <div
+                            class="h-28 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/5"
+                        />
+                        <div
+                            class="h-28 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/5"
+                        />
                     </div>
 
                     <div
                         v-else-if="loadError"
                         class="flex flex-col items-center gap-2 p-10 text-center"
                     >
-                        <p class="text-sm font-medium text-slate-700 dark:text-gray-300">
+                        <p
+                            class="text-sm font-medium text-slate-700 dark:text-gray-300"
+                        >
                             Couldn't load booking options
                         </p>
                         <p class="text-xs text-muted dark:text-gray-400">
@@ -100,7 +105,11 @@
                             v-if="submitting"
                             class="h-4 w-4 animate-spin"
                         />
-                        {{ submitting ? "Submitting..." : "Submit Booking Request" }}
+                        {{
+                            submitting
+                                ? "Submitting..."
+                                : "Submit Booking Request"
+                        }}
                     </button>
                 </div>
             </div>
@@ -154,13 +163,12 @@ function emptyModel(): HomecareBookingModel {
 }
 
 const model = reactive<HomecareBookingModel>(emptyModel());
-const errors = ref<Record<string, string>>({});
 
 const homecareSchema = computed(() =>
     createHomecareBookingSchema(branch.value?.homecare?.adl_min_hour ?? 0),
 );
 
-const { validate } = useSchemaValidation(homecareSchema, model);
+const { validate, errors } = useSchemaValidation(homecareSchema, model);
 
 async function loadBranchOptions(uuid: string) {
     loadingBranch.value = true;

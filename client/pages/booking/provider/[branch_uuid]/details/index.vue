@@ -11,7 +11,9 @@
             }"
         >
             <div class="relative z-50 flex h-full min-h-0 flex-col">
-                <div class="shrink-0 border-b border-gray-100/80 px-6 py-6 dark:border-white/10">
+                <div
+                    class="shrink-0 border-b border-gray-100/80 px-6 py-6 dark:border-white/10"
+                >
                     <div class="flex items-center justify-between">
                         <div>
                             <p
@@ -20,7 +22,9 @@
                                 Booking Progress
                             </p>
 
-                            <p class="mt-1 text-xs text-muted dark:text-gray-400">
+                            <p
+                                class="mt-1 text-xs text-muted dark:text-gray-400"
+                            >
                                 Complete each step to continue
                             </p>
                         </div>
@@ -34,7 +38,9 @@
 
                     <div class="mt-5">
                         <div class="mb-2 flex items-center justify-between">
-                            <span class="text-xs font-medium text-muted dark:text-gray-400">
+                            <span
+                                class="text-xs font-medium text-muted dark:text-gray-400"
+                            >
                                 Overall progress
                             </span>
 
@@ -73,11 +79,15 @@
                         </div>
 
                         <div>
-                            <p class="text-xs font-semibold text-secondary dark:text-white">
+                            <p
+                                class="text-xs font-semibold text-secondary dark:text-white"
+                            >
                                 Need help?
                             </p>
 
-                            <p class="mt-0.5 text-[11px] leading-4 text-muted dark:text-gray-400">
+                            <p
+                                class="mt-0.5 text-[11px] leading-4 text-muted dark:text-gray-400"
+                            >
                                 Complete the required steps before continuing.
                             </p>
                         </div>
@@ -109,10 +119,14 @@
                             : "Homecare Services"
                     }}
                 </p>
-                <h1 class="font-serif text-3xl text-gray-900 mt-1 dark:text-white">
+                <h1
+                    class="font-serif text-3xl text-gray-900 mt-1 dark:text-white"
+                >
                     Patient Booking Request
                 </h1>
-                <p class="text-[15px] text-gray-500 mt-2 leading-relaxed dark:text-gray-400">
+                <p
+                    class="text-[15px] text-gray-500 mt-2 leading-relaxed dark:text-gray-400"
+                >
                     Complete the form below to submit your request. Fields
                     marked with
                     <span class="text-red-500">*</span> are required.
@@ -135,7 +149,9 @@
 
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="text-xs font-semibold text-gray-900 dark:text-white">
+                            <span
+                                class="text-xs font-semibold text-gray-900 dark:text-white"
+                            >
                                 Booking Progress
                             </span>
                             <span class="text-xs font-bold text-primary-600">
@@ -153,7 +169,9 @@
                         </div>
                     </div>
 
-                    <ChevronRight class="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
+                    <ChevronRight
+                        class="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500"
+                    />
                 </button>
             </div>
 
@@ -487,10 +505,7 @@ const scrollTo = async (step: string) => {
 
         const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
         const offset = isDesktop ? 32 : 112;
-        const top =
-            el.getBoundingClientRect().top +
-            window.scrollY -
-            offset;
+        const top = el.getBoundingClientRect().top + window.scrollY - offset;
 
         window.scrollTo({ top, behavior: "smooth" });
     }, 50);
