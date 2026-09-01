@@ -126,7 +126,11 @@ class UserService
 
     public function fetchMe(User $user)
     {
-        $user->load(['employee', 'client', 'systemOwner']);
+        $user->load([
+            'employee.locations',
+            'client.location',
+            'systemOwner.location',
+        ]);
 
         return [
             'user' => $user,
@@ -159,12 +163,14 @@ class UserService
                 'has_password' => !empty($user->getAuthPassword()),
 
                 'first_name'   => $profile?->first_name,
+                'middle_name'  => $profile?->middle_name,
                 'last_name'    => $profile?->last_name,
                 'avatar'       => $profile?->avatar,
-                // platform_admins has no phone column.
                 'phone_number' => $user->employee?->phone_number
-                    ?? $user->client?->phone_number,
+                    ?? $user->client?->phone_number
+                    ?? $user->systemOwner?->phone_number,
                 'birth_date'   => $user->employee?->birth_date,
+                'occupation'   => $user->client?->occupation,
 
                 'location' => $location ? [
                     'street'       => $location->street,
@@ -212,9 +218,10 @@ class UserService
             $locationId = $this->syncLocation($user, $payload);
 
             $shared = array_filter([
-                'first_name' => isset($payload['first_name']) ? Str::title($payload['first_name']) : null,
-                'last_name'  => isset($payload['last_name']) ? Str::title($payload['last_name']) : null,
-                'avatar'     => $avatarUrl,
+                'first_name'  => isset($payload['first_name']) ? Str::title($payload['first_name']) : null,
+                'middle_name' => isset($payload['middle_name']) ? Str::title($payload['middle_name']) : null,
+                'last_name'   => isset($payload['last_name']) ? Str::title($payload['last_name']) : null,
+                'avatar'      => $avatarUrl,
             ], fn($value) => $value !== null);
 
             $withLocation = $locationId
@@ -228,9 +235,12 @@ class UserService
 
             $user->client?->update($withLocation + array_filter([
                 'phone_number' => $payload['phone_number'] ?? null,
+                'occupation'   => $payload['occupation'] ?? null,
             ], fn($value) => $value !== null));
 
-            $user->systemOwner?->update($withLocation);
+            $user->systemOwner?->update($withLocation + array_filter([
+                'phone_number' => $payload['phone_number'] ?? null,
+            ], fn($value) => $value !== null));
 
             return $this->profile($user->fresh());
         });

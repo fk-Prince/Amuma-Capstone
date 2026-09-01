@@ -21,11 +21,12 @@ return new class extends Migration
                 ->constrained('locations', 'location_id');
 
             $table->string('first_name')->nullable();
+            $table->string('middle_name')->nullable();
             $table->string('last_name')->nullable();
             $table->string('phone_number')->nullable();
             $table->string('avatar')->nullable();
             $table->boolean('is_verified')->default(false);
-
+            $table->string('occupation')->nullable();
             $table->timestamps();
         });
     }

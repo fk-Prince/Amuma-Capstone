@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('platform_admins', function (Blueprint $table) {
-            $table->id('employee_permission_id');
+            $table->id('platform_admin_id');
             $table->foreignId('user_id')
                 ->constrained('users', 'user_id');
 
@@ -22,8 +22,10 @@ return new class extends Migration
 
             $table->boolean('is_active')->default(true);
             $table->string('first_name')->nullable();
+            $table->string('middle_name')->nullable();
             $table->string('last_name')->nullable();
             $table->string('avatar')->nullable();
+            $table->string('phone_number')->nullable();
             $table->timestamps();
         });
     }

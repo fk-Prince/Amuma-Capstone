@@ -15,8 +15,9 @@ class UpdateProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name'  => ['required', 'string', 'max:255'],
+            'first_name'  => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
+            'last_name'   => ['required', 'string', 'max:255'],
 
             'email' => [
                 'required',
@@ -32,6 +33,7 @@ class UpdateProfileRequest extends FormRequest
             // do not, so they stay optional here and are filtered on write.
             'phone_number' => ['nullable', 'string', 'max:30'],
             'birth_date'   => ['nullable', 'date', 'before:today'],
+            'occupation'   => ['nullable', 'string', 'max:255'],
 
             'avatar' => ['nullable', 'file', 'image', 'max:5120'],
 

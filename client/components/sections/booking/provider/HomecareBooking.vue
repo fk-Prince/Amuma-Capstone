@@ -41,12 +41,16 @@
 
                 <template v-else>
                     <div class="mb-4">
-                        <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+                        <h3
+                            class="text-sm font-semibold text-slate-900 dark:text-white"
+                        >
                             Booking Type
                             <span class="text-danger">*</span>
                         </h3>
 
-                        <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
+                        <p
+                            class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
+                        >
                             Choose the type of care you need.
                         </p>
                     </div>
@@ -134,7 +138,9 @@
                                 <Stethoscope class="h-5 w-5" />
                             </div>
 
-                            <h4 class="text-sm font-semibold text-slate-700 dark:text-gray-300">
+                            <h4
+                                class="text-sm font-semibold text-slate-700 dark:text-gray-300"
+                            >
                                 No services available
                             </h4>
 
@@ -157,7 +163,9 @@
 
             <div>
                 <div class="mb-2">
-                    <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+                    <h3
+                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                    >
                         Schedule
                     </h3>
 
@@ -191,9 +199,7 @@
                                 <DatePickerField
                                     label="Date"
                                     :model-value="model.date"
-                                    @update:model-value="
-                                        update('date', $event)
-                                    "
+                                    @update:model-value="update('date', $event)"
                                     :min="todayStr"
                                     placeholder="Select a date"
                                     required
@@ -266,9 +272,14 @@
                 </div>
             </div>
 
-            <div v-if="!loading && model.type === 'Medical'" class="bg-white dark:bg-secondary">
+            <div
+                v-if="!loading && model.type === 'Medical'"
+                class="bg-white dark:bg-secondary"
+            >
                 <div class="mb-2">
-                    <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+                    <h3
+                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                    >
                         Medical Service
                         <span class="text-danger">*</span>
                     </h3>
@@ -334,7 +345,9 @@
                     v-if="selectedService"
                     class="mt-4 flex items-center justify-between rounded-xl bg-primary/5 px-4 py-3"
                 >
-                    <span class="text-xs font-medium text-slate-500 dark:text-gray-400">
+                    <span
+                        class="text-xs font-medium text-slate-500 dark:text-gray-400"
+                    >
                         Estimated service total
                     </span>
 
@@ -353,9 +366,10 @@
                 class="bg-white dark:bg-secondary"
             >
                 <div class="mb-3">
-                    <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+                    <h3
+                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                    >
                         Care Duration
-                        <span class="text-danger">*</span>
                     </h3>
 
                     <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
@@ -407,17 +421,25 @@
                     class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:bg-secondary dark:border-white/10"
                 >
                     <div class="flex items-center justify-between text-xs">
-                        <span class="text-slate-500 dark:text-gray-400">Hourly Rate</span>
+                        <span class="text-slate-500 dark:text-gray-400"
+                            >Hourly Rate</span
+                        >
 
-                        <span class="font-semibold text-slate-700 dark:text-gray-300">
+                        <span
+                            class="font-semibold text-slate-700 dark:text-gray-300"
+                        >
                             {{ formatCurrency(adlRatePerHour) }} / hour
                         </span>
                     </div>
 
                     <div class="mt-2 flex items-center justify-between text-xs">
-                        <span class="text-slate-500 dark:text-gray-400">Minimum Hours</span>
+                        <span class="text-slate-500 dark:text-gray-400"
+                            >Minimum Hours</span
+                        >
 
-                        <span class="font-semibold text-slate-700 dark:text-gray-300">
+                        <span
+                            class="font-semibold text-slate-700 dark:text-gray-300"
+                        >
                             {{ minAdlHours }} hours
                         </span>
                     </div>
@@ -426,7 +448,9 @@
                         v-if="adlTotal"
                         class="mt-3 flex items-center justify-between border-t border-slate-200 pt-3 dark:border-white/10"
                     >
-                        <span class="text-sm font-semibold text-slate-700 dark:text-gray-300">
+                        <span
+                            class="text-sm font-semibold text-slate-700 dark:text-gray-300"
+                        >
                             Estimated Total
                         </span>
 
@@ -439,7 +463,9 @@
 
             <div>
                 <div class="mb-2">
-                    <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+                    <h3
+                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                    >
                         Homecare Service Address
                         <span class="text-danger">*</span>
                     </h3>

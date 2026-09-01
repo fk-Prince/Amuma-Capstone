@@ -108,8 +108,12 @@ class User extends Authenticatable
         'isSystemOwner',
         'hasBooking',
         'first_name',
+        'middle_name',
         'last_name',
         'avatar',
+        'phone_number',
+        'occupation',
+        'address',
     ];
 
     public function getHasBookingAttribute(): bool
@@ -164,6 +168,14 @@ class User extends Authenticatable
             ?? null;
     }
 
+    public function getMiddleNameAttribute(): ?string
+    {
+        return $this->employee?->middle_name
+            ?? $this->client?->middle_name
+            ?? $this->systemOwner?->middle_name
+            ?? null;
+    }
+
     public function getLastNameAttribute(): ?string
     {
         return $this->employee?->last_name
@@ -177,6 +189,27 @@ class User extends Authenticatable
         return $this->employee?->avatar
             ?? $this->client?->avatar
             ?? $this->systemOwner?->avatar
+            ?? null;
+    }
+
+    public function getPhoneNumberAttribute(): ?string
+    {
+        return $this->employee?->phone_number
+            ?? $this->client?->phone_number
+            ?? $this->systemOwner?->phone_number
+            ?? null;
+    }
+
+    public function getOccupationAttribute(): ?string
+    {
+        return $this->client?->occupation ?? null;
+    }
+
+    public function getAddressAttribute(): ?string
+    {
+        return $this->employee?->locations?->full_address
+            ?? $this->client?->location?->full_address
+            ?? $this->systemOwner?->location?->full_address
             ?? null;
     }
 }

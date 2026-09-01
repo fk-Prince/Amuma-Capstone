@@ -1,11 +1,12 @@
 <template>
-    <div class="min-h-screen bg-white pt-[100px]">
+    <div class="min-h-screen bg-white pt-[100px] dark:bg-secondary">
         <div class="mx-auto max-w-5xl px-5 pb-16 sm:px-8">
-            <!-- Header -->
             <div
                 class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between"
             >
-                <h1 class="text-2xl font-bold tracking-tight text-slate-900">
+                <h1
+                    class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white"
+                >
                     My Profile
                 </h1>
 
@@ -13,7 +14,7 @@
                     <button
                         type="button"
                         :disabled="saving || !isDirty"
-                        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
                         @click="reset"
                     >
                         Cancel
@@ -22,7 +23,7 @@
                     <button
                         type="button"
                         :disabled="saving || !isDirty"
-                        class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-secondary dark:hover:bg-gray-200"
                         @click="save"
                     >
                         <LoaderCircle
@@ -34,7 +35,9 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap gap-1 border-b border-slate-200 pb-0">
+            <div
+                class="flex flex-wrap gap-1 border-b border-slate-200 pb-0 dark:border-white/10"
+            >
                 <button
                     v-for="tab in tabs"
                     :key="tab.value"
@@ -42,8 +45,8 @@
                     class="rounded-t-lg border px-4 py-2 text-sm font-medium transition"
                     :class="
                         activeTab === tab.value
-                            ? 'border-slate-200 border-b-white bg-white text-slate-900'
-                            : 'border-transparent text-slate-500 hover:text-slate-800'
+                            ? 'border-slate-200 border-b-white bg-white text-slate-900 dark:border-white/10 dark:border-b-secondary dark:bg-secondary dark:text-white'
+                            : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
                     "
                     @click="activeTab = tab.value"
                 >
@@ -57,8 +60,12 @@
                     :key="n"
                     class="grid gap-6 lg:grid-cols-[240px_1fr]"
                 >
-                    <div class="h-10 animate-pulse rounded bg-slate-100" />
-                    <div class="h-24 animate-pulse rounded bg-slate-100" />
+                    <div
+                        class="h-10 animate-pulse rounded bg-slate-100 dark:bg-white/10"
+                    />
+                    <div
+                        class="h-24 animate-pulse rounded bg-slate-100 dark:bg-white/10"
+                    />
                 </div>
             </div>
 
@@ -67,13 +74,17 @@
                 <div v-show="activeTab === 'profile'">
                     <!-- Profile photo -->
                     <section
-                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr]"
+                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr] dark:border-white/10"
                     >
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2
+                                class="text-sm font-semibold text-slate-900 dark:text-white"
+                            >
                                 Profile photo
                             </h2>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">
+                            <p
+                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                            >
                                 This photo appears on your profile and anywhere
                                 you're shown across AMUMA.
                             </p>
@@ -83,12 +94,12 @@
                             <img
                                 :src="avatarPreview || fallbackAvatar"
                                 alt="Profile photo"
-                                class="h-14 w-14 rounded-full object-cover ring-1 ring-slate-200"
+                                class="h-14 w-14 rounded-full object-cover ring-1 ring-slate-200 dark:ring-white/10"
                             />
 
                             <button
                                 type="button"
-                                class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
                                 @click="avatarInput?.click()"
                             >
                                 Change photo
@@ -97,7 +108,7 @@
                             <button
                                 v-if="avatarPreview"
                                 type="button"
-                                class="text-sm font-medium text-slate-500 transition hover:text-slate-800"
+                                class="text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200"
                                 @click="removeAvatar"
                             >
                                 Remove
@@ -122,25 +133,38 @@
 
                     <!-- Personal info -->
                     <section
-                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr]"
+                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr] dark:border-white/10"
                     >
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2
+                                class="text-sm font-semibold text-slate-900 dark:text-white"
+                            >
                                 Personal info
                             </h2>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">
+                            <p
+                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                            >
                                 Your name and contact details.
                             </p>
                         </div>
 
                         <div class="space-y-5">
-                            <div class="grid gap-5 sm:grid-cols-2">
+                            <div class="grid gap-5 sm:grid-cols-3">
                                 <BaseInput
                                     v-model="form.first_name"
                                     label="First name"
                                     :error="errors.first_name"
                                     @update:modelValue="
                                         clearError('first_name')
+                                    "
+                                />
+
+                                <BaseInput
+                                    v-model="form.middle_name"
+                                    label="Middle name"
+                                    :error="errors.middle_name"
+                                    @update:modelValue="
+                                        clearError('middle_name')
                                     "
                                 />
 
@@ -162,7 +186,6 @@
 
                             <div class="grid gap-5 sm:grid-cols-2">
                                 <PhoneInput
-                                    v-if="canEditPhone"
                                     v-model="form.phone_number"
                                     label="Contact number"
                                     :error="errors.phone_number"
@@ -182,6 +205,16 @@
                                         clearError('birth_date')
                                     "
                                 />
+
+                                <BaseInput
+                                    v-if="roles.is_client"
+                                    v-model="form.occupation"
+                                    label="Occupation"
+                                    :error="errors.occupation"
+                                    @update:modelValue="
+                                        clearError('occupation')
+                                    "
+                                />
                             </div>
                         </div>
                     </section>
@@ -189,15 +222,18 @@
                     <!-- Address -->
                     <section
                         v-if="canEditLocation"
-                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr]"
+                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr] dark:border-white/10"
                     >
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2
+                                class="text-sm font-semibold text-slate-900 dark:text-white"
+                            >
                                 Address
                             </h2>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">
-                                Where you're based. Used for scheduling and
-                                travel estimates.
+                            <p
+                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                            >
+                                Where you're based.
                             </p>
 
                             <button
@@ -226,7 +262,7 @@
 
                                 <template #fallback>
                                     <div
-                                        class="flex h-64 items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-400"
+                                        class="flex h-64 items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-400 dark:bg-white/5 dark:text-gray-500"
                                     >
                                         Loading map...
                                     </div>
@@ -271,13 +307,17 @@
 
                     <!-- Password -->
                     <section
-                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr]"
+                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr] dark:border-white/10"
                     >
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2
+                                class="text-sm font-semibold text-slate-900 dark:text-white"
+                            >
                                 Password
                             </h2>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">
+                            <p
+                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                            >
                                 {{
                                     meta.has_password
                                         ? "Set a new password for your account."
@@ -312,7 +352,7 @@
 
                                     <p
                                         v-if="!errors.password"
-                                        class="mt-1.5 text-xs text-slate-400"
+                                        class="mt-1.5 text-xs text-slate-400 dark:text-gray-500"
                                     >
                                         Minimum 8 characters
                                     </p>
@@ -334,7 +374,7 @@
                             <button
                                 type="button"
                                 :disabled="saving || !form.password"
-                                class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
                                 @click="save"
                             >
                                 Update password
@@ -345,25 +385,88 @@
                     <!-- Account -->
                     <section class="grid gap-6 py-8 lg:grid-cols-[260px_1fr]">
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2
+                                class="text-sm font-semibold text-slate-900 dark:text-white"
+                            >
                                 Account
                             </h2>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">
-                                Read-only details about this account.
+                            <p
+                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                            >
+                                Most details here are read-only. Contact number
+                                and occupation can be updated directly.
                             </p>
                         </div>
 
-                        <dl class="divide-y divide-slate-100">
+                        <dl
+                            class="divide-y divide-slate-100 dark:divide-white/10"
+                        >
+                            <div
+                                class="flex items-center justify-between gap-4 py-2.5"
+                            >
+                                <dt
+                                    class="text-sm text-slate-500 dark:text-gray-400"
+                                >
+                                    Sign-in method
+                                </dt>
+                                <dd
+                                    class="truncate text-sm font-medium text-slate-800 dark:text-white"
+                                >
+                                    {{ signInMethods }}
+                                </dd>
+                            </div>
+
+                            <div
+                                class="flex items-center justify-between gap-4 py-2.5"
+                            >
+                                <dt
+                                    class="shrink-0 text-sm text-slate-500 dark:text-gray-400"
+                                >
+                                    Contact number
+                                </dt>
+                                <dd class="w-full max-w-[220px]">
+                                    <PhoneInput
+                                        v-model="form.phone_number"
+                                        :error="errors.phone_number"
+                                        @update:modelValue="
+                                            clearError('phone_number')
+                                        "
+                                    />
+                                </dd>
+                            </div>
+
+                            <div
+                                v-if="roles.is_client"
+                                class="flex items-center justify-between gap-4 py-2.5"
+                            >
+                                <dt
+                                    class="shrink-0 text-sm text-slate-500 dark:text-gray-400"
+                                >
+                                    Occupation
+                                </dt>
+                                <dd class="w-full max-w-[220px]">
+                                    <BaseInput
+                                        v-model="form.occupation"
+                                        :error="errors.occupation"
+                                        @update:modelValue="
+                                            clearError('occupation')
+                                        "
+                                    />
+                                </dd>
+                            </div>
+
                             <div
                                 v-for="row in accountRows"
                                 :key="row.label"
                                 class="flex items-center justify-between gap-4 py-2.5"
                             >
-                                <dt class="text-sm text-slate-500">
+                                <dt
+                                    class="text-sm text-slate-500 dark:text-gray-400"
+                                >
                                     {{ row.label }}
                                 </dt>
                                 <dd
-                                    class="truncate text-sm font-medium text-slate-800"
+                                    class="truncate text-sm font-medium text-slate-800 dark:text-white"
                                 >
                                     {{ row.value }}
                                 </dd>
@@ -376,10 +479,14 @@
                 <div v-show="activeTab === 'notifications'">
                     <section class="grid gap-6 py-8 lg:grid-cols-[260px_1fr]">
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2
+                                class="text-sm font-semibold text-slate-900 dark:text-white"
+                            >
                                 Email preferences
                             </h2>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">
+                            <p
+                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                            >
                                 What we send to your inbox.
                             </p>
                         </div>
@@ -398,7 +505,7 @@
                                     :class="
                                         pref.enabled
                                             ? 'bg-primary'
-                                            : 'bg-slate-200'
+                                            : 'bg-slate-200 dark:bg-white/10'
                                     "
                                     @click="pref.enabled = !pref.enabled"
                                 >
@@ -414,11 +521,13 @@
 
                                 <div>
                                     <p
-                                        class="text-sm font-medium text-slate-800"
+                                        class="text-sm font-medium text-slate-800 dark:text-white"
                                     >
                                         {{ pref.label }}
                                     </p>
-                                    <p class="text-sm text-slate-500">
+                                    <p
+                                        class="text-sm text-slate-500 dark:text-gray-400"
+                                    >
                                         {{ pref.description }}
                                     </p>
                                 </div>
@@ -503,10 +612,12 @@ const roles = reactive({
 
 const form = reactive({
     first_name: "",
+    middle_name: "",
     last_name: "",
     email: "",
     phone_number: "",
     birth_date: "",
+    occupation: "",
 
     street: "",
     city: "",
@@ -532,21 +643,21 @@ const original = ref<Record<string, any>>({});
 
 const today = new Date().toISOString().slice(0, 10);
 
-// platform_admins carries no phone or birth date column, so those fields are
-// hidden for an account that is only a system owner. Address applies to all.
-const canEditPhone = computed(() => roles.is_employee || roles.is_client);
+// Every account type (employee, client, system owner) has its own
+// phone_number column now, so this is no longer role-gated.
+const canEditPhone = computed(() => true);
 const canEditLocation = computed(
     () => roles.is_employee || roles.is_client || roles.is_system_owner,
 );
 
-// Password fields are excluded: they start empty and are never part of the
-// saved snapshot, so comparing them would mark a clean form as dirty.
 const trackedKeys = [
     "first_name",
+    "middle_name",
     "last_name",
     "email",
     "phone_number",
     "birth_date",
+    "occupation",
     "street",
     "city",
     "province",
@@ -576,8 +687,6 @@ const memberSince = computed(() => {
     }
 });
 
-// The two aren't exclusive: an account linked to Google can also have a local
-// password, so both are listed rather than picking one.
 const signInMethods = computed(() => {
     const methods: string[] = [];
 
@@ -595,7 +704,6 @@ const signInMethods = computed(() => {
 });
 
 const accountRows = computed(() => [
-    { label: "Sign-in method", value: signInMethods.value },
     { label: "Address", value: meta.full_address || "Not set" },
     { label: "Member since", value: memberSince.value },
     { label: "Account ID", value: meta.uuid ? meta.uuid.split("-")[0] : "—" },
@@ -611,10 +719,11 @@ const fallbackAvatar = computed(() => {
 
 const applyProfile = (data: any) => {
     form.first_name = data.first_name ?? "";
+    form.middle_name = data.middle_name ?? "";
     form.last_name = data.last_name ?? "";
     form.email = data.email ?? "";
     form.phone_number = data.phone_number ?? "";
-    // A date input only accepts YYYY-MM-DD.
+    form.occupation = data.occupation ?? "";
     form.birth_date = data.birth_date
         ? String(data.birth_date).slice(0, 10)
         : "";
@@ -733,6 +842,7 @@ const save = async () => {
     try {
         const payload: Record<string, any> = {
             first_name: form.first_name,
+            middle_name: form.middle_name,
             last_name: form.last_name,
             email: form.email,
         };
@@ -743,6 +853,10 @@ const save = async () => {
 
         if (roles.is_employee && form.birth_date) {
             payload.birth_date = form.birth_date;
+        }
+
+        if (roles.is_client && form.occupation) {
+            payload.occupation = form.occupation;
         }
 
         if (canEditLocation.value) {
@@ -756,7 +870,6 @@ const save = async () => {
             });
         }
 
-        // Only sent when the user actually typed a new password.
         if (form.password) {
             payload.password = form.password;
             payload.password_confirmation = form.password_confirmation;
@@ -766,7 +879,6 @@ const save = async () => {
             }
         }
 
-        // BaseService switches to FormData automatically when a File is present.
         if (avatarFile.value) {
             payload.avatar = avatarFile.value;
         }
@@ -775,11 +887,7 @@ const save = async () => {
 
         applyProfile(res?.data ?? res);
         avatarFile.value = null;
-
-        // Refresh the shared auth user so the navbar name and avatar update
-        // without a reload.
         await fetchAuthUser();
-
         success("Profile updated.");
     } catch (err: any) {
         const raw = err?.errors ?? {};

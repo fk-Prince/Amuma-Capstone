@@ -93,6 +93,7 @@
                     :model-value="props.model.occupation"
                     @update:model-value="update('occupation', $event)"
                     :error="errors?.occupation"
+                    :disabled="isDisabled('occupation')"
                     required
                 />
             </div>
@@ -166,6 +167,11 @@ onMounted(() => {
     if (props.currentUser?.first_name) {
         updates.first_name = props.currentUser.first_name;
         lockedFields.first_name = true;
+    }
+
+    if (props.currentUser?.middle_name) {
+        updates.middle_name = props.currentUser.middle_name;
+        lockedFields.middle_name = true;
     }
 
     if (props.currentUser?.last_name) {
@@ -291,6 +297,7 @@ onMounted(() => {
                     :model-value="props.model.occupation"
                     @update:model-value="update('occupation', $event)"
                     :error="errors?.occupation"
+                    :disabled="isDisabled('occupation')"
                     required
                 />
             </div>
@@ -369,6 +376,11 @@ onMounted(() => {
         lockedFields.first_name = true;
     }
 
+    if (props.currentUser?.middle_name) {
+        updates.middle_name = props.currentUser.middle_name;
+        lockedFields.middle_name = true;
+    }
+
     if (props.currentUser?.last_name) {
         updates.last_name = props.currentUser.last_name;
         lockedFields.last_name = true;
@@ -382,6 +394,16 @@ onMounted(() => {
     if (props.currentUser?.phone_number) {
         updates.phone_number = props.currentUser.phone_number;
         lockedFields.phone_number = true;
+    }
+
+    if (props.currentUser?.occupation) {
+        updates.occupation = props.currentUser.occupation;
+        lockedFields.occupation = true;
+    }
+
+    if (props.currentUser?.address) {
+        updates.address = props.currentUser.address;
+        lockedFields.address = true;
     }
 
     if (Object.keys(updates).length) {
