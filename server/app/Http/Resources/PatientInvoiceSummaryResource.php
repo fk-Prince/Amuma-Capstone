@@ -20,6 +20,7 @@ class PatientInvoiceSummaryResource extends JsonResource
             'status' => $this->resource['status'],
             'invoice_count' => $this->resource['invoice_count'],
             'latest_invoice' =>  $this->resource['latest_invoice'],
+            'invoices' => $this->resource['invoices'] ?? [],
             'admissions' => $this->resource['admissions'] ?? [],
             'services' =>     $this->resource['services'] ?? [],
             'discharge_calculation' => $this->resource['discharge_calculation'] ?? null,

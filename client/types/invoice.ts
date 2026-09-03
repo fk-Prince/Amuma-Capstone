@@ -167,6 +167,7 @@ export interface InvoiceAdjustmentDetail {
 
 export interface InvoicePayment {
     payment_id: number;
+    receipt_no?: string | null;
     reference_id: string;
     amount: number;
     payment_method: string;
@@ -269,6 +270,12 @@ export interface PatientInvoiceItem {
     branch?: InvoiceBranch;
     services?: InvoiceServiceLine[];
     facilities?: InvoiceAccommodationLine[];
+    accommodations?: {
+        accommodation_type: string | null;
+        billing_cycle: string | null;
+        room_no: string | null;
+        bed_no: string | null;
+    }[];
     payments?: InvoicePayment[];
 }
 
@@ -283,6 +290,7 @@ export interface PatientInvoiceSummary {
     status: string;
     invoice_count: number;
     latest_invoice: PatientInvoiceItem | null;
+    invoices: PatientInvoiceItem[];
     admissions: PatientAdmission[];
     services: InvoiceServiceLine[];
     discharge_calculation: DischargeCalculation | null;

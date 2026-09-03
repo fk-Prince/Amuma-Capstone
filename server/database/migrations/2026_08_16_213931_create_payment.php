@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('payment_method', 50)->nullable();
             $table->decimal('prior_balance', 10, 2)->nullable();
             $table->decimal('new_balance', 10, 2)->nullable();
+            $table->string('description')->nullable();
             $table->timestamp('created_at')->useCurrent();
         });
     }

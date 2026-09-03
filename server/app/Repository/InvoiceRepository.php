@@ -48,6 +48,7 @@ class InvoiceRepository
             'invoiceAccommodation.patientAdmission.bed.room',
             'invoiceAccommodation.branchContract',
             'payments.refunds',
+            'payments.receipt',
             'invoiceAdjustments',
         ])
             ->where('invoice_code', $payload['invoice_code'])
@@ -65,6 +66,7 @@ class InvoiceRepository
             ->where('status', '!=', Invoice::STATUS_VOID)
             ->with([
                 'payments.refunds',
+            'payments.receipt',
                 'invoiceServices.scheduleService.schedule.patient',
                 'invoiceServices.scheduleService.service',
                 'invoiceAccommodation.patientAdmission.patient',
@@ -130,6 +132,7 @@ class InvoiceRepository
         $query->with([
             'branch',
             'payments.refunds',
+            'payments.receipt',
             'invoiceServices.scheduleService.schedule.patient',
             'invoiceServices.scheduleService.service',
             'invoiceAccommodation.patientAdmission.patient',
@@ -187,6 +190,7 @@ class InvoiceRepository
         $query->with([
             'branch',
             'payments.refunds',
+            'payments.receipt',
             'invoiceServices.scheduleService.schedule.patient',
             'invoiceServices.scheduleService.service',
             'invoiceAccommodation.patientAdmission.patient',
@@ -335,6 +339,10 @@ class InvoiceRepository
             'invoice_count' => $patientInvoices->count(),
 
             'latest_invoice' => $latestInvoice,
+
+            'invoices' => $formattedInvoices
+                ->sortByDesc('created_at')
+                ->values(),
 
             'admissions' => $admissions,
 
@@ -657,6 +665,23 @@ class InvoiceRepository
                 ]
                 : null,
 
+            'accommodations' =>
+            $invoice->invoiceAccommodation
+                ->map(fn($accommodation) => [
+                    'accommodation_type' =>
+                    $accommodation->branchContract?->accommodation_type,
+
+                    'billing_cycle' =>
+                    $accommodation->branchContract?->billing_cycle,
+
+                    'room_no' =>
+                    $accommodation->patientAdmission?->bed?->room?->room_no,
+
+                    'bed_no' =>
+                    $accommodation->patientAdmission?->bed?->bed_no,
+                ])
+                ->values(),
+
             'services' =>
             $invoice->invoiceServices
                 ->map(fn($invoiceService) => [
@@ -693,6 +718,9 @@ class InvoiceRepository
                 ->map(fn($payment) => [
                     'payment_id' =>
                     $payment->payment_id,
+
+                    'receipt_no' =>
+                    $payment->receipt?->receipt_no,
 
                     'reference_id' =>
                     $payment->reference_id,

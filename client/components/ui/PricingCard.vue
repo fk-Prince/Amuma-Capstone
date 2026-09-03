@@ -13,7 +13,7 @@
             class="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap"
         >
             <span
-                class="bg-white text-primary text-xs font-bold px-5 py-1.5 rounded-full shadow-md tracking-wide border border-primary/10 dark:bg-secondary"
+                class="bg-white text-primary text-xs font-bold px-5 py-1.5 rounded-full shadow-md tracking-wide border border-primary/10 dark:border-white/20"
             >
                 Most Popular
             </span>
@@ -70,7 +70,7 @@
             </span>
             <span
                 v-if="billingInterval === 'yearly' && annualDiscount > 0"
-                class="text-xs font-bold px-2 py-1 rounded bg-green-100 text-green-700"
+                class="text-xs font-bold px-2 py-1 rounded bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400"
             >
                 Save {{ annualDiscount }}%
             </span>
@@ -82,7 +82,7 @@
             :class="[
                 'w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 mb-6',
                 featured
-                    ? 'bg-white text-primary hover:bg-light border border-white dark:bg-secondary'
+                    ? 'bg-white text-primary hover:bg-light border border-white'
                     : 'bg-white text-secondary border border-secondary hover:bg-secondary hover:text-white dark:bg-white/5 dark:text-white dark:border-white/20 dark:hover:bg-white/10',
             ]"
         >
@@ -122,7 +122,9 @@
             >
                 <svg
                     class="w-4 h-4 flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
-                    :class="featured ? 'text-white' : 'text-accent'"
+                    :class="
+                        featured ? 'text-white' : 'text-accent dark:text-accent-300'
+                    "
                     viewBox="0 0 16 16"
                     fill="none"
                 >

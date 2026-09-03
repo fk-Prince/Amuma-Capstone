@@ -80,8 +80,23 @@ class InvoiceService
                     $payload['branch_id']
                 );
 
+                $codes = array_filter((array) ($payload['invoice_codes'] ?? []));
+
+                // Selecting invoices narrows the same scoped set the "pay
+                // everything" path uses, so a code from another patient or
+                // branch can never be smuggled in.
+                $invoices = $codes
+                    ? $result['invoices']->filter(
+                        fn($invoice) => in_array($invoice->invoice_code, $codes, true)
+                    )->values()
+                    : $result['invoices'];
+
+                if ($codes && $invoices->isEmpty()) {
+                    throw new Exception('The selected invoices are no longer payable.', 422);
+                }
+
                 return $this->collectCash(
-                    $result['invoices'],
+                    $invoices,
                     $payload,
                     $user,
                     'Patient payment has been processed successfully.'
@@ -105,8 +120,18 @@ class InvoiceService
             throw new Exception('Enter a cash amount greater than 0.', 422);
         }
 
+        $allocations = collect($payload['allocations'] ?? [])
+            ->map(fn($amount) => round((float) $amount, 2))
+            ->filter(fn($amount) => $amount > 0);
+
         $payable = $invoices
             ->filter(fn($invoice) => $invoice->balance_due > 0)
+            ->when(
+                $allocations->isNotEmpty(),
+                fn($list) => $list->filter(
+                    fn($invoice) => $allocations->has($invoice->invoice_code)
+                )
+            )
             ->sortBy('created_at')
             ->values();
 
@@ -161,12 +186,21 @@ class InvoiceService
                 continue;
             }
 
-            $paymentAmount = round(min($remaining, $priorBalance), 2);
+            $requested = $allocations->isNotEmpty()
+                ? (float) ($allocations[$invoice->invoice_code] ?? 0)
+                : $remaining;
+
+            if ($requested <= 0) {
+                continue;
+            }
+
+            $paymentAmount = round(min($remaining, $priorBalance, $requested), 2);
 
             $payment = $invoice->payments()->create([
                 'receipt_id' => $receipt->receipt_id,
                 'amount' => $paymentAmount,
                 'payment_method' => $method,
+                'description' => $invoice->paymentDescription(),
                 'masked_card_number' => $maskedReference,
                 'prior_balance' => $priorBalance,
             ]);
@@ -199,7 +233,9 @@ class InvoiceService
             'remaining_balance' => round($totalBalance - $applied, 2),
             'receipt' => new PaymentReceiptResource(
                 $receipt->load([
-                    'payments.invoice',
+                    'payments.invoice.invoiceServices.scheduleService.service',
+                    'payments.invoice.invoiceAccommodation.branchContract',
+                    'payments.invoice.invoiceAccommodation.patientAdmission.bed.room',
                     'branch.location',
                     'patient',
                     'issuer',
@@ -255,7 +291,9 @@ class InvoiceService
                 });
             })
             ->with([
-                'payments.invoice',
+                'payments.invoice.invoiceServices.scheduleService.service',
+                'payments.invoice.invoiceAccommodation.branchContract',
+                'payments.invoice.invoiceAccommodation.patientAdmission.bed.room',
                 'branch.location',
                 'patient',
                 'client',

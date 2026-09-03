@@ -31,15 +31,13 @@ class PaymentReceiptResource extends JsonResource
                 'name' => $this->resolvePayorName(),
             ],
 
-            // Null on portal payments: those are self-service, with no
-            // cashier standing behind the counter.
             'issued_by' => $this->resolveIssuerName(),
 
             'patient' => [
                 'patient_uuid' => $this->patient?->uuid,
                 'full_name'    => trim(
                     ($this->patient?->first_name ?? '') . ' ' .
-                    ($this->patient?->last_name ?? '')
+                        ($this->patient?->last_name ?? '')
                 ) ?: null,
             ],
 
@@ -63,6 +61,9 @@ class PaymentReceiptResource extends JsonResource
                 'payment_id'        => $payment->payment_id,
                 'payment_reference' => $payment->reference_id,
                 'invoice_code'      => $payment->invoice?->invoice_code,
+                'description'       => $payment->description
+                    ?: $payment->invoice?->paymentDescription()
+                    ?: 'Payment for balance',
                 'invoice_date'      => $payment->invoice?->created_at?->toIso8601String(),
                 'prior_balance'     => (float) $payment->prior_balance,
                 'amount_applied'    => (float) $payment->amount,
@@ -98,7 +99,7 @@ class PaymentReceiptResource extends JsonResource
 
         $name = trim(
             ($this->client?->first_name ?? '') . ' ' .
-            ($this->client?->last_name ?? '')
+                ($this->client?->last_name ?? '')
         );
 
         return $name !== '' ? $name : null;

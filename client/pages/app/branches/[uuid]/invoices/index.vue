@@ -15,7 +15,9 @@
                 <div
                     class="flex flex-col gap-4 border-b border-slate-200 p-4 shrink-0 lg:flex-row lg:items-center lg:justify-between dark:border-white/10"
                 >
-                    <div class="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-white/10">
+                    <div
+                        class="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-white/10"
+                    >
                         <button
                             v-for="tab in tabs"
                             :key="tab.key"
@@ -62,122 +64,130 @@
                 </div>
 
                 <DataTable
-                        v-if="activeTab === 'patients'"
-                        class="flex-1 min-h-0"
-                        :columns="patientColumns"
-                        :rows="invoices"
-                        :pagination="pagination"
-                        :loading="loading"
-                        :searchable="false"
-                        empty-title="No invoices found"
-                        empty-description="Try a different search term or filter."
-                        :on-row-click="onRowClick"
-                        @page-change="fetchInvoices"
+                    v-if="activeTab === 'patients'"
+                    class="flex-1 min-h-0"
+                    :columns="patientColumns"
+                    :rows="invoices"
+                    :pagination="pagination"
+                    :loading="loading"
+                    :searchable="false"
+                    empty-title="No invoices found"
+                    empty-description="Try a different search term or filter."
+                    :on-row-click="onRowClick"
+                    @page-change="fetchInvoices"
                 >
-                        <template #cell-patient_name="{ row }">
-                            <div class="flex flex-col">
-                                <span class="font-medium text-slate-800 dark:text-white">
-                                    {{ row.patient?.full_name ?? "—" }}
-                                </span>
-                                <span class="text-xs text-slate-400 dark:text-gray-500">
-                                    Latest
-                                    {{
-                                        row.latest_invoice?.invoice_code ??
-                                        "No invoices yet"
-                                    }}
-                                </span>
-                            </div>
-                        </template>
-
-                        <template #cell-total_amount="{ value }">
-                            <span class="font-medium"
-                                >₱{{ formatMoney(value) }}</span
-                            >
-                        </template>
-
-                        <template #cell-total_paid="{ value }">
-                            <span class="font-medium text-green-600"
-                                >₱{{ formatMoney(value) }}</span
-                            >
-                        </template>
-
-                        <template #cell-total_refunded="{ row }">
+                    <template #cell-patient_name="{ row }">
+                        <div class="flex flex-col">
                             <span
-                                class="font-medium"
-                                :class="
-                                    totalRefunded(row) > 0
-                                        ? 'text-amber-600 dark:text-amber-300'
-                                        : 'text-slate-400 dark:text-gray-500'
-                                "
-                                >₱{{ formatMoney(totalRefunded(row)) }}</span
+                                class="font-medium text-slate-800 dark:text-white"
                             >
-                        </template>
+                                {{ row.patient?.full_name ?? "—" }}
+                            </span>
+                            <span
+                                class="text-xs text-slate-400 dark:text-gray-500"
+                            >
+                                Latest
+                                {{
+                                    row.latest_invoice?.invoice_code ??
+                                    "No invoices yet"
+                                }}
+                            </span>
+                        </div>
+                    </template>
 
-                        <template #cell-total_balance="{ value }">
-                            <span class="font-medium text-red-500"
-                                >₱{{ formatMoney(value) }}</span
-                            >
-                        </template>
+                    <template #cell-total_amount="{ value }">
+                        <span class="font-medium"
+                            >₱{{ formatMoney(value) }}</span
+                        >
+                    </template>
+
+                    <template #cell-total_paid="{ value }">
+                        <span class="font-medium text-green-600"
+                            >₱{{ formatMoney(value) }}</span
+                        >
+                    </template>
+
+                    <template #cell-total_refunded="{ row }">
+                        <span
+                            class="font-medium"
+                            :class="
+                                totalRefunded(row) > 0
+                                    ? 'text-amber-600 dark:text-amber-300'
+                                    : 'text-slate-400 dark:text-gray-500'
+                            "
+                            >₱{{ formatMoney(totalRefunded(row)) }}</span
+                        >
+                    </template>
+
+                    <template #cell-total_balance="{ value }">
+                        <span class="font-medium text-red-500"
+                            >₱{{ formatMoney(value) }}</span
+                        >
+                    </template>
                 </DataTable>
 
                 <DataTable
-                        v-else
-                        class="flex-1 min-h-0"
-                        :columns="receiptColumns"
-                        :rows="receipts"
-                        :pagination="receiptPagination"
-                        :loading="receiptsLoading"
-                        :searchable="false"
-                        empty-title="No receipts found"
-                        empty-description="Search by receipt number, patient, payor, invoice code or gateway reference."
-                        :on-row-click="openReceipt"
-                        @page-change="fetchReceipts"
+                    v-else
+                    class="flex-1 min-h-0"
+                    :columns="receiptColumns"
+                    :rows="receipts"
+                    :pagination="receiptPagination"
+                    :loading="receiptsLoading"
+                    :searchable="false"
+                    empty-title="No receipts found"
+                    empty-description="Search by receipt number, patient, payor, invoice code or gateway reference."
+                    :on-row-click="openReceipt"
+                    @page-change="fetchReceipts"
                 >
-                        <template #cell-receipt_no="{ row }">
-                            <span class="font-mono font-semibold text-slate-800 dark:text-white">
-                                {{ row.receipt_no }}
-                            </span>
-                        </template>
+                    <template #cell-receipt_no="{ row }">
+                        <span
+                            class="font-mono font-semibold text-slate-800 dark:text-white"
+                        >
+                            {{ row.receipt_no }}
+                        </span>
+                    </template>
 
-                        <template #cell-issued_at="{ row }">
-                            <span class="text-slate-600 dark:text-gray-400">
-                                {{ formatDateTime(row.issued_at) }}
-                            </span>
-                        </template>
+                    <template #cell-issued_at="{ row }">
+                        <span class="text-slate-600 dark:text-gray-400">
+                            {{ formatDateTime(row.issued_at) }}
+                        </span>
+                    </template>
 
-                        <template #cell-patient="{ row }">
-                            <div class="flex flex-col">
-                                <span class="font-medium text-slate-800 dark:text-white">
-                                    {{ row.patient?.full_name ?? "—" }}
-                                </span>
-                                <span class="text-xs text-slate-400 dark:text-gray-500">
-                                    from {{ row.payor?.name ?? "—" }}
-                                </span>
-                            </div>
-                        </template>
-
-                        <template #cell-channel="{ row }">
+                    <template #cell-patient="{ row }">
+                        <div class="flex flex-col">
                             <span
-                                class="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                                :class="
-                                    row.channel === 'portal'
-                                        ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300'
-                                        : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300'
-                                "
+                                class="font-medium text-slate-800 dark:text-white"
                             >
-                                {{
-                                    row.channel === "portal"
-                                        ? "Online"
-                                        : "Counter"
-                                }}
+                                {{ row.patient?.full_name ?? "—" }}
                             </span>
-                        </template>
+                            <span
+                                class="text-xs text-slate-400 dark:text-gray-500"
+                            >
+                                from {{ row.payor?.name ?? "—" }}
+                            </span>
+                        </div>
+                    </template>
 
-                        <template #cell-amount="{ row }">
-                            <span class="font-medium text-green-600">
-                                ₱{{ formatMoney(row.payment?.amount_applied) }}
-                            </span>
-                        </template>
+                    <template #cell-channel="{ row }">
+                        <span
+                            class="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                            :class="
+                                row.channel === 'portal'
+                                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300'
+                                    : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300'
+                            "
+                        >
+                            {{
+                                row.channel === "portal" ? "Online" : "Counter"
+                            }}
+                        </span>
+                    </template>
+
+                    <template #cell-amount="{ row }">
+                        <span class="font-medium text-green-600">
+                            ₱{{ formatMoney(row.payment?.amount_applied) }}
+                        </span>
+                    </template>
                 </DataTable>
             </div>
         </div>

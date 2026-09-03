@@ -181,7 +181,7 @@ const features = [
         hybrid: true,
     },
     {
-        name: "Caregiver & nurse QR clock-in tracking",
+        name: "Caregiver QR clock-in tracking",
         homecare: true,
         facility: false,
         hybrid: true,
@@ -211,7 +211,13 @@ const features = [
         hybrid: true,
     },
     {
-        name: "Multiple branches & staff management",
+        name: "Up to 5 branches on one subscription",
+        homecare: true,
+        facility: true,
+        hybrid: true,
+    },
+    {
+        name: "Per-branch staff, services & settings",
         homecare: true,
         facility: true,
         hybrid: true,

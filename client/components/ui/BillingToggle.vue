@@ -16,13 +16,13 @@
             :aria-checked="modelValue === 'yearly'"
             @click="toggle"
             :class="[
-                'relative w-12 h-7 rounded-full transition-colors duration-200',
+                'flex w-12 h-7 shrink-0 items-center rounded-full p-[3px] transition-colors duration-200',
                 modelValue === 'yearly' ? 'bg-primary' : 'bg-gray-300 dark:bg-white/20',
             ]"
         >
             <span
                 :class="[
-                    'absolute top-[3px] left-[3px] w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 dark:bg-secondary',
+                    'h-5 w-5 rounded-full bg-white shadow transition-transform duration-200',
                     modelValue === 'yearly' ? 'translate-x-5' : 'translate-x-0',
                 ]"
             />

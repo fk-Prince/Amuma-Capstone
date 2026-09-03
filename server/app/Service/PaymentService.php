@@ -95,6 +95,7 @@ class PaymentService
                     'receipt_id' => $receipt->receipt_id,
                     'amount' => $paymentAmount,
                     'payment_method' => $method,
+                    'description' => $invoice->paymentDescription(),
                     'masked_card_number' => $maskedAccountDetails,
                     'prior_balance' => $priorBalance,
                 ]);
@@ -127,7 +128,9 @@ class PaymentService
                 'remaining_balance' => round($totalBalance - $applied, 2),
                 'receipt' => new PaymentReceiptResource(
                     $receipt->load([
-                        'payments.invoice',
+                        'payments.invoice.invoiceServices.scheduleService.service',
+                'payments.invoice.invoiceAccommodation.branchContract',
+                'payments.invoice.invoiceAccommodation.patientAdmission.bed.room',
                         'branch.location',
                         'patient',
                         'client',
@@ -141,7 +144,9 @@ class PaymentService
     {
         $receipt = PaymentReceipt::where('receipt_no', $payload['receipt_no'])
             ->with([
-                'payments.invoice',
+                'payments.invoice.invoiceServices.scheduleService.service',
+                'payments.invoice.invoiceAccommodation.branchContract',
+                'payments.invoice.invoiceAccommodation.patientAdmission.bed.room',
                 'branch.location',
                 'patient',
                 'client',

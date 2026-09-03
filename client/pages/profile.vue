@@ -1,6 +1,6 @@
 <template>
     <div class="min-h-screen bg-slate-50/70 pt-[100px] dark:bg-surface">
-        <div class="mx-auto max-w-5xl px-5 pb-16 sm:px-8">
+        <div class="mx-auto max-w-[100rem] px-6 pb-16">
             <div
                 class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between"
             >
@@ -148,74 +148,67 @@
                             </p>
                         </div>
 
-                        <div class="space-y-5">
-                            <div class="grid gap-5 sm:grid-cols-3">
-                                <BaseInput
-                                    v-model="form.first_name"
-                                    label="First name"
-                                    :error="errors.first_name"
-                                    @update:modelValue="
-                                        clearError('first_name')
-                                    "
-                                />
+                        <div class="grid gap-5 sm:grid-cols-6">
+                            <BaseInput
+                                v-model="form.first_name"
+                                label="First name"
+                                class-name="sm:col-span-2"
+                                :error="errors.first_name"
+                                @update:modelValue="clearError('first_name')"
+                            />
 
-                                <BaseInput
-                                    v-model="form.middle_name"
-                                    label="Middle name"
-                                    :error="errors.middle_name"
-                                    @update:modelValue="
-                                        clearError('middle_name')
-                                    "
-                                />
+                            <BaseInput
+                                v-model="form.middle_name"
+                                label="Middle name"
+                                class-name="sm:col-span-2"
+                                :error="errors.middle_name"
+                                @update:modelValue="clearError('middle_name')"
+                            />
 
-                                <BaseInput
-                                    v-model="form.last_name"
-                                    label="Last name"
-                                    :error="errors.last_name"
-                                    @update:modelValue="clearError('last_name')"
-                                />
-                            </div>
+                            <BaseInput
+                                v-model="form.last_name"
+                                label="Last name"
+                                class-name="sm:col-span-2"
+                                :error="errors.last_name"
+                                @update:modelValue="clearError('last_name')"
+                            />
 
                             <BaseInput
                                 v-model="form.email"
                                 label="Email"
                                 mode="email"
+                                class-name="sm:col-span-6"
                                 :error="errors.email"
                                 @update:modelValue="clearError('email')"
                             />
 
-                            <div class="grid gap-5 sm:grid-cols-2">
-                                <PhoneInput
-                                    v-model="form.phone_number"
-                                    label="Contact number"
-                                    :error="errors.phone_number"
-                                    @update:modelValue="
-                                        clearError('phone_number')
-                                    "
-                                />
+                            <PhoneInput
+                                v-model="form.phone_number"
+                                label="Contact number"
+                                class-name="sm:col-span-3"
+                                :error="errors.phone_number"
+                                @update:modelValue="clearError('phone_number')"
+                            />
 
-                                <BaseInput
-                                    v-if="roles.is_employee"
-                                    v-model="form.birth_date"
-                                    label="Birth date"
-                                    mode="date"
-                                    :max="today"
-                                    :error="errors.birth_date"
-                                    @update:modelValue="
-                                        clearError('birth_date')
-                                    "
-                                />
+                            <BaseInput
+                                v-if="roles.is_employee"
+                                v-model="form.birth_date"
+                                label="Birth date"
+                                mode="date"
+                                class-name="sm:col-span-3"
+                                :max="today"
+                                :error="errors.birth_date"
+                                @update:modelValue="clearError('birth_date')"
+                            />
 
-                                <BaseInput
-                                    v-if="roles.is_client"
-                                    v-model="form.occupation"
-                                    label="Occupation"
-                                    :error="errors.occupation"
-                                    @update:modelValue="
-                                        clearError('occupation')
-                                    "
-                                />
-                            </div>
+                            <BaseInput
+                                v-if="roles.is_client"
+                                v-model="form.occupation"
+                                label="Occupation"
+                                class-name="sm:col-span-3"
+                                :error="errors.occupation"
+                                @update:modelValue="clearError('occupation')"
+                            />
                         </div>
                     </section>
 
@@ -269,35 +262,35 @@
                                 </template>
                             </ClientOnly>
 
-                            <div v-else class="space-y-5">
+                            <div v-else class="grid gap-5 sm:grid-cols-6">
                                 <BaseInput
                                     v-model="form.street"
                                     label="Street"
+                                    class-name="sm:col-span-6"
                                     :error="errors.street"
                                     @update:modelValue="clearError('street')"
                                 />
 
-                                <div class="grid gap-5 sm:grid-cols-2">
-                                    <BaseInput
-                                        v-model="form.city"
-                                        label="City"
-                                        :error="errors.city"
-                                        @update:modelValue="clearError('city')"
-                                    />
+                                <BaseInput
+                                    v-model="form.city"
+                                    label="City"
+                                    class-name="sm:col-span-3"
+                                    :error="errors.city"
+                                    @update:modelValue="clearError('city')"
+                                />
 
-                                    <BaseInput
-                                        v-model="form.province"
-                                        label="Province"
-                                        :error="errors.province"
-                                        @update:modelValue="
-                                            clearError('province')
-                                        "
-                                    />
-                                </div>
+                                <BaseInput
+                                    v-model="form.province"
+                                    label="Province"
+                                    class-name="sm:col-span-3"
+                                    :error="errors.province"
+                                    @update:modelValue="clearError('province')"
+                                />
 
                                 <BaseInput
                                     v-model="form.country"
                                     label="Country"
+                                    class-name="sm:col-span-3"
                                     :error="errors.country"
                                     @update:modelValue="clearError('country')"
                                 />
@@ -393,8 +386,7 @@
                             <p
                                 class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
                             >
-                                Most details here are read-only. Contact number
-                                and occupation can be updated directly.
+                                Details here are read-only.
                             </p>
                         </div>
 
@@ -413,45 +405,6 @@
                                     class="truncate text-sm font-medium text-slate-800 dark:text-white"
                                 >
                                     {{ signInMethods }}
-                                </dd>
-                            </div>
-
-                            <div
-                                class="flex items-center justify-between gap-4 py-2.5"
-                            >
-                                <dt
-                                    class="shrink-0 text-sm text-slate-500 dark:text-gray-400"
-                                >
-                                    Contact number
-                                </dt>
-                                <dd class="w-full max-w-[220px]">
-                                    <PhoneInput
-                                        v-model="form.phone_number"
-                                        :error="errors.phone_number"
-                                        @update:modelValue="
-                                            clearError('phone_number')
-                                        "
-                                    />
-                                </dd>
-                            </div>
-
-                            <div
-                                v-if="roles.is_client"
-                                class="flex items-center justify-between gap-4 py-2.5"
-                            >
-                                <dt
-                                    class="shrink-0 text-sm text-slate-500 dark:text-gray-400"
-                                >
-                                    Occupation
-                                </dt>
-                                <dd class="w-full max-w-[220px]">
-                                    <BaseInput
-                                        v-model="form.occupation"
-                                        :error="errors.occupation"
-                                        @update:modelValue="
-                                            clearError('occupation')
-                                        "
-                                    />
                                 </dd>
                             </div>
 
@@ -636,7 +589,6 @@ const meta = reactive({
     uuid: "",
     created_at: "",
     has_password: true,
-    full_address: "",
 });
 
 const original = ref<Record<string, any>>({});
@@ -704,7 +656,6 @@ const signInMethods = computed(() => {
 });
 
 const accountRows = computed(() => [
-    { label: "Address", value: meta.full_address || "Not set" },
     { label: "Member since", value: memberSince.value },
     { label: "Account ID", value: meta.uuid ? meta.uuid.split("-")[0] : "—" },
 ]);
@@ -747,7 +698,6 @@ const applyProfile = (data: any) => {
     meta.uuid = data.uuid ?? "";
     meta.created_at = data.created_at ?? "";
     meta.has_password = data.has_password !== false;
-    meta.full_address = data.location?.full_address ?? "";
 
     avatarPreview.value = data.avatar ?? null;
     avatarCleared.value = false;

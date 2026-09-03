@@ -103,14 +103,14 @@ onBeforeUnmount(() => {
 
                 <article
                     id="receipt-print"
-                    class="receipt-form relative bg-white p-6 text-black shadow-2xl dark:bg-secondary"
+                    class="receipt-form relative bg-white p-6 text-black shadow-2xl"
                 >
                     <div
                         v-if="receipt.is_voided"
                         class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
                     >
                         <span
-                            class="-rotate-12 text-8xl font-black tracking-widest text-rose-600/20 dark:text-rose-300"
+                            class="-rotate-12 text-8xl font-black tracking-widest text-rose-600/20"
                         >
                             VOID
                         </span>
@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
                                 class="w-[190px] shrink-0 border-l border-black p-2 text-[9px]"
                             >
                                 <p
-                                    class="text-right text-[11px] font-extrabold uppercase tracking-[0.16em] text-rose-600 dark:text-rose-300"
+                                    class="text-right text-[11px] font-extrabold uppercase tracking-[0.16em] text-rose-600"
                                 >
                                     Original
                                 </p>
@@ -297,7 +297,10 @@ onBeforeUnmount(() => {
                                     </td>
 
                                     <td class="border-r border-black px-2 py-1">
-                                        Payment for balance
+                                        {{
+                                            line.description ||
+                                            "Payment for balance"
+                                        }}
                                     </td>
 
                                     <td
@@ -397,7 +400,7 @@ onBeforeUnmount(() => {
 
                                         <span
                                             v-if="settled"
-                                            class="ml-1 text-[8px] font-bold uppercase text-emerald-700 dark:text-emerald-300"
+                                            class="ml-1 text-[8px] font-bold uppercase text-emerald-700"
                                         >
                                             Settled
                                         </span>
@@ -478,7 +481,7 @@ onBeforeUnmount(() => {
                                 </p>
 
                                 <p
-                                    class="mt-1 font-mono text-[13px] font-extrabold tracking-wider text-rose-600 dark:text-rose-300"
+                                    class="mt-1 font-mono text-[13px] font-extrabold tracking-wider text-rose-600"
                                 >
                                     No. {{ receipt.receipt_no }}
                                 </p>
@@ -488,7 +491,7 @@ onBeforeUnmount(() => {
 
                     <p
                         v-if="receipt.is_voided"
-                        class="mt-2 border-2 border-rose-600 px-3 py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-rose-700 dark:text-rose-300"
+                        class="mt-2 border-2 border-rose-600 px-3 py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-rose-700"
                     >
                         Voided {{ longDateTime(receipt.voided_at) }}
 

@@ -19,6 +19,7 @@ class Payment extends Model
         'amount',
         'reference_id',
         'payment_method',
+        'description',
         'masked_card_number',
         'prior_balance',
         'new_balance',

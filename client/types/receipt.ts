@@ -4,6 +4,7 @@ export interface ReceiptLine {
     payment_id: number | null;
     payment_reference: string | null;
     invoice_code: string;
+    description?: string | null;
     invoice_date: string | null;
     prior_balance: number;
     amount_applied: number;

@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen pt-[50px] bg-white dark:bg-secondary">
+    <div class="min-h-screen pt-[50px] bg-white dark:bg-surface">
         <main class="max-w-6xl mx-auto px-6 py-16">
             <div class="text-center mb-10">
                 <p
@@ -27,20 +27,30 @@
                 <div
                     v-for="i in 3"
                     :key="i"
-                    class="rounded-3xl border border-gray-200 p-8 animate-pulse dark:border-white/10"
+                    class="rounded-3xl border border-gray-200 p-8 animate-pulse dark:border-white/10 dark:bg-secondary"
                 >
-                    <div class="h-4 w-20 bg-gray-200 rounded mb-6"></div>
+                    <div
+                        class="h-4 w-20 bg-gray-200 rounded mb-6 dark:bg-white/10"
+                    ></div>
 
-                    <div class="h-8 w-40 bg-gray-200 rounded mb-4"></div>
+                    <div
+                        class="h-8 w-40 bg-gray-200 rounded mb-4 dark:bg-white/10"
+                    ></div>
 
                     <div class="space-y-2 mb-8">
-                        <div class="h-4 bg-gray-200 rounded"></div>
-                        <div class="h-4 w-5/6 bg-gray-200 rounded"></div>
+                        <div class="h-4 bg-gray-200 rounded dark:bg-white/10"></div>
+                        <div
+                            class="h-4 w-5/6 bg-gray-200 rounded dark:bg-white/10"
+                        ></div>
                     </div>
 
-                    <div class="h-10 w-28 bg-gray-200 rounded mb-8"></div>
+                    <div
+                        class="h-10 w-28 bg-gray-200 rounded mb-8 dark:bg-white/10"
+                    ></div>
 
-                    <div class="h-12 bg-gray-200 rounded-xl mb-8"></div>
+                    <div
+                        class="h-12 bg-gray-200 rounded-xl mb-8 dark:bg-white/10"
+                    ></div>
 
                     <div class="space-y-4">
                         <div
@@ -49,9 +59,11 @@
                             class="flex items-center gap-3"
                         >
                             <div
-                                class="w-5 h-5 rounded-full bg-gray-200 flex-shrink-0"
+                                class="w-5 h-5 rounded-full bg-gray-200 flex-shrink-0 dark:bg-white/10"
                             ></div>
-                            <div class="h-4 flex-1 bg-gray-200 rounded"></div>
+                            <div
+                                class="h-4 flex-1 bg-gray-200 rounded dark:bg-white/10"
+                            ></div>
                         </div>
                     </div>
                 </div>
@@ -75,12 +87,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref } from "vue";
 import BillingToggle from "~/components/ui/BillingToggle.vue";
 import PricingCard from "~/components/ui/PricingCard.vue";
-import { planService } from "@/api/plan/PlanService";
 import ComparableTable from "~/components/ui/ComparableTable.vue";
-import { useSubscriptionCheckout } from "~/stores/subscription";
+import { usePlanCards } from "~/composables/usePlanCards";
 
 useHead({ title: "Product" });
 
@@ -91,63 +102,5 @@ definePageMeta({
 });
 
 const billingCycle = ref<"monthly" | "yearly">("monthly");
-const loading = ref(true);
-const checkout = useSubscriptionCheckout();
-checkout.selectedInterval = billingCycle.value;
-
-watch(billingCycle, (val) => {
-    checkout.selectedInterval = val;
-});
-
-onMounted(async () => {
-    try {
-        const plans = await planService.list();
-        checkout.setPlans(plans);
-    } finally {
-        loading.value = false;
-    }
-});
-
-const PLAN_LABELS = ["Plan A", "Plan B", "Plan C"];
-
-const formattedPlans = computed(() =>
-    checkout.plans.map((plan: any, index: number) => ({
-        planLabel: PLAN_LABELS[index] ?? `Plan ${index + 1}`,
-        ...plan,
-        title: plan.name,
-        description: plan.description,
-        price:
-            billingCycle.value === "yearly"
-                ? plan.yearly_price
-                : plan.monthly_price,
-
-        monthly_price: Number(plan.monthly_price),
-        yearly_price: Number(plan.yearly_price),
-        billing_interval: billingCycle.value,
-        ctaText: `Subscribe to ${plan.name}`,
-        featured: index === checkout.plans.length - 1,
-        features: plan.name.includes("Home")
-            ? [
-                  "Homecare visits scheduling",
-                  "Caregiver & nurse assignment with QR clock-in",
-                  "eMAR & vital signs tracking",
-                  "Family portal & messaging",
-                  "Billing, invoices & online payments",
-              ]
-            : plan.name.includes("In-house")
-              ? [
-                    "Admissions & discharge management",
-                    "VIP & Common room contracts",
-                    "eMAR & vital signs tracking",
-                    "VIP CCTV access",
-                    "Family portal & messaging",
-                    "Billing, invoices & online payments",
-                ]
-              : [
-                    "All Homecare features",
-                    "All Facility features",
-                    "One subscription for both services",
-                ],
-    })),
-);
+const { checkout, loading, formattedPlans } = usePlanCards(billingCycle);
 </script>

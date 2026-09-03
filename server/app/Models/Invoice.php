@@ -47,6 +47,37 @@ class Invoice extends Model
         );
     }
 
+    public function paymentDescription(): string
+    {
+        $services = $this->invoiceServices
+            ->map(fn($line) => $line->scheduleService?->service_id === null
+                ? 'Activities of Daily Living (ADL)'
+                : $line->scheduleService?->service?->service_name)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($services->isNotEmpty()) {
+            return $services->implode(', ');
+        }
+
+        $stays = $this->invoiceAccommodation
+            ->map(function ($accommodation) {
+                return collect([
+                    $accommodation->branchContract?->accommodation_type,
+                    $accommodation->branchContract?->billing_cycle
+                ])->filter()->implode(' · ');
+            })
+            ->filter()
+            ->values();
+
+        if ($stays->isNotEmpty()) {
+            return $stays->implode(' | ');
+        }
+
+        return 'Payment for balance';
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(

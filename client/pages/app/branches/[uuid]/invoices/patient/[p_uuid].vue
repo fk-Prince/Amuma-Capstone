@@ -2,7 +2,7 @@
     <div
         class="min-h-screen-header w-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8 dark:bg-surface"
     >
-        <div class="mx-auto max-w-[1600px] space-y-5">
+        <div class="mx-auto space-y-5">
             <div
                 class="flex flex-wrap items-center justify-between gap-3 no-print"
             >
@@ -49,19 +49,87 @@
 
             <div
                 v-if="loading"
-                class="rounded-2xl border border-primary-100 bg-white p-12 text-center shadow-sm dark:border-primary-500/20 dark:bg-secondary"
+                class="grid animate-pulse items-start gap-5 xl:grid-cols-[minmax(0,1fr)_500px]"
             >
+                <div class="space-y-5">
+                    <div
+                        class="overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-sm dark:border-primary-500/20 dark:bg-secondary"
+                    >
+                        <div
+                            class="space-y-3 border-b border-primary-100 px-6 py-7 dark:border-primary-500/20"
+                        >
+                            <div
+                                class="h-4 w-40 rounded bg-primary-100/70 dark:bg-white/10"
+                            />
+                            <div
+                                class="h-7 w-64 rounded bg-primary-100/70 dark:bg-white/10"
+                            />
+                            <div
+                                class="h-3 w-48 rounded bg-primary-100/50 dark:bg-white/5"
+                            />
+                        </div>
+
+                        <div
+                            class="grid border-b border-primary-100 sm:grid-cols-2 lg:grid-cols-4 dark:border-primary-500/20"
+                        >
+                            <div
+                                v-for="n in 4"
+                                :key="n"
+                                class="space-y-2 border-b border-primary-100 px-6 py-5 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0 dark:border-primary-500/20"
+                            >
+                                <div
+                                    class="h-2.5 w-20 rounded bg-primary-100/70 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-6 w-28 rounded bg-primary-100/70 dark:bg-white/10"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 px-6 py-6">
+                            <div
+                                v-for="n in 4"
+                                :key="n"
+                                class="h-12 rounded-xl bg-primary-50/70 dark:bg-white/5"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="grid gap-5 lg:grid-cols-2">
+                        <div
+                            v-for="n in 2"
+                            :key="n"
+                            class="space-y-3 rounded-2xl border border-primary-100 bg-white p-6 shadow-sm dark:border-primary-500/20 dark:bg-secondary"
+                        >
+                            <div
+                                class="h-4 w-32 rounded bg-primary-100/70 dark:bg-white/10"
+                            />
+
+                            <div
+                                v-for="row in 3"
+                                :key="row"
+                                class="h-10 rounded-lg bg-primary-50/70 dark:bg-white/5"
+                            />
+                        </div>
+                    </div>
+                </div>
+
                 <div
-                    class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary-100 border-t-primary-600 dark:border-primary-500/20"
-                />
-
-                <p class="mt-4 text-sm font-medium text-secondary dark:text-white">
-                    Loading patient account...
-                </p>
-
-                <p class="mt-1 text-xs text-muted dark:text-gray-400">
-                    Please wait while the invoice information is loaded.
-                </p>
+                    class="space-y-4 rounded-2xl border border-primary-100 bg-white p-6 shadow-sm dark:border-primary-500/20 dark:bg-secondary"
+                >
+                    <div
+                        class="h-4 w-28 rounded bg-primary-100/70 dark:bg-white/10"
+                    />
+                    <div
+                        class="h-8 w-40 rounded bg-primary-100/70 dark:bg-white/10"
+                    />
+                    <div
+                        class="h-24 rounded-xl bg-primary-50/70 dark:bg-white/5"
+                    />
+                    <div
+                        class="h-10 rounded-xl bg-primary-50/70 dark:bg-white/5"
+                    />
+                </div>
             </div>
 
             <div
@@ -86,7 +154,9 @@
                     </svg>
                 </div>
 
-                <p class="mt-4 text-sm font-semibold text-secondary dark:text-white">
+                <p
+                    class="mt-4 text-sm font-semibold text-secondary dark:text-white"
+                >
                     Unable to load patient account
                 </p>
 
@@ -182,12 +252,24 @@
                                     label="Total Paid"
                                     :value="summary.total_paid"
                                     variant="paid"
+                                    :action-label="
+                                        receiptGroups.length
+                                            ? 'View receipts'
+                                            : undefined
+                                    "
+                                    :on-action="() => scrollTo(paymentsSection)"
                                 />
 
                                 <SummaryCard
                                     label="Refunded"
                                     :value="summary.total_refunded"
                                     variant="refunded"
+                                    :action-label="
+                                        refundHistory.length
+                                            ? 'View refunds'
+                                            : undefined
+                                    "
+                                    :on-action="() => scrollTo(refundsSection)"
                                 />
 
                                 <SummaryCard
@@ -208,7 +290,9 @@
                                         Refund Processing
                                     </p>
 
-                                    <p class="mt-1 text-xs text-muted dark:text-gray-400">
+                                    <p
+                                        class="mt-1 text-xs text-muted dark:text-gray-400"
+                                    >
                                         A refund is currently being processed.
                                     </p>
                                 </div>
@@ -635,6 +719,215 @@
                                 </div>
                             </section>
                         </section>
+
+                        <section
+                            v-if="transactions.length || refundHistory.length"
+                            class="grid gap-5 lg:grid-cols-2"
+                        >
+                            <div
+                                ref="paymentsSection"
+                                class="overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-sm dark:border-primary-500/20 dark:bg-secondary"
+                            >
+                                <div
+                                    class="flex items-center justify-between gap-3 border-b border-primary-100 px-6 py-4 dark:border-primary-500/20"
+                                >
+                                    <div>
+                                        <p
+                                            class="text-sm font-semibold text-secondary dark:text-white"
+                                        >
+                                            Payment Receipts
+                                        </p>
+
+                                        <p
+                                            class="text-xs text-muted dark:text-gray-400"
+                                        >
+                                            {{ receiptGroups.length }} recorded
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        v-if="receiptGroups.length"
+                                        type="button"
+                                        class="shrink-0 text-xs font-semibold text-primary-600 hover:underline dark:text-primary-300"
+                                        @click="transactionsOpen = true"
+                                    >
+                                        View all
+                                    </button>
+                                </div>
+
+                                <ul
+                                    v-if="receiptGroups.length"
+                                    class="divide-y divide-primary-100 dark:divide-primary-500/20"
+                                >
+                                    <li
+                                        v-for="receipt in receiptGroups.slice(
+                                            0,
+                                            5,
+                                        )"
+                                        :key="receipt.key"
+                                        class="flex items-center gap-3 px-6 py-3.5 transition-colors"
+                                        :class="
+                                            receipt.receipt_no
+                                                ? 'cursor-pointer hover:bg-primary-50/40 dark:hover:bg-white/5'
+                                                : ''
+                                        "
+                                        @click="
+                                            openReceiptByNo(receipt.receipt_no)
+                                        "
+                                    >
+                                        <span
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300"
+                                        >
+                                            <Loader2
+                                                v-if="
+                                                    loadingReceipt ===
+                                                    receipt.receipt_no
+                                                "
+                                                class="h-4 w-4 animate-spin"
+                                            />
+
+                                            <Receipt v-else class="h-4 w-4" />
+                                        </span>
+
+                                        <div class="min-w-0 flex-1">
+                                            <p
+                                                class="truncate font-mono text-xs font-semibold text-secondary dark:text-white"
+                                            >
+                                                {{
+                                                    receipt.receipt_no ??
+                                                    "No receipt"
+                                                }}
+                                            </p>
+
+                                            <p
+                                                class="truncate text-[11px] text-muted dark:text-gray-400"
+                                            >
+                                                {{
+                                                    invoiceCodesLabel(
+                                                        receipt.invoice_codes,
+                                                    )
+                                                }}
+                                                · {{ receipt.payment_method }} ·
+                                                {{
+                                                    formatDateTime(
+                                                        receipt.created_at,
+                                                    )
+                                                }}
+                                            </p>
+                                        </div>
+
+                                        <p
+                                            class="shrink-0 text-sm font-bold text-primary-700 dark:text-primary-300"
+                                        >
+                                            ₱{{ formatMoney(receipt.amount) }}
+                                        </p>
+                                    </li>
+                                </ul>
+
+                                <p
+                                    v-else
+                                    class="px-6 py-8 text-center text-xs text-muted dark:text-gray-400"
+                                >
+                                    No payment receipts recorded yet.
+                                </p>
+                            </div>
+
+                            <div
+                                ref="refundsSection"
+                                class="overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-sm dark:border-primary-500/20 dark:bg-secondary"
+                            >
+                                <div
+                                    class="flex items-center justify-between gap-3 border-b border-primary-100 px-6 py-4 dark:border-primary-500/20"
+                                >
+                                    <div>
+                                        <p
+                                            class="text-sm font-semibold text-secondary dark:text-white"
+                                        >
+                                            Refunds
+                                        </p>
+
+                                        <p
+                                            class="text-xs text-muted dark:text-gray-400"
+                                        >
+                                            {{ refundHistory.length }} recorded
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        v-if="refundHistory.length"
+                                        type="button"
+                                        class="shrink-0 text-xs font-semibold text-primary-600 hover:underline dark:text-primary-300"
+                                        @click="refundsOpen = true"
+                                    >
+                                        View all
+                                    </button>
+                                </div>
+
+                                <ul
+                                    v-if="refundHistory.length"
+                                    class="divide-y divide-primary-100 dark:divide-primary-500/20"
+                                >
+                                    <li
+                                        v-for="refund in refundHistory.slice(
+                                            0,
+                                            5,
+                                        )"
+                                        :key="refund.refund_id"
+                                        class="flex items-center gap-3 px-6 py-3.5 transition-colors hover:bg-accent-50/40 dark:hover:bg-white/5"
+                                    >
+                                        <span
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-500/15 dark:text-accent-300"
+                                        >
+                                            <Undo2 class="h-4 w-4" />
+                                        </span>
+
+                                        <div class="min-w-0 flex-1">
+                                            <p
+                                                class="truncate font-mono text-xs font-semibold text-secondary dark:text-white"
+                                            >
+                                                {{ refund.invoice_code }}
+                                            </p>
+
+                                            <p
+                                                class="truncate text-[11px] text-muted dark:text-gray-400"
+                                            >
+                                                {{
+                                                    formatDateTime(
+                                                        refund.created_at,
+                                                    )
+                                                }}
+                                            </p>
+                                        </div>
+
+                                        <div class="shrink-0 text-right">
+                                            <p
+                                                class="text-sm font-bold text-accent-700 dark:text-accent-300"
+                                            >
+                                                ₱{{
+                                                    formatMoney(refund.amount)
+                                                }}
+                                            </p>
+
+                                            <span
+                                                class="mt-0.5 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-semibold capitalize"
+                                                :class="
+                                                    statusClasses(refund.status)
+                                                "
+                                            >
+                                                {{ refund.status }}
+                                            </span>
+                                        </div>
+                                    </li>
+                                </ul>
+
+                                <p
+                                    v-else
+                                    class="px-6 py-8 text-center text-xs text-muted dark:text-gray-400"
+                                >
+                                    No refunds recorded yet.
+                                </p>
+                            </div>
+                        </section>
                     </main>
 
                     <aside class="xl:sticky xl:top-6 print:hidden">
@@ -688,23 +981,77 @@
                                     </div>
                                 </div>
 
-                                <p class="mt-2 text-xs text-muted dark:text-gray-400">
+                                <p
+                                    class="mt-2 text-xs text-muted dark:text-gray-400"
+                                >
                                     Amount still due from the patient.
                                 </p>
                             </div>
+                            <div
+                                v-if="payableInvoices.length"
+                                class="flex items-center justify-between gap-3 border-b border-primary-100 px-6 py-4 dark:border-primary-500/20"
+                            >
+                                <div class="min-w-0">
+                                    <p
+                                        class="text-sm font-semibold text-secondary dark:text-white"
+                                    >
+                                        {{ selectionSummaryLabel }}
+                                    </p>
 
-                            <div class="p-6">
+                                    <p
+                                        class="text-xs text-muted dark:text-gray-400"
+                                    >
+                                        ₱{{ formatMoney(selectedBalance) }} will
+                                        be settled
+                                    </p>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="shrink-0 rounded-xl border border-primary-500 px-3 py-2 text-xs font-semibold text-primary-600 transition hover:bg-primary-500 hover:text-white dark:text-primary-300"
+                                    @click="invoicePickerOpen = true"
+                                >
+                                    Choose invoices
+                                </button>
+                            </div>
+
+                            <div class="space-y-4 p-6">
+                                <div>
+                                    <label
+                                        class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted dark:text-gray-400"
+                                    >
+                                        Received from
+                                    </label>
+
+                                    <input
+                                        v-model="payorName"
+                                        type="text"
+                                        :placeholder="
+                                            summary.patient?.full_name ??
+                                            'Name of payer'
+                                        "
+                                        class="mt-1.5 w-full rounded-xl border border-primary-100 bg-white px-3.5 py-2.5 text-sm text-secondary outline-none transition placeholder:text-muted focus:border-primary dark:border-primary-500/20 dark:bg-secondary dark:text-white dark:placeholder:text-gray-500"
+                                    />
+
+                                    <p
+                                        class="mt-1 text-[11px] text-muted dark:text-gray-400"
+                                    >
+                                        Leave blank if the patient paid in
+                                        person.
+                                    </p>
+                                </div>
+
                                 <PaymentForm
                                     :processing="processingPayment"
-                                    :total-amount="summary.total_balance"
+                                    :total-amount="selectedBalance"
                                     :enable-card="false"
                                     :enable-g-cash="false"
                                     :enable-cash="true"
                                     title="Complete Payment"
-                                    :description="`Outstanding balance: ₱${formatMoney(summary.total_balance)}`"
+                                    :description="paymentDescription"
                                     cash-label="Confirm Cash Payment"
                                     cash-processing-label="Confirming payment..."
-                                    cash-description="Enter the cash amount received from the patient."
+                                    cash-description="Enter the cash amount received at the counter."
                                     @cash-pay="handleCashPay"
                                 />
                             </div>
@@ -736,7 +1083,9 @@
                                 Account Settled
                             </p>
 
-                            <p class="mt-1 text-xs leading-5 text-muted dark:text-gray-400">
+                            <p
+                                class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
+                            >
                                 All outstanding invoices for this patient have
                                 been fully paid.
                             </p>
@@ -755,7 +1104,9 @@
                                 <div
                                     class="flex items-center justify-between gap-3"
                                 >
-                                    <span class="text-xs text-muted dark:text-gray-400">
+                                    <span
+                                        class="text-xs text-muted dark:text-gray-400"
+                                    >
                                         Total invoices
                                     </span>
 
@@ -769,7 +1120,9 @@
                                 <div
                                     class="flex items-center justify-between gap-3"
                                 >
-                                    <span class="text-xs text-muted dark:text-gray-400">
+                                    <span
+                                        class="text-xs text-muted dark:text-gray-400"
+                                    >
                                         Admissions
                                     </span>
 
@@ -783,7 +1136,9 @@
                                 <div
                                     class="flex items-center justify-between gap-3"
                                 >
-                                    <span class="text-xs text-muted dark:text-gray-400">
+                                    <span
+                                        class="text-xs text-muted dark:text-gray-400"
+                                    >
                                         Services
                                     </span>
 
@@ -794,7 +1149,9 @@
                                     </span>
                                 </div>
 
-                                <div class="border-t border-primary-100 pt-3 dark:border-primary-500/20">
+                                <div
+                                    class="border-t border-primary-100 pt-3 dark:border-primary-500/20"
+                                >
                                     <div
                                         class="flex items-center justify-between gap-3"
                                     >
@@ -849,7 +1206,9 @@
                 <div
                     class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-secondary"
                 >
-                    <div class="border-b border-primary-100 px-6 py-5 dark:border-primary-500/20">
+                    <div
+                        class="border-b border-primary-100 px-6 py-5 dark:border-primary-500/20"
+                    >
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <p
@@ -864,7 +1223,9 @@
                                     Process Refund
                                 </h3>
 
-                                <p class="mt-1 text-xs text-muted dark:text-gray-400">
+                                <p
+                                    class="mt-1 text-xs text-muted dark:text-gray-400"
+                                >
                                     Please confirm the refund amount below.
                                 </p>
                             </div>
@@ -921,11 +1282,15 @@
                             <div
                                 class="flex items-center justify-between gap-3"
                             >
-                                <span class="text-xs text-muted dark:text-gray-400">
+                                <span
+                                    class="text-xs text-muted dark:text-gray-400"
+                                >
                                     Refundable Amount
                                 </span>
 
-                                <span class="text-sm font-bold text-secondary dark:text-white">
+                                <span
+                                    class="text-sm font-bold text-secondary dark:text-white"
+                                >
                                     ₱{{ formatMoney(refundableAmount) }}
                                 </span>
                             </div>
@@ -993,7 +1358,9 @@
                                 Discharge Calculation
                             </h3>
 
-                            <p class="mt-1 text-xs text-muted dark:text-gray-400">
+                            <p
+                                class="mt-1 text-xs text-muted dark:text-gray-400"
+                            >
                                 Admission #{{
                                     selectedDischargeCalculation.admission_id
                                 }}
@@ -1150,11 +1517,15 @@
                         <div
                             class="rounded-xl border border-accent-100 bg-accent-50/40 p-4 dark:border-accent-500/20 dark:bg-accent-500/15"
                         >
-                            <p class="text-xs font-semibold text-accent-700 dark:text-accent-300">
+                            <p
+                                class="text-xs font-semibold text-accent-700 dark:text-accent-300"
+                            >
                                 Termination Fee Window
                             </p>
 
-                            <p class="mt-1 text-xs leading-5 text-muted dark:text-gray-400">
+                            <p
+                                class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
+                            >
                                 This admission is currently within the
                                 termination fee window. A
                                 {{
@@ -1184,11 +1555,346 @@
             :receipt="activeReceipt"
             @close="activeReceipt = null"
         />
+
+        <Teleport to="body">
+            <div
+                v-if="transactionsOpen || refundsOpen"
+                class="fixed inset-0 z-[70] flex items-center justify-center p-4"
+            >
+                <div
+                    class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"
+                    @click="closeHistory"
+                />
+
+                <div
+                    class="relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-secondary"
+                >
+                    <div
+                        class="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
+                    >
+                        <div class="min-w-0">
+                            <p
+                                class="text-xs font-semibold text-gray-400 dark:text-gray-500"
+                            >
+                                {{
+                                    transactionsOpen
+                                        ? "Payment receipts"
+                                        : "Refund history"
+                                }}
+                            </p>
+
+                            <h2
+                                class="mt-0.5 truncate text-lg font-semibold text-gray-900 dark:text-white"
+                            >
+                                {{ summary?.patient?.full_name ?? "Patient" }}
+                            </h2>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/10"
+                            @click="closeHistory"
+                        >
+                            <X class="h-4.5 w-4.5" />
+                        </button>
+                    </div>
+
+                    <ul
+                        v-if="transactionsOpen"
+                        class="min-h-0 flex-1 divide-y divide-gray-100 overflow-y-auto dark:divide-white/10"
+                    >
+                        <li
+                            v-for="receipt in receiptGroups"
+                            :key="receipt.key"
+                            class="flex items-start justify-between gap-4 px-6 py-4 transition-colors"
+                            :class="
+                                receipt.receipt_no
+                                    ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5'
+                                    : ''
+                            "
+                            @click="openReceiptByNo(receipt.receipt_no)"
+                        >
+                            <div class="min-w-0">
+                                <p
+                                    class="flex items-center gap-1.5 font-mono text-sm font-semibold text-secondary dark:text-white"
+                                >
+                                    <Loader2
+                                        v-if="
+                                            loadingReceipt ===
+                                            receipt.receipt_no
+                                        "
+                                        class="h-3.5 w-3.5 animate-spin"
+                                    />
+                                    {{ receipt.receipt_no ?? "No receipt" }}
+                                </p>
+
+                                <p
+                                    class="text-xs text-muted dark:text-gray-400"
+                                >
+                                    {{ receipt.invoice_codes.join(", ") }}
+
+                                    <span
+                                        v-if="receipt.invoice_codes.length > 1"
+                                        class="text-gray-400 dark:text-gray-500"
+                                    >
+                                        ({{ receipt.invoice_codes.length }}
+                                        invoices)
+                                    </span>
+                                </p>
+
+                                <p
+                                    class="text-[11px] text-gray-400 dark:text-gray-500"
+                                >
+                                    {{ receipt.payment_method }} ·
+                                    {{ formatDateTime(receipt.created_at) }}
+                                </p>
+                            </div>
+
+                            <p
+                                class="shrink-0 text-sm font-semibold text-primary-700 dark:text-primary-300"
+                            >
+                                ₱{{ formatMoney(receipt.amount) }}
+                            </p>
+                        </li>
+                    </ul>
+
+                    <ul
+                        v-else
+                        class="min-h-0 flex-1 divide-y divide-gray-100 overflow-y-auto dark:divide-white/10"
+                    >
+                        <li
+                            v-for="refund in refundHistory"
+                            :key="refund.refund_id"
+                            class="flex items-start justify-between gap-4 px-6 py-4"
+                        >
+                            <div class="min-w-0">
+                                <p
+                                    class="font-mono text-sm font-semibold text-secondary dark:text-white"
+                                >
+                                    {{ refund.invoice_code }}
+                                </p>
+
+                                <p
+                                    class="text-xs text-muted dark:text-gray-400"
+                                >
+                                    {{
+                                        refund.refund_method ||
+                                        refund.payment_method
+                                    }}
+                                    <template v-if="refund.reason">
+                                        · {{ refund.reason }}
+                                    </template>
+                                </p>
+
+                                <p
+                                    class="text-[11px] text-gray-400 dark:text-gray-500"
+                                >
+                                    {{ formatDateTime(refund.created_at) }}
+                                </p>
+                            </div>
+
+                            <div class="shrink-0 text-right">
+                                <p
+                                    class="text-sm font-semibold text-accent-700 dark:text-accent-300"
+                                >
+                                    ₱{{ formatMoney(refund.amount) }}
+                                </p>
+
+                                <span
+                                    class="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize"
+                                    :class="statusClasses(refund.status)"
+                                >
+                                    {{ refund.status }}
+                                </span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </Teleport>
+
+        <Teleport to="body">
+            <div
+                v-if="invoicePickerOpen"
+                class="fixed inset-0 z-[70] flex items-center justify-center p-4"
+            >
+                <div
+                    class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"
+                    @click="invoicePickerOpen = false"
+                />
+
+                <div
+                    class="relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-secondary"
+                >
+                    <div
+                        class="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
+                    >
+                        <div class="min-w-0">
+                            <p
+                                class="text-xs font-semibold text-gray-400 dark:text-gray-500"
+                            >
+                                Select invoices to pay
+                            </p>
+
+                            <h2
+                                class="mt-0.5 truncate text-lg font-semibold text-gray-900 dark:text-white"
+                            >
+                                {{ summary?.patient?.full_name ?? "Patient" }}
+                            </h2>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/10"
+                            @click="invoicePickerOpen = false"
+                        >
+                            <X class="h-4.5 w-4.5" />
+                        </button>
+                    </div>
+
+                    <div
+                        class="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-6 py-3 dark:border-white/10"
+                    >
+                        <p class="text-xs text-muted dark:text-gray-400">
+                            {{ payableInvoices.length }} unpaid invoice{{
+                                payableInvoices.length === 1 ? "" : "s"
+                            }}
+                        </p>
+
+                        <button
+                            type="button"
+                            class="text-xs font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300"
+                            @click="toggleSelectAllInvoices"
+                        >
+                            {{
+                                allInvoicesSelected ? "Clear all" : "Select all"
+                            }}
+                        </button>
+                    </div>
+
+                    <ul
+                        class="min-h-0 flex-1 divide-y divide-gray-100 overflow-y-auto dark:divide-white/10"
+                    >
+                        <li
+                            v-for="invoice in payableInvoices"
+                            :key="invoice.invoice_code"
+                        >
+                            <label
+                                class="flex cursor-pointer items-start gap-3 px-6 py-4 transition hover:bg-gray-50 dark:hover:bg-white/5"
+                            >
+                                <input
+                                    type="checkbox"
+                                    class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-primary focus:ring-primary/30 dark:border-white/20 dark:bg-transparent"
+                                    :value="invoice.invoice_code"
+                                    v-model="selectedInvoiceCodes"
+                                />
+
+                                <span class="min-w-0 flex-1">
+                                    <span
+                                        class="flex flex-wrap items-center gap-2"
+                                    >
+                                        <span
+                                            class="font-mono text-sm font-semibold text-secondary dark:text-white"
+                                        >
+                                            {{ invoice.invoice_code }}
+                                        </span>
+
+                                        <span
+                                            class="rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize"
+                                            :class="
+                                                statusClasses(invoice.status)
+                                            "
+                                        >
+                                            {{ invoice.status }}
+                                        </span>
+                                    </span>
+
+                                    <span
+                                        class="mt-1 block text-xs text-muted dark:text-gray-400"
+                                    >
+                                        {{ invoiceDescription(invoice) }}
+                                    </span>
+
+                                    <span
+                                        class="mt-1 block text-[11px] text-gray-400 dark:text-gray-500"
+                                    >
+                                        Total ₱{{
+                                            formatMoney(invoice.total)
+                                        }}
+                                        · Paid ₱{{
+                                            formatMoney(invoice.amount_paid)
+                                        }}
+                                        · Due ₱{{
+                                            formatMoney(invoice.balance_due)
+                                        }}
+                                    </span>
+                                </span>
+
+                                <span class="w-32 shrink-0" @click.prevent.stop>
+                                    <span
+                                        class="block text-[10px] font-semibold uppercase tracking-wide text-muted dark:text-gray-500"
+                                    >
+                                        Amount to pay
+                                    </span>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        :max="invoice.balance_due"
+                                        :disabled="
+                                            !selectedInvoiceCodes.includes(
+                                                invoice.invoice_code,
+                                            )
+                                        "
+                                        :value="amountFor(invoice.invoice_code)"
+                                        class="mt-1 w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-right text-sm font-semibold text-secondary outline-none transition focus:border-primary disabled:bg-gray-50 disabled:text-gray-400 dark:border-white/10 dark:bg-transparent dark:text-white dark:disabled:bg-white/5"
+                                        @input="
+                                            setInvoiceAmount(
+                                                invoice.invoice_code,
+                                                (
+                                                    $event.target as HTMLInputElement
+                                                ).value,
+                                            )
+                                        "
+                                    />
+                                </span>
+                            </label>
+                        </li>
+                    </ul>
+
+                    <div
+                        class="flex shrink-0 items-center justify-between gap-3 border-t border-gray-100 px-6 py-4 dark:border-white/10"
+                    >
+                        <div class="min-w-0">
+                            <p class="text-xs text-muted dark:text-gray-400">
+                                {{ selectionSummaryLabel }}
+                            </p>
+
+                            <p
+                                class="text-base font-bold text-secondary dark:text-white"
+                            >
+                                ₱{{ formatMoney(selectedBalance) }}
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="shrink-0 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-600"
+                            @click="invoicePickerOpen = false"
+                        >
+                            Done
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, h, onMounted, ref } from "vue";
+import { computed, h, onMounted, ref, type Ref } from "vue";
+import { Loader2, Receipt, Undo2, X } from "lucide-vue-next";
 import { useRoute, useRouter } from "vue-router";
 
 import { invoiceService } from "~/api/invoice/InvoiceService";
@@ -1200,7 +1906,11 @@ import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
 import { useToast } from "~/composables/useToast";
 import { calculateAge } from "~/utils/user";
 
-import type { PatientAdmission, PatientInvoiceSummary } from "~/types/invoice";
+import type {
+    PatientAdmission,
+    PatientInvoiceItem,
+    PatientInvoiceSummary,
+} from "~/types/invoice";
 import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
 
 definePageMeta({
@@ -1270,6 +1980,270 @@ const currentAdmission = computed(() => {
 const showPayment = computed(() => {
     return Number(summary.value?.total_balance ?? 0) > 0;
 });
+
+const payorName = ref("");
+const invoicePickerOpen = ref(false);
+const transactionsOpen = ref(false);
+const refundsOpen = ref(false);
+
+const transactions = computed(() =>
+    (summary.value?.invoices ?? [])
+        .flatMap((invoice) =>
+            (invoice.payments ?? []).map((payment) => ({
+                ...payment,
+                invoice_code: invoice.invoice_code,
+            })),
+        )
+        .sort(
+            (a, b) =>
+                new Date(b.created_at ?? 0).getTime() -
+                new Date(a.created_at ?? 0).getTime(),
+        ),
+);
+
+// One counter transaction produces one receipt but a payment row per invoice,
+// so the list groups by receipt and keeps the per-invoice split for the modal.
+const receiptGroups = computed(() => {
+    const groups = new Map<
+        string,
+        {
+            key: string;
+            receipt_no: string | null;
+            amount: number;
+            invoice_codes: string[];
+            payment_method: string;
+            created_at: string | null;
+        }
+    >();
+
+    for (const payment of transactions.value) {
+        const key = payment.receipt_no ?? `payment-${payment.payment_id}`;
+        const existing = groups.get(key);
+
+        if (existing) {
+            existing.amount += Number(payment.amount ?? 0);
+
+            if (!existing.invoice_codes.includes(payment.invoice_code)) {
+                existing.invoice_codes.push(payment.invoice_code);
+            }
+
+            continue;
+        }
+
+        groups.set(key, {
+            key,
+            receipt_no: payment.receipt_no ?? null,
+            amount: Number(payment.amount ?? 0),
+            invoice_codes: [payment.invoice_code],
+            payment_method: payment.payment_method,
+            created_at: payment.created_at,
+        });
+    }
+
+    return [...groups.values()];
+});
+
+const refundHistory = computed(() =>
+    transactions.value
+        .flatMap((payment) =>
+            (payment.refunds ?? []).map((refund) => ({
+                ...refund,
+                invoice_code: payment.invoice_code,
+                payment_method: payment.payment_method,
+            })),
+        )
+        .sort(
+            (a, b) =>
+                new Date(b.created_at ?? 0).getTime() -
+                new Date(a.created_at ?? 0).getTime(),
+        ),
+);
+const selectedInvoiceCodes = ref<string[]>([]);
+const invoiceAmounts = ref<Record<string, number>>({});
+
+const payableInvoices = computed(() =>
+    (summary.value?.invoices ?? []).filter(
+        (invoice) => Number(invoice.balance_due ?? 0) > 0,
+    ),
+);
+
+const allInvoicesSelected = computed(
+    () =>
+        payableInvoices.value.length > 0 &&
+        selectedInvoiceCodes.value.length === payableInvoices.value.length,
+);
+
+function invoiceBalance(code: string) {
+    const invoice = payableInvoices.value.find(
+        (item) => item.invoice_code === code,
+    );
+
+    return Number(invoice?.balance_due ?? 0);
+}
+
+// An amount is only ever as large as what that invoice still owes, so a typo
+// cannot overpay one invoice at the expense of another.
+function amountFor(code: string) {
+    const entered = invoiceAmounts.value[code];
+    const balance = invoiceBalance(code);
+
+    if (entered === undefined || entered === null || Number.isNaN(entered)) {
+        return balance;
+    }
+
+    return Math.min(Math.max(Number(entered), 0), balance);
+}
+
+const allocations = computed(() =>
+    Object.fromEntries(
+        selectedInvoiceCodes.value
+            .map((code) => [code, amountFor(code)] as const)
+            .filter(([, amount]) => amount > 0),
+    ),
+);
+
+// Nothing ticked means "settle the whole account", which is what this panel
+// did before selection existed.
+const selectedBalance = computed(() => {
+    if (!selectedInvoiceCodes.value.length) {
+        return Number(summary.value?.total_balance ?? 0);
+    }
+
+    return Object.values(allocations.value).reduce(
+        (total, amount) => total + amount,
+        0,
+    );
+});
+
+const selectionSummaryLabel = computed(() => {
+    const count = selectedInvoiceCodes.value.length;
+
+    if (!count) return "Paying the full outstanding balance";
+
+    return `${count} invoice${count === 1 ? "" : "s"} selected`;
+});
+
+const paymentDescription = computed(() => {
+    const amount = `₱${formatMoney(selectedBalance.value)}`;
+
+    if (!selectedInvoiceCodes.value.length) {
+        return `Outstanding balance: ${amount}`;
+    }
+
+    return `${selectionSummaryLabel.value}: ${amount}`;
+});
+
+function invoiceDescription(invoice: PatientInvoiceItem) {
+    const services = (invoice.services ?? [])
+        .map((line) => line.service_name)
+        .filter(Boolean);
+
+    if (services.length) return services.join(", ");
+
+    const stays = (invoice.accommodations ?? []).map((stay) =>
+        [
+            stay.accommodation_type,
+            stay.billing_cycle,
+            stay.room_no ? `Room ${stay.room_no}` : null,
+            stay.bed_no ? `Bed ${stay.bed_no}` : null,
+        ]
+            .filter(Boolean)
+            .join(" · "),
+    );
+
+    if (stays.length) return stays.join(" | ");
+
+    return "No line items recorded";
+}
+
+function invoiceCodesLabel(codes: string[]) {
+    if (codes.length <= 2) return codes.join(", ");
+
+    return `${codes.slice(0, 2).join(", ")} +${codes.length - 2} more`;
+}
+
+function closeHistory() {
+    transactionsOpen.value = false;
+    refundsOpen.value = false;
+}
+
+const paymentsSection = ref<HTMLElement | null>(null);
+const refundsSection = ref<HTMLElement | null>(null);
+
+function scrollTo(section: Ref<HTMLElement | null>) {
+    section.value?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+const loadingReceipt = ref<string | null>(null);
+
+// Receipts are addressed by number rather than kept in the summary payload, so
+// opening one is a lookup against the branch's receipt list.
+async function openReceiptByNo(receiptNo?: string | null) {
+    if (!receiptNo || loadingReceipt.value) return;
+
+    loadingReceipt.value = receiptNo;
+
+    try {
+        const response = await invoiceService.receipts({
+            branch_uuid: uuid.value,
+            search: receiptNo,
+            per_page: 1,
+        });
+
+        const receipt = (response?.data ?? response ?? []).find(
+            (row: PaymentReceiptData) => row.receipt_no === receiptNo,
+        );
+
+        if (!receipt) {
+            error("That receipt could not be found.");
+            return;
+        }
+
+        closeHistory();
+        activeReceipt.value = receipt;
+    } catch (err: any) {
+        console.error(err);
+        error(err?.message ?? "Unable to open that receipt.");
+    } finally {
+        loadingReceipt.value = null;
+    }
+}
+
+function formatDateTime(value: string | null | undefined) {
+    if (!value) return "—";
+
+    const parsed = new Date(value);
+
+    if (Number.isNaN(parsed.getTime())) return "—";
+
+    return parsed.toLocaleString("en-PH", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+    });
+}
+
+function setInvoiceAmount(code: string, value: string) {
+    const parsed = Number(value);
+
+    if (value === "" || Number.isNaN(parsed)) {
+        delete invoiceAmounts.value[code];
+        return;
+    }
+
+    invoiceAmounts.value[code] = Math.min(
+        Math.max(parsed, 0),
+        invoiceBalance(code),
+    );
+}
+
+function toggleSelectAllInvoices() {
+    selectedInvoiceCodes.value = allInvoicesSelected.value
+        ? []
+        : payableInvoices.value.map((invoice) => invoice.invoice_code);
+}
 
 const hasProcessingRefund = computed(() => {
     return Number(summary.value?.total_refund_processing ?? 0) > 0;
@@ -1383,9 +2357,16 @@ async function handleCashPay(cash: number) {
             payment_method: "CASH",
             p_uuid: patientUuid.value,
             branch_uuid: uuid.value,
+            payor_name: payorName.value.trim(),
+            invoice_codes: selectedInvoiceCodes.value,
+            allocations: allocations.value,
         });
 
         success(response.message);
+
+        selectedInvoiceCodes.value = [];
+        invoiceAmounts.value = {};
+        payorName.value = "";
 
         if (response.receipt) {
             activeReceipt.value = response.receipt;
@@ -1555,6 +2536,8 @@ const SummaryCard = (props: {
     label: string;
     value: number;
     variant?: string;
+    actionLabel?: string;
+    onAction?: () => void;
 }) => {
     const variants: Record<
         string,
@@ -1609,6 +2592,17 @@ const SummaryCard = (props: {
                 },
                 `₱${formatMoney(props.value)}`,
             ),
+            props.actionLabel && props.onAction
+                ? h(
+                      "button",
+                      {
+                          type: "button",
+                          class: `mt-2 text-[11px] font-semibold underline-offset-2 hover:underline ${variant.label}`,
+                          onClick: props.onAction,
+                      },
+                      props.actionLabel,
+                  )
+                : null,
         ],
     );
 };

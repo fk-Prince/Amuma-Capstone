@@ -17,6 +17,13 @@ class Plan extends Model
         'name'
     ];
 
+    protected $appends = ['branch_limit'];
+
+    public function getBranchLimitAttribute(): int
+    {
+        return Subscription::BRANCH_LIMIT;
+    }
+
 
     public function subscription()
     {
