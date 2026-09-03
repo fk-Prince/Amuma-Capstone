@@ -46,4 +46,9 @@ class Agency extends Model
     {
         return $this->hasMany(Branch::class, 'agency_id', 'agency_id');
     }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class, 'agency_id', 'agency_id');
+    }
 }

@@ -1,7 +1,7 @@
 <template>
     <section v-if="guardian">
         <h3
-            class="mb-4 flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B]"
+            class="mb-4 flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] dark:text-accent-300"
         >
             <svg
                 class="h-3.5 w-3.5"
@@ -40,9 +40,70 @@
         </div>
     </section>
 
+    <section v-if="hasDiagnoses">
+        <h3
+            class="mb-4 flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] dark:text-accent-300"
+        >
+            <FileText class="h-3.5 w-3.5" />
+            Diagnosis
+        </h3>
+
+        <div class="space-y-6">
+            <div
+                v-for="(entry, index) in diagnoses"
+                :key="index"
+                class="border-b border-slate-100 pb-5 last:border-b-0 last:pb-0 dark:border-white/10"
+            >
+                <p
+                    v-if="diagnoses.length > 1"
+                    class="mb-3 text-xs font-semibold text-slate-600 dark:text-gray-400"
+                >
+                    Diagnosis {{ index + 1 }}
+                </p>
+
+                <div
+                    class="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2"
+                >
+                    <Field label="Diagnosis" :value="entry.diagnosis" />
+
+                    <Field
+                        label="Diagnosis Date"
+                        :value="formatDate(entry.diagnosis_date)"
+                    />
+
+                    <Field
+                        label="Diagnosis Notes"
+                        :value="entry.diagnosis_notes"
+                    />
+
+                    <Field
+                        label="Diagnosis File"
+                        :value="entry.diagnosis_file_name"
+                    >
+                        <template #value>
+                            <a
+                                v-if="entry.diagnosis_file"
+                                :href="entry.diagnosis_file"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-primary underline hover:text-primary/70"
+                            >
+                                {{ entry.diagnosis_file_name || "View file" }}
+                            </a>
+
+                            <span v-else>
+                                {{ entry.diagnosis_file_name || "—" }}
+                            </span>
+                        </template>
+                    </Field>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section v-if="hasAssessment">
         <h3
-            class="mb-4 flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B]"
+            class="mb-4 flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] dark:text-accent-300"
         >
             <svg
                 class="h-3.5 w-3.5"
@@ -73,7 +134,7 @@
                 :class="
                     index === activeIndex
                         ? 'bg-primary text-white'
-                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100 dark:bg-white/5 dark:text-gray-400 dark:hover:bg-white/10'
                 "
                 @click="activeIndex = index"
             >
@@ -82,7 +143,7 @@
                     :class="
                         index === activeIndex
                             ? 'bg-white/20 text-white'
-                            : 'bg-white text-slate-400'
+                            : 'bg-white text-slate-400 dark:bg-secondary dark:text-gray-500'
                     "
                 >
                     {{ index + 1 }}
@@ -93,117 +154,33 @@
         </div>
 
         <div v-if="activeAssessment" class="space-y-8">
+
             <div class="space-y-4">
                 <h5
-                    class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                    class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                 >
-                    Recent Diagnosis / Supporting Document
+                    Condition &amp; Mental / Cognitive State
                 </h5>
 
                 <div
                     class="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2"
                 >
                     <Field
-                        label="Diagnosis"
-                        :value="activeAssessment.diagnosis"
+                        label="Mobility"
+                        :value="activeAssessment.condition"
                     />
 
                     <Field
-                        label="Diagnosis Date"
-                        :value="activeAssessment.diagnosis_date"
-                    />
-
-                    <Field
-                        label="Diagnosis Notes"
-                        :value="activeAssessment.diagnosis_notes"
-                    />
-
-                    <Field
-                        label="Diagnosis File"
-                        :value="activeAssessment.diagnosis_file_name"
-                    >
-                        <template #value>
-                            <a
-                                v-if="activeAssessment.diagnosis_file"
-                                :href="diagnosisFileUrl"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="text-primary underline hover:text-primary/70"
-                            >
-                                {{
-                                    activeAssessment.diagnosis_file_name ||
-                                    "View file"
-                                }}
-                            </a>
-
-                            <span v-else>
-                                {{
-                                    activeAssessment.diagnosis_file_name || "—"
-                                }}
-                            </span>
-                        </template>
-                    </Field>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <h5
-                    class="text-xs font-semibold uppercase tracking-wide text-slate-400"
-                >
-                    Vital Signs
-                </h5>
-
-                <div
-                    class="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2"
-                >
-                    <Field
-                        label="Blood Pressure"
-                        :value="activeAssessment.blood_pressure"
-                    />
-
-                    <Field
-                        label="Pulse Rate"
-                        :value="activeAssessment.pulse_rate"
-                    />
-
-                    <Field
-                        label="Respiratory Rate"
-                        :value="activeAssessment.respiratory_rate"
-                    />
-
-                    <Field
-                        label="Temperature"
-                        :value="activeAssessment.temperature"
-                    />
-
-                    <Field
-                        label="Oxygen Saturation"
-                        :value="activeAssessment.oxygen_saturation"
-                    />
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <h5
-                    class="text-xs font-semibold uppercase tracking-wide text-slate-400"
-                >
-                    Mental / Cognitive State
-                </h5>
-
-                <div
-                    class="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2"
-                >
-                    <Field
-                        label="Mental State"
+                        label="Level of Consciousness"
                         :value="activeAssessment.mental_state"
                     />
 
-                    <Field
-                        label="Memory Issues"
-                        :value="activeAssessment.memory_issues"
-                    />
+                    <Field label="Affect" :value="activeAssessment.affect" />
 
-                    <Field label="Mood" :value="activeAssessment.mood" />
+                    <Field
+                        label="Behavior"
+                        :value="activeAssessment.behavior"
+                    />
 
                     <Field
                         label="Communication"
@@ -213,14 +190,41 @@
                     <Field label="Speech" :value="activeAssessment.speech" />
                 </div>
             </div>
+
+            <div v-if="activeAssessment.life_system_profile" class="space-y-4">
+                <h5
+                    class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                >
+                    Life System Profile
+                </h5>
+
+                <div
+                    class="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2"
+                >
+                    <Field
+                        v-for="activity in LIFE_SYSTEM_ACTIVITIES"
+                        :key="activity"
+                        :label="activityLabel(activity)"
+                        :value="
+                            lifeSystemLabel(
+                                activeAssessment.life_system_profile?.[
+                                    activity
+                                ],
+                            )
+                        "
+                    />
+                </div>
+            </div>
         </div>
     </section>
 </template>
 
 <script lang="ts" setup>
 import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { FileText } from "lucide-vue-next";
 import type { BookingRetrieve } from "~/types/booking";
 import { fullName } from "~/utils/user";
+import { formatDate } from "~/utils/time";
 import { Field } from "~/utils/fields";
 
 const props = defineProps<{
@@ -254,6 +258,20 @@ const activeAssessment = computed(() => {
 });
 
 const hasAssessment = computed(() => assessments.value.length > 0);
+
+// Diagnoses moved out of the assessment; older bookings still carry them
+// inside it, so those are read back as a single-entry list.
+const diagnoses = computed<any[]>(() => {
+    const provided = (props.booking as any)?.diagnoses;
+
+    if (Array.isArray(provided) && provided.length) return provided;
+
+    return assessments.value.filter(
+        (entry) => entry?.diagnosis || entry?.diagnosis_notes,
+    );
+});
+
+const hasDiagnoses = computed(() => diagnoses.value.length > 0);
 
 watch(
     assessments,

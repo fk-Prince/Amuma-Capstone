@@ -7,26 +7,26 @@
                 @click.self="closeModal"
             >
                 <div
-                    class="w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60"
+                    class="w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 dark:bg-secondary dark:ring-primary-500/20"
                 >
                     <div
-                        class="flex items-center justify-between border-b border-primary-100 px-6 py-4"
+                        class="flex items-center justify-between border-b border-primary-100 px-6 py-4 dark:border-primary-500/20"
                     >
                         <div>
                             <h2
-                                class="text-base font-semibold text-primary-900"
+                                class="text-base font-semibold text-primary-900 dark:text-primary-300"
                             >
                                 Room Transfer History
                             </h2>
 
-                            <p class="mt-1 text-xs text-muted">
+                            <p class="mt-1 text-xs text-muted dark:text-gray-400">
                                 Patient room and bed transfer history
                             </p>
                         </div>
 
                         <button
                             type="button"
-                            class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                            class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                             @click="closeModal"
                         >
                             <svg
@@ -51,58 +51,58 @@
                             <div
                                 v-for="i in 3"
                                 :key="i"
-                                class="animate-pulse rounded-xl border border-primary-100 p-4"
+                                class="animate-pulse rounded-xl border border-primary-100 p-4 dark:border-primary-500/20"
                             >
                                 <div class="flex items-center justify-between">
                                     <div class="space-y-2">
                                         <div
-                                            class="h-4 w-32 rounded bg-slate-200"
+                                            class="h-4 w-32 rounded bg-slate-200 dark:bg-white/15"
                                         ></div>
 
                                         <div
-                                            class="h-3 w-48 rounded bg-slate-100"
+                                            class="h-3 w-48 rounded bg-slate-100 dark:bg-white/10"
                                         ></div>
                                     </div>
 
                                     <div
-                                        class="h-3 w-24 rounded bg-slate-100"
+                                        class="h-3 w-24 rounded bg-slate-100 dark:bg-white/10"
                                     ></div>
                                 </div>
 
                                 <div class="mt-4 flex items-center gap-3">
                                     <div
-                                        class="flex-1 rounded-lg bg-slate-50 p-4"
+                                        class="flex-1 rounded-lg bg-slate-50 p-4 dark:bg-white/5"
                                     >
                                         <div
-                                            class="h-3 w-16 rounded bg-slate-200"
+                                            class="h-3 w-16 rounded bg-slate-200 dark:bg-white/15"
                                         ></div>
 
                                         <div
-                                            class="mt-2 h-5 w-28 rounded bg-slate-200"
+                                            class="mt-2 h-5 w-28 rounded bg-slate-200 dark:bg-white/15"
                                         ></div>
 
                                         <div
-                                            class="mt-2 h-3 w-20 rounded bg-slate-100"
+                                            class="mt-2 h-3 w-20 rounded bg-slate-100 dark:bg-white/10"
                                         ></div>
                                     </div>
 
                                     <div
-                                        class="h-8 w-8 shrink-0 rounded-full bg-slate-200"
+                                        class="h-8 w-8 shrink-0 rounded-full bg-slate-200 dark:bg-white/15"
                                     ></div>
 
                                     <div
-                                        class="flex-1 rounded-lg bg-slate-50 p-4"
+                                        class="flex-1 rounded-lg bg-slate-50 p-4 dark:bg-white/5"
                                     >
                                         <div
-                                            class="h-3 w-16 rounded bg-slate-200"
+                                            class="h-3 w-16 rounded bg-slate-200 dark:bg-white/15"
                                         ></div>
 
                                         <div
-                                            class="mt-2 h-5 w-28 rounded bg-slate-200"
+                                            class="mt-2 h-5 w-28 rounded bg-slate-200 dark:bg-white/15"
                                         ></div>
 
                                         <div
-                                            class="mt-2 h-3 w-20 rounded bg-slate-100"
+                                            class="mt-2 h-3 w-20 rounded bg-slate-100 dark:bg-white/10"
                                         ></div>
                                     </div>
                                 </div>
@@ -114,11 +114,11 @@
                             class="flex flex-col items-center justify-center py-12 text-center"
                         >
                             <div
-                                class="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100"
+                                class="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-white/10"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
-                                    class="h-6 w-6 text-slate-400"
+                                    class="h-6 w-6 text-slate-400 dark:text-gray-500"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
@@ -132,11 +132,11 @@
                                 </svg>
                             </div>
 
-                            <h3 class="text-sm font-semibold text-primary-900">
+                            <h3 class="text-sm font-semibold text-primary-900 dark:text-primary-300">
                                 No transfer history
                             </h3>
 
-                            <p class="mt-1 text-sm text-muted">
+                            <p class="mt-1 text-sm text-muted dark:text-gray-400">
                                 No room or bed transfers have been recorded.
                             </p>
                         </div>
@@ -145,7 +145,7 @@
                     </div>
 
                     <div
-                        class="flex justify-end border-t border-primary-100 bg-slate-50 px-6 py-4"
+                        class="flex justify-end border-t border-primary-100 bg-slate-50 px-6 py-4 dark:border-primary-500/20 dark:bg-white/5"
                     >
                         <button
                             type="button"

@@ -13,7 +13,7 @@
             class="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap"
         >
             <span
-                class="bg-white text-primary text-xs font-bold px-5 py-1.5 rounded-full shadow-md tracking-wide border border-primary/10"
+                class="bg-white text-primary text-xs font-bold px-5 py-1.5 rounded-full shadow-md tracking-wide border border-primary/10 dark:bg-secondary"
             >
                 Most Popular
             </span>
@@ -82,7 +82,7 @@
             :class="[
                 'w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 mb-6',
                 featured
-                    ? 'bg-white text-primary hover:bg-light border border-white'
+                    ? 'bg-white text-primary hover:bg-light border border-white dark:bg-secondary'
                     : 'bg-white text-secondary border border-secondary hover:bg-secondary hover:text-white dark:bg-white/5 dark:text-white dark:border-white/20 dark:hover:bg-white/10',
             ]"
         >

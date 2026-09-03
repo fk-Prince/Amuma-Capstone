@@ -1,32 +1,32 @@
 <template>
-    <div class="min-h-screen-header bg-light p-3 sm:p-4 lg:p-6 font-sans">
+    <div class="min-h-screen-header bg-light p-3 sm:p-4 lg:p-6 font-sans dark:bg-surface">
         <div
             class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 w-full lg:h-[calc(100dvh-var(--header-h)-3rem)]"
         >
             <div class="flex min-w-0 min-h-0 flex-col">
                 <ScheduleFilter />
 
-                <div class="flex-1 w-full mx-auto rounded-b-2xl bg-white">
+                <div class="flex-1 w-full mx-auto rounded-b-2xl bg-white dark:bg-secondary">
                     <div v-if="pending" class="p-4 space-y-3">
                         <div
                             v-for="n in 6"
                             :key="n"
-                            class="flex items-center gap-4 rounded-xl border border-slate-100 p-4 animate-pulse"
+                            class="flex items-center gap-4 rounded-xl border border-slate-100 p-4 animate-pulse dark:border-white/10"
                         >
                             <div
-                                class="h-10 w-10 shrink-0 rounded-full bg-slate-200"
+                                class="h-10 w-10 shrink-0 rounded-full bg-slate-200 dark:bg-white/15"
                             />
 
                             <div class="flex-1 space-y-2">
-                                <div class="h-3 w-1/3 rounded bg-slate-200" />
-                                <div class="h-2.5 w-1/2 rounded bg-slate-100" />
+                                <div class="h-3 w-1/3 rounded bg-slate-200 dark:bg-white/15" />
+                                <div class="h-2.5 w-1/2 rounded bg-slate-100 dark:bg-white/10" />
                             </div>
 
                             <div
-                                class="h-6 w-20 shrink-0 rounded-full bg-slate-200"
+                                class="h-6 w-20 shrink-0 rounded-full bg-slate-200 dark:bg-white/15"
                             />
                             <div
-                                class="h-6 w-16 shrink-0 rounded-full bg-slate-100"
+                                class="h-6 w-16 shrink-0 rounded-full bg-slate-100 dark:bg-white/10"
                             />
                         </div>
                     </div>
@@ -36,7 +36,7 @@
                         class="flex flex-col items-center justify-center gap-3 px-6 py-24 text-center"
                     >
                         <div
-                            class="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400"
+                            class="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-white/10 dark:text-gray-500"
                         >
                             <svg
                                 width="26"
@@ -57,11 +57,11 @@
                             </svg>
                         </div>
 
-                        <p class="text-sm font-semibold text-slate-600">
+                        <p class="text-sm font-semibold text-slate-600 dark:text-gray-400">
                             No schedules found
                         </p>
 
-                        <p class="max-w-xs text-sm text-slate-400">
+                        <p class="max-w-xs text-sm text-slate-400 dark:text-gray-500">
                             Try adjusting your filters or check back later for
                             new schedules.
                         </p>
@@ -94,7 +94,7 @@
                     >
                         <button
                             type="button"
-                            class="px-5 py-2.5 rounded-xl border border-muted-light bg-white text-sm font-medium text-secondary hover:border-primary/40 hover:text-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-5 py-2.5 rounded-xl border border-muted-light bg-white text-sm font-medium text-secondary hover:border-primary/40 hover:text-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:bg-secondary dark:hover:text-primary-300 dark:border-white/10 dark:text-white"
                             :disabled="loadingMore"
                             @click="loadMore"
                         >

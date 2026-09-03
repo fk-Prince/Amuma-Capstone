@@ -11,25 +11,25 @@
 
             <div
                 v-if="schedule"
-                class="relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl"
+                class="relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-white/10 dark:bg-secondary"
             >
                 <div
-                    class="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-6 py-4"
+                    class="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-6 py-4 dark:border-white/10"
                 >
                     <div class="min-w-0">
                         <p
-                            class="text-xs font-medium uppercase tracking-wide text-slate-400"
+                            class="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
                         >
                             Schedule Details
                         </p>
 
                         <div class="mt-1 flex flex-wrap items-center gap-2">
-                            <h2 class="text-lg font-semibold text-slate-800">
+                            <h2 class="text-lg font-semibold text-slate-800 dark:text-white">
                                 {{ schedule.schedule_code }}
                             </h2>
 
                             <span
-                                class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium capitalize text-slate-600"
+                                class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium capitalize text-slate-600 dark:bg-white/10 dark:text-gray-400"
                             >
                                 {{ schedule.category }}
                             </span>
@@ -55,7 +55,7 @@
                     :class="bodyGridClass"
                 >
                     <div
-                        class="rounded-xl bg-slate-50 p-3"
+                        class="rounded-xl bg-slate-50 p-3 dark:bg-white/5"
                         :class="leftColClass"
                     >
                         <div class="flex items-center gap-3">
@@ -76,9 +76,9 @@
                             </div>
 
                             <div class="min-w-0 flex-1">
-                                <p class="text-xs text-slate-400">Patient</p>
+                                <p class="text-xs text-slate-400 dark:text-gray-500">Patient</p>
                                 <p
-                                    class="truncate font-semibold text-slate-800"
+                                    class="truncate font-semibold text-slate-800 dark:text-white"
                                 >
                                     {{ schedule.patient?.full_name ?? "—" }}
                                 </p>
@@ -87,7 +87,7 @@
                             <button
                                 v-if="patientUuid"
                                 type="button"
-                                class="flex shrink-0 items-center gap-1.5 rounded-lg border border-primary/20 bg-white px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-primary/5"
+                                class="flex shrink-0 items-center gap-1.5 rounded-lg border border-primary/20 bg-white px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-primary/5 dark:bg-secondary"
                                 @click="viewPatient"
                             >
                                 View Patient
@@ -108,17 +108,17 @@
 
                         <div
                             v-if="schedule.patient?.guardian"
-                            class="mt-3 flex items-center gap-2.5 border-t border-slate-200 pt-3"
+                            class="mt-3 flex items-center gap-2.5 border-t border-slate-200 pt-3 dark:border-white/10"
                         >
                             <div
-                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-slate-400 ring-1 ring-slate-200"
+                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-slate-400 ring-1 ring-slate-200 dark:bg-secondary dark:text-gray-500 dark:ring-white/10"
                             >
                                 <Users class="h-4 w-4" />
                             </div>
 
                             <div class="min-w-0 flex-1">
                                 <p
-                                    class="flex flex-wrap items-center gap-1.5 truncate text-sm font-medium text-slate-700"
+                                    class="flex flex-wrap items-center gap-1.5 truncate text-sm font-medium text-slate-700 dark:text-gray-400"
                                 >
                                     {{ schedule.patient.guardian.full_name }}
 
@@ -127,7 +127,7 @@
                                             schedule.patient.guardian
                                                 .relationship
                                         "
-                                        class="rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-medium capitalize text-slate-600"
+                                        class="rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-medium capitalize text-slate-600 dark:bg-white/15 dark:text-gray-400"
                                     >
                                         {{
                                             schedule.patient.guardian
@@ -136,7 +136,7 @@
                                     </span>
                                 </p>
 
-                                <p class="text-[11px] text-slate-400">
+                                <p class="text-[11px] text-slate-400 dark:text-gray-500">
                                     Guardian
                                 </p>
                             </div>
@@ -154,15 +154,15 @@
 
                     <div
                         v-if="isFacilitySchedule"
-                        class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                        class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
                         :class="leftColClass"
                     >
                         <div
-                            class="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-4 py-3"
+                            class="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-4 py-3 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600"
+                                    class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300"
                                 >
                                     <svg
                                         width="18"
@@ -184,12 +184,12 @@
 
                                 <div>
                                     <p
-                                        class="text-sm font-semibold tracking-tight text-slate-800"
+                                        class="text-sm font-semibold tracking-tight text-slate-800 dark:text-white"
                                     >
                                         Facility Admission
                                     </p>
 
-                                    <p class="text-xs text-slate-400">
+                                    <p class="text-xs text-slate-400 dark:text-gray-500">
                                         Current room assignment
                                     </p>
                                 </div>
@@ -199,8 +199,8 @@
                                 class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
                                 :class="
                                     schedule.patient?.is_admitted
-                                        ? 'bg-emerald-100 text-emerald-700'
-                                        : 'bg-amber-100 text-amber-700'
+                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                                        : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
                                 "
                             >
                                 <span
@@ -228,17 +228,17 @@
                             class="p-4"
                         >
                             <div
-                                class="mb-4 flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-3"
+                                class="mb-4 flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-3 dark:bg-emerald-500/10"
                             >
                                 <div>
                                     <p
-                                        class="text-[11px] font-medium uppercase tracking-wider text-emerald-600"
+                                        class="text-[11px] font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-300"
                                     >
                                         Assigned Accommodation
                                     </p>
 
                                     <p
-                                        class="mt-0.5 text-sm font-semibold text-emerald-900"
+                                        class="mt-0.5 text-sm font-semibold text-emerald-900 dark:text-emerald-300"
                                     >
                                         {{
                                             schedule.patient.admission.bed?.room
@@ -278,7 +278,7 @@
                                 </div>
 
                                 <div
-                                    class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm"
+                                    class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm dark:bg-secondary dark:text-emerald-300"
                                 >
                                     <svg
                                         width="17"
@@ -301,10 +301,10 @@
 
                         <div
                             v-else
-                            class="flex items-center gap-3 border-t border-slate-100 bg-amber-50/60 px-4 py-4"
+                            class="flex items-center gap-3 border-t border-slate-100 bg-amber-50/60 px-4 py-4 dark:border-white/10 dark:bg-amber-500/10"
                         >
                             <div
-                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600"
+                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300"
                             >
                                 <svg
                                     width="17"
@@ -323,11 +323,11 @@
                             </div>
 
                             <div>
-                                <p class="text-sm font-semibold text-slate-800">
+                                <p class="text-sm font-semibold text-slate-800 dark:text-white">
                                     Patient is not currently admitted
                                 </p>
 
-                                <p class="mt-0.5 text-xs text-slate-500">
+                                <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                                     No active facility admission or room
                                     assignment was found.
                                 </p>
@@ -337,12 +337,12 @@
 
                     <div
                         v-else
-                        class="space-y-4 rounded-xl border border-sky-100 bg-sky-50 p-4"
+                        class="space-y-4 rounded-xl border border-sky-100 bg-sky-50 p-4 dark:border-sky-500/20 dark:bg-sky-500/10"
                         :class="leftColClass"
                     >
                         <div class="flex items-start gap-3">
                             <div
-                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600"
+                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300"
                             >
                                 <svg
                                     width="18"
@@ -361,7 +361,7 @@
 
                             <div class="min-w-0">
                                 <p
-                                    class="text-xs font-medium uppercase tracking-wide text-sky-600"
+                                    class="text-xs font-medium uppercase tracking-wide text-sky-600 dark:text-sky-300"
                                 >
                                     {{
                                         schedule.is_onsite
@@ -371,7 +371,7 @@
                                 </p>
 
                                 <p
-                                    class="mt-1 text-sm font-semibold text-slate-800"
+                                    class="mt-1 text-sm font-semibold text-slate-800 dark:text-white"
                                 >
                                     {{
                                         schedule.address ??
@@ -385,7 +385,7 @@
                                     :href="googleMapsUrl"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700 hover:underline"
+                                    class="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700 hover:underline dark:text-sky-300 dark:hover:text-sky-300"
                                 >
                                     Open in Google Maps
 
@@ -417,7 +417,7 @@
 
                             <template #fallback>
                                 <div
-                                    class="h-[300px] w-full animate-pulse rounded-xl border border-sky-100 bg-sky-100/50"
+                                    class="h-[300px] w-full animate-pulse rounded-xl border border-sky-100 bg-sky-100/50 dark:border-sky-500/20 dark:bg-sky-500/15"
                                 />
                             </template>
                         </ClientOnly>
@@ -467,29 +467,29 @@
                         class="grid grid-cols-1 sm:grid-cols-3 gap-3"
                         :class="leftColClass"
                     >
-                        <div class="rounded-xl border border-slate-100 p-3">
-                            <p class="text-xs text-slate-400">Date</p>
-                            <p class="mt-1 text-sm font-medium text-slate-700">
+                        <div class="rounded-xl border border-slate-100 p-3 dark:border-white/10">
+                            <p class="text-xs text-slate-400 dark:text-gray-500">Date</p>
+                            <p class="mt-1 text-sm font-medium text-slate-700 dark:text-gray-400">
                                 {{ schedule.scheduled_date }}
                             </p>
                         </div>
 
-                        <div class="rounded-xl border border-slate-100 p-3">
-                            <p class="text-xs text-slate-400">Time</p>
-                            <p class="mt-1 text-sm font-medium text-slate-700">
+                        <div class="rounded-xl border border-slate-100 p-3 dark:border-white/10">
+                            <p class="text-xs text-slate-400 dark:text-gray-500">Time</p>
+                            <p class="mt-1 text-sm font-medium text-slate-700 dark:text-gray-400">
                                 {{ schedule.start_time }}
                             </p>
                         </div>
 
-                        <div class="rounded-xl border border-slate-100 p-3">
-                            <p class="text-xs text-slate-400">
+                        <div class="rounded-xl border border-slate-100 p-3 dark:border-white/10">
+                            <p class="text-xs text-slate-400 dark:text-gray-500">
                                 {{
                                     scheduleHasAdlService
                                         ? "Duration"
                                         : "Estimated Duration"
                                 }}
                             </p>
-                            <p class="mt-1 text-sm font-medium text-slate-700">
+                            <p class="mt-1 text-sm font-medium text-slate-700 dark:text-gray-400">
                                 <template v-if="scheduleHasAdlService">
                                     <template v-if="schedule.total_hours">
                                         {{
@@ -513,7 +513,7 @@
                             </p>
 
                             <!-- <p
-                                            class="mt-0.5 text-xs text-slate-400"
+                                            class="mt-0.5 text-xs text-slate-400 dark:text-gray-500"
                                         >
                                             {{ service.type }}
                                             •
@@ -523,7 +523,7 @@
                     </div>
 
                     <div :class="servicesColClass">
-                        <p class="mb-2 text-sm font-semibold text-slate-800">
+                        <p class="mb-2 text-sm font-semibold text-slate-800 dark:text-white">
                             Services
                         </p>
 
@@ -531,12 +531,12 @@
                             <div
                                 v-for="service in schedule.services"
                                 :key="service.schedule_services_id"
-                                class="rounded-xl border border-slate-100 p-3"
+                                class="rounded-xl border border-slate-100 p-3 dark:border-white/10"
                             >
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <p
-                                            class="text-sm font-semibold text-slate-800"
+                                            class="text-sm font-semibold text-slate-800 dark:text-white"
                                         >
                                             {{
                                                 service.service_name ??
@@ -551,7 +551,7 @@
                                         :class="
                                             service.assignees?.length
                                                 ? 'bg-primary/10 text-primary'
-                                                : 'bg-rose-100 text-rose-600'
+                                                : 'bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300'
                                         "
                                     >
                                         {{
@@ -570,7 +570,7 @@
                                         <div
                                             v-for="i in 4"
                                             :key="i"
-                                            class="h-[68px] animate-pulse rounded-xl bg-slate-100"
+                                            class="h-[68px] animate-pulse rounded-xl bg-slate-100 dark:bg-white/10"
                                         />
                                     </div>
 
@@ -579,11 +579,11 @@
                                             class="flex flex-wrap items-center justify-between gap-2"
                                         >
                                             <p
-                                                class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                                                class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                                             >
                                                 Assign
                                                 {{ requiredRoleLabel(service) }}
-                                                <span class="text-slate-300">
+                                                <span class="text-slate-300 dark:text-gray-500">
                                                     ·
                                                 </span>
                                                 {{
@@ -598,21 +598,21 @@
                                                 class="relative w-full sm:w-64"
                                             >
                                                 <Search
-                                                    class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                                                    class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
                                                 />
 
                                                 <input
                                                     v-model="employeeSearch"
                                                     type="text"
                                                     placeholder="Search name"
-                                                    class="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                                    class="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
                                                 />
                                             </div>
                                         </div>
 
                                         <div
                                             v-if="!eligibleFor(service).length"
-                                            class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center text-xs text-slate-500"
+                                            class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center text-xs text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
                                         >
                                             {{
                                                 employeeSearch
@@ -627,14 +627,14 @@
                                                     service,
                                                 )"
                                                 :key="employee.employee_id"
-                                                class="rounded-xl border transition"
+                                                class="rounded-xl border transition dark:border-white/10"
                                                 :class="[
                                                     isAssigned(
                                                         service.schedule_services_id,
                                                         employee.employee_id,
                                                     )
                                                         ? 'border-primary/40 bg-primary/[0.04] ring-1 ring-primary/20'
-                                                        : 'border-slate-200 bg-white hover:border-primary/30',
+                                                        : 'border-slate-200 bg-white hover:border-primary/30 dark:border-white/10 dark:bg-secondary',
                                                     isPickDisabled(
                                                         service,
                                                         employee,
@@ -700,7 +700,7 @@
                                                             class="flex items-center gap-1.5"
                                                         >
                                                             <span
-                                                                class="truncate text-sm font-semibold text-slate-800"
+                                                                class="truncate text-sm font-semibold text-slate-800 dark:text-white"
                                                             >
                                                                 {{
                                                                     employeeLabel(
@@ -721,7 +721,7 @@
                                                         </span>
 
                                                         <span
-                                                            class="block truncate text-xs capitalize text-slate-500"
+                                                            class="block truncate text-xs capitalize text-slate-500 dark:text-gray-400"
                                                         >
                                                             {{
                                                                 employee.role_name ??
@@ -744,7 +744,7 @@
                                                             v-if="
                                                                 employee.phone_number
                                                             "
-                                                            class="mt-0.5 flex items-center gap-1 text-[11px] text-slate-400"
+                                                            class="mt-0.5 flex items-center gap-1 text-[11px] text-slate-400 dark:text-gray-500"
                                                         >
                                                             <Phone
                                                                 class="h-3 w-3 shrink-0"
@@ -758,7 +758,7 @@
                                                             v-if="
                                                                 employee.email
                                                             "
-                                                            class="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] text-slate-400"
+                                                            class="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] text-slate-400 dark:text-gray-500"
                                                         >
                                                             <Mail
                                                                 class="h-3 w-3 shrink-0"
@@ -775,7 +775,7 @@
 
                                                     <span
                                                         v-if="employee.is_busy"
-                                                        class="shrink-0 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700"
+                                                        class="shrink-0 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
                                                     >
                                                         Conflict
                                                     </span>
@@ -786,7 +786,7 @@
                                                             service.type !==
                                                                 'ADL'
                                                         "
-                                                        class="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500"
+                                                        class="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500 dark:bg-white/10 dark:text-gray-400"
                                                     >
                                                         <CircleHelp
                                                             class="h-3.5 w-3.5"
@@ -796,7 +796,7 @@
 
                                                     <span
                                                         v-else
-                                                        class="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700"
+                                                        class="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                                                     >
                                                         Available
                                                     </span>
@@ -823,7 +823,7 @@
                                                         type="text"
                                                         maxlength="255"
                                                         placeholder="Note for this assignment"
-                                                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:text-gray-400"
                                                         @input="
                                                             setNote(
                                                                 service.schedule_services_id,
@@ -841,7 +841,7 @@
                                                         class="mt-2 flex flex-wrap items-center gap-1.5"
                                                     >
                                                         <span
-                                                            class="text-[11px] text-slate-400"
+                                                            class="text-[11px] text-slate-400 dark:text-gray-500"
                                                         >
                                                             Suggestions:
                                                         </span>
@@ -852,7 +852,7 @@
                                                             )"
                                                             :key="preset"
                                                             type="button"
-                                                            class="rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition"
+                                                            class="rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition dark:border-white/10"
                                                             :class="
                                                                 noteFor(
                                                                     service.schedule_services_id,
@@ -861,7 +861,7 @@
                                                                     ),
                                                                 ) === preset
                                                                     ? 'border-primary bg-primary text-white'
-                                                                    : 'border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary'
+                                                                    : 'border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-gray-400'
                                                             "
                                                             @click="
                                                                 togglePreset(
@@ -885,7 +885,7 @@
                                 <div v-else class="mt-3">
                                     <p
                                         v-if="service.assignees"
-                                        class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400"
+                                        class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                                     >
                                         Assigned Employee
                                         <span
@@ -902,7 +902,7 @@
                                         <div
                                             v-for="employee in service.assignees"
                                             :key="employee.employee_id"
-                                            class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+                                            class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-white/10 dark:bg-white/5"
                                         >
                                             <div
                                                 class="flex min-w-0 items-center gap-3"
@@ -927,13 +927,13 @@
 
                                                 <div class="min-w-0">
                                                     <p
-                                                        class="truncate text-sm font-semibold text-slate-800"
+                                                        class="truncate text-sm font-semibold text-slate-800 dark:text-white"
                                                     >
                                                         {{ employee.full_name }}
                                                     </p>
 
                                                     <p
-                                                        class="truncate text-xs capitalize text-slate-500"
+                                                        class="truncate text-xs capitalize text-slate-500 dark:text-gray-400"
                                                     >
                                                         {{
                                                             employee.employee_role ??
@@ -942,7 +942,7 @@
                                                     </p>
 
                                                     <div
-                                                        class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-400"
+                                                        class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-400 dark:text-gray-500"
                                                     >
                                                         <span
                                                             v-if="
@@ -998,7 +998,7 @@
 
                                     <div
                                         v-else
-                                        class="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500"
+                                        class="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
                                     >
                                         No employee has been assigned yet.
                                     </div>
@@ -1009,11 +1009,11 @@
                 </div>
 
                 <div
-                    class="flex shrink-0 justify-end gap-2 border-t border-slate-100 bg-slate-50 px-6 py-3"
+                    class="flex shrink-0 justify-end gap-2 border-t border-slate-100 bg-slate-50 px-6 py-3 dark:border-white/10 dark:bg-white/5"
                 >
                     <template v-if="isEditing">
                         <button
-                            class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                            class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-400 dark:hover:bg-white/5"
                             @click="cancelEdit"
                         >
                             Cancel
@@ -1042,7 +1042,7 @@
 
                     <template v-else>
                         <button
-                            class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                            class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-400 dark:hover:bg-white/5"
                             @click="close"
                         >
                             Close

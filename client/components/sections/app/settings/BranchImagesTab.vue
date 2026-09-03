@@ -56,7 +56,7 @@
             <button
                 type="button"
                 @click="openModal = true"
-                class="aspect-square rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50 flex flex-col items-center justify-center text-primary hover:bg-primary-100 transition"
+                class="aspect-square rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50 flex flex-col items-center justify-center text-primary hover:bg-primary-100 transition dark:border-primary-500/20 dark:bg-primary-500/10 dark:hover:bg-primary-500/15"
             >
                 <Plus class="w-9 h-9" />
 
@@ -187,7 +187,7 @@
                             {{ submitError }}
                         </p>
 
-                        <div class="grid grid-cols-2 gap-3 pt-2">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                             <button
                                 type="button"
                                 @click="closeModal"

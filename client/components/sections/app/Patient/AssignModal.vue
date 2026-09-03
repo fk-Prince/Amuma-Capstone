@@ -9,25 +9,25 @@
                 <Transition name="assign-modal-panel" appear>
                     <div
                         v-if="modelValue"
-                        class="flex max-h-[85vh] w-full max-w-lg flex-col rounded-2xl border border-slate-100 bg-white shadow-xl"
+                        class="flex max-h-[85vh] w-full max-w-lg flex-col rounded-2xl border border-slate-100 bg-white shadow-xl dark:border-white/10 dark:bg-secondary"
                     >
                         <div
-                            class="flex items-start justify-between border-b border-slate-100 px-5 py-4"
+                            class="flex items-start justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10"
                         >
                             <div>
                                 <h2
-                                    class="text-sm font-semibold text-slate-800"
+                                    class="text-sm font-semibold text-slate-800 dark:text-white"
                                 >
                                     Assign Now
                                 </h2>
-                                <p class="mt-0.5 text-xs text-slate-400">
+                                <p class="mt-0.5 text-xs text-slate-400 dark:text-gray-500">
                                     {{ headerSubtitle }}
                                 </p>
                             </div>
 
                             <button
                                 type="button"
-                                class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+                                class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-400"
                                 @click="handleCancel"
                             >
                                 <X class="h-4 w-4" />
@@ -38,18 +38,18 @@
                             <div
                                 v-for="row in serviceRows"
                                 :key="row.block.scheduleServiceId"
-                                class="rounded-xl border border-slate-100 p-3"
+                                class="rounded-xl border border-slate-100 p-3 dark:border-white/10"
                             >
                                 <div
                                     class="mb-2.5 flex items-start justify-between gap-3"
                                 >
                                     <div class="min-w-0">
                                         <p
-                                            class="truncate text-xs font-semibold text-slate-800"
+                                            class="truncate text-xs font-semibold text-slate-800 dark:text-white"
                                         >
                                             {{ row.block.serviceName }}
                                         </p>
-                                        <p class="text-[11px] text-slate-400">
+                                        <p class="text-[11px] text-slate-400 dark:text-gray-500">
                                             {{ row.block.patientName }} ·
                                             {{ row.block.startLabel }} -
                                             {{ row.block.endLabel }}
@@ -58,7 +58,7 @@
 
                                     <span
                                         v-if="row.employeeId"
-                                        class="flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600"
+                                        class="flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
                                     >
                                         <Check class="h-3 w-3" />
                                         Selected
@@ -68,7 +68,7 @@
                                 <div class="relative">
                                     <select
                                         v-model="row.employeeId"
-                                        class="w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-100"
+                                        class="w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 dark:focus:bg-secondary dark:focus:ring-sky-500/20 dark:focus:bg-white/10"
                                     >
                                         <option :value="null" disabled>
                                             Select employee
@@ -82,23 +82,23 @@
                                         </option>
                                     </select>
                                     <ChevronDown
-                                        class="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
+                                        class="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-gray-500"
                                     />
                                 </div>
                             </div>
 
                             <p
                                 v-if="!serviceRows.length"
-                                class="py-8 text-center text-xs text-slate-400"
+                                class="py-8 text-center text-xs text-slate-400 dark:text-gray-500"
                             >
                                 No services to assign.
                             </p>
                         </div>
 
                         <div
-                            class="flex items-center justify-between gap-3 border-t border-slate-100 px-5 py-4"
+                            class="flex items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 dark:border-white/10"
                         >
-                            <p class="text-[11px] text-slate-400">
+                            <p class="text-[11px] text-slate-400 dark:text-gray-500">
                                 {{ assignedCount }} of
                                 {{ serviceRows.length }} assigned
                             </p>
@@ -106,7 +106,7 @@
                             <div class="flex items-center gap-2">
                                 <button
                                     type="button"
-                                    class="rounded-lg px-3.5 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50"
+                                    class="rounded-lg px-3.5 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5"
                                     @click="handleCancel"
                                 >
                                     Cancel
@@ -114,7 +114,7 @@
                                 <button
                                     type="button"
                                     :disabled="!canSubmit || submitting"
-                                    class="rounded-lg bg-sky-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                                    class="rounded-lg bg-sky-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-white/15 dark:disabled:text-gray-500"
                                     @click="handleSubmit"
                                 >
                                     {{

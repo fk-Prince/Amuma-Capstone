@@ -14,14 +14,14 @@
                     :class="
                         activeIndex === index
                             ? 'text-primary'
-                            : 'text-slate-500 hover:text-slate-700'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
                     "
                 >
                     {{ tab }}
                 </button>
 
                 <span
-                    class="absolute bottom-0 left-0 w-full h-[1px] bg-slate-200"
+                    class="absolute bottom-0 left-0 w-full h-[1px] bg-slate-200 dark:bg-white/15"
                 />
 
                 <span

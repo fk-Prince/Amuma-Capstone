@@ -1,19 +1,19 @@
 <template>
     <div
-        class="min-h-screen-header grid grid-cols-1 lg:grid-cols-[1fr_320px] bg-slate-50"
+        class="min-h-screen-header grid grid-cols-1 lg:grid-cols-[1fr_320px] bg-slate-50 dark:bg-surface"
     >
         <main class="px-5 sm:px-10 py-8 w-full mx-auto lg:mx-0">
             <div class="lg:hidden mb-6">
                 <div class="flex items-center gap-2">
                     <div
-                        class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden"
+                        class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden dark:bg-white/10"
                     >
                         <div
                             class="h-full rounded-full bg-primary transition-all duration-300"
                             :style="{ width: `${progress}%` }"
                         ></div>
                     </div>
-                    <span class="text-xs font-medium text-gray-400 shrink-0">
+                    <span class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500">
                         {{ Math.round(progress) }}%
                     </span>
                 </div>
@@ -28,7 +28,7 @@
             >
                 <div>
                     <div
-                        class="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm"
+                        class="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
                     >
                         <AdmissionReview
                             :reserved="bookingStore.reserved"
@@ -43,24 +43,24 @@
 
                     <div
                         v-if="requiresReservation && !hasReservation"
-                        class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3"
+                        class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3 dark:border-amber-500/20 dark:bg-amber-500/10"
                     >
                         <span
-                            class="h-8 w-8 shrink-0 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-sm font-semibold"
+                            class="h-8 w-8 shrink-0 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-sm font-semibold dark:bg-amber-500/15 dark:text-amber-300"
                         >
                             !
                         </span>
                         <div>
-                            <p class="text-sm font-medium text-amber-800">
+                            <p class="text-sm font-medium text-amber-800 dark:text-amber-300">
                                 No room or bed reserved
                             </p>
-                            <p class="text-xs text-amber-700 mt-0.5">
+                            <p class="text-xs text-amber-700 mt-0.5 dark:text-amber-300">
                                 You need to select an accommodation and bed
                                 before you can proceed to payment.
                             </p>
                             <button
                                 type="button"
-                                class="mt-2 text-xs font-medium text-amber-800 underline hover:no-underline"
+                                class="mt-2 text-xs font-medium text-amber-800 underline hover:no-underline dark:text-amber-300"
                                 @click="goEditStep('step2')"
                             >
                                 Go back and select a room
@@ -69,7 +69,7 @@
                     </div>
 
                     <div
-                        class="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-6"
+                        class="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-6 dark:border-white/10 dark:bg-secondary"
                     >
                         <BaseButton
                             variant="primary"
@@ -88,24 +88,24 @@
         </main>
 
         <aside
-            class="hidden lg:flex flex-col bg-white border-r sticky top-0 h-screen"
+            class="hidden lg:flex flex-col bg-white border-r sticky top-0 h-screen dark:bg-secondary"
         >
             <div class="px-6 py-6 border-b">
                 <p
-                    class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+                    class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500"
                 >
                     Admission Progress
                 </p>
                 <div class="mt-3 flex items-center gap-2">
                     <div
-                        class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden"
+                        class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden dark:bg-white/10"
                     >
                         <div
                             class="h-full rounded-full bg-primary transition-all duration-300"
                             :style="{ width: `${progress}%` }"
                         ></div>
                     </div>
-                    <span class="text-xs font-medium text-gray-400 shrink-0">
+                    <span class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500">
                         {{ Math.round(progress) }}%
                     </span>
                 </div>

@@ -1,19 +1,19 @@
 <template>
     <div
-        class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] overflow-hidden"
+        class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] overflow-hidden dark:bg-secondary dark:border-primary-500/20"
     >
-        <div class="border-b border-primary-100 px-5 py-4">
-            <h3 class="text-sm font-semibold text-primary-900">
+        <div class="border-b border-primary-100 px-5 py-4 dark:border-primary-500/20">
+            <h3 class="text-sm font-semibold text-primary-900 dark:text-primary-300">
                 Admission Timeline
             </h3>
 
-            <p class="text-xs text-muted mt-1">Complete admission history</p>
+            <p class="text-xs text-muted mt-1 dark:text-gray-400">Complete admission history</p>
         </div>
 
         <div class="p-5">
             <div
                 v-if="!allAdmissions.length"
-                class="py-8 text-center text-sm text-slate-400"
+                class="py-8 text-center text-sm text-slate-400 dark:text-gray-500"
             >
                 No admission records.
             </div>
@@ -22,7 +22,7 @@
                 <div class="relative">
                     <span
                         v-if="visibleAdmissions.length"
-                        class="absolute left-[6px] top-2.5 bottom-2.5 w-0.5 -translate-x-1/2 bg-primary-100"
+                        class="absolute left-[6px] top-2.5 bottom-2.5 w-0.5 -translate-x-1/2 bg-primary-100 dark:bg-primary-500/15"
                     />
 
                     <div
@@ -38,8 +38,8 @@
                                 class="relative z-10 mt-1.5 h-3 w-3 shrink-0 rounded-full border-2 border-white"
                                 :class="
                                     isCurrent(admission)
-                                        ? 'bg-primary ring-4 ring-primary-100'
-                                        : 'bg-slate-300'
+                                        ? 'bg-primary ring-4 ring-primary-100 dark:ring-primary-500/20'
+                                        : 'bg-slate-300 dark:bg-white/20'
                                 "
                             />
 
@@ -49,13 +49,13 @@
                                 >
                                     <div class="min-w-0">
                                         <p
-                                            class="text-sm font-semibold text-primary-900"
+                                            class="text-sm font-semibold text-primary-900 dark:text-primary-300"
                                         >
                                             Admission
                                         </p>
 
                                         <p
-                                            class="text-[11px] text-muted mt-0.5"
+                                            class="text-[11px] text-muted mt-0.5 dark:text-gray-400"
                                         >
                                             {{
                                                 formatDate(
@@ -89,7 +89,7 @@
                                 class="group relative"
                             >
                                 <div
-                                    class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md"
+                                    class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md dark:border-white/10 dark:bg-secondary dark:hover:border-white/10"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-4 px-4 py-3.5"
@@ -99,7 +99,7 @@
                                                 class="flex items-center gap-2 flex-wrap"
                                             >
                                                 <span
-                                                    class="text-[12px] font-semibold text-slate-800"
+                                                    class="text-[12px] font-semibold text-slate-800 dark:text-white"
                                                 >
                                                     {{
                                                         formatDate(
@@ -108,12 +108,12 @@
                                                     }}
                                                 </span>
 
-                                                <span class="text-slate-300">
+                                                <span class="text-slate-300 dark:text-gray-500">
                                                     →
                                                 </span>
 
                                                 <span
-                                                    class="text-[12px] font-semibold text-slate-800"
+                                                    class="text-[12px] font-semibold text-slate-800 dark:text-white"
                                                 >
                                                     {{
                                                         formatDate(
@@ -131,7 +131,7 @@
                                                             ?.invoice_accommodation_id ===
                                                             invoice.invoice_accommodation_id
                                                     "
-                                                    class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
+                                                    class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300"
                                                 >
                                                     <span
                                                         class="h-1.5 w-1.5 rounded-full bg-emerald-500"
@@ -143,7 +143,7 @@
 
                                         <div class="shrink-0 text-right">
                                             <p
-                                                class="text-sm font-bold tracking-tight text-slate-900"
+                                                class="text-sm font-bold tracking-tight text-slate-900 dark:text-white"
                                             >
                                                 {{
                                                     formatCurrency(
@@ -153,7 +153,7 @@
                                             </p>
 
                                             <p
-                                                class="mt-0.5 text-[9px] uppercase tracking-wider text-slate-400"
+                                                class="mt-0.5 text-[9px] uppercase tracking-wider text-slate-400 dark:text-gray-500"
                                             >
                                                 Total
                                             </p>
@@ -161,20 +161,20 @@
                                     </div>
 
                                     <div
-                                        class="border-t border-slate-100 bg-slate-50/60 px-4 py-3"
+                                        class="border-t border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-white/10 dark:bg-white/5"
                                     >
                                         <div
                                             class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-3"
                                         >
                                             <div class="min-w-0">
                                                 <p
-                                                    class="text-[9px] font-medium uppercase tracking-wider text-slate-400"
+                                                    class="text-[9px] font-medium uppercase tracking-wider text-slate-400 dark:text-gray-500"
                                                 >
                                                     Accommodation
                                                 </p>
 
                                                 <p
-                                                    class="mt-0.5 truncate text-[11px] font-semibold text-slate-700"
+                                                    class="mt-0.5 truncate text-[11px] font-semibold text-slate-700 dark:text-gray-400"
                                                 >
                                                     {{
                                                         invoice.contract
@@ -189,13 +189,13 @@
 
                                             <div class="min-w-0">
                                                 <p
-                                                    class="text-[9px] font-medium uppercase tracking-wider text-slate-400"
+                                                    class="text-[9px] font-medium uppercase tracking-wider text-slate-400 dark:text-gray-500"
                                                 >
                                                     Billing Cycle
                                                 </p>
 
                                                 <p
-                                                    class="mt-0.5 truncate text-[11px] font-semibold text-slate-700"
+                                                    class="mt-0.5 truncate text-[11px] font-semibold text-slate-700 dark:text-gray-400"
                                                 >
                                                     {{
                                                         invoice.contract
@@ -210,7 +210,7 @@
 
                                             <div class="min-w-0">
                                                 <p
-                                                    class="text-[9px] font-medium uppercase tracking-wider text-slate-400"
+                                                    class="text-[9px] font-medium uppercase tracking-wider text-slate-400 dark:text-gray-500"
                                                 >
                                                     Payment Status
                                                 </p>
@@ -239,7 +239,7 @@
 
                         <div
                             v-else
-                            class="ml-6 rounded-xl bg-slate-50 border border-slate-100 px-4 py-4 text-center text-xs text-slate-400"
+                            class="ml-6 rounded-xl bg-slate-50 border border-slate-100 px-4 py-4 text-center text-xs text-slate-400 dark:bg-white/5 dark:border-white/10 dark:text-gray-500"
                         >
                             No invoices for this admission.
                         </div>
@@ -248,11 +248,11 @@
 
                 <div
                     v-if="canToggle"
-                    class="mt-5 pt-4 border-t border-primary-100 flex justify-center"
+                    class="mt-5 pt-4 border-t border-primary-100 flex justify-center dark:border-primary-500/20"
                 >
                     <button
                         type="button"
-                        class="inline-flex items-center gap-2 rounded-lg border border-primary-100 bg-white px-4 py-2 text-xs font-medium text-primary hover:bg-primary-50 transition"
+                        class="inline-flex items-center gap-2 rounded-lg border border-primary-100 bg-white px-4 py-2 text-xs font-medium text-primary hover:bg-primary-50 transition dark:border-primary-500/20 dark:bg-secondary dark:hover:bg-primary-500/10"
                         @click="toggleExpanded"
                     >
                         {{ expanded ? "Show less" : "Show more" }}
@@ -350,7 +350,7 @@ function invoiceStatusClass(status?: string | null) {
 
     return (
         INVOICE_STATUS[key] ?? // border-primary-100
-        "bg-primary-50 text-primary-600"
+        "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
     );
 }
 
@@ -398,21 +398,21 @@ function formatCurrency(value?: string | number | null) {
 function statusBadgeClass(status?: string) {
     switch (status?.toLowerCase()) {
         case "admitted":
-            return "bg-emerald-100 text-emerald-700";
+            return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300";
 
         case "waiting":
-            return "bg-blue-100 text-blue-700";
+            return "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300";
 
         case "discharged":
         case "completed":
-            return "bg-slate-100 text-slate-600";
+            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
 
         case "cancelled":
         case "rejected":
-            return "bg-rose-100 text-rose-700";
+            return "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300";
 
         default:
-            return "bg-primary-50 text-primary-600";
+            return "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300";
     }
 }
 </script>

@@ -12,7 +12,7 @@
         >
             <button
                 type="button"
-                class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors dark:hover:bg-white/10"
                 @click.stop="close"
                 aria-label="Close"
             >
@@ -30,7 +30,7 @@
             <button
                 v-if="images.length > 1"
                 type="button"
-                class="absolute left-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                class="absolute left-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors dark:hover:bg-white/10"
                 @click.stop="prev"
                 aria-label="Previous image"
             >
@@ -49,7 +49,7 @@
             <button
                 v-if="images.length > 1"
                 type="button"
-                class="absolute right-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                class="absolute right-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors dark:hover:bg-white/10"
                 @click.stop="next"
                 aria-label="Next image"
             >

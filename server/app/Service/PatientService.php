@@ -5,6 +5,11 @@ namespace App\Service;
 
 use App\Http\Resources\PatientReportResource;
 use App\Http\Resources\PatientResource;
+use App\Models\Patient;
+use App\Models\PatientAssessment;
+use App\Models\PatientDiagnosis;
+use App\Service\External\SupabaseService;
+use Illuminate\Http\UploadedFile;
 use App\Models\Schedule;
 use App\Models\User;
 use App\Repository\LocationRepository;
@@ -73,10 +78,11 @@ class PatientService
             'date_of_birth'      => $patient['date_of_birth'] ?? null,
             'phone_number'       => $patient['phone_number'] ?? null,
             'citizenship'        => $patient['citizenship'] ?? null,
-            'assessment'         => $assessment,
             'allergies'          => $this->parseAllergies($patient['allergies'] ?? null),
         ]);
 
+        $this->syncAssessments($patient, $assessment);
+        $this->syncDiagnoses($patient, $payload['diagnoses'] ?? []);
 
         $patientAccess = $this->patientAccess($guardian, $patient);
 
@@ -187,13 +193,15 @@ class PatientService
             'citizenship'        => $patient['citizenship'] ?? null,
             'occupation'         => $patient['occupation'] ?? null,
             'marital_status'     => $patient['marital_status'] ?? null,
-            'assessment'         => $assessment,
             'allergies'          => $this->parseAllergies($patient['allergies'] ?? null),
         ]);
 
         if (!$patient) {
             throw new Exception('Unable to create patient.', 500);
         }
+
+        $this->syncAssessments($patient, $assessment);
+        $this->syncDiagnoses($patient, $payload['diagnoses'] ?? []);
 
         $patientAccess = $this->patientAccess($guardian, $patient);
 
@@ -205,6 +213,112 @@ class PatientService
             'patient' => $patient,
             'patientAccess' => $patientAccess,
         ];
+    }
+
+    // The booking keeps its own assessment snapshot inside booking_data; this
+    // turns that snapshot into the patient's own assessment rows.
+    public function syncAssessments(object $patient, mixed $assessment): void
+    {
+        if (empty($assessment)) {
+            return;
+        }
+
+        $entries = array_is_list((array) $assessment)
+            ? (array) $assessment
+            : [(array) $assessment];
+
+        foreach ($entries as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            $profile = $entry['life_system_profile'] ?? [];
+
+            $row = [
+                'patient_id' => $patient->patient_id,
+                'condition' => $entry['condition'] ?? 'ambulatory',
+                'mental_state' => $entry['mental_state'] ?? 'alert',
+                'affect' => $entry['affect'] ?? 'cheerful',
+                'behavior' => $entry['behavior'] ?? 'cooperative',
+                'communication' => $entry['communication'] ?? 'Coherent & Logical',
+                'speech' => $entry['speech'] ?? 'clear',
+            ];
+
+            foreach (PatientAssessment::LIFE_SYSTEM_ACTIVITIES as $activity) {
+                $row[$activity] = $profile[$activity] ?? 5;
+            }
+
+            PatientAssessment::create($row);
+        }
+    }
+
+    public function addDiagnosis(string $uuid, int $branchId, array $payload)
+    {
+        $patient = Patient::where('uuid', $uuid)
+            ->where('branch_id', $branchId)
+            ->first();
+
+        if (!$patient) {
+            throw new Exception('Patient not found for this branch.', 404);
+        }
+
+        $file = $payload['diagnosis_file'] ?? null;
+
+        $diagnosis = PatientDiagnosis::create([
+            'patient_id' => $patient->patient_id,
+            'diagnosis' => $payload['diagnosis'],
+            'diagnosis_date' => $payload['diagnosis_date'] ?? null,
+            'diagnosis_notes' => $payload['diagnosis_notes'] ?? null,
+            'diagnosis_file' => $file instanceof UploadedFile
+                ? $this->uploadDiagnosisFile($file)
+                : null,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => __('Diagnosis added.'),
+            'diagnosis' => [
+                'uuid' => $diagnosis->uuid,
+                'diagnosis' => $diagnosis->diagnosis,
+                'diagnosis_date' => $diagnosis->diagnosis_date?->toDateString(),
+                'diagnosis_notes' => $diagnosis->diagnosis_notes,
+                'diagnosis_file' => $diagnosis->diagnosis_file,
+            ],
+        ], 201);
+    }
+
+    private function uploadDiagnosisFile(UploadedFile $file): ?string
+    {
+        try {
+            return SupabaseService::store($file)['url'] ?? null;
+        } catch (\Throwable $e) {
+            throw new Exception(
+                'We couldn\'t upload the diagnosis file. Please try again or use a different file.',
+                422,
+                $e
+            );
+        }
+    }
+
+    public function syncDiagnoses(object $patient, mixed $diagnoses): void
+    {
+        foreach ((array) $diagnoses as $diagnosis) {
+            if (!is_array($diagnosis) || empty(array_filter($diagnosis))) {
+                continue;
+            }
+
+            PatientDiagnosis::create([
+                'patient_id' => $patient->patient_id,
+                'diagnosis' => $diagnosis['diagnosis'] ?? null,
+                'diagnosis_date' => !empty($diagnosis['diagnosis_date'])
+                    ? $diagnosis['diagnosis_date']
+                    : null,
+                'diagnosis_notes' => $diagnosis['diagnosis_notes'] ?? null,
+                'diagnosis_file' => is_string($diagnosis['diagnosis_file'] ?? null)
+                    ? $diagnosis['diagnosis_file']
+                    : null,
+            ]);
+        }
     }
 
     // DONE PATIENT ACCESS
@@ -305,7 +419,18 @@ class PatientService
     private function reportProfile(mixed $patient)
     {
         return [
-            'assessment' => $patient->assessment,
+            'assessment' => $patient->assessments->map(fn($assessment) => [
+                'diagnosis' => $assessment->diagnosis,
+                'diagnosis_date' => $assessment->diagnosis_date?->toDateString(),
+                'diagnosis_notes' => $assessment->diagnosis_notes,
+                'condition' => $assessment->condition,
+                'mental_state' => $assessment->mental_state,
+                'affect' => $assessment->affect,
+                'behavior' => $assessment->behavior,
+                'communication' => $assessment->communication,
+                'speech' => $assessment->speech,
+                'life_system_profile' => $assessment->life_system_profile,
+            ])->values(),
             'allergies' => $patient->allergies ?? [],
         ];
     }

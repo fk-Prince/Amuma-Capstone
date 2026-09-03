@@ -1,12 +1,10 @@
 <template>
-    <div class="flex min-h-screen-header flex-col bg-slate-50">
-        <div
-            class="mx-auto flex w-full max-w-[1700px] flex-1 flex-col space-y-6 p-4"
-        >
+    <div class="flex min-h-screen-header flex-col bg-slate-50 dark:bg-surface">
+        <div class="mx-auto flex w-full flex-1 flex-col space-y-6 p-4">
             <div
-                class="flex flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+                class="flex flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
-                <div class="border-b border-slate-100 p-5">
+                <div class="border-b border-slate-100 p-5 dark:border-white/10">
                     <ServiceSearch
                         v-model="searchData"
                         v-model:activeTab="activeTab"
@@ -17,7 +15,7 @@
                 <div class="flex flex-1 flex-col p-5">
                     <div class="mb-5 flex justify-end">
                         <span
-                            class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600"
+                            class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 dark:bg-white/10 dark:text-gray-400"
                         >
                             {{ filteredServices.length }}
                             {{
@@ -122,8 +120,10 @@ const filteredServices = computed(() => {
     if (searchData.value.trim()) {
         const keyword = searchData.value.toLowerCase();
 
-        list = list.filter((s) =>
-            s.service_name.toLowerCase().includes(keyword),
+        list = list.filter(
+            (s) =>
+                s.service_name.toLowerCase().includes(keyword) ||
+                (s.category_name ?? "").toLowerCase().includes(keyword),
         );
     }
     return list;

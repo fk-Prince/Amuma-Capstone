@@ -5,21 +5,21 @@
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 font-sans animate-fade-in"
         >
             <div
-                class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-slide-up"
+                class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-slide-up dark:bg-secondary dark:border-white/10"
             >
                 <!-- Header -->
                 <div
-                    class="sticky top-0 bg-gradient-to-r from-slate-50 to-blue-50 px-6 py-5 border-b border-gray-200 flex items-start justify-between gap-4"
+                    class="sticky top-0 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-white/5 dark:to-primary-500/10 px-6 py-5 border-b border-gray-200 flex items-start justify-between gap-4 dark:border-white/10"
                 >
                     <div class="flex-1">
-                        <h2 class="text-xl font-bold text-gray-900">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">
                             {{
                                 isEditMode
                                     ? "Update Facility Plan"
                                     : "Create Facility Plan"
                             }}
                         </h2>
-                        <p class="text-sm text-gray-600 mt-1">
+                        <p class="text-sm text-gray-600 mt-1 dark:text-gray-400">
                             {{
                                 isEditMode
                                     ? "Update the facility plan details and pricing"
@@ -32,7 +32,7 @@
                         type="button"
                         @click="close"
                         :disabled="isSubmitting"
-                        class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                        class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-400 dark:hover:bg-white/10"
                         aria-label="Close dialog"
                     >
                         <X class="w-5 h-5" />
@@ -57,7 +57,7 @@
                             :error="errors.accommodation_type"
                             required
                         />
-                        <p class="text-xs text-gray-500 mt-2 ml-1">
+                        <p class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400">
                             Choose between private VIP rooms or shared common
                             wards
                         </p>
@@ -76,7 +76,7 @@
                             :error="errors.billing_cycle"
                             required
                         />
-                        <p class="text-xs text-gray-500 mt-2 ml-1">
+                        <p class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400">
                             {{ billingCycleDescription }}
                         </p>
                     </div>
@@ -92,7 +92,7 @@
                             :error="errors.price"
                             required
                         />
-                        <p class="text-xs text-gray-500 mt-2 ml-1">
+                        <p class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400">
                             Set the
                             {{
                                 form.billing_cycle === "MONTHLY"
@@ -105,7 +105,7 @@
 
                     <!-- Description Section -->
                     <div
-                        class="bg-gray-50 rounded-xl p-4 border border-gray-200"
+                        class="bg-gray-50 rounded-xl p-4 border border-gray-200 dark:bg-white/5 dark:border-white/10"
                     >
                         <div class="space-y-3">
                             <BaseInput
@@ -130,7 +130,7 @@
                                 <!-- Current Description (Edit Mode) -->
                                 <div
                                     v-if="existingRoomDescription"
-                                    class="flex items-start gap-3 p-3 bg-white rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all group"
+                                    class="flex items-start gap-3 p-3 bg-white rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all group dark:bg-secondary dark:border-blue-500/20 dark:hover:bg-blue-500/10"
                                     @click="useExistingDescription"
                                     role="button"
                                     tabindex="0"
@@ -138,7 +138,7 @@
                                     @keydown.space="useExistingDescription"
                                 >
                                     <div
-                                        class="flex-shrink-0 w-5 h-5 mt-1 text-blue-600"
+                                        class="flex-shrink-0 w-5 h-5 mt-1 text-blue-600 dark:text-blue-300"
                                     >
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
@@ -154,17 +154,17 @@
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <p
-                                            class="text-sm font-semibold text-gray-900 mb-1"
+                                            class="text-sm font-semibold text-gray-900 mb-1 dark:text-white"
                                         >
                                             Current Description
                                         </p>
                                         <p
-                                            class="text-sm text-gray-700 line-clamp-2"
+                                            class="text-sm text-gray-700 line-clamp-2 dark:text-gray-400"
                                         >
                                             {{ existingRoomDescription }}
                                         </p>
                                         <p
-                                            class="text-xs text-blue-600 font-medium mt-1"
+                                            class="text-xs text-blue-600 font-medium mt-1 dark:text-blue-300"
                                         >
                                             Click to reuse
                                         </p>
@@ -174,7 +174,7 @@
                                 <!-- Suggested Description (Create Mode) -->
                                 <div
                                     v-else-if="suggestedDescription"
-                                    class="flex items-start gap-3 p-3 bg-white rounded-lg border-2 border-green-200 cursor-pointer hover:border-green-300 hover:bg-green-50 transition-all group"
+                                    class="flex items-start gap-3 p-3 bg-white rounded-lg border-2 border-green-200 cursor-pointer hover:border-green-300 hover:bg-green-50 transition-all group dark:bg-secondary"
                                     @click="useSuggestedDescription"
                                     role="button"
                                     tabindex="0"
@@ -196,13 +196,13 @@
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <p
-                                            class="text-sm font-semibold text-gray-900 mb-1"
+                                            class="text-sm font-semibold text-gray-900 mb-1 dark:text-white"
                                         >
                                             Suggested for
                                             {{ form.accommodation_type }}
                                         </p>
                                         <p
-                                            class="text-sm text-gray-700 line-clamp-2"
+                                            class="text-sm text-gray-700 line-clamp-2 dark:text-gray-400"
                                         >
                                             {{ suggestedDescription }}
                                         </p>
@@ -243,13 +243,13 @@
 
                 <!-- Footer -->
                 <div
-                    class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3"
+                    class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3 dark:bg-white/5 dark:border-white/10"
                 >
                     <button
                         type="button"
                         @click="close"
                         :disabled="isSubmitting"
-                        class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/10"
                     >
                         Cancel
                     </button>

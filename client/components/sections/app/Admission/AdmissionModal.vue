@@ -24,14 +24,14 @@
                 >
                     <div
                         v-if="open"
-                        class="bg-white rounded-2xl shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+                        class="bg-white rounded-2xl shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden dark:bg-secondary dark:ring-primary-500/20"
                         role="dialog"
                         aria-modal="true"
                         aria-label="Patient details"
                     >
                         <!-- Header-->
                         <div
-                            class="flex items-start justify-between px-5 py-4 border-b border-primary-100/80 bg-primary-50/40 shrink-0"
+                            class="flex items-start justify-between px-5 py-4 border-b border-primary-100/80 bg-primary-50/40 shrink-0 dark:border-primary-500/20 dark:bg-primary-500/10"
                         >
                             <div class="flex items-center gap-3 min-w-0">
                                 <div
@@ -55,11 +55,11 @@
                                 </div>
                                 <div class="min-w-0">
                                     <h2
-                                        class="text-base font-semibold leading-tight text-primary-900 truncate"
+                                        class="text-base font-semibold leading-tight text-primary-900 truncate dark:text-primary-300"
                                     >
                                         {{ patient?.full_name || "Patient" }}
                                     </h2>
-                                    <p class="text-xs text-muted mt-0.5">
+                                    <p class="text-xs text-muted mt-0.5 dark:text-gray-400">
                                         Patient details &amp; current admission
                                     </p>
                                 </div>
@@ -67,7 +67,7 @@
 
                             <button
                                 aria-label="Close dialog"
-                                class="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-primary-400 transition-colors duration-200 hover:bg-primary-100 hover:text-primary-700"
+                                class="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-primary-400 transition-colors duration-200 hover:bg-primary-100 hover:text-primary-700 dark:hover:bg-primary-500/15 dark:hover:text-primary-300"
                                 @click="$emit('close')"
                             >
                                 <svg
@@ -107,7 +107,7 @@
                                     d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                                 />
                             </svg>
-                            <p class="text-xs text-muted">
+                            <p class="text-xs text-muted dark:text-gray-400">
                                 Loading patient details…
                             </p>
                         </div>
@@ -118,16 +118,16 @@
                         >
                             <div
                                 v-if="admission"
-                                class="rounded-xl border border-primary-100 bg-primary-50/40 p-4 flex items-center justify-between gap-3"
+                                class="rounded-xl border border-primary-100 bg-primary-50/40 p-4 flex items-center justify-between gap-3 dark:border-primary-500/20 dark:bg-primary-500/10"
                             >
                                 <div>
                                     <p
-                                        class="text-[11px] uppercase tracking-wide text-muted font-semibold"
+                                        class="text-[11px] uppercase tracking-wide text-muted font-semibold dark:text-gray-400"
                                     >
                                         Admission status
                                     </p>
                                     <p
-                                        class="mt-1 text-sm font-semibold text-primary-900"
+                                        class="mt-1 text-sm font-semibold text-primary-900 dark:text-primary-300"
                                     >
                                         {{
                                             admission.room?.room_no
@@ -136,13 +136,13 @@
                                         }}
                                         <span
                                             v-if="admission.bed?.bed_no"
-                                            class="text-muted font-normal"
+                                            class="text-muted font-normal dark:text-gray-400"
                                         >
                                             · Bed
                                             {{ admission.bed.bed_no }}
                                         </span>
                                     </p>
-                                    <p class="text-xs text-muted mt-0.5">
+                                    <p class="text-xs text-muted mt-0.5 dark:text-gray-400">
                                         Admitted
                                         {{ formatDate(admission.admitted_at) }}
                                         <span v-if="admission.end_date">
@@ -163,12 +163,12 @@
                             <!-- Personal information -->
                             <section>
                                 <h3
-                                    class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2"
+                                    class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2 dark:text-gray-400"
                                 >
                                     Personal information
                                 </h3>
                                 <div
-                                    class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 rounded-xl border border-primary-100 p-4"
+                                    class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 rounded-xl border border-primary-100 p-4 dark:border-primary-500/20"
                                 >
                                     <InfoField
                                         label="Gender"
@@ -212,33 +212,14 @@
                                 </div>
                             </section>
 
-                            <!-- Vitals -->
-                            <section v-if="vitalEntries.length">
-                                <h3
-                                    class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2"
-                                >
-                                    Vitals
-                                </h3>
-                                <div
-                                    class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 rounded-xl border border-primary-100 p-4"
-                                >
-                                    <InfoField
-                                        v-for="[key, value] in vitalEntries"
-                                        :key="key"
-                                        :label="formatKey(key)"
-                                        :value="value"
-                                    />
-                                </div>
-                            </section>
-
                             <section v-if="medicationEntries.length">
                                 <h3
-                                    class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2"
+                                    class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2 dark:text-gray-400"
                                 >
                                     Assessment
                                 </h3>
                                 <div
-                                    class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 rounded-xl border border-primary-100 p-4"
+                                    class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 rounded-xl border border-primary-100 p-4 dark:border-primary-500/20"
                                 >
                                     <InfoField
                                         v-for="[
@@ -258,20 +239,20 @@
                             v-else
                             class="flex-1 flex flex-col items-center justify-center gap-2 py-16 px-6 text-center"
                         >
-                            <p class="text-sm font-medium text-primary-900">
+                            <p class="text-sm font-medium text-primary-900 dark:text-primary-300">
                                 No patient data
                             </p>
-                            <p class="text-xs text-muted max-w-[220px]">
+                            <p class="text-xs text-muted max-w-[220px] dark:text-gray-400">
                                 We couldn't load details for this patient.
                             </p>
                         </div>
 
                         <div
-                            class="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-primary-100/80 shrink-0"
+                            class="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-primary-100/80 shrink-0 dark:border-primary-500/20"
                         >
                             <button
                                 type="button"
-                                class="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors duration-200"
+                                class="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors duration-200 dark:text-gray-400 dark:hover:text-gray-400"
                                 @click="$emit('close')"
                             >
                                 Close
@@ -318,21 +299,10 @@ const assessment = computed(() => {
     return Array.isArray(value) ? (value[0] ?? null) : value;
 });
 
-const VITAL_KEYS = [
-    "blood_pressure",
-    "pulse_rate",
-    "respiratory_rate",
-    "temperature",
-    "oxygen_saturation",
-];
-
-const vitalEntries = computed(() =>
-    toEntries(assessment.value, (key) => VITAL_KEYS.includes(key)),
-);
 const medicationEntries = computed(() =>
     toEntries(
         assessment.value,
-        (key) => !VITAL_KEYS.includes(key) && key !== "diagnosis_file",
+        (key) => key !== "diagnosis_file",
     ),
 );
 
@@ -364,11 +334,11 @@ function statusBadgeClass(status?: string) {
         case "admitted":
             return "bg-green-50 text-accent";
         case "waiting":
-            return "bg-orange-50 text-secondary";
+            return "bg-orange-50 text-secondary dark:text-white";
         case "discharged":
-            return "bg-slate-100 text-slate-500";
+            return "bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-400";
         default:
-            return "bg-primary-50 text-primary-600";
+            return "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300";
     }
 }
 
@@ -384,7 +354,7 @@ const InfoField = defineComponent({
                 h(
                     "p",
                     {
-                        class: "text-[13px] font-medium text-primary-900 truncate",
+                        class: "text-[13px] font-medium text-primary-900 truncate dark:text-primary-300",
                     },
                     p.value === null || p.value === undefined || p.value === ""
                         ? "—"

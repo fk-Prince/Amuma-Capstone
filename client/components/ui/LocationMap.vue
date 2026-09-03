@@ -80,7 +80,7 @@ onUnmounted(() => {
 <template>
     <div
         ref="container"
-        class="w-full rounded-xl overflow-hidden border border-[#E4EFED] z-0"
+        class="w-full rounded-xl overflow-hidden border border-[#E4EFED] z-0 dark:border-white/10"
         :class="heightClass"
     />
 </template>

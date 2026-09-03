@@ -1,7 +1,7 @@
 import { computed, ref, type ComputedRef, type Ref } from "vue";
 import { useSchemaValidation } from "~/composables/useSchemaValidation";
 import type { HomecareBooking, FacilityBooking } from "~/types/booking";
-import type { Patient, Guardian, Assessment } from "~/types/patient";
+import type { Patient, Guardian, Diagnosis } from "~/types/patient";
 import type { ZodTypeAny } from "zod";
 import { reservedSchema, type Reserved } from "~/types/contract";
 
@@ -16,13 +16,13 @@ export function useBookingFlowValidation(opts: {
     facilityBookingSchema: ZodTypeAny;
     patientSchema: ComputedRef<ZodTypeAny>;
     guardianSchema: ZodTypeAny;
-    assessmentSchema: ZodTypeAny; // schema for a SINGLE assessment item
+    assessmentSchema: ZodTypeAny;
 
     homecareData: HomecareBooking;
     facilityData: FacilityBooking;
     patientData: Patient;
     guardianData: Guardian;
-    assessmentData: Assessment[];
+    diagnosisData: Diagnosis[];
 
     reserved?: Ref<Reserved>;
 }) {
@@ -46,29 +46,17 @@ export function useBookingFlowValidation(opts: {
         opts.guardianData
     );
 
-    // Assessment is a list, and it's optional overall — an item only needs to
-    // validate if the user actually started filling it in. Errors are keyed
-    // flat as `field.index` to match AssessmentForm's lookup pattern.
     const assessmentErrors = ref<Record<string, string>>({});
 
+    // always carry a default, so there is nothing to fail on.
     const ASSESSMENT_FIELDS = [
         "diagnosis",
         "diagnosis_date",
         "diagnosis_notes",
         "diagnosis_file",
-        "blood_pressure",
-        "pulse_rate",
-        "respiratory_rate",
-        "temperature",
-        "oxygen_saturation",
-        "mental_state",
-        "memory_issues",
-        "mood",
-        "communication",
-        "speech",
     ] as const;
 
-    function isAssessmentTouched(item: Assessment): boolean {
+    function isAssessmentTouched(item: Diagnosis): boolean {
         return ASSESSMENT_FIELDS.some((key) => {
             const value = (item as any)[key];
             return value !== "" && value !== undefined && value !== null;
@@ -76,7 +64,7 @@ export function useBookingFlowValidation(opts: {
     }
 
     const assessmentIsValid = computed(() => {
-        const items = opts.assessmentData ?? [];
+        const items = opts.diagnosisData ?? [];
 
         return items.every((item) => {
             if (!isAssessmentTouched(item)) return true;
@@ -85,7 +73,7 @@ export function useBookingFlowValidation(opts: {
     });
 
     function validateAssessment(): boolean {
-        const items = opts.assessmentData ?? [];
+        const items = opts.diagnosisData ?? [];
         const next: Record<string, string> = {};
         let valid = true;
 
@@ -206,6 +194,9 @@ export function useBookingFlowValidation(opts: {
             step2Valid.value ? "step2" : null,
             step3Valid.value ? "step3" : null,
             step4Valid.value ? "step4" : null,
+            // The assessment is comboboxes with defaults, so it never blocks
+            // and always reads as done.
+            "step5",
         ].filter((x): x is string => x !== null)
     );
 

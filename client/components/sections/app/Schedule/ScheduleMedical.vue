@@ -2,34 +2,34 @@
     <div
         v-for="(day, index) in dayGroups"
         :key="day.date"
-        class="overflow-hidden bg-white"
+        class="overflow-hidden bg-white dark:bg-secondary"
     >
         <div
-            class="flex cursor-pointer select-none items-center justify-between border-b border-slate-100 px-5 py-4 transition-colors hover:bg-slate-50/60"
+            class="flex cursor-pointer select-none items-center justify-between border-b border-slate-100 px-5 py-4 transition-colors hover:bg-slate-50/60 dark:border-white/10 dark:hover:bg-white/5"
             @click="toggleDay(day.date)"
         >
             <div class="flex flex-wrap items-center gap-2">
-                <h3 class="font-semibold text-slate-800">
+                <h3 class="font-semibold text-slate-800 dark:text-white">
                     {{ day.dateLabel }}
                 </h3>
 
                 <span
                     v-if="day.isToday"
-                    class="flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-teal-600"
+                    class="flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-teal-600 dark:bg-teal-500/15 dark:text-teal-300"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-teal-500" />
                     Today
                 </span>
 
                 <!-- <span
-                    class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500"
+                    class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-white/10 dark:text-gray-400"
                 >
                     {{ day.count }} {{ day.count === 1 ? "visit" : "visits" }}
                 </span> -->
 
                 <span
                     v-if="day.unassignedCount"
-                    class="flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-600"
+                    class="flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
                 >
                     <svg
                         width="10"
@@ -47,7 +47,7 @@
 
             <button
                 type="button"
-                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                 :aria-label="
                     isCollapsed(day.date) ? 'Expand day' : 'Collapse day'
                 "
@@ -92,7 +92,7 @@
                     class="flex flex-col items-center justify-center gap-2 px-5 py-10 text-center"
                 >
                     <div
-                        class="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-400"
+                        class="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-white/10 dark:text-gray-500"
                     >
                         <svg
                             width="20"
@@ -107,7 +107,7 @@
                         </svg>
                     </div>
 
-                    <p class="text-sm font-medium text-slate-500">
+                    <p class="text-sm font-medium text-slate-500 dark:text-gray-400">
                         No visits scheduled for this day
                     </p>
                 </div>
@@ -137,7 +137,7 @@
                     </div>
 
                     <div
-                        class="sticky top-0 z-20 flex h-10 bg-white shadow-[0_1px_0_0_rgba(0,0,0,0.04)]"
+                        class="sticky top-0 z-20 flex h-10 bg-white shadow-[0_1px_0_0_rgba(0,0,0,0.04)] dark:bg-secondary"
                     >
                         <!-- The pill lives in the hour ruler rather than above
                              the line: anchored to the line's top it rendered
@@ -153,15 +153,15 @@
                         </div>
 
                         <div
-                            class="sticky left-0 z-30 shrink-0 border-b border-r border-slate-100 bg-white"
+                            class="sticky left-0 z-30 shrink-0 border-b border-r border-slate-100 bg-white dark:border-white/10 dark:bg-secondary"
                             :style="{ width: `${labelWidth}px` }"
                         />
 
-                        <div class="flex border-b border-slate-100">
+                        <div class="flex border-b border-slate-100 dark:border-white/10">
                             <div
                                 v-for="hour in day.hours"
                                 :key="hour.value"
-                                class="flex h-10 shrink-0 items-center justify-center border-r border-secondary/20 text-xs font-medium text-slate-400"
+                                class="flex h-10 shrink-0 items-center justify-center border-r border-secondary/20 text-xs font-medium text-slate-400 dark:text-gray-500"
                                 :style="{ width: `${hourWidth}px` }"
                             >
                                 {{ hour.label }}
@@ -181,7 +181,7 @@
                         }"
                     >
                         <div
-                            class="sticky left-0 z-20 shrink-0 border-r border-slate-100/80 px-3 py-2.5"
+                            class="sticky left-0 z-20 shrink-0 border-r border-slate-100/80 px-3 py-2.5 dark:border-white/10"
                             :style="{ width: `${labelWidth}px` }"
                             :class="rowTheme(rowIndex)"
                         >
@@ -193,7 +193,7 @@
                                         class="flex items-center gap-1.5 min-w-0"
                                     >
                                         <p
-                                            class="truncate text-[13.5px] font-semibold text-slate-800"
+                                            class="truncate text-[13.5px] font-semibold text-slate-800 dark:text-white"
                                         >
                                             {{ schedule.schedule_code }}
                                         </p>
@@ -202,8 +202,8 @@
                                             class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium"
                                             :class="
                                                 schedule.category === 'Facility'
-                                                    ? 'bg-indigo-50 text-indigo-600'
-                                                    : 'bg-teal-50 text-teal-600'
+                                                    ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300'
+                                                    : 'bg-teal-50 text-teal-600 dark:bg-teal-500/15 dark:text-teal-300'
                                             "
                                         >
                                             {{
@@ -217,7 +217,7 @@
                                     <!-- The day header above already states the
                                          date, so the row only needs the time. -->
                                     <p
-                                        class="mt-1 flex items-center gap-1 text-[12px] font-medium text-slate-600"
+                                        class="mt-1 flex items-center gap-1 text-[12px] font-medium text-slate-600 dark:text-gray-400"
                                     >
                                         <svg
                                             width="11"
@@ -234,7 +234,7 @@
                                         {{ schedule.start_time ?? "—" }}
                                         <span
                                             v-if="schedule.end_time"
-                                            class="text-slate-400"
+                                            class="text-slate-400 dark:text-gray-500"
                                         >
                                             – {{ schedule.end_time }}
                                         </span>
@@ -242,7 +242,7 @@
 
                                     <p
                                         v-if="bedLabel(schedule)"
-                                        class="mt-0.5 truncate text-[11px] text-slate-400"
+                                        class="mt-0.5 truncate text-[11px] text-slate-400 dark:text-gray-500"
                                         :title="bedLabel(schedule)"
                                     >
                                         {{ bedLabel(schedule) }}
@@ -271,7 +271,7 @@
                                                 (s) => !s.assignees?.length,
                                             )
                                         "
-                                        class="flex-1 rounded-md bg-rose-50 px-2 py-1 text-[10.5px] font-semibold text-rose-600 border-rose-600/20 border transition hover:bg-rose-100"
+                                        class="flex-1 rounded-md bg-rose-50 px-2 py-1 text-[10.5px] font-semibold text-rose-600 border-rose-600/20 border transition hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/15"
                                         @click="$emit('assign', schedule)"
                                     >
                                         Assign
@@ -303,7 +303,7 @@
                                     :key="
                                         service.schedule_services_id ?? sIndex
                                     "
-                                    class="group absolute flex cursor-pointer flex-col justify-center gap-1 rounded-lg border border-slate-200/80 px-2.5 py-1.5 text-[11px] shadow-sm transition-all duration-150 hover:z-10 hover:-translate-y-0.5 hover:shadow-md"
+                                    class="group absolute flex cursor-pointer flex-col justify-center gap-1 rounded-lg border border-slate-200/80 px-2.5 py-1.5 text-[11px] shadow-sm transition-all duration-150 hover:z-10 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10"
                                     :class="
                                         scheduleStatusTheme(schedule.status)
                                             .card
@@ -358,7 +358,7 @@
                                                         (service.assignees
                                                             ?.length ?? 0) > 3
                                                     "
-                                                    class="flex items-center justify-center rounded-full border-2 border-white bg-slate-200 px-1.5 py-0.5 text-[9px] font-semibold text-slate-600"
+                                                    class="flex items-center justify-center rounded-full border-2 border-white bg-slate-200 px-1.5 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-white/15 dark:text-gray-400"
                                                     :title="
                                                         service.assignees
                                                             .slice(3)
@@ -394,7 +394,7 @@
                                                         (service.assignees
                                                             ?.length ?? 0) > 1
                                                     "
-                                                    class="text-slate-500"
+                                                    class="text-slate-500 dark:text-gray-400"
                                                 >
                                                     +{{
                                                         (service.assignees
@@ -408,7 +408,7 @@
                                                 v-if="
                                                     !service.assignees?.length
                                                 "
-                                                class="truncate italic text-[11px] text-slate-400"
+                                                class="truncate italic text-[11px] text-slate-400 dark:text-gray-500"
                                             >
                                                 Not assigned yet
                                             </span>
@@ -431,7 +431,7 @@
                                     </div>
 
                                     <div
-                                        class="flex items-center gap-1.5 text-[11px] text-slate-500"
+                                        class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-gray-400"
                                     >
                                         <svg
                                             width="11"
@@ -455,7 +455,7 @@
 
                             <div
                                 v-else
-                                class="group absolute flex cursor-pointer flex-col justify-center gap-1 rounded-xl border border-slate-200/60 px-4 py-2.5 text-xs shadow-sm transition-all duration-150 hover:z-10 hover:-translate-y-0.5 hover:shadow-md"
+                                class="group absolute flex cursor-pointer flex-col justify-center gap-1 rounded-xl border border-slate-200/60 px-4 py-2.5 text-xs shadow-sm transition-all duration-150 hover:z-10 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10"
                                 :class="
                                     scheduleStatusTheme(schedule.status).card
                                 "
@@ -471,7 +471,7 @@
                                     class="flex items-center justify-between gap-2"
                                 >
                                     <span
-                                        class="truncate text-[13px] font-semibold text-slate-800"
+                                        class="truncate text-[13px] font-semibold text-slate-800 dark:text-white"
                                     >
                                         {{
                                             schedule.category ||
@@ -494,7 +494,7 @@
                                 </div>
 
                                 <div
-                                    class="flex items-center gap-1.5 text-[11px] text-slate-500"
+                                    class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-gray-400"
                                 >
                                     <svg
                                         width="11"
@@ -516,7 +516,7 @@
 
                                 <div
                                     v-if="schedule.patient?.full_name"
-                                    class="truncate text-[11px] font-medium text-slate-600"
+                                    class="truncate text-[11px] font-medium text-slate-600 dark:text-gray-400"
                                 >
                                     {{ schedule.patient.full_name }}
                                 </div>

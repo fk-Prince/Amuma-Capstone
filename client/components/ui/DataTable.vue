@@ -66,7 +66,7 @@
                                 class="px-5 py-4"
                             >
                                 <div
-                                    class="h-3 rounded bg-slate-100 animate-pulse"
+                                    class="h-3 rounded bg-slate-100 animate-pulse dark:bg-white/10"
                                     :class="[
                                         colIndex === 0
                                             ? 'w-[60%]'

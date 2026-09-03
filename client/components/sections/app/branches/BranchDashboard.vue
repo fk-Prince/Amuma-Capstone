@@ -66,7 +66,7 @@
                         class="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center dark:bg-emerald-500/10"
                     >
                         <svg
-                            class="h-5 w-5 text-emerald-600"
+                            class="h-5 w-5 text-emerald-600 dark:text-emerald-300"
                             fill="none"
                             stroke="currentColor"
                             stroke-width="2"
@@ -80,7 +80,7 @@
                     </div>
 
                     <span
-                        class="flex items-center gap-2 text-xs font-medium text-emerald-600"
+                        class="flex items-center gap-2 text-xs font-medium text-emerald-600 dark:text-emerald-300"
                     >
                         <span
                             class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"
@@ -100,7 +100,7 @@
                 </p>
 
                 <div
-                    class="mt-3 flex items-center gap-2 text-xs text-emerald-600"
+                    class="mt-3 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-300"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                     {{ statsData.active_branches_percent }}% of total branches
@@ -159,7 +159,7 @@
                         class="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center dark:bg-rose-500/10"
                     >
                         <svg
-                            class="h-5 w-5 text-rose-500"
+                            class="h-5 w-5 text-rose-500 dark:text-rose-300"
                             fill="none"
                             stroke="currentColor"
                             stroke-width="2"
@@ -174,7 +174,7 @@
                     </div>
 
                     <span
-                        class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-500 text-xs font-semibold dark:bg-rose-500/10"
+                        class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-500 text-xs font-semibold dark:bg-rose-500/10 dark:text-rose-300"
                     >
                         Attention
                     </span>
@@ -190,7 +190,7 @@
                     {{ statsData.maintenance_alerts }}
                 </p>
 
-                <p class="mt-3 text-xs text-rose-500">Subscription expired</p>
+                <p class="mt-3 text-xs text-rose-500 dark:text-rose-300">Subscription expired</p>
             </div>
         </div>
     </div>

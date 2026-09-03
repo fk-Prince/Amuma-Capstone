@@ -28,6 +28,14 @@ class SubscriptionService extends BaseService {
         return await this.request(this.resource + '-renew', 'POST', payload);
     }
 
+    async createBranchFromCapacity(payload: any): Promise<any> {
+        return await this.request(this.resource + '-branch', 'POST', payload);
+    }
+
+    async applyUpgrade(payload: any): Promise<any> {
+        return await this.request(this.resource + '-apply-upgrade', 'POST', payload);
+    }
+
 
     async list(payload: any): Promise<any> {
         return await this.request(this.resource, 'GET', payload);

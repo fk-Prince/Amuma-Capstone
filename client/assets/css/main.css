@@ -3,12 +3,18 @@
 @tailwind utilities;
 
 :root {
-    --header-h: 150px;
+    --header-h: 88px;
+}
+
+@media (min-width: 640px) {
+    :root {
+        --header-h: 104px;
+    }
 }
 
 @media (min-width: 1024px) {
     :root {
-        --header-h: 90px;
+        --header-h: 120px;
     }
 }
 
@@ -18,6 +24,14 @@ body,
     height: 100%;
     margin: 0;
     padding: 0;
+}
+
+:root {
+    color-scheme: light;
+}
+
+html.dark {
+    color-scheme: dark;
 }
 
 @layer utilities {

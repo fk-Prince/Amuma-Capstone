@@ -29,6 +29,12 @@ class AgencyService
         if ($payload['type'] === 'agency_branches') {
             return $this->agencyRepository->paginate($payload);
         }
+
+        if ($payload['type'] === 'branch_capacity') {
+            return response()->json([
+                'data' => $this->agencyRepository->branchCapacity($payload['agency_id'] ?? null),
+            ]);
+        }
     }
 
     public function update(array $payload)

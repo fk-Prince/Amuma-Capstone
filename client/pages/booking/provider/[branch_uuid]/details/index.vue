@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-screen grid grid-cols-1 lg:grid-cols-[280px_1fr] bg-gray-50 dark:bg-secondary"
+        class="min-h-screen grid grid-cols-1 lg:grid-cols-[280px_1fr] bg-gray-50 dark:bg-surface"
     >
         <aside
             data-booking-sidebar
@@ -17,7 +17,7 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p
-                                class="text-[11px] font-bold uppercase tracking-[0.12em] text-primary-600"
+                                class="text-[11px] font-bold uppercase tracking-[0.12em] text-primary-600 dark:text-primary-300"
                             >
                                 Booking Progress
                             </p>
@@ -30,7 +30,7 @@
                         </div>
 
                         <div
-                            class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/80 text-primary-500 shadow-sm ring-1 ring-primary-100 dark:bg-white/10 dark:ring-primary-500/20"
+                            class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/80 text-primary-500 shadow-sm ring-1 ring-primary-100 dark:bg-white/10 dark:ring-primary-500/20 dark:text-primary-300"
                         >
                             <ClipboardCheck class="h-4.5 w-4.5" />
                         </div>
@@ -44,7 +44,7 @@
                                 Overall progress
                             </span>
 
-                            <span class="text-xs font-bold text-primary-600">
+                            <span class="text-xs font-bold text-primary-600 dark:text-primary-300">
                                 {{ Math.round(progress) }}%
                             </span>
                         </div>
@@ -68,7 +68,7 @@
                     />
                 </div>
 
-                <div class="shrink-0 border-t border-gray-100/80 px-6 py-4">
+                <div class="shrink-0 border-t border-gray-100/80 px-6 py-4 dark:border-white/10">
                     <div
                         class="flex items-start gap-3 rounded-xl bg-white/60 p-3 ring-1 ring-gray-100 dark:bg-white/5 dark:ring-white/10"
                     >
@@ -142,7 +142,7 @@
                     @click="stepsSheetOpen = true"
                 >
                     <div
-                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10"
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
                     >
                         <ClipboardCheck class="h-4 w-4" />
                     </div>
@@ -154,7 +154,7 @@
                             >
                                 Booking Progress
                             </span>
-                            <span class="text-xs font-bold text-primary-600">
+                            <span class="text-xs font-bold text-primary-600 dark:text-primary-300">
                                 {{ Math.round(progress) }}%
                             </span>
                         </div>
@@ -201,7 +201,7 @@
 
                                     <button
                                         type="button"
-                                        class="text-gray-400 hover:text-gray-600 dark:text-gray-500"
+                                        class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
                                         aria-label="Close"
                                         @click="stepsSheetOpen = false"
                                     >
@@ -283,6 +283,26 @@
                 <section
                     id="step4"
                     ref="step4"
+                    class="scroll-mt-28 lg:scroll-mt-8 border-x border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
+                >
+                    <DiagnosisForm
+                        :model="diagnosisData"
+                        :errors="assessmentErrors"
+                        @update:model="
+                            diagnosisData.splice(
+                                0,
+                                diagnosisData.length,
+                                ...$event,
+                            )
+                        "
+                        @update:errors="assessmentErrors = $event"
+                    />
+                    <div class="h-px bg-slate-200 dark:bg-white/10" />
+                </section>
+
+                <section
+                    id="step5"
+                    ref="step5"
                     class="scroll-mt-28 lg:scroll-mt-8 border-x rounded-b-2xl border-b border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
                 >
                     <AssessmentForm
@@ -354,11 +374,13 @@ import GuardianForm from "~/components/forms/GuardianForm.vue";
 import PatientForm from "~/components/forms/PatientForm.vue";
 import BaseButton from "~/components/ui/BaseButton.vue";
 import AssessmentForm from "~/components/forms/AssessmentForm.vue";
+import DiagnosisForm from "~/components/forms/DiagnosisForm.vue";
 
 import {
     patientData,
     createPatientSchema,
     assessmentData,
+    diagnosisData,
     assessmentSchema,
 } from "~/schema/patient-schema";
 import { guardianData, guardianSchema } from "~/schema/patient-schema";
@@ -424,7 +446,7 @@ const {
     facilityData,
     patientData,
     guardianData,
-    assessmentData,
+    diagnosisData,
 });
 
 onMounted(async () => {
@@ -469,6 +491,7 @@ async function submit() {
     bookingStore.patient = structuredClone(toRaw(patientData));
     bookingStore.guardian = structuredClone(toRaw(guardianData));
     bookingStore.assessment = structuredClone(toRaw(assessmentData));
+    bookingStore.diagnoses = structuredClone(toRaw(diagnosisData));
     bookingStore.services = serviceData.value;
     bookingStore.branchHomecare = branch.value?.homecare ?? {};
     bookingStore.branchFacility = branch.value?.facility ?? [];
@@ -482,10 +505,11 @@ const step1 = ref<HTMLElement | null>(null);
 const step2 = ref<HTMLElement | null>(null);
 const step3 = ref<HTMLElement | null>(null);
 const step4 = ref<HTMLElement | null>(null);
+const step5 = ref<HTMLElement | null>(null);
 const activeStep = ref("step1");
 
 const scrollTo = async (step: string) => {
-    if (step === "step5") {
+    if (step === "step6") {
         submit();
         return;
     }

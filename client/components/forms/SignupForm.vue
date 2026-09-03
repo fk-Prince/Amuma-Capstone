@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import { Check } from "lucide-vue-next";
 import BaseInput from "../ui/BaseInput.vue";
 import BaseButton from "../ui/BaseButton.vue";
 import OtpDialog from "../ui/OtpDialog.vue";
+import TermsModal from "../ui/TermsModal.vue";
 import { useToast } from "~/composables/useToast";
 import { otpService } from "~/api/otp/OtpService";
 
@@ -24,6 +26,20 @@ const errors = ref({
     email: "",
     password: "",
     confirmPassword: "",
+    terms: "",
+});
+
+const agreedToTerms = ref(false);
+const showTerms = ref(false);
+
+function acceptTerms() {
+    agreedToTerms.value = true;
+    errors.value.terms = "";
+    showTerms.value = false;
+}
+
+watch(agreedToTerms, () => {
+    errors.value.terms = "";
 });
 
 const showPassword = ref(false);
@@ -76,6 +92,7 @@ async function handleSignUp() {
         email: "",
         password: "",
         confirmPassword: "",
+        terms: "",
     };
 
     if (!signupData.value.firstName.trim()) {
@@ -106,12 +123,18 @@ async function handleSignUp() {
         errors.value.confirmPassword = "Passwords do not match.";
     }
 
+    if (!agreedToTerms.value) {
+        errors.value.terms =
+            "Please read and accept the Terms and Conditions to continue.";
+    }
+
     if (
         errors.value.firstName ||
         errors.value.lastName ||
         errors.value.email ||
         errors.value.password ||
-        errors.value.confirmPassword
+        errors.value.confirmPassword ||
+        errors.value.terms
     ) {
         return;
     }
@@ -207,6 +230,13 @@ async function resendOtp() {
             @verify="verifyOtp"
             @resend="resendOtp"
             @close="showOtpDialog = false"
+        />
+
+        <TermsModal
+            v-if="showTerms"
+            show-accept
+            @accept="acceptTerms"
+            @close="showTerms = false"
         />
 
         <div class="mb-10 text-center">
@@ -391,6 +421,49 @@ async function resendOtp() {
                     </button>
                 </template>
             </BaseInput>
+
+            <div class="mt-1">
+                <label class="flex cursor-pointer items-start gap-2">
+                    <input
+                        v-model="agreedToTerms"
+                        type="checkbox"
+                        class="peer sr-only"
+                    />
+
+                    <span
+                        class="mt-px flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border transition peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500/40"
+                        :class="
+                            agreedToTerms
+                                ? 'border-blue-600 bg-blue-600'
+                                : errors.terms
+                                  ? 'border-red-400'
+                                  : 'border-slate-300 dark:border-white/25'
+                        "
+                    >
+                        <Check
+                            v-if="agreedToTerms"
+                            class="h-2.5 w-2.5 stroke-[3.5] text-white"
+                        />
+                    </span>
+
+                    <span
+                        class="text-xs leading-4 text-slate-500 dark:text-gray-400"
+                    >
+                        I have read and agree to the
+                        <button
+                            type="button"
+                            class="font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                            @click.prevent="showTerms = true"
+                        >
+                            Terms and Conditions
+                        </button>
+                    </span>
+                </label>
+
+                <p v-if="errors.terms" class="mt-1 text-xs text-red-500">
+                    {{ errors.terms }}
+                </p>
+            </div>
 
             <BaseButton
                 type="submit"

@@ -3,7 +3,7 @@
         class="bg-white dark:bg-secondary rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm p-8 sm:p-10 text-center"
     >
         <div
-            class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-500/10 text-primary-500"
+            class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-500/10 text-primary-500 dark:text-primary-300"
         >
             <component :is="icon ?? HeartHandshake" class="h-7 w-7" />
         </div>

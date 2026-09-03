@@ -324,21 +324,21 @@ const emit = defineEmits<{
     <div v-if="variant === 'preview'" class="space-y-3">
         <div
             v-if="!latestMedication"
-            class="py-8 text-center text-sm text-gray-400"
+            class="py-8 text-center text-sm text-gray-400 dark:text-gray-500"
         >
             No medications recorded.
         </div>
 
         <div
             v-else
-            class="rounded-2xl border border-gray-100 bg-white shadow-sm"
+            class="rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
         >
             <div class="flex items-start justify-between gap-3 px-5 py-4">
                 <div>
-                    <h2 class="text-base font-semibold text-gray-900">
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-white">
                         {{ latestMedication.name }}
                     </h2>
-                    <p class="mt-0.5 text-xs text-gray-400">
+                    <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                         {{ latestMedication.strength }} ·
                         {{
                             formatDosage(
@@ -355,44 +355,44 @@ const emit = defineEmits<{
                 </div>
 
                 <span
-                    class="shrink-0 rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600"
+                    class="shrink-0 rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:border-white/10 dark:text-gray-400"
                 >
                     {{ formatFrequency(latestMedication.frequency) }}
                 </span>
             </div>
 
             <div
-                class="grid grid-cols-2 gap-3 border-t border-gray-50 px-5 py-4 sm:grid-cols-3"
+                class="grid grid-cols-2 gap-3 border-t border-gray-50 px-5 py-4 sm:grid-cols-3 dark:border-white/10"
             >
                 <div>
                     <p
-                        class="text-xs font-medium uppercase tracking-wide text-gray-400"
+                        class="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500"
                     >
                         Instructions
                     </p>
-                    <p class="mt-1 text-sm font-medium text-gray-800">
+                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
                         {{ latestMedication.instructions || "—" }}
                     </p>
                 </div>
 
                 <div>
                     <p
-                        class="text-xs font-medium uppercase tracking-wide text-gray-400"
+                        class="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500"
                     >
                         Taken for
                     </p>
-                    <p class="mt-1 text-sm font-medium text-gray-800">
+                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
                         {{ latestMedication.takenFor || "—" }}
                     </p>
                 </div>
 
                 <div>
                     <p
-                        class="text-xs font-medium uppercase tracking-wide text-gray-400"
+                        class="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500"
                     >
                         Duration
                     </p>
-                    <p class="mt-1 text-sm font-medium text-gray-800">
+                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
                         {{ latestMedication.durationLabel }}
                     </p>
                 </div>
@@ -404,10 +404,10 @@ const emit = defineEmits<{
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap items-center gap-3">
                 <div
-                    class="flex items-center rounded-xl border bg-white px-2 py-1.5 shadow-sm"
+                    class="flex items-center rounded-xl border bg-white px-2 py-1.5 shadow-sm dark:bg-secondary dark:border-white/10"
                 >
                     <button
-                        class="p-2 text-gray-400 hover:text-gray-700"
+                        class="p-2 text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-400"
                         @click="shiftMonth(-1)"
                     >
                         <ChevronLeft class="h-4 w-4" />
@@ -418,20 +418,20 @@ const emit = defineEmits<{
                     </span>
 
                     <button
-                        class="p-2 text-gray-400 hover:text-gray-700"
+                        class="p-2 text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-400"
                         @click="shiftMonth(1)"
                     >
                         <ChevronRight class="h-4 w-4" />
                     </button>
                 </div>
 
-                <div class="rounded-full border bg-white p-1">
+                <div class="rounded-full border bg-white p-1 dark:bg-secondary dark:border-white/10">
                     <button
                         class="rounded-full px-4 py-1.5 text-sm"
                         :class="
                             scheduleKind === 'Scheduled'
-                                ? 'bg-emerald-50 text-emerald-600'
-                                : 'text-gray-500'
+                                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                : 'text-gray-500 dark:text-gray-400'
                         "
                         @click="scheduleKind = 'Scheduled'"
                     >
@@ -442,8 +442,8 @@ const emit = defineEmits<{
                         class="rounded-full px-4 py-1.5 text-sm"
                         :class="
                             scheduleKind === 'PRN'
-                                ? 'bg-emerald-50 text-emerald-600'
-                                : 'text-gray-500'
+                                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                : 'text-gray-500 dark:text-gray-400'
                         "
                         @click="scheduleKind = 'PRN'"
                     >
@@ -466,36 +466,36 @@ const emit = defineEmits<{
         <div
             v-for="med in visibleMedications"
             :key="med.id"
-            class="rounded-2xl border border-gray-100 bg-white shadow-sm"
+            class="rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
         >
             <div
-                class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-50 px-5 py-4"
+                class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-50 px-5 py-4 dark:border-white/10"
             >
                 <div>
-                    <h2 class="text-base font-semibold text-gray-900">
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-white">
                         {{ med.name }}
                     </h2>
 
-                    <p class="mt-0.5 text-xs text-gray-400">
+                    <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                         {{ med.strength }} ·
                         {{ formatDosage(med.dosageAmount, med.dosageUnit) }}
                         · {{ ROUTE_LABELS[med.route] ?? med.route }}
                     </p>
 
-                    <p class="mt-1 text-[11px] text-gray-400">
+                    <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
                         Prescribed at {{ formatDate(med.recorded_date) }}
                     </p>
                 </div>
 
                 <div class="flex flex-col items-end gap-1">
-                    <p class="text-xs text-gray-400">
+                    <p class="text-xs text-gray-400 dark:text-gray-500">
                         This will run through
                         {{ formatDate(med.startDate) }}
                         -
                         {{ getEndDate(med.startDate, med.durationLabel) }}
                     </p>
                     <label
-                        class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600"
+                        class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 dark:border-white/10 dark:text-gray-400"
                     >
                         {{ med.durationLabel }}
                     </label>
@@ -503,77 +503,77 @@ const emit = defineEmits<{
             </div>
 
             <div
-                class="grid grid-cols-1 gap-3 border-b border-gray-50 px-5 py-4 sm:grid-cols-5"
+                class="grid grid-cols-1 gap-3 border-b border-gray-50 px-5 py-4 sm:grid-cols-5 dark:border-white/10"
             >
                 <div>
                     <p
-                        class="text-xs font-medium uppercase tracking-wide text-gray-400"
+                        class="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500"
                     >
                         Medication
                     </p>
 
-                    <p class="mt-1 text-sm font-medium text-gray-800">
+                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
                         {{ med.instructions }}
                     </p>
                 </div>
 
                 <div>
                     <p
-                        class="text-xs font-medium uppercase tracking-wide text-gray-400"
+                        class="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500"
                     >
                         Taken Every
                     </p>
 
-                    <p class="mt-1 text-sm font-medium text-gray-800">
+                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
                         {{ formatFrequency(med.frequency) }}
                     </p>
                 </div>
 
                 <div>
                     <p
-                        class="text-xs font-medium uppercase tracking-wide text-gray-400"
+                        class="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500"
                     >
                         Taken for
                     </p>
 
-                    <p class="mt-1 text-sm font-medium text-gray-800">
+                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
                         {{ med.takenFor }}
                     </p>
                 </div>
 
                 <div>
                     <p
-                        class="text-xs font-medium uppercase tracking-wide text-gray-400"
+                        class="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500"
                     >
                         Dosage
                     </p>
 
-                    <p class="mt-1 text-sm font-medium text-gray-800">
+                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
                         {{ formatDosage(med.dosageAmount, med.dosageUnit) }}
                     </p>
                 </div>
 
                 <div>
                     <p
-                        class="text-xs font-medium uppercase tracking-wide text-gray-400"
+                        class="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500"
                     >
                         Route
                     </p>
 
-                    <p class="mt-1 text-sm font-medium text-gray-800">
+                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
                         {{ ROUTE_LABELS[med.route] ?? med.route }}
                     </p>
                 </div>
             </div>
 
             <div v-if="med.kind === 'Scheduled'" class="px-3 sm:px-5 py-4">
-                <div class="overflow-x-auto rounded-xl border border-gray-100">
+                <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-white/10">
                     <div class="min-w-max">
                         <div
-                            class="flex border-b border-gray-100 bg-gray-50/80"
+                            class="flex border-b border-gray-100 bg-gray-50/80 dark:border-white/10 dark:bg-white/5"
                         >
                             <div
-                                class="sticky left-0 z-10 w-24 shrink-0 border-r border-gray-100 bg-gray-50/80 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400"
+                                class="sticky left-0 z-10 w-24 shrink-0 border-r border-gray-100 bg-gray-50/80 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:border-white/10 dark:bg-white/5 dark:text-gray-500"
                             >
                                 Time
                             </div>
@@ -585,12 +585,12 @@ const emit = defineEmits<{
                                     class="flex w-11 shrink-0 flex-col items-center gap-0.5 py-2.5"
                                     :class="
                                         isToday(day.fullDate)
-                                            ? 'bg-emerald-50'
+                                            ? 'bg-emerald-50 dark:bg-emerald-500/10'
                                             : ''
                                     "
                                 >
                                     <span
-                                        class="text-[10px] font-medium text-gray-400"
+                                        class="text-[10px] font-medium text-gray-400 dark:text-gray-500"
                                     >
                                         {{ day.label }}
                                     </span>
@@ -600,7 +600,7 @@ const emit = defineEmits<{
                                         :class="
                                             isToday(day.fullDate)
                                                 ? 'bg-emerald-500 text-white'
-                                                : 'text-gray-700'
+                                                : 'text-gray-700 dark:text-gray-200'
                                         "
                                     >
                                         {{ day.date }}
@@ -613,15 +613,15 @@ const emit = defineEmits<{
                             v-for="(time, rowIndex) in med.times"
                             :key="time"
                             class="flex items-center"
-                            :class="rowIndex % 2 ? 'bg-gray-50/60' : 'bg-white'"
+                            :class="rowIndex % 2 ? 'bg-gray-50/60 dark:bg-white/5' : 'bg-white dark:bg-secondary'"
                         >
                             <div
-                                class="sticky left-0 z-10 flex w-24 shrink-0 items-center gap-1.5 border-r border-gray-100 px-3 py-2.5 text-xs font-medium text-gray-600"
+                                class="sticky left-0 z-10 flex w-24 shrink-0 items-center gap-1.5 border-r border-gray-100 px-3 py-2.5 text-xs font-medium text-gray-600 dark:border-white/10 dark:text-gray-400"
                                 :class="
-                                    rowIndex % 2 ? 'bg-gray-50' : 'bg-white'
+                                    rowIndex % 2 ? 'bg-gray-50 dark:bg-white/5' : 'bg-white dark:bg-secondary'
                                 "
                             >
-                                <Clock class="h-3.5 w-3.5 text-gray-400" />
+                                <Clock class="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
                                 {{ formatTime(time) }}
                             </div>
 
@@ -632,14 +632,14 @@ const emit = defineEmits<{
                                     class="flex w-11 justify-center py-2"
                                     :class="
                                         isToday(day.fullDate)
-                                            ? 'bg-emerald-50/50'
+                                            ? 'bg-emerald-50/50 dark:bg-emerald-500/10'
                                             : ''
                                     "
                                 >
                                     <button
                                         v-if="isDoseDay(med, day.fullDate)"
                                         type="button"
-                                        class="flex h-7 w-7 items-center justify-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-60"
+                                        class="flex h-7 w-7 items-center justify-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10"
                                         :class="
                                             isTaken(med, time, day.fullDate)
                                                 ? 'border-emerald-500 bg-emerald-500 text-white'
@@ -648,8 +648,8 @@ const emit = defineEmits<{
                                                         time,
                                                         day.fullDate,
                                                     )
-                                                  ? 'border-rose-300 bg-rose-50 text-rose-500'
-                                                  : 'border-gray-200 bg-white hover:border-emerald-400 hover:bg-emerald-50'
+                                                  ? 'border-rose-300 bg-rose-50 text-rose-500 dark:bg-rose-500/10 dark:text-rose-300'
+                                                  : 'border-gray-200 bg-white hover:border-emerald-400 hover:bg-emerald-50 dark:border-white/10 dark:bg-secondary dark:hover:bg-emerald-500/10'
                                         "
                                         :disabled="disabled || !isProvider"
                                         :aria-label="
@@ -694,7 +694,7 @@ const emit = defineEmits<{
 
                                     <span
                                         v-else
-                                        class="flex h-7 w-7 items-center justify-center text-xs text-gray-300"
+                                        class="flex h-7 w-7 items-center justify-center text-xs text-gray-300 dark:text-gray-500"
                                         aria-hidden="true"
                                     >
                                         –
@@ -706,7 +706,7 @@ const emit = defineEmits<{
                 </div>
 
                 <div
-                    class="mt-3 flex items-center gap-4 text-[11px] text-gray-400"
+                    class="mt-3 flex items-center gap-4 text-[11px] text-gray-400 dark:text-gray-500"
                 >
                     <div class="flex items-center gap-1.5">
                         <span
@@ -716,13 +716,13 @@ const emit = defineEmits<{
                     </div>
                     <div class="flex items-center gap-1.5">
                         <span
-                            class="h-3 w-3 rounded-full border border-rose-300 bg-rose-50"
+                            class="h-3 w-3 rounded-full border border-rose-300 bg-rose-50 dark:bg-rose-500/10"
                         ></span>
                         Missed
                     </div>
                     <div class="flex items-center gap-1.5">
                         <span
-                            class="h-3 w-3 rounded-full border border-gray-200 bg-white"
+                            class="h-3 w-3 rounded-full border border-gray-200 bg-white dark:border-white/10 dark:bg-secondary"
                         ></span>
                         Not yet given
                     </div>
@@ -732,7 +732,7 @@ const emit = defineEmits<{
 
         <div
             v-if="!visibleMedications.length"
-            class="rounded-2xl border border-dashed border-gray-200 bg-white py-14 text-center text-sm text-gray-400"
+            class="rounded-2xl border border-dashed border-gray-200 bg-white py-14 text-center text-sm text-gray-400 dark:border-white/10 dark:bg-secondary dark:text-gray-500"
         >
             No {{ scheduleKind.toLowerCase() }} medications created in
             {{ currentMonthLabel }}.

@@ -1,252 +1,237 @@
 <template>
-    <div class="rounded-2xl bg-white border border-gray-100 shadow-sm">
-        <div class="p-5 border-b border-gray-100">
-            <h3 class="text-base font-semibold text-gray-800">
-                Medical Schedule
-            </h3>
-            <p class="mt-0.5 text-sm text-gray-400">
-                Clinical visits and the medical staff assigned to them.
-            </p>
-        </div>
-
-        <div v-if="loading" class="space-y-3 p-5">
+    <div class="rounded-2xl bg-white dark:bg-secondary">
+        <div v-if="loading" class="space-y-3">
             <div
                 v-for="i in 3"
                 :key="i"
-                class="h-28 animate-pulse rounded-xl bg-gray-50"
+                class="h-32 animate-pulse rounded-2xl bg-gray-50 dark:bg-white/5"
             />
         </div>
 
-        <div v-else-if="!logs.length" class="p-12 text-center">
+        <div
+            v-else-if="!logs.length"
+            class="rounded-2xl border border-dashed border-gray-200 p-12 text-center dark:border-white/10"
+        >
             <span
-                class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 text-gray-300"
+                class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 text-gray-300 dark:bg-white/5 dark:text-gray-500"
             >
-                <Stethoscope class="w-6 h-6" />
+                <Stethoscope class="h-6 w-6" />
             </span>
-            <p class="text-sm font-medium text-gray-600">
-                No medical visits yet
+
+            <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                No medical visits found
             </p>
-            <p class="mt-1 text-xs text-gray-400">
-                Clinical/medical schedule entries will show up here.
+
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                Try a different status or month to see more clinical visits.
             </p>
         </div>
 
-        <div v-else class="p-5 space-y-6">
-            <div v-if="upcomingSchedules.length">
-                <div class="flex items-center justify-between gap-2 mb-3">
+        <div v-else class="space-y-6">
+            <section
+                v-for="group in groups"
+                :key="group.key"
+                class="space-y-3"
+            >
+                <div
+                    v-if="group.title"
+                    class="flex items-center justify-between gap-2"
+                >
                     <div class="flex items-center gap-2">
-                        <CalendarClock class="w-4 h-4 text-blue-500" />
-                        <p class="text-sm font-semibold text-gray-800">
-                            Scheduled Days
+                        <CalendarClock class="h-4 w-4 text-primary-500 dark:text-primary-300" />
+
+                        <p class="text-sm font-semibold text-gray-800 dark:text-white">
+                            {{ group.title }}
                         </p>
                     </div>
-                    <span class="text-xs text-gray-400">
-                        {{ upcomingSchedules.length }} upcoming
+
+                    <span class="text-[11px] text-gray-400 dark:text-gray-500">
+                        {{ group.schedules.length }}
+                        {{ group.schedules.length === 1 ? "visit" : "visits" }}
                     </span>
                 </div>
 
-                <div class="space-y-3">
-                    <div
-                        v-for="schedule in upcomingSchedules"
-                        :key="schedule.schedule_id"
-                        class="flex flex-col gap-3 rounded-xl border border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                        <div class="flex items-start gap-3 min-w-0">
-                            <span
-                                class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-500"
-                            >
-                                <CalendarClock class="w-4 h-4" />
-                            </span>
-
-                            <div class="min-w-0">
-                                <p
-                                    class="text-sm font-semibold text-gray-800"
-                                >
-                                    {{ schedule.schedule_code }}
-                                </p>
-                                <p class="text-xs text-gray-500 mt-0.5">
-                                    {{ formatDate(getScheduleDate(schedule)) }}
-                                    <span v-if="schedule.start_time">
-                                        · {{ schedule.start_time }}
-                                        <template v-if="schedule.end_time">
-                                            - {{ schedule.end_time }}
-                                        </template>
-                                    </span>
-                                </p>
-                            </div>
-                        </div>
-
-                        <div
-                            class="flex items-center gap-2 flex-wrap pl-12 sm:pl-0 sm:shrink-0"
-                        >
-                            <span
-                                class="px-2.5 py-1 rounded-full text-xs font-medium"
-                                :class="scheduleStatusTheme(schedule.status).badge"
-                            >
-                                {{ scheduleStatusLabel(schedule.status) }}
-                            </span>
-
-                            <span
-                                class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600"
-                            >
-                                {{ formatDuration(schedule.total_hours) || "0 hrs" }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="historySchedules.length">
-                <p class="text-sm font-semibold text-gray-800 mb-3">
-                    History
-                </p>
-
-                <div class="space-y-4">
-            <div
-                v-for="schedule in historySchedules"
-                :key="schedule.schedule_id"
-                class="rounded-xl border border-gray-100 overflow-hidden"
-            >
-                <div
-                    class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between bg-gray-50/60"
-                >
-                    <div>
-                        <p class="text-sm font-semibold text-gray-800">
-                            {{ schedule.schedule_code }}
-                        </p>
-                        <p class="text-xs text-gray-500 mt-0.5">
-                            {{ formatDate(getScheduleDate(schedule)) }}
-                            <span v-if="schedule.start_time">
-                                · {{ schedule.start_time }}
-                                <template v-if="schedule.end_time">
-                                    - {{ schedule.end_time }}
-                                </template>
-                            </span>
-                        </p>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <span
-                            class="px-2.5 py-1 rounded-full text-xs font-medium"
-                            :class="scheduleStatusTheme(schedule.status).badge"
-                        >
-                            {{ scheduleStatusLabel(schedule.status) }}
-                        </span>
-
-                        <span
-                            class="px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-600"
-                        >
-                            {{ formatDuration(schedule.total_hours) }}
-                        </span>
-                    </div>
-                </div>
-
-                <div
-                    v-if="schedule.services?.length"
-                    class="divide-y divide-gray-100"
+                <article
+                    v-for="schedule in group.schedules"
+                    :key="schedule.schedule_id"
+                    class="overflow-hidden rounded-2xl border border-gray-100 bg-white transition hover:border-gray-200 dark:border-white/10 dark:bg-secondary dark:hover:border-white/10"
                 >
                     <div
-                        v-for="service in schedule.services"
-                        :key="service.schedule_services_id"
                         class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <div class="flex items-center gap-3 min-w-0">
-                            <template v-if="service.assignees?.length">
-                                <img
-                                    v-if="service.assignees[0]?.avatar"
-                                    :src="service.assignees[0].avatar!"
-                                    class="w-9 h-9 rounded-full object-cover shrink-0"
-                                    alt=""
-                                />
-                                <span
-                                    v-else
-                                    class="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-xs font-semibold shrink-0"
-                                >
-                                    {{ initials(service.assignees[0]?.full_name) }}
-                                </span>
-                            </template>
+                        <div class="flex min-w-0 items-center gap-3">
                             <span
-                                v-else
-                                class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0"
+                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-gray-400 dark:bg-white/5 dark:text-gray-500"
                             >
-                                <UserRound class="w-4 h-4" />
+                                <Stethoscope class="h-4 w-4" />
                             </span>
 
                             <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <p
+                                        class="truncate text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
+                                        {{ schedule.schedule_code }}
+                                    </p>
+
+                                    <span
+                                        v-if="dayBadge(schedule)"
+                                        class="shrink-0 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-semibold text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
+                                    >
+                                        {{ dayBadge(schedule) }}
+                                    </span>
+                                </div>
+
                                 <p
-                                    class="text-sm font-medium text-gray-800 truncate"
+                                    class="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-gray-400 dark:text-gray-500"
                                 >
-                                    {{ service.service_name || "Service" }}
-                                </p>
-                                <p class="text-xs text-gray-400 truncate">
-                                    <template v-if="service.assignees?.length">
-                                        {{ service.assignees[0]?.full_name }}
-                                        <span
-                                            v-if="
-                                                service.assignees[0]
-                                                    ?.employee_role
-                                            "
-                                        >
-                                            · {{ service.assignees[0]?.employee_role }}
-                                        </span>
-                                        <span
-                                            v-if="service.assignees.length > 1"
-                                        >
-                                            +{{ service.assignees.length - 1 }}
-                                            more
+                                    <span class="whitespace-nowrap">
+                                        {{
+                                            formatDate(
+                                                getScheduleDate(schedule),
+                                            ) || "Date to be confirmed"
+                                        }}
+                                    </span>
+
+                                    <template v-if="schedule.start_time">
+                                        <span class="text-gray-300 dark:text-gray-500">·</span>
+
+                                        <span class="whitespace-nowrap">
+                                            {{ schedule.start_time }}
+                                            <template v-if="schedule.end_time">
+                                                – {{ schedule.end_time }}
+                                            </template>
                                         </span>
                                     </template>
-                                    <span v-else class="italic">
-                                        Not assigned yet
+
+                                    <span class="text-gray-300 dark:text-gray-500">·</span>
+
+                                    <span
+                                        class="whitespace-nowrap"
+                                        title="Estimated duration"
+                                    >
+                                        Est.
+                                        {{ formatDurationShort(schedule.total_hours) }}
                                     </span>
                                 </p>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-3 shrink-0 pl-12 sm:pl-0">
-                            <div
-                                class="rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 text-right"
-                            >
-                                <p class="text-[10px] uppercase text-gray-400">
-                                    Duration
-                                </p>
-                                <p class="text-xs font-semibold text-gray-700">
-                                    {{
-                                        formatDuration(
-                                            (service.duration_minutes ?? 0) /
-                                                60,
-                                        )
-                                    }}
-                                </p>
+                        <span
+                            class="inline-flex shrink-0 items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-[11px] font-semibold sm:self-auto"
+                            :class="scheduleStatusTheme(schedule.status).badge"
+                        >
+                            <span
+                                class="h-1.5 w-1.5 rounded-full bg-current opacity-70"
+                            />
+                            {{ scheduleStatusLabel(schedule.status) }}
+                        </span>
+                    </div>
+
+                    <div
+                        v-if="schedule.services?.length"
+                        class="divide-y divide-gray-100 border-t border-gray-100 dark:divide-white/10 dark:border-white/10"
+                    >
+                        <div
+                            v-for="service in schedule.services"
+                            :key="service.schedule_services_id"
+                            class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                            <div class="flex min-w-0 items-center gap-3">
+                                <template v-if="service.assignees?.length">
+                                    <img
+                                        v-if="service.assignees[0]?.avatar"
+                                        :src="service.assignees[0].avatar!"
+                                        class="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-white"
+                                        alt=""
+                                    />
+
+                                    <span
+                                        v-else
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-50 text-xs font-bold text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
+                                    >
+                                        {{ initials(service.assignees[0]?.full_name) }}
+                                    </span>
+                                </template>
+
+                                <span
+                                    v-else
+                                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-300"
+                                >
+                                    <UserRound class="h-4 w-4" />
+                                </span>
+
+                                <div class="min-w-0">
+                                    <p
+                                        class="truncate text-sm font-medium text-gray-800 dark:text-white"
+                                    >
+                                        {{ service.service_name || "Service" }}
+                                    </p>
+
+                                    <p class="truncate text-xs text-gray-400 dark:text-gray-500">
+                                        <template v-if="service.assignees?.length">
+                                            {{ service.assignees[0]?.full_name }}
+
+                                            <span
+                                                v-if="service.assignees[0]?.employee_role"
+                                                class="capitalize"
+                                            >
+                                                · {{ service.assignees[0]?.employee_role }}
+                                            </span>
+
+                                            <span v-if="service.assignees.length > 1">
+                                                +{{ service.assignees.length - 1 }}
+                                                more
+                                            </span>
+                                        </template>
+
+                                        <span v-else class="text-amber-600 dark:text-amber-300">
+                                            Not assigned yet
+                                        </span>
+                                    </p>
+                                </div>
                             </div>
 
                             <div
-                                v-if="latestVisit(service)"
-                                class="rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-right"
+                                class="flex shrink-0 items-center gap-2 pl-12 text-[11px] sm:pl-0"
                             >
-                                <p class="text-[10px] uppercase text-emerald-500">
-                                    Last Visit
-                                </p>
-                                <p class="text-xs font-semibold text-emerald-700">
+                                <span
+                                    class="inline-flex items-center gap-1 whitespace-nowrap font-semibold text-gray-500 dark:text-gray-400"
+                                    title="Estimated duration"
+                                >
+                                    <Clock class="h-3 w-3 text-gray-300 dark:text-gray-500" />
+                                    Est.
+                                    {{
+                                        formatDurationShort(
+                                            (service.duration_minutes ?? 0) / 60,
+                                        )
+                                    }}
+                                </span>
+
+                                <span
+                                    v-if="latestVisit(service)"
+                                    class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-emerald-50 px-2 py-1 font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                                >
+                                    <span
+                                        class="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                                    />
                                     {{ formatTimestamp(latestVisit(service)?.in_timestamp) }}
-                                </p>
+                                </span>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-                </div>
-            </div>
+                </article>
+            </section>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { Stethoscope, UserRound, CalendarClock } from "lucide-vue-next";
+import { Stethoscope, UserRound, CalendarClock, Clock } from "lucide-vue-next";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import { useSchedule } from "~/composables/useSchedule";
-import { formatDuration } from "~/utils/time";
+import { formatDurationShort } from "~/utils/time";
 
 const props = withDefaults(
     defineProps<{
@@ -259,11 +244,15 @@ const props = withDefaults(
     },
 );
 
-const { formatDate, getScheduleDate, scheduleStatusTheme, scheduleStatusLabel } =
-    useSchedule();
+const {
+    formatDate,
+    getScheduleDate,
+    scheduleStatusTheme,
+    scheduleStatusLabel,
+    today,
+    toLocalDateString,
+} = useSchedule();
 
-// A pending/confirmed visit hasn't happened yet, so it belongs in its own
-// "Scheduled Days" list rather than being mixed in with past visits.
 const NOT_YET_DONE_STATUSES = ["pending", "confirmed"];
 
 const upcomingSchedules = computed(() =>
@@ -277,6 +266,44 @@ const historySchedules = computed(() =>
         (schedule) => !NOT_YET_DONE_STATUSES.includes(schedule.status),
     ),
 );
+
+const groups = computed(() => {
+    const list: {
+        key: string;
+        title: string | null;
+        schedules: ScheduleItem[];
+    }[] = [];
+
+    if (upcomingSchedules.value.length) {
+        list.push({
+            key: "upcoming",
+            title: "Scheduled Days",
+            schedules: upcomingSchedules.value,
+        });
+    }
+
+    if (historySchedules.value.length) {
+        list.push({
+            key: "history",
+            title: upcomingSchedules.value.length ? "History" : null,
+            schedules: historySchedules.value,
+        });
+    }
+
+    return list;
+});
+
+function dayBadge(schedule: ScheduleItem) {
+    const date = getScheduleDate(schedule);
+    if (!date) return null;
+
+    if (date === today()) return "Today";
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return date === toLocalDateString(tomorrow) ? "Tomorrow" : null;
+}
 
 function latestVisit(service: ScheduleServiceItem) {
     const visits = (service.assignees ?? []).flatMap((a) => a.online ?? []);

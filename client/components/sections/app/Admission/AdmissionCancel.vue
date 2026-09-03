@@ -6,18 +6,18 @@
             @click.self="handleClose"
         >
             <div
-                class="w-full max-w-md rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60"
+                class="w-full max-w-md rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 dark:bg-secondary dark:ring-primary-500/20"
             >
-                <div class="border-b border-primary-100 p-6">
+                <div class="border-b border-primary-100 p-6 dark:border-primary-500/20">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <h3
-                                class="text-base font-semibold text-primary-900"
+                                class="text-base font-semibold text-primary-900 dark:text-primary-300"
                             >
                                 Cancel Admission
                             </h3>
 
-                            <p class="text-xs text-muted mt-1">
+                            <p class="text-xs text-muted mt-1 dark:text-gray-400">
                                 Please provide a reason for cancelling this
                                 admission.
                             </p>
@@ -25,7 +25,7 @@
 
                         <button
                             type="button"
-                            class="text-slate-400 hover:text-slate-600 transition"
+                            class="text-slate-400 hover:text-slate-600 transition dark:text-gray-500 dark:hover:text-gray-400"
                             :disabled="loading"
                             @click="handleClose"
                         >
@@ -48,7 +48,7 @@
                     <div>
                         <label
                             for="cancellation-reason"
-                            class="block text-xs font-medium text-primary-900 mb-2"
+                            class="block text-xs font-medium text-primary-900 mb-2 dark:text-primary-300"
                         >
                             Cancellation reason
                         </label>
@@ -59,12 +59,12 @@
                             rows="4"
                             :disabled="loading"
                             placeholder="Enter the reason for cancelling this admission..."
-                            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-primary-900 placeholder:text-slate-400 outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-primary-900 placeholder:text-slate-400 outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:bg-slate-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-secondary dark:placeholder:text-gray-500 dark:disabled:bg-white/5"
                         />
 
                         <p
                             v-if="cancellationReasonError"
-                            class="mt-1.5 text-xs text-rose-600"
+                            class="mt-1.5 text-xs text-rose-600 dark:text-rose-300"
                         >
                             {{ cancellationReasonError }}
                         </p>
@@ -75,7 +75,7 @@
                     >
                         <button
                             type="button"
-                            class="rounded-lg px-4 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 transition disabled:opacity-40"
+                            class="rounded-lg px-4 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 transition disabled:opacity-40 dark:text-gray-400 dark:hover:text-gray-400"
                             :disabled="loading"
                             @click="handleClose"
                         >

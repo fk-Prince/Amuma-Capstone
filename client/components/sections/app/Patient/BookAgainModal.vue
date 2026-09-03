@@ -24,7 +24,7 @@
                 >
                     <div class="min-w-0">
                         <p
-                            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+                            class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500"
                         >
                             Book Again
                         </p>
@@ -38,7 +38,7 @@
 
                     <button
                         type="button"
-                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/10 dark:hover:text-white/80"
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/10 dark:hover:text-white/80 dark:text-gray-500"
                         @click="close"
                     >
                         <X class="h-4.5 w-4.5" />

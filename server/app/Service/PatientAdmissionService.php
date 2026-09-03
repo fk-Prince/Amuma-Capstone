@@ -77,7 +77,7 @@ class PatientAdmissionService
             'change_room' => $this->changeRoom($payload),
             'discharge' => $this->dischargeAdmission($payload),
             'cancel' => $this->cancelAdmission($payload),
-            'branch_contract' => $this->branchContractService->roomContract($payload['user'], $payload),
+            'branch_contract' => $this->branchContractService->roomContract($payload),
             default => throw new Exception('Invalid admission action.'),
         };
     }

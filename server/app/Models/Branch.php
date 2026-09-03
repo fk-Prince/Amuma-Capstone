@@ -25,22 +25,31 @@ class Branch extends Model
 
     public function hasFacilitySubscription(): bool
     {
-        return $this->subscriptions()
-            ->where('status', 'active')
-            ->whereDate('end_date', '>=', now())
-            ->whereHas('plans', function ($q) {
-                $q->whereIn('plan_code', ['B', 'C']);
-            })
-            ->exists();
+        return $this->hasPlanAccess(['B', 'C']);
     }
 
     public function hasHomecareSubscription(): bool
     {
+        return $this->hasPlanAccess(['A', 'C']);
+    }
+
+    private function hasPlanAccess(array $planCodes): bool
+    {
         return $this->subscriptions()
-            ->where('status', 'active')
-            ->whereDate('end_date', '>=', now())
-            ->whereHas('plans', function ($q) {
-                $q->whereIn('plan_code', ['A', 'C']);
+            ->wherePivot('status', BranchSubscription::STATUS_APPROVED)
+            ->where('subscriptions.status', Subscription::STATUS_ACTIVE)
+            ->whereDate('subscriptions.end_date', '>=', now())
+            ->where(function ($q) use ($planCodes) {
+                $q->where(function ($current) use ($planCodes) {
+                    $current->where(function ($notDue) {
+                        $notDue->whereNull('subscriptions.pending_plan_starts_at')
+                            ->orWhereDate('subscriptions.pending_plan_starts_at', '>', now());
+                    })
+                        ->whereHas('plans', fn($p) => $p->whereIn('plan_code', $planCodes));
+                })->orWhere(function ($upgraded) use ($planCodes) {
+                    $upgraded->whereDate('subscriptions.pending_plan_starts_at', '<=', now())
+                        ->whereHas('pendingPlan', fn($p) => $p->whereIn('plan_code', $planCodes));
+                });
             })
             ->exists();
     }
@@ -67,7 +76,21 @@ class Branch extends Model
 
     public function subscriptions()
     {
-        return $this->hasMany(Subscription::class, 'branch_id', 'branch_id');
+        return $this->belongsToMany(
+            Subscription::class,
+            'branch_subscription',
+            'branch_id',
+            'subscription_id'
+        )
+            ->using(BranchSubscription::class)
+            ->withPivot(['branch_subscription_id', 'uuid', 'status'])
+            ->withTimestamps();
+    }
+
+    public function subscriptionLink()
+    {
+        return $this->hasOne(BranchSubscription::class, 'branch_id', 'branch_id')
+            ->latestOfMany('branch_subscription_id');
     }
 
     public function agencies()

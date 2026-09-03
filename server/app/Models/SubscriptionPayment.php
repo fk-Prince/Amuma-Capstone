@@ -11,8 +11,14 @@ class SubscriptionPayment extends Model
 
     public const STATUS_PAID = 'paid';
     public const STATUS_REFUNDED = 'refunded';
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class, 'plan_id', 'plan_id');
+    }
+
     protected $fillable = [
         'subscription_id',
+        'plan_id',
         'xendit_invoice_id',
         'payment_reference_id',
         'masked_card_number',

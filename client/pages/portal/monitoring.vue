@@ -110,11 +110,11 @@ const todaysActivity: ActivityEntry[] = [
         title: "Next Appointment",
         subtitle: "Doctor consultation with Dr. Gem Manolo",
         icon: "calendar-clock",
-        iconBg: "bg-violet-50",
-        iconText: "text-violet-600",
+        iconBg: "bg-violet-50 dark:bg-violet-500/10",
+        iconText: "text-violet-600 dark:text-violet-300",
         status: "Upcoming",
-        statusBg: "bg-violet-50",
-        statusText: "text-violet-600",
+        statusBg: "bg-violet-50 dark:bg-violet-500/10",
+        statusText: "text-violet-600 dark:text-violet-300",
     },
     {
         id: 2,
@@ -122,11 +122,11 @@ const todaysActivity: ActivityEntry[] = [
         title: "Physical Therapy",
         subtitle: "Completed session",
         icon: "activity",
-        iconBg: "bg-emerald-50",
-        iconText: "text-emerald-600",
+        iconBg: "bg-emerald-50 dark:bg-emerald-500/10",
+        iconText: "text-emerald-600 dark:text-emerald-300",
         status: "Completed",
-        statusBg: "bg-emerald-50",
-        statusText: "text-emerald-600",
+        statusBg: "bg-emerald-50 dark:bg-emerald-500/10",
+        statusText: "text-emerald-600 dark:text-emerald-300",
     },
     {
         id: 3,
@@ -134,11 +134,11 @@ const todaysActivity: ActivityEntry[] = [
         title: "Breakfast",
         subtitle: "Breakfast completed",
         icon: "utensils",
-        iconBg: "bg-primary-50",
-        iconText: "text-primary-600",
+        iconBg: "bg-primary-50 dark:bg-primary-500/10",
+        iconText: "text-primary-600 dark:text-primary-300",
         status: "Completed",
-        statusBg: "bg-emerald-50",
-        statusText: "text-emerald-600",
+        statusBg: "bg-emerald-50 dark:bg-emerald-500/10",
+        statusText: "text-emerald-600 dark:text-emerald-300",
     },
     {
         id: 4,
@@ -146,11 +146,11 @@ const todaysActivity: ActivityEntry[] = [
         title: "Medication",
         subtitle: "Amlodipine 5mg",
         icon: "pill",
-        iconBg: "bg-amber-50",
-        iconText: "text-amber-600",
+        iconBg: "bg-amber-50 dark:bg-amber-500/10",
+        iconText: "text-amber-600 dark:text-amber-300",
         status: "Given",
-        statusBg: "bg-emerald-50",
-        statusText: "text-emerald-600",
+        statusBg: "bg-emerald-50 dark:bg-emerald-500/10",
+        statusText: "text-emerald-600 dark:text-emerald-300",
     },
     {
         id: 5,
@@ -158,21 +158,21 @@ const todaysActivity: ActivityEntry[] = [
         title: "Wake Up",
         subtitle: "Resident woke up",
         icon: "clock",
-        iconBg: "bg-gray-100",
-        iconText: "text-gray-500",
+        iconBg: "bg-gray-100 dark:bg-white/10",
+        iconText: "text-gray-500 dark:text-gray-400",
         status: "Completed",
-        statusBg: "bg-emerald-50",
-        statusText: "text-emerald-600",
+        statusBg: "bg-emerald-50 dark:bg-emerald-500/10",
+        statusText: "text-emerald-600 dark:text-emerald-300",
     },
 ];
 </script>
 
 <template>
-    <div v-if="isVip" class="space-y-5 p-4 sm:p-6 lg:p-8">
+    <div v-if="isVip" class="min-h-full space-y-5 p-4 sm:p-6 lg:p-8">
         <div class="grid grid-cols-1 gap-5 items-start lg:grid-cols-3">
             <div class="lg:col-span-2 space-y-5">
                 <div
-                    class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
+                    class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
                 >
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
@@ -183,13 +183,13 @@ const todaysActivity: ActivityEntry[] = [
                                 alt=""
                             />
                             <div
-                                class="w-11 h-11 rounded-full bg-gray-200"
+                                class="w-11 h-11 rounded-full bg-gray-200 dark:bg-white/15"
                                 v-else
                             ></div>
                             <div>
                                 <div class="flex items-center gap-2 flex-wrap">
                                     <p
-                                        class="text-sm font-semibold text-gray-900"
+                                        class="text-sm font-semibold text-gray-900 dark:text-white"
                                     >
                                         {{ residentName }}
                                     </p>
@@ -200,7 +200,7 @@ const todaysActivity: ActivityEntry[] = [
                                         VIP
                                     </span>
                                     <span
-                                        class="flex items-center gap-1 text-emerald-600 text-xs font-medium"
+                                        class="flex items-center gap-1 text-emerald-600 text-xs font-medium dark:text-emerald-300"
                                     >
                                         <span
                                             class="w-1.5 h-1.5 rounded-full bg-emerald-500"
@@ -208,13 +208,13 @@ const todaysActivity: ActivityEntry[] = [
                                         Online
                                     </span>
                                 </div>
-                                <p class="text-xs text-gray-400 mt-0.5">
+                                <p class="text-xs text-gray-400 mt-0.5 dark:text-gray-500">
                                     {{ roomLabel }} · Last updated just now
                                 </p>
                             </div>
                         </div>
                         <span
-                            class="flex items-center gap-1 text-xs font-medium text-primary-600 bg-primary-50 px-3 py-1.5 rounded-lg"
+                            class="flex items-center gap-1 text-xs font-medium text-primary-600 bg-primary-50 px-3 py-1.5 rounded-lg dark:text-primary-300 dark:bg-primary-500/10"
                         >
                             <span
                                 class="w-1.5 h-1.5 rounded-full bg-primary-500"
@@ -255,7 +255,7 @@ const todaysActivity: ActivityEntry[] = [
                         </div>
                         <div
                             v-if="snapshotMessage"
-                            class="absolute inset-x-0 top-3 mx-auto w-fit bg-white/90 text-gray-800 text-[11px] font-medium px-3 py-1 rounded-full shadow"
+                            class="absolute inset-x-0 top-3 mx-auto w-fit bg-white/90 text-gray-800 text-[11px] font-medium px-3 py-1 rounded-full shadow dark:text-white"
                         >
                             {{ snapshotMessage }}
                         </div>
@@ -297,47 +297,47 @@ const todaysActivity: ActivityEntry[] = [
                     <div class="grid grid-cols-4 gap-2 mt-4">
                         <button
                             @click="zoomIn"
-                            class="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-gray-100 hover:bg-gray-50"
+                            class="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-gray-100 hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5"
                         >
                             <Icon
                                 name="zoom-in"
-                                class="w-4 h-4 text-gray-500"
+                                class="w-4 h-4 text-gray-500 dark:text-gray-400"
                             />
-                            <span class="text-[11px] text-gray-500"
+                            <span class="text-[11px] text-gray-500 dark:text-gray-400"
                                 >Zoom In</span
                             >
                         </button>
                         <button
                             @click="zoomOut"
-                            class="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-gray-100 hover:bg-gray-50"
+                            class="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-gray-100 hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5"
                         >
                             <Icon
                                 name="zoom-out"
-                                class="w-4 h-4 text-gray-500"
+                                class="w-4 h-4 text-gray-500 dark:text-gray-400"
                             />
-                            <span class="text-[11px] text-gray-500"
+                            <span class="text-[11px] text-gray-500 dark:text-gray-400"
                                 >Zoom Out</span
                             >
                         </button>
                         <button
                             @click="takeSnapshot"
-                            class="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-gray-100 hover:bg-gray-50"
+                            class="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-gray-100 hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5"
                         >
                             <Icon
                                 name="aperture"
-                                class="w-4 h-4 text-gray-500"
+                                class="w-4 h-4 text-gray-500 dark:text-gray-400"
                             />
-                            <span class="text-[11px] text-gray-500"
+                            <span class="text-[11px] text-gray-500 dark:text-gray-400"
                                 >Snapshot</span
                             >
                         </button>
                         <button
                             @click="toggleSpeak"
-                            class="flex flex-col items-center gap-1.5 py-3 rounded-xl border hover:bg-gray-50"
+                            class="flex flex-col items-center gap-1.5 py-3 rounded-xl border hover:bg-gray-50 dark:hover:bg-white/5 dark:border-white/10"
                             :class="
                                 isSpeaking
-                                    ? 'border-rose-200 bg-rose-50'
-                                    : 'border-gray-100'
+                                    ? 'border-rose-200 bg-rose-50 dark:border-rose-500/20 dark:bg-rose-500/10'
+                                    : 'border-gray-100 dark:border-white/10'
                             "
                         >
                             <Icon
@@ -345,23 +345,23 @@ const todaysActivity: ActivityEntry[] = [
                                 class="w-4 h-4"
                                 :class="
                                     isSpeaking
-                                        ? 'text-rose-600'
-                                        : 'text-gray-500'
+                                        ? 'text-rose-600 dark:text-rose-300'
+                                        : 'text-gray-500 dark:text-gray-400'
                                 "
                             />
                             <span
                                 class="text-[11px]"
                                 :class="
                                     isSpeaking
-                                        ? 'text-rose-600'
-                                        : 'text-gray-500'
+                                        ? 'text-rose-600 dark:text-rose-300'
+                                        : 'text-gray-500 dark:text-gray-400'
                                 "
                                 >Speak</span
                             >
                         </button>
                     </div>
                     <p
-                        class="flex items-center gap-1.5 text-xs text-primary-600 bg-primary-50 rounded-lg px-3 py-2 mt-3"
+                        class="flex items-center gap-1.5 text-xs text-primary-600 bg-primary-50 rounded-lg px-3 py-2 mt-3 dark:text-primary-300 dark:bg-primary-500/10"
                     >
                         <Icon
                             name="shield-check"
@@ -373,33 +373,33 @@ const todaysActivity: ActivityEntry[] = [
 
                 <div class="grid grid-cols-2 gap-5">
                     <div
-                        class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
+                        class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
                     >
-                        <p class="text-sm font-semibold text-gray-800 mb-4">
+                        <p class="text-sm font-semibold text-gray-800 mb-4 dark:text-white">
                             Camera Information
                         </p>
                         <dl class="space-y-3 text-sm">
                             <div class="flex items-center justify-between">
-                                <dt class="text-gray-400">Camera Name</dt>
-                                <dd class="font-medium text-gray-800">
+                                <dt class="text-gray-400 dark:text-gray-500">Camera Name</dt>
+                                <dd class="font-medium text-gray-800 dark:text-white">
                                     {{ cameraInfo.name }}
                                 </dd>
                             </div>
                             <div class="flex items-center justify-between">
-                                <dt class="text-gray-400">Status</dt>
-                                <dd class="font-medium text-emerald-600">
+                                <dt class="text-gray-400 dark:text-gray-500">Status</dt>
+                                <dd class="font-medium text-emerald-600 dark:text-emerald-300">
                                     {{ cameraInfo.status }}
                                 </dd>
                             </div>
                             <div class="flex items-center justify-between">
-                                <dt class="text-gray-400">Video Quality</dt>
-                                <dd class="font-medium text-gray-800">
+                                <dt class="text-gray-400 dark:text-gray-500">Video Quality</dt>
+                                <dd class="font-medium text-gray-800 dark:text-white">
                                     {{ cameraInfo.quality }}
                                 </dd>
                             </div>
                             <div class="flex items-center justify-between">
-                                <dt class="text-gray-400">Connection</dt>
-                                <dd class="font-medium text-emerald-600">
+                                <dt class="text-gray-400 dark:text-gray-500">Connection</dt>
+                                <dd class="font-medium text-emerald-600 dark:text-emerald-300">
                                     {{ cameraInfo.connection }}
                                 </dd>
                             </div>
@@ -407,13 +407,13 @@ const todaysActivity: ActivityEntry[] = [
                     </div>
 
                     <div
-                        class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
+                        class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
                     >
                         <div class="flex items-center justify-between mb-4">
-                            <p class="text-sm font-semibold text-gray-800">
+                            <p class="text-sm font-semibold text-gray-800 dark:text-white">
                                 Recent Snapshots
                             </p>
-                            <span class="text-[11px] text-gray-400"
+                            <span class="text-[11px] text-gray-400 dark:text-gray-500"
                                 >{{ snapshots.length }} saved</span
                             >
                         </div>
@@ -440,9 +440,9 @@ const todaysActivity: ActivityEntry[] = [
                         <div v-else class="text-center py-6">
                             <Icon
                                 name="aperture"
-                                class="w-6 h-6 text-gray-300 mx-auto mb-1.5"
+                                class="w-6 h-6 text-gray-300 mx-auto mb-1.5 dark:text-gray-500"
                             />
-                            <p class="text-xs text-gray-400">
+                            <p class="text-xs text-gray-400 dark:text-gray-500">
                                 No snapshots yet — use the Snapshot button on
                                 the feed.
                             </p>
@@ -453,9 +453,9 @@ const todaysActivity: ActivityEntry[] = [
 
             <div class="space-y-5">
                 <div
-                    class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
+                    class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
                 >
-                    <p class="text-sm font-semibold text-gray-800 mb-4">
+                    <p class="text-sm font-semibold text-gray-800 mb-4 dark:text-white">
                         Today's Activity
                     </p>
                     <ul class="space-y-3">
@@ -475,7 +475,7 @@ const todaysActivity: ActivityEntry[] = [
                                     class="flex items-center justify-between gap-2"
                                 >
                                     <p
-                                        class="text-xs font-medium text-gray-800"
+                                        class="text-xs font-medium text-gray-800 dark:text-white"
                                     >
                                         {{ a.title }}
                                     </p>
@@ -485,10 +485,10 @@ const todaysActivity: ActivityEntry[] = [
                                         >{{ a.status }}</span
                                     >
                                 </div>
-                                <p class="text-[11px] text-gray-400">
+                                <p class="text-[11px] text-gray-400 dark:text-gray-500">
                                     {{ a.subtitle }}
                                 </p>
-                                <p class="text-[10px] text-gray-300 mt-0.5">
+                                <p class="text-[10px] text-gray-300 mt-0.5 dark:text-gray-500">
                                     {{ a.time }}
                                 </p>
                             </div>
@@ -497,39 +497,39 @@ const todaysActivity: ActivityEntry[] = [
                 </div>
 
                 <div
-                    class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
+                    class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
                 >
-                    <p class="text-sm font-semibold text-gray-800 mb-4">
+                    <p class="text-sm font-semibold text-gray-800 mb-4 dark:text-white">
                         Room Information
                     </p>
                     <dl class="space-y-3 text-sm">
                         <div class="flex items-center justify-between">
-                            <dt class="text-gray-400">Room Type</dt>
-                            <dd class="font-medium text-gray-800">
+                            <dt class="text-gray-400 dark:text-gray-500">Room Type</dt>
+                            <dd class="font-medium text-gray-800 dark:text-white">
                                 {{ roomInfo.type }}
                             </dd>
                         </div>
                         <div class="flex items-center justify-between">
-                            <dt class="text-gray-400">Room Number</dt>
-                            <dd class="font-medium text-gray-800">
+                            <dt class="text-gray-400 dark:text-gray-500">Room Number</dt>
+                            <dd class="font-medium text-gray-800 dark:text-white">
                                 {{ roomInfo.number }}
                             </dd>
                         </div>
                         <div class="flex items-center justify-between">
-                            <dt class="text-gray-400">Floor</dt>
-                            <dd class="font-medium text-gray-800">
+                            <dt class="text-gray-400 dark:text-gray-500">Floor</dt>
+                            <dd class="font-medium text-gray-800 dark:text-white">
                                 {{ roomInfo.floor }}
                             </dd>
                         </div>
                         <div class="flex items-center justify-between">
-                            <dt class="text-gray-400">Caregiver on Duty</dt>
-                            <dd class="font-medium text-gray-800">
+                            <dt class="text-gray-400 dark:text-gray-500">Caregiver on Duty</dt>
+                            <dd class="font-medium text-gray-800 dark:text-white">
                                 {{ roomInfo.caregiver }}
                             </dd>
                         </div>
                         <div class="flex items-center justify-between">
-                            <dt class="text-gray-400">Next Care Time</dt>
-                            <dd class="font-medium text-gray-800">
+                            <dt class="text-gray-400 dark:text-gray-500">Next Care Time</dt>
+                            <dd class="font-medium text-gray-800 dark:text-white">
                                 {{ roomInfo.nextCare }}
                             </dd>
                         </div>
@@ -538,13 +538,13 @@ const todaysActivity: ActivityEntry[] = [
             </div>
         </div>
 
-        <div class="bg-primary-50 rounded-2xl p-5 flex items-center gap-4">
-            <Icon name="shield-check" class="w-6 h-6 text-primary-600 shrink-0" />
+        <div class="bg-primary-50 rounded-2xl p-5 flex items-center gap-4 dark:bg-primary-500/10">
+            <Icon name="shield-check" class="w-6 h-6 text-primary-600 shrink-0 dark:text-primary-300" />
             <div class="flex-1">
-                <p class="text-sm font-semibold text-primary-700">
+                <p class="text-sm font-semibold text-primary-700 dark:text-primary-300">
                     Your loved one's privacy and safety are our top priority.
                 </p>
-                <p class="text-xs text-primary-600">
+                <p class="text-xs text-primary-600 dark:text-primary-300">
                     This live camera is for family viewing only. Please use it
                     responsibly.
                 </p>
@@ -553,23 +553,23 @@ const todaysActivity: ActivityEntry[] = [
     </div>
 
     <div v-else class="space-y-5 p-4 sm:p-6 lg:p-8">
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10">
             <div
-                class="rounded-xl bg-gray-50 border border-dashed border-gray-200 aspect-video max-w-3xl flex flex-col items-center justify-center text-center px-8 mx-auto"
+                class="rounded-xl bg-gray-50 border border-dashed border-gray-200 aspect-video max-w-3xl flex flex-col items-center justify-center text-center px-8 mx-auto dark:bg-white/5 dark:border-white/10"
             >
-                <Icon name="lock" class="w-8 h-8 text-gray-300 mb-2" />
-                <p class="text-sm font-medium text-gray-700">
+                <Icon name="lock" class="w-8 h-8 text-gray-300 mb-2 dark:text-gray-500" />
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
                     Live camera isn't included in the Common Room plan
                 </p>
-                <p class="text-xs text-gray-400 mt-1 max-w-xs">
+                <p class="text-xs text-gray-400 mt-1 max-w-xs dark:text-gray-500">
                     Caregivers post care photos regularly so you can still see
                     how {{ residentName.split(" ")[0] }} is doing.
                 </p>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p class="text-sm font-semibold text-gray-800 mb-4">
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10">
+            <p class="text-sm font-semibold text-gray-800 mb-4 dark:text-white">
                 Care Photos from Caregivers
             </p>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">

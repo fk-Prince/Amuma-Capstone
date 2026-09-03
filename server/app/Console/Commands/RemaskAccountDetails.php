@@ -60,8 +60,6 @@ class RemaskAccountDetails extends Command
                     $method = (string) ($row->{$methodColumn} ?? '');
                     $current = (string) $row->masked_card_number;
 
-                    // Xendit already redacts card numbers as 400000XXXXXX2503.
-                    // Re-masking those would drop the BIN for no privacy gain.
                     if (preg_match('/[*x]{4,}/i', $current)) {
                         continue;
                     }

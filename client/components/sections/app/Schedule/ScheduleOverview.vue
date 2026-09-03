@@ -1,7 +1,7 @@
 <template>
     <div class="w-full lg:h-full flex flex-col min-h-0">
         <div
-            class="lg:h-full rounded-2xl bg-white border border-[#E4EFED] p-5 flex flex-col overflow-hidden"
+            class="lg:h-full rounded-2xl bg-white border border-[#E4EFED] p-5 flex flex-col overflow-hidden dark:border-white/10 dark:bg-secondary"
         >
             <button
                 type="button"
@@ -9,17 +9,17 @@
                 @click="open = !open"
             >
                 <div>
-                    <h3 class="font-semibold text-[#16302E]">
+                    <h3 class="font-semibold text-[#16302E] dark:text-white">
                         Schedule Overview
                     </h3>
 
-                    <p class="text-xs text-[#6B8A87] mt-1">
+                    <p class="text-xs text-[#6B8A87] mt-1 dark:text-gray-400">
                         Today's schedule activity
                     </p>
                 </div>
 
                 <svg
-                    class="h-5 w-5 text-[#16302E] transition-transform duration-300"
+                    class="h-5 w-5 text-[#16302E] transition-transform duration-300 dark:text-white"
                     :class="{ 'rotate-180': open }"
                     viewBox="0 0 20 20"
                     fill="none"
@@ -36,17 +36,17 @@
 
             <div class="hidden lg:flex items-center justify-between mb-5">
                 <div>
-                    <h3 class="font-semibold text-[#16302E]">
+                    <h3 class="font-semibold text-[#16302E] dark:text-white">
                         Schedule Overview
                     </h3>
 
-                    <p class="text-xs text-[#6B8A87] mt-1">
+                    <p class="text-xs text-[#6B8A87] mt-1 dark:text-gray-400">
                         Today's schedule activity
                     </p>
                 </div>
 
                 <div
-                    class="h-10 w-10 rounded-xl bg-[#EAF4F2] flex items-center justify-center text-[#0E7C7B]"
+                    class="h-10 w-10 rounded-xl bg-[#EAF4F2] flex items-center justify-center text-[#0E7C7B] dark:text-accent-300 dark:bg-accent-500/15"
                 >
                     <CalendarDays class="h-5 w-5" />
                 </div>
@@ -66,57 +66,57 @@
                 >
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
                                     Upcoming
                                 </p>
-                                <Clock class="h-4 w-4 text-amber-500" />
+                                <Clock class="h-4 w-4 text-amber-500 dark:text-amber-300" />
                             </div>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.schedule?.upcoming ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                 Not yet started
                             </p>
                         </div>
 
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
                                     In Progress
                                 </p>
-                                <CalendarClock class="h-4 w-4 text-blue-500" />
+                                <CalendarClock class="h-4 w-4 text-blue-500 dark:text-blue-300" />
                             </div>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.schedule?.in_progress ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                 Currently ongoing
                             </p>
                         </div>
 
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
                                     Waiting
                                 </p>
@@ -124,43 +124,43 @@
                             </div>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.schedule?.waiting ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                 Checked in, waiting
                             </p>
                         </div>
 
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
                                     Completed
                                 </p>
-                                <UserCheck class="h-4 w-4 text-emerald-600" />
+                                <UserCheck class="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
                             </div>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.schedule?.completed ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">Finished today</p>
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">Finished today</p>
                         </div>
 
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
                                     Cancelled
                                 </p>
@@ -168,35 +168,35 @@
                             </div>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.schedule?.cancelled ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                 Cancelled today
                             </p>
                         </div>
 
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
                                     Today
                                 </p>
-                                <CalendarDays class="h-4 w-4 text-[#0E7C7B]" />
+                                <CalendarDays class="h-4 w-4 text-[#0E7C7B] dark:text-accent-300" />
                             </div>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.schedule?.today ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                 Total appointments
                             </p>
                         </div>
@@ -204,16 +204,16 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <p
-                                class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                             >
                                 Next Slot
                             </p>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{
                                     overview?.schedule?.next_slot_time ??
@@ -221,7 +221,7 @@
                                 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                 {{
                                     overview?.schedule?.next_slot_patient ??
                                     "No upcoming slot"
@@ -230,27 +230,27 @@
                         </div>
 
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <p
-                                class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                             >
                                 Providers
                             </p>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.providers?.active ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">On duty today</p>
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">On duty today</p>
                         </div>
                     </div>
 
-                    <div class="mt-5 border-t border-[#EDF4F3] pt-4">
+                    <div class="mt-5 border-t border-[#EDF4F3] pt-4 dark:border-white/10">
                         <p
-                            class="text-xs uppercase tracking-wide text-[#6B8A87] mb-3"
+                            class="text-xs uppercase tracking-wide text-[#6B8A87] mb-3 dark:text-gray-400"
                         >
                             Upcoming Schedule
                         </p>
@@ -264,7 +264,7 @@
                             >
                                 <div>
                                     <p
-                                        class="text-sm font-medium text-[#16302E]"
+                                        class="text-sm font-medium text-[#16302E] dark:text-white"
                                     >
                                         {{
                                             item.patient_name ??
@@ -273,13 +273,13 @@
                                     </p>
 
                                     <p
-                                        class="text-xs text-[#6B8A87] capitalize"
+                                        class="text-xs text-[#6B8A87] capitalize dark:text-gray-400"
                                     >
                                         {{ item.category }} · {{ item.status }}
                                     </p>
                                 </div>
 
-                                <p class="text-xs text-[#6B8A87]">
+                                <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                     {{ formatTime(item.scheduled_at) }}
                                 </p>
                             </div>
@@ -289,7 +289,7 @@
                                     !(overview?.schedule?.upcoming_list ?? [])
                                         .length
                                 "
-                                class="text-sm text-[#6B8A87]"
+                                class="text-sm text-[#6B8A87] dark:text-gray-400"
                             >
                                 No upcoming schedule
                             </p>

@@ -85,7 +85,7 @@ onBeforeUnmount(() => {
                     <div class="flex items-center gap-2">
                         <button
                             type="button"
-                            class="rounded-full bg-white px-4 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
+                            class="rounded-full bg-white px-4 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 dark:bg-secondary dark:text-gray-200 dark:hover:bg-white/5"
                             @click="handlePrint"
                         >
                             Print
@@ -93,7 +93,7 @@ onBeforeUnmount(() => {
 
                         <button
                             type="button"
-                            class="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+                            class="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20 dark:hover:bg-white/10"
                             @click="emit('close')"
                         >
                             Close
@@ -103,14 +103,14 @@ onBeforeUnmount(() => {
 
                 <article
                     id="receipt-print"
-                    class="receipt-form relative bg-white p-6 text-black shadow-2xl"
+                    class="receipt-form relative bg-white p-6 text-black shadow-2xl dark:bg-secondary"
                 >
                     <div
                         v-if="receipt.is_voided"
                         class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
                     >
                         <span
-                            class="-rotate-12 text-8xl font-black tracking-widest text-rose-600/20"
+                            class="-rotate-12 text-8xl font-black tracking-widest text-rose-600/20 dark:text-rose-300"
                         >
                             VOID
                         </span>
@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
                                 class="w-[190px] shrink-0 border-l border-black p-2 text-[9px]"
                             >
                                 <p
-                                    class="text-right text-[11px] font-extrabold uppercase tracking-[0.16em] text-rose-600"
+                                    class="text-right text-[11px] font-extrabold uppercase tracking-[0.16em] text-rose-600 dark:text-rose-300"
                                 >
                                     Original
                                 </p>
@@ -397,7 +397,7 @@ onBeforeUnmount(() => {
 
                                         <span
                                             v-if="settled"
-                                            class="ml-1 text-[8px] font-bold uppercase text-emerald-700"
+                                            class="ml-1 text-[8px] font-bold uppercase text-emerald-700 dark:text-emerald-300"
                                         >
                                             Settled
                                         </span>
@@ -478,7 +478,7 @@ onBeforeUnmount(() => {
                                 </p>
 
                                 <p
-                                    class="mt-1 font-mono text-[13px] font-extrabold tracking-wider text-rose-600"
+                                    class="mt-1 font-mono text-[13px] font-extrabold tracking-wider text-rose-600 dark:text-rose-300"
                                 >
                                     No. {{ receipt.receipt_no }}
                                 </p>
@@ -488,7 +488,7 @@ onBeforeUnmount(() => {
 
                     <p
                         v-if="receipt.is_voided"
-                        class="mt-2 border-2 border-rose-600 px-3 py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-rose-700"
+                        class="mt-2 border-2 border-rose-600 px-3 py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-rose-700 dark:text-rose-300"
                     >
                         Voided {{ longDateTime(receipt.voided_at) }}
 

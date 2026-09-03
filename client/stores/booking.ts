@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import type { Service } from "~/types/service";
 import type { BranchFacility, BranchHomecare } from "~/types/branch";
 import type { HomecareBooking, FacilityBooking } from "~/types/booking";
-import type { Patient, Guardian, Assessment } from "~/types/patient";
+import type { Patient, Guardian, Assessment, Diagnosis } from "~/types/patient";
 import type { Reserved } from "~/types/contract";
 
 const initialState = () => ({
@@ -15,6 +15,7 @@ const initialState = () => ({
     patient: {} as Patient,
     guardian: {} as Guardian,
     assessment: [] as Assessment[],
+    diagnoses: [] as Diagnosis[],
     booking_type: "online",
     payment: {
         total_amount: 0,

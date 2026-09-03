@@ -49,6 +49,11 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                         'total_amount'     => $subscription['total_amount'],
                         'endDate'          => $subscription['endDate'],
                         'subscription_uuid' => $subscription['subscription_uuid'] ?? null,
+                        // Without these the webhook cannot tell a deferred
+                        // upgrade from an immediate one and applies it now.
+                        'is_upgrade'         => $subscription['is_upgrade'] ?? false,
+                        'upgrade_starts_now' => $subscription['upgrade_starts_now'] ?? false,
+                        'upgrade_starts_at'  => $subscription['upgrade_starts_at'] ?? null,
                     ],
                 ]);
 

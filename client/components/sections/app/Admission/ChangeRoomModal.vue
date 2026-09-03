@@ -13,10 +13,10 @@
                 class="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-5"
             >
                 <div
-                    class="w-full max-w-2xl max-h-[88vh] overflow-y-auto rounded-2xl bg-white p-6 md:p-7 shadow-xl"
+                    class="w-full max-w-2xl max-h-[88vh] overflow-y-auto rounded-2xl bg-white p-6 md:p-7 shadow-xl dark:bg-secondary"
                 >
                     <h3 class="text-lg font-semibold">Change Room / Bed</h3>
-                    <p class="mt-1 text-sm text-slate-500">
+                    <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
                         Move this patient to a different room or bed within
                         {{
                             currentType ? currentType.toUpperCase() : "the same"
@@ -25,23 +25,23 @@
                     </p>
 
                     <div
-                        class="mt-4 rounded-xl bg-slate-50 p-3 flex items-center justify-between"
+                        class="mt-4 rounded-xl bg-slate-50 p-3 flex items-center justify-between dark:bg-white/5"
                     >
                         <div>
-                            <p class="text-xs text-slate-500">
+                            <p class="text-xs text-slate-500 dark:text-gray-400">
                                 Current Room & Bed
                             </p>
                             <p class="font-semibold">
                                 Room {{ admission?.room?.room_no ?? "—" }}
                                 <span
                                     v-if="admission?.bed?.bed_no"
-                                    class="text-slate-400 font-normal"
+                                    class="text-slate-400 font-normal dark:text-gray-500"
                                 >
                                     · Bed {{ admission.bed.bed_no }}
                                 </span>
                                 <span
                                     v-if="currentType"
-                                    class="text-slate-400 font-normal"
+                                    class="text-slate-400 font-normal dark:text-gray-500"
                                 >
                                     · {{ currentType.toUpperCase() }}
                                 </span>
@@ -53,16 +53,16 @@
                         <div
                             v-for="i in 4"
                             :key="i"
-                            class="animate-pulse rounded-xl border p-4 space-y-3"
+                            class="animate-pulse rounded-xl border p-4 space-y-3 dark:border-white/10"
                         >
-                            <div class="h-4 w-28 rounded bg-slate-200" />
-                            <div class="h-3 w-40 rounded bg-slate-100" />
+                            <div class="h-4 w-28 rounded bg-slate-200 dark:bg-white/15" />
+                            <div class="h-3 w-40 rounded bg-slate-100 dark:bg-white/10" />
                         </div>
                     </div>
 
                     <div
                         v-else-if="!roomsForType.length"
-                        class="mt-6 rounded-xl border border-dashed py-10 text-center text-sm text-slate-500"
+                        class="mt-6 rounded-xl border border-dashed py-10 text-center text-sm text-slate-500 dark:text-gray-400 dark:border-white/10"
                     >
                         No rooms available for this accommodation type.
                     </div>
@@ -71,7 +71,7 @@
                         <div
                             v-for="room in roomsForType"
                             :key="room.room_id"
-                            class="rounded-xl border p-4 transition"
+                            class="rounded-xl border p-4 transition dark:border-white/10"
                             :class="
                                 selectedRoom?.room_id === room.room_id
                                     ? 'border-primary ring-1 ring-primary/30'
@@ -84,12 +84,12 @@
                                         Room {{ room.room_no }}
                                         <span
                                             v-if="isCurrentRoom(room)"
-                                            class="text-xs font-normal text-slate-400"
+                                            class="text-xs font-normal text-slate-400 dark:text-gray-500"
                                         >
                                             (current)
                                         </span>
                                     </p>
-                                    <p class="text-xs text-slate-500">
+                                    <p class="text-xs text-slate-500 dark:text-gray-400">
                                         {{ room.floor }} Floor
                                     </p>
                                 </div>
@@ -97,8 +97,8 @@
                                     class="text-xs h-fit rounded-full px-2.5 py-1 font-medium"
                                     :class="
                                         availableBeds(room).length > 0
-                                            ? 'bg-emerald-50 text-emerald-700'
-                                            : 'bg-rose-50 text-rose-700'
+                                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                            : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'
                                     "
                                 >
                                     {{
@@ -133,16 +133,16 @@
                         class="mt-5 rounded-xl bg-primary/5 border border-primary/20 p-4 flex items-center justify-between"
                     >
                         <div>
-                            <p class="text-xs text-slate-500">New Room & Bed</p>
+                            <p class="text-xs text-slate-500 dark:text-gray-400">New Room & Bed</p>
                             <p class="font-semibold">
                                 Room {{ selectedRoom.room_no }}
-                                <span class="text-slate-400 font-normal">
+                                <span class="text-slate-400 font-normal dark:text-gray-500">
                                     · Bed {{ selectedBed.bed_no }}
                                 </span>
                             </p>
                         </div>
                         <span
-                            class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700"
+                            class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                         >
                             Selected
                         </span>
@@ -150,10 +150,10 @@
 
                     <div v-if="selectedRoom && selectedBed" class="mt-4">
                         <label
-                            class="block text-xs font-medium text-slate-500 mb-1.5"
+                            class="block text-xs font-medium text-slate-500 mb-1.5 dark:text-gray-400"
                         >
                             Reason for change
-                            <span class="text-slate-400 font-normal"
+                            <span class="text-slate-400 font-normal dark:text-gray-500"
                                 >(optional)</span
                             >
                         </label>
@@ -196,7 +196,7 @@
                         {{ submitting ? "Moving..." : "Confirm Move" }}
                     </button>
                     <button
-                        class="mt-3 w-full rounded-xl border py-2.5 text-sm"
+                        class="mt-3 w-full rounded-xl border py-2.5 text-sm dark:border-white/10"
                         @click="$emit('close')"
                     >
                         Cancel
@@ -217,19 +217,19 @@
                         @click.self="showBeds = false"
                     >
                         <div
-                            class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl"
+                            class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl dark:bg-secondary"
                         >
                             <div class="flex justify-between items-center mb-5">
                                 <div>
                                     <h3 class="font-semibold text-lg">
                                         Select Bed
                                     </h3>
-                                    <p class="text-sm text-slate-500">
+                                    <p class="text-sm text-slate-500 dark:text-gray-400">
                                         Room {{ modalRoom?.room_no }}
                                     </p>
                                 </div>
                                 <button
-                                    class="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                                    class="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                                     aria-label="Close"
                                     @click="showBeds = false"
                                 >
@@ -248,7 +248,7 @@
                                         bed.status.toLowerCase() !==
                                             'available' && !isCurrentBed(bed)
                                     "
-                                    class="w-full rounded-xl border p-4 flex justify-between items-center transition"
+                                    class="w-full rounded-xl border p-4 flex justify-between items-center transition dark:border-white/10"
                                     :class="
                                         bed.status.toLowerCase() ===
                                             'available' || isCurrentBed(bed)
@@ -261,7 +261,7 @@
                                         Bed {{ bed.bed_no }}
                                         <span
                                             v-if="isCurrentBed(bed)"
-                                            class="text-xs font-normal text-slate-400"
+                                            class="text-xs font-normal text-slate-400 dark:text-gray-500"
                                         >
                                             (current)
                                         </span>
@@ -270,11 +270,11 @@
                                         class="text-xs rounded-full px-3 py-1 font-medium"
                                         :class="
                                             isCurrentBed(bed)
-                                                ? 'bg-slate-200 text-slate-600'
+                                                ? 'bg-slate-200 text-slate-600 dark:bg-white/15 dark:text-gray-400'
                                                 : bed.status.toLowerCase() ===
                                                     'available'
-                                                  ? 'bg-emerald-50 text-emerald-700'
-                                                  : 'bg-rose-50 text-rose-700'
+                                                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                                  : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'
                                         "
                                     >
                                         {{
@@ -286,7 +286,7 @@
                                 </button>
                             </div>
 
-                            <div v-else class="py-8 text-center text-slate-500">
+                            <div v-else class="py-8 text-center text-slate-500 dark:text-gray-400">
                                 <p class="font-medium">No beds available</p>
                                 <p class="text-sm mt-1">
                                     This room currently has no available beds.

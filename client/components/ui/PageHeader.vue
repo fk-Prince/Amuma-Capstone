@@ -1,15 +1,15 @@
 <template>
     <div class="flex items-end justify-between border-b border-[#DCEBE9] pb-4">
         <div>
-            <h1 class="text-4xl font-bold text-[#16302E]">
+            <h1 class="text-4xl font-bold text-[#16302E] dark:text-white">
                 {{ title }}
             </h1>
 
-            <h2 class="mt-1 text-sm font-medium text-[#0E7C7B]">
+            <h2 class="mt-1 text-sm font-medium text-[#0E7C7B] dark:text-accent-300">
                 {{ subtitle }}
             </h2>
 
-            <p class="mt-1 text-sm text-[#6B8A87]">
+            <p class="mt-1 text-sm text-[#6B8A87] dark:text-gray-400">
                 {{ description }}
             </p>
         </div>

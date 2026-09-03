@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-[calc(100vh-90px)] bg-slate-200 dark:bg-secondary flex items-center justify-center px-5 py-12"
+        class="min-h-[calc(100vh-90px)] bg-slate-200 dark:bg-surface flex items-center justify-center px-5 py-12"
     >
         <div class="max-w-lg w-full">
             <div
@@ -61,7 +61,17 @@
                     </div>
                 </div>
 
-                <div class="mt-8 flex flex-col sm:flex-row gap-3">
+                <BaseButton
+                    v-if="acknowledgement"
+                    variant="secondary"
+                    class="mt-8 w-full rounded-xl py-3"
+                    @click="showAcknowledgement = true"
+                >
+                    <Printer class="h-4 w-4" />
+                    Print booking form
+                </BaseButton>
+
+                <div class="mt-3 flex flex-col sm:flex-row gap-3">
                     <BaseButton
                         variant="secondary"
                         class="w-full rounded-xl py-3"
@@ -79,14 +89,23 @@
                 </div>
             </div>
         </div>
+
+        <BookingAcknowledgement
+            v-if="showAcknowledgement && acknowledgement"
+            :booking="acknowledgement"
+            :branch-name="acknowledgement.branch_name"
+            @close="showAcknowledgement = false"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { CheckCircle2, BellRing, ShieldCheck } from "lucide-vue-next";
+import { CheckCircle2, BellRing, Printer, ShieldCheck } from "lucide-vue-next";
 import BaseButton from "~/components/ui/BaseButton.vue";
+import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.vue";
+import { patientAccessService } from "~/api/patient-access/PatientAccessService";
 import { useBookingStore } from "~/stores/booking";
 import { fetchAuthUser } from "~/composables/useAuthUser";
 
@@ -105,9 +124,35 @@ const category = computed<"homecare" | "facility">(
 
 const referenceId = computed(() => bookingStore.lastSubmittedId ?? "");
 
+const acknowledgement = ref<any>(null);
+const showAcknowledgement = ref(false);
+
+// The store is cleared on arrival, so the printable copy is read back from the
+// server — that way it also survives a refresh of this page.
+async function loadAcknowledgement(reference: string) {
+    try {
+        const res = await patientAccessService.retrieveAction({
+            action: "bookings",
+            page: 1,
+            per_page: 10,
+        });
+
+        acknowledgement.value =
+            (res?.data ?? []).find(
+                (booking: any) => booking.reference_id === reference,
+            ) ?? null;
+    } catch {
+        acknowledgement.value = null;
+    }
+}
+
 onMounted(() => {
+    const reference = referenceId.value;
+
     bookingStore.$reset?.();
     fetchAuthUser();
+
+    if (reference) loadAcknowledgement(reference);
 });
 
 function goHome() {

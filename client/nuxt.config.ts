@@ -54,6 +54,11 @@ export default defineNuxtConfig({
 
   app: {
     head: {
+      style: [
+        {
+          innerHTML: `html{background:#EEF3FB}html.dark{background:#1f2634}`,
+        },
+      ],
       script: [
         {
           innerHTML: `(function(){try{var t=localStorage.getItem('theme');if(t?t==='dark':true)document.documentElement.classList.add('dark')}catch(e){}})()`,

@@ -123,7 +123,7 @@ function onError(err: Error) {
                 class="absolute inset-0 flex items-center justify-center bg-black/50"
             >
                 <div
-                    class="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-medium text-gray-800"
+                    class="flex items-center gap-2 rounded-full bg-white/90 dark:bg-secondary/95 px-4 py-2 text-sm font-medium text-gray-800 dark:text-white"
                 >
                     <svg
                         class="h-4 w-4 animate-spin"
@@ -151,7 +151,7 @@ function onError(err: Error) {
 
             <button
                 type="button"
-                class="absolute top-4 right-4 rounded-full bg-white/90 p-3"
+                class="absolute top-4 right-4 rounded-full bg-white/90 dark:bg-secondary/95 p-3"
                 @click="emit('close')"
             >
                 ✕

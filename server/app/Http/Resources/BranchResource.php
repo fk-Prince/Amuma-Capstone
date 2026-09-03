@@ -252,6 +252,7 @@ class BranchResource extends JsonResource
                 'reserved_walkin_slots' => $settings['reserved_walkin_slots'] ?? 0,
                 'enable_booking_pre_admission' => $settings['enable_booking_pre_admission'] ?? false,
                 'enable_booking_complete_admission' => $settings['enable_booking_complete_admission'] ?? false,
+                'requires_full_payment_on_admit' => $settings['requires_full_payment_on_admit'] ?? true,
                 'minimum_adl_hours' => $settings['minimum_adl_hours'] ?? 8,
                 'termination_fee_percent' => $settings['termination_fee_percent'] ?? 0,
                 'currency' => $settings['currency'] ?? 'PHP',
@@ -266,11 +267,13 @@ class BranchResource extends JsonResource
                 : 0.00,
 
             'subscriptions' => $this->subscriptions->map(function ($subscription) {
+                $plan = $subscription->effectivePlan();
+
                 return [
                     'plans' => [
                         'status' => $subscription->status,
-                        'plan_code' => optional($subscription->plans)->plan_code,
-                        'name' => optional($subscription->plans)->name,
+                        'plan_code' => $plan?->plan_code,
+                        'name' => $plan?->name,
                     ],
                 ];
             })->values()->all(),

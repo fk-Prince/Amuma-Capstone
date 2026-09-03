@@ -2,18 +2,29 @@
 
 namespace App\Service;
 
+use App\Enums\ModuleEnum;
+use App\Events\NotificationEvent;
 use App\Models\Branch;
+use App\Models\Employee;
 use App\Models\Invoice;
 use App\Models\InvoiceAdjustment;
 use App\Models\InvoiceAccommodation;
+use App\Models\Module;
 use App\Models\PatientAdmission;
 use App\Models\Refund;
+use App\Models\User;
+use App\Repository\NotificationRepository;
 use App\Utils\MaskUtil;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class RefundService
 {
+    public function __construct(
+        private NotificationRepository $notificationRepository
+    ) {}
+
     private const TERMINATION_FEE_WINDOW_DAYS = 7;
 
 
@@ -64,9 +75,65 @@ class RefundService
         return round(max(0,   $this->getPaidAmount($invoice)   - $this->getRefundedAmount($invoice)), 2);
     }
 
+    public function getRetainedAmount(Invoice $invoice): float
+    {
+        return round(
+            (float) InvoiceAdjustment::query()
+                ->where('invoice_id', $invoice->invoice_id)
+                ->sum('amount'),
+            2
+        );
+    }
+
+    // Nothing is written when an invoice becomes refundable — the balance is
+    // read back from what was paid, what has already been refunded, and what
+    // the adjustments retain.
     public function getRefundableAmount(Invoice $invoice): float
     {
-        return $this->getNetPaidAmount($invoice);
+        return round(
+            max(
+                0,
+                $this->getPaidAmount($invoice)
+                    - $this->getRefundedAmount($invoice)
+                    - $this->getRetainedAmount($invoice)
+            ),
+            2
+        );
+    }
+
+    // A family's request is just a refund parked at 'pending': it is not money
+    // moved yet, so it never counts against the refundable balance.
+    public function getPendingRefunds(Invoice $invoice)
+    {
+        return Refund::query()
+            ->whereIn(
+                'payment_id',
+                $invoice->payments()->select('payment_id')
+            )
+            ->where('status', Refund::STATUS_PENDING)
+            ->get();
+    }
+
+    public function getRefundSummary(Invoice $invoice): array
+    {
+        $pending = $this->getPendingRefunds($invoice);
+        $refundable = $this->getRefundableAmount($invoice);
+        $first = $pending->first();
+
+        return [
+            'amount_paid' => $this->getPaidAmount($invoice),
+            'refunded_amount' => $this->getRefundedAmount($invoice),
+            'retained_amount' => $this->getRetainedAmount($invoice),
+            'refundable_amount' => $refundable,
+            'has_refundable_balance' => $refundable > 0,
+            'requested_refund' => $first ? [
+                'amount' => round((float) $pending->sum('amount'), 2),
+                'method' => $first->refund_method,
+                'account_details' => $first->masked_card_number,
+                'reason' => $first->reason,
+                'requested_at' => $first->created_at?->toIso8601String(),
+            ] : null,
+        ];
     }
 
 
@@ -226,7 +293,6 @@ class RefundService
                 'reason' => 'Termination fee due to early admission termination',
             ]);
         }
-        $this->createRefundsForInvoice($invoice,  $refundAmount,  'Refund processed due to early admission termination.');
     }
 
     public function createRefundFutureInvoice(Invoice $invoice, array $payload)
@@ -289,8 +355,14 @@ class RefundService
         $this->createRefundsForInvoice($invoice,  $refundableAmount,   $reason);
     }
 
-    public function createRefundsForInvoice(Invoice $invoice,   float $amount, string $reason)
-    {
+    public function createRefundsForInvoice(
+        Invoice $invoice,
+        float $amount,
+        string $reason,
+        string $status = Refund::STATUS_PROCESSING,
+        ?string $method = null,
+        ?string $accountDetails = null
+    ) {
         $amount = round($amount, 2);
 
         if ($amount <= 0) {
@@ -339,10 +411,11 @@ class RefundService
             Refund::create([
                 'payment_id' => $payment->payment_id,
                 'amount' => $refundAmount,
-                'refund_method' => $payment->payment_method,
-                'status' => Refund::STATUS_PROCESSING,
+                'refund_method' => $method ?? $payment->payment_method,
+                'status' => $status,
                 'reason' => $reason,
-                'masked_card_number' => $payment->masked_card_number,
+                'masked_card_number' => $accountDetails
+                    ?? $payment->masked_card_number,
             ]);
 
             $remainingAmount = round(
@@ -357,37 +430,147 @@ class RefundService
     }
 
 
-    public function claimPortalRefund(object $patient, array $payload): array
+    public function requestPortalRefund(object $patient, array $payload, ?User $user = null): array
     {
         $method = trim((string) $payload['method']);
-        $accountDetails = trim((string) $payload['account_details']);
-        $maskedAccountDetails = MaskUtil::accountDetails($method, $accountDetails);
+        $accountDetails = MaskUtil::accountDetails(
+            $method,
+            trim((string) $payload['account_details'])
+        );
 
-        $processingRefunds = $patient->patient_invoices
-            ->flatMap(fn($invoice) => $invoice->payments)
-            ->flatMap(fn($payment) => $payment->refunds)
-            ->where('status', Refund::STATUS_PROCESSING);
+        $invoice = $patient->patient_invoices
+            ->first(fn($invoice) => $this->getRefundableAmount($invoice) > 0
+                && $this->getPendingRefunds($invoice)->isEmpty());
 
-        if ($processingRefunds->isEmpty()) {
+        if (!$invoice) {
             throw new Exception(
-                'No pending refund is available to claim right now.',
+                'There is no refundable balance to request right now.',
                 404
             );
         }
 
-        foreach ($processingRefunds as $refund) {
-            $refund->update([
-                'refund_method' => $method,
-                'masked_card_number' => $maskedAccountDetails ?? null,
-                'status' => Refund::STATUS_COMPLETED,
-            ]);
+        $amount = $this->getRefundableAmount($invoice);
+
+        return DB::transaction(function () use (
+            $invoice,
+            $amount,
+            $method,
+            $accountDetails,
+            $payload,
+            $user
+        ) {
+            $this->createRefundsForInvoice(
+                $invoice,
+                $amount,
+                $payload['reason'] ?? 'Refund requested by the patient\'s family.',
+                Refund::STATUS_PENDING,
+                $method,
+                $accountDetails
+            );
+
+            $this->notifyAccounting($invoice, $amount, $user);
+
+            return [
+                'success' => true,
+                'message' => 'Your refund request has been sent to accounting.',
+                'amount' => $amount,
+                'invoice_id' => $invoice->invoice_id,
+            ];
+        });
+    }
+
+
+    private function notifyAccounting(Invoice $invoice, float $amount, ?User $user): void
+    {
+        $module = Module::where('module_name', ModuleEnum::BillingAndInvoices->value)->first();
+
+        if (!$module) {
+            return;
         }
 
-        return [
-            'success' => true,
-            'message' => 'Your refund has been claimed and marked complete.',
-            'amount' => (float) $processingRefunds->sum('amount'),
-        ];
+        $recipients = Employee::query()
+            ->with('users')
+            ->whereHas(
+                'employeeBranch',
+                fn($q) => $q->where('branch_id', $invoice->branch_id)
+            )
+            ->whereHas(
+                'permissions',
+                fn($q) => $q->where('module_id', $module->module_id)
+                    ->where('branch_id', $invoice->branch_id)
+                    ->where('can_read', true)
+            )
+            ->get();
+
+        $message = 'A refund of ' . number_format($amount, 2)
+            . ' was requested on invoice ' . $invoice->invoice_code . '.';
+
+        foreach ($recipients as $employee) {
+            if (!$employee->user_id || !$employee->users?->uuid) {
+                continue;
+            }
+
+            $this->notificationRepository->create([
+                'branch_id' => $invoice->branch_id,
+                'to_user_id' => $employee->user_id,
+                'from_user_id' => $user?->user_id,
+                'message_type' => 'Billing',
+                'message' => $message,
+            ]);
+
+            event(new NotificationEvent(
+                $employee->users->uuid,
+                (string) $invoice->branch?->uuid,
+                $message,
+                (string) $invoice->invoice_id,
+                'Billing',
+                null,
+            ));
+        }
+    }
+
+    public function createRefundFromDashboard(Invoice $invoice, array $payload): array
+    {
+        $refundable = $this->getRefundableAmount($invoice);
+
+        if ($refundable <= 0) {
+            throw new Exception('This invoice has no refundable balance.', 422);
+        }
+
+        $amount = isset($payload['amount'])
+            ? round((float) $payload['amount'], 2)
+            : $refundable;
+
+        if ($amount <= 0 || $amount > $refundable) {
+            throw new Exception(
+                'Refund amount must be between 0 and ' . $refundable . '.',
+                422
+            );
+        }
+
+        $method = trim((string) ($payload['method'] ?? ''));
+        $accountDetails = $method && !empty($payload['account_details'])
+            ? MaskUtil::accountDetails($method, trim((string) $payload['account_details']))
+            : null;
+
+        return DB::transaction(function () use ($invoice, $amount, $payload, $method, $accountDetails) {
+            $this->getPendingRefunds($invoice)->each->delete();
+
+            $this->createRefundsForInvoice(
+                $invoice,
+                $amount,
+                $payload['reason'] ?? 'Refund issued by accounting.',
+                Refund::STATUS_COMPLETED,
+                $method ?: null,
+                $accountDetails
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Refund recorded.',
+                'amount' => $amount,
+            ];
+        });
     }
 
     public function getTerminationFeeAmount(PatientAdmission $admission, mixed $contract)

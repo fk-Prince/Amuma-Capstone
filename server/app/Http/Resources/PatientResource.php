@@ -38,7 +38,49 @@ class PatientResource extends JsonResource
                 'full_address' => $this->location?->full_address,
             ]),
 
-            'assessment' => $this->assessment,
+            // Ongoing first, then pending, then everything else newest-first —
+            // the overview shows the most actionable one at the top.
+            'schedules' => $this->whenLoaded('schedules', fn() => $this->schedules
+                ->sortBy(fn($schedule) => [
+                    match ($schedule->status) {
+                        Schedule::STATUS_ONGOING => 0,
+                        Schedule::STATUS_PENDING => 1,
+                        default => 2,
+                    },
+                    -strtotime((string) $schedule->scheduled_at),
+                ])
+                ->map(fn($schedule) => [
+                    'uuid' => $schedule->uuid,
+                    'schedule_code' => $schedule->schedule_code,
+                    'status' => $schedule->status,
+                    'category' => $schedule->category,
+                    'scheduled_at' => $schedule->scheduled_at,
+                    'address' => $schedule->location?->full_address,
+                ])
+                ->values()),
+
+            'assessment' => $this->assessments
+                ->map(fn($assessment) => [
+                    'uuid' => $assessment->uuid,
+                    'condition' => $assessment->condition,
+                    'mental_state' => $assessment->mental_state,
+                    'affect' => $assessment->affect,
+                    'behavior' => $assessment->behavior,
+                    'communication' => $assessment->communication,
+                    'speech' => $assessment->speech,
+                    'life_system_profile' => $assessment->life_system_profile,
+                ])
+                ->values(),
+
+            'diagnoses' => $this->diagnoses
+                ->map(fn($diagnosis) => [
+                    'uuid' => $diagnosis->uuid,
+                    'diagnosis' => $diagnosis->diagnosis,
+                    'diagnosis_date' => $diagnosis->diagnosis_date?->toDateString(),
+                    'diagnosis_notes' => $diagnosis->diagnosis_notes,
+                    'diagnosis_file' => $diagnosis->diagnosis_file,
+                ])
+                ->values(),
 
             'medications_count' => $this->medications_count ?? 0,
             'vitals_count' => $this->vitals_count ?? 0,

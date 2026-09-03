@@ -17,27 +17,27 @@
             />
 
             <div
-                class="relative z-50 flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
+                class="relative z-50 flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
             >
                 <div
-                    class="flex items-start justify-between border-b border-slate-100 px-6 py-5"
+                    class="flex items-start justify-between border-b border-slate-100 px-6 py-5 dark:border-white/10"
                 >
                     <div>
                         <p
-                            class="text-xs uppercase tracking-wide text-slate-400"
+                            class="text-xs uppercase tracking-wide text-slate-400 dark:text-gray-500"
                         >
                             Assign Caregiver Staff
                         </p>
 
-                        <h2 class="mt-1 text-lg font-semibold text-slate-800">
+                        <h2 class="mt-1 text-lg font-semibold text-slate-800 dark:text-white">
                             Activities of Daily Living (ADL) Booking
                         </h2>
 
-                        <p class="mt-1 text-sm text-slate-500">
+                        <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
                             {{ patientName }}
                         </p>
 
-                        <p class="mt-1 text-xs text-slate-400">
+                        <p class="mt-1 text-xs text-slate-400 dark:text-gray-500">
                             {{ formatDate(schedule?.scheduled_at) }}
                             •
                             {{ formatTime(schedule?.scheduled_at) }}
@@ -46,7 +46,7 @@
 
                     <button
                         type="button"
-                        class="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                        class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 dark:text-gray-500 dark:hover:bg-white/10"
                         @click="close"
                     >
                         ✕
@@ -58,12 +58,12 @@
                 >
                     <div class="overflow-y-auto p-6 space-y-4">
                         <div
-                            class="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                            class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5"
                         >
-                            <p class="text-sm font-semibold text-slate-800">
+                            <p class="text-sm font-semibold text-slate-800 dark:text-white">
                                 Hours Booked
                             </p>
-                            <p class="mt-1 text-xs text-slate-500">
+                            <p class="mt-1 text-xs text-slate-500 dark:text-gray-400">
                                 {{
                                     schedule?.total_hours
                                         ? `${formatDuration(Number(schedule.total_hours))} (${schedule.total_hours} hrs)`
@@ -74,7 +74,7 @@
 
                         <div class="flex items-center justify-between">
                             <p
-                                class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                                class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                             >
                                 Assigned Caregiver
                             </p>
@@ -83,8 +83,8 @@
                                 class="flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
                                 :class="
                                     assignments.length
-                                        ? 'bg-emerald-50 text-emerald-700'
-                                        : 'bg-rose-50 text-rose-600'
+                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                        : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300'
                                 "
                             >
                                 {{
@@ -99,7 +99,7 @@
                             <div
                                 v-for="(entry, entryIndex) in assignments"
                                 :key="entry.employee_id"
-                                class="rounded-xl border border-slate-200 bg-white p-4"
+                                class="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-secondary"
                             >
                                 <div
                                     class="flex items-center justify-between gap-3"
@@ -112,7 +112,7 @@
                                         </span>
 
                                         <p
-                                            class="truncate text-sm font-semibold text-slate-800"
+                                            class="truncate text-sm font-semibold text-slate-800 dark:text-white"
                                         >
                                             Caregiver
                                         </p>
@@ -120,14 +120,14 @@
 
                                     <div class="flex items-center gap-2">
                                         <span
-                                            class="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-700"
+                                            class="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                                         >
                                             Assigned
                                         </span>
 
                                         <button
                                             type="button"
-                                            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                                            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:text-gray-500 dark:hover:bg-rose-500/10 dark:hover:text-rose-300"
                                             title="Remove"
                                             @click="
                                                 toggleEmployee(
@@ -167,13 +167,13 @@
 
                                     <div class="min-w-0 flex-1">
                                         <p
-                                            class="truncate text-sm font-semibold text-slate-800"
+                                            class="truncate text-sm font-semibold text-slate-800 dark:text-white"
                                         >
                                             {{ nameFor(entry.employee_id) }}
                                         </p>
 
                                         <p
-                                            class="truncate text-xs capitalize text-slate-400"
+                                            class="truncate text-xs capitalize text-slate-400 dark:text-gray-500"
                                         >
                                             {{
                                                 employeeById(entry.employee_id)
@@ -182,7 +182,7 @@
                                         </p>
 
                                         <div
-                                            class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-400"
+                                            class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-400 dark:text-gray-500"
                                         >
                                             <span
                                                 v-if="
@@ -225,14 +225,14 @@
                                         type="text"
                                         :maxlength="NOTE_MAX"
                                         placeholder="Note for this assignment"
-                                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:text-gray-400"
                                     />
 
                                     <div
                                         class="mt-2 flex flex-wrap items-center gap-1.5"
                                     >
                                         <span
-                                            class="text-[11px] text-slate-400"
+                                            class="text-[11px] text-slate-400 dark:text-gray-500"
                                         >
                                             Suggestions:
                                         </span>
@@ -241,11 +241,11 @@
                                             v-for="preset in NOTE_PRESETS"
                                             :key="preset"
                                             type="button"
-                                            class="rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition"
+                                            class="rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition dark:border-white/10"
                                             :class="
                                                 entry.note === preset
                                                     ? 'border-primary bg-primary text-white'
-                                                    : 'border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary'
+                                                    : 'border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-gray-400'
                                             "
                                             @click="
                                                 entry.note =
@@ -263,7 +263,7 @@
 
                         <p
                             v-else
-                            class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-500"
+                            class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
                         >
                             Pick staff from the list on the right to assign
                             them to this booking.
@@ -271,17 +271,17 @@
                     </div>
 
                     <div
-                        class="flex flex-col overflow-hidden border-t border-slate-100 bg-slate-50 lg:border-l lg:border-t-0"
+                        class="flex flex-col overflow-hidden border-t border-slate-100 bg-slate-50 lg:border-l lg:border-t-0 dark:border-white/10 dark:bg-white/5"
                     >
                         <div class="shrink-0 space-y-3 p-5 pb-3">
                             <div class="flex items-baseline justify-between">
                                 <p
-                                    class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                                    class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                                 >
                                     Available Caregivers
                                 </p>
 
-                                <span class="text-[11px] text-slate-400">
+                                <span class="text-[11px] text-slate-400 dark:text-gray-500">
                                     {{ filteredEmployees.length }} shown
                                 </span>
                             </div>
@@ -291,7 +291,7 @@
                                     v-model="employeeSearch"
                                     type="text"
                                     placeholder="Search name"
-                                    class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
                                 />
                             </div>
                         </div>
@@ -303,16 +303,16 @@
                                 <div
                                     v-for="i in 4"
                                     :key="i"
-                                    class="h-16 animate-pulse rounded-xl bg-white"
+                                    class="h-16 animate-pulse rounded-xl bg-white dark:bg-secondary"
                                 />
                             </div>
 
                             <div v-else class="space-y-2">
                                 <div
                                     v-if="!filteredEmployees.length"
-                                    class="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center"
+                                    class="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center dark:border-white/10 dark:bg-secondary"
                                 >
-                                    <p class="text-sm text-slate-500">
+                                    <p class="text-sm text-slate-500 dark:text-gray-400">
                                         {{
                                             employeeSearch
                                                 ? "No caregivers match that search"
@@ -324,11 +324,11 @@
                                 <div
                                     v-for="employee in filteredEmployees"
                                     :key="employee.employee_id"
-                                    class="rounded-xl border bg-white transition"
+                                    class="rounded-xl border bg-white transition dark:bg-secondary dark:border-white/10"
                                     :class="[
                                         isSelected(employee.employee_id)
                                             ? 'border-primary bg-primary/5'
-                                            : 'border-slate-200 hover:border-primary/40',
+                                            : 'border-slate-200 hover:border-primary/40 dark:border-white/10',
                                         employee.is_busy ||
                                         !isCaregiver(employee) ||
                                         isAssignmentTypeMismatch(employee)
@@ -342,7 +342,7 @@
                                         @click="handleEmployeeClick(employee)"
                                     >
                                         <div
-                                            class="h-10 w-10 overflow-hidden rounded-full bg-[#EAF4F2] flex items-center justify-center shrink-0"
+                                            class="h-10 w-10 overflow-hidden rounded-full bg-[#EAF4F2] flex items-center justify-center shrink-0 dark:bg-accent-500/15"
                                         >
                                             <img
                                                 v-if="employee.avatar"
@@ -368,7 +368,7 @@
                                                 class="flex items-center gap-1.5"
                                             >
                                                 <p
-                                                    class="truncate text-sm font-semibold text-slate-700"
+                                                    class="truncate text-sm font-semibold text-slate-700 dark:text-gray-400"
                                                 >
                                                     {{
                                                         fullName(
@@ -390,7 +390,7 @@
                                             </div>
 
                                             <p
-                                                class="truncate text-xs text-slate-400"
+                                                class="truncate text-xs text-slate-400 dark:text-gray-500"
                                             >
                                                 {{ employee.role_name }}
                                             </p>
@@ -400,7 +400,7 @@
                                                     employee.phone_number ||
                                                     employee.email
                                                 "
-                                                class="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-slate-400"
+                                                class="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-slate-400 dark:text-gray-500"
                                             >
                                                 <span
                                                     v-if="
@@ -424,7 +424,7 @@
                                             class="flex flex-col items-end gap-1"
                                         >
                                             <span
-                                                class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700"
+                                                class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
                                             >
                                                 <span
                                                     class="h-1.5 w-1.5 rounded-full bg-amber-500"
@@ -433,7 +433,7 @@
                                             </span>
 
                                             <span
-                                                class="flex items-center gap-1 text-[11px] font-medium text-amber-600 hover:underline"
+                                                class="flex items-center gap-1 text-[11px] font-medium text-amber-600 hover:underline dark:text-amber-300"
                                                 @click.stop="
                                                     toggleConflicts(
                                                         employee.employee_id,
@@ -466,7 +466,7 @@
                                         </div>
                                         <span
                                             v-else-if="!isCaregiver(employee)"
-                                            class="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-600"
+                                            class="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-600 dark:bg-rose-500/15 dark:text-rose-300"
                                         >
                                             Caregiver only
                                         </span>
@@ -476,7 +476,7 @@
                                                     employee,
                                                 )
                                             "
-                                            class="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-600"
+                                            class="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-600 dark:bg-rose-500/15 dark:text-rose-300"
                                         >
                                             {{
                                                 assignmentTypeLabel(employee)
@@ -488,13 +488,13 @@
                                                     employee.employee_id,
                                                 )
                                             "
-                                            class="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700"
+                                            class="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                                         >
                                             Assigned
                                         </span>
                                         <span
                                             v-else
-                                            class="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700"
+                                            class="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                                         >
                                             Available
                                         </span>
@@ -508,20 +508,20 @@
                                             ) &&
                                             employee.conflict_schedules?.length
                                         "
-                                        class="space-y-2 border-t border-slate-100 bg-slate-50/50 p-3"
+                                        class="space-y-2 border-t border-slate-100 bg-slate-50/50 p-3 dark:border-white/10 dark:bg-white/5"
                                     >
                                         <div
                                             v-for="(
                                                 conflict, idx
                                             ) in employee.conflict_schedules"
                                             :key="idx"
-                                            class="rounded-lg border border-amber-100 bg-white p-2.5 text-xs"
+                                            class="rounded-lg border border-amber-100 bg-white p-2.5 text-xs dark:border-amber-500/20 dark:bg-secondary"
                                         >
                                             <div
                                                 class="flex items-center justify-between"
                                             >
                                                 <span
-                                                    class="font-semibold text-slate-700"
+                                                    class="font-semibold text-slate-700 dark:text-gray-400"
                                                 >
                                                     {{ conflict.schedule_code }}
                                                 </span>
@@ -530,8 +530,8 @@
                                                     :class="
                                                         conflict.category ===
                                                         'medical'
-                                                            ? 'bg-sky-100 text-sky-700'
-                                                            : 'bg-violet-100 text-violet-700'
+                                                            ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300'
+                                                            : 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300'
                                                     "
                                                 >
                                                     {{
@@ -543,7 +543,7 @@
                                                 </span>
                                             </div>
 
-                                            <p class="mt-1 text-slate-500">
+                                            <p class="mt-1 text-slate-500 dark:text-gray-400">
                                                 {{
                                                     formatDate(
                                                         conflict.scheduled_at,
@@ -570,7 +570,7 @@
                                             </p>
 
                                             <p
-                                                class="mt-1 capitalize text-slate-400"
+                                                class="mt-1 capitalize text-slate-400 dark:text-gray-500"
                                             >
                                                 {{ conflict.status }}
                                             </p>
@@ -583,11 +583,11 @@
                 </div>
 
                 <div
-                    class="flex justify-end gap-3 border-t border-slate-100 px-6 py-4"
+                    class="flex justify-end gap-3 border-t border-slate-100 px-6 py-4 dark:border-white/10"
                 >
                     <button
                         type="button"
-                        class="rounded-lg px-4 py-2 text-sm text-slate-500 transition hover:bg-slate-100"
+                        class="rounded-lg px-4 py-2 text-sm text-slate-500 transition hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10"
                         @click="close"
                     >
                         Cancel

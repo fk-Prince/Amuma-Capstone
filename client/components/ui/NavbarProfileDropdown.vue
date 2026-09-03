@@ -7,7 +7,7 @@
                     class="flex items-center gap-2.5 px-2 py-1.5 rounded-xl transition-colors focus:outline-none"
                     :class="[
                         scrolled || navTheme !== 'dark'
-                            ? 'hover:bg-primary-50'
+                            ? 'hover:bg-primary-50 dark:hover:bg-primary-500/10'
                             : 'hover:bg-light/10',
                         themeAware ? 'dark:hover:bg-white/10' : '',
                     ]"
@@ -43,7 +43,7 @@
                             class="text-xs transition-colors duration-300"
                             :class="[
                                 scrolled || navTheme !== 'dark'
-                                    ? 'text-muted'
+                                    ? 'text-muted dark:text-gray-400'
                                     : 'text-light/70',
                                 themeAware ? 'dark:text-gray-400' : '',
                             ]"
@@ -57,7 +57,7 @@
                         class="block w-4 h-4 transition-colors duration-300"
                         :class="[
                             scrolled || navTheme !== 'dark'
-                                ? 'text-muted'
+                                ? 'text-muted dark:text-gray-400'
                                 : 'text-light/80',
                             themeAware ? 'dark:text-white/60' : '',
                         ]"
@@ -117,8 +117,8 @@
                             class="flex-1 flex items-center justify-center gap-1.5 rounded-full py-1.5 text-xs font-medium transition-colors"
                             :class="
                                 !isDark
-                                    ? 'bg-white text-gray-800 shadow-sm'
-                                    : 'text-gray-400 hover:text-gray-600'
+                                    ? 'bg-white text-gray-800 shadow-sm dark:bg-secondary dark:text-white'
+                                    : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400'
                             "
                             @click="setTheme(false)"
                         >
@@ -131,7 +131,7 @@
                             :class="
                                 isDark
                                     ? 'bg-secondary text-white shadow-sm'
-                                    : 'text-gray-400 hover:text-gray-600'
+                                    : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400'
                             "
                             @click="setTheme(true)"
                         >
@@ -144,7 +144,7 @@
                         <button
                             type="button"
                             :disabled="loggingOut"
-                            class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-500 transition-colors hover:bg-rose-50 dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-500 transition-colors hover:bg-rose-50 dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 dark:text-rose-300"
                             @click="
                                 () => {
                                     logout();

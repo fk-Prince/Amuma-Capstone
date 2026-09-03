@@ -438,20 +438,17 @@ const allergyList = computed(() => {
 });
 
 const ASSESSMENT_LABELS: Record<string, string> = {
-    mood: "Mood",
+    condition: "Condition",
     speech: "Speech",
-    mental_state: "Mental State",
+    mental_state: "Level of Consciousness",
+    affect: "Affect",
+    behavior: "Behavior",
     communication: "Communication",
-    memory_issues: "Memory Issues",
     diagnosis: "Diagnosis",
     diagnosis_date: "Diagnosis Date",
     diagnosis_notes: "Diagnosis Notes",
     diagnosis_file_name: "Attached File",
-    blood_pressure: "Blood Pressure",
-    pulse_rate: "Pulse Rate",
-    temperature: "Temperature",
-    respiratory_rate: "Respiratory Rate",
-    oxygen_saturation: "Oxygen Saturation",
+    life_system_profile: "Life System Profile",
 };
 
 function humanizeKey(key: string) {

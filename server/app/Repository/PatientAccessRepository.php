@@ -100,6 +100,24 @@ class PatientAccessRepository
                         )
                 )
             )
+            ->when(
+                !empty($payload['month']) && $payload['month'] !== 'all',
+                fn($query) => $query->whereRaw(
+                    "to_char(scheduled_at, 'YYYY-MM') = ?",
+                    [$payload['month']]
+                )
+            )
+            ->when(
+                !empty($payload['status']) && $payload['status'] !== 'all',
+                fn($query) => $query->whereIn(
+                    'status',
+                    match ($payload['status']) {
+                        'upcoming' => [Schedule::STATUS_PENDING, 'confirmed'],
+                        'missed' => [Schedule::STATUS_MISSED, Schedule::STATUS_CANCELLED],
+                        default => [$payload['status']],
+                    }
+                )
+            )
             ->with([
                 'scheduleServices.service',
                 'scheduleServices.assigned' => fn($assignedQuery) =>
@@ -109,14 +127,19 @@ class PatientAccessRepository
                 ]),
             ])
             ->orderByDesc('scheduled_at')
-            ->limit(50)
-            ->get();
+            ->paginate((int) ($payload['per_page'] ?? 10));
 
         return [
             'success' => true,
-            'data' => $schedules
+            'data' => collect($schedules->items())
                 ->map(fn($schedule) => $this->helper->schedulePayload($schedule, $patient))
                 ->values(),
+            'meta' => [
+                'current_page' => $schedules->currentPage(),
+                'last_page' => $schedules->lastPage(),
+                'total' => $schedules->total(),
+                'per_page' => $schedules->perPage(),
+            ],
         ];
     }
 
@@ -237,6 +260,14 @@ class PatientAccessRepository
                 'currentAdmission.bed.room',
                 'latestAdmission.bed.room',
             ]);
+
+            $relations['assessments'] = fn($query) =>
+            $query->orderByDesc('created_at')
+                ->orderByDesc('patient_assessment_id');
+
+            $relations['diagnoses'] = fn($query) =>
+            $query->orderByDesc('diagnosis_date')
+                ->orderByDesc('patient_diagnosis_id');
 
 
             $relations['schedules'] = fn($query) =>

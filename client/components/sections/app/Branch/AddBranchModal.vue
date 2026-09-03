@@ -33,9 +33,13 @@
                                     Add a new branch
                                 </h2>
 
-                                <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                                <p
+                                    class="mt-0.5 text-sm text-gray-500 dark:text-gray-400"
+                                >
                                     Connecting to
-                                    <span class="font-medium text-secondary dark:text-white">
+                                    <span
+                                        class="font-medium text-secondary dark:text-white"
+                                    >
                                         {{ agencyName }}
                                     </span>
                                 </p>
@@ -53,7 +57,9 @@
                         </button>
                     </div>
 
-                    <div class="shrink-0 border-b border-gray-100 px-6 py-4 dark:border-white/10">
+                    <div
+                        class="shrink-0 border-b border-gray-100 px-6 py-4 dark:border-white/10"
+                    >
                         <ol class="flex w-full items-start">
                             <li
                                 v-for="(step, index) in STEPS"
@@ -118,150 +124,356 @@
                             {{ stepError }}
                         </p>
 
-                        <!-- Step 1 — plan & billing -->
+                        <!-- Step 1 — how to add this branch, then plan if purchasing -->
                         <div v-if="currentStep === 1">
-                            <div v-if="loadingPlans" class="space-y-4">
-                                <div
-                                    class="mx-auto h-10 w-56 animate-pulse rounded-full bg-slate-100 dark:bg-white/10"
-                                />
-                                <div class="grid gap-4 sm:grid-cols-3">
-                                    <div
-                                        v-for="n in 3"
-                                        :key="n"
-                                        class="h-56 animate-pulse rounded-xl bg-slate-100 dark:bg-white/10"
-                                    />
-                                </div>
-                            </div>
-
-                            <template v-else>
-                                <div
-                                    class="mb-6 flex flex-col items-center justify-center"
-                                >
-                                    <div
-                                        class="relative inline-flex items-center rounded-full border border-primary-200 bg-muted-light/40 py-1 dark:border-primary-500/30 dark:bg-white/5"
+                            <!-- Choose: use a slot on an existing subscription, or buy another -->
+                            <div v-if="!addMode" class="space-y-4">
+                                <div class="mb-6 text-center">
+                                    <p
+                                        class="text-base font-semibold text-slate-900 dark:text-white"
                                     >
-                                        <span
-                                            class="absolute bottom-1 left-1 top-1 w-[calc(50%-6px)] rounded-full bg-primary shadow-sm transition-all duration-300"
-                                            :class="
-                                                form.interval === 'yearly'
-                                                    ? 'translate-x-[calc(100%+3px)]'
-                                                    : 'translate-x-0'
-                                            "
-                                        />
-
-                                        <button
-                                            v-for="option in INTERVALS"
-                                            :key="option"
-                                            type="button"
-                                            class="relative z-10 min-w-[110px] rounded-full px-5 py-2 text-sm font-semibold capitalize transition-colors duration-300"
-                                            :class="
-                                                form.interval === option
-                                                    ? 'text-white'
-                                                    : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
-                                            "
-                                            @click="form.interval = option"
-                                        >
-                                            {{ option }}
-                                        </button>
-                                    </div>
-
-                                    <p class="mt-2 text-xs text-muted dark:text-gray-400">
-                                        {{
-                                            form.interval === "yearly"
-                                                ? "Billed annually — save more compared to monthly billing."
-                                                : "Billed monthly. Switch to yearly to save more."
-                                        }}
+                                        How do you want to add this branch?
+                                    </p>
+                                    <p
+                                        class="mt-1 text-sm text-muted dark:text-gray-400"
+                                    >
+                                        {{ capacity?.used ?? 0 }} of
+                                        {{ capacity?.capacity ?? 0 }} branches
+                                        used across your subscriptions.
                                     </p>
                                 </div>
 
-                                <div
-                                    class="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3"
+                                <button
+                                    v-for="option in availableSubscriptions"
+                                    :key="option.uuid"
+                                    type="button"
+                                    class="flex w-full items-start gap-4 rounded-xl border border-slate-200 p-5 text-left transition hover:border-primary hover:bg-primary-50/40 dark:border-white/10 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10"
+                                    @click="chooseSubscription(option.uuid)"
                                 >
-                                    <label
-                                        v-for="plan in plans"
-                                        :key="plan.plan_id"
-                                        class="relative flex h-full cursor-pointer flex-col gap-3 rounded-xl border p-5 transition-all"
-                                        :class="
-                                            form.plan?.plan_id === plan.plan_id
-                                                ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20 dark:bg-primary-500/10'
-                                                : 'border-muted-light hover:border-primary-200 dark:border-white/10 dark:hover:border-primary-500/40'
-                                        "
+                                    <div
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
                                     >
-                                        <input
-                                            type="radio"
-                                            class="pointer-events-none absolute h-0 w-0 opacity-0"
-                                            :checked="
-                                                form.plan?.plan_id ===
-                                                plan.plan_id
-                                            "
-                                            @change="form.plan = plan"
-                                        />
+                                        <Check class="h-5 w-5" />
+                                    </div>
 
-                                        <span
-                                            class="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors"
-                                            :class="
-                                                form.plan?.plan_id ===
-                                                plan.plan_id
-                                                    ? 'border-primary'
-                                                    : 'border-slate-300 dark:border-white/20'
-                                            "
+                                    <div class="min-w-0 flex-1">
+                                        <p
+                                            class="text-sm font-semibold text-secondary dark:text-white"
+                                        >
+                                            Use my {{ option.plan_name }}
+                                            subscription
+                                        </p>
+
+                                        <p
+                                            class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
+                                        >
+                                            {{ option.slots_left }} of
+                                            {{ option.branch_limit }} slots
+                                            left. The branch shares this plan
+                                            and runs until
+                                            {{ formatDate(option.end_date) }}.
+                                        </p>
+                                    </div>
+
+                                    <span
+                                        class="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                    >
+                                        No charge
+                                    </span>
+                                </button>
+
+                                <div
+                                    v-if="!canUseCapacity"
+                                    class="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-sm text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
+                                >
+                                    <Building2
+                                        class="mt-0.5 h-4 w-4 shrink-0"
+                                    />
+                                    <span>
+                                        All
+                                        {{ capacity?.capacity ?? 0 }} branch
+                                        slots on your subscriptions are used.
+                                        Purchase another to add 5 more.
+                                    </span>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="flex w-full items-start gap-4 rounded-xl border border-slate-200 p-5 text-left transition hover:border-primary hover:bg-primary-50/40 dark:border-white/10 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10"
+                                    @click="addMode = 'purchase'"
+                                >
+                                    <div
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                                    >
+                                        <Home class="h-5 w-5" />
+                                    </div>
+
+                                    <div class="min-w-0 flex-1">
+                                        <p
+                                            class="text-sm font-semibold text-secondary dark:text-white"
+                                        >
+                                            Purchase another subscription
+                                        </p>
+
+                                        <p
+                                            class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
+                                        >
+                                            Pick a plan and pay — adds this
+                                            branch plus 4 more slots.
+                                        </p>
+                                    </div>
+
+                                    <ChevronRight
+                                        class="mt-1 h-4 w-4 shrink-0 text-slate-400 dark:text-gray-500"
+                                    />
+                                </button>
+                            </div>
+
+                            <!-- Chose capacity: nothing to pick, the plan is inherited -->
+                            <div
+                                v-else-if="addMode === 'capacity'"
+                                class="space-y-4"
+                            >
+                                <div
+                                    class="rounded-xl border border-slate-200 p-5 dark:border-white/10"
+                                >
+                                    <p
+                                        class="text-sm font-semibold text-secondary dark:text-white"
+                                    >
+                                        {{ availableSubscription?.plan_name }} —
+                                        included
+                                    </p>
+                                    <p
+                                        class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
+                                    >
+                                        This branch joins your existing
+                                        subscription, so it uses the same plan
+                                        and expires with it on
+                                        {{
+                                            formatDate(
+                                                availableSubscription?.end_date,
+                                            )
+                                        }}.
+                                    </p>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="text-xs font-medium text-primary hover:underline"
+                                    @click="resetChoice"
+                                >
+                                    Choose a different option
+                                </button>
+                            </div>
+
+                            <template v-else>
+                                <button
+                                    v-if="canUseCapacity"
+                                    type="button"
+                                    class="mb-4 text-xs font-medium text-primary hover:underline"
+                                    @click="resetChoice"
+                                >
+                                    Choose a different option
+                                </button>
+
+                                <div v-if="loadingPlans" class="space-y-4">
+                                    <div
+                                        class="mx-auto h-10 w-56 animate-pulse rounded-full bg-slate-100 dark:bg-white/10"
+                                    />
+                                    <div class="grid gap-4 sm:grid-cols-3">
+                                        <div
+                                            v-for="n in 3"
+                                            :key="n"
+                                            class="h-56 animate-pulse rounded-xl bg-slate-100 dark:bg-white/10"
+                                        />
+                                    </div>
+                                </div>
+
+                                <template v-else>
+                                    <div
+                                        class="mb-6 flex flex-col items-center justify-center"
+                                    >
+                                        <div
+                                            class="relative inline-flex items-center rounded-full border border-primary-200 bg-muted-light/40 py-1 dark:border-primary-500/30 dark:bg-white/5"
                                         >
                                             <span
-                                                v-if="
+                                                class="absolute bottom-1 left-1 top-1 w-[calc(50%-6px)] rounded-full bg-primary shadow-sm transition-all duration-300"
+                                                :class="
+                                                    form.interval === 'yearly'
+                                                        ? 'translate-x-[calc(100%+3px)]'
+                                                        : 'translate-x-0'
+                                                "
+                                            />
+
+                                            <button
+                                                v-for="option in INTERVALS"
+                                                :key="option"
+                                                type="button"
+                                                class="relative z-10 min-w-[110px] rounded-full px-5 py-2 text-sm font-semibold capitalize transition-colors duration-300"
+                                                :class="
+                                                    form.interval === option
+                                                        ? 'text-white'
+                                                        : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
+                                                "
+                                                @click="form.interval = option"
+                                            >
+                                                {{ option }}
+                                            </button>
+                                        </div>
+
+                                        <p
+                                            class="mt-2 text-xs text-muted dark:text-gray-400"
+                                        >
+                                            {{
+                                                form.interval === "yearly"
+                                                    ? "Billed annually — save more compared to monthly billing."
+                                                    : "Billed monthly. Switch to yearly to save more."
+                                            }}
+                                        </p>
+                                    </div>
+
+                                    <div
+                                        class="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3"
+                                    >
+                                        <label
+                                            v-for="plan in plans"
+                                            :key="plan.plan_id"
+                                            class="relative flex h-full flex-col gap-3 rounded-xl border p-5 transition-all dark:border-white/10"
+                                            :class="
+                                                slotsForPlan(plan)
+                                                    ? 'cursor-not-allowed border-muted-light bg-slate-50/80 dark:border-white/10 dark:bg-white/5'
+                                                    : form.plan?.plan_id ===
+                                                        plan.plan_id
+                                                      ? 'cursor-pointer border-primary bg-primary-50/60 ring-1 ring-primary/20 dark:bg-primary-500/10'
+                                                      : 'cursor-pointer border-muted-light hover:border-primary-200 dark:border-white/10 dark:hover:border-primary-500/40'
+                                            "
+                                        >
+                                            <input
+                                                v-if="!slotsForPlan(plan)"
+                                                type="radio"
+                                                class="pointer-events-none absolute h-0 w-0 opacity-0"
+                                                :checked="
                                                     form.plan?.plan_id ===
                                                     plan.plan_id
                                                 "
-                                                class="h-2.5 w-2.5 rounded-full bg-primary"
+                                                @change="form.plan = plan"
                                             />
-                                        </span>
-
-                                        <div
-                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary-100 bg-primary-50 dark:border-primary-500/20 dark:bg-primary-500/10"
-                                        >
-                                            <Home
-                                                class="h-4 w-4 text-primary"
-                                            />
-                                        </div>
-
-                                        <div class="pr-6">
-                                            <p
-                                                class="text-sm font-semibold leading-tight text-secondary dark:text-white"
-                                            >
-                                                {{ plan.name }}
-                                            </p>
-
-                                            <p
-                                                class="mt-1 text-xs leading-relaxed text-muted dark:text-gray-400"
-                                            >
-                                                {{ plan.description }}
-                                            </p>
-                                        </div>
-
-                                        <div
-                                            class="mt-auto flex items-center justify-between border-t border-muted-light/70 pt-3 dark:border-white/10"
-                                        >
-                                            <span
-                                                class="text-xs font-medium text-muted dark:text-gray-400"
-                                            >
-                                                {{
-                                                    form.interval === "yearly"
-                                                        ? "/ year"
-                                                        : "/ month"
-                                                }}
-                                            </span>
 
                                             <span
-                                                class="whitespace-nowrap text-base font-bold text-primary"
+                                                v-if="!slotsForPlan(plan)"
+                                                class="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors"
+                                                :class="
+                                                    form.plan?.plan_id ===
+                                                    plan.plan_id
+                                                        ? 'border-primary'
+                                                        : 'border-slate-300 dark:border-white/20'
+                                                "
                                             >
-                                                ₱{{
-                                                    form.interval === "yearly"
-                                                        ? plan.yearly_price
-                                                        : plan.monthly_price
-                                                }}
+                                                <span
+                                                    v-if="
+                                                        form.plan?.plan_id ===
+                                                        plan.plan_id
+                                                    "
+                                                    class="h-2.5 w-2.5 rounded-full bg-primary"
+                                                />
                                             </span>
-                                        </div>
-                                    </label>
-                                </div>
+
+                                            <div
+                                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary-100 bg-primary-50 dark:border-primary-500/20 dark:bg-primary-500/10"
+                                            >
+                                                <Home
+                                                    class="h-4 w-4 text-primary"
+                                                />
+                                            </div>
+
+                                            <div class="pr-6">
+                                                <p
+                                                    class="text-sm font-semibold leading-tight text-secondary dark:text-white"
+                                                >
+                                                    {{ plan.name }}
+                                                </p>
+
+                                                <p
+                                                    class="mt-1 text-xs leading-relaxed text-muted dark:text-gray-400"
+                                                >
+                                                    {{ plan.description }}
+                                                </p>
+                                            </div>
+
+                                            <div
+                                                v-if="slotsForPlan(plan)"
+                                                class="mt-auto border-t border-muted-light/70 pt-3 dark:border-white/10"
+                                            >
+                                                <span
+                                                    class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                                >
+                                                    <CheckCircle2
+                                                        class="h-3.5 w-3.5"
+                                                    />
+                                                    {{
+                                                        slotsForPlan(plan)!
+                                                            .slots
+                                                    }}
+                                                    {{
+                                                        slotsForPlan(plan)!
+                                                            .slots === 1
+                                                            ? "slot"
+                                                            : "slots"
+                                                    }}
+                                                    left
+                                                </span>
+
+                                                <p
+                                                    class="mt-2 text-xs leading-relaxed text-muted dark:text-gray-400"
+                                                >
+                                                    Already covered by your
+                                                    subscription — no need to
+                                                    buy it again.
+                                                </p>
+
+                                                <button
+                                                    type="button"
+                                                    class="mt-2 text-xs font-semibold text-primary hover:underline"
+                                                    @click.prevent="
+                                                        chooseSubscription(
+                                                            slotsForPlan(plan)!
+                                                                .uuid,
+                                                        )
+                                                    "
+                                                >
+                                                    Use a free slot instead
+                                                </button>
+                                            </div>
+
+                                            <div
+                                                v-else
+                                                class="mt-auto flex items-center justify-between border-t border-muted-light/70 pt-3 dark:border-white/10"
+                                            >
+                                                <span
+                                                    class="text-xs font-medium text-muted dark:text-gray-400"
+                                                >
+                                                    {{
+                                                        form.interval ===
+                                                        "yearly"
+                                                            ? "/ year"
+                                                            : "/ month"
+                                                    }}
+                                                </span>
+
+                                                <span
+                                                    class="whitespace-nowrap text-base font-bold text-primary"
+                                                >
+                                                    ₱{{
+                                                        form.interval ===
+                                                        "yearly"
+                                                            ? plan.yearly_price
+                                                            : plan.monthly_price
+                                                    }}
+                                                </span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </template>
                             </template>
                         </div>
 
@@ -293,7 +505,9 @@
                                 >
                                     Branch configuration
                                 </h3>
-                                <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
+                                <p
+                                    class="mt-1 text-sm text-slate-500 dark:text-gray-400"
+                                >
                                     Set up the operational preferences for this
                                     branch.
                                 </p>
@@ -322,17 +536,34 @@
                                         <p
                                             class="truncate text-base font-bold text-secondary dark:text-white"
                                         >
-                                            {{ form.plan?.name }}
+                                            {{ effectivePlan?.name }}
                                         </p>
 
                                         <p
                                             class="mt-0.5 text-xs capitalize text-muted dark:text-gray-400"
                                         >
-                                            Billed {{ form.interval }}
+                                            Billed {{ effectiveInterval }}
                                         </p>
                                     </div>
 
-                                    <div class="shrink-0 text-right">
+                                    <div
+                                        v-if="usesExistingCapacity"
+                                        class="shrink-0 text-right"
+                                    >
+                                        <p
+                                            class="text-sm font-bold text-emerald-600 dark:text-emerald-400"
+                                        >
+                                            Included
+                                        </p>
+
+                                        <p
+                                            class="text-[11px] text-muted dark:text-gray-400"
+                                        >
+                                            no extra charge
+                                        </p>
+                                    </div>
+
+                                    <div v-else class="shrink-0 text-right">
                                         <p
                                             class="text-lg font-bold text-primary"
                                         >
@@ -345,7 +576,9 @@
                                             </template>
                                         </p>
 
-                                        <p class="text-[11px] text-muted dark:text-gray-400">
+                                        <p
+                                            class="text-[11px] text-muted dark:text-gray-400"
+                                        >
                                             {{
                                                 form.interval === "yearly"
                                                     ? "/ year"
@@ -356,14 +589,53 @@
                                 </div>
 
                                 <p
-                                    v-if="form.plan?.description"
+                                    v-if="effectivePlan?.description"
                                     class="mt-3 border-t border-slate-100 pt-3 text-xs leading-relaxed text-muted dark:border-white/10 dark:text-gray-400"
                                 >
-                                    {{ form.plan.description }}
+                                    {{ effectivePlan?.description }}
                                 </p>
                             </div>
 
+                            <div
+                                v-if="usesExistingCapacity"
+                                class="mx-auto w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-secondary"
+                            >
+                                <p
+                                    class="text-sm font-semibold text-slate-900 dark:text-white"
+                                >
+                                    Included in your current subscription
+                                </p>
+
+                                <p
+                                    class="mt-1 text-sm leading-6 text-muted dark:text-gray-400"
+                                >
+                                    This is branch
+                                    {{ (capacity?.used ?? 0) + 1 }} of
+                                    {{ capacity?.capacity }} — no payment is
+                                    needed. It will be sent to AMUMA for review
+                                    before it goes live.
+                                </p>
+
+                                <button
+                                    type="button"
+                                    :disabled="processing"
+                                    class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                    @click="addFromCapacity"
+                                >
+                                    <LoaderCircle
+                                        v-if="processing"
+                                        class="h-4 w-4 animate-spin"
+                                    />
+                                    {{
+                                        processing
+                                            ? "Adding branch..."
+                                            : "Confirm & add branch"
+                                    }}
+                                </button>
+                            </div>
+
                             <PaymentForm
+                                v-else
                                 v-model:card="card"
                                 :total-amount="total"
                                 :processing="processing || loadingTotal"
@@ -433,6 +705,7 @@ import { computed, onMounted, reactive, ref, watch } from "vue";
 import {
     Building2,
     Check,
+    CheckCircle2,
     ChevronLeft,
     ChevronRight,
     Home,
@@ -455,9 +728,30 @@ import { branchSchema } from "~/schema/branch-schema";
 import type { Branch, BranchSettings } from "~/types/branch";
 import type { CardDetails } from "~/types/payment";
 
+interface AvailableSubscription {
+    uuid: string;
+    plan_name: string | null;
+    plan_code: string | null;
+    billing_interval: string | null;
+    end_date: string | null;
+    branches_used: number;
+    branch_limit: number;
+    slots_left: number;
+}
+
+interface BranchCapacity {
+    used: number;
+    capacity: number;
+    remaining: number;
+    has_room: boolean;
+    available_subscriptions?: AvailableSubscription[];
+}
+
 const props = defineProps<{
     agencyId: number | string;
     agencyName: string;
+    branchUuid: string;
+    capacity?: BranchCapacity | null;
 }>();
 
 const emit = defineEmits<{
@@ -467,11 +761,8 @@ const emit = defineEmits<{
 
 const { success, error } = useToast();
 
-// PaymentForm reads the selected method straight off this store, so the modal
-// shares it rather than duplicating the method picker.
 const checkout = useSubscriptionCheckout();
 
-const STEPS = ["Plan", "Branch Details", "Configuration", "Payment"];
 const INTERVALS = ["monthly", "yearly"] as const;
 
 const currentStep = ref(1);
@@ -480,6 +771,88 @@ const errors = ref<Record<string, string>>({});
 
 const plans = ref<any[]>([]);
 const loadingPlans = ref(true);
+
+const capacity = computed(() => props.capacity ?? null);
+
+const addMode = ref<"capacity" | "purchase" | null>(null);
+
+const selectedSubscriptionUuid = ref<string | null>(null);
+
+const availableSubscriptions = computed<AvailableSubscription[]>(
+    () => capacity.value?.available_subscriptions ?? [],
+);
+
+const availableSubscription = computed(
+    () =>
+        availableSubscriptions.value.find(
+            (subscription) =>
+                subscription.uuid === selectedSubscriptionUuid.value,
+        ) ?? null,
+);
+
+const canUseCapacity = computed(() => availableSubscriptions.value.length > 0);
+
+function chooseSubscription(uuid: string) {
+    selectedSubscriptionUuid.value = uuid;
+    addMode.value = "capacity";
+}
+
+function resetChoice() {
+    selectedSubscriptionUuid.value = null;
+    addMode.value = null;
+}
+
+const openSlotsByPlan = computed(() => {
+    const map = new Map<string, { slots: number; uuid: string }>();
+
+    for (const option of availableSubscriptions.value) {
+        if (!option.plan_code || option.slots_left < 1) continue;
+
+        const existing = map.get(option.plan_code);
+
+        map.set(option.plan_code, {
+            slots: (existing?.slots ?? 0) + option.slots_left,
+            uuid: existing?.uuid ?? option.uuid,
+        });
+    }
+
+    return map;
+});
+
+const slotsForPlan = (plan: any) =>
+    openSlotsByPlan.value.get(plan?.plan_code) ?? null;
+
+const selectablePlans = computed(() =>
+    plans.value.filter((plan) => !slotsForPlan(plan)),
+);
+
+const buyingMoreCapacity = computed(() => addMode.value === "purchase");
+
+const usesExistingCapacity = computed(
+    () => canUseCapacity.value && addMode.value === "capacity",
+);
+
+const effectivePlan = computed(() => {
+    if (!usesExistingCapacity.value) return form.plan;
+
+    const code = availableSubscription.value?.plan_code;
+
+    return plans.value.find((plan) => plan.plan_code === code) ?? null;
+});
+
+const effectiveInterval = computed(() =>
+    usesExistingCapacity.value
+        ? (availableSubscription.value?.billing_interval?.toLowerCase() ??
+          form.interval)
+        : form.interval,
+);
+
+const STEPS = computed(() => [
+    "Plan",
+    "Branch Details",
+    "Configuration",
+    buyingMoreCapacity.value || !canUseCapacity.value ? "Payment" : "Confirm",
+]);
 
 const validating = ref(false);
 const processing = ref(false);
@@ -522,9 +895,6 @@ const form = reactive({
     } as BranchSettings,
 });
 
-// A ref rather than reactive(): PaymentForm's `update:card` emits a fresh
-// object, which v-model has to be able to assign back.
-// Prefilled with the Xendit test card, matching the subscription checkout page.
 const card = ref<CardDetails>({
     number: "4000000000002503",
     expMonth: "04",
@@ -535,15 +905,22 @@ const card = ref<CardDetails>({
     email: "prince.sestoso@gmail.com",
 });
 
-const continueDisabled = computed(
-    () =>
-        validating.value ||
-        (currentStep.value === 1 && (loadingPlans.value || !form.plan)),
-);
+const continueDisabled = computed(() => {
+    if (validating.value) return true;
+
+    if (currentStep.value === 1) {
+        if (!addMode.value) return true;
+        if (addMode.value === "purchase") {
+            return loadingPlans.value || !form.plan;
+        }
+    }
+
+    return false;
+});
 
 const buildPayload = () => ({
-    plan_code: form.plan?.plan_code,
-    billing_interval: form.interval,
+    plan_code: effectivePlan.value?.plan_code,
+    billing_interval: effectiveInterval.value,
     payment_method: checkout.payment_method,
 
     // BRANCH DATA
@@ -561,8 +938,7 @@ const buildPayload = () => ({
     branch_latitude: form.branch.location.latitude,
     branch_longitude: form.branch.location.longitude,
 
-    // AGENCY — only the id: the backend resolves and reuses the existing
-    // agency, and every agency_* rule is nullable unless agency_name is sent.
+    // AGENCY
     agency_id: props.agencyId,
 });
 
@@ -604,7 +980,12 @@ const nextStep = async () => {
     stepError.value = null;
 
     if (currentStep.value === 1) {
-        if (!form.plan) {
+        if (!addMode.value) {
+            stepError.value = "Please choose how to add this branch.";
+            return;
+        }
+
+        if (addMode.value === "purchase" && !form.plan) {
             stepError.value = "Please select a plan.";
             return;
         }
@@ -619,7 +1000,9 @@ const nextStep = async () => {
         const passed = await validateOnServer();
         if (!passed) return;
 
-        await loadTotal();
+        if (!usesExistingCapacity.value) {
+            await loadTotal();
+        }
     }
 
     currentStep.value++;
@@ -630,8 +1013,6 @@ const previousStep = () => {
     if (currentStep.value > 1) currentStep.value--;
 };
 
-// The same validate endpoint the public subscription flow uses, so branch
-// uniqueness (email/name) is caught before the card is ever charged.
 const validateOnServer = async (): Promise<boolean> => {
     validating.value = true;
     errors.value = {};
@@ -672,7 +1053,6 @@ const loadTotal = async () => {
     try {
         const payload: Record<string, any> = { ...buildPayload() };
 
-        // GET can't carry the uploads, and the total only depends on the plan.
         delete payload.branch_image;
         delete payload.branch_document;
         delete payload.branch_settings;
@@ -764,8 +1144,19 @@ const requestClose = () => {
 
 const formatMoney = (value: number) => formatAmount(value);
 
-// Switching the billing cycle changes what is owed, so refresh the total when
-// the user goes back and flips it after it has already been fetched.
+const formatDate = (date?: string | null) => {
+    if (!date) return "—";
+
+    try {
+        return new Date(date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        });
+    } catch {
+        return String(date);
+    }
+};
 watch(
     () => [form.plan?.plan_id, form.interval],
     () => {
@@ -777,11 +1168,33 @@ onMounted(async () => {
     try {
         const res = await planService.list();
         plans.value = res ?? [];
-        form.plan = plans.value[0] ?? null;
+        form.plan = selectablePlans.value[0] ?? null;
     } catch (err: any) {
         stepError.value = err?.message ?? "Failed to load plans.";
     } finally {
         loadingPlans.value = false;
     }
 });
+
+const addFromCapacity = async () => {
+    if (processing.value) return;
+
+    processing.value = true;
+    stepError.value = null;
+
+    try {
+        const result = await subscriptionService.createBranchFromCapacity({
+            ...buildPayload(),
+            branch_uuid: props.branchUuid,
+            subscription_uuid: availableSubscription.value?.uuid,
+        });
+
+        await onCreated(result);
+    } catch (err: any) {
+        stepError.value =
+            err?.message ?? "Failed to add the branch. Please try again.";
+    } finally {
+        processing.value = false;
+    }
+};
 </script>

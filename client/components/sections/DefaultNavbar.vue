@@ -34,12 +34,28 @@ const props = defineProps<{
 
 const variant = computed(() => route.meta.navVariant ?? 1);
 
+// Same box the landing sections use, so the floating bar tracks the content
+// column at every width instead of only where the two percentages happen to
+// meet. Its px-10 below matches the sections' inner padding.
+const CONTENT_BOX = "inset-x-0 mx-auto w-[94%] max-w-[1600px]";
+
+const navInner = computed(() => {
+    if (variant.value === 2 || variant.value === 3) return "px-10";
+    // Percentage padding drifts against a capped container — it only lines up
+    // at one viewport width — so variant 1 uses the same box as the sections.
+    if (variant.value === 1 || variant.value === 4)
+        return "mx-auto max-w-[100rem] px-6";
+    // Sits over the auth pages' left panel, so it tracks that panel's padding.
+    if (variant.value === 5) return "px-8 md:px-10 lg:px-20";
+
+    return "px-6";
+});
+
 const header = computed(() => {
     switch (variant.value) {
         case 1:
             return [
                 "fixed top-0 left-0 z-50 w-full h-[90px] ",
-                "md:px-[5%] lg:px-[10%]",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
                     ? "bg-white dark:bg-secondary border-b border-muted-light dark:border-white/10"
@@ -52,8 +68,9 @@ const header = computed(() => {
 
         case 2:
             return [
-                "fixed top-4 left-1/2 -translate-x-1/2 z-50",
-                "w-[92%] md:w-[80%] rounded-xl h-[90px] ",
+                "fixed top-4 z-50",
+                CONTENT_BOX,
+                "rounded-xl h-[90px] ",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
                     ? "border border-muted-light bg-light"
@@ -65,8 +82,9 @@ const header = computed(() => {
                 .join(" ");
         case 3:
             return [
-                "fixed top-4 left-1/2 -translate-x-1/2 z-50",
-                "w-[92%] md:w-[80%] h-[90px] rounded-xl",
+                "fixed top-4 z-50",
+                CONTENT_BOX,
+                "h-[90px] rounded-xl",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
                     ? "border border-muted-light dark:border-white/10 bg-light dark:bg-secondary"
@@ -79,7 +97,6 @@ const header = computed(() => {
         case 4:
             return [
                 "relative w-full h-[70px] flex items-center",
-                "md:px-[5%] lg:px-[8%]",
                 "transition-all duration-300 ease-out bg-secondary",
             ]
                 .filter(Boolean)
@@ -186,10 +203,13 @@ watch(
 
 <template>
     <header :class="header">
-        <nav class="flex justify-between items-center w-full px-6 h-[90px]">
+        <nav
+            class="flex justify-between items-center w-full h-[90px]"
+            :class="navInner"
+        >
             <nav
                 v-if="variant === 5"
-                class="flex justify-between items-center w-full px-6 h-[90px]"
+                class="flex justify-between items-center w-full h-[90px]"
             >
                 <NuxtLink to="/" class="shrink-0">
                     <img

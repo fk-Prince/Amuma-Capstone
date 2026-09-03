@@ -1,15 +1,15 @@
 <template>
     <div
-        class="rounded-3xl border border-muted-light bg-white overflow-hidden font-sans"
+        class="rounded-3xl border border-muted-light bg-white overflow-hidden font-sans dark:bg-secondary dark:border-white/10"
     >
         <div class="p-5 md:p-6">
             <div class="flex items-center gap-2 mb-4">
                 <div
-                    class="w-7 h-7 rounded-lg bg-primary-50 flex items-center justify-center"
+                    class="w-7 h-7 rounded-lg bg-primary-50 flex items-center justify-center dark:bg-primary-500/10"
                 >
                     <HomeIcon class="w-3.5 h-3.5 text-primary" />
                 </div>
-                <p class="text-sm font-semibold text-secondary">
+                <p class="text-sm font-semibold text-secondary dark:text-white">
                     Homecare Overview
                 </p>
             </div>
@@ -44,16 +44,16 @@
             </div>
         </div>
 
-        <div class="h-px bg-muted-light" />
+        <div class="h-px bg-muted-light dark:bg-white/10" />
 
         <div class="p-5 md:p-6">
             <div class="flex items-center gap-2 mb-4">
                 <div
-                    class="w-7 h-7 rounded-lg bg-accent-50 flex items-center justify-center"
+                    class="w-7 h-7 rounded-lg bg-accent-50 flex items-center justify-center dark:bg-accent-500/15"
                 >
-                    <Building2 class="w-3.5 h-3.5 text-accent-600" />
+                    <Building2 class="w-3.5 h-3.5 text-accent-600 dark:text-accent-300" />
                 </div>
-                <p class="text-sm font-semibold text-secondary">
+                <p class="text-sm font-semibold text-secondary dark:text-white">
                     Facility Overview
                 </p>
             </div>
@@ -97,17 +97,18 @@
             </div>
         </div>
 
-        <div class="h-px bg-muted-light" />
+        <div class="h-px bg-muted-light dark:bg-white/10" />
 
         <div
-            class="p-5 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
+            v-if="visibleActions.length"
+            class="p-5 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
         >
             <button
-                v-for="action in actions"
+                v-for="action in visibleActions"
                 :key="action.action"
                 type="button"
                 @click="handleAction(action.action)"
-                class="group rounded-2xl px-4 py-3.5 flex items-center justify-between text-left transition-colors hover:bg-light/70"
+                class="group rounded-2xl px-4 py-3.5 flex items-center justify-between text-left transition-colors hover:bg-light/70 dark:hover:bg-white/5"
             >
                 <div class="flex items-center gap-3">
                     <div
@@ -121,13 +122,13 @@
                         />
                     </div>
 
-                    <span class="font-semibold text-sm text-secondary">
+                    <span class="font-semibold text-sm text-secondary dark:text-white">
                         {{ action.label }}
                     </span>
                 </div>
 
                 <ChevronRight
-                    class="w-4 h-4 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+                    class="w-4 h-4 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-primary dark:text-gray-400"
                 />
             </button>
         </div>
@@ -148,13 +149,12 @@ import {
     Users,
 } from "lucide-vue-next";
 
-import StatCard from "./StatCard.vue";
+import { computed } from "vue";
 
-type ActionType =
-    | "create-homecare"
-    | "create-facility"
-    | "view-plans"
-    | "manage-contracts";
+import StatCard from "./StatCard.vue";
+import { Modules } from "~/types/module";
+
+type ActionType = "create-homecare" | "create-facility" | "view-plans";
 
 interface Overview {
     active_patient: string;
@@ -187,31 +187,33 @@ const actions: {
         label: "Create Homecare Plan",
         action: "create-homecare",
         icon: HomeIcon,
-        iconBg: "bg-primary-50",
+        iconBg: "bg-primary-50 dark:bg-primary-500/10",
         iconColor: "text-primary",
     },
     {
         label: "Create Facility Plan",
         action: "create-facility",
         icon: Building2,
-        iconBg: "bg-accent-50",
-        iconColor: "text-accent-600",
+        iconBg: "bg-accent-50 dark:bg-accent-500/15",
+        iconColor: "text-accent-600 dark:text-accent-300",
     },
     {
         label: "View Care Plans",
         action: "view-plans",
         icon: FileText,
-        iconBg: "bg-light",
-        iconColor: "text-secondary",
-    },
-    {
-        label: "Manage Contracts",
-        action: "manage-contracts",
-        icon: FileText,
-        iconBg: "bg-muted-light",
-        iconColor: "text-muted-dark",
+        iconBg: "bg-light dark:bg-white/10",
+        iconColor: "text-primary-700 dark:text-primary-300",
     },
 ];
+
+const { canCreate } = usePermissions();
+
+const visibleActions = computed(() =>
+    actions.filter(
+        (action) =>
+            action.action === "view-plans" || canCreate(Modules.Contracts),
+    ),
+);
 
 function handleAction(type: ActionType) {
     emit("action", type);

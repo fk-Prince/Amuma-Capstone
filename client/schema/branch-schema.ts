@@ -151,6 +151,7 @@ export const settingSchema = z.object({
 
     enable_booking_pre_admission: z.boolean(),
     enable_booking_complete_admission: z.boolean(),
+    requires_full_payment_on_admit: z.boolean(),
 
     minimum_adl_hours: z.preprocess(
         (value) => (value === "" ? undefined : value),

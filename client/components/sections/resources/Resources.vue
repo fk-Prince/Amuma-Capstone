@@ -1,7 +1,7 @@
 <template>
     <div class="bg-white dark:bg-secondary relative">
         <section
-            class="relative z-10 w-full overflow-hidden bg-light/40 px-6 pb-12 pt-24 sm:px-[5%] sm:pb-16 sm:pt-32 lg:px-[10%] dark:bg-transparent"
+            class="relative z-10 w-full overflow-hidden bg-light/40 pb-12 pt-24 sm:pb-16 sm:pt-32 dark:bg-transparent"
         >
             <div
                 class="pointer-events-none absolute -top-24 right-[-100px] h-[380px] w-[380px] rounded-full bg-primary-200/40 blur-[100px]"
@@ -29,7 +29,7 @@
                 class="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-white dark:to-secondary"
             />
 
-            <div class="relative z-10 mx-auto w-full">
+            <div class="relative z-10 mx-auto w-full max-w-[100rem] px-6">
                 <div
                     class="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary dark:bg-primary-500/10"
                 >
@@ -52,7 +52,7 @@
         </section>
 
         <main
-            class="relative z-0 mx-auto w-full md:px-[5%] lg:px-[10%] space-y-20 bg-white px-6 py-10 dark:bg-secondary"
+            class="relative z-0 mx-auto w-full max-w-[100rem] space-y-20 bg-white px-6 py-10 dark:bg-secondary"
         >
             <section>
                 <div class="mb-8 flex items-end justify-between gap-4">

@@ -4,7 +4,7 @@
             <button
                 type="button"
                 @click="goBack"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-[#6B8A87] hover:text-[#16302E] transition"
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-[#6B8A87] hover:text-[#16302E] transition dark:hover:text-white dark:text-gray-400"
             >
                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none">
                     <path
@@ -21,7 +21,7 @@
             <button
                 type="button"
                 @click="handlePrint"
-                class="inline-flex items-center gap-2 rounded-full border border-[#DDECEC] bg-white px-4 py-2 text-sm font-medium text-[#0E7C7B] shadow-sm transition hover:border-[#0E7C7B] hover:text-[#0A5A58]"
+                class="inline-flex items-center gap-2 rounded-full border border-[#DDECEC] bg-white px-4 py-2 text-sm font-medium text-[#0E7C7B] shadow-sm transition hover:border-[#0E7C7B] hover:text-[#0A5A58] dark:text-accent-300 dark:hover:text-accent-200 dark:border-white/10 dark:hover:border-accent-500/40 dark:bg-secondary"
             >
                 <svg
                     class="h-4 w-4"
@@ -44,14 +44,14 @@
 
         <div
             v-if="loading"
-            class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-10 text-center text-[#6B8A87]"
+            class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-10 text-center text-[#6B8A87] dark:text-gray-400 dark:bg-secondary"
         >
             Loading invoice…
         </div>
 
         <div
             v-else-if="errorLabel"
-            class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-10 text-center text-[#B3402F]"
+            class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-10 text-center text-[#B3402F] dark:text-rose-300 dark:bg-secondary"
         >
             {{ errorLabel }}
         </div>
@@ -61,34 +61,34 @@
             class="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-5 items-start"
         >
             <div
-                class="invoice-sheet min-w-0 overflow-hidden rounded-[24px] border border-[#DDECEC] bg-white shadow-sm ring-1 ring-black/5"
+                class="invoice-sheet min-w-0 overflow-hidden rounded-[24px] border border-[#DDECEC] bg-white shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-secondary"
             >
                 <div
-                    class="print-only-header border-b border-[#DDECEC] px-6 py-5"
+                    class="print-only-header border-b border-[#DDECEC] px-6 py-5 dark:border-white/10"
                 >
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <p
-                                class="text-[11px] font-mono uppercase tracking-[0.2em] text-[#6B8A87]"
+                                class="text-[11px] font-mono uppercase tracking-[0.2em] text-[#6B8A87] dark:text-gray-400"
                             >
                                 Amuma Care
                             </p>
                             <h1
-                                class="mt-1 text-xl font-semibold text-[#16302E]"
+                                class="mt-1 text-xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 Invoice
                             </h1>
-                            <p class="text-sm text-[#6B8A87]">
+                            <p class="text-sm text-[#6B8A87] dark:text-gray-400">
                                 {{ invoice.branch?.name ?? "Branch" }}
                             </p>
                         </div>
                         <div class="text-right">
                             <p
-                                class="text-[11px] font-mono uppercase tracking-[0.2em] text-[#6B8A87]"
+                                class="text-[11px] font-mono uppercase tracking-[0.2em] text-[#6B8A87] dark:text-gray-400"
                             >
                                 Invoice No.
                             </p>
-                            <p class="text-sm font-semibold text-[#16302E]">
+                            <p class="text-sm font-semibold text-[#16302E] dark:text-white">
                                 #{{ invoice.invoice_code }}
                             </p>
                         </div>
@@ -96,22 +96,22 @@
                 </div>
 
                 <div
-                    class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 px-7 py-6 border-b border-[#EDF4F3] bg-gradient-to-b from-[#0E7C7B]/[0.04] to-transparent"
+                    class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 px-7 py-6 border-b border-[#EDF4F3] bg-gradient-to-b from-[#0E7C7B]/[0.04] to-transparent dark:border-white/10"
                 >
                     <div class="flex items-center gap-4 min-w-0">
                         <div class="min-w-0">
                             <span
-                                class="w-fit font-mono text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] inline-block mb-2"
+                                class="w-fit font-mono text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] inline-block mb-2 dark:text-accent-300 dark:bg-accent-500/15"
                             >
                                 #{{ invoice.invoice_code }}
                             </span>
 
                             <h2
-                                class="text-lg font-semibold text-[#16302E] truncate"
+                                class="text-lg font-semibold text-[#16302E] truncate dark:text-white"
                             >
                                 {{ invoice.patient?.full_name ?? "—" }}
                             </h2>
-                            <p class="text-sm text-[#6B8A87] truncate">
+                            <p class="text-sm text-[#6B8A87] truncate dark:text-gray-400">
                                 {{ invoice.branch?.name ?? "—" }}
                             </p>
                         </div>
@@ -120,11 +120,11 @@
                     <div class="flex items-center gap-4 shrink-0">
                         <div class="text-right">
                             <p
-                                class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono"
+                                class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono dark:text-gray-400"
                             >
                                 Created
                             </p>
-                            <p class="text-sm font-medium text-[#16302E]">
+                            <p class="text-sm font-medium text-[#16302E] dark:text-white">
                                 {{ formatDate(invoice.created_at) }}
                             </p>
                         </div>
@@ -139,16 +139,16 @@
                 </div>
 
                 <div
-                    class="grid grid-cols-2 sm:divide-x divide-[#EDF4F3] border-b border-[#EDF4F3] bg-[#FAFDFC]"
+                    class="grid grid-cols-1 sm:grid-cols-2 sm:divide-x divide-[#EDF4F3] border-b border-[#EDF4F3] bg-[#FAFDFC] dark:border-white/10 dark:bg-white/5"
                     :class="hasRefunds ? 'sm:grid-cols-4' : 'sm:grid-cols-3'"
                 >
                     <div class="px-4 sm:px-7 py-4 sm:py-5">
                         <p
-                            class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono mb-1"
+                            class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono mb-1 dark:text-gray-400"
                         >
                             Total
                         </p>
-                        <p class="text-2xl font-bold text-[#16302E]">
+                        <p class="text-2xl font-bold text-[#16302E] dark:text-white">
                             ₱{{ formatMoney(invoice.total) }}
                         </p>
                     </div>
@@ -159,7 +159,7 @@
                         >
                             Amount Paid
                         </p>
-                        <p class="text-2xl font-bold text-[#1F7A4D]">
+                        <p class="text-2xl font-bold text-[#1F7A4D] dark:text-emerald-300">
                             ₱{{ formatMoney(invoice.amount_paid) }}
                         </p>
                     </div>
@@ -173,7 +173,7 @@
                         >
                             Refunded
                         </p>
-                        <p class="text-2xl font-bold text-[#966B1F]">
+                        <p class="text-2xl font-bold text-[#966B1F] dark:text-amber-300">
                             ₱{{ formatMoney(invoice.refunded_amount) }}
                         </p>
                     </div>
@@ -184,7 +184,7 @@
                         >
                             Balance Due
                         </p>
-                        <p class="text-2xl font-bold text-[#B3402F]">
+                        <p class="text-2xl font-bold text-[#B3402F] dark:text-rose-300">
                             ₱{{ formatMoney(invoice.balance_due) }}
                         </p>
                     </div>
@@ -206,7 +206,7 @@
                             <div
                                 v-for="item in invoice.services"
                                 :key="item.schedule_services_id"
-                                class="rounded-xl border border-[#EDF4F3] px-5 py-4"
+                                class="rounded-xl border border-[#EDF4F3] px-5 py-4 dark:border-white/10"
                             >
                                 <div
                                     class="grid grid-cols-1 sm:grid-cols-[1.4fr_1.4fr_1fr] gap-x-6 gap-y-4 text-sm"
@@ -251,7 +251,7 @@
                             <div
                                 v-for="facility in invoice.facilities"
                                 :key="facility.invoice_accommodation_id"
-                                class="rounded-xl border border-[#EDF4F3] px-5 py-4"
+                                class="rounded-xl border border-[#EDF4F3] px-5 py-4 dark:border-white/10"
                             >
                                 <div
                                     class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm"
@@ -323,7 +323,7 @@
                         </div>
                     </section>
 
-                    <section class="pt-5 border-t border-[#EDF4F3]">
+                    <section class="pt-5 border-t border-[#EDF4F3] dark:border-white/10">
                         <SectionHeader>
                             <template #icon>
                                 <svg
@@ -352,7 +352,7 @@
                             <div
                                 v-for="payment in invoice.payments"
                                 :key="payment.payment_id"
-                                class="rounded-xl border border-[#EDF4F3] px-5 py-4"
+                                class="rounded-xl border border-[#EDF4F3] px-5 py-4 dark:border-white/10"
                             >
                                 <div
                                     class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-4 text-sm"
@@ -370,13 +370,13 @@
                                         :value="`₱${formatMoney(payment.amount)}`"
                                     />
                                 </div>
-                                <p class="text-xs text-[#6B8A87] mt-2">
+                                <p class="text-xs text-[#6B8A87] mt-2 dark:text-gray-400">
                                     {{ formatDate(payment.created_at) }}
                                 </p>
 
                                 <div
                                     v-if="payment.refunds?.length"
-                                    class="mt-3 space-y-2 border-t border-[#EDF4F3] pt-3"
+                                    class="mt-3 space-y-2 border-t border-[#EDF4F3] pt-3 dark:border-white/10"
                                 >
                                     <div
                                         v-for="refund in payment.refunds"
@@ -387,7 +387,7 @@
                                             class="flex items-center justify-between gap-3"
                                         >
                                             <span
-                                                class="text-xs font-mono text-[#966B1F]"
+                                                class="text-xs font-mono text-[#966B1F] dark:text-amber-300"
                                             >
                                                 {{
                                                     refund.reference_id ??
@@ -411,7 +411,7 @@
                                             class="mt-1.5 flex items-center justify-between gap-3"
                                         >
                                             <p
-                                                class="text-xs text-[#6B8A87]"
+                                                class="text-xs text-[#6B8A87] dark:text-gray-400"
                                             >
                                                 {{
                                                     refund.reason ??
@@ -420,7 +420,7 @@
                                             </p>
 
                                             <span
-                                                class="shrink-0 text-sm font-semibold text-[#966B1F]"
+                                                class="shrink-0 text-sm font-semibold text-[#966B1F] dark:text-amber-300"
                                             >
                                                 ₱{{
                                                     formatMoney(refund.amount)
@@ -434,7 +434,7 @@
 
                         <p
                             v-else
-                            class="rounded-xl border border-dashed border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700"
+                            class="rounded-xl border border-dashed border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300"
                         >
                             No payments recorded yet
                         </p>
@@ -442,7 +442,7 @@
 
                     <section
                         v-if="invoice.adjustments?.length"
-                        class="pt-5 border-t border-[#EDF4F3]"
+                        class="pt-5 border-t border-[#EDF4F3] dark:border-white/10"
                     >
                         <SectionHeader>
                             <template #icon>
@@ -467,14 +467,14 @@
                             <div
                                 v-for="adjustment in invoice.adjustments"
                                 :key="adjustment.invoice_adjustment_id"
-                                class="rounded-xl border border-[#EDF4F3] px-5 py-4"
+                                class="rounded-xl border border-[#EDF4F3] px-5 py-4 dark:border-white/10"
                             >
                                 <div
                                     class="flex items-start justify-between gap-4"
                                 >
                                     <div class="min-w-0">
                                         <p
-                                            class="text-sm font-medium text-[#16302E] capitalize"
+                                            class="text-sm font-medium text-[#16302E] capitalize dark:text-white"
                                         >
                                             {{
                                                 formatAdjustmentType(
@@ -483,7 +483,7 @@
                                             }}
                                         </p>
                                         <p
-                                            class="text-xs text-[#6B8A87] mt-1"
+                                            class="text-xs text-[#6B8A87] mt-1 dark:text-gray-400"
                                         >
                                             {{
                                                 adjustment.reason ??
@@ -491,7 +491,7 @@
                                             }}
                                         </p>
                                         <p
-                                            class="text-xs text-[#6B8A87] mt-1"
+                                            class="text-xs text-[#6B8A87] mt-1 dark:text-gray-400"
                                         >
                                             {{
                                                 formatDate(
@@ -502,7 +502,7 @@
                                     </div>
 
                                     <span
-                                        class="shrink-0 text-sm font-semibold text-[#16302E]"
+                                        class="shrink-0 text-sm font-semibold text-[#16302E] dark:text-white"
                                     >
                                         ₱{{
                                             formatMoney(adjustment.amount)
@@ -517,7 +517,7 @@
 
             <div
                 v-if="showPayment"
-                class="xl:sticky xl:top-6 no-print rounded-3xl border border-[#DDECEC] bg-white shadow-sm overflow-hidden"
+                class="xl:sticky xl:top-6 no-print rounded-3xl border border-[#DDECEC] bg-white shadow-sm overflow-hidden dark:border-white/10 dark:bg-secondary"
             >
                 <div class="p-6">
                     <PaymentForm
@@ -538,20 +538,20 @@
 
             <div
                 v-else
-                class="no-print rounded-2xl shadow-sm ring-1 ring-black/5 bg-white p-6 text-center text-sm text-[#6B8A87] xl:sticky xl:top-6"
+                class="no-print rounded-2xl shadow-sm ring-1 ring-black/5 bg-white p-6 text-center text-sm text-[#6B8A87] xl:sticky xl:top-6 dark:text-gray-400 dark:bg-secondary"
             >
                 This invoice is fully paid.
             </div>
 
             <div
                 v-if="paymentChange > 0"
-                class="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center"
+                class="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center dark:border-emerald-500/20 dark:bg-emerald-500/10"
             >
-                <p class="text-xs uppercase tracking-wide text-emerald-700">
+                <p class="text-xs uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
                     Change Returned
                 </p>
 
-                <p class="mt-1 text-3xl font-bold text-emerald-800">
+                <p class="mt-1 text-3xl font-bold text-emerald-800 dark:text-emerald-300">
                     ₱{{ formatMoney(paymentChange) }}
                 </p>
             </div>
@@ -703,30 +703,30 @@ function statusClasses(status: string) {
     const normalized = (status ?? "").toLowerCase();
 
     if (normalized === "paid") {
-        return "bg-[#E4F4EE] text-[#1F7A4D]";
+        return "bg-[#E4F4EE] text-[#1F7A4D] dark:text-emerald-300 dark:bg-emerald-500/15";
     }
     if (normalized === "partial") {
-        return "bg-[#E6F1FA] text-[#2563A6]";
+        return "bg-[#E6F1FA] text-[#2563A6] dark:text-blue-300 dark:bg-blue-500/15";
     }
     if (normalized === "overdue") {
-        return "bg-[#FBE8E6] text-[#B3402F]";
+        return "bg-[#FBE8E6] text-[#B3402F] dark:text-rose-300 dark:bg-rose-500/15";
     }
-    return "bg-[#FDF3DE] text-[#966B1F]";
+    return "bg-[#FDF3DE] text-[#966B1F] dark:text-amber-300 dark:bg-amber-500/15";
 }
 
 function refundStatusClasses(status: string) {
     const normalized = (status ?? "").toLowerCase();
 
     if (normalized === "completed") {
-        return "bg-[#E4F4EE] text-[#1F7A4D]";
+        return "bg-[#E4F4EE] text-[#1F7A4D] dark:text-emerald-300 dark:bg-emerald-500/15";
     }
     if (normalized === "processing" || normalized === "pending") {
-        return "bg-[#FDF3DE] text-[#966B1F]";
+        return "bg-[#FDF3DE] text-[#966B1F] dark:text-amber-300 dark:bg-amber-500/15";
     }
     if (normalized === "failed" || normalized === "cancelled") {
-        return "bg-[#FBE8E6] text-[#B3402F]";
+        return "bg-[#FBE8E6] text-[#B3402F] dark:text-rose-300 dark:bg-rose-500/15";
     }
-    return "bg-slate-100 text-slate-600";
+    return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
 }
 
 function formatAdjustmentType(type: string) {
@@ -755,10 +755,10 @@ onMounted(() => {
 
 const Field = (fieldProps: { label: string; value: any }, { slots }: any) =>
     h("p", { class: "flex flex-col gap-0.5" }, [
-        h("span", { class: "text-xs text-[#6B8A87]" }, fieldProps.label),
+        h("span", { class: "text-xs text-[#6B8A87] dark:text-gray-400" }, fieldProps.label),
         h(
             "span",
-            { class: "text-[#16302E] font-medium" },
+            { class: "text-[#16302E] font-medium dark:text-white" },
             slots.value ? slots.value() : (fieldProps.value ?? "—"),
         ),
     ]);
@@ -768,7 +768,7 @@ const SectionHeader = (_props: unknown, { slots }: any) =>
     h(
         "h3",
         {
-            class: "flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4",
+            class: "flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4 dark:text-accent-300",
         },
         [slots.icon?.(), slots.default?.()],
     );

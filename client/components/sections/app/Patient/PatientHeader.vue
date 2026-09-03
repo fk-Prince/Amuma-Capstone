@@ -29,7 +29,7 @@ function fullName(
 </script>
 
 <template>
-    <div class="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 shadow-sm">
+    <div class="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 shadow-sm dark:border-white/10 dark:bg-secondary">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div class="flex items-center gap-4 min-w-0">
                 <div
@@ -39,7 +39,7 @@ function fullName(
                 </div>
 
                 <div class="min-w-0">
-                    <h1 class="text-lg font-semibold text-gray-900">
+                    <h1 class="text-lg font-semibold text-gray-900 dark:text-white">
                         {{
                             fullName(
                                 patient.first_name,
@@ -50,32 +50,32 @@ function fullName(
                     </h1>
 
                     <div
-                        class="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-500"
+                        class="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400"
                     >
                         <span class="flex items-center gap-1.5">
                             <Calendar class="h-4 w-4 text-primary" />
                             <div>
-                                <p class="text-xs text-muted">Date of birth</p>
+                                <p class="text-xs text-muted dark:text-gray-400">Date of birth</p>
                                 {{ formatDate(patient.date_of_birth) }}
                             </div>
                         </span>
 
-                        <span class="text-gray-300">•</span>
+                        <span class="text-gray-300 dark:text-gray-500">•</span>
 
                         <span class="flex items-center gap-1.5">
                             <UserRound class="h-4 w-4 text-primary" />
                             <div>
-                                <p class="text-xs text-muted">Age</p>
+                                <p class="text-xs text-muted dark:text-gray-400">Age</p>
                                 {{ calculateAge(patient.date_of_birth, false) }}
                             </div>
                         </span>
 
-                        <span class="text-gray-300">•</span>
+                        <span class="text-gray-300 dark:text-gray-500">•</span>
 
                         <span class="flex items-center gap-1.5">
                             <MapPin class="h-4 w-4 text-primary" />
                             <div>
-                                <p class="text-xs text-muted">Address</p>
+                                <p class="text-xs text-muted dark:text-gray-400">Address</p>
                                 {{
                                     patient.location?.full_address ||
                                     "No address provided"
@@ -88,24 +88,24 @@ function fullName(
         </div>
 
         <div
-            class="mt-5 flex flex-wrap justify-end gap-2 border-t border-gray-100 pt-4 text-sm text-gray-500"
+            class="mt-5 flex flex-wrap justify-end gap-2 border-t border-gray-100 pt-4 text-sm text-gray-500 dark:border-white/10 dark:text-gray-400"
         >
             <button
-                class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary"
+                class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary dark:hover:bg-primary-500/10"
             >
                 <Share2 class="h-4 w-4" />
                 Share
             </button>
 
             <button
-                class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary"
+                class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary dark:hover:bg-primary-500/10"
             >
                 <Send class="h-4 w-4" />
                 Send
             </button>
 
             <button
-                class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary"
+                class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary dark:hover:bg-primary-500/10"
                 @click="emit('print')"
             >
                 <Printer class="h-4 w-4" />
@@ -113,7 +113,7 @@ function fullName(
             </button>
 
             <button
-                class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary"
+                class="flex items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-primary-50 hover:text-primary dark:hover:bg-primary-500/10"
             >
                 <Pencil class="h-4 w-4" />
                 Edit

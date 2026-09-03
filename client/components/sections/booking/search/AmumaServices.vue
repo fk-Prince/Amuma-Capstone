@@ -30,7 +30,7 @@
                 <div
                     v-for="module in modules"
                     :key="module.title"
-                    class="group border border-muted-light rounded-2xl p-5 bg-white hover:border-primary-200 hover:shadow-md hover:-translate-y-1 transition-all dark:bg-secondary dark:border-white/10"
+                    class="group border border-muted-light rounded-2xl p-5 bg-white hover:border-primary-200 hover:shadow-md hover:-translate-y-1 transition-all dark:bg-secondary dark:border-white/10 dark:hover:border-primary-500/20"
                 >
                     <div
                         class="w-10 h-10 rounded-lg flex items-center justify-center"
@@ -65,7 +65,7 @@ const modules = [
     {
         icon: Search,
         iconBg: "bg-primary-50 dark:bg-primary-500/10",
-        iconColor: "text-primary-600",
+        iconColor: "text-primary-600 dark:text-primary-300",
         title: "Find care services",
         description:
             "Search for caregivers, agencies, and nearby care facilities based on your needs.",
@@ -81,7 +81,7 @@ const modules = [
     {
         icon: Bell,
         iconBg: "bg-primary-50 dark:bg-primary-500/10",
-        iconColor: "text-primary-600",
+        iconColor: "text-primary-600 dark:text-primary-300",
         title: "Stay updated",
         description:
             "Receive updates about care activities, schedules, and patient information.",

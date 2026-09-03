@@ -36,6 +36,38 @@ class PatientController extends Controller
         return $this->patientService->showPatient($uuid);
     }
 
+    public function storeDiagnosis(Request $request, string $uuid)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+
+        AuthGuard::requireModule(
+            $request->user(),
+            $branch->branch_id,
+            ModuleEnum::Patients,
+            PermissionAction::Update
+        );
+
+        $validated = $request->validate([
+            'diagnosis' => ['required', 'string', 'max:200'],
+            'diagnosis_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'diagnosis_notes' => ['nullable', 'string', 'max:1000'],
+            'diagnosis_file' => [
+                'nullable',
+                'file',
+                'mimes:pdf,png,jpg,jpeg',
+                'max:10240',
+            ],
+        ]);
+
+        $validated['diagnosis_file'] = $request->file('diagnosis_file');
+
+        return $this->patientService->addDiagnosis(
+            $uuid,
+            $branch->branch_id,
+            $validated
+        );
+    }
+
     public function report(Request $request, string $uuid)
     {
         BranchGuard::resolveBranch($request->branch_uuid);

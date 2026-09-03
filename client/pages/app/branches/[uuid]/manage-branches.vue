@@ -69,6 +69,14 @@
 
                 Add New Branch
             </button>
+
+            <span
+                v-if="statsData.branch_capacity?.capacity"
+                class="shrink-0 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-medium text-slate-500 dark:border-white/10 dark:text-gray-400"
+            >
+                {{ statsData.branch_capacity.used }} of
+                {{ statsData.branch_capacity.capacity }} branches used
+            </span>
         </div>
 
         <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-secondary">
@@ -77,7 +85,7 @@
             >
                 <div class="flex min-w-0 items-start gap-4">
                     <!-- <div
-                        class="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50"
+                        class="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 dark:border-white/10 dark:bg-white/5"
                     > -->
                     <img
                         v-if="agency?.image"
@@ -89,7 +97,7 @@
 
                     <div
                         v-else
-                        class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-50 text-primary"
+                        class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-50 text-primary dark:bg-primary-500/10"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -115,7 +123,7 @@
 
                         <!-- <p
                             v-if="agency.description"
-                            class="mt-1 max-w-2xl text-sm leading-6 text-slate-500"
+                            class="mt-1 max-w-2xl text-sm leading-6 text-slate-500 dark:text-gray-400"
                         >
                             {{ agency.description }}
                         </p> -->
@@ -340,6 +348,8 @@
             v-if="showAddBranch && agencyId"
             :agency-id="agencyId"
             :agency-name="agency?.name ?? 'Your agency'"
+            :branch-uuid="route.params.uuid as string"
+            :capacity="statsData.branch_capacity"
             @close="showAddBranch = false"
             @created="onBranchCreated"
         />
@@ -351,7 +361,7 @@ import BranchDashboard from "~/components/sections/app/branches/BranchDashboard.
 import BranchCard from "~/components/sections/app/branches/BranchCard.vue";
 import AddBranchModal from "~/components/sections/app/Branch/AddBranchModal.vue";
 import Combobox from "~/components/ui/Combobox.vue";
-import { CircleCheck, Clock, LayoutGrid } from "lucide-vue-next";
+import { CircleCheck, CircleX, Clock, LayoutGrid } from "lucide-vue-next";
 import { computed, ref, h, onMounted, onBeforeUnmount, watch } from "vue";
 import { agencyService } from "~/api/agency/AgencyService";
 import { useBranchStore } from "~/stores/branch";
@@ -377,6 +387,7 @@ type Branch = {
     phone: string;
     email: string;
     is_verified: boolean;
+    review_status?: "pending" | "verified" | "rejected";
     rooms: number;
     staffs: number;
     patients: number;
@@ -386,12 +397,15 @@ type Branch = {
 const branchStore = useBranchStore();
 
 const search = ref("");
-const statusFilter = ref<"all" | "verified" | "pending">("all");
+const statusFilter = ref<"all" | "verified" | "pending" | "rejected">(
+    "verified",
+);
 
 const statusOptions = [
     { label: "All branches", value: "all", iconComponent: LayoutGrid },
     { label: "Verified", value: "verified", iconComponent: CircleCheck },
     { label: "Pending review", value: "pending", iconComponent: Clock },
+    { label: "Rejected", value: "rejected", iconComponent: CircleX },
 ];
 const viewMode = ref<"list" | "grid">("grid");
 
@@ -464,6 +478,12 @@ const statsData = ref({
     expiring_soon: 0,
     expiring_soon_percent: 0,
     maintenance_alerts: 0,
+    branch_capacity: {
+        used: 0,
+        capacity: 0,
+        remaining: 0,
+        has_room: false,
+    },
 });
 
 
@@ -485,6 +505,7 @@ const mapBranch = (b: any): Branch => ({
     phone: b.contact_number ?? "—",
     email: b.email ?? "—",
     is_verified: Boolean(b.is_verified),
+    review_status: b.review_status,
     rooms: b.rooms_count ?? 0,
     staffs: b.staff_count ?? 0,
     patients: b.patients_count ?? 0,

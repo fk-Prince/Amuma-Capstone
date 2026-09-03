@@ -13,6 +13,8 @@ use Carbon\Carbon;
 use App\Factories\PaymentFactory;
 use App\Guard\AuthGuard;
 use App\Http\Resources\SubscriptionResource;
+use App\Models\Agency;
+use App\Models\BranchSubscription;
 use App\Models\EmployeePermission;
 use App\Models\PlatformAdmin;
 use App\Models\Subscription;
@@ -79,6 +81,27 @@ class SubscriptionService
             throw new Exception(__('This branch has no subscription to renew.'), 404);
         }
 
+
+        if ($subscription->pendingPlanIsDue()) {
+            $subscription->update([
+                'plan_id' => $subscription->pending_plan_id,
+                'pending_plan_id' => null,
+                'pending_plan_starts_at' => null,
+            ]);
+
+            $subscription->refresh();
+        }
+
+        if ($subscription->pending_plan_id) {
+            throw new Exception(
+                __(':plan is already paid for and starts on :date. You can renew again once it takes over.', [
+                    'plan' => $subscription->pendingPlan?->name,
+                    'date' => Carbon::parse($subscription->pending_plan_starts_at)->toFormattedDateString(),
+                ]),
+                422
+            );
+        }
+
         $planCode = $payload['plan_code'] ?? $subscription->plans?->plan_code;
         $plan = $this->planRepository->findByField('plan_code', $planCode);
 
@@ -99,18 +122,30 @@ class SubscriptionService
             ? Carbon::parse($subscription->end_date)
             : Carbon::now();
 
-        $extendFrom = $currentEnd->isFuture() ? $currentEnd : Carbon::now();
+        $isUpgrade = $plan->plan_id !== $subscription->plan_id;
+
+        $startNow = $isUpgrade
+            && ($payload['upgrade_timing'] ?? 'after') === 'now';
+
+        $extendFrom = ($startNow || !$currentEnd->isFuture())
+            ? Carbon::now()
+            : $currentEnd;
 
         return [
             'user' => $user,
             'plan' => $plan,
-            'branch' => ['branch_id' => $subscription->branch_id],
+            'branch' => ['branch_id' => $payload['branch_id']],
             'agency' => [],
             'subscription_uuid' => $subscription->uuid,
             'method' => $payload['payment_method'],
             'billing_interval' => $interval->value,
             'total_amount' => (float) $plan->{$interval->loadPriceKey()},
             'endDate' => $interval->addTo($extendFrom)->toDateTimeString(),
+            'is_upgrade' => $isUpgrade,
+            'upgrade_starts_now' => $startNow,
+            'upgrade_starts_at' => $isUpgrade && !$startNow
+                ? $currentEnd->toDateString()
+                : null,
             'type' => 'renewal',
             'status' => true,
             'payment_type' => 'RENEWAL',
@@ -130,15 +165,33 @@ class SubscriptionService
                 throw new Exception(__('Subscription not found.'), 404);
             }
 
-            $subscription->update([
-                'plan_id' => $meta['plan']['plan_id'] ?? $subscription->plan_id,
+            $paidPlanId = $meta['plan']['plan_id'] ?? $subscription->plan_id;
+            $startsAt = $meta['upgrade_starts_at'] ?? null;
+
+            $changes = [
                 'billing_interval' => $meta['billing_interval'],
                 'end_date' => $meta['endDate'],
                 'status' => Subscription::STATUS_ACTIVE,
-            ]);
+            ];
+
+            if ($startsAt) {
+                $changes['pending_plan_id'] = $paidPlanId;
+                $changes['pending_plan_starts_at'] = $startsAt;
+            } else {
+                $changes['plan_id'] = $paidPlanId;
+                $changes['pending_plan_id'] = null;
+                $changes['pending_plan_starts_at'] = null;
+
+                if (!empty($meta['upgrade_starts_now'])) {
+                    $changes['start_date'] = Carbon::now();
+                }
+            }
+
+            $subscription->update($changes);
 
             $subscription->payments()->create([
                 'subscription_id' => $subscription->subscription_id,
+                'plan_id' => $paidPlanId,
                 'xendit_invoice_id' => $payload['xendit_invoice_id'] ?? null,
                 'payment_reference_id' => $payload['external_id'] ?? null,
                 'masked_card_number' => $payload['masked_card_number'] ?? null,
@@ -155,6 +208,59 @@ class SubscriptionService
                     'billing_interval' => $subscription->billing_interval,
                     'start_date' => $subscription->start_date,
                     'end_date' => $subscription->end_date,
+                ],
+            ], 200);
+        });
+    }
+
+    public function applyPendingPlan(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            $subscription = $this->subscriptionRepository
+                ->findLatestForBranch($payload['branch_id']);
+
+            if (!$subscription) {
+                throw new Exception(__('This branch has no subscription.'), 404);
+            }
+
+            if (!$subscription->pending_plan_id) {
+                throw new Exception(__('There is no queued upgrade to apply.'), 422);
+            }
+
+            $plan = $subscription->pendingPlan;
+            $today = Carbon::now()->startOfDay();
+            $startsAt = Carbon::parse($subscription->pending_plan_starts_at)->startOfDay();
+
+            $forfeited = $startsAt->isAfter($today)
+                ? $today->diffInDays($startsAt)
+                : 0;
+
+            $subscription->update([
+                'plan_id' => $subscription->pending_plan_id,
+                'pending_plan_id' => null,
+                'pending_plan_starts_at' => null,
+                'start_date' => Carbon::now(),
+                'end_date' => $subscription->end_date
+                    ? Carbon::parse($subscription->end_date)->subDays($forfeited)
+                    : $subscription->end_date,
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => __(':plan is active now.', ['plan' => $plan?->name]),
+                'forfeited_days' => $forfeited,
+                'subscription' => [
+                    'uuid' => $subscription->uuid,
+                    'status' => $subscription->status,
+                    'billing_interval' => $subscription->billing_interval,
+                    'start_date' => $subscription->start_date,
+                    'end_date' => $subscription->end_date,
+                    'plan' => [
+                        'plan_id' => $plan?->plan_id,
+                        'name' => $plan?->name,
+                        'plan_code' => $plan?->plan_code,
+                    ],
+                    'pending_plan' => null,
                 ],
             ], 200);
         });
@@ -379,10 +485,17 @@ class SubscriptionService
 
                 $subscription = $this->subscriptionRepository->create([
                     'plan_id' => $plan['plan_id'],
-                    'branch_id' => $branchData->branch_id,
+                    'agency_id' => $agencyData->agency_id ?? null,
                     'billing_interval' => $billing_interval->value,
                     'start_date' => Carbon::now(),
                     'end_date' => $endDate,
+                ]);
+
+                // 1st brnac
+                BranchSubscription::create([
+                    'subscription_id' => $subscription->subscription_id,
+                    'branch_id' => $branchData->branch_id,
+                    'status' => BranchSubscription::STATUS_PENDING,
                 ]);
 
                 $subscription->payments()->create([
@@ -521,6 +634,171 @@ class SubscriptionService
             ], 500);
         }
     }
+
+
+    public function createBranchWithinCapacity(array $payload, User $user)
+    {
+        if (empty($payload['agency_id'])) {
+            throw new Exception('An agency is required to add a branch.', 422);
+        }
+
+        return DB::transaction(function () use ($payload, $user) {
+
+            $agency = Agency::where('agency_id', $payload['agency_id'])
+                ->lockForUpdate()
+                ->first();
+
+            if (!$agency) {
+                throw new Exception('Agency not found.', 404);
+            }
+
+            $subscription = $this->subscriptionRepository->findSubscriptionWithRoom(
+                $agency->agency_id,
+                $payload['subscription_uuid'] ?? null
+            );
+
+            if (!$subscription) {
+                throw new Exception(
+                    'That subscription has no free branch slots. Pick another or purchase a new subscription.',
+                    409
+                );
+            }
+
+            $branchLatitude = $payload['branch_latitude'] ?? null;
+            $branchLongitude = $payload['branch_longitude'] ?? null;
+
+            if (empty($branchLatitude) || empty($branchLongitude)) {
+                $geo = $this->nominatimService->geocodeAddress([
+                    'street' => $payload['branch_street'] ?? null,
+                    'city' => $payload['branch_city'] ?? null,
+                    'province' => $payload['branch_province'] ?? null,
+                    'country' => $payload['branch_country'] ?? null,
+                ]);
+
+                $branchLatitude = $geo['lat'] ?? null;
+                $branchLongitude = $geo['lng'] ?? null;
+            }
+
+            $branchLocation = $this->locationRepository->create([
+                'street' => $payload['branch_street'] ?? null,
+                'city' => $payload['branch_city'] ?? null,
+                'province' => $payload['branch_province'] ?? null,
+                'country' => $payload['branch_country'] ?? null,
+                'latitude' => $branchLatitude,
+                'longitude' => $branchLongitude,
+            ]);
+
+            $branchData = $this->branchRepository->create([
+                'agency_id' => $agency->agency_id,
+                'location_id' => $branchLocation->location_id,
+                'description' => $payload['branch_description'] ?? null,
+                'name' => $payload['branch_name'] ?? null,
+                'contact_number' => $payload['branch_contact_number'] ?? null,
+                'image' => $payload['branch_image'] ?? null,
+                'document' => $payload['branch_document'] ?? null,
+                'settings' => $payload['branch_settings'] ?? null,
+                'email' => $payload['branch_email'],
+            ]);
+
+            $link = BranchSubscription::create([
+                'subscription_id' => $subscription->subscription_id,
+                'branch_id' => $branchData->branch_id,
+                'status' => BranchSubscription::STATUS_PENDING,
+            ]);
+
+            $employee = $this->employeeRepository->findEmployeeByFields([
+                ['user_id', '=', $user->user_id],
+            ]);
+
+            if (!$employee) {
+                $employee = $this->employeeRepository->createEmployee([
+                    'user_id'    => $user->user_id,
+                    'first_name' => $user->first_name,
+                    'last_name'  => $user->last_name,
+                    'avatar'     => $user->avatar,
+                ]);
+            }
+
+            $employee->employeeBranch()->create([
+                'role_name' => 'branch_owner',
+                'branch_id'   => $branchData->branch_id,
+                'employee_id' => $employee->employee_id,
+            ]);
+
+            foreach ($this->moduleRepository->getAllModules() as $module) {
+                EmployeePermission::updateOrCreate(
+                    [
+                        'employee_id' => $employee->employee_id,
+                        'branch_id'   => $branchData->branch_id,
+                        'module_id'   => $module->module_id,
+                    ],
+                    [
+                        'can_read'    => true,
+                        'can_create'  => true,
+                        'can_update'  => true,
+                        'can_approve' => true,
+                        'can_assign'  => true,
+                    ]
+                );
+            }
+
+            $adminMessage = "New branch request from {$branchData->name} (included in an existing subscription) is awaiting your review.";
+
+            $admins = User::whereIn(
+                'user_id',
+                PlatformAdmin::pluck('user_id')
+            )->get(['user_id', 'uuid']);
+
+            foreach ($admins as $admin) {
+                $this->notificationRepository->create([
+                    'branch_id' => $branchData->branch_id,
+                    'to_user_id' => $admin->user_id,
+                    'from_user_id' => $user->user_id,
+                    'message_type' => 'Subscription',
+                    'message' => $adminMessage,
+                ]);
+
+                event(new NotificationEvent(
+                    $admin->uuid,
+                    $branchData->uuid,
+                    $adminMessage,
+                    (string) $subscription->subscription_id,
+                    'Subscription',
+                    $subscription
+                ));
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => __('Branch added and sent for review.'),
+                'branch' => [
+                    'branch_id' => $branchData->branch_id,
+                    'uuid' => $branchData->uuid,
+                    'name' => $branchData->name,
+                    'description' => $branchData->description,
+                    'image' => $branchData->image,
+                    'is_verified' => $branchData->is_verified,
+                    'contact_number' => $branchData->contact_number,
+                    'email' => $branchData->email,
+                    'location' => [
+                        'street' => $branchLocation->street,
+                        'city' => $branchLocation->city,
+                        'province' => $branchLocation->province,
+                        'country' => $branchLocation->country,
+                        'full_address' => $branchLocation->full_address,
+                    ],
+                    'agency' => [
+                        'agency_id' => $agency->agency_id,
+                        'name' => $agency->name,
+                    ],
+                    'rooms_count' => 0,
+                    'staff_count' => 1,
+                    'patients_count' => 0,
+                ],
+            ], 201);
+        });
+    }
+
     public function subscriptionWebhook(object $payload)
     {
         if (
@@ -586,26 +864,23 @@ class SubscriptionService
     {
         return DB::transaction(function () use ($payload) {
 
-            $subscription = $this->subscriptionRepository->findByFields([
-                ['uuid', '=', $payload['subscription_uuid']],
-            ]);
+            $link = $this->resolveBranchLink($payload);
 
-            if (!$subscription) {
-                throw new Exception('Subscription not found.', 404);
+            if ($link->status !== BranchSubscription::STATUS_PENDING) {
+                throw new Exception("Only pending branches can be approved (current status: {$link->status}).", 404);
             }
 
-            if ($subscription->status !== 'pending') {
-                throw new Exception("Only pending subscriptions can be approved (current status: {$subscription->status}).", 404);
-            }
+            $link->load(['branch.agencies', 'subscription']);
 
-            $subscription->load('branch.agencies');
-
-            $branch = $subscription->branch;
+            $branch = $link->branch;
             $agency = $branch?->agencies;
+            $subscription = $link->subscription;
 
             if (! $branch) {
-                throw new Exception('Branch not found for this subscription.', 404);
+                throw new Exception('Branch not found for this request.', 404);
             }
+
+            $link->update(['status' => BranchSubscription::STATUS_APPROVED]);
 
             if (! $branch->is_verified) {
                 $branch->update(['is_verified' => true]);
@@ -615,75 +890,104 @@ class SubscriptionService
                 $agency->update(['is_verified' => true]);
             }
 
-            $startDate = Carbon::now();
-            $endDate = $subscription->billing_interval === 'YEARLY'
-                ? $startDate->copy()->addYear()
-                : $startDate->copy()->addMonth();
 
-            $subscription->update([
-                'status' => 'active',
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-            ]);
+            if ($subscription && $subscription->status === Subscription::STATUS_PENDING) {
+                $startDate = Carbon::now();
+
+                $subscription->update([
+                    'status' => Subscription::STATUS_ACTIVE,
+                    'start_date' => $startDate,
+                    'end_date' => $subscription->billing_interval === 'YEARLY'
+                        ? $startDate->copy()->addYear()
+                        : $startDate->copy()->addMonth(),
+                ]);
+            }
 
             return response()->json([
                 'message' => '',
-                'data' => $subscription->fresh(['branch.agencies'])
+                'data' => $link->fresh(['branch.agencies', 'subscription.plans']),
             ]);
         });
+    }
+
+    private function resolveBranchLink(array $payload): BranchSubscription
+    {
+        $uuid = $payload['branch_subscription_uuid']
+            ?? $payload['subscription_uuid']
+            ?? null;
+
+        if (!$uuid) {
+            throw new Exception('No branch request was specified.', 422);
+        }
+
+        $link = BranchSubscription::where('uuid', $uuid)->first();
+
+        if (!$link) {
+            $subscription = Subscription::where('uuid', $uuid)->first();
+
+            $link = $subscription
+                ? BranchSubscription::where('subscription_id', $subscription->subscription_id)
+                ->orderBy('created_at')
+                ->first()
+                : null;
+        }
+
+        if (!$link) {
+            throw new Exception('Branch request not found.', 404);
+        }
+
+        return $link;
     }
 
     public function reject(array $payload)
     {
         return DB::transaction(function () use ($payload) {
 
-            $subscription = $this->subscriptionRepository->findByFields([
-                ['uuid', '=', $payload['subscription_uuid']],
-            ]);
+            $link = $this->resolveBranchLink($payload);
 
-            if (!$subscription) {
-                throw new Exception('Subscription not found.', 404);
+            if ($link->status !== BranchSubscription::STATUS_PENDING) {
+                throw new Exception("Only pending branches can be rejected (current status: {$link->status}).", 404);
             }
 
-            if ($subscription->status !== 'pending') {
-                throw new Exception("Only pending subscriptions can be approved (current status: {$subscription->status}).", 404);
+            $link->load(['branch.agencies', 'subscription.payments']);
+
+            $subscription = $link->subscription;
+
+            $link->update(['status' => BranchSubscription::STATUS_REJECTED]);
+
+            $remaining = BranchSubscription::where('subscription_id', $link->subscription_id)
+                ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
+                ->count();
+
+            if ($remaining === 0 && $subscription) {
+                $payment = $subscription->payments
+                    ->where('status', SubscriptionPayment::STATUS_PAID)
+                    ->sortByDesc('created_at')
+                    ->first();
+
+                if ($payment) {
+                    $refunded = XenditService::refundXenditPayment(
+                        $payment->xendit_invoice_id,
+                        (float) $payment->price
+                    );
+
+                    if (!$refunded) {
+                        throw new Exception('Subscription cannot be rejected because the payment refund failed.',);
+                    }
+
+                    $payment->update([
+                        'status' => SubscriptionPayment::STATUS_REFUNDED,
+                    ]);
+                }
+
+                $subscription->update([
+                    'status' => Subscription::STATUS_REJECTED,
+                ]);
             }
-            $subscription->load([
-                'branch.agencies',
-                'payments',
-            ]);
-
-            $payment = $subscription->payments
-                ->where('status', SubscriptionPayment::STATUS_PAID)
-                ->sortByDesc('created_at')
-                ->first();
-
-
-            if (!$payment) {
-                throw new Exception('No successful payment found for this subscription.',  404);
-            }
-
-            $refunded = XenditService::refundXenditPayment(
-                $payment->xendit_invoice_id,
-                (float) $payment->price
-            );
-
-            if (!$refunded) {
-                throw new Exception('Subscription cannot be rejected because the payment refund failed.',);
-            }
-
-            $subscription->update([
-                'status' => Subscription::STATUS_REJECTED,
-            ]);
-
-            $payment->update([
-                'status' => SubscriptionPayment::STATUS_REFUNDED,
-            ]);
-
 
             return response()->json([
                 'message' => '',
-                'data' => $subscription->fresh(['branch.agencies'])
+                'data' => $link->fresh(['branch.agencies', 'subscription.plans']),
             ]);
         });
     }

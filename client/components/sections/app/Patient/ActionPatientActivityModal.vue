@@ -114,10 +114,10 @@ watch(
                         role="dialog"
                         aria-modal="true"
                         aria-label="Activity Form"
-                        class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+                        class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
                     >
                         <div
-                            class="sticky top-0 z-10 flex items-center justify-between gap-4 rounded-t-2xl border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur"
+                            class="sticky top-0 z-10 flex items-center justify-between gap-4 rounded-t-2xl border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur dark:bg-secondary/95 dark:border-white/10"
                         >
                             <div class="flex items-center gap-3">
                                 <div
@@ -128,7 +128,7 @@ watch(
 
                                 <div>
                                     <h2
-                                        class="text-lg font-semibold leading-tight text-gray-900"
+                                        class="text-lg font-semibold leading-tight text-gray-900 dark:text-white"
                                     >
                                         {{
                                             props.activity
@@ -137,7 +137,7 @@ watch(
                                         }}
                                     </h2>
 
-                                    <p class="mt-0.5 text-xs text-gray-400">
+                                    <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                                         {{
                                             props.activity
                                                 ? "Update this activity for this patient."
@@ -151,7 +151,7 @@ watch(
                                 type="button"
                                 @click="close"
                                 aria-label="Close dialog"
-                                class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                                class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                             >
                                 <X class="h-5 w-5" />
                             </button>
@@ -221,12 +221,12 @@ watch(
                             </div>
 
                             <div
-                                class="mt-8 flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end"
+                                class="mt-8 flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end dark:border-white/10"
                             >
                                 <button
                                     type="button"
                                     @click="close"
-                                    class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                                    class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
                                 >
                                     Cancel
                                 </button>

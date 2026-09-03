@@ -34,6 +34,22 @@ class BookingRepository
                     $query->where('booking_type', $payload['booking_type']);
                 }
             )
+            // The facility/homecare service type lives inside the booking_data
+            // json, and only one of the two branches is ever populated.
+            ->when(
+                !empty($payload['service_type']),
+                function ($query) use ($payload) {
+                    $query->where(function ($sub) use ($payload) {
+                        $sub->whereRaw(
+                            "booking_data->'facility'->>'type' = ?",
+                            [$payload['service_type']]
+                        )->orWhereRaw(
+                            "booking_data->'homecare'->>'type' = ?",
+                            [$payload['service_type']]
+                        );
+                    });
+                }
+            )
             ->when(
                 !empty($payload['date_from']),
                 function ($query) use ($payload) {

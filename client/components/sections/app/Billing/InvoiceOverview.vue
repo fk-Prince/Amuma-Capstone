@@ -1,6 +1,6 @@
 <template>
     <div class="w-full shrink-0">
-        <div class="bg-white border border-slate-200 p-5 flex flex-col">
+        <div class="bg-white border border-slate-200 p-5 flex flex-col dark:bg-secondary dark:border-white/10">
             <div
                 class="flex items-center justify-between"
                 :class="{ 'mb-5': open }"
@@ -11,16 +11,16 @@
                     @click="open = !open"
                 >
                     <div
-                        class="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center text-primary shrink-0"
+                        class="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center text-primary shrink-0 dark:bg-primary-500/10"
                     >
                         <Wallet class="h-5 w-5" />
                     </div>
 
                     <div class="text-left">
-                        <h3 class="font-semibold text-slate-800">
+                        <h3 class="font-semibold text-slate-800 dark:text-white">
                             Billing Overview
                         </h3>
-                        <p class="text-xs text-slate-400 mt-0.5">
+                        <p class="text-xs text-slate-400 mt-0.5 dark:text-gray-500">
                             Financial summary
                         </p>
                     </div>
@@ -28,25 +28,25 @@
 
                 <div class="flex items-center gap-3">
                     <div
-                        class="flex items-center rounded-xl border border-slate-200 bg-slate-50 px-1 py-1 shrink-0"
+                        class="flex items-center rounded-xl border border-slate-200 bg-slate-50 px-1 py-1 shrink-0 dark:border-white/10 dark:bg-white/5"
                     >
                         <button
                             type="button"
-                            class="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-white hover:text-slate-700 transition-colors"
+                            class="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-white hover:text-slate-700 transition-colors dark:text-gray-500 dark:hover:bg-secondary dark:hover:text-gray-400 dark:hover:bg-white/10"
                             @click="shiftMonth(-1)"
                         >
                             <ChevronLeft class="h-4 w-4" />
                         </button>
 
                         <span
-                            class="min-w-[120px] text-center text-sm font-medium text-slate-700"
+                            class="min-w-[120px] text-center text-sm font-medium text-slate-700 dark:text-gray-400"
                         >
                             {{ currentMonthLabel }}
                         </span>
 
                         <button
                             type="button"
-                            class="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-white hover:text-slate-700 transition-colors"
+                            class="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-white hover:text-slate-700 transition-colors dark:text-gray-500 dark:hover:bg-secondary dark:hover:text-gray-400 dark:hover:bg-white/10"
                             @click="shiftMonth(1)"
                         >
                             <ChevronRight class="h-4 w-4" />
@@ -55,7 +55,7 @@
 
                     <button
                         type="button"
-                        class="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors shrink-0"
+                        class="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors shrink-0 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-400"
                         @click="open = !open"
                     >
                         <svg
@@ -92,7 +92,7 @@
                             <div
                                 v-for="metric in metrics"
                                 :key="metric.key"
-                                class="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 hover:border-primary-200 hover:shadow-sm transition-all duration-200"
+                                class="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 hover:border-primary-200 hover:shadow-sm transition-all duration-200 dark:border-white/10 dark:bg-white/5 dark:hover:border-primary-500/20"
                             >
                                 <template v-if="props.loading">
                                     <div class="animate-pulse">
@@ -100,19 +100,19 @@
                                             class="flex items-center justify-between"
                                         >
                                             <div
-                                                class="h-3 w-20 rounded bg-slate-200"
+                                                class="h-3 w-20 rounded bg-slate-200 dark:bg-white/15"
                                             ></div>
                                             <div
-                                                class="h-7 w-7 rounded-lg bg-slate-200"
+                                                class="h-7 w-7 rounded-lg bg-slate-200 dark:bg-white/15"
                                             ></div>
                                         </div>
 
                                         <div
-                                            class="mt-3 h-8 w-28 rounded bg-slate-200"
+                                            class="mt-3 h-8 w-28 rounded bg-slate-200 dark:bg-white/15"
                                         ></div>
 
                                         <div
-                                            class="mt-2 h-3 w-24 rounded bg-slate-200"
+                                            class="mt-2 h-3 w-24 rounded bg-slate-200 dark:bg-white/15"
                                         ></div>
                                     </div>
                                 </template>
@@ -122,7 +122,7 @@
                                         class="flex items-center justify-between"
                                     >
                                         <p
-                                            class="text-[11px] font-medium uppercase tracking-wide text-slate-400"
+                                            class="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
                                         >
                                             {{ metric.label }}
                                         </p>
@@ -140,7 +140,7 @@
                                     </div>
 
                                     <p
-                                        class="mt-2.5 text-2xl font-semibold text-slate-800 tabular-nums"
+                                        class="mt-2.5 text-2xl font-semibold text-slate-800 tabular-nums dark:text-white"
                                     >
                                         {{ metric.display }}
                                     </p>
@@ -155,30 +155,30 @@
                             </div>
                         </div>
 
-                        <div class="mt-5 border-t border-slate-100 pt-4">
+                        <div class="mt-5 border-t border-slate-100 pt-4 dark:border-white/10">
                             <p
-                                class="text-xs font-medium uppercase tracking-wide text-slate-400 mb-3"
+                                class="text-xs font-medium uppercase tracking-wide text-slate-400 mb-3 dark:text-gray-500"
                             >
                                 Monthly Performance
                             </p>
 
                             <div
-                                class="rounded-xl border border-slate-100 bg-gradient-to-br from-slate-50 to-primary-50/40 p-4 flex items-center justify-between"
+                                class="rounded-xl border border-slate-100 bg-gradient-to-br from-slate-50 to-primary-50/40 dark:from-white/5 dark:to-primary-500/10 p-4 flex items-center justify-between dark:border-white/10"
                             >
                                 <template v-if="props.loading">
                                     <div class="animate-pulse w-full">
                                         <div
-                                            class="h-3 w-28 bg-slate-200 rounded"
+                                            class="h-3 w-28 bg-slate-200 rounded dark:bg-white/15"
                                         ></div>
                                         <div
-                                            class="mt-3 h-8 w-20 bg-slate-200 rounded"
+                                            class="mt-3 h-8 w-20 bg-slate-200 rounded dark:bg-white/15"
                                         ></div>
                                     </div>
                                 </template>
 
                                 <template v-else>
                                     <div>
-                                        <p class="text-sm text-slate-400">
+                                        <p class="text-sm text-slate-400 dark:text-gray-500">
                                             Revenue Growth
                                         </p>
 
@@ -199,7 +199,7 @@
                                     </div>
 
                                     <div
-                                        class="h-11 w-11 rounded-xl bg-primary-50 flex items-center justify-center"
+                                        class="h-11 w-11 rounded-xl bg-primary-50 flex items-center justify-center dark:bg-primary-500/10"
                                     >
                                         <TrendingUp
                                             class="h-5 w-5 text-primary"
@@ -297,10 +297,10 @@ const formatCurrency = (value: number) => {
 };
 
 const trendColor = (trend: string) => {
-    if (trend === "up") return "text-emerald-600";
+    if (trend === "up") return "text-emerald-600 dark:text-emerald-300";
     if (trend === "down") return "text-red-500";
     if (trend === "warning") return "text-orange-500";
-    return "text-slate-400";
+    return "text-slate-400 dark:text-gray-500";
 };
 
 const metrics = computed(() => [
@@ -311,7 +311,7 @@ const metrics = computed(() => [
         secondary: props.overview?.total_revenue?.secondary ?? "No changes",
         secondaryColor: trendColor(props.overview?.total_revenue?.trend),
         icon: DollarSign,
-        iconBg: "bg-primary-50",
+        iconBg: "bg-primary-50 dark:bg-primary-500/10",
         iconColor: "text-primary",
     },
     {
@@ -321,8 +321,8 @@ const metrics = computed(() => [
         secondary: props.overview?.payments_received?.secondary ?? "No changes",
         secondaryColor: trendColor(props.overview?.payments_received?.trend),
         icon: Wallet,
-        iconBg: "bg-emerald-50",
-        iconColor: "text-emerald-600",
+        iconBg: "bg-emerald-50 dark:bg-emerald-500/10",
+        iconColor: "text-emerald-600 dark:text-emerald-300",
     },
     {
         key: "refunded",
@@ -331,8 +331,8 @@ const metrics = computed(() => [
         secondary: props.overview?.refunds_issued?.secondary ?? "No changes",
         secondaryColor: trendColor(props.overview?.refunds_issued?.trend),
         icon: RotateCcw,
-        iconBg: "bg-amber-50",
-        iconColor: "text-amber-600",
+        iconBg: "bg-amber-50 dark:bg-amber-500/10",
+        iconColor: "text-amber-600 dark:text-amber-300",
     },
     {
         key: "outstanding",
@@ -342,7 +342,7 @@ const metrics = computed(() => [
         ),
         secondary:
             props.overview?.outstanding_balance?.secondary ?? "No changes",
-        secondaryColor: "text-slate-400",
+        secondaryColor: "text-slate-400 dark:text-gray-500",
         icon: Receipt,
         iconBg: "bg-orange-50",
         iconColor: "text-orange-500",
@@ -354,7 +354,7 @@ const metrics = computed(() => [
         secondary:
             props.overview?.overdue_invoices?.secondary ??
             "No overdue invoices",
-        secondaryColor: "text-slate-400",
+        secondaryColor: "text-slate-400 dark:text-gray-500",
         icon: AlertTriangle,
         iconBg: "bg-red-50",
         iconColor: "text-red-500",
@@ -366,9 +366,9 @@ const metrics = computed(() => [
         secondary:
             props.overview?.upcoming_payments?.secondary ??
             "No upcoming payments",
-        secondaryColor: "text-slate-400",
+        secondaryColor: "text-slate-400 dark:text-gray-500",
         icon: CalendarClock,
-        iconBg: "bg-primary-50",
+        iconBg: "bg-primary-50 dark:bg-primary-500/10",
         iconColor: "text-primary",
     },
 ]);

@@ -97,6 +97,32 @@
                 </div>
             </div>
 
+            <div class="bg-white p-1 md:col-span-2 dark:bg-transparent">
+                <label class="flex items-start gap-3">
+                    <input
+                        type="checkbox"
+                        v-model="setting.requires_full_payment_on_admit"
+                        @change="clearError('requires_full_payment_on_admit')"
+                        class="h-4 w-4 mt-1 rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
+                    />
+
+                    <div>
+                        <p
+                            class="text-sm font-medium text-slate-700 dark:text-gray-300"
+                        >
+                            Requires Full Payment on Admit
+                        </p>
+
+                        <p class="text-xs text-slate-400 dark:text-gray-500">
+                            A resident must settle the full contract amount
+                            before their admission can be completed. Turn this
+                            off to admit residents with a partial payment and
+                            collect the balance afterwards.
+                        </p>
+                    </div>
+                </label>
+            </div>
+
             <!-- <div class="bg-white p-1 dark:bg-transparent">
                 <BaseInput
                     v-model="setting.billing_due_date"
@@ -169,7 +195,7 @@
                         :class="setting.is_open ? 'bg-primary' : 'bg-slate-300 dark:bg-white/10'"
                     >
                         <span
-                            class="h-4 w-4 rounded-full bg-white shadow transition-transform"
+                            class="h-4 w-4 rounded-full bg-white shadow transition-transform dark:bg-secondary"
                             :class="
                                 setting.is_open
                                     ? 'translate-x-6'
@@ -195,7 +221,7 @@
         </div>
 
         <div class="pt-2">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Combobox
                     v-model="setting.currency"
                     :items="currencies"
@@ -222,7 +248,7 @@
                     Business Hours
                 </label>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <p class="text-sm mb-1 text-slate-700 dark:text-gray-300">Opening Hours</p>
                         <Combobox
@@ -293,6 +319,8 @@ const setting = reactive<OperationSetting>({
         activeBranch.value?.settings?.enable_booking_pre_admission ?? true,
     enable_booking_complete_admission:
         activeBranch.value?.settings?.enable_booking_complete_admission ?? true,
+    requires_full_payment_on_admit:
+        activeBranch.value?.settings?.requires_full_payment_on_admit ?? true,
     minimum_adl_hours: activeBranch.value?.settings?.minimum_adl_hours ?? 8,
     termination_fee_percent:
         activeBranch.value?.settings?.termination_fee_percent ?? 0,

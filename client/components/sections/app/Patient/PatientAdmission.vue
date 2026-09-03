@@ -1,26 +1,26 @@
 <template>
-    <div class="min-h-screen bg-slate-50">
+    <div class="min-h-screen bg-slate-50 dark:bg-white/5">
         <div class="w-full mx-auto px-4 lg:px-8 py-8">
             <div v-if="loading" class="space-y-6">
                 <div
-                    class="rounded-2xl border border-primary-100 bg-white p-6 animate-pulse"
+                    class="rounded-2xl border border-primary-100 bg-white p-6 animate-pulse dark:border-primary-500/20 dark:bg-secondary"
                 >
-                    <div class="h-6 w-64 bg-slate-200 rounded"></div>
-                    <div class="h-3 w-80 bg-slate-100 rounded mt-3"></div>
+                    <div class="h-6 w-64 bg-slate-200 rounded dark:bg-white/15"></div>
+                    <div class="h-3 w-80 bg-slate-100 rounded mt-3 dark:bg-white/10"></div>
                 </div>
                 <div class="grid lg:grid-cols-3 gap-6">
                     <div
-                        class="lg:col-span-2 rounded-2xl border border-primary-100 bg-white p-6 animate-pulse h-48"
+                        class="lg:col-span-2 rounded-2xl border border-primary-100 bg-white p-6 animate-pulse h-48 dark:border-primary-500/20 dark:bg-secondary"
                     ></div>
                     <div
-                        class="rounded-2xl border border-primary-100 bg-white p-6 animate-pulse h-48"
+                        class="rounded-2xl border border-primary-100 bg-white p-6 animate-pulse h-48 dark:border-primary-500/20 dark:bg-secondary"
                     ></div>
                 </div>
             </div>
 
             <div
                 v-else-if="!patient"    
-                class="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-slate-400"
+                class="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-slate-400 dark:border-white/10 dark:text-gray-500"
             >
                 We couldn't find this patient's admission record.
             </div>
@@ -30,7 +30,7 @@
                     <div class="lg:col-span-2 space-y-6">
                         <section>
                             <h2
-                                class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2.5"
+                                class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2.5 dark:text-gray-400"
                             >
                                 Current admission
                             </h2>
@@ -43,14 +43,14 @@
                                     )
                                 "
                                 type="button"
-                                class="w-full text-left rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 hover:bg-primary-50/40 transition"
+                                class="w-full text-left rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 hover:bg-primary-50/40 transition dark:bg-secondary dark:border-primary-500/20 dark:hover:bg-primary-500/10"
                             >
                                 <div
                                     class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
                                 >
                                     <div>
                                         <p
-                                            class="text-sm font-semibold text-primary-900"
+                                            class="text-sm font-semibold text-primary-900 dark:text-primary-300"
                                         >
                                             {{
                                                 latestAdmission.room?.room_no
@@ -61,13 +61,13 @@
                                                 v-if="
                                                     latestAdmission.bed?.bed_no
                                                 "
-                                                class="text-muted font-normal"
+                                                class="text-muted font-normal dark:text-gray-400"
                                             >
                                                 · Bed
                                                 {{ latestAdmission.bed.bed_no }}
                                             </span>
                                         </p>
-                                        <p class="text-xs text-muted mt-1">
+                                        <p class="text-xs text-muted mt-1 dark:text-gray-400">
                                             <span
                                                 v-if="
                                                     latestAdmission.status ===
@@ -115,7 +115,7 @@
                                         >
                                             {{ latestAdmission.status }}
                                         </p>
-                                        <p class="text-xs text-muted mt-0.5">
+                                        <p class="text-xs text-muted mt-0.5 dark:text-gray-400">
                                             {{
                                                 latestAdmission.current_contract
                                                     .accommodation_type
@@ -125,7 +125,7 @@
                                 </div>
                                 <div v-if="totalStayDays !== null" class="mt-5">
                                     <div
-                                        class="h-1.5 rounded-full bg-slate-100 overflow-hidden"
+                                        class="h-1.5 rounded-full bg-slate-100 overflow-hidden dark:bg-white/10"
                                     >
                                         <div
                                             class="h-full rounded-full bg-primary transition-all duration-300"
@@ -134,7 +134,7 @@
                                             }"
                                         ></div>
                                     </div>
-                                    <p class="text-[11px] text-muted mt-1.5">
+                                    <p class="text-[11px] text-muted mt-1.5 dark:text-gray-400">
                                         Day {{ dayOfStay ?? 0 }} of
                                         {{ totalStayDays }}
                                     </p>
@@ -143,7 +143,7 @@
 
                             <div
                                 v-else
-                                class="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400"
+                                class="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
                             >
                                 No active admission on record.
                             </div>
@@ -154,30 +154,30 @@
 
                     <aside class="space-y-6">
                         <div
-                            class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-5"
+                            class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-5 dark:bg-secondary dark:border-primary-500/20"
                         >
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div
-                                    class="rounded-xl bg-primary-50/60 border border-primary-100 p-4"
+                                    class="rounded-xl bg-primary-50/60 border border-primary-100 p-4 dark:bg-primary-500/10 dark:border-primary-500/20"
                                 >
                                     <p
-                                        class="text-[10px] uppercase tracking-wide text-muted font-semibold"
+                                        class="text-[10px] uppercase tracking-wide text-muted font-semibold dark:text-gray-400"
                                     >
                                         Current Stay
                                     </p>
 
                                     <p
-                                        class="text-xl font-semibold text-primary-900 mt-1"
+                                        class="text-xl font-semibold text-primary-900 mt-1 dark:text-primary-300"
                                     >
                                         {{ dayOfStay ?? 0 }}
                                         <span
-                                            class="text-xs font-medium text-muted"
+                                            class="text-xs font-medium text-muted dark:text-gray-400"
                                         >
                                             day{{ dayOfStay === 1 ? "" : "s" }}
                                         </span>
                                     </p>
 
-                                    <p class="text-[10px] text-muted mt-1">
+                                    <p class="text-[10px] text-muted mt-1 dark:text-gray-400">
                                         {{
                                             latestAdmission?.status ===
                                             "admitted"
@@ -188,21 +188,21 @@
                                 </div>
 
                                 <div
-                                    class="rounded-xl bg-slate-50 border border-slate-100 p-4"
+                                    class="rounded-xl bg-slate-50 border border-slate-100 p-4 dark:bg-white/5 dark:border-white/10"
                                 >
                                     <p
-                                        class="text-[10px] uppercase tracking-wide text-muted font-semibold"
+                                        class="text-[10px] uppercase tracking-wide text-muted font-semibold dark:text-gray-400"
                                     >
                                         Total Admissions
                                     </p>
 
                                     <p
-                                        class="text-xl font-semibold text-primary-900 mt-1"
+                                        class="text-xl font-semibold text-primary-900 mt-1 dark:text-primary-300"
                                     >
                                         {{ patient.admissions?.length ?? 0 }}
                                     </p>
 
-                                    <p class="text-[10px] text-muted mt-1">
+                                    <p class="text-[10px] text-muted mt-1 dark:text-gray-400">
                                         Lifetime admissions
                                     </p>
                                 </div>
@@ -211,7 +211,7 @@
 
                         <section>
                             <h2
-                                class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2.5"
+                                class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2.5 dark:text-gray-400"
                             >
                                 Admission history
                                 <span v-if="pastAdmissions.length">
@@ -221,7 +221,7 @@
 
                             <div
                                 v-if="!pastAdmissions.length"
-                                class="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400"
+                                class="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
                             >
                                 No previous admissions.
                             </div>
@@ -230,14 +230,14 @@
                                 <div
                                     v-for="admission in pastAdmissions"
                                     :key="admission.patient_admission_id"
-                                    class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 hover:bg-primary-50/40 transition"
+                                    class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 hover:bg-primary-50/40 transition dark:bg-secondary dark:border-primary-500/20 dark:hover:bg-primary-500/10"
                                 >
                                     <div
                                         class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
                                     >
                                         <div>
                                             <p
-                                                class="text-sm font-semibold text-primary-900"
+                                                class="text-sm font-semibold text-primary-900 dark:text-primary-300"
                                             >
                                                 {{
                                                     admission.room?.room_no
@@ -247,14 +247,14 @@
 
                                                 <span
                                                     v-if="admission.bed?.bed_no"
-                                                    class="text-muted font-normal"
+                                                    class="text-muted font-normal dark:text-gray-400"
                                                 >
                                                     · Bed
                                                     {{ admission.bed.bed_no }}
                                                 </span>
                                             </p>
 
-                                            <p class="text-xs text-muted mt-1">
+                                            <p class="text-xs text-muted mt-1 dark:text-gray-400">
                                                 Admitted
                                                 {{
                                                     formatDate(
@@ -283,7 +283,7 @@
                                                 class="text-right"
                                             >
                                                 <p
-                                                    class="text-xs text-muted mt-0.5"
+                                                    class="text-xs text-muted mt-0.5 dark:text-gray-400"
                                                 >
                                                     {{
                                                         admission
@@ -460,21 +460,21 @@ function formatCurrency(value?: string | number | null) {
 function statusBadgeClass(status?: string) {
     switch (status?.toLowerCase()) {
         case "admitted":
-            return "bg-emerald-100 text-emerald-700";
+            return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300";
 
         case "waiting":
-            return "bg-blue-100 text-blue-700";
+            return "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300";
 
         case "discharged":
         case "completed":
-            return "bg-slate-100 text-slate-600";
+            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
 
         case "cancelled":
         case "rejected":
-            return "bg-rose-100 text-rose-700";
+            return "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300";
 
         default:
-            return "bg-primary-50 text-primary-600";
+            return "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300";
     }
 }
 </script>

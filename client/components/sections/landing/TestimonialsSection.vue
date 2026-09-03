@@ -1,12 +1,12 @@
 <template>
-    <section class="relative overflow-hidden bg-slate-50 px-[6%] py-24 dark:bg-secondary">
+    <section class="relative overflow-hidden bg-slate-50 py-24 dark:bg-secondary">
         <!-- Blob -->
 
         <div
             class="absolute top-[20%] right-[-150px] h-[500px] w-[500px] rounded-full bg-blue-200/30 blur-[120px]"
         ></div>
 
-        <div class="relative z-10">
+        <div class="relative z-10 mx-auto w-[94%] max-w-[1600px] px-10">
             <!-- Header -->
 
             <div class="mb-12 flex flex-wrap items-end justify-between gap-6">

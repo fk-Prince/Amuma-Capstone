@@ -2,17 +2,17 @@
     <section>
         <div class="mb-5 flex items-center justify-between gap-3">
             <div>
-                <h2 class="text-sm font-semibold text-secondary">
+                <h2 class="text-sm font-semibold text-secondary dark:text-white">
                     Patient Admissions
                 </h2>
 
-                <p class="mt-1 text-xs text-muted">
+                <p class="mt-1 text-xs text-muted dark:text-gray-400">
                     Current admissions are shown first.
                 </p>
             </div>
 
             <span
-                class="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700"
+                class="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
             >
                 {{ admissions.length }}
             </span>
@@ -22,11 +22,11 @@
             <article
                 v-for="admission in admissions"
                 :key="admission.patient_admission_id"
-                class="overflow-hidden rounded-2xl border transition"
+                class="overflow-hidden rounded-2xl border transition dark:border-white/10"
                 :class="
                     isCurrentAdmission(admission)
-                        ? 'border-primary-300 bg-primary-50/20 shadow-sm'
-                        : 'border-primary-100 bg-white'
+                        ? 'border-primary-300 bg-primary-50/20 shadow-sm dark:bg-primary-500/10'
+                        : 'border-primary-100 bg-white dark:border-primary-500/20 dark:bg-secondary'
                 "
             >
                 <div
@@ -35,7 +35,7 @@
                 >
                     <div class="flex items-center gap-2">
                         <span
-                            class="h-2 w-2 animate-pulse rounded-full bg-white"
+                            class="h-2 w-2 animate-pulse rounded-full bg-white dark:bg-secondary"
                         />
 
                         <span
@@ -92,15 +92,15 @@
                         </div>
 
                         <div
-                            class="shrink-0 rounded-xl bg-primary-50 px-4 py-3 lg:min-w-[155px]"
+                            class="shrink-0 rounded-xl bg-primary-50 px-4 py-3 lg:min-w-[155px] dark:bg-primary-500/10"
                         >
                             <p
-                                class="text-[10px] uppercase tracking-[0.14em] text-primary-600"
+                                class="text-[10px] uppercase tracking-[0.14em] text-primary-600 dark:text-primary-300"
                             >
                                 Admission Total
                             </p>
 
-                            <p class="mt-1 text-lg font-bold text-primary-800">
+                            <p class="mt-1 text-lg font-bold text-primary-800 dark:text-primary-300">
                                 ₱{{ formatMoney(admissionTotal(admission)) }}
                             </p>
                         </div>
@@ -126,18 +126,18 @@
 
                     <div
                         v-if="admission.invoices?.length"
-                        class="mt-6 border-t border-primary-100 pt-5"
+                        class="mt-6 border-t border-primary-100 pt-5 dark:border-primary-500/20"
                     >
                         <div
                             class="mb-3 flex items-center justify-between gap-3"
                         >
                             <p
-                                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted"
+                                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted dark:text-gray-400"
                             >
                                 Admission Invoices
                             </p>
 
-                            <span class="text-[11px] text-muted">
+                            <span class="text-[11px] text-muted dark:text-gray-400">
                                 {{ admission.invoices.length }}
                                 invoice(s)
                             </span>
@@ -147,11 +147,11 @@
                             <div
                                 v-for="invoice in admission.invoices"
                                 :key="invoice.invoice_id"
-                                class="overflow-hidden rounded-xl border border-primary-100 bg-white"
+                                class="overflow-hidden rounded-xl border border-primary-100 bg-white dark:border-primary-500/20 dark:bg-secondary"
                             >
                                 <button
                                     type="button"
-                                    class="group w-full p-4 text-left transition hover:bg-primary-50/30"
+                                    class="group w-full p-4 text-left transition hover:bg-primary-50/30 dark:hover:bg-primary-500/10"
                                     @click="
                                         emit(
                                             'view-invoice',
@@ -167,7 +167,7 @@
                                                 class="flex flex-wrap items-center gap-2"
                                             >
                                                 <span
-                                                    class="font-mono text-xs font-semibold text-primary-700"
+                                                    class="font-mono text-xs font-semibold text-primary-700 dark:text-primary-300"
                                                 >
                                                     {{ invoice.invoice_code }}
                                                 </span>
@@ -192,7 +192,7 @@
                                             </div>
 
                                             <p
-                                                class="mt-1 text-[11px] text-muted"
+                                                class="mt-1 text-[11px] text-muted dark:text-gray-400"
                                             >
                                                 {{
                                                     formatDate(
@@ -203,17 +203,17 @@
                                         </div>
 
                                         <div
-                                            class="grid grid-cols-3 gap-5 sm:flex sm:items-center"
+                                            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:flex sm:items-center"
                                         >
                                             <div>
                                                 <p
-                                                    class="text-[10px] text-muted"
+                                                    class="text-[10px] text-muted dark:text-gray-400"
                                                 >
                                                     Total
                                                 </p>
 
                                                 <p
-                                                    class="mt-1 text-xs font-semibold text-secondary"
+                                                    class="mt-1 text-xs font-semibold text-secondary dark:text-white"
                                                 >
                                                     ₱{{
                                                         formatMoney(
@@ -225,13 +225,13 @@
 
                                             <div>
                                                 <p
-                                                    class="text-[10px] text-muted"
+                                                    class="text-[10px] text-muted dark:text-gray-400"
                                                 >
                                                     Paid
                                                 </p>
 
                                                 <p
-                                                    class="mt-1 text-xs font-semibold text-primary-700"
+                                                    class="mt-1 text-xs font-semibold text-primary-700 dark:text-primary-300"
                                                 >
                                                     ₱{{
                                                         formatMoney(
@@ -243,7 +243,7 @@
 
                                             <div>
                                                 <p
-                                                    class="text-[10px] text-muted"
+                                                    class="text-[10px] text-muted dark:text-gray-400"
                                                 >
                                                     Balance
                                                 </p>
@@ -255,7 +255,7 @@
                                                             invoice.balance_due,
                                                         ) > 0
                                                             ? 'text-danger'
-                                                            : 'text-primary-700'
+                                                            : 'text-primary-700 dark:text-primary-300'
                                                     "
                                                 >
                                                     ₱{{
@@ -288,14 +288,14 @@
                                             </p>
 
                                             <p
-                                                class="mt-1 text-xs leading-5 text-secondary"
+                                                class="mt-1 text-xs leading-5 text-secondary dark:text-white"
                                             >
                                                 {{ refundReason(invoice) }}
                                             </p>
 
                                             <div
                                                 v-if="refundAmount(invoice) > 0"
-                                                class="mt-2 text-[11px] text-muted"
+                                                class="mt-2 text-[11px] text-muted dark:text-gray-400"
                                             >
                                                 Refunded:
                                                 <span
@@ -319,9 +319,9 @@
 
                     <div
                         v-else
-                        class="mt-5 rounded-xl border border-dashed border-primary-100 px-4 py-5 text-center"
+                        class="mt-5 rounded-xl border border-dashed border-primary-100 px-4 py-5 text-center dark:border-primary-500/20"
                     >
-                        <p class="text-xs text-muted">
+                        <p class="text-xs text-muted dark:text-gray-400">
                             No invoices for this admission.
                         </p>
                     </div>
@@ -424,19 +424,19 @@ function formatMoney(amount: number | string | null | undefined) {
 function statusClasses(status: string | null | undefined) {
     switch (status?.toLowerCase()) {
         case "paid":
-            return "bg-primary-50 text-primary-700";
+            return "bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300";
 
         case "partial":
-            return "bg-accent-50 text-accent-700";
+            return "bg-accent-50 text-accent-700 dark:bg-accent-500/15 dark:text-accent-300";
 
         case "pending":
-            return "bg-slate-100 text-slate-600";
+            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
 
         case "admitted":
-            return "bg-primary-50 text-primary-700";
+            return "bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300";
 
         case "discharged":
-            return "bg-slate-100 text-slate-600";
+            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
 
         case "overdue":
             return "bg-danger/10 text-danger";
@@ -445,7 +445,7 @@ function statusClasses(status: string | null | undefined) {
             return "bg-danger/10 text-danger";
 
         default:
-            return "bg-slate-100 text-slate-600";
+            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
     }
 }
 
@@ -459,14 +459,14 @@ const Field = (props: { label: string; value: unknown }) =>
             h(
                 "span",
                 {
-                    class: "truncate text-[10px] font-semibold uppercase tracking-[0.11em] text-muted",
+                    class: "truncate text-[10px] font-semibold uppercase tracking-[0.11em] text-muted dark:text-gray-400",
                 },
                 props.label,
             ),
             h(
                 "span",
                 {
-                    class: "truncate text-sm font-medium text-secondary",
+                    class: "truncate text-sm font-medium text-secondary dark:text-white",
                 },
                 String(props.value ?? "—"),
             ),
@@ -477,20 +477,20 @@ const EmptyState = (props: { title: string; description: string }) =>
     h(
         "div",
         {
-            class: "rounded-xl border border-dashed border-primary-100 px-6 py-10 text-center",
+            class: "rounded-xl border border-dashed border-primary-100 px-6 py-10 text-center dark:border-primary-500/20",
         },
         [
             h(
                 "p",
                 {
-                    class: "text-sm font-semibold text-secondary",
+                    class: "text-sm font-semibold text-secondary dark:text-white",
                 },
                 props.title,
             ),
             h(
                 "p",
                 {
-                    class: "mt-1 text-xs text-muted",
+                    class: "mt-1 text-xs text-muted dark:text-gray-400",
                 },
                 props.description,
             ),

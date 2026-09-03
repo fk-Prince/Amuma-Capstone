@@ -150,7 +150,7 @@
                         {{ fullName(review.user) }}
                     </p>
 
-                    <div class="text-amber-500 text-sm">
+                    <div class="text-amber-500 text-sm dark:text-amber-300">
                         {{ "★".repeat(review.rate)
                         }}{{ "☆".repeat(5 - review.rate) }}
                     </div>
@@ -175,7 +175,7 @@
                     <button
                         @click="loadMore"
                         :disabled="loadingMore"
-                        class="px-5 py-2 text-sm border border-muted-light rounded-lg text-secondary hover:bg-light/60 dark:text-white dark:border-white/10"
+                        class="px-5 py-2 text-sm border border-muted-light rounded-lg text-secondary hover:bg-light/60 dark:text-white dark:border-white/10 dark:hover:bg-white/5"
                     >
                         {{ loadingMore ? "Loading..." : "See More Reviews" }}
                     </button>
@@ -189,7 +189,7 @@
                 <div
                     class="flex h-16 w-16 items-center justify-center rounded-full bg-light dark:bg-white/5"
                 >
-                    <Star class="h-8 w-8 text-amber-500 fill-amber-400" />
+                    <Star class="h-8 w-8 text-amber-500 fill-amber-400 dark:text-amber-300" />
                 </div>
 
                 <h3 class="mt-4 text-lg font-semibold text-secondary dark:text-white">
@@ -279,7 +279,7 @@
                                     class="h-6 w-6"
                                     :class="
                                         n <= form.rate
-                                            ? 'text-amber-500 fill-amber-400'
+                                            ? 'text-amber-500 fill-amber-400 dark:text-amber-300'
                                             : 'text-muted-light dark:text-white/10'
                                     "
                                 />
@@ -695,7 +695,7 @@ function formatDate(dateStr: string) {
 const btnClass = (active: boolean) =>
     `px-3 py-1.5 text-sm rounded-lg border transition ${
         active
-            ? "border-amber-400 text-amber-500 bg-white dark:bg-secondary"
+            ? "border-amber-400 text-amber-500 bg-white dark:bg-secondary dark:text-amber-300"
             : "border-muted-light text-muted hover:border-primary/30 dark:border-white/10 dark:text-gray-400"
     }`;
 </script>

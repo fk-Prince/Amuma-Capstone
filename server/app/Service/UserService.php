@@ -49,7 +49,7 @@ class UserService
                 // Older rows stored these as strings ("1", "8"), which leaves
                 // checkboxes unchecked on the client.
                 foreach (
-                    ['enable_booking_pre_admission', 'enable_booking_complete_admission', 'is_open']
+                    ['enable_booking_pre_admission', 'enable_booking_complete_admission', 'requires_full_payment_on_admit', 'is_open']
                     as $key
                 ) {
                     if (array_key_exists($key, $settings)) {
@@ -96,9 +96,14 @@ class UserService
                     'settings' => $settings,
                     'plan' => $branch?->subscriptions
                         ? $branch->subscriptions->map(function ($subscription) {
+                            // effectivePlan(), not plans: a deferred upgrade
+                            // takes over on its start date, and the menu has
+                            // to match what the gate already allows.
+                            $plan = $subscription->effectivePlan();
+
                             return [
-                                'plan_code' => $subscription->plans->plan_code,
-                                'name' => $subscription->plans->name,
+                                'plan_code' => $plan?->plan_code,
+                                'name' => $plan?->name,
                             ];
                         })->values()
                         : [],

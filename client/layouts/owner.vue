@@ -1,5 +1,5 @@
 <template>
-    <div class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-[#0b0f1a] overflow-hidden">
+    <div class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden">
         <OwnerSidebar :open="isOpen" @close="isOpen = false" />
 
         <div class="flex-1 flex flex-col min-w-0 h-full">

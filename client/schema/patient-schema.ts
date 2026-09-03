@@ -1,6 +1,6 @@
 
 import { z } from "zod";
-import type { Assessment, Guardian, Patient } from "~/types/patient";
+import type { Assessment, Diagnosis, Guardian, Patient } from "~/types/patient";
 
 const decimalString = z
     .string()
@@ -193,25 +193,35 @@ export const guardianData = reactive<Guardian>({
 
 
 
-export const assessmentData = reactive<Assessment[]>([
+export const diagnosisData = reactive<Diagnosis[]>([
     {
         diagnosis: "",
         diagnosis_date: "",
         diagnosis_notes: "",
         diagnosis_file: undefined,
         diagnosis_file_name: "",
+    },
+]);
 
-        blood_pressure: "",
-        pulse_rate: "",
-        temperature: "",
-        oxygen_saturation: "",
-        respiratory_rate: "",
+export const assessmentData = reactive<Assessment[]>([
+    {
+        condition: "ambulatory",
 
         communication: "Coherent & Logical",
         speech: "clear",
 
         mental_state: "alert",
-        memory_issues: "none",
-        mood: "calm",
+        affect: "cheerful",
+        behavior: "cooperative",
+
+        life_system_profile: {
+            bathing: 5,
+            transferring: 5,
+            toileting: 5,
+            grooming: 5,
+            eating: 5,
+            locomotion: 5,
+            dressing: 5,
+        },
     },
 ]);

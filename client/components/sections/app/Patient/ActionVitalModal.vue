@@ -177,10 +177,10 @@ const bloodPressureDisplay = computed(() => {
                         role="dialog"
                         aria-modal="true"
                         aria-label="Vital Form"
-                        class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+                        class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
                     >
                         <div
-                            class="sticky top-0 z-10 flex items-center justify-between gap-4 rounded-t-2xl border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur"
+                            class="sticky top-0 z-10 flex items-center justify-between gap-4 rounded-t-2xl border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur dark:bg-secondary/95 dark:border-white/10"
                         >
                             <div class="flex items-center gap-3">
                                 <div
@@ -191,7 +191,7 @@ const bloodPressureDisplay = computed(() => {
 
                                 <div>
                                     <h2
-                                        class="text-lg font-semibold leading-tight text-gray-900"
+                                        class="text-lg font-semibold leading-tight text-gray-900 dark:text-white"
                                     >
                                         {{
                                             props.vital
@@ -200,7 +200,7 @@ const bloodPressureDisplay = computed(() => {
                                         }}
                                     </h2>
 
-                                    <p class="mt-0.5 text-xs text-gray-400">
+                                    <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                                         {{
                                             props.vital
                                                 ? "Update this vital sign record for this patient."
@@ -214,7 +214,7 @@ const bloodPressureDisplay = computed(() => {
                                 type="button"
                                 @click="close"
                                 aria-label="Close dialog"
-                                class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                                class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                             >
                                 <X class="h-5 w-5" />
                             </button>
@@ -231,7 +231,7 @@ const bloodPressureDisplay = computed(() => {
                             <div class="space-y-6">
                                 <div>
                                     <label
-                                        class="mb-1.5 block text-sm font-semibold text-gray-700"
+                                        class="mb-1.5 block text-sm font-semibold text-gray-700 dark:text-gray-400"
                                     >
                                         Blood Pressure
                                     </label>
@@ -272,7 +272,7 @@ const bloodPressureDisplay = computed(() => {
 
                                     <p
                                         v-if="bloodPressureDisplay"
-                                        class="mt-1.5 text-xs text-gray-400"
+                                        class="mt-1.5 text-xs text-gray-400 dark:text-gray-500"
                                     >
                                         {{ bloodPressureDisplay }}
                                     </p>
@@ -350,7 +350,7 @@ const bloodPressureDisplay = computed(() => {
 
                                 <div>
                                     <label
-                                        class="mb-1.5 block text-sm font-semibold text-gray-700"
+                                        class="mb-1.5 block text-sm font-semibold text-gray-700 dark:text-gray-400"
                                     >
                                         Pain Level (0-10)
                                     </label>
@@ -365,12 +365,12 @@ const bloodPressureDisplay = computed(() => {
                                                     level - 1,
                                                 )
                                             "
-                                            class="h-9 w-9 rounded-lg border text-sm font-medium"
+                                            class="h-9 w-9 rounded-lg border text-sm font-medium dark:border-white/10"
                                             :class="
                                                 form.painLevel ===
                                                 String(level - 1)
                                                     ? 'border-primary bg-primary/10 text-primary'
-                                                    : 'border-gray-200 text-gray-500'
+                                                    : 'border-gray-200 text-gray-500 dark:border-white/10 dark:text-gray-400'
                                             "
                                         >
                                             {{ level - 1 }}
@@ -412,12 +412,12 @@ const bloodPressureDisplay = computed(() => {
                             </div>
 
                             <div
-                                class="mt-8 flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end"
+                                class="mt-8 flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end dark:border-white/10"
                             >
                                 <button
                                     type="button"
                                     @click="close"
-                                    class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                                    class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
                                 >
                                     Cancel
                                 </button>

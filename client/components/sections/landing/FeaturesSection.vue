@@ -1,11 +1,11 @@
 <template>
-    <section class="relative overflow-hidden bg-slate-100 px-[6%] py-24 dark:bg-secondary">
+    <section class="relative overflow-hidden bg-slate-100 py-24 dark:bg-secondary">
         <!-- Blob -->
         <div
             class="absolute top-0 right-[-150px] h-[500px] w-[500px] rounded-full bg-cyan-200/40 blur-[100px]"
         ></div>
 
-        <div class="relative z-10 flex gap-16 max-lg:flex-col">
+        <div class="relative z-10 mx-auto flex w-[94%] max-w-[1600px] gap-16 px-10 max-lg:flex-col">
             <div class="w-[280px] shrink-0">
                 <p
                     class="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-primary"

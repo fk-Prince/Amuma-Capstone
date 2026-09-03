@@ -1,6 +1,6 @@
 ﻿﻿<template>
     <div
-        class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-[#0b0f1a] overflow-hidden print:h-auto print:overflow-visible"
+        class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden print:h-auto print:overflow-visible"
     >
         <div class="print:hidden">
             <DashboardSidebar

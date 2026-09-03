@@ -44,7 +44,7 @@ const boxClass = computed(() =>
 
 <template>
     <div
-        class="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-50 font-bold text-primary-700"
+        class="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-50 font-bold text-primary-700 ring-1 ring-primary-100 dark:bg-primary-500/15 dark:text-primary-200 dark:ring-white/10"
         :class="boxClass"
     >
         <img

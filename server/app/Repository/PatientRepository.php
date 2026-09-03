@@ -32,6 +32,8 @@ class PatientRepository
         if (!empty($payload['type']) && $payload['type'] === 'admission') {
             return Patient::with([
                 'location',
+                'assessments',
+                'diagnoses',
                 'currentAdmission.bed.room',
                 // 'currentAdmission.admissionContract',
                 'currentAdmission.invoiceAdmission.branchContract',
@@ -66,6 +68,8 @@ class PatientRepository
 
         return Patient::with([
             'location',
+            'assessments',
+            'diagnoses',
             'admissions' => function ($query) {
                 $query->where('status', 'admitted');
             },
@@ -125,6 +129,8 @@ class PatientRepository
     {
         return Patient::with([
             'location',
+            'assessments',
+            'diagnoses',
 
             'admissions.bed.room',
 
@@ -174,6 +180,8 @@ class PatientRepository
             'branch.location',
             'branch.agencies',
             'location',
+            'assessments',
+            'diagnoses',
 
             'admissions.bed.room',
 

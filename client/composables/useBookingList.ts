@@ -12,6 +12,7 @@ export function useBookingList(branchUuid: Ref<string>) {
     const searchQuery = ref("");
     const statusFilter = ref<string>("all");
     const typeFilter = ref<string>("all");
+    const bookingTypeFilter = ref<string>("all");
 
     function toDateInputValue(date: Date): string {
         const year = date.getFullYear();
@@ -50,6 +51,9 @@ export function useBookingList(branchUuid: Ref<string>) {
         try {
             const res: any = await bookingService.list({
                 category: typeFilter.value !== "all" ? typeFilter.value : "all",
+                service_type: bookingTypeFilter.value !== "all"
+                    ? bookingTypeFilter.value
+                    : undefined,
                 branch_uuid: branchUuid.value,
                 page: pagination.currentPage.value,
                 per_page: pagination.pageSize.value,
@@ -84,7 +88,7 @@ export function useBookingList(branchUuid: Ref<string>) {
 
     }
 
-    watch([searchQuery, statusFilter, typeFilter, dateFrom, dateTo], () => {
+    watch([searchQuery, statusFilter, typeFilter, bookingTypeFilter, dateFrom, dateTo], () => {
         if (debounceTimer) clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             pagination.reset();

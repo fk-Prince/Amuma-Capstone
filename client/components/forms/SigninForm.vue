@@ -3,6 +3,7 @@ import { ref } from "vue";
 import BaseInput from "../ui/BaseInput.vue";
 import BaseButton from "../ui/BaseButton.vue";
 import AlertMessage from "../ui/AlertMessage.vue";
+import TermsModal from "../ui/TermsModal.vue";
 
 import { useAuthUser, fetchAuthUser } from "~/composables/useAuthUser";
 import { authService } from "~/api/auth/AuthService";
@@ -14,6 +15,7 @@ const route = useRoute();
 const branch = useBranchStore();
 const user = useAuthUser();
 const redirecting = ref(false);
+const showTerms = ref(false);
 
 const signinData = ref<SigninRequest>({
     email: "prince.sestoso@gmail.com",
@@ -234,6 +236,21 @@ async function googleUrl() {
                     Sign up
                 </NuxtLink>
             </p>
+
+            <p
+                class="text-center text-xs leading-5 text-slate-400 dark:text-gray-500"
+            >
+                By signing in you agree to AMUMA's
+                <button
+                    type="button"
+                    class="font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                    @click.prevent="showTerms = true"
+                >
+                    Terms and Conditions
+                </button>
+            </p>
         </form>
+
+        <TermsModal v-if="showTerms" @close="showTerms = false" />
     </div>
 </template>

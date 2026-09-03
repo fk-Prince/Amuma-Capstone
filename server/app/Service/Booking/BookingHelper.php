@@ -150,19 +150,39 @@ class BookingHelper
 
     public function resolveAssessment(array $assessment)
     {
-        if (empty($assessment['diagnosis_file'])) {
-            return $assessment;
+        return $assessment;
+    }
+
+    public function resolveDiagnoses(mixed $diagnoses): array
+    {
+        if (!is_array($diagnoses)) {
+            return [];
         }
+
+        return array_values(array_map(
+            fn($diagnosis) => $this->resolveDiagnosis((array) $diagnosis),
+            $diagnoses
+        ));
+    }
+
+    public function resolveDiagnosis(array $diagnosis)
+    {
+        if (empty($diagnosis['diagnosis_file'])) {
+            return $diagnosis;
+        }
+
         try {
-            $uploadResult = SupabaseService::store($assessment['diagnosis_file']);
+            $uploadResult = SupabaseService::store($diagnosis['diagnosis_file']);
 
             if (empty($uploadResult['url'])) {
                 throw new Exception('Diagnosis file upload failed: no URL returned.');
             }
-            $assessment['diagnosis_file'] = $uploadResult['url'];
+
+            $diagnosis['diagnosis_file'] = $uploadResult['url'];
         } catch (\Throwable $e) {
             throw new Exception('We couldn\'t upload your diagnosis file. Please try again or use a different file.', 422, $e);
         }
-        return $assessment;
+
+        return $diagnosis;
     }
 }

@@ -5,7 +5,7 @@
         class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors"
         :class="[
             danger
-                ? 'text-rose-500 hover:bg-rose-50 dark:hover:bg-white/10'
+                ? 'text-rose-500 hover:bg-rose-50 dark:hover:bg-white/10 dark:text-rose-300'
                 : 'text-gray-600 dark:text-white/80 hover:bg-gray-50 dark:hover:bg-white/10',
             disabled
                 ? 'opacity-40 cursor-not-allowed pointer-events-none'
@@ -18,7 +18,7 @@
 
         <span
             v-if="badge"
-            class="text-[11px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500"
+            class="text-[11px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400"
         >
             {{ badge }}
         </span>

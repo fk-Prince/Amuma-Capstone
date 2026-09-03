@@ -1,61 +1,81 @@
 <template>
     <div
         v-if="isLoading"
-        class="grid gap-5 items-start p-4 sm:p-6 lg:p-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+        class="grid min-h-full gap-5 items-start p-4 sm:p-6 lg:p-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     >
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div
+            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
+        >
             <div class="flex items-center justify-between mb-4">
-                <div class="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                <div
+                    class="h-4 w-24 bg-gray-200 rounded animate-pulse dark:bg-white/15"
+                />
                 <div class="flex items-center gap-1">
                     <div
-                        class="w-6 h-6 rounded-full bg-gray-200 animate-pulse"
+                        class="w-6 h-6 rounded-full bg-gray-200 animate-pulse dark:bg-white/15"
                     />
                     <div
-                        class="w-6 h-6 rounded-full bg-gray-200 animate-pulse"
+                        class="w-6 h-6 rounded-full bg-gray-200 animate-pulse dark:bg-white/15"
                     />
                 </div>
             </div>
 
             <div class="flex flex-col items-center text-center px-1">
                 <div
-                    class="w-20 h-20 rounded-full bg-gray-200 animate-pulse mb-3"
-                />
-                <div class="h-4 w-32 bg-gray-200 rounded animate-pulse mb-2" />
-                <div class="h-3 w-24 bg-gray-200 rounded animate-pulse mb-2" />
-                <div class="h-3 w-28 bg-gray-200 rounded animate-pulse mb-3" />
-                <div
-                    class="h-5 w-16 bg-gray-200 rounded-full animate-pulse mb-4"
+                    class="w-20 h-20 rounded-full bg-gray-200 animate-pulse mb-3 dark:bg-white/15"
                 />
                 <div
-                    class="h-9 w-full bg-gray-200 rounded-full animate-pulse"
+                    class="h-4 w-32 bg-gray-200 rounded animate-pulse mb-2 dark:bg-white/15"
+                />
+                <div
+                    class="h-3 w-24 bg-gray-200 rounded animate-pulse mb-2 dark:bg-white/15"
+                />
+                <div
+                    class="h-3 w-28 bg-gray-200 rounded animate-pulse mb-3 dark:bg-white/15"
+                />
+                <div
+                    class="h-5 w-16 bg-gray-200 rounded-full animate-pulse mb-4 dark:bg-white/15"
+                />
+                <div
+                    class="h-9 w-full bg-gray-200 rounded-full animate-pulse dark:bg-white/15"
                 />
             </div>
 
             <div class="flex items-center justify-center gap-1.5 mt-4">
-                <div class="w-5 h-1.5 rounded-full bg-gray-200 animate-pulse" />
                 <div
-                    class="w-1.5 h-1.5 rounded-full bg-gray-200 animate-pulse"
+                    class="w-5 h-1.5 rounded-full bg-gray-200 animate-pulse dark:bg-white/15"
                 />
                 <div
-                    class="w-1.5 h-1.5 rounded-full bg-gray-200 animate-pulse"
+                    class="w-1.5 h-1.5 rounded-full bg-gray-200 animate-pulse dark:bg-white/15"
+                />
+                <div
+                    class="w-1.5 h-1.5 rounded-full bg-gray-200 animate-pulse dark:bg-white/15"
                 />
             </div>
         </div>
 
         <div
-            class="md:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
+            class="md:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-3">
-                <div class="h-4 w-28 bg-gray-200 rounded animate-pulse" />
-                <div class="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                <div
+                    class="h-4 w-28 bg-gray-200 rounded animate-pulse dark:bg-white/15"
+                />
+                <div
+                    class="h-4 w-20 bg-gray-200 rounded animate-pulse dark:bg-white/15"
+                />
             </div>
             <div
-                class="w-full h-[280px] rounded-xl bg-gray-200 animate-pulse"
+                class="w-full h-[280px] rounded-xl bg-gray-200 animate-pulse dark:bg-white/15"
             />
         </div>
 
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div class="h-4 w-28 bg-gray-200 rounded animate-pulse mb-4" />
+        <div
+            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
+        >
+            <div
+                class="h-4 w-28 bg-gray-200 rounded animate-pulse mb-4 dark:bg-white/15"
+            />
             <div class="space-y-3">
                 <div
                     v-for="n in 4"
@@ -64,49 +84,67 @@
                 >
                     <div class="flex items-center gap-3">
                         <div
-                            class="w-8 h-8 rounded-lg bg-gray-200 animate-pulse"
+                            class="w-8 h-8 rounded-lg bg-gray-200 animate-pulse dark:bg-white/15"
                         />
                         <div>
                             <div
-                                class="h-3.5 w-32 bg-gray-200 rounded animate-pulse mb-1.5"
+                                class="h-3.5 w-32 bg-gray-200 rounded animate-pulse mb-1.5 dark:bg-white/15"
                             />
                             <div
-                                class="h-3 w-20 bg-gray-200 rounded animate-pulse"
+                                class="h-3 w-20 bg-gray-200 rounded animate-pulse dark:bg-white/15"
                             />
                         </div>
                     </div>
-                    <div class="h-3 w-12 bg-gray-200 rounded animate-pulse" />
+                    <div
+                        class="h-3 w-12 bg-gray-200 rounded animate-pulse dark:bg-white/15"
+                    />
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div class="h-4 w-32 bg-gray-200 rounded animate-pulse mb-4" />
+        <div
+            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
+        >
+            <div
+                class="h-4 w-32 bg-gray-200 rounded animate-pulse mb-4 dark:bg-white/15"
+            />
             <div class="flex gap-5 items-stretch w-full">
                 <div
-                    class="flex-1 h-[68px] rounded-xl bg-gray-200 animate-pulse"
+                    class="flex-1 h-[68px] rounded-xl bg-gray-200 animate-pulse dark:bg-white/15"
                 />
                 <div
-                    class="flex-1 h-[68px] rounded-xl bg-gray-200 animate-pulse"
+                    class="flex-1 h-[68px] rounded-xl bg-gray-200 animate-pulse dark:bg-white/15"
                 />
             </div>
             <div class="mt-4 space-y-2">
-                <div class="h-3 w-20 bg-gray-200 rounded animate-pulse" />
-                <div class="h-3.5 w-28 bg-gray-200 rounded animate-pulse" />
-                <div class="h-3 w-16 bg-gray-200 rounded animate-pulse mt-2" />
-                <div class="h-3.5 w-20 bg-gray-200 rounded animate-pulse" />
+                <div
+                    class="h-3 w-20 bg-gray-200 rounded animate-pulse dark:bg-white/15"
+                />
+                <div
+                    class="h-3.5 w-28 bg-gray-200 rounded animate-pulse dark:bg-white/15"
+                />
+                <div
+                    class="h-3 w-16 bg-gray-200 rounded animate-pulse mt-2 dark:bg-white/15"
+                />
+                <div
+                    class="h-3.5 w-20 bg-gray-200 rounded animate-pulse dark:bg-white/15"
+                />
             </div>
             <div
-                class="h-9 w-full bg-gray-200 rounded-full animate-pulse mt-4"
+                class="h-9 w-full bg-gray-200 rounded-full animate-pulse mt-4 dark:bg-white/15"
             />
         </div>
 
         <div
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full flex flex-col"
+            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full flex flex-col dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
-                <div class="h-4 w-36 bg-gray-200 rounded animate-pulse" />
-                <div class="h-3 w-12 bg-gray-200 rounded animate-pulse" />
+                <div
+                    class="h-4 w-36 bg-gray-200 rounded animate-pulse dark:bg-white/15"
+                />
+                <div
+                    class="h-3 w-12 bg-gray-200 rounded animate-pulse dark:bg-white/15"
+                />
             </div>
             <div class="space-y-3">
                 <div
@@ -116,22 +154,24 @@
                 >
                     <div class="flex items-center gap-3">
                         <div
-                            class="w-8 h-8 rounded-lg bg-gray-200 animate-pulse"
+                            class="w-8 h-8 rounded-lg bg-gray-200 animate-pulse dark:bg-white/15"
                         />
                         <div>
                             <div
-                                class="h-3.5 w-28 bg-gray-200 rounded animate-pulse mb-1.5"
+                                class="h-3.5 w-28 bg-gray-200 rounded animate-pulse mb-1.5 dark:bg-white/15"
                             />
                             <div
-                                class="h-3 w-16 bg-gray-200 rounded animate-pulse"
+                                class="h-3 w-16 bg-gray-200 rounded animate-pulse dark:bg-white/15"
                             />
                         </div>
                     </div>
-                    <div class="h-3.5 w-14 bg-gray-200 rounded animate-pulse" />
+                    <div
+                        class="h-3.5 w-14 bg-gray-200 rounded animate-pulse dark:bg-white/15"
+                    />
                 </div>
             </div>
             <div
-                class="h-3 w-32 bg-gray-200 rounded animate-pulse mt-auto pt-4"
+                class="h-3 w-32 bg-gray-200 rounded animate-pulse mt-auto pt-4 dark:bg-white/15"
             />
         </div>
     </div>
@@ -148,12 +188,12 @@
         <div
             class="bg-white dark:bg-secondary rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm p-8 text-center"
         >
-            <p class="text-rose-500 text-sm">
+            <p class="text-rose-500 text-sm dark:text-rose-300">
                 {{ loadError }}
             </p>
             <button
                 @click="loadPatientData"
-                class="mt-2 text-xs text-primary-600 font-medium"
+                class="mt-2 text-xs text-primary-600 font-medium dark:text-primary-300"
             >
                 Retry
             </button>
@@ -165,10 +205,12 @@
         class="grid gap-5 items-start p-4 sm:p-6 lg:p-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     >
         <div
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 relative overflow-hidden"
+            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 relative overflow-hidden dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
-                <p class="text-sm font-semibold text-gray-800">My Loved Ones</p>
+                <p class="text-sm font-semibold text-gray-800 dark:text-white">
+                    My Loved Ones
+                </p>
 
                 <div
                     v-if="lovedOnes.length > 1"
@@ -176,14 +218,14 @@
                 >
                     <button
                         @click="prevLovedOne"
-                        class="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                        class="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-400"
                     >
                         <ChevronLeft class="w-4 h-4" />
                     </button>
 
                     <button
                         @click="nextLovedOne"
-                        class="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                        class="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-400"
                     >
                         <ChevronRight class="w-4 h-4" />
                     </button>
@@ -208,15 +250,17 @@
                             alt=""
                         />
 
-                        <p class="font-semibold text-gray-900">
+                        <p class="font-semibold text-gray-900 dark:text-white">
                             {{ lo.full_name }}
                         </p>
 
-                        <p class="text-xs font-medium text-primary-600 mt-1">
+                        <p
+                            class="text-xs font-medium text-primary-600 mt-1 dark:text-primary-300"
+                        >
                             {{ lo.branch_name }}
                         </p>
 
-                        <p class="text-xs text-gray-400">
+                        <p class="text-xs text-gray-400 dark:text-gray-500">
                             {{ lo.location_name }}
                         </p>
 
@@ -242,7 +286,7 @@
 
                         <NuxtLink
                             to="/portal/loved-ones"
-                            class="mt-4 w-full border border-primary-600 text-primary-600 text-sm font-medium py-2 rounded-full transition-colors hover:bg-primary-500 hover:text-white hover:border-primary-500 text-center"
+                            class="mt-4 w-full border border-primary-600 text-primary-600 text-sm font-medium py-2 rounded-full transition-colors hover:bg-primary-500 hover:text-white hover:border-primary-500 text-center dark:text-primary-300"
                         >
                             View Full Profile
                         </NuxtLink>
@@ -251,7 +295,9 @@
             </div>
 
             <div v-else class="text-center py-8">
-                <p class="text-gray-500">You currently have no patients.</p>
+                <p class="text-gray-500 dark:text-gray-400">
+                    You currently have no patients.
+                </p>
             </div>
 
             <div
@@ -266,7 +312,7 @@
                     :class="
                         selectedIndex === idx
                             ? 'w-5 bg-primary-500'
-                            : 'w-1.5 bg-gray-200 hover:bg-gray-300'
+                            : 'w-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/15 dark:hover:bg-white/20'
                     "
                 />
             </div>
@@ -274,23 +320,23 @@
 
         <div
             v-if="isAdmission && primaryLovedOne"
-            class="md:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
+            class="md:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-3">
                 <p
-                    class="text-sm font-semibold text-gray-800 flex items-center gap-1.5"
+                    class="text-sm font-semibold text-gray-800 flex items-center gap-1.5 dark:text-white"
                 >
-                    <Camera class="w-4 h-4 text-gray-500" />
+                    <Camera class="w-4 h-4 text-gray-500 dark:text-gray-400" />
                     Live Camera
                 </p>
 
                 <div class="flex items-center gap-2 text-xs">
-                    <span class="text-gray-400">
+                    <span class="text-gray-400 dark:text-gray-500">
                         {{ primaryLovedOne.room_label }}
                     </span>
 
                     <span
-                        class="flex items-center gap-1 text-primary-600 font-medium"
+                        class="flex items-center gap-1 text-primary-600 font-medium dark:text-primary-300"
                     >
                         <span class="w-1.5 h-1.5 rounded-full bg-primary-500" />
                         Live
@@ -361,39 +407,34 @@
         </div>
 
         <div
-            v-else-if="
-                isHomecare && primaryLovedOne && primaryLovedOne.schedule.adl
-            "
-            class="md:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full flex flex-col"
+            v-else-if="isHomecare && primaryLovedOne && attendanceVisit"
+            class="md:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full flex flex-col dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <p
-                        class="text-sm font-semibold text-gray-800 flex items-center gap-1.5"
+                        class="text-sm font-semibold text-gray-800 flex items-center gap-1.5 dark:text-white"
                     >
-                        <Home class="w-4 h-4 text-gray-500" />
+                        <Home
+                            class="w-4 h-4 text-gray-500 dark:text-gray-400"
+                        />
                         Homecare Attendance
                     </p>
 
-                    <p class="text-xs text-gray-400 mt-0.5">
+                    <p class="text-xs text-gray-400 mt-0.5 dark:text-gray-500">
                         {{ adlVisitSubtitle }}
                     </p>
                 </div>
 
                 <span
                     class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium shrink-0"
-                    :class="
-                        scheduleStatusTheme(primaryLovedOne.schedule.adl.status)
-                            .badge
-                    "
+                    :class="scheduleStatusTheme(attendanceVisit.status).badge"
                 >
                     <span
-                        v-if="primaryLovedOne.schedule.adl.status === 'ongoing'"
+                        v-if="attendanceVisit.status === 'ongoing'"
                         class="w-1.5 h-1.5 rounded-full bg-current"
                     />
-                    {{
-                        scheduleStatusLabel(primaryLovedOne.schedule.adl.status)
-                    }}
+                    {{ scheduleStatusLabel(attendanceVisit.status) }}
                 </span>
             </div>
 
@@ -404,7 +445,7 @@
                 <div
                     v-for="service in adlServices"
                     :key="service.schedule_services_id"
-                    class="rounded-xl bg-gray-50 p-3.5"
+                    class="rounded-xl bg-gray-50 p-3.5 dark:bg-white/5"
                 >
                     <div class="flex items-center gap-3 mb-3.5">
                         <template v-if="assigneesOf(service).length <= 1">
@@ -420,7 +461,7 @@
 
                             <span
                                 v-else
-                                class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-xs font-semibold shrink-0"
+                                class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-xs font-semibold shrink-0 dark:bg-primary-500/15 dark:text-primary-300"
                             >
                                 <UserRound
                                     v-if="!primaryAssignee(service)"
@@ -437,7 +478,7 @@
 
                             <div class="min-w-0">
                                 <p
-                                    class="text-sm font-medium text-gray-800 truncate"
+                                    class="text-sm font-medium text-gray-800 truncate dark:text-white"
                                 >
                                     {{
                                         primaryAssignee(service)?.full_name ||
@@ -445,8 +486,13 @@
                                     }}
                                 </p>
 
-                                <p class="text-xs text-gray-400 truncate">
-                                    {{ service.service_name || "ADL Service" }}
+                                <p
+                                    class="text-xs text-gray-400 truncate dark:text-gray-500"
+                                >
+                                    {{
+                                        service.service_name ||
+                                        "Homecare Service"
+                                    }}
                                 </p>
                             </div>
                         </template>
@@ -462,13 +508,13 @@
                                     <img
                                         v-if="assignee.avatar"
                                         :src="assignee.avatar"
-                                        class="w-9 h-9 rounded-full object-cover ring-2 ring-gray-50"
+                                        class="w-9 h-9 rounded-full object-cover ring-2 ring-gray-50 dark:ring-white/10"
                                         alt=""
                                     />
 
                                     <span
                                         v-else
-                                        class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-[10px] font-semibold ring-2 ring-gray-50"
+                                        class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-[10px] font-semibold ring-2 ring-gray-50 dark:bg-primary-500/15 dark:text-primary-300 dark:ring-white/10"
                                     >
                                         {{ initials(assignee.full_name) }}
                                     </span>
@@ -476,7 +522,7 @@
 
                                 <span
                                     v-if="assigneesOf(service).length > 3"
-                                    class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-[10px] font-semibold ring-2 ring-gray-50"
+                                    class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-[10px] font-semibold ring-2 ring-gray-50 dark:bg-white/15 dark:text-gray-400 dark:ring-white/10"
                                 >
                                     +{{ assigneesOf(service).length - 3 }}
                                 </span>
@@ -484,42 +530,103 @@
 
                             <div class="min-w-0">
                                 <p
-                                    class="text-sm font-medium text-gray-800 truncate"
+                                    class="text-sm font-medium text-gray-800 truncate dark:text-white"
                                 >
                                     {{
                                         primaryAssignee(service)?.full_name ||
                                         "Unassigned"
                                     }}
-                                    <span class="text-gray-400 font-normal">
+                                    <span
+                                        class="text-gray-400 font-normal dark:text-gray-500"
+                                    >
                                         +{{ assigneesOf(service).length - 1 }}
                                         more
                                     </span>
                                 </p>
 
-                                <p class="text-xs text-gray-400 truncate">
-                                    {{ service.service_name || "ADL Service" }}
+                                <p
+                                    class="text-xs text-gray-400 truncate dark:text-gray-500"
+                                >
+                                    {{
+                                        service.service_name ||
+                                        "Homecare Service"
+                                    }}
                                 </p>
                             </div>
                         </template>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-2">
+                    <div v-if="isMedicalVisit" class="grid grid-cols-2 gap-2">
                         <div
-                            class="flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-2"
+                            class="flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-2 dark:bg-secondary"
                         >
                             <span
-                                class="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 shrink-0"
+                                class="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 dark:bg-white/5 dark:text-gray-500"
+                            >
+                                <Stethoscope class="w-3 h-3" />
+                            </span>
+                            <div class="min-w-0">
+                                <p
+                                    class="text-[10px] uppercase text-gray-400 truncate dark:text-gray-500"
+                                >
+                                    Service
+                                </p>
+                                <p
+                                    class="text-xs font-semibold text-gray-800 truncate dark:text-white"
+                                >
+                                    {{
+                                        service.service_name ||
+                                        "Medical Service"
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div
+                            class="flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-2 dark:bg-secondary"
+                        >
+                            <span
+                                class="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 dark:bg-white/5 dark:text-gray-500"
                             >
                                 <Clock class="w-3 h-3" />
                             </span>
                             <div class="min-w-0">
                                 <p
-                                    class="text-[10px] uppercase text-gray-400 truncate"
+                                    class="text-[10px] uppercase text-gray-400 truncate dark:text-gray-500"
+                                >
+                                    Estimated Duration
+                                </p>
+                                <p
+                                    class="text-xs font-semibold text-gray-800 truncate dark:text-white"
+                                >
+                                    {{
+                                        formatDuration(
+                                            (service.duration_minutes ?? 0) /
+                                                60,
+                                        ) || "—"
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="grid grid-cols-3 gap-2">
+                        <div
+                            class="flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-2 dark:bg-secondary"
+                        >
+                            <span
+                                class="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 dark:bg-white/5 dark:text-gray-500"
+                            >
+                                <Clock class="w-3 h-3" />
+                            </span>
+                            <div class="min-w-0">
+                                <p
+                                    class="text-[10px] uppercase text-gray-400 truncate dark:text-gray-500"
                                 >
                                     Scheduled
                                 </p>
                                 <p
-                                    class="text-xs font-semibold text-gray-800 truncate"
+                                    class="text-xs font-semibold text-gray-800 truncate dark:text-white"
                                 >
                                     {{
                                         formatDuration(
@@ -532,21 +639,21 @@
                         </div>
 
                         <div
-                            class="flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-2"
+                            class="flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-2 dark:bg-secondary"
                         >
                             <span
-                                class="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 shrink-0"
+                                class="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 dark:bg-white/5 dark:text-gray-500"
                             >
                                 <Timer class="w-3 h-3" />
                             </span>
                             <div class="min-w-0">
                                 <p
-                                    class="text-[10px] uppercase text-gray-400 truncate"
+                                    class="text-[10px] uppercase text-gray-400 truncate dark:text-gray-500"
                                 >
                                     Worked
                                 </p>
                                 <p
-                                    class="text-xs font-semibold text-gray-800 truncate"
+                                    class="text-xs font-semibold text-gray-800 truncate dark:text-white"
                                 >
                                     {{
                                         formatDuration(
@@ -560,21 +667,21 @@
                         </div>
 
                         <div
-                            class="flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-2"
+                            class="flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-2 dark:bg-secondary"
                         >
                             <span
-                                class="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 shrink-0"
+                                class="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 dark:bg-white/5 dark:text-gray-500"
                             >
                                 <Hourglass class="w-3 h-3" />
                             </span>
                             <div class="min-w-0">
                                 <p
-                                    class="text-[10px] uppercase text-gray-400 truncate"
+                                    class="text-[10px] uppercase text-gray-400 truncate dark:text-gray-500"
                                 >
                                     Remaining
                                 </p>
                                 <p
-                                    class="text-xs font-semibold text-gray-800 truncate"
+                                    class="text-xs font-semibold text-gray-800 truncate dark:text-white"
                                 >
                                     {{
                                         formatDuration(
@@ -586,6 +693,32 @@
                             </div>
                         </div>
                     </div>
+
+                    <div v-if="!isMedicalVisit" class="mt-3">
+                        <div class="mb-1 flex items-center justify-between">
+                            <span
+                                class="text-[10px] uppercase text-gray-400 dark:text-gray-500"
+                            >
+                                Progress
+                            </span>
+                            <span
+                                class="text-[11px] font-semibold text-gray-600 dark:text-gray-400"
+                            >
+                                {{ servicePercent(service) }}%
+                            </span>
+                        </div>
+
+                        <div
+                            class="h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-white/15"
+                        >
+                            <div
+                                class="h-full rounded-full bg-primary transition-all duration-500"
+                                :style="{
+                                    width: servicePercent(service) + '%',
+                                }"
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -594,44 +727,65 @@
                 class="flex-1 flex flex-col items-center justify-center text-center py-6 mb-5"
             >
                 <span
-                    class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-2"
+                    class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-2 dark:bg-white/5 dark:text-gray-500"
                 >
                     <UserRound class="w-5 h-5" />
                 </span>
-                <p class="text-xs font-medium text-gray-500">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
                     No caregiver assigned yet
                 </p>
-                <p class="text-xs text-gray-400 mt-0.5">
+                <p class="text-xs text-gray-400 mt-0.5 dark:text-gray-500">
                     We'll notify you once a caregiver is assigned.
                 </p>
             </div>
 
-            <div class="mt-auto">
-                <div class="grid grid-cols-2 gap-3">
-                    <button
-                        @click="generateAttendanceQr('in')"
-                        :disabled="isGeneratingQr"
-                        class="border border-primary-600 text-primary-600 text-sm font-medium py-2 rounded-full hover:bg-primary-500 hover:text-white hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {{
-                            isGeneratingQr && qrDirection === "in"
-                                ? "Generating..."
-                                : "Generate Time-In QR"
-                        }}
-                    </button>
+            <div
+                class="mt-auto border-t border-gray-100 pt-4 dark:border-white/10"
+            >
+                <p
+                    v-if="isMedicalVisit"
+                    class="text-[11px] text-gray-400 dark:text-gray-500"
+                >
+                    Medical visits are recorded by the care team — no time-in or
+                    time-out code is needed.
+                </p>
 
-                    <button
-                        @click="generateAttendanceQr('out')"
-                        :disabled="isGeneratingQr"
-                        class="border border-primary-600 text-primary-600 text-sm font-medium py-2 rounded-full hover:bg-primary-500 hover:text-white hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                <template v-else>
+                    <p
+                        class="mb-2.5 text-[11px] text-gray-400 dark:text-gray-500"
                     >
-                        {{
-                            isGeneratingQr && qrDirection === "out"
-                                ? "Generating..."
-                                : "Generate Time-Out QR"
-                        }}
-                    </button>
-                </div>
+                        Show a code to the caregiver to scan on arrival or
+                        before they leave.
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button
+                            @click="generateAttendanceQr('in')"
+                            :disabled="isGeneratingQr"
+                            class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary-600 py-2 text-xs font-semibold text-primary-600 transition hover:bg-primary-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 dark:text-primary-300"
+                        >
+                            <QrCode class="h-3.5 w-3.5" />
+                            {{
+                                isGeneratingQr && qrDirection === "in"
+                                    ? "Generating…"
+                                    : "Time-In QR"
+                            }}
+                        </button>
+
+                        <button
+                            @click="generateAttendanceQr('out')"
+                            :disabled="isGeneratingQr"
+                            class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 py-2 text-xs font-semibold text-gray-600 transition hover:border-primary-600 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-400 dark:hover:text-primary-300 dark:border-white/10"
+                        >
+                            <QrCode class="h-3.5 w-3.5" />
+                            {{
+                                isGeneratingQr && qrDirection === "out"
+                                    ? "Generating…"
+                                    : "Time-Out QR"
+                            }}
+                        </button>
+                    </div>
+                </template>
 
                 <QrCodeModal
                     :show="showQrModal"
@@ -644,15 +798,15 @@
         </div>
 
         <div
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full"
+            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full dark:bg-secondary dark:border-white/10"
         >
-            <p class="text-sm font-semibold text-gray-800 mb-4">
+            <p class="text-sm font-semibold text-gray-800 mb-4 dark:text-white">
                 Latest's Updates
             </p>
 
             <p
                 v-if="!updates.length"
-                class="py-6 text-center text-xs text-gray-400"
+                class="py-6 text-center text-xs text-gray-400 dark:text-gray-500"
             >
                 No updates recorded yet.
             </p>
@@ -662,15 +816,19 @@
                     v-for="u in updates"
                     :key="u.id"
                     class="flex items-center justify-between rounded-xl px-3 py-2.5"
-                    :class="u.highlighted ? 'bg-violet-50' : ''"
+                    :class="
+                        u.highlighted
+                            ? 'bg-violet-50 dark:bg-violet-500/10'
+                            : ''
+                    "
                 >
                     <div class="flex items-center gap-3">
                         <span
                             class="w-8 h-8 rounded-lg flex items-center justify-center"
                             :class="
                                 u.highlighted
-                                    ? 'bg-violet-100 text-violet-600'
-                                    : 'bg-primary-50 text-primary-600'
+                                    ? 'bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300'
+                                    : 'bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300'
                             "
                         >
                             <Pill v-if="u.icon === 'med'" class="w-4 h-4" />
@@ -693,8 +851,8 @@
                                 class="text-sm font-medium"
                                 :class="
                                     u.highlighted
-                                        ? 'text-violet-700'
-                                        : 'text-gray-800'
+                                        ? 'text-violet-700 dark:text-violet-300'
+                                        : 'text-gray-800 dark:text-white'
                                 "
                             >
                                 {{ u.title }}
@@ -705,8 +863,8 @@
                                 class="text-xs"
                                 :class="
                                     u.highlighted
-                                        ? 'text-violet-500'
-                                        : 'text-gray-400'
+                                        ? 'text-violet-500 dark:text-violet-300'
+                                        : 'text-gray-400 dark:text-gray-500'
                                 "
                             >
                                 {{ u.subtitle }}
@@ -717,8 +875,8 @@
                                 class="text-xs mt-0.5"
                                 :class="
                                     u.highlighted
-                                        ? 'text-violet-500'
-                                        : 'text-gray-400'
+                                        ? 'text-violet-500 dark:text-violet-300'
+                                        : 'text-gray-400 dark:text-gray-500'
                                 "
                             >
                                 {{ u.description }}
@@ -729,7 +887,9 @@
                     <span
                         class="text-xs font-medium"
                         :class="
-                            u.highlighted ? 'text-violet-600' : 'text-gray-400'
+                            u.highlighted
+                                ? 'text-violet-600 dark:text-violet-300'
+                                : 'text-gray-400 dark:text-gray-500'
                         "
                     >
                         {{ u.time }}
@@ -738,45 +898,55 @@
             </ul>
         </div>
 
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p class="text-sm font-semibold text-gray-800 mb-4">
+        <div
+            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
+        >
+            <p class="text-sm font-semibold text-gray-800 mb-4 dark:text-white">
                 Upcoming Payment
             </p>
 
             <div class="flex gap-5 items-stretch w-full">
                 <div
-                    class="flex-1 bg-primary-50 rounded-xl p-4 flex items-center justify-between"
+                    class="flex-1 bg-primary-50 rounded-xl p-4 flex items-center justify-between dark:bg-primary-500/10"
                 >
                     <div>
-                        <p class="text-xs text-gray-400">Overall Balance</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">
+                            Overall Balance
+                        </p>
 
-                        <p class="text-lg font-semibold text-gray-900">
+                        <p
+                            class="text-lg font-semibold text-gray-900 dark:text-white"
+                        >
                             {{ peso(billing.overall_balance) }}
                         </p>
                     </div>
 
                     <span
-                        class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 shrink-0"
+                        class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 shrink-0 dark:bg-primary-500/15 dark:text-primary-300"
                     >
                         <Calendar class="w-[18px] h-[18px]" />
                     </span>
                 </div>
 
                 <div
-                    class="flex-1 bg-emerald-50 rounded-xl p-4 flex items-center justify-between"
+                    class="flex-1 bg-emerald-50 rounded-xl p-4 flex items-center justify-between dark:bg-emerald-500/10"
                 >
                     <div>
-                        <p class="text-xs text-emerald-600">
+                        <p
+                            class="text-xs text-emerald-600 dark:text-emerald-300"
+                        >
                             Refundable Amount
                         </p>
 
-                        <p class="text-lg font-semibold text-emerald-700">
+                        <p
+                            class="text-lg font-semibold text-emerald-700 dark:text-emerald-300"
+                        >
                             {{ peso(billing.refundable_amount) }}
                         </p>
                     </div>
 
                     <span
-                        class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0"
+                        class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 dark:bg-emerald-500/15 dark:text-emerald-300"
                     >
                         <ArrowDownCircle class="w-[18px] h-[18px]" />
                     </span>
@@ -787,44 +957,48 @@
                 v-if="billing.latest_invoice_code"
                 class="mt-4 text-xs space-y-1"
             >
-                <p class="text-gray-400">Latest Invoice</p>
+                <p class="text-gray-400 dark:text-gray-500">Latest Invoice</p>
 
-                <p class="font-semibold text-gray-800">
+                <p class="font-semibold text-gray-800 dark:text-white">
                     {{ billing.latest_invoice_code }}
                 </p>
 
-                <p class="text-gray-400 mt-2">Status</p>
+                <p class="text-gray-400 mt-2 dark:text-gray-500">Status</p>
 
-                <p class="font-semibold text-gray-800 capitalize">
+                <p
+                    class="font-semibold text-gray-800 capitalize dark:text-white"
+                >
                     {{ billing.status || "N/A" }}
                 </p>
 
-                <p class="text-gray-400 mt-2">Invoice Balance</p>
+                <p class="text-gray-400 mt-2 dark:text-gray-500">
+                    Invoice Balance
+                </p>
 
-                <p class="font-semibold text-gray-800">
+                <p class="font-semibold text-gray-800 dark:text-white">
                     {{ peso(billing.balance_due) }}
                 </p>
             </div>
 
             <NuxtLink
                 to="/portal/balance"
-                class="mt-4 w-full border border-primary-600 text-primary-600 text-sm font-medium py-2 rounded-full transition-colors hover:bg-primary-500 hover:text-white hover:border-primary-500 text-center block"
+                class="mt-4 w-full border border-primary-600 text-primary-600 text-sm font-medium py-2 rounded-full transition-colors hover:bg-primary-500 hover:text-white hover:border-primary-500 text-center block dark:text-primary-300"
             >
                 View Bill Date
             </NuxtLink>
         </div>
 
         <div
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full flex flex-col"
+            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full flex flex-col dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
-                <p class="text-sm font-semibold text-gray-800">
+                <p class="text-sm font-semibold text-gray-800 dark:text-white">
                     Recent Transactions
                 </p>
 
                 <NuxtLink
                     to="/portal/balance"
-                    class="text-xs text-primary-600 font-medium"
+                    class="text-xs text-primary-600 font-medium dark:text-primary-300"
                 >
                     View All
                 </NuxtLink>
@@ -838,35 +1012,42 @@
                 >
                     <div class="flex items-center gap-3">
                         <span
-                            class="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-50 text-emerald-600"
+                            class="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
                         >
                             <ArrowDownCircle class="w-4 h-4" />
                         </span>
 
                         <div>
-                            <p class="text-sm font-medium text-gray-800">
+                            <p
+                                class="text-sm font-medium text-gray-800 dark:text-white"
+                            >
                                 Payment Received
                             </p>
 
-                            <p class="text-xs text-gray-400">
+                            <p class="text-xs text-gray-400 dark:text-gray-500">
                                 {{ t.created_at }}
                             </p>
                         </div>
                     </div>
 
-                    <span class="text-sm font-semibold text-emerald-600">
+                    <span
+                        class="text-sm font-semibold text-emerald-600 dark:text-emerald-300"
+                    >
                         +{{ peso(t.amount) }}
                     </span>
                 </li>
             </ul>
 
-            <p v-else class="text-xs text-gray-400 py-4 text-center">
+            <p
+                v-else
+                class="text-xs text-gray-400 py-4 text-center dark:text-gray-500"
+            >
                 No transactions yet.
             </p>
 
             <NuxtLink
                 to="/portal/balance"
-                class="mt-auto pt-4 text-xs text-primary-600 font-medium flex items-center gap-1"
+                class="mt-auto pt-4 text-xs text-primary-600 font-medium flex items-center gap-1 dark:text-primary-300"
             >
                 View All Transactions →
             </NuxtLink>
@@ -909,6 +1090,8 @@ import {
     Clock,
     Timer,
     Hourglass,
+    QrCode,
+    Stethoscope,
     UserRound,
 } from "lucide-vue-next";
 
@@ -1006,21 +1189,32 @@ const isHomecare = computed(
     () => primaryLovedOne.value?.location_type === "homecare",
 );
 
-const adlServices = computed(
-    () => primaryLovedOne.value?.schedule.adl?.services ?? [],
+const attendanceVisit = computed(
+    () =>
+        primaryLovedOne.value?.schedule.adl ??
+        primaryLovedOne.value?.schedule.medical ??
+        null,
 );
 
+const isMedicalVisit = computed(
+    () =>
+        !primaryLovedOne.value?.schedule.adl &&
+        Boolean(primaryLovedOne.value?.schedule.medical),
+);
+
+const adlServices = computed(() => attendanceVisit.value?.services ?? []);
+
 const adlVisitSubtitle = computed(() => {
-    const adl = primaryLovedOne.value?.schedule.adl;
+    const adl = attendanceVisit.value;
 
     if (!adl) {
         return "";
     }
 
-    const category = adl.category || "ADL";
+    const category = adl.category || "Homecare";
 
     if (!adl.scheduled_date) {
-        return `${category} visit`;
+        return `${category} `;
     }
 
     const date = new Date(adl.scheduled_date).toLocaleDateString("en-US", {
@@ -1029,7 +1223,7 @@ const adlVisitSubtitle = computed(() => {
         year: "numeric",
     });
 
-    return `${category} visit · ${date}${adl.start_time ? ` at ${adl.start_time}` : ""}`;
+    return `Schedule starts in ${date}${adl.start_time ? ` at ${adl.start_time}` : ""}`;
 });
 
 const { scheduleStatusTheme, scheduleStatusLabel } = useSchedule();
@@ -1090,6 +1284,14 @@ function serviceRemainingMinutes(service: ScheduleServiceItem) {
         (service.duration_minutes ?? 0) - serviceWorkedMinutesCapped(service),
         0,
     );
+}
+
+function servicePercent(service: ScheduleServiceItem) {
+    const scheduled = service.duration_minutes ?? 0;
+
+    if (!scheduled) return 0;
+
+    return Math.round((serviceWorkedMinutesCapped(service) / scheduled) * 100);
 }
 
 const billing = ref<BillingData>({
@@ -1164,37 +1366,37 @@ function peso(amount: number) {
 function statusStyle(status: string) {
     const map: Record<string, { badge: string }> = {
         admitted: {
-            badge: "bg-emerald-50 text-emerald-600",
+            badge: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300",
         },
 
         pending: {
-            badge: "bg-amber-50 text-amber-600",
+            badge: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300",
         },
 
         ongoing: {
-            badge: "bg-amber-50 text-amber-600",
+            badge: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300",
         },
 
         homecare: {
-            badge: "bg-primary-50 text-primary-600",
+            badge: "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300",
         },
 
         discharged: {
-            badge: "bg-gray-100 text-gray-500",
+            badge: "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400",
         },
 
         cancelled: {
-            badge: "bg-gray-100 text-gray-500",
+            badge: "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400",
         },
 
         "no active record": {
-            badge: "bg-gray-100 text-gray-500",
+            badge: "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400",
         },
     };
 
     return (
         map[status?.toLowerCase()] ?? {
-            badge: "bg-gray-100 text-gray-500",
+            badge: "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400",
         }
     );
 }
@@ -1374,7 +1576,7 @@ async function generateAttendanceQr(direction: "in" | "out") {
     if (!scheduleServicesId) {
         showError(
             "Can't generate QR code",
-            "No ADL service is available for this visit yet.",
+            "No service is available for this visit yet.",
         );
 
         return;

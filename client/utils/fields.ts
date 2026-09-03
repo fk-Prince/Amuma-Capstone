@@ -40,12 +40,12 @@ export const Field = (
         [
             h(
                 "span",
-                { class: "text-xs text-[#6B8A87]" },
+                { class: "text-xs text-[#6B8A87] dark:text-gray-400" },
                 fieldProps.label,
             ),
             h(
                 "span",
-                { class: "text-[#16302E] font-medium" },
+                { class: "text-[#16302E] font-medium dark:text-white" },
                 slots.value ? slots.value() : (fieldProps.value ?? "—"),
             ),
         ],

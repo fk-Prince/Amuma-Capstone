@@ -6,13 +6,13 @@
                 class="fixed inset-0 z-50 flex items-center justify-center bg-primary-950/60 p-4 backdrop-blur-sm"
             >
                 <div
-                    class="w-full max-w-4xl max-h-[90dvh] overflow-y-auto rounded-2xl bg-white shadow-[0_20px_60px_-15px_rgba(10,40,87,0.35)] ring-1 ring-black/5"
+                    class="w-full max-w-4xl max-h-[90dvh] overflow-y-auto rounded-2xl bg-white shadow-[0_20px_60px_-15px_rgba(10,40,87,0.35)] ring-1 ring-black/5 dark:bg-secondary"
                 >
                     <div
-                        class="flex items-start gap-4 border-b border-slate-100 px-4 sm:px-8 py-5 sm:py-7"
+                        class="flex items-start gap-4 border-b border-slate-100 px-4 sm:px-8 py-5 sm:py-7 dark:border-white/10"
                     >
                         <div
-                            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600 ring-1 ring-rose-100"
+                            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600 ring-1 ring-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -32,12 +32,12 @@
 
                         <div class="min-w-0">
                             <h3
-                                class="text-xl font-semibold tracking-tight text-primary-950"
+                                class="text-xl font-semibold tracking-tight text-primary-950 dark:text-primary-300"
                             >
                                 Discharge patient
                             </h3>
 
-                            <p class="mt-1 text-sm text-slate-500">
+                            <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
                                 This ends the patient's current admission and
                                 future periods. This action cannot be undone.
                             </p>
@@ -46,7 +46,7 @@
                         <button
                             type="button"
                             :disabled="loading"
-                            class="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:opacity-40"
+                            class="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:opacity-40 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                             @click="handleClose"
                         >
                             <svg
@@ -72,28 +72,28 @@
                             <!-- CURRENT -->
                             <section class="flex flex-col">
                                 <h4
-                                    class="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-400"
+                                    class="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                                 >
                                     Current period
                                 </h4>
 
                                 <div
                                     v-if="showCurrentPeriodBlock"
-                                    class="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white p-5"
+                                    class="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-secondary"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-3"
                                     >
                                         <div class="min-w-0">
                                             <p
-                                                class="text-base font-semibold text-primary-950"
+                                                class="text-base font-semibold text-primary-950 dark:text-primary-300"
                                             >
                                                 {{ currentBillingCycleLabel }}
                                                 billing
                                             </p>
 
                                             <p
-                                                class="mt-0.5 text-xs text-slate-500"
+                                                class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
                                             >
                                                 {{
                                                     formatDate(
@@ -110,7 +110,7 @@
                                         </div>
 
                                         <p
-                                            class="shrink-0 text-base font-semibold text-primary-950"
+                                            class="shrink-0 text-base font-semibold text-primary-950 dark:text-primary-300"
                                         >
                                             {{
                                                 formatCurrency(
@@ -121,16 +121,16 @@
                                     </div>
 
                                     <!-- PAYMENT SUMMARY -->
-                                    <div class="mt-5 grid grid-cols-2 gap-2.5">
-                                        <div class="rounded-lg bg-slate-50 p-3">
+                                    <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                        <div class="rounded-lg bg-slate-50 p-3 dark:bg-white/5">
                                             <p
-                                                class="text-[11px] text-slate-500"
+                                                class="text-[11px] text-slate-500 dark:text-gray-400"
                                             >
                                                 Paid
                                             </p>
 
                                             <p
-                                                class="mt-0.5 text-sm font-semibold text-primary-950"
+                                                class="mt-0.5 text-sm font-semibold text-primary-950 dark:text-primary-300"
                                             >
                                                 {{
                                                     formatCurrency(
@@ -144,16 +144,16 @@
                                             class="rounded-lg p-3"
                                             :class="
                                                 isEligibleForRefund
-                                                    ? 'bg-emerald-50'
-                                                    : 'bg-slate-100'
+                                                    ? 'bg-emerald-50 dark:bg-emerald-500/10'
+                                                    : 'bg-slate-100 dark:bg-white/10'
                                             "
                                         >
                                             <p
                                                 class="text-[11px]"
                                                 :class="
                                                     isEligibleForRefund
-                                                        ? 'text-emerald-700'
-                                                        : 'text-slate-400'
+                                                        ? 'text-emerald-700 dark:text-emerald-300'
+                                                        : 'text-slate-400 dark:text-gray-500'
                                                 "
                                             >
                                                 Refundable
@@ -163,8 +163,8 @@
                                                 class="mt-0.5 text-sm font-semibold"
                                                 :class="
                                                     isEligibleForRefund
-                                                        ? 'text-emerald-700'
-                                                        : 'text-slate-400'
+                                                        ? 'text-emerald-700 dark:text-emerald-300'
+                                                        : 'text-slate-400 dark:text-gray-500'
                                                 "
                                             >
                                                 {{
@@ -178,11 +178,11 @@
 
                                     <!-- REFUND POLICY -->
                                     <div
-                                        class="mt-5 rounded-lg border p-3.5"
+                                        class="mt-5 rounded-lg border p-3.5 dark:border-white/10"
                                         :class="
                                             isEligibleForRefund
-                                                ? 'border-rose-200 bg-rose-50'
-                                                : 'border-slate-200 bg-slate-50'
+                                                ? 'border-rose-200 bg-rose-50 dark:border-rose-500/20 dark:bg-rose-500/10'
+                                                : 'border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/5'
                                         "
                                     >
                                         <div
@@ -196,8 +196,8 @@
                                                         class="text-sm font-semibold"
                                                         :class="
                                                             isEligibleForRefund
-                                                                ? 'text-rose-800'
-                                                                : 'text-slate-600'
+                                                                ? 'text-rose-800 dark:text-rose-300'
+                                                                : 'text-slate-600 dark:text-gray-400'
                                                         "
                                                     >
                                                         {{ refundPolicyTitle }}
@@ -207,8 +207,8 @@
                                                         class="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase"
                                                         :class="
                                                             isEligibleForRefund
-                                                                ? 'bg-rose-100 text-rose-700'
-                                                                : 'bg-slate-200 text-slate-600'
+                                                                ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
+                                                                : 'bg-slate-200 text-slate-600 dark:bg-white/15 dark:text-gray-400'
                                                         "
                                                     >
                                                         {{ refundPolicyBadge }}
@@ -219,8 +219,8 @@
                                                     class="mt-1.5 text-xs leading-5"
                                                     :class="
                                                         isEligibleForRefund
-                                                            ? 'text-rose-700'
-                                                            : 'text-slate-500'
+                                                            ? 'text-rose-700 dark:text-rose-300'
+                                                            : 'text-slate-500 dark:text-gray-400'
                                                     "
                                                 >
                                                     {{
@@ -234,28 +234,28 @@
                                     <!-- CALCULATION -->
                                     <div
                                         v-if="isEligibleForRefund"
-                                        class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4"
+                                        class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5"
                                     >
                                         <p
-                                            class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                                            class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                                         >
                                             Refund calculation
                                         </p>
 
                                         <div class="mt-3 space-y-2 text-sm">
                                             <div class="flex justify-between">
-                                                <span class="text-slate-500">
+                                                <span class="text-slate-500 dark:text-gray-400">
                                                     Amount paid
                                                 </span>
 
                                                 <span
-                                                    class="font-medium text-slate-700"
+                                                    class="font-medium text-slate-700 dark:text-gray-400"
                                                 >
                                                     <div
                                                         class="flex justify-between"
                                                     >
                                                         <span
-                                                            class="font-medium text-slate-700"
+                                                            class="font-medium text-slate-700 dark:text-gray-400"
                                                         >
                                                             {{
                                                                 formatCurrency(
@@ -271,9 +271,9 @@
                                                 v-if="
                                                     isWithinTerminationFeeWindow
                                                 "
-                                                class="flex justify-between text-slate-600"
+                                                class="flex justify-between text-slate-600 dark:text-gray-400"
                                             >
-                                                <span class="text-slate-500">
+                                                <span class="text-slate-500 dark:text-gray-400">
                                                     Termination fee ({{
                                                         terminationFeePercent
                                                     }}% of
@@ -300,10 +300,10 @@
                                                 class="space-y-2"
                                             >
                                                 <div
-                                                    class="flex justify-between text-slate-600"
+                                                    class="flex justify-between text-slate-600 dark:text-gray-400"
                                                 >
                                                     <span
-                                                        class="text-slate-500"
+                                                        class="text-slate-500 dark:text-gray-400"
                                                     >
                                                         Half of price ({{
                                                             terminationFeePercent
@@ -329,10 +329,10 @@
                                                 </div>
 
                                                 <div
-                                                    class="flex justify-between text-slate-600"
+                                                    class="flex justify-between text-slate-600 dark:text-gray-400"
                                                 >
                                                     <span
-                                                        class="text-slate-500"
+                                                        class="text-slate-500 dark:text-gray-400"
                                                     >
                                                         Days stayed ({{
                                                             daysSinceAdmissionStart
@@ -359,16 +359,16 @@
                                             </div>
 
                                             <div
-                                                class="border-t border-slate-200 pt-2 flex justify-between"
+                                                class="border-t border-slate-200 pt-2 flex justify-between dark:border-white/10"
                                             >
                                                 <span
-                                                    class="font-semibold text-slate-700"
+                                                    class="font-semibold text-slate-700 dark:text-gray-400"
                                                 >
                                                     Refund
                                                 </span>
 
                                                 <span
-                                                    class="font-bold text-emerald-600"
+                                                    class="font-bold text-emerald-600 dark:text-emerald-300"
                                                 >
                                                     {{
                                                         formatCurrency(
@@ -383,9 +383,9 @@
 
                                 <div
                                     v-else
-                                    class="flex flex-1 items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5"
+                                    class="flex flex-1 items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5"
                                 >
-                                    <p class="text-sm text-slate-500">
+                                    <p class="text-sm text-slate-500 dark:text-gray-400">
                                         No active billing period.
                                     </p>
                                 </div>
@@ -394,20 +394,20 @@
                             <!-- FUTURE -->
                             <section class="flex flex-col">
                                 <h4
-                                    class="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-400"
+                                    class="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                                 >
                                     Future periods
                                 </h4>
 
                                 <div
                                     v-if="futureInvoiceCount > 0"
-                                    class="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white p-5"
+                                    class="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-secondary"
                                 >
                                     <div
                                         class="flex items-center justify-between"
                                     >
                                         <p
-                                            class="text-base font-semibold text-primary-950"
+                                            class="text-base font-semibold text-primary-950 dark:text-primary-300"
                                         >
                                             {{ futureInvoiceCount }}
                                             {{
@@ -419,7 +419,7 @@
                                         </p>
 
                                         <span
-                                            class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-700"
+                                            class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
                                         >
                                             Upcoming
                                         </span>
@@ -432,7 +432,7 @@
                                         <div
                                             v-for="invoice in futureInvoices"
                                             :key="invoice.invoice_accommodation_id"
-                                            class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
+                                            class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/10 dark:bg-white/5"
                                         >
                                             <div
                                                 class="flex items-center justify-between gap-3"
@@ -442,7 +442,7 @@
                                                         class="flex items-center gap-2"
                                                     >
                                                         <p
-                                                            class="text-sm font-semibold text-primary-950"
+                                                            class="text-sm font-semibold text-primary-950 dark:text-primary-300"
                                                         >
                                                             {{
                                                                 invoice.invoice_code
@@ -450,7 +450,7 @@
                                                         </p>
 
                                                         <span
-                                                            class="shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold uppercase"
+                                                            class="shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold uppercase dark:border-white/10"
                                                             :class="
                                                                 statusClasses(
                                                                     invoice.status,
@@ -462,7 +462,7 @@
                                                     </div>
 
                                                     <p
-                                                        class="mt-0.5 text-xs text-slate-500"
+                                                        class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
                                                     >
                                                         {{
                                                             formatDate(
@@ -481,7 +481,7 @@
                                                         class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs"
                                                     >
                                                         <span
-                                                            class="text-slate-500"
+                                                            class="text-slate-500 dark:text-gray-400"
                                                         >
                                                             Paid
                                                             {{
@@ -492,7 +492,7 @@
                                                         </span>
 
                                                         <span
-                                                            class="text-rose-500"
+                                                            class="text-rose-500 dark:text-rose-300"
                                                         >
                                                             Refunded
                                                             {{
@@ -503,7 +503,7 @@
                                                         </span>
 
                                                         <span
-                                                            class="font-medium text-emerald-600"
+                                                            class="font-medium text-emerald-600 dark:text-emerald-300"
                                                         >
                                                             Refundable
                                                             {{
@@ -516,7 +516,7 @@
                                                 </div>
 
                                                 <p
-                                                    class="shrink-0 text-sm font-semibold text-primary-950"
+                                                    class="shrink-0 text-sm font-semibold text-primary-950 dark:text-primary-300"
                                                 >
                                                     {{
                                                         formatCurrency(
@@ -530,23 +530,23 @@
 
                                     <label
                                         v-if="hasRefundableFutureInvoices"
-                                        class="mt-5 flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3.5 transition hover:border-primary/40 hover:bg-primary-50/40"
+                                        class="mt-5 flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3.5 transition hover:border-primary/40 hover:bg-primary-50/40 dark:border-white/10 dark:hover:bg-primary-500/10"
                                     >
                                         <input
                                             v-model="refund"
                                             type="checkbox"
-                                            class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                                            class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-white/10"
                                         />
 
                                         <div>
                                             <p
-                                                class="text-sm font-medium text-slate-700"
+                                                class="text-sm font-medium text-slate-700 dark:text-gray-400"
                                             >
                                                 Refund future periods
                                             </p>
 
                                             <p
-                                                class="mt-0.5 text-xs leading-5 text-slate-500"
+                                                class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                             >
                                                 Refund the upcoming periods that
                                                 still have a balance.
@@ -556,7 +556,7 @@
 
                                     <p
                                         v-else
-                                        class="mt-5 text-xs leading-5 text-slate-500"
+                                        class="mt-5 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                     >
                                         None of the upcoming periods have a
                                         refundable balance.
@@ -565,9 +565,9 @@
 
                                 <div
                                     v-else
-                                    class="flex flex-1 items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5"
+                                    class="flex flex-1 items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5"
                                 >
-                                    <p class="text-sm text-slate-500">
+                                    <p class="text-sm text-slate-500 dark:text-gray-400">
                                         No future billing periods to refund.
                                     </p>
                                 </div>
@@ -579,15 +579,15 @@
                                 showCurrentPeriodBlock &&
                                 requiredPaymentAmount !== null
                             "
-                            class="mt-6 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-5 py-4"
+                            class="mt-6 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div>
-                                <p class="text-sm font-semibold text-slate-700">
+                                <p class="text-sm font-semibold text-slate-700 dark:text-gray-400">
                                     Required payment
                                 </p>
 
                                 <p
-                                    class="mt-0.5 text-xs leading-5 text-slate-500"
+                                    class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                 >
                                     {{ requiredPaymentDescription }}
                                 </p>
@@ -598,8 +598,8 @@
                                     class="text-lg font-bold"
                                     :class="
                                         isUnderRequiredPayment
-                                            ? 'text-rose-600'
-                                            : 'text-emerald-600'
+                                            ? 'text-rose-600 dark:text-rose-300'
+                                            : 'text-emerald-600 dark:text-emerald-300'
                                     "
                                 >
                                     {{ formatCurrency(requiredPaymentAmount) }}
@@ -609,8 +609,8 @@
                                     class="mt-0.5 text-xs"
                                     :class="
                                         isUnderRequiredPayment
-                                            ? 'text-rose-500'
-                                            : 'text-emerald-600'
+                                            ? 'text-rose-500 dark:text-rose-300'
+                                            : 'text-emerald-600 dark:text-emerald-300'
                                     "
                                 >
                                     {{
@@ -627,10 +627,10 @@
                         <div class="mt-6">
                             <label
                                 for="discharge-note"
-                                class="block text-sm font-semibold text-slate-700 mb-2"
+                                class="block text-sm font-semibold text-slate-700 mb-2 dark:text-gray-400"
                             >
                                 Discharge note
-                                <span class="font-normal text-slate-400">
+                                <span class="font-normal text-slate-400 dark:text-gray-500">
                                     (optional)
                                 </span>
                             </label>
@@ -641,28 +641,28 @@
                                 rows="3"
                                 :disabled="loading"
                                 placeholder="Why is this patient being discharged?"
-                                class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:bg-slate-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-secondary dark:text-white dark:placeholder:text-gray-500 dark:disabled:bg-white/5"
                             />
                         </div>
                     </div>
 
                     <!-- FOOTER -->
                     <div
-                        class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-4 sm:px-8 py-5"
+                        class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-4 sm:px-8 py-5 dark:border-white/10 dark:bg-white/5"
                     >
                         <div
                             v-if="
                                 showCurrentPeriodBlock && isUnderRequiredPayment
                             "
-                            class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3.5"
+                            class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3.5 dark:border-amber-500/20 dark:bg-amber-500/10"
                         >
                             <div>
-                                <p class="text-sm font-semibold text-amber-900">
+                                <p class="text-sm font-semibold text-amber-900 dark:text-amber-300">
                                     Payment required before discharge
                                 </p>
 
                                 <p
-                                    class="mt-0.5 text-xs leading-5 text-amber-800"
+                                    class="mt-0.5 text-xs leading-5 text-amber-800 dark:text-amber-300"
                                 >
                                     The patient has paid
                                     {{ formatCurrency(currentNetPaidAmount) }}
@@ -677,7 +677,7 @@
                             <button
                                 type="button"
                                 :disabled="loading"
-                                class="rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200/60 disabled:cursor-not-allowed disabled:opacity-50"
+                                class="rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200/60 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-400 dark:hover:bg-white/15"
                                 @click="handleClose"
                             >
                                 Cancel
@@ -840,7 +840,7 @@ const canDischarge = computed(() => {
 function statusClasses(status?: string | null) {
     const s = (status ?? "").toLowerCase();
 
-    return INVOICE_STATUS[s] ?? "bg-slate-50 text-slate-500 border-slate-200";
+    return INVOICE_STATUS[s] ?? "bg-slate-50 text-slate-500 border-slate-200 dark:bg-white/5 dark:text-gray-400 dark:border-white/10";
 }
 
 function handleConfirm() {

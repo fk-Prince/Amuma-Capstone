@@ -46,6 +46,33 @@ class SubscriptionController extends Controller
         return $this->subscriptionService->makeSubscription($data, $request->user());
     }
 
+    public function newBranchFromCapacity(SubscriptionRequest $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
+        AuthGuard::requireModule(
+            $request->user(),
+            $branch->branch_id,
+            ModuleEnum::ManageBranches,
+            PermissionAction::Create
+        );
+
+        $data = $request->validated();
+
+        // Taken from the resolved branch, never the request body, so a caller
+        // cannot add branches to an agency they don't belong to.
+        $data['agency_id'] = $branch->agency_id;
+
+        if ($request->hasFile('branch_image')) {
+            $data['branch_image'] = $request->file('branch_image');
+        }
+
+        if ($request->hasFile('branch_document')) {
+            $data['branch_document'] = $request->file('branch_document');
+        }
+
+        return $this->subscriptionService->createBranchWithinCapacity($data, $request->user());
+    }
+
     public function validateSubscription(SubscriptionRequest $request)
     {
         return response()->json([
@@ -87,6 +114,14 @@ class SubscriptionController extends Controller
         AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Update);
         BranchGuard::mergeRequest($request, $branch);
         return $this->subscriptionService->makeRenewal($request->all(), $request->user());
+    }
+
+    public function applyUpgrade(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Update);
+        BranchGuard::mergeRequest($request, $branch);
+        return $this->subscriptionService->applyPendingPlan($request->all());
     }
 
     public function action(Request $request)

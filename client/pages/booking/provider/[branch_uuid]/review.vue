@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-screen grid grid-cols-1 lg:grid-cols-[280px_1fr] bg-gray-50 dark:bg-secondary"
+        class="min-h-screen grid grid-cols-1 lg:grid-cols-[280px_1fr] bg-gray-50 dark:bg-surface"
     >
         <aside
             class="hidden lg:flex flex-col bg-white border-r sticky top-0 h-screen dark:bg-secondary dark:border-white/10"
@@ -86,6 +86,7 @@
                             :patient="bookingStore.patient"
                             :guardian="bookingStore.guardian"
                             :assessments="bookingStore.assessment"
+                            :diagnoses="bookingStore.diagnoses"
                             :services="bookingStore.services"
                             :branchHomecare="
                                 bookingStore.branchHomecare ?? undefined
@@ -240,7 +241,10 @@ const booking_data = {
         bookingStore.category === "homecare" ? bookingStore.homecare : null,
     patient: bookingStore.patient,
     guardian: bookingStore.guardian,
+    // The diagnoses ride alongside the assessment rather than inside it, so
+    // they land in their own table on the patient.
     assessment: bookingStore.assessment,
+    diagnoses: bookingStore.diagnoses,
 };
 
 async function handleCardPay() {

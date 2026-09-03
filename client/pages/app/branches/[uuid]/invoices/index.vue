@@ -1,19 +1,21 @@
 <template>
-    <div class="flex-1 flex flex-col gap-6 min-h-0 bg-slate-100">
+    <div
+        class="flex min-h-screen-header flex-1 flex-col gap-6 bg-slate-100 dark:bg-surface"
+    >
         <InvoiceOverview
             :overview="overview"
             @month-change="onMonthChange"
             :loading="overviewLoading"
         />
 
-        <div class="flex-1 flex flex-col gap-6 min-h-0 px-6">
+        <div class="flex-1 flex flex-col gap-6 min-h-0 px-6 pb-6">
             <div
-                class="flex bg-white border rounded-2xl mt-3 border-slate-200 flex-col overflow-hidden"
+                class="flex flex-1 min-h-0 bg-white border rounded-2xl mt-3 border-slate-200 flex-col overflow-hidden dark:bg-secondary dark:border-white/10"
             >
                 <div
-                    class="flex flex-col gap-4 border-b border-slate-200 p-4 shrink-0 lg:flex-row lg:items-center lg:justify-between"
+                    class="flex flex-col gap-4 border-b border-slate-200 p-4 shrink-0 lg:flex-row lg:items-center lg:justify-between dark:border-white/10"
                 >
-                    <div class="inline-flex rounded-xl bg-slate-100 p-1">
+                    <div class="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-white/10">
                         <button
                             v-for="tab in tabs"
                             :key="tab.key"
@@ -21,8 +23,8 @@
                             class="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                             :class="
                                 activeTab === tab.key
-                                    ? 'bg-white text-primary shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700'
+                                    ? 'bg-white text-primary shadow-sm dark:bg-secondary'
+                                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
                             "
                             @click="switchTab(tab.key)"
                         >
@@ -51,7 +53,7 @@
                         <button
                             v-if="query"
                             type="button"
-                            class="h-9 shrink-0 rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50"
+                            class="h-9 shrink-0 rounded-lg border border-slate-200 px-4 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
                             @click="clearSearch"
                         >
                             Clear
@@ -59,9 +61,9 @@
                     </div>
                 </div>
 
-                <div v-if="activeTab === 'patients'" class="flex-1 min-h-0">
-                    <DataTable
-                        class="h-full"
+                <DataTable
+                        v-if="activeTab === 'patients'"
+                        class="flex-1 min-h-0"
                         :columns="patientColumns"
                         :rows="invoices"
                         :pagination="pagination"
@@ -71,13 +73,13 @@
                         empty-description="Try a different search term or filter."
                         :on-row-click="onRowClick"
                         @page-change="fetchInvoices"
-                    >
+                >
                         <template #cell-patient_name="{ row }">
                             <div class="flex flex-col">
-                                <span class="font-medium text-slate-800">
+                                <span class="font-medium text-slate-800 dark:text-white">
                                     {{ row.patient?.full_name ?? "—" }}
                                 </span>
-                                <span class="text-xs text-slate-400">
+                                <span class="text-xs text-slate-400 dark:text-gray-500">
                                     Latest
                                     {{
                                         row.latest_invoice?.invoice_code ??
@@ -104,8 +106,8 @@
                                 class="font-medium"
                                 :class="
                                     totalRefunded(row) > 0
-                                        ? 'text-amber-600'
-                                        : 'text-slate-400'
+                                        ? 'text-amber-600 dark:text-amber-300'
+                                        : 'text-slate-400 dark:text-gray-500'
                                 "
                                 >₱{{ formatMoney(totalRefunded(row)) }}</span
                             >
@@ -116,12 +118,11 @@
                                 >₱{{ formatMoney(value) }}</span
                             >
                         </template>
-                    </DataTable>
-                </div>
+                </DataTable>
 
-                <div v-else class="flex-1 min-h-0">
-                    <DataTable
-                        class="h-full"
+                <DataTable
+                        v-else
+                        class="flex-1 min-h-0"
                         :columns="receiptColumns"
                         :rows="receipts"
                         :pagination="receiptPagination"
@@ -131,25 +132,25 @@
                         empty-description="Search by receipt number, patient, payor, invoice code or gateway reference."
                         :on-row-click="openReceipt"
                         @page-change="fetchReceipts"
-                    >
+                >
                         <template #cell-receipt_no="{ row }">
-                            <span class="font-mono font-semibold text-slate-800">
+                            <span class="font-mono font-semibold text-slate-800 dark:text-white">
                                 {{ row.receipt_no }}
                             </span>
                         </template>
 
                         <template #cell-issued_at="{ row }">
-                            <span class="text-slate-600">
+                            <span class="text-slate-600 dark:text-gray-400">
                                 {{ formatDateTime(row.issued_at) }}
                             </span>
                         </template>
 
                         <template #cell-patient="{ row }">
                             <div class="flex flex-col">
-                                <span class="font-medium text-slate-800">
+                                <span class="font-medium text-slate-800 dark:text-white">
                                     {{ row.patient?.full_name ?? "—" }}
                                 </span>
-                                <span class="text-xs text-slate-400">
+                                <span class="text-xs text-slate-400 dark:text-gray-500">
                                     from {{ row.payor?.name ?? "—" }}
                                 </span>
                             </div>
@@ -160,8 +161,8 @@
                                 class="rounded-full px-2.5 py-1 text-[11px] font-semibold"
                                 :class="
                                     row.channel === 'portal'
-                                        ? 'bg-blue-50 text-blue-600'
-                                        : 'bg-emerald-50 text-emerald-600'
+                                        ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300'
+                                        : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300'
                                 "
                             >
                                 {{
@@ -177,8 +178,7 @@
                                 ₱{{ formatMoney(row.payment?.amount_applied) }}
                             </span>
                         </template>
-                    </DataTable>
-                </div>
+                </DataTable>
             </div>
         </div>
 

@@ -1,9 +1,9 @@
 <template>
-    <tr class="group hover:bg-[#F7FAF9] transition-colors">
+    <tr class="group hover:bg-[#F7FAF9] transition-colors dark:hover:bg-white/5">
         <td class="py-4 pl-6 pr-3 whitespace-nowrap">
             <div class="flex flex-col gap-1">
                 <span
-                    class="inline-flex items-center gap-2 text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] w-fit"
+                    class="inline-flex items-center gap-2 text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] w-fit dark:text-accent-300 dark:bg-accent-500/15"
                 >
                     <span
                         class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
@@ -12,7 +12,7 @@
                     #{{ booking.reference_id }}
                 </span>
 
-                <span class="text-[11px] text-gray-400">
+                <span class="text-[11px] text-gray-400 dark:text-gray-500">
                     {{ stringToDateTime(booking.created_at) }}
                 </span>
             </div>
@@ -21,7 +21,7 @@
         <td class="py-4 px-3 min-w-[220px]">
             <div class="flex items-center gap-3 min-w-0">
                 <div class="min-w-0">
-                    <p class="font-semibold text-[#16302E] truncate text-sm">
+                    <p class="font-semibold text-[#16302E] truncate text-sm dark:text-white">
                         {{
                             fullName(
                                 booking.patient?.first_name,
@@ -30,18 +30,18 @@
                             )
                         }}
                     </p>
-                    <p class="text-xs text-muted truncate">
+                    <p class="text-xs text-muted dark:text-gray-400 truncate">
                         {{ serviceAddress }}
                     </p>
                 </div>
             </div>
         </td>
 
-        <td class="py-4 px-3 text-sm text-muted whitespace-nowrap capitalize">
+        <td class="py-4 px-3 text-sm text-muted dark:text-gray-400 whitespace-nowrap capitalize">
             {{ booking.category ?? "—" }}
         </td>
 
-        <td class="py-4 px-3 text-sm text-muted whitespace-nowrap">
+        <td class="py-4 px-3 text-sm text-muted dark:text-gray-400 whitespace-nowrap">
             {{
                 booking.homecare?.type === "Medical"
                     ? "Medical Services"
@@ -55,7 +55,7 @@
             }}
         </td>
 
-        <td class="py-4 px-3 text-sm text-muted whitespace-nowrap">
+        <td class="py-4 px-3 text-sm text-muted dark:text-gray-400 whitespace-nowrap">
             {{
                 booking.category === "facility"
                     ? booking.facility?.admission_date
@@ -98,11 +98,11 @@
                 <button
                     type="button"
                     @click.stop="viewDetails"
-                    class="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4EFED] text-[#16302E] hover:bg-[#F0F5F4] transition flex items-center gap-1 shrink-0"
+                    class="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4EFED] text-[#16302E] hover:bg-[#F0F5F4] transition flex items-center gap-1 shrink-0 dark:hover:bg-white/5 dark:border-white/10 dark:text-white"
                 >
                     View
                     <svg
-                        class="w-3.5 h-3.5 text-[#6B8A87]"
+                        class="w-3.5 h-3.5 text-[#6B8A87] dark:text-gray-400"
                         viewBox="0 0 20 20"
                         fill="none"
                     >

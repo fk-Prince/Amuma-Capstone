@@ -77,6 +77,20 @@ export const typeFilters = [
     { label: "Homecare", value: "homecare" },
 ];
 
+// Keyed by the category they belong to, so picking a category narrows the
+// booking types to the ones that category can actually have.
+export const bookingTypeFilters = [
+    { label: "All Types", value: "all", category: "all" },
+    { label: "Complete Admission", value: "Complete", category: "facility" },
+    { label: "Pre-Admission", value: "Pre-Admission", category: "facility" },
+    { label: "Medical Services", value: "Medical", category: "homecare" },
+    {
+        label: "Activity of Daily Living (ADL)",
+        value: "ADL",
+        category: "homecare",
+    },
+];
+
 
 export function formatStatus(status?: string) {
     const s = (status ?? "").toLowerCase();

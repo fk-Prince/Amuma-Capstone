@@ -363,6 +363,27 @@ export function formatHourLabel(hour24: number): string {
     });
 }
 
+// RESULT 50hrs -> 2d 2h, 1.5hrs -> 1h 30m
+export const formatDurationShort = (hours: number) => {
+    const totalMinutes = Math.round((hours ?? 0) * 60);
+
+    if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) return "0h";
+
+    const days = Math.floor(totalMinutes / 1440);
+    const remainingHours = Math.floor((totalMinutes % 1440) / 60);
+    const minutes = totalMinutes % 60;
+
+    if (days) {
+        return remainingHours ? `${days}d ${remainingHours}h` : `${days}d`;
+    }
+
+    if (remainingHours) {
+        return minutes ? `${remainingHours}h ${minutes}m` : `${remainingHours}h`;
+    }
+
+    return `${minutes}m`;
+};
+
 // RESULT 50hrs -> 2days and 2 hours
 export const formatDuration = (hours: number) => {
     if (!hours || hours <= 0) return "";

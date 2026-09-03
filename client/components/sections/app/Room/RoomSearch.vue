@@ -11,7 +11,6 @@ const emit = defineEmits<{
     "update:modelValue": [value: string];
     "update:activeTab": [value: string];
     addRoom: [];
-    search: [];
 }>();
 
 const tabs = [
@@ -34,12 +33,12 @@ const { canCreate } = usePermissions();
 </script>
 
 <template>
-    <div class="bg-white px-5 py-2 space-y-5">
+    <div class="bg-white px-5 py-2 space-y-5 dark:bg-secondary">
         <div class="flex gap-2">
             <div class="relative flex-1">
                 <div class="relative flex-1">
                     <Search
-                        class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                        class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
                     />
 
                     <BaseInput
@@ -47,7 +46,6 @@ const { canCreate } = usePermissions();
                         @update:model-value="emit('update:modelValue', $event)"
                         placeholder="Search rooms, beds, or residents..."
                         input-class="pl-11"
-                        @keyup.enter="emit('search')"
                     />
                 </div>
             </div>
@@ -81,7 +79,7 @@ const { canCreate } = usePermissions();
             class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
         >
             <div class="flex items-center md:flex-row flex-col gap-5">
-                <div class="inline-flex w-fit rounded-xl bg-slate-100 p-1">
+                <div class="inline-flex w-fit rounded-xl bg-slate-100 p-1 dark:bg-white/10">
                     <button
                         v-for="tab in tabs"
                         :key="tab.label"
@@ -90,8 +88,8 @@ const { canCreate } = usePermissions();
                         class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
                         :class="
                             activeTab === tab.label
-                                ? 'bg-white text-slate-900 shadow-sm'
-                                : 'text-slate-500 hover:text-slate-700'
+                                ? 'bg-white text-slate-900 shadow-sm dark:bg-secondary dark:text-white'
+                                : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
                         "
                     >
                         <component :is="tab.icon" class="h-4 w-4" />
@@ -99,18 +97,10 @@ const { canCreate } = usePermissions();
                     </button>
                 </div>
 
-                <button
-                    type="button"
-                    class="flex items-center justify-center md:w-fit w-full gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white transition hover:bg-primary/50"
-                    @click="emit('search')"
-                >
-                    <Search class="h-4 w-4" />
-                    Search
-                </button>
             </div>
 
             <div
-                class="hidden flex-wrap items-center gap-5 text-xs text-slate-500 lg:flex"
+                class="hidden flex-wrap items-center gap-5 text-xs text-slate-500 lg:flex dark:text-gray-400"
             >
                 <span class="flex items-center gap-2">
                     <span

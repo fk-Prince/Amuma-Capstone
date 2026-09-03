@@ -63,6 +63,7 @@ class BookingResource extends JsonResource
                 'address' => $data['guardian']['address'] ?? null,
             ],
             'assessment' => $data['assessment'] ?? null,
+            'diagnoses' => $data['diagnoses'] ?? [],
             'reserved' => $data['reserved'] ?? null,
             'client' => $this->user,
             'payment' => $data['payment'] ?? null,

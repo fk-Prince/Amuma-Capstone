@@ -1,7 +1,7 @@
 <template>
     <section>
         <h3
-            class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
+            class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] dark:text-accent-300 mb-4"
         >
             <svg
                 class="h-3.5 w-3.5"

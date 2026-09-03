@@ -125,13 +125,13 @@ watch(
                     leave-to-class="opacity-0 scale-95"
                 >
                     <div
-                        class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+                        class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
                         role="dialog"
                         aria-modal="true"
                         :aria-label="title"
                     >
                         <div
-                            class="sticky top-0 z-10 flex items-center justify-between gap-4 rounded-t-2xl border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur"
+                            class="sticky top-0 z-10 flex items-center justify-between gap-4 rounded-t-2xl border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur dark:bg-secondary/95 dark:border-white/10"
                         >
                             <div class="flex items-center gap-3">
                                 <div
@@ -142,14 +142,14 @@ watch(
 
                                 <div>
                                     <h2
-                                        class="text-lg font-semibold leading-tight text-gray-900"
+                                        class="text-lg font-semibold leading-tight text-gray-900 dark:text-white"
                                     >
                                         {{ title }}
                                     </h2>
 
                                     <p
                                         v-if="subtitle"
-                                        class="mt-0.5 text-sm text-gray-500"
+                                        class="mt-0.5 text-sm text-gray-500 dark:text-gray-400"
                                     >
                                         {{ subtitle }}
                                     </p>
@@ -160,7 +160,7 @@ watch(
                                 type="button"
                                 @click="emit('close')"
                                 aria-label="Close dialog"
-                                class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                                class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                             >
                                 <X class="h-5 w-5" />
                             </button>
@@ -195,7 +195,7 @@ watch(
                                     />
                                     <p
                                         v-if="categoryLoadError"
-                                        class="mt-1.5 text-xs text-amber-600"
+                                        class="mt-1.5 text-xs text-amber-600 dark:text-amber-300"
                                     >
                                         Couldn't load existing categories — you
                                         can still type a new one.
@@ -231,13 +231,13 @@ watch(
                                             class="flex items-end justify-between"
                                         >
                                             <label
-                                                class="mb-1 flex items-center text-end gap-2 text-sm font-semibold text-slate-700"
+                                                class="mb-1 flex items-center text-end gap-2 text-sm font-semibold text-slate-700 dark:text-gray-400"
                                             >
                                                 Maximum Duration
                                             </label>
 
                                             <div
-                                                class="inline-flex shrink-0 rounded-lg border border-slate-200 bg-slate-50 p-0.5 mb-0.5"
+                                                class="inline-flex shrink-0 rounded-lg border border-slate-200 bg-slate-50 p-0.5 mb-0.5 dark:border-white/10 dark:bg-white/5"
                                             >
                                                 <button
                                                     type="button"
@@ -250,8 +250,8 @@ watch(
                                                     :class="
                                                         durationType ===
                                                         'minutes'
-                                                            ? 'bg-white text-slate-900 shadow-sm'
-                                                            : 'text-slate-500 hover:text-slate-700'
+                                                            ? 'bg-white text-slate-900 shadow-sm dark:bg-secondary dark:text-white'
+                                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
                                                     "
                                                 >
                                                     Minutes
@@ -267,8 +267,8 @@ watch(
                                                     class="rounded-md px-2.5 py-1 text-xs font-medium transition"
                                                     :class="
                                                         durationType === 'time'
-                                                            ? 'bg-white text-slate-900 shadow-sm'
-                                                            : 'text-slate-500 hover:text-slate-700'
+                                                            ? 'bg-white text-slate-900 shadow-sm dark:bg-secondary dark:text-white'
+                                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
                                                     "
                                                 >
                                                     HH:mm:ss
@@ -310,7 +310,7 @@ watch(
                                             >
                                                 <template #suffix>
                                                     <span
-                                                        class="border-l border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-500"
+                                                        class="border-l border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
                                                     >
                                                         Minutes
                                                     </span>
@@ -345,12 +345,12 @@ watch(
                             </div>
 
                             <div
-                                class="mt-8 flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end"
+                                class="mt-8 flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end dark:border-white/10"
                             >
                                 <button
                                     type="button"
                                     @click="emit('close')"
-                                    class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+                                    class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5 dark:focus-visible:ring-white/10"
                                 >
                                     Cancel
                                 </button>

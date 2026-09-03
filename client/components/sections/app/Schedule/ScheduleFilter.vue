@@ -1,6 +1,6 @@
 <template>
     <div
-        class="w-full rounded-t-2xl border border-muted-light/70 bg-white font-sans shadow-sm shadow-secondary/[0.03]"
+        class="w-full rounded-t-2xl border border-muted-light/70 bg-white font-sans shadow-sm shadow-secondary/[0.03] dark:bg-secondary dark:border-white/10"
     >
         <div class="flex flex-col gap-3 p-4 sm:p-5">
             <div class="flex items-center gap-3">
@@ -11,7 +11,7 @@
                     @click="expanded = !expanded"
                 >
                     <span
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 transition-colors group-hover:bg-primary-100"
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 transition-colors group-hover:bg-primary-100 dark:bg-primary-500/10 dark:text-primary-300 dark:group-hover:bg-primary-500/15"
                     >
                         <SlidersHorizontal class="h-5 w-5" />
                     </span>
@@ -19,7 +19,7 @@
                     <span class="min-w-0">
                         <span class="flex items-center gap-2">
                             <span
-                                class="font-semibold tracking-tight text-secondary"
+                                class="font-semibold tracking-tight text-secondary dark:text-white"
                             >
                                 Filter Schedule
                             </span>
@@ -32,7 +32,7 @@
                             </span>
                         </span>
 
-                        <span class="mt-0.5 block truncate text-xs text-muted">
+                        <span class="mt-0.5 block truncate text-xs text-muted dark:text-gray-400">
                             Refine appointments by date, status or service type
                         </span>
                     </span>
@@ -40,7 +40,7 @@
 
                 <div class="flex shrink-0 items-center gap-2 pl-2">
                     <div
-                        class="flex items-center gap-1 rounded-xl bg-muted-light p-1"
+                        class="flex items-center gap-1 rounded-xl bg-muted-light p-1 dark:bg-white/10"
                     >
                         <button
                             v-for="option in viewOptions"
@@ -51,8 +51,8 @@
                             class="flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
                             :class="
                                 filters.view === option.value
-                                    ? 'bg-white text-primary-600 shadow-sm'
-                                    : 'text-muted hover:text-secondary'
+                                    ? 'bg-white text-primary-600 shadow-sm dark:bg-secondary dark:text-primary-300'
+                                    : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
                             "
                             @click="setView(option.value)"
                         >
@@ -62,7 +62,7 @@
 
                     <button
                         type="button"
-                        class="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-primary-50 hover:text-primary-600"
+                        class="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-primary-500/10 dark:hover:text-primary-300 dark:text-gray-400"
                         :aria-expanded="expanded"
                         aria-label="Toggle filters"
                         @click="expanded = !expanded"
@@ -78,21 +78,21 @@
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div class="relative min-w-0 flex-1">
                     <Search
-                        class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                        class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted dark:text-gray-400"
                     />
 
                     <input
                         :value="filters.search"
                         type="text"
                         placeholder="Search patient, assigned nurse or schedule code"
-                        class="w-full rounded-xl border border-muted-light bg-muted-light/40 py-2.5 pl-10 pr-9 text-sm text-secondary transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25"
+                        class="w-full rounded-xl border border-muted-light bg-muted-light/40 py-2.5 pl-10 pr-9 text-sm text-secondary transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 dark:focus:bg-secondary dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-white/10"
                         @input="onSearchInput"
                     />
 
                     <button
                         v-if="filters.search"
                         type="button"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-secondary"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-secondary dark:text-gray-400 dark:hover:text-white"
                         aria-label="Clear search"
                         @click="clearSearch"
                     >
@@ -103,7 +103,7 @@
                 <button
                     v-if="activeFilterCount > 0"
                     type="button"
-                    class="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-muted-light px-3 text-xs font-medium text-muted transition-colors hover:border-danger/30 hover:bg-danger/10 hover:text-danger"
+                    class="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-muted-light px-3 text-xs font-medium text-muted transition-colors hover:border-danger/30 hover:bg-danger/10 hover:text-danger dark:border-white/10 dark:text-gray-400"
                     @click="resetFilters"
                 >
                     <X class="h-3.5 w-3.5" />
@@ -118,7 +118,7 @@
                 <span
                     v-for="chip in summaryChips"
                     :key="chip.key"
-                    class="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-medium text-primary-600"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-medium text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
                 >
                     <component :is="chip.icon" class="h-3 w-3" />
                     {{ chip.label }}
@@ -134,11 +134,11 @@
         >
             <div v-show="expanded" ref="panelRef" class="overflow-hidden">
                 <div
-                    class="space-y-5 border-t border-muted-light/70 p-4 sm:p-5"
+                    class="space-y-5 border-t border-muted-light/70 p-4 sm:p-5 dark:border-white/10"
                 >
                     <div>
                         <p
-                            class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted"
+                            class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
                         >
                             <CalendarDays class="h-3.5 w-3.5" />
                             Date range
@@ -151,11 +151,11 @@
                                 v-model="filters.date_from"
                                 type="date"
                                 aria-label="From"
-                                class="w-full min-w-0 rounded-xl border border-muted-light bg-muted-light/40 px-3 py-2.5 text-sm text-secondary transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 sm:w-44"
+                                class="w-full min-w-0 rounded-xl border border-muted-light bg-muted-light/40 px-3 py-2.5 text-sm text-secondary transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 sm:w-44 dark:focus:bg-secondary dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-white/10"
                                 @change="emitChange(true)"
                             />
 
-                            <span class="shrink-0 text-xs text-muted sm:px-1">
+                            <span class="shrink-0 text-xs text-muted sm:px-1 dark:text-gray-400">
                                 to
                             </span>
 
@@ -163,7 +163,7 @@
                                 v-model="filters.date_to"
                                 type="date"
                                 aria-label="To"
-                                class="w-full min-w-0 rounded-xl border border-muted-light bg-muted-light/40 px-3 py-2.5 text-sm text-secondary transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 sm:w-44"
+                                class="w-full min-w-0 rounded-xl border border-muted-light bg-muted-light/40 px-3 py-2.5 text-sm text-secondary transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 sm:w-44 dark:focus:bg-secondary dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-white/10"
                                 @change="emitChange(true)"
                             />
                         </div>
@@ -172,7 +172,7 @@
                     <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                         <div>
                             <p
-                                class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted"
+                                class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
                             >
                                 <CircleDot class="h-3.5 w-3.5" />
                                 Status
@@ -183,11 +183,11 @@
                                     v-for="status in statusOptions"
                                     :key="status.value"
                                     type="button"
-                                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors dark:border-white/10"
                                     :class="
                                         isStatusActive(status.value)
                                             ? 'border-primary bg-primary text-white'
-                                            : 'border-muted-light bg-white text-muted hover:border-primary/40 hover:text-primary-600'
+                                            : 'border-muted-light bg-white text-muted hover:border-primary/40 hover:text-primary-600 dark:bg-secondary dark:hover:text-primary-300 dark:border-white/10 dark:text-gray-400'
                                     "
                                     @click="toggleStatus(status.value)"
                                 >
@@ -198,7 +198,7 @@
 
                         <div>
                             <p
-                                class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted"
+                                class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
                             >
                                 <Layers class="h-3.5 w-3.5" />
                                 Service type
@@ -209,11 +209,11 @@
                                     v-for="type in typeOptions"
                                     :key="type.value"
                                     type="button"
-                                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors dark:border-white/10"
                                     :class="
                                         filters.type.includes(type.value)
                                             ? 'border-primary bg-primary text-white'
-                                            : 'border-muted-light bg-white text-muted hover:border-primary/40 hover:text-primary-600'
+                                            : 'border-muted-light bg-white text-muted hover:border-primary/40 hover:text-primary-600 dark:bg-secondary dark:hover:text-primary-300 dark:border-white/10 dark:text-gray-400'
                                     "
                                     @click="toggleType(type.value)"
                                 >
@@ -224,7 +224,7 @@
 
                         <div>
                             <p
-                                class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted"
+                                class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
                             >
                                 <UserCheck class="h-3.5 w-3.5" />
                                 Caseload
@@ -235,11 +235,11 @@
                                     v-for="option in caseloadOptions"
                                     :key="option.value"
                                     type="button"
-                                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors dark:border-white/10"
                                     :class="
                                         filters.assignment === option.value
                                             ? 'border-primary bg-primary text-white'
-                                            : 'border-muted-light bg-white text-muted hover:border-primary/40 hover:text-primary-600'
+                                            : 'border-muted-light bg-white text-muted hover:border-primary/40 hover:text-primary-600 dark:bg-secondary dark:hover:text-primary-300 dark:border-white/10 dark:text-gray-400'
                                     "
                                     @click="setAssignment(option.value)"
                                 >

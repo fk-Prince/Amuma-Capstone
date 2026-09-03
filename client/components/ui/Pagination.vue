@@ -1,6 +1,6 @@
 <template>
     <div class="flex justify-between items-center">
-        <div class="text-sm text-gray-600">
+        <div class="text-sm text-gray-600 dark:text-gray-400">
             Showing {{ startItem }} to {{ endItem }} of {{ totalItems }} items
         </div>
 
@@ -13,7 +13,7 @@
                     'px-3 py-2 border rounded-lg font-medium',
                     currentPage === page
                         ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white hover:bg-gray-50',
+                        : 'bg-white hover:bg-gray-50 dark:bg-secondary dark:hover:bg-white/5',
                 ]"
             >
                 {{ page }}

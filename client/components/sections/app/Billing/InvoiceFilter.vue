@@ -1,5 +1,5 @@
 <template>
-    <div class="w-full bg-white p-5 rounded-t-xl">
+    <div class="w-full bg-white p-5 rounded-t-xl dark:bg-secondary">
         <div
             class="flex items-center justify-between"
             :class="expanded ? 'mb-4' : ''"
@@ -10,14 +10,14 @@
                 @click="expanded = !expanded"
             >
                 <div
-                    class="h-10 w-10 rounded-xl bg-[#EAF4F2] flex items-center justify-center text-primary"
+                    class="h-10 w-10 rounded-xl bg-[#EAF4F2] flex items-center justify-center text-primary dark:bg-accent-500/15"
                 >
                     <SlidersHorizontal class="h-5 w-5" />
                 </div>
 
                 <div>
                     <div class="flex items-center gap-2">
-                        <h3 class="font-semibold text-[#16302E]">
+                        <h3 class="font-semibold text-[#16302E] dark:text-white">
                             Filter Invoice
                         </h3>
 
@@ -29,7 +29,7 @@
                         </span>
                     </div>
 
-                    <p class="text-xs text-[#6B8A87]">
+                    <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                         Search and filter invoice date range
                     </p>
                 </div>
@@ -37,7 +37,7 @@
 
             <button
                 type="button"
-                class="h-8 w-8 rounded-lg hover:bg-[#EAF4F2]"
+                class="h-8 w-8 rounded-lg hover:bg-[#EAF4F2] dark:hover:bg-accent-500/15"
                 @click="expanded = !expanded"
             >
                 <ChevronDown
@@ -51,37 +51,37 @@
             <div v-show="expanded" class="overflow-hidden">
                 <div class="mb-4 relative">
                     <Search
-                        class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B8A87]"
+                        class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B8A87] dark:text-gray-400"
                     />
 
                     <input
                         v-model="filters.search"
                         type="text"
                         placeholder="Search invoice code..."
-                        class="w-full rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] pl-9 py-2.5 text-sm"
+                        class="w-full rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] pl-9 py-2.5 text-sm dark:border-white/10 dark:bg-white/5"
                         @input="emitChange"
                     />
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="text-xs text-[#6B8A87]"> From </label>
+                        <label class="text-xs text-[#6B8A87] dark:text-gray-400"> From </label>
 
                         <input
                             v-model="filters.dateFrom"
                             type="datetime-local"
-                            class="w-full rounded-xl border border-[#EDF4F3] px-3 py-2.5 text-sm"
+                            class="w-full rounded-xl border border-[#EDF4F3] px-3 py-2.5 text-sm dark:border-white/10"
                             @change="emitChange"
                         />
                     </div>
 
                     <div>
-                        <label class="text-xs text-[#6B8A87]"> To </label>
+                        <label class="text-xs text-[#6B8A87] dark:text-gray-400"> To </label>
 
                         <input
                             v-model="filters.dateTo"
                             type="datetime-local"
-                            class="w-full rounded-xl border border-[#EDF4F3] px-3 py-2.5 text-sm"
+                            class="w-full rounded-xl border border-[#EDF4F3] px-3 py-2.5 text-sm dark:border-white/10"
                             @change="emitChange"
                         />
                     </div>

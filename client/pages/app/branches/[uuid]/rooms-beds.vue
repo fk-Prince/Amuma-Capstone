@@ -11,6 +11,7 @@ import { useToast } from "~/composables/useToast";
 import type { Bed, BedForm } from "~/types/bed";
 import { bedService } from "~/api/bed/BedService";
 import { usePagination } from "~/composables/usePagination";
+import { useDebounceFn } from "@vueuse/core";
 
 const { success, error } = useToast();
 
@@ -94,10 +95,12 @@ function goToPage(page: number) {
     fetchRoom();
 }
 
-const handleClicked = () => {
+const debouncedFetchRoom = useDebounceFn(() => {
     pagination.reset();
     fetchRoom();
-};
+}, 400);
+
+watch(searchData, debouncedFetchRoom);
 
 onMounted(async () => {
     await Promise.all([fetchRoom(), fetchOverview()]);
@@ -302,18 +305,17 @@ const roomMatchesCurrentFilter = (room: Room) => {
 </script>
 
 <template>
-    <div class="min-h-screen-header bg-slate-50">
-        <div class="mx-auto max-w-[1700px] space-y-6 p-4 md:p-6">
+    <div class="min-h-screen-header bg-slate-50 dark:bg-surface">
+        <div class="mx-auto space-y-6 p-4 md:p-6">
             <RoomDashboard @addRoom="addRoomClicked" :overview="overview" />
 
             <div
-                class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
-                <div class="border-b border-slate-100 p-5">
+                <div class="border-b border-slate-100 p-5 dark:border-white/10">
                     <RoomSearch
                         v-model="searchData"
                         v-model:activeTab="activeTab"
-                        @search="handleClicked"
                         @addRoom="addRoomClicked"
                     />
                 </div>
@@ -321,18 +323,22 @@ const roomMatchesCurrentFilter = (room: Room) => {
                 <div class="p-5">
                     <div class="mb-5 flex items-center justify-between">
                         <div>
-                            <h2 class="text-lg font-semibold text-slate-900">
+                            <h2
+                                class="text-lg font-semibold text-slate-900 dark:text-white"
+                            >
                                 Room Directory
                             </h2>
 
-                            <p class="mt-1 text-sm text-slate-500">
+                            <p
+                                class="mt-1 text-sm text-slate-500 dark:text-gray-400"
+                            >
                                 Browse and manage all rooms and their assigned
                                 beds.
                             </p>
                         </div>
 
                         <span
-                            class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600"
+                            class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 dark:bg-white/10 dark:text-gray-400"
                         >
                             {{ pagination.totalItems }}
                             {{
@@ -355,9 +361,9 @@ const roomMatchesCurrentFilter = (room: Room) => {
 
                     <div
                         v-if="!isLoading && roomData && roomData.length > 0"
-                        class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 mt-2 border-t border-slate-100"
+                        class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 mt-2 border-t border-slate-100 dark:border-white/10"
                     >
-                        <p class="text-xs text-slate-400">
+                        <p class="text-xs text-slate-400 dark:text-gray-500">
                             Showing {{ pagination.rangeStart }}–{{
                                 pagination.rangeEnd
                             }}
@@ -368,7 +374,7 @@ const roomMatchesCurrentFilter = (room: Room) => {
                         <div class="flex items-center gap-1">
                             <button
                                 type="button"
-                                class="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition"
+                                class="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
                                 :disabled="!pagination.canGoPrev"
                                 @click="
                                     goToPage(pagination.currentPage.value - 1)
@@ -381,11 +387,11 @@ const roomMatchesCurrentFilter = (room: Room) => {
                                 v-for="p in pagination.pageNumbers.value"
                                 :key="p"
                                 type="button"
-                                class="w-8 h-8 text-xs font-medium rounded-md border transition"
+                                class="w-8 h-8 text-xs font-medium rounded-md border transition dark:border-white/10"
                                 :class="
                                     p === pagination.currentPage.value
                                         ? 'bg-primary text-white border-primary/80'
-                                        : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                                        : 'border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5'
                                 "
                                 @click="goToPage(p)"
                             >
@@ -394,7 +400,7 @@ const roomMatchesCurrentFilter = (room: Room) => {
 
                             <button
                                 type="button"
-                                class="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition"
+                                class="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
                                 :disabled="!pagination.canGoNext"
                                 @click="
                                     goToPage(pagination.currentPage.value + 1)

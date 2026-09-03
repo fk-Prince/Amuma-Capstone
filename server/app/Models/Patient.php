@@ -24,7 +24,6 @@ class Patient extends Model
         'date_of_birth',
         'phone_number',
         'citizenship',
-        'assessment',
         'allergies',
     ];
 
@@ -32,7 +31,6 @@ class Patient extends Model
         'date_of_birth' => 'date',
         'height' => 'decimal:2',
         'weight' => 'decimal:2',
-        'assessment' => 'array',
         'allergies' => 'array',
     ];
 
@@ -69,6 +67,16 @@ class Patient extends Model
     public function activities()
     {
         return $this->hasMany(PatientActivity::class, 'patient_id', 'patient_id');
+    }
+
+    public function assessments()
+    {
+        return $this->hasMany(PatientAssessment::class, 'patient_id', 'patient_id');
+    }
+
+    public function diagnoses()
+    {
+        return $this->hasMany(PatientDiagnosis::class, 'patient_id', 'patient_id');
     }
 
     public function admissions()

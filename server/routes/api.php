@@ -96,6 +96,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // PORTAL BILLING (family/client-facing)
     Route::post('/refunds/action', [RefundController::class, 'store']);
+    Route::post('/refunds/issue', [RefundController::class, 'issue']);
     Route::post('/payments/action', [PaymentController::class, 'store']);
     Route::post('/payments/receipt', [PaymentController::class, 'receipt']);
 
@@ -112,6 +113,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/subscriptions-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
     Route::post('/subscriptions-validate',  [SubscriptionController::class, 'validateSubscription']);
     Route::post('/subscriptions-renew',  [SubscriptionController::class, 'renew']);
+    Route::post('/subscriptions-branch', [SubscriptionController::class, 'newBranchFromCapacity']);
+    Route::post('/subscriptions-apply-upgrade', [SubscriptionController::class, 'applyUpgrade']);
 
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);
 
@@ -136,6 +139,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // PRIVATE API ROUTES
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/patients/{uuid}/report', [PatientController::class, 'report']);
+    Route::post('/patients/{uuid}/diagnoses', [PatientController::class, 'storeDiagnosis']);
 
     Route::apiResources([
         'employees' => EmployeeController::class,

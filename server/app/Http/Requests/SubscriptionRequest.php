@@ -27,6 +27,14 @@ class SubscriptionRequest extends FormRequest
             'payment_method' => ['nullable', 'string'],
             'payment_type' => ['nullable', 'string'],
 
+            // Only sent when adding a branch against existing paid capacity,
+            // where it identifies the agency the caller already belongs to.
+            'branch_uuid' => ['nullable', 'string', 'exists:branches,uuid'],
+
+            // Which of the agency's subscriptions the new branch should join;
+            // ownership is re-checked server-side against the resolved agency.
+            'subscription_uuid' => ['nullable', 'string', 'exists:subscriptions,uuid'],
+
             // Agency data
             'agency_id'          => ['nullable'],
             'agency_name'        => ['nullable', 'string', 'required_with:agency_street,agency_city,agency_province,agency_country,agency_email'],
@@ -72,6 +80,7 @@ class SubscriptionRequest extends FormRequest
             'branch_settings.reserved_walkin_slots' => ['required', 'integer'],
             'branch_settings.enable_booking_pre_admission' => ['required', 'boolean'],
             'branch_settings.enable_booking_complete_admission' => ['required', 'boolean'],
+            'branch_settings.requires_full_payment_on_admit' => ['nullable', 'boolean'],
             'branch_settings.minimum_adl_hours' => ['required', 'integer'],
             'branch_settings.is_open' => ['required', 'boolean'],
         ];

@@ -22,7 +22,7 @@
         >
             <span
                 :class="[
-                    'absolute top-[3px] left-[3px] w-5 h-5 rounded-full bg-white shadow transition-transform duration-200',
+                    'absolute top-[3px] left-[3px] w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 dark:bg-secondary',
                     modelValue === 'yearly' ? 'translate-x-5' : 'translate-x-0',
                 ]"
             />

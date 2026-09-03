@@ -72,7 +72,7 @@ const saveBed = () => {
 
 <template>
     <div
-        class="rounded-2xl bg-white p-4"
+        class="rounded-2xl bg-white p-4 dark:bg-secondary"
         :class="{
             border: action !== 'update',
         }"
@@ -109,7 +109,7 @@ const saveBed = () => {
                     ]"
                 />
 
-                <p v-if="patient?.patient" class="text-xs text-gray-400 -mt-2">
+                <p v-if="patient?.patient" class="text-xs text-gray-400 -mt-2 dark:text-gray-500">
                     This bed has a patient assigned. Discharge the patient
                     before changing its status.
                 </p>
@@ -119,7 +119,7 @@ const saveBed = () => {
                 <button
                     type="button"
                     @click="cancelEdit"
-                    class="rounded-lg border px-4 py-2 text-sm text-slate-600"
+                    class="rounded-lg border px-4 py-2 text-sm text-slate-600 dark:text-gray-400 dark:border-white/10"
                 >
                     Cancel
                 </button>

@@ -138,10 +138,10 @@ function close() {
                         role="dialog"
                         aria-modal="true"
                         aria-label="Add Medication"
-                        class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+                        class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
                     >
                         <div
-                            class="sticky top-0 z-10 flex items-center justify-between gap-4 rounded-t-2xl border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur"
+                            class="sticky top-0 z-10 flex items-center justify-between gap-4 rounded-t-2xl border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur dark:bg-secondary/95 dark:border-white/10"
                         >
                             <div class="flex items-center gap-3">
                                 <div
@@ -152,11 +152,11 @@ function close() {
 
                                 <div>
                                     <h2
-                                        class="text-lg font-semibold leading-tight text-gray-900"
+                                        class="text-lg font-semibold leading-tight text-gray-900 dark:text-white"
                                     >
                                         Add Medication
                                     </h2>
-                                    <p class="mt-0.5 text-xs text-gray-400">
+                                    <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                                         Record a new medication and its
                                         administration schedule for this
                                         patient.
@@ -168,7 +168,7 @@ function close() {
                                 type="button"
                                 @click="close"
                                 aria-label="Close dialog"
-                                class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40"
+                                class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                             >
                                 <X class="h-5 w-5" />
                             </button>
@@ -280,13 +280,13 @@ function close() {
 
                                 <div>
                                     <label
-                                        class="mb-1.5 block text-sm font-semibold text-gray-700"
+                                        class="mb-1.5 block text-sm font-semibold text-gray-700 dark:text-gray-400"
                                     >
                                         Type
                                     </label>
 
                                     <div
-                                        class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5"
+                                        class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 dark:border-white/10 dark:bg-white/5"
                                     >
                                         <button
                                             type="button"
@@ -294,8 +294,8 @@ function close() {
                                             class="rounded-md px-4 py-1.5 text-sm font-medium transition"
                                             :class="
                                                 form.kind === 'Scheduled'
-                                                    ? 'bg-white text-emerald-600 shadow-sm'
-                                                    : 'text-slate-500 hover:text-slate-700'
+                                                    ? 'bg-white text-emerald-600 shadow-sm dark:bg-secondary dark:text-emerald-300'
+                                                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
                                             "
                                         >
                                             Scheduled
@@ -307,15 +307,15 @@ function close() {
                                             class="rounded-md px-4 py-1.5 text-sm font-medium transition"
                                             :class="
                                                 form.kind === 'PRN'
-                                                    ? 'bg-white text-emerald-600 shadow-sm'
-                                                    : 'text-slate-500 hover:text-slate-700'
+                                                    ? 'bg-white text-emerald-600 shadow-sm dark:bg-secondary dark:text-emerald-300'
+                                                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
                                             "
                                         >
                                             PRN
                                         </button>
                                     </div>
 
-                                    <p class="mt-1.5 text-xs text-gray-400">
+                                    <p class="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
                                         {{
                                             form.kind === "Scheduled"
                                                 ? "Given at fixed times every day."
@@ -326,23 +326,23 @@ function close() {
 
                                 <div v-if="form.kind === 'Scheduled'">
                                     <label
-                                        class="mb-1.5 block text-sm font-semibold text-gray-700"
+                                        class="mb-1.5 block text-sm font-semibold text-gray-700 dark:text-gray-400"
                                     >
                                         Times
                                     </label>
 
                                     <div
-                                        class="flex flex-wrap items-center gap-2 rounded-xl border p-3"
+                                        class="flex flex-wrap items-center gap-2 rounded-xl border p-3 dark:border-white/10"
                                         :class="
                                             errors.times
                                                 ? 'border-red-300'
-                                                : 'border-gray-200'
+                                                : 'border-gray-200 dark:border-white/10'
                                         "
                                     >
                                         <span
                                             v-for="time in sortedTimes"
                                             :key="time"
-                                            class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700"
+                                            class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                                         >
                                             <Clock class="h-3 w-3" />
                                             {{ formatTime(time) }}
@@ -350,7 +350,7 @@ function close() {
                                                 type="button"
                                                 @click="removeTime(time)"
                                                 :aria-label="`Remove ${formatTime(time)}`"
-                                                class="rounded-full p-0.5 text-emerald-500 transition hover:bg-emerald-100 hover:text-emerald-700"
+                                                class="rounded-full p-0.5 text-emerald-500 transition hover:bg-emerald-100 hover:text-emerald-700 dark:text-emerald-300 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-300"
                                             >
                                                 <X class="h-3 w-3" />
                                             </button>
@@ -358,7 +358,7 @@ function close() {
 
                                         <span
                                             v-if="!sortedTimes.length"
-                                            class="text-xs text-gray-400"
+                                            class="text-xs text-gray-400 dark:text-gray-500"
                                         >
                                             No times added yet.
                                         </span>
@@ -369,12 +369,12 @@ function close() {
                                             <input
                                                 v-model="newTime"
                                                 type="time"
-                                                class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-700 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-300"
+                                                class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-700 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:border-white/10 dark:text-gray-400"
                                             />
                                             <button
                                                 type="button"
                                                 @click="addTime"
-                                                class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
+                                                class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/15"
                                             >
                                                 <Plus class="h-3.5 w-3.5" />
                                                 Add
@@ -392,12 +392,12 @@ function close() {
                             </div>
 
                             <div
-                                class="mt-8 flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end"
+                                class="mt-8 flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end dark:border-white/10"
                             >
                                 <button
                                     type="button"
                                     @click="close"
-                                    class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+                                    class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5 dark:focus-visible:ring-white/10"
                                 >
                                     Cancel
                                 </button>

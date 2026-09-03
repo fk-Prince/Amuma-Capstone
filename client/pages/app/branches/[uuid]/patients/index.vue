@@ -48,7 +48,7 @@ const actionMenuItems = [
     {
         label: "View Information",
         icon: Eye,
-        class: "text-slate-500 hover:bg-slate-100 hover:text-slate-700",
+        class: "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-400",
         route: (patient: PatientRetrieve) => ({
             path: `/app/branches/${b_uuid.value}/patients/${patient.uuid}`,
             query: { tab: "overview" },
@@ -57,7 +57,7 @@ const actionMenuItems = [
     {
         label: "View Medication",
         icon: Pill,
-        class: "text-slate-500 hover:bg-slate-100 hover:text-slate-700",
+        class: "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-400",
         route: (patient: PatientRetrieve) => ({
             path: `/app/branches/${b_uuid.value}/patients/${patient.uuid}`,
             query: { tab: "medication" },
@@ -66,7 +66,7 @@ const actionMenuItems = [
     {
         label: "Schedules",
         icon: CalendarDays,
-        class: "text-slate-500 hover:bg-slate-100 hover:text-slate-700",
+        class: "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-400",
         route: (patient: PatientRetrieve) => ({
             path: `/app/branches/${b_uuid.value}/patients/${patient.uuid}`,
             query: { tab: "schedule" },
@@ -75,7 +75,7 @@ const actionMenuItems = [
     {
         label: "Vitals",
         icon: Activity,
-        class: "text-slate-500 hover:bg-slate-100 hover:text-slate-700",
+        class: "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-400",
         route: (patient: PatientRetrieve) => ({
             path: `/app/branches/${b_uuid.value}/patients/${patient.uuid}`,
             query: { tab: "vitals" },
@@ -191,15 +191,15 @@ const emptyStateSubtitle = computed(() =>
 </script>
 
 <template>
-    <div class="min-h-screen-header bg-slate-100 p-2">
+    <div class="min-h-screen-header bg-slate-100 p-2 dark:bg-surface">
         <div
             class="w-full min-h-[calc(100dvh-var(--header-h)-1rem)] lg:h-[calc(100dvh-var(--header-h)-1rem)] flex flex-col gap-4"
         >
             <div
-                class="bg-white rounded-lg shadow-sm border border-[#E4EFED] overflow-hidden flex-1 min-h-0 flex flex-col"
+                class="bg-white rounded-lg shadow-sm border border-[#E4EFED] overflow-hidden flex-1 min-h-0 flex flex-col dark:border-white/10 dark:bg-secondary"
             >
                 <div
-                    class="flex flex-col gap-3 px-3 sm:px-6 py-4 border-b border-[#E4EFED]"
+                    class="flex flex-col gap-3 px-3 sm:px-6 py-4 border-b border-[#E4EFED] dark:border-white/10"
                 >
                     <div class="flex gap-3 items-center flex-wrap">
                         <PatientFilter
@@ -216,7 +216,7 @@ const emptyStateSubtitle = computed(() =>
                         />
 
                         <div
-                            class="inline-flex items-center rounded-lg border border-[#E4EFED] bg-white p-1 shrink-0"
+                            class="inline-flex items-center rounded-lg border border-[#E4EFED] bg-white p-1 shrink-0 dark:border-white/10 dark:bg-secondary"
                         >
                             <button
                                 type="button"
@@ -224,7 +224,7 @@ const emptyStateSubtitle = computed(() =>
                                 :class="
                                     viewMode === 'table'
                                         ? 'bg-primary text-white'
-                                        : 'text-slate-400 hover:text-slate-600'
+                                        : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400'
                                 "
                                 @click="viewMode = 'table'"
                             >
@@ -237,7 +237,7 @@ const emptyStateSubtitle = computed(() =>
                                 :class="
                                     viewMode === 'card'
                                         ? 'bg-primary text-white'
-                                        : 'text-slate-400 hover:text-slate-600'
+                                        : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400'
                                 "
                                 @click="viewMode = 'card'"
                             >
@@ -248,7 +248,7 @@ const emptyStateSubtitle = computed(() =>
                 </div>
 
                 <template v-if="viewMode === 'table'">
-                    <div class="flex-1 min-h-0 overflow-y-auto relative">
+                    <div class="flex-1 min-h-0 overflow-auto relative">
                         <div
                             v-if="isFetching && !isLoading"
                             class="absolute inset-0 bg-white/50 z-20 pointer-events-none"
@@ -257,35 +257,35 @@ const emptyStateSubtitle = computed(() =>
                         <table class="w-full text-left border-collapse">
                             <thead class="sticky top-0 z-10">
                                 <tr
-                                    class="border-b border-[#E4EFED] bg-[#F7FAF9]"
+                                    class="border-b border-[#E4EFED] bg-[#F7FAF9] dark:border-white/10 dark:bg-white/5"
                                 >
                                     <th
-                                        class="py-3 pl-6 pr-3 text-xs font-semibold text-muted uppercase tracking-wide"
+                                        class="py-3 pl-6 pr-3 text-xs font-semibold text-muted uppercase tracking-wide dark:text-gray-400"
                                     >
                                         Patient
                                     </th>
                                     <th
-                                        class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide"
+                                        class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide dark:text-gray-400"
                                     >
                                         Gender
                                     </th>
                                     <th
-                                        class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide"
+                                        class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide dark:text-gray-400"
                                     >
                                         Birthdate
                                     </th>
                                     <th
-                                        class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide"
+                                        class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide dark:text-gray-400"
                                     >
                                         Citizen
                                     </th>
                                     <th
-                                        class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide"
+                                        class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide dark:text-gray-400"
                                     >
                                         Care Type
                                     </th>
                                     <th
-                                        class="py-3 pl-3 pr-6 text-xs font-semibold text-muted uppercase tracking-wide text-right"
+                                        class="py-3 pl-3 pr-6 text-xs font-semibold text-muted uppercase tracking-wide text-right dark:text-gray-400"
                                     >
                                         Actions
                                     </th>
@@ -300,7 +300,7 @@ const emptyStateSubtitle = computed(() =>
                                     >
                                         <td colspan="6" class="py-4 px-6">
                                             <div
-                                                class="h-6 rounded-md bg-slate-100 animate-pulse"
+                                                class="h-6 rounded-md bg-slate-100 animate-pulse dark:bg-white/10"
                                             />
                                         </td>
                                     </tr>
@@ -317,7 +317,7 @@ const emptyStateSubtitle = computed(() =>
                                         >
                                             <svg
                                                 viewBox="0 0 24 24"
-                                                class="w-10 h-10 text-gray-300 mb-3"
+                                                class="w-10 h-10 text-gray-300 mb-3 dark:text-gray-500"
                                                 fill="none"
                                                 stroke="currentColor"
                                                 stroke-width="1.5"
@@ -329,13 +329,13 @@ const emptyStateSubtitle = computed(() =>
                                             </svg>
 
                                             <p
-                                                class="text-sm font-medium text-gray-500"
+                                                class="text-sm font-medium text-gray-500 dark:text-gray-400"
                                             >
                                                 {{ emptyStateTitle }}
                                             </p>
 
                                             <p
-                                                class="text-xs text-gray-400 mt-1"
+                                                class="text-xs text-gray-400 mt-1 dark:text-gray-500"
                                             >
                                                 {{ emptyStateSubtitle }}
                                             </p>
@@ -347,12 +347,12 @@ const emptyStateSubtitle = computed(() =>
                                     v-else
                                     v-for="patient in patients"
                                     :key="patient.patient_id"
-                                    class="hover:bg-[#F7FAF9] transition"
+                                    class="hover:bg-[#F7FAF9] transition dark:hover:bg-white/5"
                                 >
                                     <td class="py-4 pl-6 pr-3">
                                         <div class="flex items-center gap-3">
                                             <div
-                                                class="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-slate-100"
+                                                class="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"
                                             >
                                                 <img
                                                     :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(patient.full_name)}&background=random&color=fff`"
@@ -362,12 +362,12 @@ const emptyStateSubtitle = computed(() =>
                                             </div>
                                             <div>
                                                 <p
-                                                    class="text-sm font-semibold text-[#16302E]"
+                                                    class="text-sm font-semibold text-[#16302E] dark:text-white"
                                                 >
                                                     {{ patient.full_name }}
                                                 </p>
                                                 <p
-                                                    class="text-xs text-gray-400"
+                                                    class="text-xs text-gray-400 dark:text-gray-500"
                                                 >
                                                     {{
                                                         patient.location
@@ -380,13 +380,13 @@ const emptyStateSubtitle = computed(() =>
                                     </td>
 
                                     <td
-                                        class="py-4 px-3 text-sm text-[#16302E]"
+                                        class="py-4 px-3 text-sm text-[#16302E] dark:text-white"
                                     >
                                         {{ patient.gender ?? "—" }}
                                     </td>
 
                                     <td
-                                        class="py-4 px-3 text-sm text-[#16302E]"
+                                        class="py-4 px-3 text-sm text-[#16302E] dark:text-white"
                                     >
                                         {{
                                             calculateAge(patient.date_of_birth)
@@ -394,13 +394,13 @@ const emptyStateSubtitle = computed(() =>
                                     </td>
 
                                     <td
-                                        class="py-4 px-3 text-sm text-[#16302E]"
+                                        class="py-4 px-3 text-sm text-[#16302E] dark:text-white"
                                     >
                                         {{ patient.citizenship ?? "—" }}
                                     </td>
 
                                     <td
-                                        class="py-4 px-3 text-sm text-[#16302E]"
+                                        class="py-4 px-3 text-sm text-[#16302E] dark:text-white"
                                     >
                                         {{ careType(patient) }}
                                     </td>
@@ -441,7 +441,7 @@ const emptyStateSubtitle = computed(() =>
                                                     <button
                                                         type="button"
                                                         title="Actions"
-                                                        class="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                                                        class="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-400"
                                                         @click.stop="toggle"
                                                     >
                                                         <MoreVertical
@@ -452,13 +452,13 @@ const emptyStateSubtitle = computed(() =>
 
                                                 <template #default="{ close }">
                                                     <div
-                                                        class="bg-white py-1.5"
+                                                        class="bg-white py-1.5 dark:bg-secondary"
                                                     >
                                                         <button
                                                             v-for="item in actionMenuItems"
                                                             :key="item.label"
                                                             type="button"
-                                                            class="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                                                            class="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
                                                             @click.stop="
                                                                 close();
                                                                 goTo(
@@ -470,7 +470,7 @@ const emptyStateSubtitle = computed(() =>
                                                         >
                                                             <component
                                                                 :is="item.icon"
-                                                                class="h-4 w-4 shrink-0 text-slate-400"
+                                                                class="h-4 w-4 shrink-0 text-slate-400 dark:text-gray-500"
                                                             />
                                                             {{ item.label }}
                                                         </button>
@@ -486,9 +486,9 @@ const emptyStateSubtitle = computed(() =>
 
                     <div
                         v-if="!isLoading && patients && patients.length > 0"
-                        class="shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-[#E4EFED] bg-white"
+                        class="shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-[#E4EFED] bg-white dark:border-white/10 dark:bg-secondary"
                     >
-                        <p class="text-xs text-muted">
+                        <p class="text-xs text-muted dark:text-gray-400">
                             Showing {{ pagination.rangeStart }}–{{
                                 pagination.rangeEnd
                             }}
@@ -498,7 +498,7 @@ const emptyStateSubtitle = computed(() =>
                         <div class="flex items-center gap-1">
                             <button
                                 type="button"
-                                class="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4EFED] text-[#16302E] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F7FAF9] transition"
+                                class="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4EFED] text-[#16302E] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F7FAF9] transition dark:text-white dark:border-white/10 dark:hover:bg-white/5"
                                 :disabled="!pagination.canGoPrev"
                                 @click="
                                     goToPage(pagination.currentPage.value - 1)
@@ -511,11 +511,11 @@ const emptyStateSubtitle = computed(() =>
                                 v-for="p in pagination.pageNumbers.value"
                                 :key="p"
                                 type="button"
-                                class="w-8 h-8 text-xs font-medium rounded-md border transition"
+                                class="w-8 h-8 text-xs font-medium rounded-md border transition dark:border-white/10"
                                 :class="
                                     p === pagination.currentPage.value
                                         ? 'bg-primary text-white border-primary/80'
-                                        : 'border-[#E4EFED] text-[#16302E] hover:bg-[#F7FAF9]'
+                                        : 'border-[#E4EFED] text-[#16302E] hover:bg-[#F7FAF9] dark:text-white dark:border-white/10 dark:hover:bg-white/5'
                                 "
                                 @click="goToPage(p)"
                             >
@@ -524,7 +524,7 @@ const emptyStateSubtitle = computed(() =>
 
                             <button
                                 type="button"
-                                class="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4EFED] text-[#16302E] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F7FAF9] transition"
+                                class="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4EFED] text-[#16302E] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F7FAF9] transition dark:text-white dark:border-white/10 dark:hover:bg-white/5"
                                 :disabled="!pagination.canGoNext"
                                 @click="
                                     goToPage(pagination.currentPage.value + 1)
@@ -548,34 +548,34 @@ const emptyStateSubtitle = computed(() =>
                             <div
                                 v-for="n in 6"
                                 :key="n"
-                                class="animate-pulse rounded-2xl border border-slate-100 bg-white p-5 shadow-sm space-y-4"
+                                class="animate-pulse rounded-2xl border border-slate-100 bg-white p-5 shadow-sm space-y-4 dark:border-white/10 dark:bg-secondary"
                             >
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="h-12 w-12 rounded-full bg-slate-100"
+                                        class="h-12 w-12 rounded-full bg-slate-100 dark:bg-white/10"
                                     />
                                     <div class="flex-1 space-y-2">
                                         <div
-                                            class="h-4 w-2/3 rounded bg-slate-100"
+                                            class="h-4 w-2/3 rounded bg-slate-100 dark:bg-white/10"
                                         />
                                         <div
-                                            class="h-3 w-1/2 rounded bg-slate-100"
+                                            class="h-3 w-1/2 rounded bg-slate-100 dark:bg-white/10"
                                         />
                                     </div>
                                 </div>
-                                <div class="h-3 w-full rounded bg-slate-100" />
-                                <div class="h-3 w-3/4 rounded bg-slate-100" />
+                                <div class="h-3 w-full rounded bg-slate-100 dark:bg-white/10" />
+                                <div class="h-3 w-3/4 rounded bg-slate-100 dark:bg-white/10" />
                             </div>
                         </div>
 
                         <div
                             v-else-if="patients.length === 0"
-                            class="flex flex-col items-center justify-center rounded-2xl border border-slate-100 bg-white py-20 shadow-sm"
+                            class="flex flex-col items-center justify-center rounded-2xl border border-slate-100 bg-white py-20 shadow-sm dark:border-white/10 dark:bg-secondary"
                         >
-                            <p class="text-sm font-medium text-slate-500">
+                            <p class="text-sm font-medium text-slate-500 dark:text-gray-400">
                                 {{ emptyStateTitle }}
                             </p>
-                            <p class="mt-1 text-xs text-slate-400">
+                            <p class="mt-1 text-xs text-slate-400 dark:text-gray-500">
                                 {{ emptyStateSubtitle }}
                             </p>
                         </div>
@@ -603,9 +603,9 @@ const emptyStateSubtitle = computed(() =>
 
                     <div
                         v-if="!isLoading && patients.length"
-                        class="shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-[#E4EFED] bg-white"
+                        class="shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-[#E4EFED] bg-white dark:border-white/10 dark:bg-secondary"
                     >
-                        <p class="text-xs text-muted">
+                        <p class="text-xs text-muted dark:text-gray-400">
                             Showing {{ pagination.rangeStart }}–{{
                                 pagination.rangeEnd
                             }}
@@ -615,7 +615,7 @@ const emptyStateSubtitle = computed(() =>
                         <div class="flex items-center gap-1">
                             <button
                                 type="button"
-                                class="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4EFED] text-[#16302E] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F7FAF9] transition"
+                                class="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4EFED] text-[#16302E] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F7FAF9] transition dark:text-white dark:border-white/10 dark:hover:bg-white/5"
                                 :disabled="!pagination.canGoPrev"
                                 @click="
                                     goToPage(pagination.currentPage.value - 1)
@@ -628,11 +628,11 @@ const emptyStateSubtitle = computed(() =>
                                 v-for="p in pagination.pageNumbers.value"
                                 :key="p"
                                 type="button"
-                                class="w-8 h-8 text-xs font-medium rounded-md border transition"
+                                class="w-8 h-8 text-xs font-medium rounded-md border transition dark:border-white/10"
                                 :class="
                                     p === pagination.currentPage.value
                                         ? 'bg-primary text-white border-primary/80'
-                                        : 'border-[#E4EFED] text-[#16302E] hover:bg-[#F7FAF9]'
+                                        : 'border-[#E4EFED] text-[#16302E] hover:bg-[#F7FAF9] dark:text-white dark:border-white/10 dark:hover:bg-white/5'
                                 "
                                 @click="goToPage(p)"
                             >
@@ -641,7 +641,7 @@ const emptyStateSubtitle = computed(() =>
 
                             <button
                                 type="button"
-                                class="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4EFED] text-[#16302E] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F7FAF9] transition"
+                                class="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4EFED] text-[#16302E] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F7FAF9] transition dark:text-white dark:border-white/10 dark:hover:bg-white/5"
                                 :disabled="!pagination.canGoNext"
                                 @click="
                                     goToPage(pagination.currentPage.value + 1)

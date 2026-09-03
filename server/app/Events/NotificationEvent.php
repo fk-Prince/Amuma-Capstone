@@ -36,8 +36,8 @@ class NotificationEvent implements ShouldBroadcastNow
             'branch_uuid' => $this->branch_uuid,
             'message_type' => $this->message_type,
             'booking' => [
-                ...$this->booking->toArray(),
-                'status' => $this->booking->status ?? 'Pending',
+                ...($this->booking?->toArray() ?? []),
+                'status' => $this->booking?->status ?? 'Pending',
             ],
         ];
     }

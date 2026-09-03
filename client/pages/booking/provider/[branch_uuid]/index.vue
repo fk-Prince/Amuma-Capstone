@@ -1,11 +1,11 @@
 <template>
-    <div class="min-h-screen flex flex-col bg-slate-50 relative dark:bg-secondary">
-        <div class="mx-auto w-full md:px-[5%] lg:px-[8%] bg-white dark:bg-secondary">
-            <!-- <div class="px-6 sm:px-12">
+    <div class="min-h-screen flex flex-col bg-slate-50 relative dark:bg-surface">
+        <div class="mx-auto w-full max-w-[100rem] bg-white dark:bg-secondary">
+            <!-- <div class="px-6">
                 <Navbar @change="scrollToSection" />
             </div> -->
 
-            <div class="px-6 sm:px-12 pt-5">
+            <div class="px-6 pt-5">
                 <Breadcrumb
                     :items="[
                         { label: 'Find a Provider', to: '/booking/search' },
@@ -14,7 +14,7 @@
                 />
             </div>
 
-            <div class="px-6 sm:px-12 scroll-mt-20" ref="overviewRef">
+            <div class="px-6 scroll-mt-20" ref="overviewRef">
                 <ProviderImage
                     :loading="loading"
                     :primaryImage="branch?.image"
@@ -23,7 +23,7 @@
                 />
             </div>
 
-            <div class="px-6 sm:px-12 pb-28 lg:pb-16">
+            <div class="px-6 pb-28 lg:pb-16">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-2">
                     <div
                         class="lg:col-span-2 flex flex-col divide-y divide-gray-100 dark:divide-white/10"

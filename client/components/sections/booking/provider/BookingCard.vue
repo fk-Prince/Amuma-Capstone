@@ -4,12 +4,12 @@
             v-if="loading"
             class="hidden lg:block sticky top-24 rounded-2xl border border-gray-200 p-5 animate-pulse dark:border-white/10"
         >
-            <div class="h-4 w-32 rounded bg-gray-200"></div>
+            <div class="h-4 w-32 rounded bg-gray-200 dark:bg-white/15"></div>
             <div class="mt-4 flex flex-col gap-3">
-                <div class="h-16 rounded-xl bg-gray-200"></div>
-                <div class="h-16 rounded-xl bg-gray-200"></div>
+                <div class="h-16 rounded-xl bg-gray-200 dark:bg-white/15"></div>
+                <div class="h-16 rounded-xl bg-gray-200 dark:bg-white/15"></div>
             </div>
-            <div class="mt-4 h-11 rounded-xl bg-gray-200"></div>
+            <div class="mt-4 h-11 rounded-xl bg-gray-200 dark:bg-white/15"></div>
         </div>
 
         <div
@@ -28,8 +28,8 @@
                         class="h-4 w-4 shrink-0"
                         :class="
                             getBranchTimeDisplay(branch?.settings).is24Hours
-                                ? 'text-emerald-600'
-                                : 'text-slate-400'
+                                ? 'text-emerald-600 dark:text-emerald-300'
+                                : 'text-slate-400 dark:text-gray-500'
                         "
                         fill="none"
                         viewBox="0 0 24 24"
@@ -45,7 +45,7 @@
 
                     <span
                         v-if="getBranchTimeDisplay(branch?.settings).is24Hours"
-                        class="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700"
+                        class="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                     >
                         Open 24 Hours
                     </span>
@@ -103,7 +103,7 @@
                         class="h-5 w-5 shrink-0 text-primary"
                     />
 
-                    <Circle v-else class="h-5 w-5 shrink-0 text-gray-300" />
+                    <Circle v-else class="h-5 w-5 shrink-0 text-gray-300 dark:text-gray-500" />
                 </button>
 
                 <button
@@ -161,7 +161,7 @@
 
                         <span
                             v-else
-                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200 dark:bg-white/10 dark:text-gray-300"
+                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200 dark:bg-white/10 dark:text-gray-300 dark:ring-white/10"
                         >
                             <span
                                 class="h-1.5 w-1.5 rounded-full bg-gray-400"
@@ -173,10 +173,10 @@
 
                     <CheckCircle2
                         v-if="selected === 'facility'"
-                        class="h-5 w-5 shrink-0 text-emerald-600"
+                        class="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300"
                     />
 
-                    <Circle v-else class="h-5 w-5 shrink-0 text-gray-300" />
+                    <Circle v-else class="h-5 w-5 shrink-0 text-gray-300 dark:text-gray-500" />
                 </button>
 
                 <p
@@ -205,7 +205,7 @@
             <div class="flex items-center gap-3">
                 <button
                     type="button"
-                    class="flex flex-1 items-center gap-3 rounded-xl border border-gray-200 px-4 py-2.5 text-left transition hover:border-gray-300 dark:border-white/10"
+                    class="flex flex-1 items-center gap-3 rounded-xl border border-gray-200 px-4 py-2.5 text-left transition hover:border-gray-300 dark:border-white/10 dark:hover:border-white/10"
                     @click="mobileSheetOpen = true"
                 >
                     <span
@@ -258,7 +258,7 @@
                             class="fixed inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-3xl bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] dark:bg-secondary"
                         >
                             <div
-                                class="mx-auto mb-4 h-1.5 w-10 rounded-full bg-gray-200"
+                                class="mx-auto mb-4 h-1.5 w-10 rounded-full bg-gray-200 dark:bg-white/15"
                             />
 
                             <div class="flex items-center justify-between">
@@ -268,7 +268,7 @@
 
                                 <button
                                     type="button"
-                                    class="text-gray-400 hover:text-gray-600 dark:text-gray-500"
+                                    class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
                                     aria-label="Close"
                                     @click="mobileSheetOpen = false"
                                 >
@@ -329,7 +329,7 @@
 
                                     <Circle
                                         v-else
-                                        class="h-5 w-5 shrink-0 text-gray-300"
+                                        class="h-5 w-5 shrink-0 text-gray-300 dark:text-gray-500"
                                     />
                                 </button>
 
@@ -392,7 +392,7 @@
 
                                         <span
                                             v-else
-                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200 dark:bg-white/10 dark:text-gray-300"
+                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200 dark:bg-white/10 dark:text-gray-300 dark:ring-white/10"
                                         >
                                             <span
                                                 class="h-1.5 w-1.5 rounded-full bg-gray-400"
@@ -404,12 +404,12 @@
 
                                     <CheckCircle2
                                         v-if="selected === 'facility'"
-                                        class="h-5 w-5 shrink-0 text-emerald-600"
+                                        class="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300"
                                     />
 
                                     <Circle
                                         v-else
-                                        class="h-5 w-5 shrink-0 text-gray-300"
+                                        class="h-5 w-5 shrink-0 text-gray-300 dark:text-gray-500"
                                     />
                                 </button>
                             </div>

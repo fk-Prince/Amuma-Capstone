@@ -44,18 +44,18 @@ const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
 </script>
 
 <template>
-    <div class="bg-white px-5 py-2 space-y-5">
+    <div class="bg-white px-5 py-2 space-y-5 dark:bg-secondary">
         <div class="flex gap-2">
             <div class="relative flex-1">
                 <Search
-                    class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                    class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
                 />
 
                 <BaseInput
                     :model-value="modelValue"
                     @update:model-value="emit('update:modelValue', $event)"
-                    placeholder="Search service..."
-                    input-class="pl-11 rounded-xl border-[#E4EFED] focus:border-primary focus:ring-primary/20"
+                    placeholder="Search service or category..."
+                    input-class="pl-11 rounded-xl border-[#E4EFED] focus:border-primary focus:ring-primary/20 dark:border-white/10"
                 />
             </div>
 
@@ -75,7 +75,7 @@ const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
             class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
         >
             <div
-                class="relative inline-grid w-full grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm lg:w-auto"
+                class="relative inline-grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm lg:w-auto dark:border-white/10 dark:bg-secondary"
             >
                 <div
                     class="absolute inset-y-1 left-1 rounded-lg bg-primary transition-transform duration-300 ease-out"
@@ -93,7 +93,7 @@ const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
                     :class="
                         activeTab === tab.label
                             ? 'text-white'
-                            : 'text-slate-500 hover:text-slate-700'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
                     "
                     @click="emit('update:activeTab', tab.label)"
                 >
@@ -105,7 +105,7 @@ const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
 
             <div class="flex flex-wrap items-center gap-4">
                 <div
-                    class="hidden items-center gap-5 text-xs text-slate-500 lg:flex"
+                    class="hidden items-center gap-5 text-xs text-slate-500 lg:flex dark:text-gray-400"
                 >
                     <span class="flex items-center gap-2">
                         <span

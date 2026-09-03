@@ -81,7 +81,7 @@
 
                                 <button
                                     type="button"
-                                    class="shrink-0 text-slate-400 hover:text-slate-600 dark:text-gray-500"
+                                    class="shrink-0 text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400"
                                     @click="dropdownOpen = false"
                                 >
                                     <svg

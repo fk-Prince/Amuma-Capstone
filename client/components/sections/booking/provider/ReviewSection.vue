@@ -1,7 +1,7 @@
 <template>
     <section class="rounded-2xl p-8 md:p-10">
         <div class="flex items-baseline gap-3 mb-8">
-            <span class="text-2xl text-primary">05</span>
+            <span class="text-2xl text-primary">06</span>
             <div>
                 <h2 class="text-xl text-primary">
                     {{
@@ -171,7 +171,7 @@
                     class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
                     <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
-                        Assessment
+                        Diagnosis
                         <span
                             class="ml-1 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
                             >(Optional)</span
@@ -188,30 +188,34 @@
 
                 <div class="p-5">
                     <p
-                        v-if="!assessments.length"
+                        v-if="!diagnoses.length"
                         class="text-sm text-slate-400 dark:text-gray-500"
                     >
-                        No assessment details were provided.
+                        No diagnoses were provided.
                     </p>
+
                     <div v-else class="space-y-6">
                         <div
-                            v-for="(assessment, index) in assessments"
+                            v-for="(entry, index) in diagnoses"
                             :key="index"
                             class="pb-6 border-b border-slate-100 last:pb-0 last:border-b-0 dark:border-white/10"
                         >
                             <h4
                                 class="text-xs font-semibold text-slate-600 mb-3 dark:text-gray-300"
                             >
-                                Assessment {{ index + 1 }}
+                                Diagnosis {{ index + 1 }}
                             </h4>
+
                             <dl
                                 class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3"
                             >
                                 <div
-                                    v-for="row in getAssessmentRows(assessment)"
+                                    v-for="row in getDiagnosisRows(entry)"
                                     :key="row.label"
                                 >
-                                    <dt class="text-xs text-slate-400 dark:text-gray-500">
+                                    <dt
+                                        class="text-xs text-slate-400 dark:text-gray-500"
+                                    >
                                         {{ row.label }}
                                     </dt>
                                     <dd
@@ -225,6 +229,94 @@
                     </div>
                 </div>
             </div>
+
+            <div class="rounded-xl border border-slate-200 dark:border-white/10">
+                <div
+                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
+                >
+                    <h3
+                        class="text-sm font-semibold text-slate-800 dark:text-white"
+                    >
+                        Assessment
+                        <span
+                            class="ml-1 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                            >(Optional)</span
+                        >
+                    </h3>
+
+                    <button
+                        type="button"
+                        @click="$emit('edit-step', 'step5')"
+                        class="flex items-center gap-1 text-xs font-medium text-primary hover:underline underline-offset-2"
+                    >
+                        <Pencil class="h-3 w-3" /> Edit
+                    </button>
+                </div>
+
+                <div class="p-5">
+                    <p
+                        v-if="!assessments.length"
+                        class="text-sm text-slate-400 dark:text-gray-500"
+                    >
+                        No assessment details were provided.
+                    </p>
+
+                    <template v-else>
+                        <dl
+                            class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3"
+                        >
+                            <div
+                                v-for="row in getAssessmentRows(assessments[0])"
+                                :key="row.label"
+                            >
+                                <dt
+                                    class="text-xs text-slate-400 dark:text-gray-500"
+                                >
+                                    {{ row.label }}
+                                </dt>
+                                <dd
+                                    class="text-sm font-medium text-slate-800 mt-0.5 break-words dark:text-white"
+                                >
+                                    {{ row.value }}
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <div
+                            v-if="lifeSystemRows(assessments[0]).length"
+                            class="mt-5 border-t border-slate-100 pt-4 dark:border-white/10"
+                        >
+                            <p
+                                class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                            >
+                                Life System Profile
+                            </p>
+
+                            <dl
+                                class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3"
+                            >
+                                <div
+                                    v-for="row in lifeSystemRows(
+                                        assessments[0],
+                                    )"
+                                    :key="row.label"
+                                >
+                                    <dt
+                                        class="text-xs text-slate-400 dark:text-gray-500"
+                                    >
+                                        {{ row.label }}
+                                    </dt>
+                                    <dd
+                                        class="text-sm font-medium text-slate-800 mt-0.5 break-words dark:text-white"
+                                    >
+                                        {{ row.value }}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </template>
+                </div>
+            </div>
         </div>
     </section>
 </template>
@@ -234,10 +326,17 @@ import { computed } from "vue";
 import { Pencil } from "lucide-vue-next";
 import type { HomecareBooking, FacilityBooking } from "~/types/booking";
 import type { Patient, Guardian, Assessment } from "~/types/patient";
+import type { Diagnosis } from "~/types/patient";
 import type { Service } from "~/types/service";
 import type { BranchFacility, BranchHomecare } from "~/types/branch";
 import { useMedicalServices } from "~/composables/useBooking";
 import { formatCurrency } from "~/utils/currency";
+import {
+    LIFE_SYSTEM_ACTIVITIES,
+    activityLabel,
+    assessmentLabel,
+    lifeSystemLabel,
+} from "~/utils/assessment";
 
 const props = defineProps<{
     category: "homecare" | "facility" | null;
@@ -246,6 +345,7 @@ const props = defineProps<{
     patient: Patient;
     guardian: Guardian;
     assessments: Assessment[];
+    diagnoses: Diagnosis[];
     services: Service[];
     branchHomecare?: BranchHomecare;
     branchFacility?: BranchFacility[];
@@ -528,59 +628,41 @@ const guardianRows = computed<Row[]>(() => {
     ];
 });
 
-function getAssessmentRows(assessment: Assessment): Row[] {
+function getDiagnosisRows(entry: Diagnosis): Row[] {
+    return [
+        { label: "Primary Diagnosis", value: entry.diagnosis ?? "" },
+        { label: "Date Diagnosed", value: entry.diagnosis_date ? formatDate(entry.diagnosis_date) : "" },
+        { label: "Diagnosis Notes", value: entry.diagnosis_notes ?? "" },
+        { label: "Supporting Document", value: entry.diagnosis_file_name ?? "" },
+    ].filter((row) => Boolean(row.value));
+}
+
+function lifeSystemRows(assessment?: Assessment): Row[] {
+    return LIFE_SYSTEM_ACTIVITIES.map((activity) => ({
+        label: activityLabel(activity),
+        value: lifeSystemLabel(assessment?.life_system_profile?.[activity]),
+    })).filter((row) => Boolean(row.value));
+}
+
+function getAssessmentRows(assessment?: Assessment): Row[] {
+    if (!assessment) return [];
+
     const rows: Row[] = [
         {
-            label: "Primary Diagnosis",
-            value: assessment.diagnosis ?? "",
-        },
-        {
-            label: "Date Diagnosed",
-            value: formatDate(assessment.diagnosis_date),
-        },
-        {
-            label: "Diagnosis Notes",
-            value: assessment.diagnosis_notes ?? "",
-        },
-        {
-            label: "Supporting Document",
-            value: assessment.diagnosis_file_name ?? "",
-        },
-        {
-            label: "Blood Pressure",
-            value: assessment.blood_pressure ?? "",
-        },
-        {
-            label: "Pulse Rate",
-            value: assessment.pulse_rate ? `${assessment.pulse_rate} bpm` : "",
-        },
-        {
-            label: "Respiratory Rate",
-            value: assessment.respiratory_rate
-                ? `${assessment.respiratory_rate} breaths/min`
-                : "",
-        },
-        {
-            label: "Temperature",
-            value: assessment.temperature ? `${assessment.temperature} °C` : "",
-        },
-        {
-            label: "Oxygen Saturation",
-            value: assessment.oxygen_saturation
-                ? `${assessment.oxygen_saturation}%`
-                : "",
+            label: "Condition",
+            value: assessmentLabel(assessment.condition),
         },
         {
             label: "Level of Consciousness",
-            value: assessment.mental_state ?? "",
+            value: assessmentLabel(assessment.mental_state),
         },
         {
-            label: "Memory / Cognitive Issues",
-            value: assessment.memory_issues ?? "",
+            label: "Affect",
+            value: assessmentLabel(assessment.affect),
         },
         {
-            label: "Mood / Behavior",
-            value: assessment.mood ?? "",
+            label: "Behavior",
+            value: assessmentLabel(assessment.behavior),
         },
         {
             label: "Communication Ability",
@@ -588,7 +670,7 @@ function getAssessmentRows(assessment: Assessment): Row[] {
         },
         {
             label: "Speech Pattern",
-            value: assessment.speech ?? "",
+            value: assessmentLabel(assessment.speech),
         },
     ];
 

@@ -1,11 +1,11 @@
 <template>
     <div
-        class="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-secondary dark:via-secondary dark:to-secondary"
+        class="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-surface dark:via-surface dark:to-surface"
     >
         <div
             class="w-full z-40 border-b border-slate-200/50 bg-white backdrop-blur-sm dark:bg-secondary dark:border-white/10"
         >
-            <div class="mx-auto max-w-[100rem] px-4 pt-4">
+            <div class="mx-auto max-w-[100rem] px-6 pt-4">
                 <Breadcrumb :items="[{ label: 'Find a Provider' }]" />
             </div>
 
@@ -15,7 +15,7 @@
         </div>
 
         <div class="flex-1 overflow-hidden">
-            <div class="mx-auto max-w-[100rem] md:px-4 py-8 h-full">
+            <div class="mx-auto max-w-[100rem] px-6 py-8 h-full">
                 <div
                     class="flex flex-col lg:flex-row gap-8 h-full items-stretch"
                 >

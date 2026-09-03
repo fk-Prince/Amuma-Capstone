@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('subscription_id')->constrained('subscriptions', 'subscription_id');
             $table->decimal('price', 10, 2);
             $table->enum('status', ['paid', 'refunded'])->default('paid');
+            $table->foreignId('plan_id')->constrained('plans', 'plan_id')->nullable();
             $table->timestamps();
         });
     }

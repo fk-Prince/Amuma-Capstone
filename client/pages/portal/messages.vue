@@ -268,19 +268,23 @@ onBeforeUnmount(() => {
 
 <template>
     <div
-        class="flex h-[calc(100dvh-88px)] min-h-0 w-full flex-col bg-slate-50/60 dark:bg-secondary p-0 sm:h-[calc(100dvh-104px)] lg:h-[calc(100dvh-160px)] lg:p-5"
+        class="flex h-screen-header min-h-0 w-full flex-col bg-slate-50/60 p-0 dark:bg-surface lg:p-5"
     >
         <div
             v-if="loadingList"
             class="grid h-full min-h-0 w-full flex-1 grid-cols-1 gap-0 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-5"
         >
             <aside
-                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-3xl lg:border lg:border-gray-100 lg:shadow-sm"
+                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-3xl lg:border lg:border-gray-100 lg:shadow-sm dark:bg-secondary dark:lg:border-white/10"
             >
-                <div class="shrink-0 border-b border-gray-100 px-5 py-5">
-                    <div class="h-4 w-24 animate-pulse rounded bg-gray-200" />
+                <div
+                    class="shrink-0 border-b border-gray-100 px-5 py-5 dark:border-white/10"
+                >
                     <div
-                        class="mt-2 h-3 w-40 animate-pulse rounded bg-gray-100"
+                        class="h-4 w-24 animate-pulse rounded bg-gray-200 dark:bg-white/15"
+                    />
+                    <div
+                        class="mt-2 h-3 w-40 animate-pulse rounded bg-gray-100 dark:bg-white/10"
                     />
                 </div>
 
@@ -288,45 +292,47 @@ onBeforeUnmount(() => {
                     <div
                         v-for="n in 4"
                         :key="n"
-                        class="h-16 animate-pulse rounded-2xl bg-gray-100"
+                        class="h-16 animate-pulse rounded-2xl bg-gray-100 dark:bg-white/10"
                     />
                 </div>
             </aside>
 
             <div
-                class="hidden min-h-0 flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white lg:flex"
+                class="hidden min-h-0 flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white lg:flex dark:border-white/10 dark:bg-secondary"
             >
                 <div
-                    class="flex shrink-0 items-center gap-3 border-b border-gray-100 px-5 py-4"
+                    class="flex shrink-0 items-center gap-3 border-b border-gray-100 px-5 py-4 dark:border-white/10"
                 >
                     <div
-                        class="h-10 w-10 animate-pulse rounded-full bg-gray-200"
+                        class="h-10 w-10 animate-pulse rounded-full bg-gray-200 dark:bg-white/15"
                     />
                     <div class="space-y-1.5">
                         <div
-                            class="h-3.5 w-32 animate-pulse rounded bg-gray-200"
+                            class="h-3.5 w-32 animate-pulse rounded bg-gray-200 dark:bg-white/15"
                         />
                         <div
-                            class="h-3 w-24 animate-pulse rounded bg-gray-100"
+                            class="h-3 w-24 animate-pulse rounded bg-gray-100 dark:bg-white/10"
                         />
                     </div>
                 </div>
 
                 <div class="min-h-0 flex-1 space-y-3 p-5">
                     <div
-                        class="h-12 w-2/3 animate-pulse rounded-2xl bg-gray-100"
+                        class="h-12 w-2/3 animate-pulse rounded-2xl bg-gray-100 dark:bg-white/10"
                     />
                     <div
-                        class="ml-auto h-12 w-1/2 animate-pulse rounded-2xl bg-gray-100"
+                        class="ml-auto h-12 w-1/2 animate-pulse rounded-2xl bg-gray-100 dark:bg-white/10"
                     />
                     <div
-                        class="h-12 w-3/5 animate-pulse rounded-2xl bg-gray-100"
+                        class="h-12 w-3/5 animate-pulse rounded-2xl bg-gray-100 dark:bg-white/10"
                     />
                 </div>
 
-                <div class="shrink-0 border-t border-gray-100 p-4">
+                <div
+                    class="shrink-0 border-t border-gray-100 p-4 dark:border-white/10"
+                >
                     <div
-                        class="h-11 w-full animate-pulse rounded-2xl bg-gray-100"
+                        class="h-11 w-full animate-pulse rounded-2xl bg-gray-100 dark:bg-white/10"
                     />
                 </div>
             </div>
@@ -345,12 +351,16 @@ onBeforeUnmount(() => {
             class="grid h-full min-h-0 w-full flex-1 grid-cols-1 gap-0 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-5"
         >
             <aside
-                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-3xl lg:border lg:border-gray-100 lg:shadow-sm"
+                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-3xl lg:border lg:border-gray-100 lg:shadow-sm dark:bg-secondary dark:lg:border-white/10"
             >
-                <div class="shrink-0 border-b border-gray-100 px-5 py-5">
-                    <p class="text-sm font-bold text-gray-900">Messages</p>
+                <div
+                    class="shrink-0 border-b border-gray-100 px-5 py-5 dark:border-white/10"
+                >
+                    <p class="text-sm font-bold text-gray-900 dark:text-white">
+                        Messages
+                    </p>
 
-                    <p class="mt-1 text-xs text-gray-400">
+                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
                         Talk with the staff looking after your loved one.
                     </p>
                 </div>
@@ -363,8 +373,8 @@ onBeforeUnmount(() => {
                         class="mb-1.5 w-full rounded-2xl border px-3.5 py-3 text-left transition"
                         :class="
                             row.branch_id === activeBranchId
-                                ? 'border-primary-200 bg-primary-50'
-                                : 'border-transparent hover:bg-gray-50'
+                                ? 'border-primary-200 bg-primary-50 dark:border-primary-500/20 dark:bg-primary-500/10'
+                                : 'border-transparent hover:bg-gray-50 dark:hover:bg-white/5'
                         "
                         @click="openThread(row.branch_id)"
                     >
@@ -379,7 +389,7 @@ onBeforeUnmount(() => {
                                     class="flex items-center justify-between gap-2"
                                 >
                                     <p
-                                        class="truncate text-sm font-semibold text-gray-900"
+                                        class="truncate text-sm font-semibold text-gray-900 dark:text-white"
                                     >
                                         {{ row.branch_name }}
                                     </p>
@@ -394,7 +404,7 @@ onBeforeUnmount(() => {
 
                                 <p
                                     v-if="row.staff_name"
-                                    class="mt-0.5 truncate text-[11px] text-gray-500"
+                                    class="mt-0.5 truncate text-[11px] text-gray-500 dark:text-gray-400"
                                 >
                                     {{ row.staff_name
                                     }}<template v-if="row.staff_role">
@@ -402,7 +412,9 @@ onBeforeUnmount(() => {
                                     >
                                 </p>
 
-                                <p class="mt-1 truncate text-xs text-gray-400">
+                                <p
+                                    class="mt-1 truncate text-xs text-gray-400 dark:text-gray-500"
+                                >
                                     {{
                                         row.last_message ??
                                         "Start a conversation"
@@ -416,10 +428,10 @@ onBeforeUnmount(() => {
 
             <div
                 :class="[
-                    'min-h-0 flex-col',
+                    'h-full min-h-0 flex-col',
                     'lg:static lg:z-auto lg:flex',
                     mobileThreadOpen
-                        ? 'fixed inset-0 z-50 flex h-[100dvh] w-full bg-white'
+                        ? 'fixed inset-0 z-50 flex h-[100dvh] w-full '
                         : 'hidden',
                 ]"
             >

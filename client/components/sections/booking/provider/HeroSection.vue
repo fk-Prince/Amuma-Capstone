@@ -17,7 +17,7 @@
             </h1>
 
             <div class="mt-2 flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
-                <Star class="h-4 w-4 fill-amber-500 text-amber-500" />
+                <Star class="h-4 w-4 fill-amber-500 text-amber-500 dark:text-amber-300" />
                 <span class="font-semibold text-gray-900 dark:text-white">
                     {{ (branch?.averageRating ?? 0).toFixed(1) }}
                 </span>

@@ -1,8 +1,10 @@
 <template>
-    <div class="max-w-7xl mx-auto space-y-8">
+    <div class="w-full mx-auto space-y-8">
         <div class="space-y-6">
             <div>
-                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                <h2
+                    class="text-lg font-semibold text-slate-900 dark:text-white"
+                >
                     Agency Information
                 </h2>
 
@@ -48,7 +50,9 @@
 
                 <div class="space-y-2" data-field="agency_image">
                     <div class="flex items-center justify-between">
-                        <label class="text-sm font-semibold text-slate-700 dark:text-gray-300">
+                        <label
+                            class="text-sm font-semibold text-slate-700 dark:text-gray-300"
+                        >
                             Agency Image
                         </label>
 
@@ -108,7 +112,9 @@
         </div>
         <div v-if="!hideDocuments" class="space-y-5">
             <div>
-                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                <h2
+                    class="text-lg font-semibold text-slate-900 dark:text-white"
+                >
                     Verification Documents
                 </h2>
 
@@ -119,8 +125,13 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div class="space-y-2 p-4" data-field="agency_id_front agency_id_back">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
+                <div
+                    class="space-y-2 p-4"
+                    data-field="agency_id_front agency_id_back"
+                >
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-2"
+                    >
                         <label
                             class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
                         >
@@ -375,7 +386,9 @@
                                 {{ fileNames.document }}
                             </p>
 
-                            <span class="mt-0.5 text-xs text-slate-400 dark:text-gray-500">
+                            <span
+                                class="mt-0.5 text-xs text-slate-400 dark:text-gray-500"
+                            >
                                 PDF selected — click to replace
                             </span>
                         </div>
@@ -459,9 +472,13 @@
             class="space-y-5"
             data-field="location.street location.city location.province location.country location"
         >
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div
+                class="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+            >
                 <div>
-                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                    <h2
+                        class="text-lg font-semibold text-slate-900 dark:text-white"
+                    >
                         Primary Address
                     </h2>
 
@@ -486,7 +503,11 @@
                         Reset
                     </button>
 
-                    <span class="text-xs text-slate-500 dark:text-gray-400 whitespace-nowrap"> Use map </span>
+                    <span
+                        class="text-xs text-slate-500 dark:text-gray-400 whitespace-nowrap"
+                    >
+                        Use map
+                    </span>
 
                     <button
                         type="button"
@@ -607,7 +628,9 @@ function initialPreview(value: unknown): string | null {
     return null;
 }
 
-const agencyImagePreview = ref<string | null>(initialPreview(props.agency.image));
+const agencyImagePreview = ref<string | null>(
+    initialPreview(props.agency.image),
+);
 const agencyImageInput = ref<HTMLInputElement | null>(null);
 const useGeolocation = ref(true);
 
@@ -640,9 +663,13 @@ const applicableDocuments = [
     "DOH / Home Health Agency Accreditation",
 ];
 
-const idFrontPreview = ref<string | null>(initialPreview(props.agency.id_front));
+const idFrontPreview = ref<string | null>(
+    initialPreview(props.agency.id_front),
+);
 const idBackPreview = ref<string | null>(initialPreview(props.agency.id_back));
-const documentPreview = ref<string | null>(initialPreview(props.agency.document));
+const documentPreview = ref<string | null>(
+    initialPreview(props.agency.document),
+);
 
 const previewRefs: Record<FileField, ReturnType<typeof ref<string | null>>> = {
     id_front: idFrontPreview,

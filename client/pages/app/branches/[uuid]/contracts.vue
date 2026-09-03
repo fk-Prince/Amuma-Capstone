@@ -1,5 +1,8 @@
 <template>
-    <div class="w-full max-w-8xl mx-auto p-4 md:p-6 space-y-6 font-sans">
+    <div
+        class="min-h-screen-header w-full bg-slate-50 font-sans dark:bg-surface"
+    >
+        <div class="mx-auto max-w-[1700px] space-y-6 p-4 md:p-6">
         <ContractDashboard
             :overview="overview"
             :loading="loading"
@@ -7,16 +10,16 @@
         />
 
         <div
-            class="bg-white rounded-3xl border border-muted-light shadow-[0_1px_2px_rgba(15,22,35,0.04)] overflow-hidden"
+            class="bg-white rounded-3xl border border-muted-light shadow-[0_1px_2px_rgba(15,22,35,0.04)] overflow-hidden dark:bg-secondary dark:border-white/10"
         >
             <div
-                class="flex items-center justify-between gap-4 px-5 pt-5 pb-0 border-b border-muted-light bg-gradient-to-b from-light/60 to-white"
+                class="flex items-center justify-between gap-4 px-5 pt-5 pb-0 border-b border-muted-light bg-gradient-to-b from-light/60 to-white dark:from-white/5 dark:to-secondary dark:border-white/10"
             >
                 <div
-                    class="relative flex items-center p-1 bg-light rounded-2xl"
+                    class="relative flex items-center p-1 bg-light rounded-2xl dark:bg-white/5"
                 >
                     <span
-                        class="absolute top-1 bottom-1 w-[180px] rounded-xl bg-white shadow-[0_1px_3px_rgba(15,22,35,0.12)] transition-transform duration-300 ease-out"
+                        class="absolute top-1 bottom-1 w-[180px] rounded-xl bg-white shadow-[0_1px_3px_rgba(15,22,35,0.12)] transition-transform duration-300 ease-out dark:bg-white/15"
                         :style="{
                             transform: `translateX(${activeIndex * 180}px)`,
                         }"
@@ -30,8 +33,8 @@
                         class="relative z-10 flex w-[180px] items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors duration-200"
                         :class="
                             activeTab === tab.value
-                                ? 'text-secondary'
-                                : 'text-muted hover:text-secondary'
+                                ? 'text-secondary dark:text-white'
+                                : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
                         "
                     >
                         <component :is="tab.icon" class="w-4 h-4 shrink-0" />
@@ -39,7 +42,7 @@
                     </button>
                 </div>
 
-                <p class="hidden sm:block text-xs text-muted pb-4 shrink-0">
+                <p class="hidden sm:block text-xs text-muted pb-4 shrink-0 dark:text-gray-400">
                     {{
                         activeTab === "homecare"
                             ? overview.active_patient
@@ -95,13 +98,14 @@
             @saved="closeModal"
         />
 
-        <ViewModal
-            :open="showViewModal"
-            :plans="plans"
-            :loading="plansLoading"
-            @close="showViewModal = false"
-            @update="editPlan"
-        />
+            <ViewModal
+                :open="showViewModal"
+                :plans="plans"
+                :loading="plansLoading"
+                @close="showViewModal = false"
+                @update="editPlan"
+            />
+        </div>
     </div>
 </template>
 
@@ -219,8 +223,6 @@ function handleDashboardAction(action: string) {
             showViewModal.value = true;
             break;
 
-        case "manage-contracts":
-            break;
     }
 }
 

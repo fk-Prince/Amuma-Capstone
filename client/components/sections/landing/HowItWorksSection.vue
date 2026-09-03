@@ -1,11 +1,11 @@
 <template>
-    <section class="relative overflow-hidden bg-slate-50 px-[6%] py-28 dark:bg-secondary">
+    <section class="relative overflow-hidden bg-slate-50 py-28 dark:bg-secondary">
         <div
             class="absolute bottom-0 left-[-100px] h-[400px] w-[400px] rounded-full bg-indigo-200/40 blur-[100px]"
         ></div>
 
         <div
-            class="relative z-10 grid items-center gap-20 lg:grid-cols-[55%_45%]"
+            class="relative z-10 mx-auto grid w-[94%] max-w-[1600px] items-center gap-20 px-10 lg:grid-cols-[55%_45%]"
         >
             <div class="flex flex-col gap-5">
                 <div

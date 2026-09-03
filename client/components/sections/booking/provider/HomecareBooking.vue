@@ -5,10 +5,10 @@
     >
         <div class="mb-8 flex items-baseline gap-3">
             <template v-if="loading">
-                <div class="h-6 w-6 shrink-0 rounded bg-slate-200" />
+                <div class="h-6 w-6 shrink-0 rounded bg-slate-200 dark:bg-white/15" />
                 <div class="flex-1 space-y-2">
-                    <div class="h-5 w-40 rounded bg-slate-200" />
-                    <div class="h-3 w-64 rounded bg-slate-200" />
+                    <div class="h-5 w-40 rounded bg-slate-200 dark:bg-white/15" />
+                    <div class="h-3 w-64 rounded bg-slate-200 dark:bg-white/15" />
                 </div>
             </template>
 
@@ -28,7 +28,7 @@
         <div class="space-y-8">
             <div>
                 <template v-if="loading">
-                    <div class="mb-3 h-4 w-36 rounded bg-slate-200" />
+                    <div class="mb-3 h-4 w-36 rounded bg-slate-200 dark:bg-white/15" />
 
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div
@@ -130,7 +130,7 @@
 
                     <template v-else>
                         <div
-                            class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center dark:border-white/10"
+                            class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center dark:border-white/10 dark:bg-white/5"
                         >
                             <div
                                 class="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-secondary dark:text-gray-500"
@@ -178,16 +178,16 @@
                     <template v-if="loading">
                         <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                             <div class="space-y-2">
-                                <div class="h-4 w-32 rounded bg-slate-200" />
+                                <div class="h-4 w-32 rounded bg-slate-200 dark:bg-white/15" />
                                 <div
-                                    class="h-11 w-full rounded-xl bg-slate-200"
+                                    class="h-11 w-full rounded-xl bg-slate-200 dark:bg-white/15"
                                 />
                             </div>
 
                             <div class="space-y-2">
-                                <div class="h-4 w-28 rounded bg-slate-200" />
+                                <div class="h-4 w-28 rounded bg-slate-200 dark:bg-white/15" />
                                 <div
-                                    class="h-11 w-full rounded-xl bg-slate-200"
+                                    class="h-11 w-full rounded-xl bg-slate-200 dark:bg-white/15"
                                 />
                             </div>
                         </div>
@@ -239,7 +239,7 @@
 
                                     <span
                                         v-else-if="branchStatus.isOpen"
-                                        class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 py-1 pl-2 pr-3 text-[11px] font-semibold text-emerald-600"
+                                        class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 py-1 pl-2 pr-3 text-[11px] font-semibold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
                                     >
                                         <span class="relative flex h-2 w-2">
                                             <span

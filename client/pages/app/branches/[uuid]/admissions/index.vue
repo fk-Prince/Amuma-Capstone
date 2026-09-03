@@ -1,8 +1,8 @@
 <template>
-    <div class="min-h-screen-header bg-slate-50">
+    <div class="min-h-screen-header bg-slate-50 dark:bg-surface">
         <div class="w-full mx-auto px-4 lg:px-8 py-8">
             <div
-                class="relative mb-6 grid w-full grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm sm:inline-grid sm:w-auto"
+                class="relative mb-6 grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm sm:inline-grid sm:w-auto dark:border-white/10 dark:bg-secondary"
             >
                 <div
                     class="absolute inset-y-1 left-1 rounded-lg bg-primary transition-transform duration-300 ease-out"
@@ -18,7 +18,7 @@
                     :class="
                         viewMode === 'form'
                             ? 'text-white'
-                            : 'text-slate-500 hover:text-slate-700'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
                     "
                     @click="viewMode = 'form'"
                 >
@@ -31,7 +31,7 @@
                     :class="
                         viewMode === 'table'
                             ? 'text-white'
-                            : 'text-slate-500 hover:text-slate-700'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
                     "
                     @click="viewMode = 'table'"
                 >
@@ -44,7 +44,7 @@
                     :class="
                         viewMode === 'bookings'
                             ? 'text-white'
-                            : 'text-slate-500 hover:text-slate-700'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
                     "
                     @click="viewMode = 'bookings'"
                 >
@@ -86,7 +86,7 @@
                     </template>
 
                     <template #cell-reference_id="{ row }">
-                        <span class="font-medium text-slate-800">
+                        <span class="font-medium text-slate-800 dark:text-white">
                             {{ row.reference_id }}
                         </span>
                     </template>
@@ -181,7 +181,7 @@
                 v-if="viewMode === 'form'"
                 class="grid lg:grid-cols-[1fr_320px] gap-8"
             >
-                <main class="bg-white rounded-2xl">
+                <main class="bg-white rounded-2xl dark:bg-secondary">
                     <div class="px-[3rem] md:px-[3.5rem] py-[1.5rem]">
                         <p
                             class="text-sm font-semibold text-primary uppercase tracking-wider"
@@ -189,12 +189,12 @@
                             Facility Admission
                         </p>
 
-                        <h1 class="mt-2 text-3xl font-bold text-slate-900">
+                        <h1 class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
                             Patient Admission Request
                         </h1>
 
                         <p
-                            class="mt-3 text-slate-500 leading-relaxed max-w-3xl"
+                            class="mt-3 text-slate-500 leading-relaxed max-w-3xl dark:text-gray-400"
                         >
                             Complete the information below to register a patient
                             for admission. Required fields are marked with
@@ -260,6 +260,19 @@
                     </section>
 
                     <section class="px-6" id="step1" ref="step4">
+                        <DiagnosisForm
+                            :model="diagnosisData"
+                            :errors="assessmentErrors"
+                            @update:model="
+                                diagnosisData.splice(
+                                    0,
+                                    diagnosisData.length,
+                                    ...$event,
+                                )
+                            "
+                            @update:errors="assessmentErrors = $event"
+                        />
+
                         <AssessmentForm
                             :model="assessmentData"
                             :errors="assessmentErrors"
@@ -275,13 +288,13 @@
                     <div class="sticky top-8 space-y-5">
                         <div class="px-6 py-6 border-b">
                             <p
-                                class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+                                class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500"
                             >
                                 Completion
                             </p>
                             <div class="mt-3 flex items-center gap-2">
                                 <div
-                                    class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden"
+                                    class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden dark:bg-white/10"
                                 >
                                     <div
                                         class="h-full rounded-full bg-primary transition-all duration-300"
@@ -290,7 +303,7 @@
                                 </div>
 
                                 <span
-                                    class="text-xs font-medium text-gray-400 shrink-0"
+                                    class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500"
                                 >
                                     {{ Math.round(progress) }}%
                                 </span>
@@ -336,11 +349,13 @@ import PatientForm from "~/components/forms/PatientForm.vue";
 import BaseButton from "~/components/ui/BaseButton.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import AssessmentForm from "~/components/forms/AssessmentForm.vue";
+import DiagnosisForm from "~/components/forms/DiagnosisForm.vue";
 
 import {
     patientData,
     createPatientSchema,
     assessmentData,
+    diagnosisData,
     assessmentSchema,
     guardianData,
     guardianSchema,
@@ -415,7 +430,7 @@ const {
     facilityData,
     patientData,
     guardianData,
-    assessmentData,
+    diagnosisData,
     reserved,
 });
 
@@ -475,6 +490,10 @@ async function loadByReference() {
 
         if (booking.assessment) {
             Object.assign(assessmentData, booking.assessment);
+        }
+
+        if (booking.diagnoses?.length) {
+            diagnosisData.splice(0, diagnosisData.length, ...booking.diagnoses);
         }
 
         if (booking.facility) {
@@ -702,22 +721,22 @@ function statusBadgeClass(status: string) {
     const value = (status ?? "").toLowerCase();
 
     if (value === "approved" || value === "admitted") {
-        return "bg-emerald-100 text-emerald-700";
+        return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300";
     }
 
     if (value === "pending") {
-        return "bg-amber-100 text-amber-700";
+        return "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300";
     }
 
     if (value === "cancelled" || value === "rejected") {
-        return "bg-rose-100 text-rose-700";
+        return "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300";
     }
 
     if (value === "waiting") {
-        return "bg-blue-100 text-blue-700";
+        return "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300";
     }
 
-    return "bg-slate-100 text-slate-600";
+    return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
 }
 
 function startNewAdmission() {
@@ -773,6 +792,7 @@ async function submit() {
     bookingStore.patient = deepToRaw(patientData);
     bookingStore.guardian = deepToRaw(guardianData);
     bookingStore.assessment = deepToRaw(assessmentData);
+    bookingStore.diagnoses = deepToRaw(diagnosisData);
     bookingStore.branchFacility = branch.value?.facility ?? [];
 
     router.push({

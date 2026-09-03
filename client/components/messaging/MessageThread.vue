@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
-import { X } from "lucide-vue-next";
+import { X, SendHorizontal, LoaderCircle } from "lucide-vue-next";
 
 import MessageAvatar from "~/components/messaging/MessageAvatar.vue";
 import { useAuthUser } from "~/composables/useAuthUser";
@@ -158,20 +158,25 @@ onBeforeUnmount(unsubscribe);
 
 <template>
     <div
-        class="flex h-full min-h-0 flex-col rounded-2xl border border-slate-200 bg-white"
+        class="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-secondary"
     >
-        <div v-if="title" class="shrink-0 border-b border-slate-200 px-5 py-4">
+        <div
+            v-if="title"
+            class="shrink-0 border-b border-slate-200 px-5 py-4 dark:border-white/10 overflow-hidden"
+        >
             <div class="flex items-center gap-3">
                 <MessageAvatar :src="avatar" :name="title" size="md" />
 
                 <div class="min-w-0 flex-1">
-                    <p class="truncate text-sm font-semibold text-slate-800">
+                    <p
+                        class="truncate text-sm font-semibold text-slate-800 dark:text-white"
+                    >
                         {{ title }}
                     </p>
 
                     <p
                         v-if="patients.length"
-                        class="mt-0.5 text-xs text-slate-400"
+                        class="mt-0.5 text-xs text-slate-400 dark:text-gray-500"
                     >
                         Caring for {{ visiblePatients.join(", ") }}
 
@@ -196,7 +201,7 @@ onBeforeUnmount(unsubscribe);
 
                     <p
                         v-else-if="subtitle"
-                        class="mt-0.5 truncate text-xs text-slate-400"
+                        class="mt-0.5 truncate text-xs text-slate-400 dark:text-gray-500"
                     >
                         {{ subtitle }}
                     </p>
@@ -206,7 +211,7 @@ onBeforeUnmount(unsubscribe);
                     v-if="showClose"
                     type="button"
                     aria-label="Close conversation"
-                    class="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 lg:hidden"
+                    class="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 lg:hidden dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                     @click="$emit('close')"
                 >
                     <X class="h-4 w-4" />
@@ -222,13 +227,13 @@ onBeforeUnmount(unsubscribe);
                 <div
                     v-for="n in 4"
                     :key="n"
-                    class="h-12 animate-pulse rounded-xl bg-slate-100"
+                    class="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-white/10"
                 />
             </div>
 
             <p
                 v-else-if="!messages.length"
-                class="py-12 text-center text-sm text-slate-400"
+                class="py-12 text-center text-sm text-slate-400 dark:text-gray-500"
             >
                 {{ emptyText ?? "No messages yet. Say hello." }}
             </p>
@@ -245,14 +250,14 @@ onBeforeUnmount(unsubscribe);
                         :class="
                             isMine(message)
                                 ? 'bg-primary text-white'
-                                : 'bg-slate-100 text-slate-700'
+                                : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-gray-100'
                         "
                     >
                         {{ message.body }}
                     </div>
 
                     <p
-                        class="mt-1 text-[10px] text-slate-400"
+                        class="mt-1 text-[10px] text-slate-400 dark:text-gray-500"
                         :class="isMine(message) ? 'text-right' : 'text-left'"
                     >
                         {{ formatTime(message.created_at) }}
@@ -261,24 +266,31 @@ onBeforeUnmount(unsubscribe);
             </div>
         </div>
 
-        <div class="shrink-0 border-t border-slate-200 p-3">
+        <div
+            class="shrink-0 border-t border-slate-200 p-3 dark:border-white/10"
+        >
             <div class="flex items-end gap-2">
                 <textarea
                     v-model="draft"
                     rows="1"
                     :disabled="disabled"
                     placeholder="Write a message..."
-                    class="max-h-32 min-h-[42px] flex-1 resize-y rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:bg-slate-50"
+                    class="max-h-32 min-h-[42px] flex-1 resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-100 dark:placeholder:text-gray-500 dark:disabled:bg-white/5"
                     @keydown.enter.exact.prevent="submit"
                 />
 
                 <button
                     type="button"
                     :disabled="!canSend"
-                    class="h-[42px] shrink-0 rounded-xl bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-40"
+                    class="flex h-[42px] shrink-0 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-40"
                     @click="submit"
                 >
-                    {{ sending ? "Sending..." : "Send" }}
+                    <LoaderCircle v-if="sending" class="h-4 w-4 animate-spin" />
+                    <SendHorizontal v-else class="h-4 w-4" />
+
+                    <span class="hidden sm:inline">
+                        {{ sending ? "Sending..." : "Send" }}
+                    </span>
                 </button>
             </div>
         </div>

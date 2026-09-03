@@ -12,7 +12,8 @@ export const colors = {
         800: "#0F397B",
         900: "#0A2857",
     },
-    secondary: '#0f1623',
+    secondary: '#242526',
+    surface: '#18191a',
     accent: {
         DEFAULT: "#0E7C7B",
         50: "#E7F5F5",

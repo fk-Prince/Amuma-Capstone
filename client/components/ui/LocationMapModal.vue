@@ -34,19 +34,19 @@ const googleMapsUrl = computed(
                 @click.self="emit('close')"
             >
                 <div
-                    class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl"
+                    class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
                 >
                     <div
-                        class="flex items-start justify-between gap-4 border-b border-[#E4EFED] px-5 py-4"
+                        class="flex items-start justify-between gap-4 border-b border-[#E4EFED] px-5 py-4 dark:border-white/10"
                     >
                         <div class="min-w-0">
-                            <h3 class="text-sm font-semibold text-[#16302E]">
+                            <h3 class="text-sm font-semibold text-[#16302E] dark:text-white">
                                 {{ title ?? "Service Location" }}
                             </h3>
 
                             <p
                                 v-if="address"
-                                class="mt-0.5 text-xs text-slate-500 break-words"
+                                class="mt-0.5 text-xs text-slate-500 break-words dark:text-gray-400"
                             >
                                 {{ address }}
                             </p>
@@ -54,7 +54,7 @@ const googleMapsUrl = computed(
 
                         <button
                             type="button"
-                            class="shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                            class="shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                             aria-label="Close"
                             @click="emit('close')"
                         >
@@ -82,13 +82,13 @@ const googleMapsUrl = computed(
 
                             <template #fallback>
                                 <div
-                                    class="h-[340px] w-full animate-pulse rounded-xl border border-[#E4EFED] bg-slate-50"
+                                    class="h-[340px] w-full animate-pulse rounded-xl border border-[#E4EFED] bg-slate-50 dark:bg-white/5 dark:border-white/10"
                                 />
                             </template>
                         </ClientOnly>
 
                         <div class="mt-4 flex items-center justify-between gap-3">
-                            <span class="text-[11px] text-slate-400">
+                            <span class="text-[11px] text-slate-400 dark:text-gray-500">
                                 {{ lat.toFixed(5) }}, {{ lng.toFixed(5) }}
                             </span>
 

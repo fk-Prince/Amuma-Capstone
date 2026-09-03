@@ -1,12 +1,12 @@
 <template>
     <div
-        class="rounded-2xl bg-white border border-muted-light/70 shadow-sm p-5 font-sans w-full"
+        class="rounded-2xl bg-white border border-muted-light/70 shadow-sm p-5 font-sans w-full dark:bg-secondary dark:border-white/10"
     >
         <!-- header -->
         <div class="flex items-start justify-between mb-4">
             <div class="flex items-start gap-3">
                 <div
-                    class="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center shrink-0"
+                    class="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center shrink-0 dark:bg-primary-500/10"
                 >
                     <svg
                         width="18"
@@ -22,21 +22,21 @@
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-secondary text-[15px] font-medium">
+                    <h3 class="text-secondary text-[15px] font-medium dark:text-white">
                         {{ title }}
                     </h3>
                     <div
-                        class="flex items-center gap-2 mt-1 text-xs text-muted"
+                        class="flex items-center gap-2 mt-1 text-xs text-muted dark:text-gray-400"
                     >
                         <button
-                            class="hover:text-secondary"
+                            class="hover:text-secondary dark:hover:text-white"
                             @click="shiftDay(-1)"
                         >
                             ‹
                         </button>
                         <span>{{ dateLabel }}</span>
                         <button
-                            class="hover:text-secondary"
+                            class="hover:text-secondary dark:hover:text-white"
                             @click="shiftDay(1)"
                         >
                             ›
@@ -47,12 +47,12 @@
 
             <div class="flex items-center gap-3">
                 <button
-                    class="text-xs font-medium text-primary border border-primary-200 rounded-full px-3 py-1.5 hover:bg-primary-50"
+                    class="text-xs font-medium text-primary border border-primary-200 rounded-full px-3 py-1.5 hover:bg-primary-50 dark:border-primary-500/20 dark:hover:bg-primary-500/10"
                 >
                     View full schedule
                 </button>
                 <button
-                    class="text-muted hover:text-secondary text-lg leading-none px-1"
+                    class="text-muted hover:text-secondary text-lg leading-none px-1 dark:text-gray-400 dark:hover:text-white"
                 >
                     ⋮
                 </button>
@@ -63,14 +63,14 @@
         <div class="relative">
             <!-- column headers -->
             <div class="grid gap-2 mb-3" :style="gridTemplate">
-                <span class="text-[11px] font-medium text-muted tracking-wide"
+                <span class="text-[11px] font-medium text-muted tracking-wide dark:text-gray-400"
                     >STAFF ON DUTY</span
                 >
                 <div class="relative h-4">
                     <span
                         v-for="mark in hourMarks"
                         :key="mark.hour"
-                        class="absolute -translate-x-1/2 text-[11px] text-muted"
+                        class="absolute -translate-x-1/2 text-[11px] text-muted dark:text-gray-400"
                         :style="{ left: `${mark.percent}%` }"
                     >
                         {{ mark.label }}
@@ -93,7 +93,7 @@
 
             <div
                 v-for="branch in branches"
-                class="grid gap-2 items-center py-3 border-t border-muted-light"
+                class="grid gap-2 items-center py-3 border-t border-muted-light dark:border-white/10"
                 :style="gridTemplate"
             >
                 <div class="flex items-center">
@@ -112,7 +112,7 @@
                     </div>
                     <span
                         v-if="branch.extraStaff > 0"
-                        class="ml-1.5 text-[11px] text-muted font-medium"
+                        class="ml-1.5 text-[11px] text-muted font-medium dark:text-gray-400"
                     >
                         +{{ branch.extraStaff }}
                     </span>
@@ -149,7 +149,7 @@
 
         <!-- legend -->
         <div
-            class="flex items-center gap-5 mt-4 pt-3 border-t border-muted-light"
+            class="flex items-center gap-5 mt-4 pt-3 border-t border-muted-light dark:border-white/10"
         >
             <div
                 v-for="role in roleLegend"
@@ -160,7 +160,7 @@
                     class="w-4 h-0.5 rounded"
                     :style="{ backgroundColor: roleColor(role.key, 'line') }"
                 />
-                <span class="text-[11px] text-muted">{{ role.label }}</span>
+                <span class="text-[11px] text-muted dark:text-gray-400">{{ role.label }}</span>
             </div>
         </div>
     </div>

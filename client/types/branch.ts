@@ -40,6 +40,7 @@ export interface BranchSettings {
     reserved_walkin_slots: number | null;
     enable_booking_pre_admission: boolean;
     enable_booking_complete_admission: boolean;
+    requires_full_payment_on_admit: boolean;
     minimum_adl_hours: number | null;
     // billing_due_date: number | null;
     is_open: boolean;

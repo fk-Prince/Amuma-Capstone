@@ -8,10 +8,10 @@
         >
             <div class="flex items-baseline gap-3 mb-8">
                 <template v-if="loading">
-                    <div class="h-6 w-6 rounded bg-slate-200 shrink-0" />
+                    <div class="h-6 w-6 rounded bg-slate-200 shrink-0 dark:bg-white/15" />
                     <div class="flex-1 space-y-2">
-                        <div class="h-5 w-40 rounded bg-slate-200" />
-                        <div class="h-3 w-64 rounded bg-slate-200" />
+                        <div class="h-5 w-40 rounded bg-slate-200 dark:bg-white/15" />
+                        <div class="h-3 w-64 rounded bg-slate-200 dark:bg-white/15" />
                     </div>
                 </template>
                 <template v-else>
@@ -58,13 +58,13 @@
                         <div class="flex items-center justify-between">
                             <div class="space-y-2">
                                 <div
-                                    class="h-4 w-28 bg-slate-200 rounded"
+                                    class="h-4 w-28 bg-slate-200 rounded dark:bg-white/15"
                                 ></div>
                                 <div
                                     class="h-3 w-40 bg-slate-100 rounded dark:bg-secondary"
                                 ></div>
                             </div>
-                            <div class="h-9 w-9 rounded-lg bg-slate-200"></div>
+                            <div class="h-9 w-9 rounded-lg bg-slate-200 dark:bg-white/15"></div>
                         </div>
                     </div>
                 </div>
@@ -91,7 +91,7 @@
                                     :class="
                                         model.type === 'Pre-Admission'
                                             ? 'bg-primary-500 text-white shadow-sm'
-                                            : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100 group-hover:bg-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20 dark:group-hover:bg-primary-500/20'
+                                            : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100 group-hover:bg-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20 dark:group-hover:bg-primary-500/20 dark:text-primary-300'
                                     "
                                 >
                                     <ClipboardCheck class="h-5 w-5" />
@@ -163,7 +163,7 @@
                                     :class="
                                         model.type === 'Complete'
                                             ? 'bg-primary-500 text-white shadow-sm'
-                                            : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100 group-hover:bg-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20 dark:group-hover:bg-primary-500/20'
+                                            : 'bg-primary-50 text-primary-600 ring-1 ring-primary-100 group-hover:bg-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20 dark:group-hover:bg-primary-500/20 dark:text-primary-300'
                                     "
                                 >
                                     <Building2 class="h-5 w-5" />
@@ -241,14 +241,14 @@
                             <div class="flex items-center justify-between">
                                 <div class="space-y-2">
                                     <div
-                                        class="h-4 w-28 bg-slate-200 rounded"
+                                        class="h-4 w-28 bg-slate-200 rounded dark:bg-white/15"
                                     ></div>
                                     <div
                                         class="h-3 w-40 bg-slate-100 rounded dark:bg-secondary"
                                     ></div>
                                 </div>
                                 <div
-                                    class="h-9 w-9 rounded-lg bg-slate-200"
+                                    class="h-9 w-9 rounded-lg bg-slate-200 dark:bg-white/15"
                                 ></div>
                             </div>
                         </div>
@@ -310,8 +310,8 @@
                                         class="text-xs"
                                         :class="
                                             room.slots === 0
-                                                ? 'text-rose-500 font-medium'
-                                                : 'text-slate-500'
+                                                ? 'text-rose-500 font-medium dark:text-rose-300'
+                                                : 'text-slate-500 dark:text-gray-400'
                                         "
                                     >
                                         {{
@@ -349,14 +349,14 @@
                             <div class="flex items-center justify-between">
                                 <div class="space-y-2">
                                     <div
-                                        class="h-4 w-28 bg-slate-200 rounded"
+                                        class="h-4 w-28 bg-slate-200 rounded dark:bg-white/15"
                                     ></div>
                                     <div
                                         class="h-3 w-40 bg-slate-100 rounded dark:bg-secondary"
                                     ></div>
                                 </div>
                                 <div
-                                    class="h-9 w-9 rounded-lg bg-slate-200"
+                                    class="h-9 w-9 rounded-lg bg-slate-200 dark:bg-white/15"
                                 ></div>
                             </div>
                         </div>
@@ -425,7 +425,7 @@
 
                         <p
                             v-if="!availablePlans.length"
-                            class="text-xs text-amber-600 mt-2"
+                            class="text-xs text-amber-600 mt-2 dark:text-amber-300"
                         >
                             No billing plans are configured for this room type
                             yet.
@@ -609,7 +609,7 @@
                                     </p>
 
                                     <p
-                                        class="mt-0.5 text-lg font-bold text-primary-600"
+                                        class="mt-0.5 text-lg font-bold text-primary-600 dark:text-primary-300"
                                     >
                                         ₱{{
                                             formatAmount(
@@ -629,8 +629,8 @@
                                     class="text-[11px] font-medium"
                                     :class="
                                         room.slots === 0
-                                            ? 'text-rose-500'
-                                            : 'text-slate-400'
+                                            ? 'text-rose-500 dark:text-rose-300'
+                                            : 'text-slate-400 dark:text-gray-500'
                                     "
                                 >
                                     {{
@@ -653,7 +653,7 @@
                         class="flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-4 dark:border-white/10 dark:bg-white/5"
                     >
                         <div
-                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-500 dark:bg-primary-500/10"
+                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-500 dark:bg-primary-500/10 dark:text-primary-300"
                         >
                             <CalendarRange class="h-4 w-4" />
                         </div>

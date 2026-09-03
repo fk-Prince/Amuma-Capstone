@@ -4,7 +4,7 @@
     >
         <button
             type="button"
-            class="-ml-1 shrink-0 rounded-lg p-2 text-gray-600 hover:bg-gray-50 hover:text-primary-500 dark:text-white/70 dark:hover:bg-white/10 lg:hidden"
+            class="-ml-1 shrink-0 rounded-lg p-2 text-gray-600 hover:bg-gray-50 hover:text-primary-500 dark:text-white/70 dark:hover:bg-white/10 lg:hidden dark:hover:text-primary-300"
             aria-label="Open navigation"
             @click="$emit('open')"
         >
@@ -46,7 +46,7 @@
                     />
                 </h1>
 
-                <p class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate">
+                <p class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate dark:text-gray-500">
                     {{
                         branchStore.activeBranch?.location?.address ||
                         "No branch selected"
@@ -58,7 +58,7 @@
                 >
                     <span class="flex items-center gap-1.5 whitespace-nowrap">
                         <Calendar
-                            class="w-3.5 h-3.5 text-primary-500 shrink-0"
+                            class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300"
                         />
                         {{ formattedDate }}
                     </span>
@@ -68,7 +68,7 @@
                     />
 
                     <span class="flex items-center gap-1.5 whitespace-nowrap">
-                        <Clock class="w-3.5 h-3.5 text-primary-500 shrink-0" />
+                        <Clock class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300" />
                         {{ formattedTime }}
                     </span>
                 </div>
@@ -123,13 +123,13 @@
                 >
                     <div
                         v-if="branchStore.showModal"
-                        class="w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60"
+                        class="w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 dark:bg-secondary dark:ring-primary-500/20"
                         role="dialog"
                         aria-modal="true"
                         aria-label="Select a branch"
                     >
                         <div
-                            class="flex items-start justify-between gap-3 border-b border-primary-100/80 bg-primary-50/40 px-4 py-3.5 sm:px-5 sm:py-4"
+                            class="flex items-start justify-between gap-3 border-b border-primary-100/80 bg-primary-50/40 px-4 py-3.5 sm:px-5 sm:py-4 dark:border-primary-500/20 dark:bg-primary-500/10"
                         >
                             <div
                                 class="flex min-w-0 items-center gap-2.5 sm:gap-3"
@@ -169,7 +169,7 @@
                                 v-if="branchStore.activeBranch"
                                 type="button"
                                 aria-label="Close dialog"
-                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-primary-400 transition-colors duration-200 hover:bg-primary-100 hover:text-primary-700"
+                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-primary-400 transition-colors duration-200 hover:bg-primary-100 hover:text-primary-700 dark:hover:bg-primary-500/15 dark:hover:text-primary-300"
                                 @click="branchStore.closeModal"
                             >
                                 <svg
@@ -198,8 +198,8 @@
                                 :class="
                                     branch.uuid ===
                                     branchStore.activeBranch?.uuid
-                                        ? 'border-primary-300 bg-primary-50 ring-1 ring-primary-200'
-                                        : 'border-transparent hover:border-primary-100 hover:bg-primary-50/70'
+                                        ? 'border-primary-300 bg-primary-50 ring-1 ring-primary-200 dark:bg-primary-500/10 dark:ring-primary-500/20'
+                                        : 'border-transparent hover:border-primary-100 hover:bg-primary-50/70 dark:hover:border-primary-500/20 dark:hover:bg-primary-500/10'
                                 "
                                 @click="branchStore.selectBranch(branch)"
                             >
@@ -207,7 +207,7 @@
                                     class="flex w-full min-w-0 items-start gap-2.5 sm:gap-3"
                                 >
                                     <div
-                                        class="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-primary-50 ring-2 ring-primary-100 transition-transform duration-200 group-hover:scale-[1.03] sm:h-11 sm:w-11"
+                                        class="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-primary-50 ring-2 ring-primary-100 transition-transform duration-200 group-hover:scale-[1.03] sm:h-11 sm:w-11 dark:bg-primary-500/10 dark:ring-primary-500/20"
                                     >
                                         <img
                                             v-if="branch.image"
@@ -256,7 +256,7 @@
 
                                                 <BadgeCheck
                                                     v-if="branch.is_verified"
-                                                    class="h-3.5 w-3.5 shrink-0 text-emerald-500"
+                                                    class="h-3.5 w-3.5 shrink-0 text-emerald-500 dark:text-emerald-300"
                                                 />
                                             </p>
 
@@ -266,7 +266,7 @@
                                                     branchStore.activeBranch
                                                         ?.uuid
                                                 "
-                                                class="shrink-0 rounded-full bg-primary-100 px-1.5 py-0.5 text-[9px] font-semibold text-primary-600 sm:px-2 sm:text-[10px]"
+                                                class="shrink-0 rounded-full bg-primary-100 px-1.5 py-0.5 text-[9px] font-semibold text-primary-600 sm:px-2 sm:text-[10px] dark:bg-primary-500/15 dark:text-primary-300"
                                             >
                                                 Active
                                             </span>
@@ -298,7 +298,7 @@
                                                     :key="plan.plan_code"
                                                     class="rounded-full border px-1.5 py-0.5 text-[10px] font-medium sm:px-2 sm:text-[11px]"
                                                     :class="{
-                                                        'border-primary-200 bg-primary-50 text-primary':
+                                                        'border-primary-200 bg-primary-50 text-primary dark:border-primary-500/20 dark:bg-primary-500/10':
                                                             plan.plan_code ===
                                                             'A',
                                                         'border-green-200 bg-green-50 text-accent':
@@ -319,7 +319,7 @@
                                                     roleMeta[
                                                         branch?.role_name ?? ''
                                                     ]?.class ||
-                                                    'bg-primary-50 text-primary-600 border-primary-200'
+                                                    'bg-primary-50 text-primary-600 border-primary-200 dark:bg-primary-500/10 dark:text-primary-300 dark:border-primary-500/20'
                                                 "
                                             >
                                                 {{
@@ -344,7 +344,7 @@
                                 </div>
 
                                 <div
-                                    class="mt-2.5 grid w-full min-w-0 grid-cols-1 gap-x-3 gap-y-1 border-t border-primary-100/70 pt-2.5 text-[10px] text-muted sm:grid-cols-2 sm:text-[11px]"
+                                    class="mt-2.5 grid w-full min-w-0 grid-cols-1 gap-x-3 gap-y-1 border-t border-primary-100/70 pt-2.5 text-[10px] text-muted sm:grid-cols-2 sm:text-[11px] dark:border-primary-500/20"
                                 >
                                     <span
                                         v-if="branch.contact_number"
@@ -373,10 +373,10 @@
 
                                 <div
                                     v-if="branch.agency?.name"
-                                    class="mt-2.5 flex w-full min-w-0 items-center gap-2 rounded-lg bg-primary-50/60 px-2 py-1.5 sm:px-2.5 sm:py-2"
+                                    class="mt-2.5 flex w-full min-w-0 items-center gap-2 rounded-lg bg-primary-50/60 px-2 py-1.5 sm:px-2.5 sm:py-2 dark:bg-primary-500/10"
                                 >
                                     <div
-                                        class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white ring-1 ring-primary-100 sm:h-7 sm:w-7"
+                                        class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white ring-1 ring-primary-100 sm:h-7 sm:w-7 dark:bg-secondary dark:ring-primary-500/20"
                                     >
                                         <img
                                             v-if="branch.agency.image"
@@ -411,7 +411,7 @@
 
                                     <BadgeCheck
                                         v-if="branch.agency.is_verified"
-                                        class="h-4 w-4 shrink-0 text-emerald-500"
+                                        class="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-300"
                                     />
                                 </div>
                             </button>
@@ -422,7 +422,7 @@
                             class="flex flex-col items-center justify-center gap-2 px-6 py-10 text-center"
                         >
                             <div
-                                class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50 text-primary-400"
+                                class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50 text-primary-400 dark:bg-primary-500/10"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"

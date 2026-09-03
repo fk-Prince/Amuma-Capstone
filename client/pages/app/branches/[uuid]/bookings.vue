@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-screen-header bg-slate-100 p-2 overflow-visible flex flex-col"
+        class="min-h-screen-header bg-slate-100 p-2 overflow-visible flex flex-col dark:bg-surface"
     >
         <div
             class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-4 items-stretch w-full flex-1 min-h-0"
@@ -8,20 +8,22 @@
             <div class="w-full min-w-0 min-h-0 flex flex-col order-1">
                 <template v-if="!selectedReferenceId">
                     <div
-                        class="rounded-xl bg-white shadow-sm border border-[#E4EFED] overflow-visible flex flex-col h-full min-h-0"
+                        class="rounded-xl bg-white shadow-sm border border-[#E4EFED] overflow-visible flex flex-col h-full min-h-0 dark:bg-secondary dark:border-white/10"
                     >
                         <div
-                            class="flex flex-col gap-3 px-6 py-4 border-b border-[#E4EFED] shrink-0"
+                            class="flex flex-col gap-3 px-6 py-4 border-b border-[#E4EFED] shrink-0 dark:border-white/10"
                         >
                             <div class="flex gap-3 items-center">
                                 <BookingFilter
                                     :search="searchQuery"
                                     :type="typeFilter"
+                                    :booking-type="bookingTypeFilter"
                                     :status="statusFilter"
                                     :date-from="dateFrom"
                                     :date-to="dateTo"
                                     @update:search="searchQuery = $event"
                                     @update:type="typeFilter = $event"
+                                    @update:bookingType="bookingTypeFilter = $event"
                                     @update:status="statusFilter = $event"
                                     @update:dateFrom="dateFrom = $event"
                                     @update:dateTo="dateTo = $event"
@@ -48,7 +50,7 @@
                                 <template #cell-reference_id="{ row }">
                                     <div class="flex flex-col gap-1">
                                         <span
-                                            class="inline-flex items-center gap-2 text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] w-fit"
+                                            class="inline-flex items-center gap-2 text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] w-fit dark:text-accent-300 dark:bg-accent-500/15"
                                         >
                                             <span
                                                 class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
@@ -59,7 +61,7 @@
                                             #{{ row.reference_id }}
                                         </span>
 
-                                        <span class="text-[11px] text-gray-400">
+                                        <span class="text-[11px] text-gray-400 dark:text-gray-500">
                                             {{
                                                 stringToDateTime(row.created_at)
                                             }}
@@ -70,7 +72,7 @@
                                 <template #cell-patient="{ row }">
                                     <div class="flex flex-col gap-1">
                                         <p
-                                            class="font-semibold text-[#16302E] truncate text-sm max-w-[14rem]"
+                                            class="font-semibold text-[#16302E] truncate text-sm max-w-[14rem] dark:text-white"
                                             :title="
                                                 fullName(
                                                     row.patient?.first_name,
@@ -90,73 +92,37 @@
 
                                         <span
                                             v-if="row.patient?.patient_id"
-                                            class="inline-flex w-fit items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-600"
+                                            class="inline-flex w-fit items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:bg-amber-500/10 dark:text-amber-300"
                                         >
                                             Book Again
                                         </span>
                                     </div>
                                 </template>
 
-                                <template #cell-service="{ row }">
-                                    <div class="flex flex-col gap-1">
+                                <template #cell-booking_type="{ row }">
+                                    <div class="flex items-center gap-2">
                                         <span
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium capitalize w-fit"
+                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium capitalize shrink-0"
                                             :class="categoryClasses(row.category)"
                                         >
                                             {{ row.category ?? "—" }}
                                         </span>
 
-                                        <span class="text-xs text-muted">
+                                        <span class="text-xs text-muted dark:text-gray-400">
                                             {{ bookingType(row) }}
-                                        </span>
-                                    </div>
-                                </template>
-
-                                <!-- Facility care is delivered at the branch;
-                                     homecare carries its own visit address,
-                                     which is not the patient's home address. -->
-                                <template #cell-location="{ row }">
-                                    <div
-                                        class="flex items-start gap-1.5 max-w-[16rem]"
-                                        :title="serviceAddress(row)"
-                                    >
-                                        <svg
-                                            class="w-3.5 h-3.5 mt-0.5 shrink-0 text-[#6B8A87]"
-                                            viewBox="0 0 20 20"
-                                            fill="none"
-                                        >
-                                            <path
-                                                d="M10 17.5s5.5-4.6 5.5-9a5.5 5.5 0 1 0-11 0c0 4.4 5.5 9 5.5 9Z"
-                                                stroke="currentColor"
-                                                stroke-width="1.5"
-                                                stroke-linejoin="round"
-                                            />
-                                            <circle
-                                                cx="10"
-                                                cy="8.5"
-                                                r="1.75"
-                                                stroke="currentColor"
-                                                stroke-width="1.5"
-                                            />
-                                        </svg>
-
-                                        <span
-                                            class="text-xs text-slate-600 truncate"
-                                        >
-                                            {{ serviceAddress(row) || "—" }}
                                         </span>
                                     </div>
                                 </template>
 
                                 <template #cell-schedule="{ row }">
                                     <div class="flex flex-col gap-0.5">
-                                        <span class="text-sm text-[#16302E]">
+                                        <span class="text-sm text-[#16302E] dark:text-white">
                                             {{ serviceDate(row) }}
                                         </span>
 
                                         <span
                                             v-if="row.valid_until"
-                                            class="text-[11px] text-gray-400"
+                                            class="text-[11px] text-gray-400 dark:text-gray-500"
                                         >
                                             Valid until
                                             {{ stringToDateTime(row.valid_until) }}
@@ -193,7 +159,7 @@
 
                                         <button
                                             type="button"
-                                            class="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4EFED] text-[#16302E] hover:bg-[#F0F5F4] transition flex items-center gap-1 shrink-0"
+                                            class="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4EFED] text-[#16302E] hover:bg-[#F0F5F4] transition flex items-center gap-1 shrink-0 dark:hover:bg-white/5 dark:border-white/10 dark:text-white"
                                             @click.stop="
                                                 selectBooking(row.reference_id)
                                             "
@@ -201,7 +167,7 @@
                                             View
 
                                             <svg
-                                                class="w-3.5 h-3.5 text-[#6B8A87]"
+                                                class="w-3.5 h-3.5 text-[#6B8A87] dark:text-gray-400"
                                                 viewBox="0 0 20 20"
                                                 fill="none"
                                             >
@@ -224,7 +190,7 @@
                 <div v-else-if="isLoadingSelected" class="space-y-5">
                     <button
                         type="button"
-                        class="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-secondary transition"
+                        class="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-secondary dark:text-white transition dark:hover:text-white"
                         @click="unSelectRefId"
                     >
                         <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none">
@@ -241,13 +207,13 @@
                     </button>
 
                     <div
-                        class="bg-white rounded-2xl min-h-[calc(100dvh-var(--header-h))] shadow-sm border border-[#E4EFED] py-16 text-center"
+                        class="bg-white rounded-2xl min-h-[calc(100dvh-var(--header-h))] shadow-sm border border-[#E4EFED] py-16 text-center dark:bg-secondary dark:border-white/10"
                     >
                         <div
                             class="mx-auto h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin"
                         />
 
-                        <p class="text-sm text-muted mt-3">Loading booking…</p>
+                        <p class="text-sm text-muted dark:text-gray-400 mt-3">Loading booking…</p>
                     </div>
                 </div>
 
@@ -257,7 +223,7 @@
                     >
                         <button
                             type="button"
-                            class="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-secondary transition"
+                            class="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-secondary dark:text-white transition dark:hover:text-white"
                             @click="unSelectRefId"
                         >
                             <svg
@@ -290,7 +256,7 @@
                 >
                     <button
                         type="button"
-                        class="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-secondary transition"
+                        class="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-secondary dark:text-white transition dark:hover:text-white"
                         @click="unSelectRefId"
                     >
                         <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none">
@@ -307,13 +273,13 @@
                     </button>
 
                     <div
-                        class="bg-white rounded-2xl min-h-[calc(100dvh-var(--header-h))] shadow-sm border border-[#E4EFED] py-16 text-center"
+                        class="bg-white rounded-2xl min-h-[calc(100dvh-var(--header-h))] shadow-sm border border-[#E4EFED] py-16 text-center dark:bg-secondary dark:border-white/10"
                     >
-                        <p class="text-sm font-medium text-gray-500">
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
                             Booking not found
                         </p>
 
-                        <p class="text-xs text-gray-400 mt-1">
+                        <p class="text-xs text-gray-400 mt-1 dark:text-gray-500">
                             We couldn't find a booking with reference "{{
                                 selectedReferenceId
                             }}".
@@ -339,17 +305,17 @@
 
                 <template v-else-if="selectedBooking">
                     <div
-                        class="w-full bg-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden"
+                        class="w-full bg-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden dark:bg-secondary"
                     >
                         <div
-                            class="px-5 py-4 border-b border-[#EDF4F3] bg-gradient-to-r from-[#0E7C7B]/[0.05] to-transparent"
+                            class="px-5 py-4 border-b border-[#EDF4F3] bg-gradient-to-r from-[#0E7C7B]/[0.05] to-transparent dark:border-white/10"
                         >
                             <div
                                 class="flex items-center justify-between gap-3"
                             >
                                 <div class="flex items-center gap-3 min-w-0">
                                     <div
-                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary"
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary dark:bg-primary-500/10"
                                     >
                                         <svg
                                             class="h-4 w-4"
@@ -367,13 +333,13 @@
 
                                     <div class="min-w-0">
                                         <p
-                                            class="text-[10px] uppercase tracking-[0.16em] text-[#6B8A87] font-mono"
+                                            class="text-[10px] uppercase tracking-[0.16em] text-[#6B8A87] font-mono dark:text-gray-400"
                                         >
                                             Booking Actions
                                         </p>
 
                                         <span
-                                            class="w-fit font-mono text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] inline-block"
+                                            class="w-fit font-mono text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] inline-block dark:text-accent-300 dark:bg-accent-500/15"
                                         >
                                             #{{ selectedBooking.reference_id }}
                                         </span>
@@ -397,11 +363,11 @@
                                     showAccommodationButton &&
                                     !isPreAdmissionFacility
                                 "
-                                class="mb-5 rounded-xl border border-[#E4EFED] bg-[#F8FBFA] p-4"
+                                class="mb-5 rounded-xl border border-[#E4EFED] bg-[#F8FBFA] p-4 dark:border-white/10 dark:bg-white/5"
                             >
                                 <div class="flex items-start gap-3">
                                     <div
-                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#0E7C7B] shadow-sm ring-1 ring-[#E4EFED]"
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#0E7C7B] shadow-sm ring-1 ring-[#E4EFED] dark:bg-secondary dark:text-accent-300"
                                     >
                                         <svg
                                             class="h-4 w-4"
@@ -425,13 +391,13 @@
 
                                     <div class="min-w-0 flex-1">
                                         <p
-                                            class="text-sm font-semibold text-[#16302E]"
+                                            class="text-sm font-semibold text-[#16302E] dark:text-white"
                                         >
                                             Accommodation
                                         </p>
 
                                         <p
-                                            class="text-xs text-[#6B8A87] mt-0.5 leading-relaxed"
+                                            class="text-xs text-[#6B8A87] mt-0.5 leading-relaxed dark:text-gray-400"
                                         >
                                             {{
                                                 selectedBooking.reserved
@@ -490,15 +456,15 @@
                                 class="space-y-3"
                             >
                                 <div class="flex items-center gap-3 mb-2">
-                                    <div class="h-px flex-1 bg-[#EDF4F3]" />
+                                    <div class="h-px flex-1 bg-[#EDF4F3] dark:bg-white/10" />
 
                                     <span
-                                        class="text-[10px] uppercase tracking-[0.14em] text-[#8AA09D] font-mono whitespace-nowrap"
+                                        class="text-[10px] uppercase tracking-[0.14em] text-[#8AA09D] font-mono whitespace-nowrap dark:text-gray-500"
                                     >
                                         Review Booking
                                     </span>
 
-                                    <div class="h-px flex-1 bg-[#EDF4F3]" />
+                                    <div class="h-px flex-1 bg-[#EDF4F3] dark:bg-white/10" />
                                 </div>
 
                                 <div class="flex flex-col gap-3">
@@ -583,11 +549,11 @@
 
                             <div
                                 v-else
-                                class="rounded-xl border border-[#E4EFED] bg-[#F8FBFA] px-4 py-3"
+                                class="rounded-xl border border-[#E4EFED] bg-[#F8FBFA] px-4 py-3 dark:border-white/10 dark:bg-white/5"
                             >
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EAF4F2] text-[#0E7C7B]"
+                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EAF4F2] text-[#0E7C7B] dark:text-accent-300 dark:bg-accent-500/15"
                                     >
                                         <svg
                                             class="h-4 w-4"
@@ -604,13 +570,13 @@
 
                                     <div>
                                         <p
-                                            class="text-sm font-semibold text-[#16302E]"
+                                            class="text-sm font-semibold text-[#16302E] dark:text-white"
                                         >
                                             No actions available
                                         </p>
 
                                         <p
-                                            class="text-xs text-[#6B8A87] mt-0.5"
+                                            class="text-xs text-[#6B8A87] mt-0.5 dark:text-gray-400"
                                         >
                                             This booking is no longer pending.
                                         </p>
@@ -694,6 +660,7 @@ const {
     searchQuery,
     statusFilter,
     typeFilter,
+    bookingTypeFilter,
     dateFrom,
     dateTo,
     pagination,
@@ -724,12 +691,8 @@ const columns = [
         label: "Patient",
     },
     {
-        key: "service",
-        label: "Service",
-    },
-    {
-        key: "location",
-        label: "Location",
+        key: "booking_type",
+        label: "Booking Type",
     },
     {
         key: "schedule",
@@ -803,8 +766,8 @@ function formatDate(value?: string) {
 
 function categoryClasses(category?: string) {
     return (category ?? "").toLowerCase() === "facility"
-        ? "bg-[#EEF2FF] text-[#4338CA]"
-        : "bg-[#EAF4F2] text-[#0E7C7B]";
+        ? "bg-[#EEF2FF] text-[#4338CA] dark:text-violet-300 dark:bg-violet-500/15"
+        : "bg-[#EAF4F2] text-[#0E7C7B] dark:text-accent-300 dark:bg-accent-500/15";
 }
 
 function statusDotClasses(status?: string) {

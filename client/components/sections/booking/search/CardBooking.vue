@@ -1,7 +1,7 @@
 <template>
     <div
         v-if="variant === 1"
-        class="group rounded-2xl border border-primary-200 bg-white overflow-hidden cursor-pointer shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-secondary"
+        class="group rounded-2xl border border-primary-200 bg-white overflow-hidden cursor-pointer shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-secondary dark:border-primary-500/20"
         @click="$emit('select', branch)"
     >
         <div class="relative h-40 overflow-hidden bg-muted-light dark:bg-white/10">
@@ -71,13 +71,13 @@
                 >
                     <template v-if="subscription.plans.name === 'Hybrid'">
                         <span
-                            class="text-xs px-2 py-1 rounded-full font-semibold bg-primary-50 text-primary-700 dark:bg-primary-500/10"
+                            class="text-xs px-2 py-1 rounded-full font-semibold bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
                         >
                             Homecare Services
                         </span>
 
                         <span
-                            class="text-xs px-2 py-1 rounded-full font-semibold bg-primary-50 text-primary-700 dark:bg-primary-500/10"
+                            class="text-xs px-2 py-1 rounded-full font-semibold bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
                         >
                             In-House Facility
                         </span>
@@ -85,7 +85,7 @@
 
                     <span
                         v-else
-                        class="text-xs px-2 py-1 rounded-full font-semibold bg-primary-50 text-primary-700 dark:bg-primary-500/10"
+                        class="text-xs px-2 py-1 rounded-full font-semibold bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
                     >
                         {{ subscription.plans.name }}
                     </span>
@@ -125,7 +125,7 @@
 
     <div
         v-else-if="variant === 2"
-        class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300 cursor-pointer sm:flex-row dark:bg-secondary dark:border-white/10"
+        class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300 cursor-pointer sm:flex-row dark:bg-secondary dark:border-white/10 dark:hover:border-white/10"
     >
         <div
             class="relative h-48 w-full shrink-0 overflow-hidden bg-slate-100 sm:h-auto sm:w-64 dark:bg-white/10"
@@ -162,7 +162,7 @@
             <div
                 class="absolute right-3 top-3 flex items-center gap-1 rounded-md bg-white/90 px-2.5 py-1 shadow-sm backdrop-blur-sm dark:bg-secondary/90"
             >
-                <!-- <span class="text-amber-500 text-xs">★</span> -->
+                <!-- <span class="text-amber-500 text-xs dark:text-amber-300">★</span> -->
                 <Star class="h-3 w-3 text-orange-400 fill-orange-400" />
 
                 <span class="text-xs font-semibold text-slate-700 dark:text-gray-300">
@@ -236,8 +236,8 @@
                     class="h-4 w-4 shrink-0"
                     :class="
                         getTime(branch.settings).is24Hours
-                            ? 'text-emerald-600'
-                            : 'text-slate-400'
+                            ? 'text-emerald-600 dark:text-emerald-300'
+                            : 'text-slate-400 dark:text-gray-500'
                     "
                     fill="none"
                     viewBox="0 0 24 24"

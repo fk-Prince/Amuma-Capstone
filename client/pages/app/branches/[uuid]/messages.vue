@@ -1,23 +1,23 @@
 <template>
     <div
-        class="flex h-[100dvh] min-h-0 w-full flex-1 bg-slate-100 lg:h-full lg:p-6"
+        class="flex h-screen-header min-h-0 w-full bg-slate-100 dark:bg-surface lg:p-6"
     >
         <div
             class="grid h-full min-h-0 w-full grid-cols-1 gap-0 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-5"
         >
             <aside
-                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-2xl lg:border lg:border-slate-200"
+                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-2xl lg:border lg:border-slate-200 dark:bg-secondary dark:lg:border-white/10"
             >
-                <div class="shrink-0 border-b border-slate-200 p-4">
+                <div class="shrink-0 border-b border-slate-200 p-4 dark:border-white/10">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p
-                                class="text-sm font-bold text-slate-800 sm:text-base"
+                                class="text-sm font-bold text-slate-800 sm:text-base dark:text-white"
                             >
                                 Messages
                             </p>
 
-                            <p class="mt-0.5 text-xs leading-4 text-slate-400">
+                            <p class="mt-0.5 text-xs leading-4 text-slate-400 dark:text-gray-500">
                                 {{
                                     tab === "families"
                                         ? "Families of patients assigned to you."
@@ -28,28 +28,34 @@
 
                         <button
                             type="button"
-                            class="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-600 active:scale-95"
+                            class="flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-600 active:scale-95"
                             @click="openComposer"
                         >
+                            <PenSquare class="h-3.5 w-3.5" />
                             New Message
                         </button>
                     </div>
 
                     <div
-                        class="mt-3 inline-flex w-full rounded-xl bg-slate-100 p-1"
+                        class="mt-3 inline-flex w-full rounded-xl bg-slate-100 p-1 dark:bg-white/10"
                     >
                         <button
                             v-for="option in tabs"
                             :key="option.value"
                             type="button"
-                            class="min-w-0 flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+                            class="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition"
                             :class="
                                 tab === option.value
-                                    ? 'bg-white text-primary shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700'
+                                    ? 'bg-white text-primary shadow-sm dark:bg-secondary'
+                                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
                             "
                             @click="switchTab(option.value)"
                         >
+                            <component
+                                :is="option.value === 'families' ? Users : Stethoscope"
+                                class="h-3.5 w-3.5 shrink-0"
+                            />
+
                             <span class="truncate">
                                 {{ option.label }}
                             </span>
@@ -73,13 +79,13 @@
                         <div
                             v-for="n in 5"
                             :key="n"
-                            class="h-16 animate-pulse rounded-xl bg-slate-100"
+                            class="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-white/10"
                         />
                     </div>
 
                     <p
                         v-else-if="!conversations.length"
-                        class="px-3 py-10 text-center text-sm text-slate-400"
+                        class="px-3 py-10 text-center text-sm text-slate-400 dark:text-gray-500"
                     >
                         No conversations yet.
                     </p>
@@ -88,11 +94,11 @@
                         v-for="item in conversations"
                         :key="item.conversation_id"
                         type="button"
-                        class="mb-1 w-full rounded-xl border px-3 py-2.5 text-left transition active:scale-[0.99]"
+                        class="mb-1 w-full rounded-xl border px-3 py-2.5 text-left transition active:scale-[0.99] dark:border-white/10"
                         :class="
                             item.conversation_id === activeId
-                                ? 'border-primary-200 bg-primary-50'
-                                : 'border-transparent hover:bg-slate-50'
+                                ? 'border-primary-200 bg-primary-50 dark:border-primary-500/20 dark:bg-primary-500/10'
+                                : 'border-transparent hover:bg-slate-50 dark:hover:bg-white/5'
                         "
                         @click="openThread(item.conversation_id)"
                     >
@@ -107,7 +113,7 @@
                                     class="flex min-w-0 items-center justify-between gap-2"
                                 >
                                     <p
-                                        class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800"
+                                        class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 dark:text-white"
                                     >
                                         {{
                                             item.client_name ??
@@ -126,13 +132,13 @@
 
                                 <p
                                     v-if="item.patient_names?.length"
-                                    class="mt-0.5 truncate text-[11px] text-primary-600"
+                                    class="mt-0.5 truncate text-[11px] text-primary-600 dark:text-primary-300"
                                 >
                                     Patient:
                                     {{ patientLabel(item.patient_names) }}
                                 </p>
 
-                                <p class="mt-1 truncate text-xs text-slate-400">
+                                <p class="mt-1 truncate text-xs text-slate-400 dark:text-gray-500">
                                     {{ item.last_message ?? "No messages yet" }}
                                 </p>
                             </div>
@@ -143,9 +149,9 @@
 
             <div
                 :class="[
-                    'min-h-0 flex-col lg:static lg:z-auto lg:flex',
+                    'h-full min-h-0 flex-col lg:static lg:z-auto lg:flex',
                     mobileThreadOpen
-                        ? 'fixed inset-0 z-50 flex h-[100dvh] w-full bg-white'
+                        ? 'fixed inset-0 z-50 flex h-[100dvh] w-full bg-white dark:bg-secondary'
                         : 'hidden',
                 ]"
             >
@@ -220,20 +226,20 @@
                     >
                         <div
                             v-if="composerOpen"
-                            class="w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-lg sm:rounded-2xl"
+                            class="w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-lg sm:rounded-2xl dark:bg-secondary"
                         >
                             <div
-                                class="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5"
+                                class="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5 dark:border-white/10"
                             >
                                 <div class="min-w-0">
                                     <p
-                                        class="text-sm font-bold text-slate-800 sm:text-base"
+                                        class="text-sm font-bold text-slate-800 sm:text-base dark:text-white"
                                     >
                                         New message
                                     </p>
 
                                     <p
-                                        class="mt-0.5 text-xs leading-4 text-slate-400"
+                                        class="mt-0.5 text-xs leading-4 text-slate-400 dark:text-gray-500"
                                     >
                                         {{
                                             tab === "colleagues"
@@ -246,7 +252,7 @@
                                 <button
                                     type="button"
                                     aria-label="Close"
-                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                                     @click="composerOpen = false"
                                 >
                                     <svg
@@ -263,7 +269,7 @@
                                 </button>
                             </div>
 
-                            <div class="border-b border-slate-100 p-2.5">
+                            <div class="border-b border-slate-100 p-2.5 dark:border-white/10">
                                 <BaseInput
                                     v-model="composerSearch"
                                     placeholder="Search by name or email..."
@@ -284,7 +290,7 @@
                                             (tab !== 'colleagues' &&
                                                 !recipients.length))
                                     "
-                                    class="px-3 py-8 text-center text-sm text-slate-400"
+                                    class="px-3 py-8 text-center text-sm text-slate-400 dark:text-gray-500"
                                 >
                                     No one found matching "{{
                                         composerSearch
@@ -293,7 +299,7 @@
 
                                 <p
                                     v-if="loadingRecipients"
-                                    class="px-3 py-8 text-center text-sm text-slate-400"
+                                    class="px-3 py-8 text-center text-sm text-slate-400 dark:text-gray-500"
                                 >
                                     Loading...
                                 </p>
@@ -304,7 +310,7 @@
                                             !colleagues.length &&
                                             !composerSearch.trim()
                                         "
-                                        class="px-3 py-8 text-center text-sm text-slate-400"
+                                        class="px-3 py-8 text-center text-sm text-slate-400 dark:text-gray-500"
                                     >
                                         No other staff at this branch yet.
                                     </p>
@@ -313,7 +319,7 @@
                                         v-for="row in colleagues"
                                         :key="row.employee_id"
                                         type="button"
-                                        class="mb-1 w-full rounded-xl px-3 py-3 text-left transition hover:bg-slate-50 active:scale-[0.99]"
+                                        class="mb-1 w-full rounded-xl px-3 py-3 text-left transition hover:bg-slate-50 active:scale-[0.99] dark:hover:bg-white/5"
                                         @click="startColleagueConversation(row)"
                                     >
                                         <div
@@ -330,7 +336,7 @@
                                                     class="flex min-w-0 items-center justify-between gap-2"
                                                 >
                                                     <p
-                                                        class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800"
+                                                        class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 dark:text-white"
                                                     >
                                                         {{ row.name }}
                                                     </p>
@@ -339,7 +345,7 @@
                                                         v-if="
                                                             row.conversation_id
                                                         "
-                                                        class="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500"
+                                                        class="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-white/10 dark:text-gray-400"
                                                     >
                                                         Existing
                                                     </span>
@@ -347,7 +353,7 @@
 
                                                 <p
                                                     v-if="row.role_name"
-                                                    class="mt-0.5 truncate text-xs capitalize text-slate-400"
+                                                    class="mt-0.5 truncate text-xs capitalize text-slate-400 dark:text-gray-500"
                                                 >
                                                     {{
                                                         row.role_name.replace(
@@ -359,7 +365,7 @@
 
                                                 <p
                                                     v-if="row.email"
-                                                    class="mt-0.5 truncate text-xs text-slate-400"
+                                                    class="mt-0.5 truncate text-xs text-slate-400 dark:text-gray-500"
                                                 >
                                                     {{ row.email }}
                                                 </p>
@@ -374,7 +380,7 @@
                                             !recipients.length &&
                                             !composerSearch.trim()
                                         "
-                                        class="px-3 py-8 text-center text-sm text-slate-400"
+                                        class="px-3 py-8 text-center text-sm text-slate-400 dark:text-gray-500"
                                     >
                                         You have no families to message yet.
                                     </p>
@@ -383,7 +389,7 @@
                                         v-for="row in recipients"
                                         :key="row.client_id"
                                         type="button"
-                                        class="mb-1 w-full rounded-xl px-3 py-3 text-left transition hover:bg-slate-50 active:scale-[0.99]"
+                                        class="mb-1 w-full rounded-xl px-3 py-3 text-left transition hover:bg-slate-50 active:scale-[0.99] dark:hover:bg-white/5"
                                         @click="startConversation(row)"
                                     >
                                         <div
@@ -400,7 +406,7 @@
                                                     class="flex min-w-0 items-center justify-between gap-2"
                                                 >
                                                     <p
-                                                        class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800"
+                                                        class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 dark:text-white"
                                                     >
                                                         {{ row.client_name }}
                                                     </p>
@@ -409,14 +415,14 @@
                                                         v-if="
                                                             row.conversation_id
                                                         "
-                                                        class="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500"
+                                                        class="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-white/10 dark:text-gray-400"
                                                     >
                                                         Existing
                                                     </span>
                                                 </div>
 
                                                 <p
-                                                    class="mt-0.5 truncate text-xs text-slate-400"
+                                                    class="mt-0.5 truncate text-xs text-slate-400 dark:text-gray-500"
                                                 >
                                                     {{
                                                         patientLabel(
@@ -427,7 +433,7 @@
 
                                                 <p
                                                     v-if="row.email"
-                                                    class="mt-0.5 truncate text-xs text-slate-400"
+                                                    class="mt-0.5 truncate text-xs text-slate-400 dark:text-gray-500"
                                                 >
                                                     {{ row.email }}
                                                 </p>
@@ -438,11 +444,11 @@
                             </div>
 
                             <div
-                                class="flex justify-end border-t border-slate-200 px-4 py-3 pb-[env(safe-area-inset-bottom)] sm:px-5"
+                                class="flex justify-end border-t border-slate-200 px-4 py-3 pb-[env(safe-area-inset-bottom)] sm:px-5 dark:border-white/10"
                             >
                                 <button
                                     type="button"
-                                    class="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+                                    class="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-400"
                                     @click="composerOpen = false"
                                 >
                                     Cancel
@@ -459,7 +465,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { MessageCircle } from "lucide-vue-next";
+import {
+    MessageCircle,
+    PenSquare,
+    Users,
+    Stethoscope,
+} from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
 import MessageThread from "~/components/messaging/MessageThread.vue";

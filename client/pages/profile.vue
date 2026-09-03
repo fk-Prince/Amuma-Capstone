@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-white pt-[100px] dark:bg-secondary">
+    <div class="min-h-screen bg-slate-50/70 pt-[100px] dark:bg-surface">
         <div class="mx-auto max-w-5xl px-5 pb-16 sm:px-8">
             <div
                 class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between"
@@ -36,17 +36,17 @@
             </div>
 
             <div
-                class="flex flex-wrap gap-1 border-b border-slate-200 pb-0 dark:border-white/10"
+                class="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <button
                     v-for="tab in tabs"
                     :key="tab.value"
                     type="button"
-                    class="rounded-t-lg border px-4 py-2 text-sm font-medium transition"
+                    class="rounded-lg px-4 py-1.5 text-sm font-medium transition"
                     :class="
                         activeTab === tab.value
-                            ? 'border-slate-200 border-b-white bg-white text-slate-900 dark:border-white/10 dark:border-b-secondary dark:bg-secondary dark:text-white'
-                            : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200'
                     "
                     @click="activeTab = tab.value"
                 >
@@ -71,10 +71,10 @@
 
             <template v-else>
                 <!-- PROFILE -->
-                <div v-show="activeTab === 'profile'">
+                <div v-show="activeTab === 'profile'" class="mt-5 space-y-5">
                     <!-- Profile photo -->
                     <section
-                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr] dark:border-white/10"
+                        class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
                     >
                         <div>
                             <h2
@@ -133,7 +133,7 @@
 
                     <!-- Personal info -->
                     <section
-                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr] dark:border-white/10"
+                        class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
                     >
                         <div>
                             <h2
@@ -222,7 +222,7 @@
                     <!-- Address -->
                     <section
                         v-if="canEditLocation"
-                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr] dark:border-white/10"
+                        class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
                     >
                         <div>
                             <h2
@@ -307,7 +307,7 @@
 
                     <!-- Password -->
                     <section
-                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr] dark:border-white/10"
+                        class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
                     >
                         <div>
                             <h2
@@ -383,7 +383,7 @@
                     </section>
 
                     <!-- Account -->
-                    <section class="grid gap-6 py-8 lg:grid-cols-[260px_1fr]">
+                    <section class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary">
                         <div>
                             <h2
                                 class="text-sm font-semibold text-slate-900 dark:text-white"
@@ -476,8 +476,8 @@
                 </div>
 
                 <!-- NOTIFICATIONS -->
-                <div v-show="activeTab === 'notifications'">
-                    <section class="grid gap-6 py-8 lg:grid-cols-[260px_1fr]">
+                <div v-show="activeTab === 'notifications'" class="mt-5 space-y-5">
+                    <section class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary">
                         <div>
                             <h2
                                 class="text-sm font-semibold text-slate-900 dark:text-white"

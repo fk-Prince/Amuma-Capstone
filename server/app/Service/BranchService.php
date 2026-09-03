@@ -151,6 +151,7 @@ class BranchService
             'reserved_walkin_slots',
             'enable_booking_pre_admission',
             'enable_booking_complete_admission',
+            'requires_full_payment_on_admit',
             'minimum_adl_hours',
             'termination_fee_percent',
             'is_open',
@@ -163,7 +164,7 @@ class BranchService
         // The request delivers these as strings ("1", "8"). Stored raw they
         // break v-model on the client, where a checkbox compares against true.
         foreach (
-            ['enable_booking_pre_admission', 'enable_booking_complete_admission', 'is_open']
+            ['enable_booking_pre_admission', 'enable_booking_complete_admission', 'requires_full_payment_on_admit', 'is_open']
             as $key
         ) {
             if (array_key_exists($key, $settingPayload)) {

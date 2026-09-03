@@ -53,7 +53,7 @@
                         class="text-sm font-semibold leading-5 transition-colors"
                         :class="
                             active === step.key
-                                ? 'text-primary-600'
+                                ? 'text-primary-600 dark:text-primary-300'
                                 : isCompleted(step.key)
                                   ? 'text-secondary dark:text-white'
                                   : 'text-muted-dark dark:text-gray-400'
@@ -129,19 +129,25 @@ const steps = computed(() => {
         },
         {
             key: "step4",
-            title: "Assessment",
-            desc: "Provide health assessment",
+            title: "Diagnosis",
+            desc: "Known diagnoses and documents",
             optional: true,
         },
         {
             key: "step5",
+            title: "Assessment",
+            desc: "Condition, mental state and daily activities",
+            optional: true,
+        },
+        {
+            key: "step6",
             title: "Review & Submit",
             desc: "Confirm and submit booking",
         },
     ];
 
     return props.hideReview
-        ? items.filter((step) => step.key !== "step5")
+        ? items.filter((step) => step.key !== "step6")
         : items;
 });
 </script>

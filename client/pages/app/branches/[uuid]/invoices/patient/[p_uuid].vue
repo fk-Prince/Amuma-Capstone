@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-screen-header w-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8"
+        class="min-h-screen-header w-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8 dark:bg-surface"
     >
         <div class="mx-auto max-w-[1600px] space-y-5">
             <div
@@ -8,7 +8,7 @@
             >
                 <button
                     type="button"
-                    class="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition hover:text-secondary"
+                    class="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition hover:text-secondary dark:text-gray-400 dark:hover:text-white"
                     @click="goBack"
                 >
                     <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none">
@@ -25,7 +25,7 @@
 
                 <button
                     type="button"
-                    class="inline-flex items-center gap-2 rounded-xl border border-primary-100 bg-white px-4 py-2 text-sm font-medium text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-primary-50"
+                    class="inline-flex items-center gap-2 rounded-xl border border-primary-100 bg-white px-4 py-2 text-sm font-medium text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-primary-50 dark:border-primary-500/20 dark:bg-secondary dark:text-primary-300 dark:hover:bg-primary-500/10"
                     @click="handlePrint"
                 >
                     <svg
@@ -49,24 +49,24 @@
 
             <div
                 v-if="loading"
-                class="rounded-2xl border border-primary-100 bg-white p-12 text-center shadow-sm"
+                class="rounded-2xl border border-primary-100 bg-white p-12 text-center shadow-sm dark:border-primary-500/20 dark:bg-secondary"
             >
                 <div
-                    class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary-100 border-t-primary-600"
+                    class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary-100 border-t-primary-600 dark:border-primary-500/20"
                 />
 
-                <p class="mt-4 text-sm font-medium text-secondary">
+                <p class="mt-4 text-sm font-medium text-secondary dark:text-white">
                     Loading patient account...
                 </p>
 
-                <p class="mt-1 text-xs text-muted">
+                <p class="mt-1 text-xs text-muted dark:text-gray-400">
                     Please wait while the invoice information is loaded.
                 </p>
             </div>
 
             <div
                 v-else-if="errors"
-                class="rounded-2xl border border-danger/20 bg-white p-10 text-center shadow-sm"
+                class="rounded-2xl border border-danger/20 bg-white p-10 text-center shadow-sm dark:bg-secondary"
             >
                 <div
                     class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-danger/10 text-danger"
@@ -86,7 +86,7 @@
                     </svg>
                 </div>
 
-                <p class="mt-4 text-sm font-semibold text-secondary">
+                <p class="mt-4 text-sm font-semibold text-secondary dark:text-white">
                     Unable to load patient account
                 </p>
 
@@ -109,10 +109,10 @@
                 >
                     <main class="min-w-0 space-y-5">
                         <section
-                            class="overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-sm"
+                            class="overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-sm dark:border-primary-500/20 dark:bg-secondary"
                         >
                             <div
-                                class="border-b border-primary-100 bg-gradient-to-br from-primary-50 via-white to-accent-50/40 px-6 py-7 sm:px-7"
+                                class="border-b border-primary-100 bg-gradient-to-br from-primary-50 via-white to-accent-50/40 dark:from-primary-500/10 dark:via-secondary dark:to-accent-500/10 px-6 py-7 sm:px-7 dark:border-primary-500/20"
                             >
                                 <div
                                     class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"
@@ -122,7 +122,7 @@
                                             class="flex flex-wrap items-center gap-2"
                                         >
                                             <span
-                                                class="rounded-lg bg-primary-100 px-2.5 py-1 font-mono text-[11px] font-semibold text-primary-700"
+                                                class="rounded-lg bg-primary-100 px-2.5 py-1 font-mono text-[11px] font-semibold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300"
                                             >
                                                 {{
                                                     summary.patient
@@ -132,7 +132,7 @@
                                         </div>
 
                                         <h1
-                                            class="mt-3 truncate text-2xl font-bold tracking-tight text-secondary sm:text-3xl"
+                                            class="mt-3 truncate text-2xl font-bold tracking-tight text-secondary sm:text-3xl dark:text-white"
                                         >
                                             {{
                                                 summary.patient?.full_name ??
@@ -141,7 +141,7 @@
                                         </h1>
 
                                         <div
-                                            class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted"
+                                            class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted dark:text-gray-400"
                                         >
                                             <span>
                                                 {{ summary.invoice_count }}
@@ -171,7 +171,7 @@
                             </div>
 
                             <div
-                                class="grid border-b border-primary-100 sm:grid-cols-2 lg:grid-cols-4"
+                                class="grid border-b border-primary-100 sm:grid-cols-2 lg:grid-cols-4 dark:border-primary-500/20"
                             >
                                 <SummaryCard
                                     label="Total Amount"
@@ -199,21 +199,21 @@
 
                             <div
                                 v-if="hasProcessingRefund"
-                                class="flex flex-wrap items-center justify-between gap-3 border-b border-primary-100 bg-accent-50/40 px-6 py-4 sm:px-7"
+                                class="flex flex-wrap items-center justify-between gap-3 border-b border-primary-100 bg-accent-50/40 px-6 py-4 sm:px-7 dark:border-primary-500/20 dark:bg-accent-500/15"
                             >
                                 <div>
                                     <p
-                                        class="text-[10px] font-semibold uppercase tracking-[0.14em] text-accent-700"
+                                        class="text-[10px] font-semibold uppercase tracking-[0.14em] text-accent-700 dark:text-accent-300"
                                     >
                                         Refund Processing
                                     </p>
 
-                                    <p class="mt-1 text-xs text-muted">
+                                    <p class="mt-1 text-xs text-muted dark:text-gray-400">
                                         A refund is currently being processed.
                                     </p>
                                 </div>
 
-                                <!-- <p class="text-sm font-bold text-accent-700">
+                                <!-- <p class="text-sm font-bold text-accent-700 dark:text-accent-300">
                                     ₱{{
                                         formatMoney(
                                             summary.total_refund_processing,
@@ -223,7 +223,7 @@
 
                                 <div class="flex items-center gap-3">
                                     <p
-                                        class="text-sm font-bold text-accent-700"
+                                        class="text-sm font-bold text-accent-700 dark:text-accent-300"
                                     >
                                         ₱{{
                                             formatMoney(
@@ -258,7 +258,7 @@
 
                             <section
                                 v-if="summary.patient"
-                                class="border-b border-primary-100 px-6 py-6 sm:px-7"
+                                class="border-b border-primary-100 px-6 py-6 sm:px-7 dark:border-primary-500/20"
                             >
                                 <SectionHeader>
                                     <template #icon>
@@ -324,7 +324,7 @@
 
                             <section>
                                 <div
-                                    class="border-b border-primary-100 px-4 sm:px-6"
+                                    class="border-b border-primary-100 px-4 sm:px-6 dark:border-primary-500/20"
                                 >
                                     <div class="flex gap-1 overflow-x-auto">
                                         <button
@@ -332,8 +332,8 @@
                                             class="relative whitespace-nowrap px-4 py-4 text-sm font-medium transition"
                                             :class="
                                                 activeTab === 'overview'
-                                                    ? 'text-primary-700'
-                                                    : 'text-muted hover:text-secondary'
+                                                    ? 'text-primary-700 dark:text-primary-300'
+                                                    : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
                                             "
                                             @click="activeTab = 'overview'"
                                         >
@@ -350,15 +350,15 @@
                                             class="relative inline-flex items-center gap-2 whitespace-nowrap px-4 py-4 text-sm font-medium transition"
                                             :class="
                                                 activeTab === 'admissions'
-                                                    ? 'text-primary-700'
-                                                    : 'text-muted hover:text-secondary'
+                                                    ? 'text-primary-700 dark:text-primary-300'
+                                                    : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
                                             "
                                             @click="activeTab = 'admissions'"
                                         >
                                             Admissions
 
                                             <span
-                                                class="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] text-primary-700"
+                                                class="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] text-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
                                             >
                                                 {{ admissions.length }}
                                             </span>
@@ -376,15 +376,15 @@
                                             class="relative inline-flex items-center gap-2 whitespace-nowrap px-4 py-4 text-sm font-medium transition"
                                             :class="
                                                 activeTab === 'services'
-                                                    ? 'text-accent-700'
-                                                    : 'text-muted hover:text-secondary'
+                                                    ? 'text-accent-700 dark:text-accent-300'
+                                                    : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
                                             "
                                             @click="activeTab = 'services'"
                                         >
                                             Services
 
                                             <span
-                                                class="rounded-full bg-accent-50 px-2 py-0.5 text-[10px] text-accent-700"
+                                                class="rounded-full bg-accent-50 px-2 py-0.5 text-[10px] text-accent-700 dark:bg-accent-500/15 dark:text-accent-300"
                                             >
                                                 {{ services.length }}
                                             </span>
@@ -403,20 +403,20 @@
                                 >
                                     <div class="grid gap-4 md:grid-cols-2">
                                         <div
-                                            class="rounded-xl border border-primary-100 bg-primary-50/40 p-5"
+                                            class="rounded-xl border border-primary-100 bg-primary-50/40 p-5 dark:border-primary-500/20 dark:bg-primary-500/10"
                                         >
                                             <div
                                                 class="flex items-start justify-between gap-3"
                                             >
                                                 <div>
                                                     <p
-                                                        class="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary-600"
+                                                        class="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary-600 dark:text-primary-300"
                                                     >
                                                         Account Status
                                                     </p>
 
                                                     <p
-                                                        class="mt-2 text-lg font-bold capitalize text-secondary"
+                                                        class="mt-2 text-lg font-bold capitalize text-secondary dark:text-white"
                                                     >
                                                         {{
                                                             summary.status ||
@@ -438,17 +438,17 @@
                                             </div>
 
                                             <div
-                                                class="mt-5 grid grid-cols-2 gap-4"
+                                                class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4"
                                             >
                                                 <div>
                                                     <p
-                                                        class="text-[10px] text-muted"
+                                                        class="text-[10px] text-muted dark:text-gray-400"
                                                     >
                                                         Invoices
                                                     </p>
 
                                                     <p
-                                                        class="mt-1 text-sm font-semibold text-secondary"
+                                                        class="mt-1 text-sm font-semibold text-secondary dark:text-white"
                                                     >
                                                         {{
                                                             summary.invoice_count
@@ -458,13 +458,13 @@
 
                                                 <div>
                                                     <p
-                                                        class="text-[10px] text-muted"
+                                                        class="text-[10px] text-muted dark:text-gray-400"
                                                     >
                                                         Admissions
                                                     </p>
 
                                                     <p
-                                                        class="mt-1 text-sm font-semibold text-secondary"
+                                                        class="mt-1 text-sm font-semibold text-secondary dark:text-white"
                                                     >
                                                         {{ admissions.length }}
                                                     </p>
@@ -473,10 +473,10 @@
                                         </div>
 
                                         <div
-                                            class="rounded-xl border border-primary-100 bg-white p-5"
+                                            class="rounded-xl border border-primary-100 bg-white p-5 dark:border-primary-500/20 dark:bg-secondary"
                                         >
                                             <p
-                                                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted"
+                                                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted dark:text-gray-400"
                                             >
                                                 Latest Invoice
                                             </p>
@@ -499,7 +499,7 @@
                                                         class="flex items-center justify-between gap-3"
                                                     >
                                                         <span
-                                                            class="font-mono text-sm font-semibold text-primary-700"
+                                                            class="font-mono text-sm font-semibold text-primary-700 dark:text-primary-300"
                                                         >
                                                             {{
                                                                 summary
@@ -531,13 +531,13 @@
                                                     >
                                                         <div>
                                                             <p
-                                                                class="text-[10px] text-muted"
+                                                                class="text-[10px] text-muted dark:text-gray-400"
                                                             >
                                                                 Total
                                                             </p>
 
                                                             <p
-                                                                class="mt-1 text-xs font-semibold text-secondary"
+                                                                class="mt-1 text-xs font-semibold text-secondary dark:text-white"
                                                             >
                                                                 ₱{{
                                                                     formatMoney(
@@ -551,13 +551,13 @@
 
                                                         <div>
                                                             <p
-                                                                class="text-[10px] text-muted"
+                                                                class="text-[10px] text-muted dark:text-gray-400"
                                                             >
                                                                 Paid
                                                             </p>
 
                                                             <p
-                                                                class="mt-1 text-xs font-semibold text-primary-700"
+                                                                class="mt-1 text-xs font-semibold text-primary-700 dark:text-primary-300"
                                                             >
                                                                 ₱{{
                                                                     formatMoney(
@@ -571,7 +571,7 @@
 
                                                         <div>
                                                             <p
-                                                                class="text-[10px] text-muted"
+                                                                class="text-[10px] text-muted dark:text-gray-400"
                                                             >
                                                                 Balance
                                                             </p>
@@ -585,7 +585,7 @@
                                                                             .balance_due,
                                                                     ) > 0
                                                                         ? 'text-danger'
-                                                                        : 'text-primary-700'
+                                                                        : 'text-primary-700 dark:text-primary-300'
                                                                 "
                                                             >
                                                                 ₱{{
@@ -603,7 +603,7 @@
 
                                             <p
                                                 v-else
-                                                class="mt-3 text-sm text-muted"
+                                                class="mt-3 text-sm text-muted dark:text-gray-400"
                                             >
                                                 No invoice available.
                                             </p>
@@ -640,23 +640,23 @@
                     <aside class="xl:sticky xl:top-6 print:hidden">
                         <div
                             v-if="showPayment"
-                            class="overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-sm"
+                            class="overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-sm dark:border-primary-500/20 dark:bg-secondary"
                         >
                             <div
-                                class="border-b border-primary-100 bg-primary-50/60 px-6 py-5"
+                                class="border-b border-primary-100 bg-primary-50/60 px-6 py-5 dark:border-primary-500/20 dark:bg-primary-500/10"
                             >
                                 <div
                                     class="flex items-start justify-between gap-3"
                                 >
                                     <div>
                                         <p
-                                            class="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-600"
+                                            class="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-600 dark:text-primary-300"
                                         >
                                             Outstanding Balance
                                         </p>
 
                                         <p
-                                            class="mt-1 text-3xl font-bold tracking-tight text-secondary"
+                                            class="mt-1 text-3xl font-bold tracking-tight text-secondary dark:text-white"
                                         >
                                             ₱{{
                                                 formatMoney(
@@ -667,7 +667,7 @@
                                     </div>
 
                                     <div
-                                        class="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-primary-700 shadow-sm"
+                                        class="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-primary-700 shadow-sm dark:bg-secondary dark:text-primary-300"
                                     >
                                         <svg
                                             class="h-4 w-4"
@@ -688,7 +688,7 @@
                                     </div>
                                 </div>
 
-                                <p class="mt-2 text-xs text-muted">
+                                <p class="mt-2 text-xs text-muted dark:text-gray-400">
                                     Amount still due from the patient.
                                 </p>
                             </div>
@@ -712,10 +712,10 @@
 
                         <div
                             v-else
-                            class="rounded-2xl border border-primary-100 bg-white p-7 text-center shadow-sm"
+                            class="rounded-2xl border border-primary-100 bg-white p-7 text-center shadow-sm dark:border-primary-500/20 dark:bg-secondary"
                         >
                             <div
-                                class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-700"
+                                class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
                             >
                                 <svg
                                     class="h-5 w-5"
@@ -731,22 +731,22 @@
                             </div>
 
                             <p
-                                class="mt-4 text-sm font-semibold text-secondary"
+                                class="mt-4 text-sm font-semibold text-secondary dark:text-white"
                             >
                                 Account Settled
                             </p>
 
-                            <p class="mt-1 text-xs leading-5 text-muted">
+                            <p class="mt-1 text-xs leading-5 text-muted dark:text-gray-400">
                                 All outstanding invoices for this patient have
                                 been fully paid.
                             </p>
                         </div>
 
                         <div
-                            class="mt-4 rounded-2xl border border-primary-100 bg-white p-5 shadow-sm"
+                            class="mt-4 rounded-2xl border border-primary-100 bg-white p-5 shadow-sm dark:border-primary-500/20 dark:bg-secondary"
                         >
                             <p
-                                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted"
+                                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted dark:text-gray-400"
                             >
                                 Account Summary
                             </p>
@@ -755,12 +755,12 @@
                                 <div
                                     class="flex items-center justify-between gap-3"
                                 >
-                                    <span class="text-xs text-muted">
+                                    <span class="text-xs text-muted dark:text-gray-400">
                                         Total invoices
                                     </span>
 
                                     <span
-                                        class="text-xs font-semibold text-secondary"
+                                        class="text-xs font-semibold text-secondary dark:text-white"
                                     >
                                         {{ summary.invoice_count }}
                                     </span>
@@ -769,12 +769,12 @@
                                 <div
                                     class="flex items-center justify-between gap-3"
                                 >
-                                    <span class="text-xs text-muted">
+                                    <span class="text-xs text-muted dark:text-gray-400">
                                         Admissions
                                     </span>
 
                                     <span
-                                        class="text-xs font-semibold text-secondary"
+                                        class="text-xs font-semibold text-secondary dark:text-white"
                                     >
                                         {{ admissions.length }}
                                     </span>
@@ -783,23 +783,23 @@
                                 <div
                                     class="flex items-center justify-between gap-3"
                                 >
-                                    <span class="text-xs text-muted">
+                                    <span class="text-xs text-muted dark:text-gray-400">
                                         Services
                                     </span>
 
                                     <span
-                                        class="text-xs font-semibold text-secondary"
+                                        class="text-xs font-semibold text-secondary dark:text-white"
                                     >
                                         {{ services.length }}
                                     </span>
                                 </div>
 
-                                <div class="border-t border-primary-100 pt-3">
+                                <div class="border-t border-primary-100 pt-3 dark:border-primary-500/20">
                                     <div
                                         class="flex items-center justify-between gap-3"
                                     >
                                         <span
-                                            class="text-xs font-medium text-secondary"
+                                            class="text-xs font-medium text-secondary dark:text-white"
                                         >
                                             Current balance
                                         </span>
@@ -809,7 +809,7 @@
                                             :class="
                                                 showPayment
                                                     ? 'text-danger'
-                                                    : 'text-primary-700'
+                                                    : 'text-primary-700 dark:text-primary-300'
                                             "
                                         >
                                             ₱{{
@@ -828,13 +828,13 @@
 
             <div
                 v-else
-                class="rounded-2xl border border-primary-100 bg-white p-12 text-center shadow-sm"
+                class="rounded-2xl border border-primary-100 bg-white p-12 text-center shadow-sm dark:border-primary-500/20 dark:bg-secondary"
             >
-                <p class="text-sm font-semibold text-secondary">
+                <p class="text-sm font-semibold text-secondary dark:text-white">
                     No patient data found
                 </p>
 
-                <p class="mt-1 text-xs text-muted">
+                <p class="mt-1 text-xs text-muted dark:text-gray-400">
                     There is no invoice information available for this patient.
                 </p>
             </div>
@@ -843,13 +843,13 @@
         <Teleport to="body">
             <div
                 v-if="refundModalOpen"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 p-4 backdrop-blur-sm no-print"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 p-4 backdrop-blur-sm no-print dark:bg-white/10"
                 @click.self="closeRefundModal"
             >
                 <div
-                    class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10"
+                    class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-secondary"
                 >
-                    <div class="border-b border-primary-100 px-6 py-5">
+                    <div class="border-b border-primary-100 px-6 py-5 dark:border-primary-500/20">
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <p
@@ -859,19 +859,19 @@
                                 </p>
 
                                 <h3
-                                    class="mt-1 text-lg font-semibold text-secondary"
+                                    class="mt-1 text-lg font-semibold text-secondary dark:text-white"
                                 >
                                     Process Refund
                                 </h3>
 
-                                <p class="mt-1 text-xs text-muted">
+                                <p class="mt-1 text-xs text-muted dark:text-gray-400">
                                     Please confirm the refund amount below.
                                 </p>
                             </div>
 
                             <button
                                 type="button"
-                                class="rounded-lg p-1.5 text-muted transition hover:bg-slate-100 hover:text-secondary"
+                                class="rounded-lg p-1.5 text-muted transition hover:bg-slate-100 hover:text-secondary dark:hover:bg-white/10 dark:text-gray-400 dark:hover:text-white"
                                 :disabled="processingRefund"
                                 @click="closeRefundModal"
                             >
@@ -909,23 +909,23 @@
 
                             <p
                                 v-if="hasProcessingRefund"
-                                class="mt-2 text-xs leading-5 text-muted"
+                                class="mt-2 text-xs leading-5 text-muted dark:text-gray-400"
                             >
                                 This amount is currently available for refund.
                             </p>
                         </div>
 
                         <div
-                            class="rounded-xl border border-primary-100 bg-slate-50/70 px-4 py-3"
+                            class="rounded-xl border border-primary-100 bg-slate-50/70 px-4 py-3 dark:border-primary-500/20 dark:bg-white/5"
                         >
                             <div
                                 class="flex items-center justify-between gap-3"
                             >
-                                <span class="text-xs text-muted">
+                                <span class="text-xs text-muted dark:text-gray-400">
                                     Refundable Amount
                                 </span>
 
-                                <span class="text-sm font-bold text-secondary">
+                                <span class="text-sm font-bold text-secondary dark:text-white">
                                     ₱{{ formatMoney(refundableAmount) }}
                                 </span>
                             </div>
@@ -940,11 +940,11 @@
                     </div>
 
                     <div
-                        class="flex justify-end gap-2 border-t border-primary-100 bg-slate-50/60 px-6 py-4"
+                        class="flex justify-end gap-2 border-t border-primary-100 bg-slate-50/60 px-6 py-4 dark:border-primary-500/20 dark:bg-white/5"
                     >
                         <button
                             type="button"
-                            class="rounded-xl px-4 py-2.5 text-sm font-medium text-muted transition hover:bg-white hover:text-secondary"
+                            class="rounded-xl px-4 py-2.5 text-sm font-medium text-muted transition hover:bg-white hover:text-secondary dark:hover:bg-secondary dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/10"
                             :disabled="processingRefund"
                             @click="closeRefundModal"
                         >
@@ -971,14 +971,14 @@
         <Teleport to="body">
             <div
                 v-if="dischargeModalOpen && selectedDischargeCalculation"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 p-4 backdrop-blur-sm no-print"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 p-4 backdrop-blur-sm no-print dark:bg-white/10"
                 @click.self="closeDischargeTermination"
             >
                 <div
-                    class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10"
+                    class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-secondary"
                 >
                     <div
-                        class="flex items-start justify-between gap-4 border-b border-primary-100 px-6 py-5"
+                        class="flex items-start justify-between gap-4 border-b border-primary-100 px-6 py-5 dark:border-primary-500/20"
                     >
                         <div>
                             <p
@@ -988,12 +988,12 @@
                             </p>
 
                             <h3
-                                class="mt-1 text-lg font-semibold text-secondary"
+                                class="mt-1 text-lg font-semibold text-secondary dark:text-white"
                             >
                                 Discharge Calculation
                             </h3>
 
-                            <p class="mt-1 text-xs text-muted">
+                            <p class="mt-1 text-xs text-muted dark:text-gray-400">
                                 Admission #{{
                                     selectedDischargeCalculation.admission_id
                                 }}
@@ -1002,7 +1002,7 @@
 
                         <button
                             type="button"
-                            class="rounded-lg p-1.5 text-muted transition hover:bg-slate-100 hover:text-secondary"
+                            class="rounded-lg p-1.5 text-muted transition hover:bg-slate-100 hover:text-secondary dark:hover:bg-white/10 dark:text-gray-400 dark:hover:text-white"
                             @click="closeDischargeTermination"
                         >
                             <svg
@@ -1046,7 +1046,7 @@
                                 </div>
 
                                 <span
-                                    class="rounded-full bg-primary-50 px-3 py-1.5 text-[10px] font-semibold text-primary-700"
+                                    class="rounded-full bg-primary-50 px-3 py-1.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
                                 >
                                     Refund Eligible
                                 </span>
@@ -1098,7 +1098,7 @@
                         </div>
 
                         <div
-                            class="rounded-xl border border-primary-100 bg-slate-50/70 p-5"
+                            class="rounded-xl border border-primary-100 bg-slate-50/70 p-5 dark:border-primary-500/20 dark:bg-white/5"
                         >
                             <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
                                 <Field
@@ -1148,13 +1148,13 @@
                         </div>
 
                         <div
-                            class="rounded-xl border border-accent-100 bg-accent-50/40 p-4"
+                            class="rounded-xl border border-accent-100 bg-accent-50/40 p-4 dark:border-accent-500/20 dark:bg-accent-500/15"
                         >
-                            <p class="text-xs font-semibold text-accent-700">
+                            <p class="text-xs font-semibold text-accent-700 dark:text-accent-300">
                                 Termination Fee Window
                             </p>
 
-                            <p class="mt-1 text-xs leading-5 text-muted">
+                            <p class="mt-1 text-xs leading-5 text-muted dark:text-gray-400">
                                 This admission is currently within the
                                 termination fee window. A
                                 {{
@@ -1165,7 +1165,7 @@
                     </div>
 
                     <div
-                        class="flex justify-end border-t border-primary-100 bg-slate-50/60 px-6 py-4"
+                        class="flex justify-end border-t border-primary-100 bg-slate-50/60 px-6 py-4 dark:border-primary-500/20 dark:bg-white/5"
                     >
                         <button
                             type="button"
@@ -1452,19 +1452,19 @@ function closeDischargeTermination() {
 function statusClasses(status: string | null | undefined) {
     switch (status?.toLowerCase()) {
         case "paid":
-            return "bg-primary-50 text-primary-700";
+            return "bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300";
 
         case "partial":
-            return "bg-accent-50 text-accent-700";
+            return "bg-accent-50 text-accent-700 dark:bg-accent-500/15 dark:text-accent-300";
 
         case "pending":
-            return "bg-slate-100 text-slate-600";
+            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
 
         case "admitted":
-            return "bg-primary-50 text-primary-700";
+            return "bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300";
 
         case "discharged":
-            return "bg-slate-100 text-slate-600";
+            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
 
         case "overdue":
             return "bg-danger/10 text-danger";
@@ -1473,7 +1473,7 @@ function statusClasses(status: string | null | undefined) {
             return "bg-danger/10 text-danger";
 
         default:
-            return "bg-slate-100 text-slate-600";
+            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
     }
 }
 
@@ -1517,14 +1517,14 @@ const Field = (
             h(
                 "span",
                 {
-                    class: "truncate text-[10px] font-semibold uppercase tracking-[0.11em] text-muted",
+                    class: "truncate text-[10px] font-semibold uppercase tracking-[0.11em] text-muted dark:text-gray-400",
                 },
                 fieldProps.label,
             ),
             h(
                 "span",
                 {
-                    class: "truncate text-sm font-medium text-secondary",
+                    class: "truncate text-sm font-medium text-secondary dark:text-white",
                 },
                 slots.value ? slots.value() : String(fieldProps.value ?? "—"),
             ),
@@ -1537,13 +1537,13 @@ const SectionHeader = (_props: unknown, { slots }: any) =>
     h(
         "h2",
         {
-            class: "flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-accent-700",
+            class: "flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-accent-700 dark:text-accent-300",
         },
         [
             h(
                 "span",
                 {
-                    class: "flex h-7 w-7 items-center justify-center rounded-lg bg-accent-50",
+                    class: "flex h-7 w-7 items-center justify-center rounded-lg bg-accent-50 dark:bg-accent-500/15",
                 },
                 slots.icon?.(),
             ),
@@ -1565,19 +1565,19 @@ const SummaryCard = (props: {
         }
     > = {
         default: {
-            container: "bg-white",
-            label: "text-muted",
-            value: "text-secondary",
+            container: "bg-white dark:bg-secondary",
+            label: "text-muted dark:text-gray-400",
+            value: "text-secondary dark:text-white",
         },
         paid: {
-            container: "bg-primary-50/60",
-            label: "text-primary-700",
-            value: "text-primary-700",
+            container: "bg-primary-50/60 dark:bg-primary-500/10",
+            label: "text-primary-700 dark:text-primary-300",
+            value: "text-primary-700 dark:text-primary-300",
         },
         refunded: {
-            container: "bg-accent-50/50",
-            label: "text-accent-700",
-            value: "text-accent-700",
+            container: "bg-accent-50/50 dark:bg-accent-500/15",
+            label: "text-accent-700 dark:text-accent-300",
+            value: "text-accent-700 dark:text-accent-300",
         },
         balance: {
             container: "bg-danger/5",
@@ -1617,20 +1617,20 @@ const EmptyState = (props: { title: string; description: string }) =>
     h(
         "div",
         {
-            class: "rounded-xl border border-dashed border-primary-100 px-6 py-10 text-center",
+            class: "rounded-xl border border-dashed border-primary-100 px-6 py-10 text-center dark:border-primary-500/20",
         },
         [
             h(
                 "p",
                 {
-                    class: "text-sm font-semibold text-secondary",
+                    class: "text-sm font-semibold text-secondary dark:text-white",
                 },
                 props.title,
             ),
             h(
                 "p",
                 {
-                    class: "mt-1 text-xs text-muted",
+                    class: "mt-1 text-xs text-muted dark:text-gray-400",
                 },
                 props.description,
             ),

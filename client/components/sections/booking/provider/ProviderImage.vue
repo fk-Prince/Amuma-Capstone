@@ -138,14 +138,14 @@
             <button
                 @click="emit('share')"
                 aria-label="Share"
-                class="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white dark:bg-white/10 dark:text-white dark:ring-1 dark:ring-white/20 dark:hover:bg-white/20"
+                class="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white dark:bg-white/10 dark:text-white dark:ring-1 dark:ring-white/20 dark:hover:bg-white/20 dark:hover:bg-white/10"
             >
                 <Share2 class="h-4 w-4" />
             </button>
             <button
                 @click="emit('favorite')"
                 aria-label="Add to favorites"
-                class="group flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white dark:bg-white/10 dark:text-white dark:ring-1 dark:ring-white/20 dark:hover:bg-white/20"
+                class="group flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white dark:bg-white/10 dark:text-white dark:ring-1 dark:ring-white/20 dark:hover:bg-white/20 dark:hover:bg-white/10"
             >
                 <Heart
                     class="h-4 w-4 transition-colors group-hover:fill-red-500 group-hover:text-red-500"

@@ -39,7 +39,12 @@ class OnlineScheduleService
             ->first();
 
         if (!$session) {
-            throw new Exception('Employee has not clocked in yet.', 409);
+            throw new Exception(
+                !empty($payload['as_family'])
+                    ? 'The assigned caregiver has not clocked in yet.'
+                    : 'Employee has not clocked in yet.',
+                409
+            );
         }
 
         $token = Str::random(64);
@@ -63,7 +68,7 @@ class OnlineScheduleService
         if ($activeSession) {
             throw new Exception(
                 $activeSession->schedule_assigned_id === $assigned->schedule_assigned_id
-                    ? 'You are already clocked in for this schedule.'
+                    ? 'There is already a caregiver clocked in for this visit. Use Generate QR Out to clock them out.'
                     : 'Another caregiver is already clocked in for this visit.',
                 409
             );

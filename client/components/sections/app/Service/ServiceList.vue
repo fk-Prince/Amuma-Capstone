@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import type { Service } from "~/types/service";
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
 import { formatCurrency } from "~/utils/currency";
+import { categoryLabel, categoryStyle, type CategoryStyle } from "~/utils/category";
 import {
     ChevronDown,
     Pencil,
@@ -64,36 +65,100 @@ const formatDuration = (duration: string) => {
     return parts.length ? parts.join(" ") : "—";
 };
 
+const formatDurationLong = (duration: string) => {
+    const [h, m] = duration.split(":").map(Number);
+    const parts = [];
+
+    if (h != null && h > 0) parts.push(`${h} ${h === 1 ? "hour" : "hours"}`);
+    if (m != null && m > 0) parts.push(`${m} ${m === 1 ? "minute" : "minutes"}`);
+
+    return parts.length ? parts.join(" ") : "Not set";
+};
+
+const SERVICE_TYPE_STYLES: Record<string, CategoryStyle> = {
+    homecare: {
+        bg: "bg-primary-50 dark:bg-primary-500/10",
+        text: "text-primary-700 dark:text-primary-300",
+        dot: "bg-primary-500",
+    },
+    inhouse: {
+        bg: "bg-accent-50 dark:bg-accent-500/15",
+        text: "text-accent-700 dark:text-accent-300",
+        dot: "bg-accent-500",
+    },
+    both: {
+        bg: "bg-violet-50 dark:bg-violet-500/15",
+        text: "text-violet-700 dark:text-violet-300",
+        dot: "bg-violet-500",
+    },
+};
+
+const serviceTypeStyle = (service: Service): CategoryStyle => {
+    const label = String(service.type_formatted ?? "").toLowerCase();
+    const isHomecare = label.includes("homecare");
+    const isInhouse = label.includes("inhouse") || label.includes("in-house");
+
+    if (isHomecare && isInhouse) return SERVICE_TYPE_STYLES.both!;
+    if (isInhouse) return SERVICE_TYPE_STYLES.inhouse!;
+
+    return SERVICE_TYPE_STYLES.homecare!;
+};
+
 const formatPrice = (price: number | string) => {
     const num = Number(price);
     return isNaN(num) ? price : formatCurrency(num);
 };
 
-type CategoryStyle = { bg: string; text: string; dot: string };
-
-const categoryPalette: CategoryStyle[] = [
-    { bg: "bg-primary-50", text: "text-primary-600", dot: "bg-primary-500" },
-    { bg: "bg-accent-50", text: "text-accent-600", dot: "bg-accent-500" },
-    { bg: "bg-primary-100", text: "text-primary-700", dot: "bg-primary-600" },
-    { bg: "bg-accent-100", text: "text-accent-700", dot: "bg-accent-600" },
-    { bg: "bg-light", text: "text-primary-700", dot: "bg-primary-400" },
-    { bg: "bg-muted-light", text: "text-muted-dark", dot: "bg-muted" },
+const serviceDetails = (service: Service) => [
+    {
+        label: "Category",
+        icon: Tag,
+        value: categoryLabel(service.category_name),
+        caption: "",
+    },
+    {
+        label: "Price",
+        icon: Banknote,
+        value: formatPrice(service.price),
+        caption: "Per session",
+    },
+    {
+        label: "Duration",
+        icon: Clock,
+        value: formatDurationLong(service.maximum_duration),
+        caption: "Maximum per session",
+    },
+    {
+        label: "Service Type",
+        icon: Stethoscope,
+        value: service.type_formatted,
+        caption: "",
+    },
 ];
 
-const defaultCategoryStyle: CategoryStyle = categoryPalette[0]!;
+const groupedServices = computed(() => {
+    const groups = new Map<string, Service[]>();
 
-const categoryStyle = (name: string | undefined | null): CategoryStyle => {
-    if (!name) return defaultCategoryStyle;
+    for (const service of props.services) {
+        const name = categoryLabel(service.category_name);
+        const bucket = groups.get(name);
 
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+        if (bucket) bucket.push(service);
+        else groups.set(name, [service]);
     }
 
-    return (
-        categoryPalette[hash % categoryPalette.length] ?? defaultCategoryStyle
-    );
-};
+    return [...groups.entries()]
+        .map(([name, list]) => ({
+            name,
+            style: categoryStyle(name === "Uncategorized" ? null : name),
+            services: list,
+        }))
+        .sort((a, b) => {
+            if (a.name === "Uncategorized") return 1;
+            if (b.name === "Uncategorized") return -1;
+            return a.name.localeCompare(b.name);
+        });
+});
 </script>
 
 <template>
@@ -103,22 +168,22 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                 <div
                     v-for="n in 5"
                     :key="n"
-                    class="rounded-2xl border border-[#E4EFED] bg-white p-4 animate-pulse"
+                    class="rounded-2xl border border-[#E4EFED] bg-white p-4 animate-pulse dark:bg-secondary dark:border-white/10"
                 >
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
-                            <div class="h-5 w-32 bg-slate-100 rounded-md" />
+                            <div class="h-5 w-32 bg-slate-100 rounded-md dark:bg-white/10" />
 
                             <div class="flex gap-2 mt-3">
-                                <div class="h-3 w-20 bg-slate-100 rounded" />
-                                <div class="h-3 w-16 bg-slate-100 rounded" />
-                                <div class="h-3 w-24 bg-slate-100 rounded" />
+                                <div class="h-3 w-20 bg-slate-100 rounded dark:bg-white/10" />
+                                <div class="h-3 w-16 bg-slate-100 rounded dark:bg-white/10" />
+                                <div class="h-3 w-24 bg-slate-100 rounded dark:bg-white/10" />
                             </div>
                         </div>
 
                         <div class="flex items-center gap-4">
-                            <div class="w-14 h-5 rounded-full bg-slate-100" />
-                            <div class="w-4 h-4 rounded bg-slate-100" />
+                            <div class="w-14 h-5 rounded-full bg-slate-100 dark:bg-white/10" />
+                            <div class="w-4 h-4 rounded bg-slate-100 dark:bg-white/10" />
                         </div>
                     </div>
                 </div>
@@ -127,10 +192,10 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
             <template v-else>
                 <div
                     v-if="services.length === 0"
-                    class="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[#E4EFED] bg-[#F7FAF9]/40"
+                    class="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[#E4EFED] bg-[#F7FAF9]/40 dark:border-white/10"
                 >
                     <div
-                        class="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center mb-3"
+                        class="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center mb-3 dark:bg-primary-500/10"
                     >
                         <svg
                             viewBox="0 0 24 24"
@@ -146,20 +211,31 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                         </svg>
                     </div>
 
-                    <p class="text-sm font-medium text-[#16302E]">
+                    <p class="text-sm font-medium text-[#16302E] dark:text-white">
                         No services found
                     </p>
-                    <p class="text-xs text-[#6B8A87] mt-1 max-w-xs">
+                    <p class="text-xs text-[#6B8A87] mt-1 max-w-xs dark:text-gray-400">
                         Try adjusting your search or filters, or add a new
                         service.
                     </p>
                 </div>
 
                 <template v-else>
+                <section
+                    v-for="group in groupedServices"
+                    :key="group.name"
+                    class="space-y-3"
+                >
+                    <p
+                        class="px-1 text-[11px] font-semibold uppercase tracking-wide text-[#9AB3AF] dark:text-gray-500"
+                    >
+                        {{ group.name }} ({{ group.services.length }})
+                    </p>
+
                     <div
-                        v-for="service in services"
+                        v-for="service in group.services"
                         :key="service.service_id"
-                        class="group rounded-2xl border border-[#E4EFED] bg-white overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-lg"
+                        class="group rounded-2xl border border-[#E4EFED] bg-white overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-lg dark:bg-secondary dark:border-white/10"
                     >
                         <button
                             type="button"
@@ -167,8 +243,8 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                             class="w-full flex items-center justify-between gap-4 p-5 text-left"
                             :class="
                                 isExpanded(service.service_id)
-                                    ? 'bg-[#F7FAF9]'
-                                    : 'hover:bg-[#FAFCFB]'
+                                    ? 'bg-[#F7FAF9] dark:bg-white/5'
+                                    : 'hover:bg-[#FAFCFB] dark:hover:bg-white/5'
                             "
                         >
                             <div class="flex items-center gap-4 min-w-0">
@@ -183,37 +259,14 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                                         class="flex items-center gap-2 flex-wrap"
                                     >
                                         <p
-                                            class="font-semibold text-[#16302E] truncate"
+                                            class="font-semibold text-[#16302E] truncate dark:text-white"
                                         >
                                             {{ service.service_name }}
                                         </p>
-
-                                        <span
-                                            v-if="service.category_name"
-                                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 ring-inset ring-black/5"
-                                            :class="[
-                                                categoryStyle(
-                                                    service.category_name,
-                                                ).bg,
-                                                categoryStyle(
-                                                    service.category_name,
-                                                ).text,
-                                            ]"
-                                        >
-                                            <span
-                                                class="h-1.5 w-1.5 rounded-full"
-                                                :class="
-                                                    categoryStyle(
-                                                        service.category_name,
-                                                    ).dot
-                                                "
-                                            />
-                                            {{ service.category_name }}
-                                        </span>
                                     </div>
 
                                     <div
-                                        class="flex flex-wrap items-center gap-3 mt-2 text-xs text-[#6B8A87]"
+                                        class="flex flex-wrap items-center gap-3 mt-2 text-xs text-[#6B8A87] dark:text-gray-400"
                                     >
                                         <span class="flex items-center gap-1">
                                             <Tag class="w-3.5 h-3.5" />
@@ -244,8 +297,8 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                                     class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium"
                                     :class="
                                         service.is_available
-                                            ? 'bg-accent-50 text-accent-600'
-                                            : 'bg-muted-light text-muted-dark'
+                                            ? 'bg-accent-50 text-accent-600 dark:bg-accent-500/15 dark:text-accent-300'
+                                            : 'bg-muted-light text-muted-dark dark:bg-white/10 dark:text-gray-300'
                                     "
                                 >
                                     <CheckCircle2
@@ -263,7 +316,7 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                                 </span>
 
                                 <ChevronDown
-                                    class="w-4 h-4 text-muted transition-transform"
+                                    class="w-4 h-4 text-muted transition-transform dark:text-gray-400"
                                     :class="{
                                         'rotate-180': isExpanded(
                                             service.service_id,
@@ -276,19 +329,19 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                         <Transition name="slide">
                             <div
                                 v-if="isExpanded(service.service_id)"
-                                class="border-t border-[#E4EFED] bg-[#FAFCFB] p-5 space-y-6"
+                                class="border-t border-[#E4EFED] bg-[#FAFCFB] p-5 space-y-6 dark:border-white/10 dark:bg-white/5"
                             >
                                 <div
                                     class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                                 >
                                     <div>
                                         <h4
-                                            class="text-sm font-semibold text-[#16302E]"
+                                            class="text-sm font-semibold text-[#16302E] dark:text-white"
                                         >
                                             Service Management
                                         </h4>
 
-                                        <p class="text-xs text-[#9AB3AF] mt-1">
+                                        <p class="text-xs text-[#9AB3AF] mt-1 dark:text-gray-500">
                                             Manage service settings and
                                             assignments
                                         </p>
@@ -300,7 +353,7 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                                             @click.stop="
                                                 openEditService(service)
                                             "
-                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition"
+                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition dark:bg-secondary dark:border-white/10 dark:text-white dark:hover:bg-white/5"
                                         >
                                             <Pencil class="w-4 h-4" />
                                             Edit
@@ -311,7 +364,7 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                                             @click.stop="
                                                 openAssignService(service)
                                             "
-                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition"
+                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition dark:bg-secondary dark:border-white/10 dark:text-white dark:hover:bg-white/5"
                                         >
                                             <UserPlus class="w-4 h-4" />
                                             Assign Nurse
@@ -320,10 +373,10 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                                 </div>
 
                                 <div
-                                    class="rounded-2xl border border-[#E4EFED] bg-white overflow-hidden shadow-sm"
+                                    class="rounded-2xl border border-[#E4EFED] bg-white overflow-hidden shadow-sm dark:bg-secondary dark:border-white/10"
                                 >
                                     <div
-                                        class="px-5 py-4 border-b border-[#E4EFED] bg-gradient-to-r from-[#F7FAF9] to-white"
+                                        class="px-5 py-4 border-b border-[#E4EFED] bg-gradient-to-r from-[#F7FAF9] to-white dark:from-white/5 dark:to-secondary dark:border-white/10"
                                     >
                                         <div class="flex items-center gap-2">
                                             <Stethoscope
@@ -331,147 +384,54 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                                             />
 
                                             <h3
-                                                class="text-sm font-semibold text-[#16302E]"
+                                                class="text-sm font-semibold text-[#16302E] dark:text-white"
                                             >
                                                 Service Information
                                             </h3>
                                         </div>
 
-                                        <p class="text-xs text-[#9AB3AF] mt-1">
+                                        <p class="text-xs text-[#9AB3AF] mt-1 dark:text-gray-500">
                                             Overview of service configuration
                                         </p>
                                     </div>
 
-                                    <div
-                                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+                                    <dl
+                                        class="grid grid-cols-2 lg:grid-cols-4 divide-y divide-[#E4EFED] sm:divide-y-0 sm:divide-x dark:divide-white/10"
                                     >
-                                        <div class="p-5">
-                                            <div
-                                                class="flex items-center gap-2 mb-3"
-                                            >
-                                                <Tag
-                                                    class="w-4 h-4 text-primary"
-                                                />
-
-                                                <span
-                                                    class="text-[11px] uppercase tracking-wide text-[#9AB3AF]"
-                                                >
-                                                    Category
-                                                </span>
-                                            </div>
-
-                                            <span
-                                                v-if="service.category_name"
-                                                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ring-black/5"
-                                                :class="[
-                                                    categoryStyle(
-                                                        service.category_name,
-                                                    ).bg,
-                                                    categoryStyle(
-                                                        service.category_name,
-                                                    ).text,
-                                                ]"
-                                            >
-                                                <span
-                                                    class="h-1.5 w-1.5 rounded-full"
-                                                    :class="
-                                                        categoryStyle(
-                                                            service.category_name,
-                                                        ).dot
-                                                    "
-                                                />
-                                                {{ service.category_name }}
-                                            </span>
-
-                                            <p
-                                                v-else
-                                                class="text-sm font-semibold text-[#16302E]"
-                                            >
-                                                —
-                                            </p>
-                                        </div>
-
                                         <div
-                                            class="p-5 border-b lg:border-b-0 lg:border-r border-[#E4EFED]"
+                                            v-for="detail in serviceDetails(service)"
+                                            :key="detail.label"
+                                            class="p-5"
                                         >
-                                            <div
-                                                class="flex items-center gap-2 mb-3"
+                                            <dt
+                                                class="flex items-center gap-2 text-[11px] uppercase tracking-wide text-[#9AB3AF] dark:text-gray-500"
                                             >
-                                                <Banknote
-                                                    class="w-4 h-4 text-primary"
+                                                <component
+                                                    :is="detail.icon"
+                                                    class="w-3.5 h-3.5"
                                                 />
+                                                {{ detail.label }}
+                                            </dt>
 
-                                                <span
-                                                    class="text-[11px] uppercase tracking-wide text-[#9AB3AF]"
-                                                >
-                                                    Price
-                                                </span>
-                                            </div>
-
-                                            <p
-                                                class="text-lg font-bold text-primary"
+                                            <dd
+                                                class="mt-2 text-sm font-semibold text-[#16302E] dark:text-white"
                                             >
-                                                {{ formatPrice(service.price) }}
-                                            </p>
+                                                {{ detail.value }}
+                                            </dd>
+
+                                            <dd
+                                                v-if="detail.caption"
+                                                class="mt-0.5 text-[11px] font-normal text-[#9AB3AF] dark:text-gray-500"
+                                            >
+                                                {{ detail.caption }}
+                                            </dd>
                                         </div>
-
-                                        <div
-                                            class="p-5 border-b lg:border-b-0 lg:border-r border-[#E4EFED]"
-                                        >
-                                            <div
-                                                class="flex items-center gap-2 mb-3"
-                                            >
-                                                <Clock
-                                                    class="w-4 h-4 text-primary"
-                                                />
-
-                                                <span
-                                                    class="text-[11px] uppercase tracking-wide text-[#9AB3AF]"
-                                                >
-                                                    Duration
-                                                </span>
-                                            </div>
-
-                                            <p
-                                                class="text-lg font-bold text-[#16302E]"
-                                            >
-                                                {{
-                                                    formatDuration(
-                                                        service.maximum_duration,
-                                                    )
-                                                }}
-                                            </p>
-                                        </div>
-
-                                        <div
-                                            class="p-5 border-b lg:border-b-0 lg:border-r border-[#E4EFED]"
-                                        >
-                                            <div
-                                                class="flex items-center gap-2 mb-3"
-                                            >
-                                                <Tag
-                                                    class="w-4 h-4 text-primary"
-                                                />
-
-                                                <span
-                                                    class="text-[11px] uppercase tracking-wide text-[#9AB3AF]"
-                                                >
-                                                    Service Type
-                                                </span>
-                                            </div>
-
-                                            <p
-                                                class="text-sm font-semibold text-[#16302E]"
-                                            >
-                                                {{ service.type_formatted }}
-                                            </p>
-                                        </div>
-                                    </div>
+                                    </dl>
                                 </div>
 
                                 <div class="flex flex-wrap gap-3">
                                     <div
-                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4EFED] text-xs text-[#6B8A87]"
+                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4EFED] text-xs text-[#6B8A87] dark:bg-secondary dark:border-white/10 dark:text-gray-400"
                                     >
                                         <span
                                             class="w-2 h-2 rounded-full bg-accent"
@@ -483,6 +443,7 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                             </div>
                         </Transition>
                     </div>
+                </section>
                 </template>
             </template>
         </div>

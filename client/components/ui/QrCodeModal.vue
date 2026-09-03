@@ -194,7 +194,7 @@ onUnmounted(() => {
                         <div
                             v-if="qrValue"
                             :class="accentClasses.ring"
-                            class="rounded-xl border-2 bg-white p-5"
+                            class="rounded-xl border-2 bg-white p-5 dark:bg-secondary"
                         >
                             <QrcodeVue :value="qrValue" :size="240" level="H" />
                         </div>

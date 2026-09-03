@@ -45,6 +45,12 @@ class GCashPayment implements ISubscriptionPayment, IFacilityPayment
                     'total_amount' => $subscription['total_amount'],
                     'endDate' => $subscription['endDate'],
                     'payment_type' => $subscription['payment_type'],
+                    // renewSubscriber() looks the subscription up by this, and
+                    // needs the upgrade keys to know when to apply the plan.
+                    'subscription_uuid' => $subscription['subscription_uuid'] ?? null,
+                    'is_upgrade' => $subscription['is_upgrade'] ?? false,
+                    'upgrade_starts_now' => $subscription['upgrade_starts_now'] ?? false,
+                    'upgrade_starts_at' => $subscription['upgrade_starts_at'] ?? null,
                 ]
             ]);
         return response()->json($response->json());

@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen-header bg-slate-50">
+    <div class="min-h-screen-header bg-slate-50 dark:bg-surface">
         <div class="w-full mx-auto px-4 lg:px-8 py-8">
             <button
                 type="button"
@@ -21,31 +21,31 @@
 
             <div v-if="loading" class="space-y-6">
                 <div
-                    class="rounded-2xl border border-primary-100 bg-white p-6 animate-pulse"
+                    class="rounded-2xl border border-primary-100 bg-white p-6 animate-pulse dark:border-primary-500/20 dark:bg-secondary"
                 >
-                    <div class="h-6 w-64 bg-slate-200 rounded"></div>
-                    <div class="h-3 w-80 bg-slate-100 rounded mt-3"></div>
+                    <div class="h-6 w-64 bg-slate-200 rounded dark:bg-white/15"></div>
+                    <div class="h-3 w-80 bg-slate-100 rounded mt-3 dark:bg-white/10"></div>
                 </div>
                 <div class="grid lg:grid-cols-3 gap-6">
                     <div
-                        class="lg:col-span-2 rounded-2xl border border-primary-100 bg-white p-6 animate-pulse h-48"
+                        class="lg:col-span-2 rounded-2xl border border-primary-100 bg-white p-6 animate-pulse h-48 dark:border-primary-500/20 dark:bg-secondary"
                     ></div>
                     <div
-                        class="rounded-2xl border border-primary-100 bg-white p-6 animate-pulse h-48"
+                        class="rounded-2xl border border-primary-100 bg-white p-6 animate-pulse h-48 dark:border-primary-500/20 dark:bg-secondary"
                     ></div>
                 </div>
             </div>
 
             <div
                 v-else-if="!patient"
-                class="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-slate-400"
+                class="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-slate-400 dark:border-white/10 dark:text-gray-500"
             >
                 We couldn't find this patient's admission record.
             </div>
 
             <template v-else>
                 <div
-                    class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5"
+                    class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 dark:bg-secondary dark:border-primary-500/20"
                 >
                     <div class="flex items-center gap-4 min-w-0">
                         <div
@@ -56,7 +56,7 @@
                         <div class="min-w-0">
                             <div class="flex items-center gap-2.5 flex-wrap">
                                 <h1
-                                    class="text-lg font-semibold text-primary-900 truncate"
+                                    class="text-lg font-semibold text-primary-900 truncate dark:text-primary-300"
                                 >
                                     {{ patient.full_name }}
                                 </h1>
@@ -72,28 +72,28 @@
                             </div>
 
                             <div
-                                class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-muted"
+                                class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-muted dark:text-gray-400"
                             >
                                 <span>{{ patient.gender }}</span>
                                 <span
-                                    class="w-1 h-1 rounded-full bg-slate-300"
+                                    class="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20"
                                 />
                                 <span>{{ patient.age }} years old</span>
                                 <template v-if="patient.blood_type">
                                     <span
-                                        class="w-1 h-1 rounded-full bg-slate-300"
+                                        class="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20"
                                     />
                                     <span>{{ patient.blood_type }}</span>
                                 </template>
                                 <template v-if="patient.phone_number">
                                     <span
-                                        class="w-1 h-1 rounded-full bg-slate-300"
+                                        class="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20"
                                     />
                                     <span>{{ patient.phone_number }}</span>
                                 </template>
                                 <template v-if="patient.location?.full_address">
                                     <span
-                                        class="w-1 h-1 rounded-full bg-slate-300"
+                                        class="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20"
                                     />
                                     <span class="truncate">{{
                                         patient.location.full_address
@@ -173,7 +173,7 @@
                     <div class="lg:col-span-2 space-y-6">
                         <section>
                             <h2
-                                class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2.5"
+                                class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2.5 dark:text-gray-400"
                             >
                                 Current admission
                             </h2>
@@ -186,7 +186,7 @@
                                     )
                                 "
                                 type="button"
-                                class="w-full text-left rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 hover:bg-primary-50/40 transition"
+                                class="w-full text-left rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 hover:bg-primary-50/40 transition dark:bg-secondary dark:border-primary-500/20 dark:hover:bg-primary-500/10"
                                 @click="admissionTimelineModalOpen = true"
                             >
                                 <div
@@ -194,7 +194,7 @@
                                 >
                                     <div>
                                         <p
-                                            class="text-sm font-semibold text-primary-900"
+                                            class="text-sm font-semibold text-primary-900 dark:text-primary-300"
                                         >
                                             {{
                                                 latestAdmission.room?.room_no
@@ -205,13 +205,13 @@
                                                 v-if="
                                                     latestAdmission.bed?.bed_no
                                                 "
-                                                class="text-muted font-normal"
+                                                class="text-muted font-normal dark:text-gray-400"
                                             >
                                                 · Bed
                                                 {{ latestAdmission.bed.bed_no }}
                                             </span>
                                         </p>
-                                        <p class="text-xs text-muted mt-1">
+                                        <p class="text-xs text-muted mt-1 dark:text-gray-400">
                                             <span
                                                 v-if="
                                                     latestAdmission.status ===
@@ -259,7 +259,7 @@
                                         >
                                             {{ latestAdmission.status }}
                                         </p>
-                                        <p class="text-xs text-muted mt-0.5">
+                                        <p class="text-xs text-muted mt-0.5 dark:text-gray-400">
                                             {{
                                                 latestAdmission.current_contract
                                                     .accommodation_type
@@ -269,7 +269,7 @@
                                 </div>
                                 <div v-if="totalStayDays !== null" class="mt-5">
                                     <div
-                                        class="h-1.5 rounded-full bg-slate-100 overflow-hidden"
+                                        class="h-1.5 rounded-full bg-slate-100 overflow-hidden dark:bg-white/10"
                                     >
                                         <div
                                             class="h-full rounded-full bg-primary transition-all duration-300"
@@ -278,7 +278,7 @@
                                             }"
                                         ></div>
                                     </div>
-                                    <p class="text-[11px] text-muted mt-1.5">
+                                    <p class="text-[11px] text-muted mt-1.5 dark:text-gray-400">
                                         Day {{ dayOfStay ?? 0 }} of
                                         {{ totalStayDays }}
                                     </p>
@@ -286,19 +286,19 @@
 
                                 <!-- <div
                                     v-if="latestInvoice"
-                                    class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between"
+                                    class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between dark:border-primary-500/20"
                                 >
-                                    <p class="text-xs text-muted">
+                                    <p class="text-xs text-muted dark:text-gray-400">
                                         Invoice
                                         <span
-                                            class="text-primary-900 font-medium"
+                                            class="text-primary-900 font-medium dark:text-primary-300"
                                         >
                                             #{{ latestInvoice.invoice_code }}
                                         </span>
 
                                         :
                                         <span
-                                            class="font-medium border rounded-md px-2 py-1 uppercase"
+                                            class="font-medium border rounded-md px-2 py-1 uppercase dark:border-white/10"
                                             :class="
                                                 INVOICE_STATUS[
                                                     latestInvoice.status
@@ -309,7 +309,7 @@
                                         </span>
                                     </p>
                                     <p
-                                        class="text-sm font-semibold text-primary-900"
+                                        class="text-sm font-semibold text-primary-900 dark:text-primary-300"
                                     >
                                         {{
                                             formatCurrency(latestInvoice.price)
@@ -320,7 +320,7 @@
 
                             <div
                                 v-else
-                                class="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400"
+                                class="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
                             >
                                 No active admission on record.
                             </div>
@@ -333,28 +333,28 @@
 
                   <aside class="space-y-6">
                         <div
-                            class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-5"
+                            class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-5 dark:bg-secondary dark:border-primary-500/20"
                         >
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div
-                                    class="rounded-xl bg-primary-50/60 border border-primary-100 p-4"
+                                    class="rounded-xl bg-primary-50/60 border border-primary-100 p-4 dark:bg-primary-500/10 dark:border-primary-500/20"
                                 >
                                     <p
-                                        class="text-[10px] uppercase tracking-wide text-muted font-semibold"
+                                        class="text-[10px] uppercase tracking-wide text-muted font-semibold dark:text-gray-400"
                                     >
                                         Current Stay
                                     </p>
 
                                     <p
-                                        class="text-xl font-semibold text-primary-900 mt-1"
+                                        class="text-xl font-semibold text-primary-900 mt-1 dark:text-primary-300"
                                     >
                                         {{ dayOfStay ?? 0 }}
-                                        <span class="text-xs font-medium text-muted">
+                                        <span class="text-xs font-medium text-muted dark:text-gray-400">
                                             day{{ dayOfStay === 1 ? "" : "s" }}
                                         </span>
                                     </p>
 
-                                    <p class="text-[10px] text-muted mt-1">
+                                    <p class="text-[10px] text-muted mt-1 dark:text-gray-400">
                                         {{
                                             latestAdmission?.status === "admitted"
                                                 ? "Currently admitted"
@@ -364,21 +364,21 @@
                             </div>
 
                             <div
-                                class="rounded-xl bg-slate-50 border border-slate-100 p-4"
+                                class="rounded-xl bg-slate-50 border border-slate-100 p-4 dark:bg-white/5 dark:border-white/10"
                             >
                                 <p
-                                    class="text-[10px] uppercase tracking-wide text-muted font-semibold"
+                                    class="text-[10px] uppercase tracking-wide text-muted font-semibold dark:text-gray-400"
                                 >
                                     Total Admissions
                                 </p>
 
                                 <p
-                                    class="text-xl font-semibold text-primary-900 mt-1"
+                                    class="text-xl font-semibold text-primary-900 mt-1 dark:text-primary-300"
                                 >
                                     {{ patient.admissions?.length ?? 0 }}
                                 </p>
 
-                                <p class="text-[10px] text-muted mt-1">
+                                <p class="text-[10px] text-muted mt-1 dark:text-gray-400">
                                     Lifetime admissions
                                 </p>
                             </div>
@@ -387,7 +387,7 @@
                    
                       <section>
                             <h2
-                                class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2.5"
+                                class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2.5 dark:text-gray-400"
                             >
                                 Admission history
                                 <span v-if="pastAdmissions.length">
@@ -397,7 +397,7 @@
 
                             <div
                                 v-if="!pastAdmissions.length"
-                                class="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400"
+                                class="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
                             >
                                 No previous admissions.
                             </div>
@@ -406,14 +406,14 @@
                                 <div
                                     v-for="admission in pastAdmissions"
                                     :key="admission.patient_admission_id"
-                                    class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 hover:bg-primary-50/40 transition"
+                                    class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 hover:bg-primary-50/40 transition dark:bg-secondary dark:border-primary-500/20 dark:hover:bg-primary-500/10"
                                 >
                                     <div
                                         class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
                                     >
                                         <div>
                                             <p
-                                                class="text-sm font-semibold text-primary-900"
+                                                class="text-sm font-semibold text-primary-900 dark:text-primary-300"
                                             >
                                                 {{
                                                     admission.room?.room_no
@@ -423,14 +423,14 @@
 
                                                 <span
                                                     v-if="admission.bed?.bed_no"
-                                                    class="text-muted font-normal"
+                                                    class="text-muted font-normal dark:text-gray-400"
                                                 >
                                                     · Bed
                                                     {{ admission.bed.bed_no }}
                                                 </span>
                                             </p>
 
-                                            <p class="text-xs text-muted mt-1">
+                                            <p class="text-xs text-muted mt-1 dark:text-gray-400">
                                                 Admitted
                                                 {{
                                                     formatDate(
@@ -459,7 +459,7 @@
                                                 class="text-right"
                                             >
                                                 <p
-                                                    class="text-xs text-muted mt-0.5"
+                                                    class="text-xs text-muted mt-0.5 dark:text-gray-400"
                                                 >
                                                     {{
                                                         admission
@@ -484,7 +484,7 @@
 
                                     <p
                                         v-if="admission.note"
-                                        class="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-muted"
+                                        class="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-muted dark:bg-white/5 dark:text-gray-400"
                                     >
                                         {{ admission.note }}
                                     </p>
@@ -503,12 +503,12 @@
                 @click.self="admitModalOpen = false"
             >
                 <div
-                    class="bg-white rounded-2xl shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 w-full max-w-sm p-6"
+                    class="bg-white rounded-2xl shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 w-full max-w-sm p-6 dark:bg-secondary dark:ring-primary-500/20"
                 >
-                    <h3 class="text-base font-semibold text-primary-900">
+                    <h3 class="text-base font-semibold text-primary-900 dark:text-primary-300">
                         Admit Patient
                     </h3>
-                    <p class="text-xs text-muted mt-1 mb-4">
+                    <p class="text-xs text-muted mt-1 mb-4 dark:text-gray-400">
                         Confirm the admission date 
                     </p>
 
@@ -525,7 +525,7 @@
                     <div class="mt-5 flex justify-end gap-2">
                         <button
                             type="button"
-                            class="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition"
+                            class="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition dark:text-gray-400 dark:hover:text-gray-400"
                             @click="admitModalOpen = false"
                         >
                             Cancel
@@ -1069,17 +1069,17 @@ function formatCurrency(value?: string | number) {
 function statusBadgeClass(status?: string) {
     switch (status?.toLowerCase()) {
         case "admitted":
-            return "bg-emerald-100 text-emerald-700";
+            return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300";
         case "waiting":
-            return "bg-blue-100 text-blue-700";
+            return "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300";
         case "discharged":
         case "completed":
-            return "bg-slate-100 text-slate-600";
+            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
         case "cancelled":
         case "rejected":
-            return "bg-rose-100 text-rose-700";
+            return "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300";
         default:
-            return "bg-primary-50 text-primary-600";
+            return "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300";
     }
 }
 

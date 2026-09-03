@@ -13,14 +13,14 @@
         <div
             :class="
                 variant === 'modal' || variant === 'new'
-                    ? 'relative bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 md:p-8 shadow-xl'
-                    : 'rounded-2xl bg-white p-6 md:p-8'
+                    ? 'relative bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 md:p-8 shadow-xl dark:bg-secondary'
+                    : 'rounded-2xl bg-white p-6 md:p-8 dark:bg-secondary'
             "
         >
             <button
                 v-if="variant === 'modal' || variant === 'new'"
                 type="button"
-                class="absolute top-5 right-5 h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none"
+                class="absolute top-5 right-5 h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                 aria-label="Close"
                 @click="emit('close')"
             >
@@ -29,11 +29,11 @@
 
             <div
                 v-if="errorEntries.length"
-                class="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4"
+                class="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 dark:border-rose-500/20 dark:bg-rose-500/10"
             >
                 <div class="flex items-start gap-2.5">
                     <svg
-                        class="h-5 w-5 text-rose-500 shrink-0 mt-0.5"
+                        class="h-5 w-5 text-rose-500 shrink-0 mt-0.5 dark:text-rose-300"
                         viewBox="0 0 20 20"
                         fill="none"
                         stroke="currentColor"
@@ -46,12 +46,12 @@
                     </svg>
 
                     <div>
-                        <p class="text-sm font-semibold text-rose-700">
+                        <p class="text-sm font-semibold text-rose-700 dark:text-rose-300">
                             Please fix the following before continuing
                         </p>
 
                         <ul
-                            class="mt-1.5 space-y-1 text-sm text-rose-600 list-disc list-inside"
+                            class="mt-1.5 space-y-1 text-sm text-rose-600 list-disc list-inside dark:text-rose-300"
                         >
                             <li
                                 v-for="[key, message] in errorEntries"
@@ -80,7 +80,7 @@
                             Choose Accommodation
                         </h2>
 
-                        <p class="text-[13px] text-muted">
+                        <p class="text-[13px] text-muted dark:text-gray-400">
                             Select your preferred room type and available bed.
                         </p>
                     </div>
@@ -94,8 +94,8 @@
                         class="text-sm font-medium transition-colors"
                         :class="
                             billingCycle === 'monthly'
-                                ? 'text-slate-900'
-                                : 'text-slate-400'
+                                ? 'text-slate-900 dark:text-white'
+                                : 'text-slate-400 dark:text-gray-500'
                         "
                     >
                         Monthly
@@ -116,11 +116,11 @@
                         :class="
                             billingCycle === 'yearly'
                                 ? 'bg-primary'
-                                : 'bg-slate-200'
+                                : 'bg-slate-200 dark:bg-white/15'
                         "
                     >
                         <span
-                            class="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform duration-200"
+                            class="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform duration-200 dark:bg-secondary"
                             :class="
                                 billingCycle === 'yearly'
                                     ? 'translate-x-5'
@@ -133,15 +133,15 @@
                         class="text-sm font-medium transition-colors flex items-center gap-1.5"
                         :class="
                             billingCycle === 'yearly'
-                                ? 'text-slate-900'
-                                : 'text-slate-400'
+                                ? 'text-slate-900 dark:text-white'
+                                : 'text-slate-400 dark:text-gray-500'
                         "
                     >
                         Yearly
 
                         <span
                             v-if="activeDiscountPercent !== null"
-                            class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700"
+                            class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                         >
                             Save {{ activeDiscountPercent }}%
                         </span>
@@ -153,25 +153,25 @@
                 <div
                     v-for="i in 4"
                     :key="i"
-                    class="rounded-2xl border p-6 animate-pulse"
+                    class="rounded-2xl border p-6 animate-pulse dark:border-white/10"
                 >
                     <div class="flex items-center justify-between">
                         <div class="space-y-3">
-                            <div class="h-5 w-32 bg-slate-200 rounded"></div>
+                            <div class="h-5 w-32 bg-slate-200 rounded dark:bg-white/15"></div>
 
-                            <div class="h-3 w-48 bg-slate-100 rounded"></div>
+                            <div class="h-3 w-48 bg-slate-100 rounded dark:bg-white/10"></div>
                         </div>
 
-                        <div class="h-12 w-12 rounded-xl bg-slate-200"></div>
+                        <div class="h-12 w-12 rounded-xl bg-slate-200 dark:bg-white/15"></div>
                     </div>
 
                     <div class="mt-6 flex justify-between items-end">
-                        <div class="h-4 w-28 bg-slate-200 rounded"></div>
+                        <div class="h-4 w-28 bg-slate-200 rounded dark:bg-white/15"></div>
 
                         <div class="space-y-2 text-right">
-                            <div class="h-5 w-20 bg-slate-200 rounded"></div>
+                            <div class="h-5 w-20 bg-slate-200 rounded dark:bg-white/15"></div>
 
-                            <div class="h-3 w-16 bg-slate-100 rounded"></div>
+                            <div class="h-3 w-16 bg-slate-100 rounded dark:bg-white/10"></div>
                         </div>
                     </div>
                 </div>
@@ -179,7 +179,7 @@
 
             <div
                 v-else-if="!contracts.length"
-                class="rounded-2xl border border-dashed p-10 text-center text-slate-400"
+                class="rounded-2xl border border-dashed p-10 text-center text-slate-400 dark:text-gray-500 dark:border-white/10"
             >
                 No accommodation options are currently available for this
                 branch.
@@ -190,7 +190,7 @@
                 class="grid md:grid-cols-2 gap-5"
                 :class="
                     errors.room || errors.bed || errors.contract_id
-                        ? 'ring-1 ring-rose-200 rounded-2xl p-2'
+                        ? 'ring-1 ring-rose-200 rounded-2xl p-2 dark:ring-rose-500/20'
                         : ''
                 "
             >
@@ -199,7 +199,7 @@
                     :key="type.value"
                     :disabled="roomsFor(type.value).length === 0"
                     @click="selectType(type.value)"
-                    class="text-left rounded-2xl border p-6 transition hover:border-primary hover:bg-primary/5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-inherit disabled:hover:bg-transparent disabled:hover:shadow-none"
+                    class="text-left rounded-2xl border p-6 transition hover:border-primary hover:bg-primary/5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-inherit disabled:hover:bg-transparent disabled:hover:shadow-none dark:border-white/10"
                     :class="
                         activeType === type.value
                             ? 'border-primary ring-1 ring-primary/30 bg-primary/5'
@@ -212,7 +212,7 @@
                                 {{ type.label }}
                             </h3>
 
-                            <p class="text-sm text-slate-500 mt-1">
+                            <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                                 {{ type.description }}
                             </p>
                         </div>
@@ -229,8 +229,8 @@
                             class="text-sm"
                             :class="
                                 roomsFor(type.value).length === 0
-                                    ? 'text-rose-500 font-medium'
-                                    : 'text-slate-500'
+                                    ? 'text-rose-500 font-medium dark:text-rose-300'
+                                    : 'text-slate-500 dark:text-gray-400'
                             "
                         >
                             {{
@@ -249,7 +249,7 @@
                                 {{ formatPrice(type.value) }}
                             </span>
 
-                            <span class="block text-xs text-slate-400">
+                            <span class="block text-xs text-slate-400 dark:text-gray-500">
                                 {{
                                     billingCycle === "yearly"
                                         ? "billed yearly"
@@ -284,7 +284,7 @@
                     <span class="text-sm font-medium text-primary">
                         {{ formatPrice(activeType) }}
 
-                        <span class="text-slate-400 font-normal">
+                        <span class="text-slate-400 font-normal dark:text-gray-500">
                             /
                             {{ billingCycle === "yearly" ? "year" : "month" }}
                         </span>
@@ -293,7 +293,7 @@
 
                 <div
                     v-if="filteredRooms.length === 0"
-                    class="rounded-2xl border border-dashed p-10 text-center text-slate-400"
+                    class="rounded-2xl border border-dashed p-10 text-center text-slate-400 dark:text-gray-500 dark:border-white/10"
                 >
                     No rooms currently available for this type.
                 </div>
@@ -302,7 +302,7 @@
                     <div
                         v-for="room in filteredRooms"
                         :key="room.room_id"
-                        class="rounded-2xl border p-5 transition hover:shadow-sm"
+                        class="rounded-2xl border p-5 transition hover:shadow-sm dark:border-white/10"
                         :class="
                             selectedRoom?.room_id === room.room_id
                                 ? 'border-primary ring-1 ring-primary/30'
@@ -315,7 +315,7 @@
                                     Room {{ room.room_no }}
                                 </h4>
 
-                                <p class="text-sm text-slate-500">
+                                <p class="text-sm text-slate-500 dark:text-gray-400">
                                     {{ room.floor }} Floor
                                 </p>
                             </div>
@@ -324,8 +324,8 @@
                                 class="text-xs h-fit rounded-full px-3 py-1 font-medium"
                                 :class="
                                     availableBeds(room).length > 0
-                                        ? 'bg-emerald-50 text-emerald-700'
-                                        : 'bg-rose-50 text-rose-700'
+                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                        : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'
                                 "
                             >
                                 {{
@@ -340,39 +340,39 @@
 
                         <div class="mt-5 space-y-2 text-sm">
                             <p class="flex justify-between">
-                                <span class="text-slate-500"> Capacity </span>
+                                <span class="text-slate-500 dark:text-gray-400"> Capacity </span>
 
                                 <strong>{{ room.capacity }}</strong>
                             </p>
 
                             <p class="flex justify-between">
-                                <span class="text-slate-500">
+                                <span class="text-slate-500 dark:text-gray-400">
                                     Available Beds
                                 </span>
 
-                                <strong class="text-emerald-600">
+                                <strong class="text-emerald-600 dark:text-emerald-300">
                                     {{ availableBeds(room).length }}
                                 </strong>
                             </p>
 
                             <p class="flex justify-between">
-                                <span class="text-slate-500">
+                                <span class="text-slate-500 dark:text-gray-400">
                                     Reserved Beds
                                 </span>
 
-                                <strong class="text-rose-600">
+                                <strong class="text-rose-600 dark:text-rose-300">
                                     {{ reservedBeds(room).length }}
                                 </strong>
                             </p>
 
                             <p class="flex justify-between pt-2 border-t">
-                                <span class="text-slate-500"> Price </span>
+                                <span class="text-slate-500 dark:text-gray-400"> Price </span>
 
                                 <strong class="text-primary">
                                     {{ formatPrice(activeType) }}
 
                                     <span
-                                        class="text-slate-400 font-normal text-xs"
+                                        class="text-slate-400 font-normal text-xs dark:text-gray-500"
                                     >
                                         /
                                         {{
@@ -467,7 +467,7 @@
                     @click.self="showBeds = false"
                 >
                     <div
-                        class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl"
+                        class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl dark:bg-secondary"
                     >
                         <div class="flex justify-between items-center mb-5">
                             <div>
@@ -475,13 +475,13 @@
                                     Select Bed
                                 </h3>
 
-                                <p class="text-sm text-slate-500">
+                                <p class="text-sm text-slate-500 dark:text-gray-400">
                                     Room {{ modalRoom?.room_no }}
                                 </p>
                             </div>
 
                             <button
-                                class="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none"
+                                class="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                                 aria-label="Close"
                                 @click="showBeds = false"
                             >
@@ -495,7 +495,7 @@
                                 :key="bed.bed_id"
                                 :disabled="!isAvailable(bed)"
                                 @click="chooseBed(bed)"
-                                class="w-full rounded-xl border p-4 flex justify-between items-center transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                class="w-full rounded-xl border p-4 flex justify-between items-center transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/10"
                                 :class="
                                     isAvailable(bed)
                                         ? 'hover:border-primary hover:bg-primary/5'
@@ -795,16 +795,16 @@ function reservedBeds(room: ApiRoom) {
 function statusBadgeClass(status: string) {
     switch (status.toLowerCase()) {
         case "available":
-            return "bg-emerald-50 text-emerald-700";
+            return "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300";
 
         case "occupied":
-            return "bg-rose-50 text-rose-700";
+            return "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300";
 
         case "maintenance":
-            return "bg-amber-50 text-amber-700";
+            return "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300";
 
         default:
-            return "bg-slate-100 text-slate-600";
+            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
     }
 }
 

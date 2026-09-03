@@ -29,7 +29,7 @@ import signinLogo from "~/assets/logo/signinLogo.png";
             />
 
             <div
-                class="relative z-10 flex w-full flex-col justify-center gap-24 px-10 py-10 text-white md:px-20"
+                class="relative z-10 flex w-full flex-col justify-center gap-24 px-8 py-10 text-white md:px-10 lg:px-20"
             >
                 <div class="space-y-4">
                     <p

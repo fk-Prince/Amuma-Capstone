@@ -126,8 +126,8 @@ class BookingService
                 $bookingData['payment']['payment_method'] = $payload['payment_method'];
                 $bookingData['payment']['xendit_invoice_id'] = $result['xendit_invoice_id'];
                 $bookingData['payment']['masked_card_number'] = $result['masked_card_number'];
-                $bookingData['assessment'] = $this->bookingHelper->resolveAssessment(
-                    $bookingData['assessment'] ?? []
+                $bookingData['diagnoses'] = $this->bookingHelper->resolveDiagnoses(
+                    $bookingData['diagnoses'] ?? []
                 );
 
 
@@ -185,7 +185,10 @@ class BookingService
             if (!is_array($assessments)) {
                 $assessments = [$assessments];
             }
-            $bookingData['assessment'] = array_values(array_filter(array_map(fn($assessment) => $this->bookingHelper->resolveAssessment($assessment),  $assessments)));
+            $bookingData['assessment'] = array_values(array_filter($assessments));
+            $bookingData['diagnoses'] = $this->bookingHelper->resolveDiagnoses(
+                $bookingData['diagnoses'] ?? []
+            );
 
             $validUntil = match ($payload['category']) {
                 Booking::CATEGORY_ONLINE => Carbon::parse(

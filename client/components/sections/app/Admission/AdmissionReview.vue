@@ -4,7 +4,7 @@
             <span class="text-2xl text-primary">05</span>
             <div>
                 <h2 class="text-xl text-primary">Review & Submit Admission</h2>
-                <p class="text-[13px] text-muted">
+                <p class="text-[13px] text-muted dark:text-gray-400">
                     Check that everything below is correct before sending your
                     admission request.
                 </p>
@@ -12,11 +12,11 @@
         </div>
 
         <div class="space-y-6">
-            <div class="rounded-xl border border-slate-200">
+            <div class="rounded-xl border border-slate-200 dark:border-white/10">
                 <div
-                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100"
+                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
                         Admission Details
                     </h3>
                     <button
@@ -36,11 +36,11 @@
                     >
                         <dd
                             v-if="row.label === 'Total'"
-                            class="mt-2 rounded-lg border border-slate-200 bg-slate-50 pl-4 pr-5 py-4"
+                            class="mt-2 rounded-lg border border-slate-200 bg-slate-50 pl-4 pr-5 py-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <span
-                                    class="text-xs font-medium uppercase tracking-wide text-slate-500"
+                                    class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                 >
                                     Total Amount
                                 </span>
@@ -52,28 +52,28 @@
                             </div>
                             <div
                                 v-if="props.payment?.paid"
-                                class="mb-6 mt-1 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 flex items-start gap-3"
+                                class="mb-6 mt-1 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 flex items-start gap-3 dark:border-emerald-500/20 dark:bg-emerald-500/10"
                             >
                                 <div
-                                    class="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600"
+                                    class="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300"
                                 >
                                     <CircleCheck class="h-5 w-5" />
                                 </div>
 
                                 <div>
                                     <p
-                                        class="text-sm font-semibold text-emerald-800"
+                                        class="text-sm font-semibold text-emerald-800 dark:text-emerald-300"
                                     >
                                         Payment Completed
                                     </p>
 
-                                    <p class="text-xs text-emerald-700">
+                                    <p class="text-xs text-emerald-700 dark:text-emerald-300">
                                         This admission has already been paid.
                                     </p>
 
                                     <p
                                         v-if="props.payment.invoice_code"
-                                        class="mt-1 text-xs font-medium text-emerald-800"
+                                        class="mt-1 text-xs font-medium text-emerald-800 dark:text-emerald-300"
                                     >
                                         Invoice Code:
                                         <span class="font-bold">
@@ -82,21 +82,21 @@
                                     </p>
                                 </div>
                             </div>
-                            <p class="mt-1.5 text-[11px] text-slate-400">
+                            <p class="mt-1.5 text-[11px] text-slate-400 dark:text-gray-500">
                                 * Prices are estimates and may change without
                                 further notice.
                             </p>
                         </dd>
 
                         <div v-else>
-                            <dt class="text-xs text-slate-400">
+                            <dt class="text-xs text-slate-400 dark:text-gray-500">
                                 {{ row.label }}
                             </dt>
                             <dd
                                 :class="
                                     row.value
-                                        ? 'text-sm font-medium text-slate-800 mt-0.5 break-words'
-                                        : 'text-sm text-slate-300 mt-0.5'
+                                        ? 'text-sm font-medium text-slate-800 mt-0.5 break-words dark:text-white'
+                                        : 'text-sm text-slate-300 mt-0.5 dark:text-gray-500'
                                 "
                             >
                                 {{ row.value || "Not provided" }}
@@ -106,11 +106,11 @@
                 </dl>
             </div>
 
-            <div class="rounded-xl border border-slate-200">
+            <div class="rounded-xl border border-slate-200 dark:border-white/10">
                 <div
-                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100"
+                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
                         Patient Information
                     </h3>
                     <button
@@ -128,14 +128,14 @@
                         :key="row.label"
                         :class="row.span ? 'sm:col-span-2' : ''"
                     >
-                        <dt class="text-xs text-slate-400">
+                        <dt class="text-xs text-slate-400 dark:text-gray-500">
                             {{ row.label }}
                         </dt>
                         <dd
                             :class="
                                 row.value
-                                    ? 'text-sm font-medium text-slate-800 mt-0.5 break-words'
-                                    : 'text-sm text-slate-300 mt-0.5'
+                                    ? 'text-sm font-medium text-slate-800 mt-0.5 break-words dark:text-white'
+                                    : 'text-sm text-slate-300 mt-0.5 dark:text-gray-500'
                             "
                         >
                             {{ row.value || "Not provided" }}
@@ -144,11 +144,11 @@
                 </dl>
             </div>
 
-            <div class="rounded-xl border border-slate-200">
+            <div class="rounded-xl border border-slate-200 dark:border-white/10">
                 <div
-                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100"
+                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
                         Guardian Information
                     </h3>
                     <button
@@ -166,14 +166,14 @@
                         :key="row.label"
                         :class="row.span ? 'sm:col-span-2' : ''"
                     >
-                        <dt class="text-xs text-slate-400">
+                        <dt class="text-xs text-slate-400 dark:text-gray-500">
                             {{ row.label }}
                         </dt>
                         <dd
                             :class="
                                 row.value
-                                    ? 'text-sm font-medium text-slate-800 mt-0.5 break-words'
-                                    : 'text-sm text-slate-300 mt-0.5'
+                                    ? 'text-sm font-medium text-slate-800 mt-0.5 break-words dark:text-white'
+                                    : 'text-sm text-slate-300 mt-0.5 dark:text-gray-500'
                             "
                         >
                             {{ row.value || "Not provided" }}
@@ -182,14 +182,14 @@
                 </dl>
             </div>
 
-            <div class="rounded-xl border border-slate-200">
+            <div class="rounded-xl border border-slate-200 dark:border-white/10">
                 <div
-                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100"
+                    class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
-                    <h3 class="text-sm font-semibold text-slate-800">
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
                         Assessment
                         <span
-                            class="ml-1 text-[11px] font-medium uppercase tracking-wide text-slate-400"
+                            class="ml-1 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
                             >(Optional)</span
                         >
                     </h3>
@@ -205,7 +205,7 @@
                 <div class="p-5">
                     <p
                         v-if="!assessmentRows.length"
-                        class="text-sm text-slate-400"
+                        class="text-sm text-slate-400 dark:text-gray-500"
                     >
                         No assessment details were provided.
                     </p>
@@ -214,11 +214,11 @@
                         class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3"
                     >
                         <div v-for="row in assessmentRows" :key="row.label">
-                            <dt class="text-xs text-slate-400">
+                            <dt class="text-xs text-slate-400 dark:text-gray-500">
                                 {{ row.label }}
                             </dt>
                             <dd
-                                class="text-sm font-medium text-slate-800 mt-0.5 break-words"
+                                class="text-sm font-medium text-slate-800 mt-0.5 break-words dark:text-white"
                             >
                                 {{ row.value }}
                             </dd>
@@ -238,6 +238,12 @@ import type { RoomContract, Reserved } from "~/types/contract";
 import { CircleCheck } from "lucide-vue-next";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate as formatDateUtil } from "~/utils/time";
+import {
+    LIFE_SYSTEM_ACTIVITIES,
+    activityLabel,
+    assessmentLabel,
+    lifeSystemLabel,
+} from "~/utils/assessment";
 const props = defineProps<{
     reserved: Reserved;
     roomContract?: RoomContract[];
@@ -357,30 +363,19 @@ const assessmentRows = computed<Row[]>(() => {
         { label: "Date Diagnosed", value: formatDate(a.diagnosis_date) },
         { label: "Diagnosis Notes", value: a.diagnosis_notes ?? "" },
         { label: "Supporting Document", value: a.diagnosis_file_name ?? "" },
-        { label: "Blood Pressure", value: a.blood_pressure ?? "" },
+        { label: "Condition", value: assessmentLabel(a.condition) },
         {
-            label: "Pulse Rate",
-            value: a.pulse_rate ? `${a.pulse_rate} bpm` : "",
+            label: "Level of Consciousness",
+            value: assessmentLabel(a.mental_state),
         },
-        {
-            label: "Respiratory Rate",
-            value: a.respiratory_rate
-                ? `${a.respiratory_rate} breaths/min`
-                : "",
-        },
-        {
-            label: "Temperature",
-            value: a.temperature ? `${a.temperature} °C` : "",
-        },
-        {
-            label: "Oxygen Saturation",
-            value: a.oxygen_saturation ? `${a.oxygen_saturation}%` : "",
-        },
-        { label: "Level of Consciousness", value: a.mental_state ?? "" },
-        { label: "Memory / Cognitive Issues", value: a.memory_issues ?? "" },
-        { label: "Mood / Behavior", value: a.mood ?? "" },
+        { label: "Affect", value: assessmentLabel(a.affect) },
+        { label: "Behavior", value: assessmentLabel(a.behavior) },
         { label: "Communication Ability", value: a.communication ?? "" },
-        { label: "Speech Pattern", value: a.speech ?? "" },
+        { label: "Speech Pattern", value: assessmentLabel(a.speech) },
+        ...LIFE_SYSTEM_ACTIVITIES.map((activity) => ({
+            label: activityLabel(activity),
+            value: lifeSystemLabel(a.life_system_profile?.[activity]),
+        })),
     ];
 
     return rows.filter((row) => !!row.value);

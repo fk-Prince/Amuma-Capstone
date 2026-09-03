@@ -11,8 +11,10 @@
             class="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/90 to-secondary/70"
         ></div>
 
-        <div class="relative z-10 max-w-[90rem] mx-auto px-6 py-20 lg:py-28">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div class="relative z-10 max-w-[100rem] mx-auto px-6 py-20 lg:py-28">
+            <div
+                class="grid grid-cols-1 lg:grid-cols-2 gap-10 xl:gap-16 items-center"
+            >
                 <div class="max-w-xl">
                     <div class="flex items-center gap-2.5">
                         <span
@@ -82,9 +84,9 @@
 
                 <!-- search card -->
                 <div
-                    class="bg-white rounded-3xl shadow-xl border border-black/5 p-6 md:p-8 w-full max-w-lg lg:ml-auto dark:bg-secondary"
+                    class="bg-white rounded-3xl shadow-xl border border-black/5 p-5 md:p-6 xl:p-8 w-full max-w-sm lg:max-w-md xl:max-w-lg lg:ml-auto dark:bg-secondary"
                 >
-                    <div class="mb-6">
+                    <div class="mb-5 xl:mb-6">
                         <div class="flex items-center gap-2">
                             <span
                                 class="w-1.5 h-1.5 rounded-full bg-accent"
@@ -95,7 +97,7 @@
                                 Trusted care services
                             </span>
                         </div>
-                        <h2 class="mt-3 text-2xl font-medium text-secondary dark:text-white">
+                        <h2 class="mt-3 text-xl xl:text-2xl font-medium text-secondary dark:text-white">
                             Find care near you
                         </h2>
                         <p class="mt-2 text-sm text-muted dark:text-gray-400">
@@ -104,7 +106,7 @@
                         </p>
                     </div>
 
-                    <div class="grid gap-5">
+                    <div class="grid gap-4 xl:gap-5">
                         <div>
                             <label
                                 class="mb-2 block text-xs font-medium text-muted uppercase tracking-wide dark:text-gray-400"
@@ -115,7 +117,7 @@
                                 v-model="searchName"
                                 :is-search="true"
                                 placeholder="Provider name"
-                                input-class="px-4 py-3"
+                                input-class="px-4 py-2.5 xl:py-3"
                             />
                         </div>
                         <div>
@@ -131,7 +133,7 @@
                                         ? 'Locating...'
                                         : 'Enter your city.'
                                 "
-                                input-class="px-4 py-3"
+                                input-class="px-4 py-2.5 xl:py-3"
                                 :readonly="locating"
                             >
                                 <template #suffix>
@@ -154,7 +156,7 @@
                             <Combobox
                                 v-model="planCode"
                                 :items="planCodeList"
-                                input-class="px-4 py-3"
+                                input-class="px-4 py-2.5 xl:py-3"
                                 :searchBar="false"
                             />
                         </div>

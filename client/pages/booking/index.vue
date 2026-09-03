@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen-header bg-slate-100 text-slate-900 flex flex-col dark:bg-secondary dark:text-white">
+    <div class="min-h-screen-header bg-slate-100 text-slate-900 flex flex-col dark:bg-surface dark:text-white">
         <div class="relative">
             <BookingHero />
             <AmumaServices />

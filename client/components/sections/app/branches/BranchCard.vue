@@ -1,6 +1,6 @@
 <template>
     <div
-        class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 transition-all duration-200 ease-out hover:-translate-y-1 hover:border-primary-200 hover:bg-white hover:shadow-md transform-gpu dark:border-white/10 dark:bg-white/5 dark:hover:bg-secondary dark:hover:border-primary-500/40"
+        class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 transition-all duration-200 ease-out hover:-translate-y-1 hover:border-primary-200 hover:bg-white hover:shadow-md transform-gpu dark:border-white/10 dark:bg-white/5 dark:hover:bg-secondary dark:hover:border-primary-500/40 dark:hover:bg-white/10"
     >
         <div class="flex items-start gap-3">
             <img
@@ -23,13 +23,32 @@
                         <span
                             class="inline-flex items-center gap-1 text-[11px] font-medium rounded-full px-2.5 py-1"
                             :class="
-                                branch.is_verified
-                                    ? 'bg-primary-50 text-primary dark:bg-primary-500/10'
-                                    : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'
+                                isRejected
+                                    ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
+                                    : branch.is_verified
+                                      ? 'bg-primary-50 text-primary dark:bg-primary-500/10'
+                                      : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'
                             "
                         >
                             <svg
-                                v-if="branch.is_verified"
+                                v-if="isRejected"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.5"
+                                class="w-3 h-3 shrink-0"
+                            >
+                                <circle cx="12" cy="12" r="9" />
+                                <path
+                                    d="m15 9-6 6m0-6 6 6"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+
+                            <svg
+                                v-else-if="branch.is_verified"
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 24 24"
                                 fill="none"
@@ -62,9 +81,11 @@
                             </svg>
 
                             {{
-                                branch.is_verified
-                                    ? "Verified"
-                                    : "Pending review"
+                                isRejected
+                                    ? "Rejected"
+                                    : branch.is_verified
+                                      ? "Verified"
+                                      : "Pending review"
                             }}
                         </span>
                     </div>
@@ -121,7 +142,7 @@
         </div>
 
         <div
-            class="mt-4 grid grid-cols-3 divide-x divide-slate-200 border-t border-slate-200 pt-3 dark:divide-white/10 dark:border-white/10"
+            class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-x divide-slate-200 border-t border-slate-200 pt-3 dark:divide-white/10 dark:border-white/10"
         >
             <div class="text-center">
                 <p class="text-sm font-semibold text-slate-900 dark:text-white">
@@ -194,15 +215,18 @@ interface BranchCardData {
     phone: string;
     email: string;
     is_verified: boolean;
+    review_status?: "pending" | "verified" | "rejected";
     rooms: number;
     staffs: number;
     patients: number;
     image: string;
 }
 
-defineProps<{
+const props = defineProps<{
     branch: BranchCardData;
 }>();
+
+const isRejected = computed(() => props.branch.review_status === "rejected");
 
 const emit = defineEmits<{
     edit: [branch: BranchCardData];

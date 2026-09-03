@@ -1,169 +1,209 @@
 <template>
-    <div class="min-h-screen bg-white pt-[100px]">
-        <div class="mx-auto w-full md:px-[5%] lg:px-[8%] px-5 pb-16 sm:px-8">
-            <!-- Header -->
-            <div
-                class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between"
-            >
-                <div>
-                    <h1
-                        class="text-2xl font-bold tracking-tight text-slate-900"
-                    >
-                        Notifications
-                    </h1>
-
-                    <p class="mt-1 text-sm text-slate-500">
-                        <span v-if="unreadCount">
-                            You have {{ unreadCount }} unread
-                            {{
-                                unreadCount === 1
-                                    ? "notification"
-                                    : "notifications"
-                            }}.
-                        </span>
-                        <span v-else>You're all caught up.</span>
-                    </p>
-                </div>
-
-                <button
-                    type="button"
-                    :disabled="!unreadCount || marking"
-                    class="inline-flex w-fit items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                    @click="markAllRead"
-                >
-                    <LoaderCircle
-                        v-if="marking"
-                        class="h-3.5 w-3.5 animate-spin"
-                    />
-                    <CheckCheck v-else class="h-4 w-4" />
-                    Mark all as read
-                </button>
-            </div>
-
-            <!-- Filter -->
-            <div class="flex gap-1 border-b border-slate-200">
-                <button
-                    v-for="tab in tabs"
-                    :key="tab.value"
-                    type="button"
-                    class="rounded-t-lg border px-4 py-2 text-sm font-medium transition"
-                    :class="
-                        filter === tab.value
-                            ? 'border-slate-200 border-b-white bg-white text-slate-900'
-                            : 'border-transparent text-slate-500 hover:text-slate-800'
-                    "
-                    @click="setFilter(tab.value)"
-                >
-                    {{ tab.label }}
-
-                    <span
-                        v-if="tab.value === 'unread' && unreadCount"
-                        class="ml-1.5 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white"
-                    >
-                        {{ unreadCount }}
-                    </span>
-                </button>
-            </div>
-
-            <!-- Loading -->
-            <div v-if="loading" class="space-y-3 py-6">
+    <div class="min-h-screen bg-slate-50/70 pt-[100px] dark:bg-surface">
+        <div class="mx-auto w-full max-w-[100rem] px-6 pb-16">
+            <div class="max-w-4xl">
+                <!-- Header -->
                 <div
-                    v-for="n in 4"
-                    :key="n"
-                    class="h-20 animate-pulse rounded-xl bg-slate-100"
-                />
-            </div>
-
-            <!-- Empty -->
-            <div
-                v-else-if="!notifications.length"
-                class="flex flex-col items-center justify-center py-20 text-center"
-            >
-                <div
-                    class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400"
+                    class="flex flex-col gap-4 py-6 sm:flex-row sm:items-start sm:justify-between"
                 >
-                    <Bell class="h-6 w-6" />
-                </div>
-
-                <p class="mt-3 text-sm font-semibold text-slate-800">
-                    {{
-                        filter === "unread"
-                            ? "No unread notifications"
-                            : "No notifications yet"
-                    }}
-                </p>
-
-                <p class="mt-1 max-w-sm text-sm text-slate-500">
-                    {{
-                        filter === "unread"
-                            ? "Everything here has been read."
-                            : "Updates about bookings, schedules and billing will show up here."
-                    }}
-                </p>
-            </div>
-
-            <!-- List -->
-            <ul v-else class="divide-y divide-slate-100">
-                <li
-                    v-for="item in notifications"
-                    :key="item.id"
-                    class="flex cursor-pointer items-start gap-4 px-2 py-4 transition hover:bg-slate-50"
-                    :class="item.unread ? 'bg-primary-50/30' : ''"
-                    @click="openNotification(item)"
-                >
-                    <span
-                        class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                        :class="toneFor(item.message_type).wrapper"
-                    >
-                        <component
-                            :is="toneFor(item.message_type).icon"
-                            class="h-4 w-4"
-                        />
-                    </span>
-
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-2">
-                            <p class="text-sm font-semibold text-slate-800">
-                                {{ item.message_type }}
-                            </p>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2.5">
+                            <h1
+                                class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white"
+                            >
+                                Notifications
+                            </h1>
 
                             <span
-                                v-if="item.branch?.name"
-                                class="truncate rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500"
+                                v-if="unreadCount"
+                                class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary dark:bg-primary-500/15"
                             >
-                                {{ item.branch.name }}
+                                {{ unreadCount }} new
                             </span>
                         </div>
 
-                        <p class="mt-0.5 text-sm leading-6 text-slate-600">
-                            {{ item.message }}
-                        </p>
-
-                        <p class="mt-1 text-xs text-slate-400">
-                            {{ notifcationFormatDate(item.created_at) }}
+                        <p
+                            class="mt-1 text-sm text-slate-500 dark:text-gray-400"
+                        >
+                            <span v-if="unreadCount">
+                                You have {{ unreadCount }} unread
+                                {{
+                                    unreadCount === 1
+                                        ? "notification"
+                                        : "notifications"
+                                }}.
+                            </span>
+                            <span v-else>You're all caught up.</span>
                         </p>
                     </div>
 
-                    <span
-                        v-if="item.unread"
-                        class="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary"
-                        aria-label="Unread"
-                    />
-                </li>
-            </ul>
+                    <button
+                        type="button"
+                        :disabled="!unreadCount || marking"
+                        class="inline-flex w-fit shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-secondary dark:text-gray-300 dark:hover:bg-white/10"
+                        @click="markAllRead"
+                    >
+                        <LoaderCircle
+                            v-if="marking"
+                            class="h-3.5 w-3.5 animate-spin"
+                        />
+                        <CheckCheck v-else class="h-4 w-4" />
+                        Mark all as read
+                    </button>
+                </div>
 
-            <div
-                v-if="!loading && currentPage < lastPage"
-                class="flex justify-center pt-6"
-            >
-                <button
-                    type="button"
-                    :disabled="loadingMore"
-                    class="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    @click="fetchNotifications(currentPage + 1)"
+                <!-- Filter -->
+                <div
+                    class="inline-flex gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-secondary"
                 >
-                    {{ loadingMore ? "Loading..." : "Load more" }}
-                </button>
+                    <button
+                        v-for="tab in tabs"
+                        :key="tab.value"
+                        type="button"
+                        class="inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium transition"
+                        :class="
+                            filter === tab.value
+                                ? 'bg-primary text-white shadow-sm'
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200'
+                        "
+                        @click="setFilter(tab.value)"
+                    >
+                        {{ tab.label }}
+
+                        <span
+                            v-if="tab.value === 'unread' && unreadCount"
+                            class="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                            :class="
+                                filter === tab.value
+                                    ? 'bg-white/20 text-white'
+                                    : 'bg-rose-500 text-white'
+                            "
+                        >
+                            {{ unreadCount }}
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Loading -->
+                <div v-if="loading" class="mt-5 space-y-3">
+                    <div
+                        v-for="n in 4"
+                        :key="n"
+                        class="h-[86px] animate-pulse rounded-xl bg-slate-200/70 dark:bg-white/5"
+                    />
+                </div>
+
+                <!-- Empty -->
+                <div
+                    v-else-if="!notifications.length"
+                    class="mt-5 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-20 text-center dark:border-white/10 dark:bg-secondary"
+                >
+                    <div
+                        class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500"
+                    >
+                        <Bell class="h-6 w-6" />
+                    </div>
+
+                    <p
+                        class="mt-3 text-sm font-semibold text-slate-800 dark:text-white"
+                    >
+                        {{
+                            filter === "unread"
+                                ? "No unread notifications"
+                                : "No notifications yet"
+                        }}
+                    </p>
+
+                    <p
+                        class="mt-1 max-w-sm text-sm text-slate-500 dark:text-gray-400"
+                    >
+                        {{
+                            filter === "unread"
+                                ? "Everything here has been read."
+                                : "Updates about bookings, schedules and billing will show up here."
+                        }}
+                    </p>
+                </div>
+
+                <!-- List -->
+                <ul v-else class="mt-5 space-y-2.5">
+                    <li
+                        v-for="item in notifications"
+                        :key="item.id"
+                        class="group relative flex cursor-pointer items-start gap-4 overflow-hidden rounded-xl border bg-white p-4 shadow-sm transition hover:-translate-y-px hover:border-primary-200 hover:shadow-md dark:bg-secondary dark:hover:border-primary-500/40"
+                        :class="
+                            item.unread
+                                ? 'border-primary-100 dark:border-primary-500/25'
+                                : 'border-slate-200 dark:border-white/10'
+                        "
+                        @click="openNotification(item)"
+                    >
+                        <span
+                            v-if="item.unread"
+                            class="absolute inset-y-0 left-0 w-1 bg-primary"
+                            aria-hidden="true"
+                        />
+
+                        <span
+                            class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                            :class="toneFor(item.message_type).wrapper"
+                        >
+                            <component
+                                :is="toneFor(item.message_type).icon"
+                                class="h-4 w-4"
+                            />
+                        </span>
+
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <p
+                                    class="text-sm font-semibold text-slate-800 dark:text-white"
+                                >
+                                    {{ item.message_type }}
+                                </p>
+
+                                <span
+                                    v-if="item.branch?.name"
+                                    class="truncate rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-white/5 dark:text-gray-400"
+                                >
+                                    {{ item.branch.name }}
+                                </span>
+                            </div>
+
+                            <p
+                                class="mt-1 text-sm leading-6 text-slate-600 dark:text-gray-300"
+                            >
+                                {{ item.message }}
+                            </p>
+
+                            <p
+                                class="mt-1.5 text-xs text-slate-400 dark:text-gray-500"
+                            >
+                                {{ notifcationFormatDate(item.created_at) }}
+                            </p>
+                        </div>
+
+                        <span
+                            v-if="item.unread"
+                            class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary"
+                            aria-label="Unread"
+                        />
+                    </li>
+                </ul>
+
+                <div
+                    v-if="!loading && currentPage < lastPage"
+                    class="flex justify-center pt-6"
+                >
+                    <button
+                        type="button"
+                        :disabled="loadingMore"
+                        class="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-secondary dark:text-gray-300 dark:hover:bg-white/10"
+                        @click="fetchNotifications(currentPage + 1)"
+                    >
+                        {{ loadingMore ? "Loading..." : "Load more" }}
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -223,22 +263,22 @@ let handler: ((event: any) => void) | null = null;
 const TONES: Record<string, { icon: any; wrapper: string }> = {
     Booking: {
         icon: ClipboardList,
-        wrapper: "bg-primary-50 text-primary",
+        wrapper: "bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300",
     },
     Schedule: {
         icon: CalendarClock,
-        wrapper: "bg-accent-50 text-accent-700",
+        wrapper: "bg-accent-50 text-accent-700 dark:bg-accent-500/10 dark:text-accent-300",
     },
     Billing: {
         icon: CreditCard,
-        wrapper: "bg-amber-50 text-amber-600",
+        wrapper: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
     },
 };
 
 const toneFor = (type: string) =>
     TONES[type] ?? {
         icon: MessageSquare,
-        wrapper: "bg-slate-100 text-slate-500",
+        wrapper: "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-gray-400",
     };
 
 // Guards against a slow earlier page landing after a filter switch.

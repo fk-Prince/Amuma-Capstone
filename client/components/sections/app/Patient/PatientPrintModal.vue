@@ -7,16 +7,16 @@
                 @click.self="close"
             >
                 <div
-                    class="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
+                    class="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
                 >
                     <div
-                        class="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4"
+                        class="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-white/10"
                     >
                         <div>
-                            <h2 class="text-base font-semibold text-slate-800">
+                            <h2 class="text-base font-semibold text-slate-800 dark:text-white">
                                 Print patient records
                             </h2>
-                            <p class="mt-0.5 text-sm text-slate-500">
+                            <p class="mt-0.5 text-sm text-slate-500 dark:text-gray-400">
                                 Choose what to include. Each section prints on
                                 its own page.
                             </p>
@@ -24,7 +24,7 @@
 
                         <button
                             type="button"
-                            class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"
+                            class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:text-gray-500 dark:hover:bg-white/10"
                             @click="close"
                         >
                             <X class="h-4 w-4" />
@@ -34,7 +34,7 @@
                     <div class="flex-1 overflow-y-auto px-5 py-4">
                         <div class="mb-3 flex items-center justify-between">
                             <p
-                                class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                                class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                             >
                                 Sections
                             </p>
@@ -52,11 +52,11 @@
                             <label
                                 v-for="section in sections"
                                 :key="section.key"
-                                class="flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition"
+                                class="flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition dark:border-white/10"
                                 :class="
                                     selected.includes(section.key)
                                         ? 'border-primary bg-primary/5'
-                                        : 'border-slate-200 hover:border-primary/40'
+                                        : 'border-slate-200 hover:border-primary/40 dark:border-white/10'
                                 "
                             >
                                 <input
@@ -68,11 +68,11 @@
 
                                 <span class="min-w-0">
                                     <span
-                                        class="block text-sm font-medium text-slate-800"
+                                        class="block text-sm font-medium text-slate-800 dark:text-white"
                                     >
                                         {{ section.label }}
                                     </span>
-                                    <span class="block text-xs text-slate-500">
+                                    <span class="block text-xs text-slate-500 dark:text-gray-400">
                                         {{ section.description }}
                                     </span>
                                 </span>
@@ -81,18 +81,18 @@
 
                         <p
                             v-if="errorMessage"
-                            class="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600"
+                            class="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
                         >
                             {{ errorMessage }}
                         </p>
                     </div>
 
                     <div
-                        class="flex justify-end gap-2 border-t border-slate-100 bg-slate-50 px-5 py-3"
+                        class="flex justify-end gap-2 border-t border-slate-100 bg-slate-50 px-5 py-3 dark:border-white/10 dark:bg-white/5"
                     >
                         <button
                             type="button"
-                            class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                            class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-400 dark:hover:bg-white/5"
                             @click="close"
                         >
                             Cancel

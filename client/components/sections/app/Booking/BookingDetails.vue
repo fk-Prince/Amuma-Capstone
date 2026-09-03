@@ -1,16 +1,16 @@
 <template>
     <div class="space-y-5 pb-8">
         <div
-            class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden"
+            class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden dark:bg-secondary"
         >
             <div
-                class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 px-7 py-6 border-b border-[#EDF4F3] bg-gradient-to-b from-[#0E7C7B]/[0.04] to-transparent"
+                class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 px-7 py-6 border-b border-[#EDF4F3] bg-gradient-to-b from-[#0E7C7B]/[0.04] to-transparent dark:border-white/10"
             >
                 <div class="flex items-center gap-4 min-w-0">
                     <div class="min-w-0">
                         <div class="flex gap-2 items-center mb-2">
                             <span
-                                class="w-fit font-mono text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] inline-block"
+                                class="w-fit font-mono text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] inline-block dark:text-accent-300 dark:bg-accent-500/15"
                             >
                                 #{{ booking.reference_id }}
                             </span>
@@ -25,7 +25,7 @@
 
                         <div class="flex items-center gap-3 min-w-0">
                             <h2
-                                class="text-lg font-semibold text-[#16302E] truncate"
+                                class="text-lg font-semibold text-[#16302E] truncate dark:text-white"
                             >
                                 {{
                                     fullName(
@@ -38,7 +38,7 @@
 
                             <span
                                 v-if="booking.patient?.patient_id"
-                                class="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-600"
+                                class="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:bg-amber-500/10 dark:text-amber-300"
                             >
                                 Book Again
                             </span>
@@ -66,7 +66,7 @@
                             </button>
                         </div>
 
-                        <p class="text-sm text-muted truncate capitalize">
+                        <p class="text-sm text-muted dark:text-gray-400 truncate capitalize">
                             {{ booking.category }}
                         </p>
                     </div>
@@ -75,12 +75,12 @@
                 <div class="flex flex-col items-end gap-2 shrink-0">
                     <div class="text-right">
                         <p
-                            class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono"
+                            class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono dark:text-gray-400"
                         >
                             Created
                         </p>
 
-                        <p class="text-sm font-medium text-[#16302E]">
+                        <p class="text-sm font-medium text-[#16302E] dark:text-white">
                             {{ stringToDateTime(booking.created_at) }}
                         </p>
                     </div>
@@ -93,11 +93,11 @@
                             "
                             class="px-3 py-1 uppercase rounded-sm text-xs font-medium"
                             :class="{
-                                'bg-emerald-100 text-emerald-700':
+                                'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300':
                                     paymentStatus === 'paid',
                                 'bg-red-100 text-red-700':
                                     paymentStatus === 'refunded',
-                                'bg-amber-100 text-amber-700':
+                                'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300':
                                     paymentStatus === 'pending',
                             }"
                         >
@@ -106,12 +106,12 @@
 
                         <div class="text-right">
                             <p
-                                class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono"
+                                class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono dark:text-gray-400"
                             >
                                 Total
                             </p>
 
-                            <p class="text-base font-semibold text-[#16302E]">
+                            <p class="text-base font-semibold text-[#16302E] dark:text-white">
                                 {{ formatCurrency(totalPrice) }}
                             </p>
                         </div>
@@ -122,7 +122,7 @@
             <div class="px-7 py-6 space-y-8">
                 <section v-if="isRejected">
                     <h3
-                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-rose-600 mb-4"
+                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-rose-600 mb-4 dark:text-rose-300"
                     >
                         <svg
                             class="h-3.5 w-3.5"
@@ -141,7 +141,7 @@
                     </h3>
 
                     <div
-                        class="rounded-lg border border-rose-100 bg-rose-50/50 px-5 py-4"
+                        class="rounded-lg border border-rose-100 bg-rose-50/50 px-5 py-4 dark:border-rose-500/20 dark:bg-rose-500/10"
                     >
                         <p
                             class="text-[10px] uppercase tracking-[0.15em] text-rose-400 font-mono"
@@ -150,8 +150,8 @@
                         </p>
 
                         <p
-                            class="mt-1 text-sm leading-relaxed text-[#16302E]"
-                            :class="booking.reason ? '' : 'italic text-[#6B8A87]'"
+                            class="mt-1 text-sm leading-relaxed text-[#16302E] dark:text-white"
+                            :class="booking.reason ? '' : 'italic text-[#6B8A87] dark:text-gray-400'"
                         >
                             {{ booking.reason || "No reason was recorded." }}
                         </p>
@@ -160,7 +160,7 @@
 
                 <section v-if="isPaid && paymentRows.length">
                     <h3
-                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
+                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4 dark:text-accent-300"
                     >
                         <svg
                             class="h-3.5 w-3.5"
@@ -179,20 +179,20 @@
                     </h3>
 
                     <div
-                        class="rounded-lg border border-emerald-100 bg-emerald-50/40 px-5 py-4"
+                        class="rounded-lg border border-emerald-100 bg-emerald-50/40 px-5 py-4 dark:border-emerald-500/20 dark:bg-emerald-500/10"
                     >
                         <div
                             class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm"
                         >
                             <div v-for="row in paymentRows" :key="row.label">
                                 <p
-                                    class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono"
+                                    class="text-[10px] uppercase tracking-[0.15em] text-[#6B8A87] font-mono dark:text-gray-400"
                                 >
                                     {{ row.label }}
                                 </p>
 
                                 <p
-                                    class="mt-0.5 font-medium text-[#16302E] break-all"
+                                    class="mt-0.5 font-medium text-[#16302E] break-all dark:text-white"
                                 >
                                     {{ row.value }}
                                 </p>
@@ -203,7 +203,7 @@
 
                 <section>
                     <h3
-                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
+                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4 dark:text-accent-300"
                     >
                         <svg
                             class="h-3.5 w-3.5"
@@ -292,7 +292,7 @@
                                         <button
                                             v-if="hasHomecareCoordinates"
                                             type="button"
-                                            class="inline-flex items-center gap-1 rounded-md border border-[#E4EFED] px-2 py-1 text-xs font-medium normal-case text-[#0E7C7B] transition hover:bg-[#EAF4F2]"
+                                            class="inline-flex items-center gap-1 rounded-md border border-[#E4EFED] px-2 py-1 text-xs font-medium normal-case text-[#0E7C7B] transition hover:bg-[#EAF4F2] dark:hover:bg-accent-500/15 dark:border-white/10 dark:text-accent-300"
                                             @click="isMapOpen = true"
                                         >
                                             <svg
@@ -367,7 +367,7 @@
                         v-if="booking.homecare?.services?.length"
                     >
                         <h3
-                            class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
+                            class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4 dark:text-accent-300"
                         >
                             <Stethoscope
                                 class="h-3.5 w-3.5"
@@ -387,13 +387,13 @@
                                 >
                                     <div>
                                         <p
-                                            class="text-xs text-[#6B8A87] uppercase tracking-wide"
+                                            class="text-xs text-[#6B8A87] uppercase tracking-wide dark:text-gray-400"
                                         >
                                             Service
                                         </p>
 
                                         <p
-                                            class="text-sm font-semibold text-[#16302E]"
+                                            class="text-sm font-semibold text-[#16302E] dark:text-white"
                                         >
                                             {{ item.service_name }}
                                         </p>
@@ -409,7 +409,7 @@
                     class="flex flex-col"
                 >
                     <h3
-                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4"
+                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4 dark:text-accent-300"
                     >
                         <Stethoscope class="h-3.5 w-3.5" :stroke-width="2" />
 
@@ -417,7 +417,7 @@
                     </h3>
 
                     <p
-                        class="text-xs text-[#6B8A87] uppercase tracking-wide mb-3 ml-5"
+                        class="text-xs text-[#6B8A87] uppercase tracking-wide mb-3 ml-5 dark:text-gray-400"
                     >
                         List of Medical Staff
                     </p>
@@ -427,27 +427,27 @@
                 <GuardianAssessmentDetails :booking="booking" />
 
                 <section
-                    class="pt-5 border-t border-[#EDF4F3] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+                    class="pt-5 border-t border-[#EDF4F3] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 dark:border-white/10"
                 >
                     <div>
                         <p
-                            class="text-xs font-mono uppercase tracking-widest text-[#6B8A87] mb-1"
+                            class="text-xs font-mono uppercase tracking-widest text-[#6B8A87] mb-1 dark:text-gray-400"
                         >
                             Booking Made By
                         </p>
 
                         <div class="flex gap-2 items-center">
                             <div>
-                                <p class="text-sm font-medium text-[#16302E]">
+                                <p class="text-sm font-medium text-[#16302E] dark:text-white">
                                     {{ booking.guardian?.first_name }}
                                     {{ booking.guardian?.last_name }}
                                 </p>
 
-                                <p class="text-sm text-[#6B8A87]">
+                                <p class="text-sm text-[#6B8A87] dark:text-gray-400">
                                     {{ booking.guardian?.email }}
                                 </p>
 
-                                <p class="text-sm text-[#6B8A87]">
+                                <p class="text-sm text-[#6B8A87] dark:text-gray-400">
                                     {{ stringToDateTime(booking.created_at) }}
                                 </p>
                             </div>
@@ -625,21 +625,9 @@ const paymentRows = computed(() => {
 
     if (!payment) return [];
 
-    const label = (method?: string | null) => {
-        if (!method) return null;
-
-        const known: Record<string, string> = {
-            "CREDIT-CARD": "Credit / Debit card",
-            GCASH: "GCash",
-            CASH: "Cash",
-        };
-
-        return known[String(method).toUpperCase()] ?? method;
-    };
-
     return [
         { label: "Amount paid", value: formatCurrency(Number(payment.total_amount) || 0) },
-        { label: "Method", value: label(payment.payment_method) },
+        { label: "Method", value: payment.payment_method },
         { label: "Card", value: payment.masked_card_number },
         { label: "Reference", value: payment.xendit_invoice_id },
     ].filter((row) => row.value);

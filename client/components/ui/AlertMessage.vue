@@ -40,7 +40,7 @@ const icons = {
 
 <template>
     <div
-        class="flex items-start gap-2.5 rounded-xl border px-4 py-3"
+        class="flex items-start gap-2.5 rounded-xl border px-4 py-3 dark:border-white/10"
         :class="styles[type].wrapper"
         role="alert"
     >

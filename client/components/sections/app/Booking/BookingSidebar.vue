@@ -1,7 +1,7 @@
 <template>
     <div class="w-full lg:h-full flex flex-col min-h-0">
         <div
-            class="lg:h-full rounded-lg bg-white border border-[#E4EFED] p-5 flex flex-col overflow-hidden"
+            class="lg:h-full rounded-lg bg-white border border-[#E4EFED] p-5 flex flex-col overflow-hidden dark:bg-secondary dark:border-white/10"
         >
             <button
                 type="button"
@@ -9,11 +9,11 @@
                 @click="open = !open"
             >
                 <div>
-                    <h3 class="font-semibold text-[#16302E]">
+                    <h3 class="font-semibold text-[#16302E] dark:text-white">
                         Booking Overview
                     </h3>
 
-                    <p class="text-xs text-[#6B8A87] mt-1">
+                    <p class="text-xs text-[#6B8A87] mt-1 dark:text-gray-400">
                         Today's booking activity
                     </p>
                 </div>
@@ -36,17 +36,17 @@
 
             <div class="hidden lg:flex items-center justify-between mb-5">
                 <div>
-                    <h3 class="font-semibold text-[#16302E]">
+                    <h3 class="font-semibold text-[#16302E] dark:text-white">
                         Booking Overview
                     </h3>
 
-                    <p class="text-xs text-[#6B8A87] mt-1">
+                    <p class="text-xs text-[#6B8A87] mt-1 dark:text-gray-400">
                         Today's booking activity
                     </p>
                 </div>
 
                 <div
-                    class="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center text-primary"
+                    class="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center text-primary dark:bg-primary-500/10"
                 >
                     <CalendarDays class="h-5 w-5" />
                 </div>
@@ -66,19 +66,19 @@
                 >
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
                                     Pending
                                 </p>
-                                <Clock class="h-4 w-4 text-amber-500" />
+                                <Clock class="h-4 w-4 text-amber-500 dark:text-amber-300" />
                             </div>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{
                                     overview?.bookings?.pending_confirmation ??
@@ -86,63 +86,63 @@
                                 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                 Need confirmation
                             </p>
                         </div>
 
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
                                     Approved
                                 </p>
-                                <CalendarClock class="h-4 w-4 text-blue-500" />
+                                <CalendarClock class="h-4 w-4 text-blue-500 dark:text-blue-300" />
                             </div>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.bookings?.approved ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                 Waiting payment
                             </p>
                         </div>
 
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
                                     Completed
                                 </p>
-                                <UserCheck class="h-4 w-4 text-emerald-600" />
+                                <UserCheck class="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
                             </div>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.bookings?.completed ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                 Finished bookings
                             </p>
                         </div>
 
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
                                     Cancelled
                                 </p>
@@ -150,45 +150,45 @@
                             </div>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.bookings?.cancelled ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                 Cancelled bookings
                             </p>
                         </div>
 
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
                                     Rejected
                                 </p>
-                                <UserX class="h-4 w-4 text-rose-500" />
+                                <UserX class="h-4 w-4 text-rose-500 dark:text-rose-300" />
                             </div>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.bookings?.rejected ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                 Rejected bookings
                             </p>
                         </div>
 
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
                                     Expiring
                                 </p>
@@ -196,12 +196,12 @@
                             </div>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.bookings?.expiring_soon ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                 Within 24 hours
                             </p>
                         </div>
@@ -209,68 +209,68 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div class="flex items-center justify-between">
                                 <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
                                     Today
                                 </p>
-                                <CalendarDays class="h-4 w-4 text-[#0E7C7B]" />
+                                <CalendarDays class="h-4 w-4 text-[#0E7C7B] dark:text-accent-300" />
                             </div>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.bookings?.today ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">New bookings</p>
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">New bookings</p>
                         </div>
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <p
-                                class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                             >
                                 Schedule Today
                             </p>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.schedule?.today ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">Appointments</p>
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">Appointments</p>
                         </div>
 
                         <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4"
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <p
-                                class="text-xs uppercase tracking-wide text-[#6B8A87]"
+                                class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                             >
                                 Patients
                             </p>
 
                             <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E]"
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
                             >
                                 {{ overview?.patients?.total ?? 0 }}
                             </p>
 
-                            <p class="text-xs text-[#6B8A87]">
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                 {{ overview?.patients?.new_today ?? 0 }} new
                                 today
                             </p>
                         </div>
                     </div>
 
-                    <div class="mt-5 border-t border-[#EDF4F3] pt-4">
+                    <div class="mt-5 border-t border-[#EDF4F3] pt-4 dark:border-white/10">
                         <p
-                            class="text-xs uppercase tracking-wide text-[#6B8A87] mb-3"
+                            class="text-xs uppercase tracking-wide text-[#6B8A87] mb-3 dark:text-gray-400"
                         >
                             Recent Bookings
                         </p>
@@ -283,20 +283,20 @@
                             >
                                 <div>
                                     <p
-                                        class="text-sm font-medium text-[#16302E]"
+                                        class="text-sm font-medium text-[#16302E] dark:text-white"
                                     >
                                         {{ item.reference_id }}
                                     </p>
 
                                     <p
-                                        class="text-xs text-[#6B8A87] capitalize"
+                                        class="text-xs text-[#6B8A87] capitalize dark:text-gray-400"
                                     >
                                         {{ item.category }} ·
                                         {{ formatStatus(item.status) }}
                                     </p>
                                 </div>
 
-                                <p class="text-xs text-[#6B8A87]">
+                                <p class="text-xs text-[#6B8A87] dark:text-gray-400">
                                     {{ notifcationFormatDate(item.created_at) }}
                                 </p>
                             </div>
@@ -305,7 +305,7 @@
                                 v-if="
                                     !(overview?.bookings?.recent ?? []).length
                                 "
-                                class="text-sm text-[#6B8A87]"
+                                class="text-sm text-[#6B8A87] dark:text-gray-400"
                             >
                                 No recent bookings
                             </p>

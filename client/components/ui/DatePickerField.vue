@@ -44,12 +44,12 @@
         <Transition name="popup">
             <div
                 v-if="open"
-                class="absolute left-0 top-full z-[9999] mt-2 w-[300px] rounded-2xl border border-slate-100 bg-white p-4 shadow-xl select-none"
+                class="absolute left-0 top-full z-[9999] mt-2 w-[300px] rounded-2xl border border-slate-100 bg-white p-4 shadow-xl select-none dark:border-white/10 dark:bg-secondary"
             >
                 <div class="mb-4 flex items-center justify-between">
                     <button
                         type="button"
-                        class="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                        class="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                         @click="goToPrevMonth"
                     >
                         <ChevronLeft class="h-4 w-4" />
@@ -59,27 +59,27 @@
                         <div class="relative">
                             <button
                                 type="button"
-                                class="flex items-center gap-1 text-sm font-semibold text-slate-800 transition hover:text-blue-500"
+                                class="flex items-center gap-1 text-sm font-semibold text-slate-800 transition hover:text-blue-500 dark:text-white dark:hover:text-blue-300"
                                 @click="toggleYearMenu"
                             >
                                 {{ viewYear }}
                                 <ChevronDown
-                                    class="h-3.5 w-3.5 text-slate-400"
+                                    class="h-3.5 w-3.5 text-slate-400 dark:text-gray-500"
                                 />
                             </button>
                             <div
                                 v-if="showYearMenu"
-                                class="absolute left-1/2 top-full z-10 mt-1 max-h-48 w-20 -translate-x-1/2 overflow-y-auto rounded-lg border border-slate-100 bg-white py-1 shadow-lg"
+                                class="absolute left-1/2 top-full z-10 mt-1 max-h-48 w-20 -translate-x-1/2 overflow-y-auto rounded-lg border border-slate-100 bg-white py-1 shadow-lg dark:border-white/10 dark:bg-secondary"
                             >
                                 <button
                                     v-for="y in yearOptions"
                                     :key="y"
                                     type="button"
-                                    class="block w-full px-3 py-1.5 text-center text-sm hover:bg-slate-50"
+                                    class="block w-full px-3 py-1.5 text-center text-sm hover:bg-slate-50 dark:hover:bg-white/5"
                                     :class="
                                         y === viewYear
-                                            ? 'text-blue-500 font-semibold'
-                                            : 'text-slate-600'
+                                            ? 'text-blue-500 font-semibold dark:text-blue-300'
+                                            : 'text-slate-600 dark:text-gray-400'
                                     "
                                     @click="selectYear(y)"
                                 >
@@ -91,27 +91,27 @@
                         <div class="relative">
                             <button
                                 type="button"
-                                class="flex items-center gap-1 text-sm font-semibold text-slate-800 transition hover:text-blue-500"
+                                class="flex items-center gap-1 text-sm font-semibold text-slate-800 transition hover:text-blue-500 dark:text-white dark:hover:text-blue-300"
                                 @click="toggleMonthMenu"
                             >
                                 {{ monthNames[viewMonth] }}
                                 <ChevronDown
-                                    class="h-3.5 w-3.5 text-slate-400"
+                                    class="h-3.5 w-3.5 text-slate-400 dark:text-gray-500"
                                 />
                             </button>
                             <div
                                 v-if="showMonthMenu"
-                                class="absolute left-1/2 top-full z-10 mt-1 max-h-48 w-24 -translate-x-1/2 overflow-y-auto rounded-lg border border-slate-100 bg-white py-1 shadow-lg"
+                                class="absolute left-1/2 top-full z-10 mt-1 max-h-48 w-24 -translate-x-1/2 overflow-y-auto rounded-lg border border-slate-100 bg-white py-1 shadow-lg dark:border-white/10 dark:bg-secondary"
                             >
                                 <button
                                     v-for="(m, idx) in monthNames"
                                     :key="m"
                                     type="button"
-                                    class="block w-full px-3 py-1.5 text-center text-sm hover:bg-slate-50"
+                                    class="block w-full px-3 py-1.5 text-center text-sm hover:bg-slate-50 dark:hover:bg-white/5"
                                     :class="
                                         idx === viewMonth
-                                            ? 'text-blue-500 font-semibold'
-                                            : 'text-slate-600'
+                                            ? 'text-blue-500 font-semibold dark:text-blue-300'
+                                            : 'text-slate-600 dark:text-gray-400'
                                     "
                                     @click="selectMonth(idx)"
                                 >
@@ -123,7 +123,7 @@
 
                     <button
                         type="button"
-                        class="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                        class="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                         @click="goToNextMonth"
                     >
                         <ChevronRight class="h-4 w-4" />
@@ -135,7 +135,7 @@
                     <span
                         v-for="d in weekdayLabels"
                         :key="d"
-                        class="flex h-8 items-center justify-center text-xs font-semibold text-slate-500"
+                        class="flex h-8 items-center justify-center text-xs font-semibold text-slate-500 dark:text-gray-400"
                     >
                         {{ d }}
                     </span>
@@ -160,7 +160,7 @@
                 <div class="mt-4 flex items-center gap-2">
                     <button
                         type="button"
-                        class="rounded-full px-4 py-2.5 text-sm font-semibold text-blue-500 transition hover:bg-blue-50"
+                        class="rounded-full px-4 py-2.5 text-sm font-semibold text-blue-500 transition hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10"
                         @click="selectToday"
                     >
                         Today
@@ -480,9 +480,9 @@ function cellClass(cell: CalendarCell) {
         return "text-slate-200 cursor-not-allowed";
     }
     if (isSelected) return "bg-blue-500 text-white font-semibold";
-    if (!cell.inCurrentMonth) return "text-slate-300 hover:bg-slate-50";
-    if (isToday(cell)) return "text-blue-500 font-semibold hover:bg-blue-50";
-    return "text-slate-700 hover:bg-slate-100";
+    if (!cell.inCurrentMonth) return "text-slate-300 hover:bg-slate-50 dark:text-gray-500 dark:hover:bg-white/5";
+    if (isToday(cell)) return "text-blue-500 font-semibold hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10";
+    return "text-slate-700 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10";
 }
 
 function selectDay(cell: CalendarCell) {

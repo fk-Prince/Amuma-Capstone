@@ -22,26 +22,26 @@ const typeStyles: Record<
 > = {
     appointment: {
         icon: CalendarClock,
-        bg: "bg-violet-50",
-        text: "text-violet-600",
+        bg: "bg-violet-50 dark:bg-violet-500/10",
+        text: "text-violet-600 dark:text-violet-300",
         label: "Appointment",
     },
     therapy: {
         icon: Activity,
-        bg: "bg-emerald-50",
-        text: "text-emerald-600",
+        bg: "bg-emerald-50 dark:bg-emerald-500/10",
+        text: "text-emerald-600 dark:text-emerald-300",
         label: "Therapy",
     },
     meal: {
         icon: Utensils,
-        bg: "bg-primary-50",
-        text: "text-primary-600",
+        bg: "bg-primary-50 dark:bg-primary-500/10",
+        text: "text-primary-600 dark:text-primary-300",
         label: "Meal",
     },
     activity: {
         icon: Users,
-        bg: "bg-amber-50",
-        text: "text-amber-600",
+        bg: "bg-amber-50 dark:bg-amber-500/10",
+        text: "text-amber-600 dark:text-amber-300",
         label: "Activity",
     },
 };
@@ -82,20 +82,20 @@ function formatOccurredAt(value: string) {
         </div>
 
         <div
-            class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm"
+            class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
         >
             <p
                 v-if="!activities.length"
-                class="py-16 text-center text-sm text-slate-400"
+                class="py-16 text-center text-sm text-slate-400 dark:text-gray-500"
             >
                 No activities recorded yet.
             </p>
 
-            <ul v-else class="divide-y divide-slate-50">
+            <ul v-else class="divide-y divide-slate-50 dark:divide-white/10">
                 <li
                     v-for="item in activities"
                     :key="item.id"
-                    class="flex items-center gap-4 px-6 py-4 transition hover:bg-slate-50/60"
+                    class="flex items-center gap-4 px-6 py-4 transition hover:bg-slate-50/60 dark:hover:bg-white/5"
                 >
                     <span
                         class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
@@ -108,21 +108,21 @@ function formatOccurredAt(value: string) {
                     </span>
 
                     <div class="min-w-0 flex-1">
-                        <p class="text-sm font-medium text-slate-800">
+                        <p class="text-sm font-medium text-slate-800 dark:text-white">
                             {{ item.title }}
                         </p>
-                        <p v-if="item.subtitle" class="text-xs text-slate-400">
+                        <p v-if="item.subtitle" class="text-xs text-slate-400 dark:text-gray-500">
                             {{ item.subtitle }}
                         </p>
                         <p
                             v-if="item.description"
-                            class="mt-0.5 line-clamp-1 text-xs text-slate-400"
+                            class="mt-0.5 line-clamp-1 text-xs text-slate-400 dark:text-gray-500"
                         >
                             {{ item.description }}
                         </p>
                     </div>
 
-                    <span class="shrink-0 text-xs text-slate-400">
+                    <span class="shrink-0 text-xs text-slate-400 dark:text-gray-500">
                         {{ formatOccurredAt(item.occurredAt) }}
                     </span>
 
@@ -138,7 +138,7 @@ function formatOccurredAt(value: string) {
 
                     <button
                         type="button"
-                        class="shrink-0 rounded-md p-1.5 text-slate-400 hover:bg-slate-100"
+                        class="shrink-0 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 dark:text-gray-500 dark:hover:bg-white/10"
                         @click="emit('edit-activity', item)"
                     >
                         <Pencil class="h-4 w-4" />

@@ -1,13 +1,13 @@
 <template>
     <div
-        class="rounded-2xl bg-white border border-muted-light/70 shadow-sm p-5 font-sans w-[320px]"
+        class="rounded-2xl bg-white border border-muted-light/70 shadow-sm p-5 font-sans w-[320px] dark:bg-secondary dark:border-white/10"
     >
-        <h3 class="text-secondary text-[15px] font-medium mb-4">{{ title }}</h3>
+        <h3 class="text-secondary text-[15px] font-medium mb-4 dark:text-white">{{ title }}</h3>
 
         <div class="flex" style="height: 220px">
             <!-- y-axis labels -->
             <div
-                class="flex flex-col justify-between text-right pr-3 text-[11px] text-muted shrink-0"
+                class="flex flex-col justify-between text-right pr-3 text-[11px] text-muted shrink-0 dark:text-gray-400"
                 style="width: 28px"
             >
                 <span v-for="tick in yTicks" :key="tick">{{ tick }}</span>
@@ -21,7 +21,7 @@
                     <div
                         v-for="(t, i) in yTicks"
                         :key="i"
-                        class="border-t border-muted-light"
+                        class="border-t border-muted-light dark:border-white/10"
                     />
                 </div>
 
@@ -35,7 +35,7 @@
                     >
                         <div
                             v-if="hovered === room.label"
-                            class="absolute -inset-x-2 top-0 bottom-0 bg-primary-100/50 rounded-t-md -z-10"
+                            class="absolute -inset-x-2 top-0 bottom-0 bg-primary-100/50 rounded-t-md -z-10 dark:bg-primary-500/15"
                         />
 
                         <div
@@ -60,10 +60,10 @@
                         <Transition name="fade">
                             <div
                                 v-if="hovered === room.label"
-                                class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-xl bg-white border border-muted-light shadow-md px-4 py-3 text-left"
+                                class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-xl bg-white border border-muted-light shadow-md px-4 py-3 text-left dark:bg-secondary dark:border-white/10"
                             >
                                 <p
-                                    class="text-secondary text-sm font-medium mb-1.5"
+                                    class="text-secondary text-sm font-medium mb-1.5 dark:text-white"
                                 >
                                     {{ room.label }}
                                 </p>
@@ -84,7 +84,7 @@
                                     Available : {{ room.available }}
                                 </p>
                                 <p
-                                    class="flex items-center gap-2 text-xs text-muted"
+                                    class="flex items-center gap-2 text-xs text-muted dark:text-gray-400"
                                 >
                                     <span
                                         class="w-1.5 h-1.5 rounded-full bg-muted"
@@ -102,7 +102,7 @@
             <div
                 v-for="room in rooms"
                 :key="room.label"
-                class="flex-1 text-center text-xs text-muted"
+                class="flex-1 text-center text-xs text-muted dark:text-gray-400"
             >
                 {{ room.label }}
             </div>

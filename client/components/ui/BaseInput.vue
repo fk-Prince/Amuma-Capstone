@@ -6,7 +6,7 @@
         </label>
 
         <div
-            class="flex items-center rounded-lg bg-white overflow-hidden transition"
+            class="flex items-center rounded-lg bg-white overflow-hidden transition dark:bg-secondary"
             :class="[
                 currentError
                     ? 'border-red-400 focus-within:ring-red-500/15'

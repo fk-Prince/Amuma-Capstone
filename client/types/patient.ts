@@ -40,29 +40,76 @@ export interface Guardian {
 }
 
 
-export interface Assessment {
+export interface Diagnosis {
     diagnosis?: string;
     diagnosis_date?: string;
     diagnosis_notes?: string;
     diagnosis_file?: File;
     diagnosis_file_name?: string;
+}
 
+export interface Assessment {
+    diagnoses?: Diagnosis[];
 
-    //VITAL SIGNS
-    blood_pressure?: string;
-    pulse_rate?: string;
-    temperature?: string;
-    oxygen_saturation?: string;
-    respiratory_rate?: string;
+    condition?: "ambulatory" | "wheelchair" | "stretcher";
 
-
-    //COMMUNICATION
     communication?: "Coherent & Logical" | "Impaired" | ""
-    speech?: "clear" | "slurred" | "alphasic" | ""
+    speech?: "clear" | "slurred" | "aphasic" | ""
 
-    mental_state?: "alert" | "confused" | "unconscious";
-    memory_issues?: "none" | "mild" | "dementia" | "alzheimers";
-    mood?: "calm" | "anxious" | "aggressive";
+    mental_state?: "alert" | "drowsy" | "lethargic" | "forgetfulness";
+    affect?: "cheerful" | "flat" | "tearful" | "depressed" | "angry";
+    behavior?:
+    | "cooperative"
+    | "uncooperative"
+    | "lack_of_interaction"
+    | "communication_barrier";
+
+    life_system_profile?: LifeSystemProfile;
+}
+
+export const LIFE_SYSTEM_ACTIVITIES = [
+    "bathing",
+    "transferring",
+    "toileting",
+    "grooming",
+    "eating",
+    "locomotion",
+    "dressing",
+] as const;
+
+export type LifeSystemActivity = (typeof LIFE_SYSTEM_ACTIVITIES)[number];
+
+export type LifeSystemScore = 0 | 1 | 2 | 3 | 4 | 5;
+
+export type LifeSystemProfile = Partial<
+    Record<LifeSystemActivity, LifeSystemScore>
+>;
+
+export const LIFE_SYSTEM_SCALE: { value: LifeSystemScore; label: string }[] = [
+    { value: 5, label: "Within normal limits" },
+    { value: 4, label: "Not normal, but without help" },
+    { value: 3, label: "Uses a device" },
+    { value: 2, label: "With assistance" },
+    { value: 1, label: "Device and help" },
+    { value: 0, label: "Dependent" },
+];
+
+export interface PortalDiagnosis {
+    diagnosis: string | null;
+    diagnosis_date: string | null;
+    diagnosis_notes: string | null;
+    diagnosis_file: string | null;
+}
+
+export interface PortalAssessment {
+    recorded_at: string | null;
+    condition: string | null;
+    mental_state: string | null;
+    affect: string | null;
+    behavior: string | null;
+    communication: string | null;
+    speech: string | null;
+    life_system_profile: LifeSystemProfile | null;
 }
 
 

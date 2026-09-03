@@ -30,10 +30,10 @@
                     role="dialog"
                     aria-modal="true"
                     aria-label="Assign Nurse"
-                    class="relative flex h-[85vh] max-h-[90vh] w-full max-w-6xl flex-col rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+                    class="relative flex h-[85vh] max-h-[90vh] w-full max-w-6xl flex-col rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
                 >
                     <div
-                        class="flex items-center justify-between gap-4 border-b border-gray-100 px-6 py-5"
+                        class="flex items-center justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
                     >
                         <div class="flex items-center gap-3 min-w-0">
                             <div
@@ -44,13 +44,13 @@
 
                             <div class="min-w-0">
                                 <h2
-                                    class="text-lg font-semibold leading-tight text-gray-900"
+                                    class="text-lg font-semibold leading-tight text-gray-900 dark:text-white"
                                 >
                                     Assign Nurse
                                 </h2>
 
                                 <p
-                                    class="mt-0.5 text-xs text-gray-400 max-w-md"
+                                    class="mt-0.5 text-xs text-gray-400 max-w-md dark:text-gray-500"
                                 >
                                     Select an nurse to handle this service. Only
                                     the assigned nurse will be responsible for
@@ -63,7 +63,7 @@
                             type="button"
                             @click="close"
                             aria-label="Close dialog"
-                            class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                            class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                         >
                             <X class="h-5 w-5" />
                         </button>
@@ -81,7 +81,7 @@
                                 </p>
 
                                 <h3
-                                    class="mt-1 truncate text-base font-semibold text-gray-900"
+                                    class="mt-1 truncate text-base font-semibold text-gray-900 dark:text-white"
                                 >
                                     {{ service?.service_name }}
                                 </h3>
@@ -99,7 +99,7 @@
                     <div class="flex items-center gap-3 px-6 py-3">
                         <div class="relative flex-1">
                             <Search
-                                class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                                class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                             />
 
                             <BaseInput
@@ -113,7 +113,7 @@
 
                     <div
                         v-if="!loading && employeeData.length"
-                        class="flex flex-wrap items-center justify-between gap-2 border-y border-gray-100 bg-gray-50/60 px-6 py-2.5"
+                        class="flex flex-wrap items-center justify-between gap-2 border-y border-gray-100 bg-gray-50/60 px-6 py-2.5 dark:border-white/10 dark:bg-white/5"
                     >
                         <button
                             type="button"
@@ -126,13 +126,13 @@
 
                         <div class="flex items-center gap-2">
                             <span
-                                class="hidden sm:inline rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-500 ring-1 ring-gray-200"
+                                class="hidden sm:inline rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-500 ring-1 ring-gray-200 dark:bg-secondary dark:text-gray-400 dark:ring-white/10"
                             >
                                 {{ employeeGroupLabel }}
                             </span>
 
                             <div
-                                class="inline-flex shrink-0 rounded-lg border border-slate-200 bg-white p-0.5"
+                                class="inline-flex shrink-0 rounded-lg border border-slate-200 bg-white p-0.5 dark:border-white/10 dark:bg-secondary"
                             >
                                 <button
                                     type="button"
@@ -141,7 +141,7 @@
                                     :class="
                                         viewFilter === 'unassigned'
                                             ? 'bg-primary/10 text-primary'
-                                            : 'text-slate-500 hover:text-slate-700'
+                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
                                     "
                                 >
                                     Unassigned
@@ -150,7 +150,7 @@
                                         :class="
                                             viewFilter === 'unassigned'
                                                 ? 'bg-primary/15'
-                                                : 'bg-slate-100'
+                                                : 'bg-slate-100 dark:bg-white/10'
                                         "
                                     >
                                         {{ unassignedCount }}
@@ -164,7 +164,7 @@
                                     :class="
                                         viewFilter === 'assigned'
                                             ? 'bg-primary/10 text-primary'
-                                            : 'text-slate-500 hover:text-slate-700'
+                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
                                     "
                                 >
                                     Assigned
@@ -173,7 +173,7 @@
                                         :class="
                                             viewFilter === 'assigned'
                                                 ? 'bg-primary/15'
-                                                : 'bg-slate-100'
+                                                : 'bg-slate-100 dark:bg-white/10'
                                         "
                                     >
                                         {{ assignedCount }}
@@ -189,23 +189,23 @@
                                 <div
                                     v-for="n in 6"
                                     :key="n"
-                                    class="rounded-xl border border-gray-100 p-3.5 animate-pulse"
+                                    class="rounded-xl border border-gray-100 p-3.5 animate-pulse dark:border-white/10"
                                 >
                                     <div class="flex items-center gap-3">
                                         <div
-                                            class="h-11 w-11 shrink-0 rounded-full bg-gray-200"
+                                            class="h-11 w-11 shrink-0 rounded-full bg-gray-200 dark:bg-white/15"
                                         />
                                         <div class="flex-1 space-y-2">
                                             <div
-                                                class="h-3 w-2/3 rounded bg-gray-200"
+                                                class="h-3 w-2/3 rounded bg-gray-200 dark:bg-white/15"
                                             />
                                             <div
-                                                class="h-2 w-1/3 rounded bg-gray-200"
+                                                class="h-2 w-1/3 rounded bg-gray-200 dark:bg-white/15"
                                             />
                                         </div>
                                     </div>
                                     <div
-                                        class="mt-3 h-5 w-20 rounded-full bg-gray-200"
+                                        class="mt-3 h-5 w-20 rounded-full bg-gray-200 dark:bg-white/15"
                                     />
                                 </div>
                             </div>
@@ -220,22 +220,22 @@
                                     v-for="employee in filteredEmployees"
                                     :key="employee.employee_id"
                                     type="button"
-                                    class="relative flex flex-col items-start gap-3 rounded-xl border p-3.5 text-left transition-all"
+                                    class="relative flex flex-col items-start gap-3 rounded-xl border p-3.5 text-left transition-all dark:border-white/10"
                                     :class="
                                         isSelected(employee.employee_id)
                                             ? 'border-primary/40 bg-primary/5 ring-1 ring-primary/20'
-                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-white/10 dark:hover:border-white/10 dark:hover:bg-white/5'
                                     "
                                     @click="
                                         toggleEmployee(employee.employee_id)
                                     "
                                 >
                                     <span
-                                        class="absolute right-3 top-3 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors"
+                                        class="absolute right-3 top-3 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors dark:border-white/10"
                                         :class="
                                             isSelected(employee.employee_id)
                                                 ? 'border-primary bg-primary text-white'
-                                                : 'border-gray-300 bg-white'
+                                                : 'border-gray-300 bg-white dark:border-white/10 dark:bg-secondary'
                                         "
                                     >
                                         <Check
@@ -253,7 +253,7 @@
                                             v-if="employee.avatar"
                                             :src="employee.avatar"
                                             alt=""
-                                            class="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-gray-100"
+                                            class="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-gray-100 dark:ring-white/10"
                                         />
                                         <span
                                             v-else
@@ -264,14 +264,14 @@
 
                                         <div class="min-w-0 text-left">
                                             <p
-                                                class="truncate text-sm font-medium leading-tight text-gray-900"
+                                                class="truncate text-sm font-medium leading-tight text-gray-900 dark:text-white"
                                             >
                                                 {{ employee.first_name }}
                                                 {{ employee.last_name }}
                                             </p>
 
                                             <p
-                                                class="mt-0.5 truncate text-xs text-gray-400"
+                                                class="mt-0.5 truncate text-xs text-gray-400 dark:text-gray-500"
                                             >
                                                 {{ employee.role_name }}
                                             </p>
@@ -296,19 +296,19 @@
                                 class="flex flex-col items-center justify-center py-14 text-center"
                             >
                                 <div
-                                    class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50"
+                                    class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 dark:bg-white/5"
                                 >
                                     <UserRoundSearch
-                                        class="h-7 w-7 text-gray-300"
+                                        class="h-7 w-7 text-gray-300 dark:text-gray-500"
                                     />
                                 </div>
 
-                                <p class="text-sm font-semibold text-gray-600">
+                                <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
                                     {{ emptyStateTitle }}
                                 </p>
 
                                 <p
-                                    class="mt-1 max-w-[260px] text-xs text-gray-400"
+                                    class="mt-1 max-w-[260px] text-xs text-gray-400 dark:text-gray-500"
                                 >
                                     {{ emptyStateSubtitle }}
                                 </p>
@@ -317,11 +317,11 @@
                     </div>
 
                     <div
-                        class="flex items-center justify-end gap-3 rounded-b-2xl border-t border-gray-100 bg-gray-50/60 px-6 py-4"
+                        class="flex items-center justify-end gap-3 rounded-b-2xl border-t border-gray-100 bg-gray-50/60 px-6 py-4 dark:border-white/10 dark:bg-white/5"
                     >
                         <button
                             type="button"
-                            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+                            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/10 dark:focus-visible:ring-white/10"
                             @click="close"
                         >
                             Cancel
@@ -533,26 +533,26 @@ const employeeGroupLabel = computed(() => {
 const serviceTypeBadgeClass = computed(() => {
     switch (props.service?.type_formatted) {
         case "Homecare Services":
-            return "bg-blue-100 text-blue-700";
+            return "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300";
         case "Inhouse Services":
-            return "bg-emerald-100 text-emerald-700";
+            return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300";
         case "Homecare and Inhouse Services":
             return "bg-purple-100 text-purple-700";
         default:
-            return "bg-gray-100 text-gray-600";
+            return "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-400";
     }
 });
 
 function assignmentBadgeClass(type?: string) {
     switch (type) {
         case "Homecare":
-            return "bg-blue-100 text-blue-700";
+            return "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300";
         case "Inhouse Facility":
-            return "bg-emerald-100 text-emerald-700";
+            return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300";
         case "Homecare + Inhouse Facility":
             return "bg-purple-100 text-purple-700";
         default:
-            return "bg-gray-100 text-gray-500";
+            return "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400";
     }
 }
 

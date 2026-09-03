@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Models\Agency;
 use App\Models\Branch;
+use App\Models\BranchSubscription;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Http\Resources\SubscriptionResource;
@@ -33,28 +34,67 @@ class SubscriptionRepository
     public function findLatestForBranch(string $branchId)
     {
         return Subscription::with('plans')
-            ->where('branch_id', $branchId)
+            ->whereHas('branchLinks', fn($q) => $q->where('branch_id', $branchId))
             ->latest('created_at')
             ->first();
     }
 
+    /**
+     * Returns the agency's oldest subscription that still has a free slot, so
+     * a new branch joins an already-paid period instead of starting its own.
+     */
+    public function findSubscriptionWithRoom(string $agencyId, ?string $subscriptionUuid = null)
+    {
+        return Subscription::query()
+            ->where('agency_id', $agencyId)
+            // Scoped when the owner picked which of their subscriptions the
+            // branch should join; still bound to their own agency either way.
+            ->when($subscriptionUuid, fn($q) => $q->where('uuid', $subscriptionUuid))
+            ->where('status', '!=', Subscription::STATUS_REJECTED)
+            ->whereHas('payments', fn($q) => $q->where('status', SubscriptionPayment::STATUS_PAID))
+            ->whereRaw(
+                '(select count(*) from branch_subscription bs
+                    where bs.subscription_id = subscriptions.subscription_id
+                      and bs.status != ?) < ?',
+                [BranchSubscription::STATUS_REJECTED, Subscription::BRANCH_LIMIT]
+            )
+            ->orderBy('created_at')
+            ->lockForUpdate()
+            ->first();
+    }
+
+    /**
+     * The approval queue is per branch, not per subscription — one paid
+     * subscription can carry up to five branches, each reviewed on its own.
+     */
     public function paginate(array $payload)
     {
-        $query = Subscription::query()
+        $query = BranchSubscription::query()
             ->with([
                 'branch.agencies',
-                'plans',
-                'payments',
+                'subscription.plans',
+                'subscription.payments',
             ]);
 
-        // Scoped when the branch settings screen asks for one branch's
-        // subscriptions; omitted by the owner-wide listing.
         if (!empty($payload['branch_id'])) {
             $query->where('branch_id', $payload['branch_id']);
         }
 
         if (!empty($payload['status'])) {
-            $query->where('status', $payload['status']);
+            $status = $payload['status'];
+
+            // The requests tab filters on the branch's own review state; the
+            // approved tab filters on the paid period's lifecycle instead.
+            if (in_array($status, [
+                BranchSubscription::STATUS_PENDING,
+                BranchSubscription::STATUS_APPROVED,
+                BranchSubscription::STATUS_REJECTED,
+            ], true)) {
+                $query->where('status', $status);
+            } else {
+                $query->where('status', '!=', BranchSubscription::STATUS_REJECTED)
+                    ->whereHas('subscription', fn($q) => $q->where('status', $status));
+            }
         }
 
         if (!empty($payload['search'])) {
@@ -63,10 +103,10 @@ class SubscriptionRepository
             $query->where(function ($builder) use ($search) {
                 $builder
                     ->whereHas('branch', function ($branchQuery) use ($search) {
-                        $branchQuery->where('name', 'like', "%{$search}%");
+                        $branchQuery->where('name', 'ilike', "%{$search}%");
                     })
                     ->orWhereHas('branch.agencies', function ($agencyQuery) use ($search) {
-                        $agencyQuery->where('name', 'like', "%{$search}%");
+                        $agencyQuery->where('name', 'ilike', "%{$search}%");
                     });
             });
         }

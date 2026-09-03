@@ -1,8 +1,10 @@
 <template>
-    <div class="max-w-7xl mx-auto space-y-8">
+    <div class="w-full mx-auto space-y-8">
         <div class="space-y-6">
             <div>
-                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                <h2
+                    class="text-lg font-semibold text-slate-900 dark:text-white"
+                >
                     Branch Information
                 </h2>
 
@@ -53,7 +55,9 @@
 
                 <div class="space-y-2" data-field="branch_image">
                     <div class="flex items-center justify-between">
-                        <label class="text-sm font-semibold text-slate-700 dark:text-gray-300">
+                        <label
+                            class="text-sm font-semibold text-slate-700 dark:text-gray-300"
+                        >
                             Branch Image
                         </label>
 
@@ -115,7 +119,9 @@
 
         <div v-if="!hideDocument" class="space-y-5">
             <div>
-                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                <h2
+                    class="text-lg font-semibold text-slate-900 dark:text-white"
+                >
                     Verification Document
                 </h2>
 
@@ -202,7 +208,9 @@
                                 {{ branchDocumentName }}
                             </p>
 
-                            <span class="mt-0.5 text-xs text-slate-400 dark:text-gray-500">
+                            <span
+                                class="mt-0.5 text-xs text-slate-400 dark:text-gray-500"
+                            >
                                 PDF selected — click to replace
                             </span>
                         </div>
@@ -294,9 +302,13 @@
             class="space-y-5"
             data-field="location.street location.city location.province location.country location"
         >
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div
+                class="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+            >
                 <div>
-                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                    <h2
+                        class="text-lg font-semibold text-slate-900 dark:text-white"
+                    >
                         Primary Address
                     </h2>
 
@@ -321,7 +333,11 @@
                         Reset
                     </button>
 
-                    <span class="text-xs text-slate-500 dark:text-gray-400 whitespace-nowrap"> Use map </span>
+                    <span
+                        class="text-xs text-slate-500 dark:text-gray-400 whitespace-nowrap"
+                    >
+                        Use map
+                    </span>
 
                     <button
                         type="button"
@@ -441,7 +457,9 @@ function initialPreview(value: unknown): string | null {
     return null;
 }
 
-const branchImagePreview = ref<string | null>(initialPreview(props.branch.image));
+const branchImagePreview = ref<string | null>(
+    initialPreview(props.branch.image),
+);
 const branchImageInput = ref<HTMLInputElement | null>(null);
 const useGeolocation = ref(true);
 
@@ -455,7 +473,7 @@ const showBranchDocumentList = ref(false);
 // uploaded is still a raw File, so derive its name from whichever it is.
 const branchDocumentName = ref<string | null>(
     (props.branch as any).document instanceof File &&
-    (props.branch as any).document.type === "application/pdf"
+        (props.branch as any).document.type === "application/pdf"
         ? (props.branch as any).document.name
         : typeof (props.branch as any).document === "string" &&
             (props.branch as any).document.toLowerCase().endsWith(".pdf")

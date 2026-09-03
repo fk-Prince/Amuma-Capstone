@@ -1,13 +1,13 @@
 <template>
     <section
-        class="relative overflow-hidden bg-gradient-to-br from-blue-100 to-light px-[6%] py-16 dark:from-secondary dark:to-secondary"
+        class="relative overflow-hidden bg-gradient-to-br from-blue-100 to-light py-16 dark:from-secondary dark:to-secondary"
     >
         <!-- Blob -->
         <div
             class="absolute right-[-100px] top-[-50px] h-[400px] w-[400px] rounded-full bg-primary/30 blur-[120px]"
         ></div>
 
-        <div class="relative z-10">
+        <div class="relative z-10 mx-auto w-[94%] max-w-[1600px] px-10">
             <div
                 class="flex flex-col items-center justify-between gap-8 rounded-[24px] border border-white/30 bg-primary px-8 py-12 backdrop-blur-xl md:flex-row md:px-14"
             >

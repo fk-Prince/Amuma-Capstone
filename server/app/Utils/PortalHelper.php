@@ -27,6 +27,7 @@ class PortalHelper
             'valid_until' => $booking->valid_until,
             'status' => $booking->status,
             'branch_name' => $booking->branch?->name,
+            'branch_image' => $booking->branch?->image,
 
             'facility' => $data['facility'] ?? null,
             'homecare' => $data['homecare'] ?? null,
@@ -60,6 +61,7 @@ class PortalHelper
             ],
 
             'assessment' => $data['assessment'] ?? null,
+            'diagnoses' => $data['diagnoses'] ?? [],
             'reserved' => $data['reserved'] ?? null,
 
 
@@ -104,12 +106,89 @@ class PortalHelper
         }
 
         if ($wantsActivity) {
-            $payload['activities'] = $patient->activities
+            $logged = $patient->activities
                 ->map(fn($activity) => PatientActivityPresenter::patientActivity($activity))
+                ->values();
+
+            // Nothing writes activity rows on its own, so the feed is built
+            // from the records care actually leaves behind.
+            $payload['activities'] = $logged
+                ->concat(self::derivedActivities($patient))
+                ->sortByDesc('occurredAt')
                 ->values();
         }
 
         return $payload;
+    }
+
+    private static function derivedActivities(object $patient)
+    {
+        $items = collect();
+
+        foreach ($patient->schedules ?? [] as $schedule) {
+            $items->push([
+                'id' => 'schedule-' . $schedule->schedule_id,
+                'title' => match (strtolower((string) $schedule->status)) {
+                    'completed' => 'Visit completed',
+                    'ongoing' => 'Visit in progress',
+                    'missed' => 'Visit missed',
+                    'cancelled' => 'Visit cancelled',
+                    default => 'Visit scheduled',
+                },
+                'subtitle' => $schedule->category ?? 'Schedule',
+                'description' => $schedule->schedule_code
+                    ? 'Reference ' . $schedule->schedule_code
+                    : '',
+                'type' => 'schedule',
+                'occurredAt' => optional($schedule->scheduled_at)->toISOString()
+                    ?? $schedule->created_at?->toISOString(),
+            ]);
+        }
+
+        foreach ($patient->vitals ?? [] as $vital) {
+            $items->push([
+                'id' => 'vital-' . $vital->vital_id,
+                'title' => 'Vitals recorded',
+                'subtitle' => trim(implode(' · ', array_filter([
+                    $vital->blood_pressure_systolic && $vital->blood_pressure_diastolic
+                        ? "BP {$vital->blood_pressure_systolic}/{$vital->blood_pressure_diastolic}"
+                        : null,
+                    $vital->heart_rate ? "HR {$vital->heart_rate}" : null,
+                    $vital->temperature ? "Temp {$vital->temperature}" : null,
+                ]))),
+                'description' => $vital->notes ?? '',
+                'type' => 'vital',
+                'occurredAt' => $vital->created_at?->toISOString(),
+            ]);
+        }
+
+        foreach ($patient->medications ?? [] as $medication) {
+            $items->push([
+                'id' => 'medication-' . $medication->medication_id,
+                'title' => 'Medication added',
+                'subtitle' => trim(
+                    $medication->name . ' ' . ($medication->strength ?? '')
+                ),
+                'description' => $medication->instructions ?? '',
+                'type' => 'medication',
+                'occurredAt' => optional($medication->recorded_at)->toISOString()
+                    ?? $medication->created_at?->toISOString(),
+            ]);
+        }
+
+        foreach ($patient->admissions ?? [] as $admission) {
+            $items->push([
+                'id' => 'admission-' . $admission->patient_admission_id,
+                'title' => 'Admission ' . strtolower((string) $admission->status),
+                'subtitle' => 'Facility',
+                'description' => '',
+                'type' => 'admission',
+                'occurredAt' => optional($admission->admitted_at)->toISOString()
+                    ?? $admission->created_at?->toISOString(),
+            ]);
+        }
+
+        return $items->filter(fn($item) => !empty($item['occurredAt']));
     }
 
     private function scheduleContext(object $patient)
@@ -162,6 +241,7 @@ class PortalHelper
     {
         $data = [
             'patient_id' => $patient->patient_id,
+            'uuid' => $patient->uuid,
             'gender' => $patient->gender,
             'date_of_birth' => $patient->date_of_birth?->format('Y-m-d'),
             'phone_number' => $patient->phone_number,
@@ -175,6 +255,8 @@ class PortalHelper
                     "{$patient->first_name} {$patient->middle_name} {$patient->last_name}"
                 ),
                 'full_address' => $patient->location?->full_address,
+                'assessments' => self::assessments($patient),
+                'diagnoses' => self::diagnoses($patient),
             ];
         }
 
@@ -188,6 +270,34 @@ class PortalHelper
         }
 
         return $data;
+    }
+
+    private function assessments(object $patient)
+    {
+        return collect($patient->assessments ?? [])
+            ->map(fn($assessment) => [
+                'recorded_at' => $assessment->created_at?->toDateString(),
+                'condition' => $assessment->condition,
+                'mental_state' => $assessment->mental_state,
+                'affect' => $assessment->affect,
+                'behavior' => $assessment->behavior,
+                'communication' => $assessment->communication,
+                'speech' => $assessment->speech,
+                'life_system_profile' => $assessment->life_system_profile,
+            ])
+            ->values();
+    }
+
+    private function diagnoses(object $patient)
+    {
+        return collect($patient->diagnoses ?? [])
+            ->map(fn($diagnosis) => [
+                'diagnosis' => $diagnosis->diagnosis,
+                'diagnosis_date' => $diagnosis->diagnosis_date?->toDateString(),
+                'diagnosis_notes' => $diagnosis->diagnosis_notes,
+                'diagnosis_file' => $diagnosis->diagnosis_file,
+            ])
+            ->values();
     }
 
     private function financials(object $patient)

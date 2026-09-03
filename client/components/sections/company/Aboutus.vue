@@ -1,7 +1,7 @@
 <template>
     <div class="bg-white dark:bg-secondary">
         <section
-            class="relative overflow-hidden bg-light/40 px-6 pb-14 pt-28 sm:px-[5%] sm:pb-16 sm:pt-32 lg:px-[10%] dark:bg-transparent"
+            class="relative overflow-hidden bg-light/40 px-6 pb-14 pt-28 sm:pb-16 sm:pt-32 dark:bg-transparent"
         >
             <div
                 class="pointer-events-none absolute -top-24 left-[-100px] h-[380px] w-[380px] rounded-full bg-primary-200/40 blur-[100px]"
@@ -33,7 +33,7 @@
             </div>
         </section>
 
-        <section class="mx-auto w-full md:px-[5%] lg:px-[10%] px-6 py-16">
+        <section class="mx-auto w-full max-w-[100rem] px-6 py-16">
             <div class="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
                 <div>
                     <p
@@ -101,7 +101,7 @@
             </div>
         </section>
 
-        <section class="mx-auto w-full px-6 py-16 md:px-[5%] lg:px-[10%]">
+        <section class="mx-auto w-full max-w-[100rem] px-6 py-16">
             <div class="mb-14 text-center">
                 <p
                     class="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-primary"

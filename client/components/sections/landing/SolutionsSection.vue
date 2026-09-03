@@ -1,12 +1,12 @@
 <template>
     <section
-        class="relative overflow-hidden bg-white px-[6%] py-24 text-center dark:bg-secondary"
+        class="relative overflow-hidden bg-white py-24 text-center dark:bg-secondary"
     >
         <div
             class="pointer-events-none absolute top-1/2 left-1/2 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-200 opacity-30 blur-[80px]"
         ></div>
 
-        <div class="relative z-10">
+        <div class="relative z-10 mx-auto w-[94%] max-w-[1600px] px-10">
             <p
                 class="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-primary"
             >

@@ -8,7 +8,7 @@
         <div>
             <label
                 v-if="props.label"
-                class="text-sm font-semibold gap-2 flex mb-1 text-slate-700"
+                class="text-sm font-semibold gap-2 flex mb-1 text-slate-700 dark:text-gray-400"
             >
                 {{ props.label }}
                 <span v-if="props.required" class="text-red-500 ml-0.5">*</span>
@@ -18,12 +18,12 @@
                 type="button"
                 :disabled="disabled"
                 :class="[
-                    'w-full border rounded-lg flex items-center gap-2 bg-white text-left transition',
+                    'w-full border rounded-lg flex items-center gap-2 bg-white text-left transition dark:bg-secondary',
                     props.inputClass ?? 'px-4 py-2',
                     currentError
                         ? 'border-red-400 focus-within:ring-red-500/15'
-                        : 'border-slate-200 focus-within:ring-blue-500/15',
-                    disabled ? 'opacity-60 cursor-not-allowed bg-gray-50' : '',
+                        : 'border-slate-200 focus-within:ring-blue-500/15 dark:border-white/10',
+                    disabled ? 'opacity-60 cursor-not-allowed bg-gray-50 dark:bg-white/5' : '',
                 ]"
                 @click="toggleOpen"
             >
@@ -37,10 +37,10 @@
                     <component
                         v-else-if="selectedOption.iconComponent"
                         :is="selectedOption.iconComponent"
-                        class="h-4 w-4 text-gray-500"
+                        class="h-4 w-4 text-gray-500 dark:text-gray-400"
                     />
 
-                    <span v-if="!selectedOption.label" class="text-gray-400">
+                    <span v-if="!selectedOption.label" class="text-gray-400 dark:text-gray-500">
                         {{ placeholder }}
                     </span>
 
@@ -48,12 +48,12 @@
                         {{ selectedOption.label }}
                     </span>
                 </span>
-                <span v-else class="text-gray-400">
+                <span v-else class="text-gray-400 dark:text-gray-500">
                     {{ placeholder }}
                 </span>
 
                 <svg
-                    class="ml-auto w-4 h-4 text-gray-400"
+                    class="ml-auto w-4 h-4 text-gray-400 dark:text-gray-500"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -74,7 +74,7 @@
 
         <div
             v-if="isOpen"
-            class="absolute z-50 w-full bg-white border overflow-hidden rounded-lg shadow-lg"
+            class="absolute z-50 w-full bg-white border overflow-hidden rounded-lg shadow-lg dark:bg-secondary dark:border-white/10"
             :class="
                 dropdownPosition === 'top'
                     ? 'bottom-full mb-1'
@@ -88,11 +88,11 @@
                         v-model="search"
                         type="text"
                         :placeholder="searchPlaceholder"
-                        class="w-full pl-9 pr-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        class="w-full pl-9 pr-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-white/10"
                     />
 
                     <SearchIcon
-                        extraClass="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+                        extraClass="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                     />
                 </div>
             </div>
@@ -101,9 +101,9 @@
                 <li
                     v-for="item in filteredItems"
                     :key="item.value"
-                    class="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-2"
+                    class="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-2 dark:hover:bg-white/10"
                     :class="{
-                        'bg-gray-50 font-medium': modelValue === item.value,
+                        'bg-gray-50 font-medium dark:bg-white/5': modelValue === item.value,
                     }"
                     @mousedown.prevent="selectItem(item)"
                 >
@@ -116,7 +116,7 @@
                     <component
                         v-else-if="item.iconComponent"
                         :is="item.iconComponent"
-                        class="h-4 w-4 text-gray-500"
+                        class="h-4 w-4 text-gray-500 dark:text-gray-400"
                     />
 
                     <span>{{ item.label }}</span>
@@ -124,14 +124,14 @@
 
                 <li
                     v-if="filteredItems.length === 0 && !showCreateOption"
-                    class="px-4 py-2 text-sm text-gray-400"
+                    class="px-4 py-2 text-sm text-gray-400 dark:text-gray-500"
                 >
                     No results
                 </li>
 
                 <li
                     v-if="showCreateOption"
-                    class="px-4 py-2 cursor-pointer text-blue-600 hover:bg-blue-50"
+                    class="px-4 py-2 cursor-pointer text-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10"
                     @mousedown.prevent="createItem(search)"
                 >
                     + Add "{{ search }}"
@@ -470,7 +470,7 @@ onBeforeUnmount(() => {
 
                     <li
                         v-if="showCreateOption"
-                        class="px-4 py-2 cursor-pointer text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                        class="px-4 py-2 cursor-pointer text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 dark:text-blue-300"
                         @mousedown.prevent="createItem(search)"
                     >
                         + Add "{{ search }}"

@@ -186,7 +186,7 @@ init();
                         class="group relative flex items-center gap-3 py-4 text-sm font-medium transition"
                     >
                         <span
-                            class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors"
+                            class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors dark:border-white/10"
                             :class="[
                                 activeTab === tab.value
                                     ? 'border-primary bg-primary text-white'
@@ -665,7 +665,7 @@ init();
                                         "
                                     />
                                     <span
-                                        class="absolute left-[3px] top-[3px] h-5 w-5 rounded-full bg-white shadow transition-transform"
+                                        class="absolute left-[3px] top-[3px] h-5 w-5 rounded-full bg-white shadow transition-transform dark:bg-secondary"
                                         :class="
                                             permissions[module.module_id]
                                                 ?.can_read

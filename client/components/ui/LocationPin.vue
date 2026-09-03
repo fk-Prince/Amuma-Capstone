@@ -170,7 +170,7 @@ onUnmounted(() => {
     <div
         id="locations-map"
         :class="[
-            'w-full h-[400px] rounded-xl z-30 overflow-hidden border border-gray-200 shadow-sm',
+            'w-full h-[400px] rounded-xl z-30 overflow-hidden border border-gray-200 shadow-sm dark:border-white/10',
             extraClass,
         ]"
     />

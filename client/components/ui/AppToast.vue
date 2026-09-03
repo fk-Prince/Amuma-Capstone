@@ -25,10 +25,10 @@ const styles: Record<
     }
 > = {
     success: {
-        wrapper: "border-emerald-200",
-        iconBg: "bg-emerald-100",
-        icon: "text-emerald-600",
-        title: "text-emerald-900",
+        wrapper: "border-emerald-200 dark:border-emerald-500/20",
+        iconBg: "bg-emerald-100 dark:bg-emerald-500/15",
+        icon: "text-emerald-600 dark:text-emerald-300",
+        title: "text-emerald-900 dark:text-emerald-300",
         progress: "bg-emerald-500",
     },
 
@@ -41,18 +41,18 @@ const styles: Record<
     },
 
     warning: {
-        wrapper: "border-amber-200",
-        iconBg: "bg-amber-100",
-        icon: "text-amber-600",
-        title: "text-amber-900",
+        wrapper: "border-amber-200 dark:border-amber-500/20",
+        iconBg: "bg-amber-100 dark:bg-amber-500/15",
+        icon: "text-amber-600 dark:text-amber-300",
+        title: "text-amber-900 dark:text-amber-300",
         progress: "bg-amber-500",
     },
 
     info: {
-        wrapper: "border-blue-200",
-        iconBg: "bg-blue-100",
-        icon: "text-blue-600",
-        title: "text-blue-900",
+        wrapper: "border-blue-200 dark:border-blue-500/20",
+        iconBg: "bg-blue-100 dark:bg-blue-500/15",
+        icon: "text-blue-600 dark:text-blue-300",
+        title: "text-blue-900 dark:text-blue-300",
         progress: "bg-blue-500",
     },
 };
@@ -111,7 +111,7 @@ defineExpose({
                 <div
                     v-for="toast in toasts"
                     :key="toast.id"
-                    class="pointer-events-auto relative overflow-hidden rounded-2xl border bg-white p-4 shadow-lg"
+                    class="pointer-events-auto relative overflow-hidden rounded-2xl border bg-white p-4 shadow-lg dark:bg-secondary dark:border-white/10"
                     :class="styles[toast.type].wrapper"
                     role="alert"
                 >
@@ -193,7 +193,7 @@ defineExpose({
 
                             <p
                                 v-if="toast.description"
-                                class="mt-1 text-sm leading-relaxed text-slate-500"
+                                class="mt-1 text-sm leading-relaxed text-slate-500 dark:text-gray-400"
                             >
                                 {{ toast.description }}
                             </p>
@@ -202,7 +202,7 @@ defineExpose({
                         <!-- Close -->
                         <button
                             type="button"
-                            class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                            class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
                             @click="remove(toast.id)"
                         >
                             <svg

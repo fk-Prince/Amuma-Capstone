@@ -168,7 +168,7 @@ onBeforeUnmount(() => {
 
 <template>
     <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 backdrop-blur-sm px-4"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 backdrop-blur-sm px-4 dark:bg-white/10"
     >
         <div class="w-full max-w-md rounded-2xl bg-white dark:bg-secondary p-8 shadow-2xl">
             <div class="text-center">
@@ -218,7 +218,7 @@ onBeforeUnmount(() => {
                     :class="
                         error
                             ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-                            : 'border-slate-200 dark:border-white/10 focus:border-primary focus:ring-primary-100'
+                            : 'border-slate-200 dark:border-white/10 focus:border-primary focus:ring-primary-100 dark:focus:ring-primary-500/20'
                     "
                     @input="handleInput(index, $event)"
                     @keydown="handleBackspace(index, $event)"

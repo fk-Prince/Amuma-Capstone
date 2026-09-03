@@ -17,17 +17,17 @@
             <button
                 ref="filterButton"
                 type="button"
-                class="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-3 lg:gap-4 rounded-lg border px-4 py-2.5 text-sm transition-colors"
+                class="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-3 lg:gap-4 rounded-lg border px-4 py-2.5 text-sm transition-colors dark:border-white/10"
                 :class="
                     hasActiveFilters
                         ? 'border-primary/30 bg-primary/5 hover:bg-primary/10'
-                        : 'border-slate-300 bg-white hover:bg-slate-50'
+                        : 'border-slate-300 bg-white hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:hover:bg-white/5'
                 "
                 @click="toggleFilters"
             >
                 <span class="flex items-center gap-1.5 lg:hidden">
-                    <SlidersHorizontal class="h-4 w-4 text-slate-400" />
-                    <span class="font-medium text-slate-900">Filters</span>
+                    <SlidersHorizontal class="h-4 w-4 text-slate-400 dark:text-gray-500" />
+                    <span class="font-medium text-slate-900 dark:text-white">Filters</span>
 
                     <span
                         v-if="activeFilterCount"
@@ -38,23 +38,23 @@
                 </span>
 
                 <span
-                    class="hidden lg:flex min-w-0 items-center gap-1.5 text-slate-600"
+                    class="hidden lg:flex min-w-0 items-center gap-1.5 text-slate-600 dark:text-gray-400"
                 >
-                    <Layers class="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                    <span class="truncate font-medium text-slate-900">
+                    <Layers class="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-gray-500" />
+                    <span class="truncate font-medium text-slate-900 dark:text-white">
                         {{ typeSummary }}
                     </span>
                 </span>
 
-                <span class="hidden lg:inline text-slate-300">|</span>
+                <span class="hidden lg:inline text-slate-300 dark:text-gray-500">|</span>
 
                 <span
-                    class="hidden lg:flex min-w-0 items-center gap-1.5 text-slate-600"
+                    class="hidden lg:flex min-w-0 items-center gap-1.5 text-slate-600 dark:text-gray-400"
                 >
                     <CalendarRange
-                        class="h-3.5 w-3.5 shrink-0 text-slate-400"
+                        class="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-gray-500"
                     />
-                    <span class="truncate font-medium text-slate-900">
+                    <span class="truncate font-medium text-slate-900 dark:text-white">
                         {{ periodSummary }}
                     </span>
                 </span>
@@ -65,7 +65,7 @@
                 />
 
                 <ChevronDown
-                    class="h-4 w-4 shrink-0 text-slate-400 transition-transform"
+                    class="h-4 w-4 shrink-0 text-slate-400 transition-transform dark:text-gray-500"
                     :class="{ 'rotate-180': open }"
                 />
             </button>
@@ -80,18 +80,18 @@
                 <Transition name="fade-slide">
                     <div
                         v-if="open"
-                        class="fixed z-[9999] w-[650px] max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
+                        class="fixed z-[9999] w-[650px] max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-white/10 dark:bg-secondary"
                         :style="dropdownStyle"
                         @click.stop
                     >
                         <div
-                            class="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/80 px-6 py-4"
+                            class="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/80 px-6 py-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div>
-                                <p class="text-sm font-semibold text-slate-900">
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white">
                                     Filter Patients
                                 </p>
-                                <p class="mt-0.5 text-xs text-slate-500">
+                                <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                                     Narrow patients down by the care they
                                     receive and when they were registered.
                                 </p>
@@ -99,7 +99,7 @@
 
                             <button
                                 type="button"
-                                class="shrink-0 text-slate-400 hover:text-slate-600"
+                                class="shrink-0 text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400"
                                 @click="open = false"
                             >
                                 <svg
@@ -120,10 +120,10 @@
                                 class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
                             >
                                 <p
-                                    class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
+                                    class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900 dark:text-white"
                                 >
                                     <Layers
-                                        class="h-3.5 w-3.5 text-slate-400"
+                                        class="h-3.5 w-3.5 text-slate-400 dark:text-gray-500"
                                     />
                                     Care Type
                                 </p>
@@ -133,11 +133,11 @@
                                         v-for="item in careTypeFilters"
                                         :key="item.value"
                                         type="button"
-                                        class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
+                                        class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition dark:border-white/10"
                                         :class="
                                             localType === item.value
                                                 ? 'border-primary bg-primary text-white'
-                                                : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
+                                                : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-gray-400'
                                         "
                                         @click="localType = item.value"
                                     >
@@ -146,16 +146,16 @@
                                 </div>
                             </div>
 
-                            <div class="h-px bg-slate-200 my-4" />
+                            <div class="h-px bg-slate-200 my-4 dark:bg-white/15" />
 
                             <div
                                 class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
                             >
                                 <p
-                                    class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
+                                    class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900 dark:text-white"
                                 >
                                     <UserCheck
-                                        class="h-3.5 w-3.5 text-slate-400"
+                                        class="h-3.5 w-3.5 text-slate-400 dark:text-gray-500"
                                     />
                                     Caseload
                                 </p>
@@ -165,11 +165,11 @@
                                         v-for="item in caseloadFilters"
                                         :key="item.value"
                                         type="button"
-                                        class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
+                                        class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition dark:border-white/10"
                                         :class="
                                             localAssignment === item.value
                                                 ? 'border-primary bg-primary text-white'
-                                                : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
+                                                : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-gray-400'
                                         "
                                         @click="localAssignment = item.value"
                                     >
@@ -178,16 +178,16 @@
                                 </div>
                             </div>
 
-                            <div class="h-px bg-slate-200 my-4" />
+                            <div class="h-px bg-slate-200 my-4 dark:bg-white/15" />
 
                             <div
                                 class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6 py-2"
                             >
                                 <p
-                                    class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900"
+                                    class="flex sm:w-24 shrink-0 items-center gap-1.5 pt-1.5 text-sm font-semibold text-slate-900 dark:text-white"
                                 >
                                     <CalendarRange
-                                        class="h-3.5 w-3.5 text-slate-400"
+                                        class="h-3.5 w-3.5 text-slate-400 dark:text-gray-500"
                                     />
                                     Period
                                 </p>
@@ -198,11 +198,11 @@
                                             v-for="p in periodPresets"
                                             :key="p.value"
                                             type="button"
-                                            class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
+                                            class="rounded-full border px-3.5 py-1.5 text-sm font-medium transition dark:border-white/10"
                                             :class="
                                                 activePreset === p.value
                                                     ? 'border-primary bg-primary text-white'
-                                                    : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary'
+                                                    : 'border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-gray-400'
                                             "
                                             @click="applyPreset(p.value)"
                                         >
@@ -223,7 +223,7 @@
                                         />
 
                                         <span
-                                            class="text-slate-400 text-xs text-center shrink-0"
+                                            class="text-slate-400 text-xs text-center shrink-0 dark:text-gray-500"
                                         >
                                             to
                                         </span>
@@ -240,12 +240,12 @@
                                 </div>
                             </div>
 
-                            <div class="h-px bg-slate-200 my-4" />
+                            <div class="h-px bg-slate-200 my-4 dark:bg-white/15" />
 
                             <div class="flex justify-end gap-3">
                                 <button
                                     type="button"
-                                    class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition"
+                                    class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition dark:text-gray-400 dark:hover:text-white"
                                     @click="resetAll"
                                 >
                                     Reset

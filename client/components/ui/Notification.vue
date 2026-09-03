@@ -50,7 +50,7 @@
                     <button
                         v-if="unreadCount > 0"
                         @click="markAllRead"
-                        class="text-xs text-blue-500 hover:underline"
+                        class="text-xs text-blue-500 hover:underline dark:text-blue-300"
                     >
                         Mark all as read
                     </button>
@@ -61,7 +61,7 @@
                 >
                     <p
                         v-if="!notifications.length"
-                        class="px-4 py-8 text-center text-xs text-gray-400"
+                        class="px-4 py-8 text-center text-xs text-gray-400 dark:text-gray-500"
                     >
                         No notifications yet.
                     </p>
@@ -97,7 +97,7 @@
                             >
                                 {{ notif.message }}
                             </p>
-                            <p class="text-[11px] text-gray-400 mt-0.5">
+                            <p class="text-[11px] text-gray-400 mt-0.5 dark:text-gray-500">
                                 {{ notifcationFormatDate(notif.created_at) }}
                             </p>
                         </div>
@@ -114,7 +114,7 @@
                 >
                     <NuxtLink
                         to="/notifications"
-                        class="text-sm text-blue-500 hover:underline"
+                        class="text-sm text-blue-500 hover:underline dark:text-blue-300"
                         @click="open = false"
                     >
                         View all notifications

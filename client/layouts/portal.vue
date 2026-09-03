@@ -1,5 +1,5 @@
 <template>
-    <div class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-[#0b0f1a] overflow-hidden">
+    <div class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden">
         <PortalSidebar :open="isOpen" @close="isOpen = false" />
 
         <div class="flex-1 flex flex-col min-w-0 h-full">
@@ -9,7 +9,7 @@
                 class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative"
             >
                 <div
-                    class="pointer-events-none absolute inset-0 overflow-hidden"
+                    class="pointer-events-none absolute inset-0 overflow-hidden dark:hidden"
                     aria-hidden="true"
                 >
                     <div
@@ -32,7 +32,7 @@
                     />
                 </div>
 
-                <div class="relative min-h-full flex flex-col">
+                <div class="relative h-full flex flex-col">
                     <slot />
                 </div>
             </main>

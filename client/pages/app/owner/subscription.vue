@@ -47,7 +47,7 @@
                 </button>
                 <!-- 
                 <div
-                    class="inline-flex w-fit items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-600 ring-1 ring-inset ring-amber-100"
+                    class="inline-flex w-fit items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-600 ring-1 ring-inset ring-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20"
                 >
                     <span class="relative flex h-1.5 w-1.5">
                         <span
@@ -404,7 +404,7 @@ const approveSubscription = async (subscription: any) => {
     try {
         await subscriptionService.action({
             action: "approve",
-            subscription_uuid: uuid,
+            branch_subscription_uuid: uuid,
         });
 
         subscriptions.value = subscriptions.value.filter(
@@ -429,7 +429,7 @@ const rejectSubscription = async (subscription: any) => {
     try {
         await subscriptionService.action({
             action: "reject",
-            subscription_uuid: uuid,
+            branch_subscription_uuid: uuid,
         });
         subscriptions.value = subscriptions.value.filter(
             (s) => s.uuid !== uuid,

@@ -62,7 +62,7 @@
                         placeholder="Enter plan description"
                     />
 
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <BaseInput
                             v-model="draft.monthly_price"
                             mode="number"
@@ -109,7 +109,7 @@
                     </div>
 
                     <div
-                        class="grid grid-cols-2 divide-x divide-slate-100 dark:divide-white/10 border-t border-slate-100 dark:border-white/10"
+                        class="grid grid-cols-1 sm:grid-cols-2 divide-x divide-slate-100 dark:divide-white/10 border-t border-slate-100 dark:border-white/10"
                     >
                         <div class="p-4">
                             <p
