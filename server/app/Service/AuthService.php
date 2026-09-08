@@ -125,7 +125,10 @@ class AuthService
             $user->client()->create([
                 'first_name' => Str::title($firstName),
                 'last_name' => Str::title($lastName),
-                'avatar' => $googleUser->getAvatar(),
+                'avatar' => $googleUser->getAvatar()
+                    ?: 'https://ui-avatars.com/api/?name=' . strtoupper(
+                        substr($firstName, 0, 1) . substr($lastName, 0, 1)
+                    ),
             ]);
         } elseif ($user->provider !== 'google') {
             $user->update([

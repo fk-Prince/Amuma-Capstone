@@ -23,6 +23,9 @@ import type {
 import { frequencyOptions } from "~/types/medication";
 
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
+import ActionButton from "~/components/ui/ActionButton.vue";
+
+const { canChart, chartingBlockedReason } = usePermissions();
 
 interface DayColumn {
     label: string;
@@ -156,9 +159,6 @@ function frequencyIntervalDays(frequency: string) {
     return FREQUENCY_INTERVAL_DAYS[frequency] ?? 1;
 }
 
-// Non-daily medications (e.g. "every 3 days") only have a dose due on
-// every Nth day from their start date — the days in between are skipped
-// rather than shown as an empty/missed dose.
 function isDoseDay(med: Medication, dateStr: string) {
     if (!med.startDate) return true;
 
@@ -335,7 +335,9 @@ const emit = defineEmits<{
         >
             <div class="flex items-start justify-between gap-3 px-5 py-4">
                 <div>
-                    <h2 class="text-base font-semibold text-gray-900 dark:text-white">
+                    <h2
+                        class="text-base font-semibold text-gray-900 dark:text-white"
+                    >
                         {{ latestMedication.name }}
                     </h2>
                     <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
@@ -370,7 +372,9 @@ const emit = defineEmits<{
                     >
                         Instructions
                     </p>
-                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
+                    <p
+                        class="mt-1 text-sm font-medium text-gray-800 dark:text-white"
+                    >
                         {{ latestMedication.instructions || "—" }}
                     </p>
                 </div>
@@ -381,7 +385,9 @@ const emit = defineEmits<{
                     >
                         Taken for
                     </p>
-                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
+                    <p
+                        class="mt-1 text-sm font-medium text-gray-800 dark:text-white"
+                    >
                         {{ latestMedication.takenFor || "—" }}
                     </p>
                 </div>
@@ -392,7 +398,9 @@ const emit = defineEmits<{
                     >
                         Duration
                     </p>
-                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
+                    <p
+                        class="mt-1 text-sm font-medium text-gray-800 dark:text-white"
+                    >
                         {{ latestMedication.durationLabel }}
                     </p>
                 </div>
@@ -425,7 +433,9 @@ const emit = defineEmits<{
                     </button>
                 </div>
 
-                <div class="rounded-full border bg-white p-1 dark:bg-secondary dark:border-white/10">
+                <div
+                    class="rounded-full border bg-white p-1 dark:bg-secondary dark:border-white/10"
+                >
                     <button
                         class="rounded-full px-4 py-1.5 text-sm"
                         :class="
@@ -452,15 +462,18 @@ const emit = defineEmits<{
                 </div>
             </div>
 
-            <button
+            <ActionButton
                 v-if="isProvider"
-                class="rounded-xl bg-primary flex items-center gap-3 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/50"
+                variant="primary"
+                extra-class="px-5 py-2"
+                :disabled="!canChart"
+                :tooltip="canChart ? '' : chartingBlockedReason"
                 @click="$emit('add-medication')"
             >
                 <Plus class="h-4 w-4" />
 
                 Add Medication
-            </button>
+            </ActionButton>
         </div>
 
         <div
@@ -472,7 +485,9 @@ const emit = defineEmits<{
                 class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-50 px-5 py-4 dark:border-white/10"
             >
                 <div>
-                    <h2 class="text-base font-semibold text-gray-900 dark:text-white">
+                    <h2
+                        class="text-base font-semibold text-gray-900 dark:text-white"
+                    >
                         {{ med.name }}
                     </h2>
 
@@ -482,7 +497,9 @@ const emit = defineEmits<{
                         · {{ ROUTE_LABELS[med.route] ?? med.route }}
                     </p>
 
-                    <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+                    <p
+                        class="mt-1 text-[11px] text-gray-400 dark:text-gray-500"
+                    >
                         Prescribed at {{ formatDate(med.recorded_date) }}
                     </p>
                 </div>
@@ -512,7 +529,9 @@ const emit = defineEmits<{
                         Medication
                     </p>
 
-                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
+                    <p
+                        class="mt-1 text-sm font-medium text-gray-800 dark:text-white"
+                    >
                         {{ med.instructions }}
                     </p>
                 </div>
@@ -524,7 +543,9 @@ const emit = defineEmits<{
                         Taken Every
                     </p>
 
-                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
+                    <p
+                        class="mt-1 text-sm font-medium text-gray-800 dark:text-white"
+                    >
                         {{ formatFrequency(med.frequency) }}
                     </p>
                 </div>
@@ -536,7 +557,9 @@ const emit = defineEmits<{
                         Taken for
                     </p>
 
-                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
+                    <p
+                        class="mt-1 text-sm font-medium text-gray-800 dark:text-white"
+                    >
                         {{ med.takenFor }}
                     </p>
                 </div>
@@ -548,7 +571,9 @@ const emit = defineEmits<{
                         Dosage
                     </p>
 
-                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
+                    <p
+                        class="mt-1 text-sm font-medium text-gray-800 dark:text-white"
+                    >
                         {{ formatDosage(med.dosageAmount, med.dosageUnit) }}
                     </p>
                 </div>
@@ -560,14 +585,18 @@ const emit = defineEmits<{
                         Route
                     </p>
 
-                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-white">
+                    <p
+                        class="mt-1 text-sm font-medium text-gray-800 dark:text-white"
+                    >
                         {{ ROUTE_LABELS[med.route] ?? med.route }}
                     </p>
                 </div>
             </div>
 
             <div v-if="med.kind === 'Scheduled'" class="px-3 sm:px-5 py-4">
-                <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-white/10">
+                <div
+                    class="overflow-x-auto rounded-xl border border-gray-100 dark:border-white/10"
+                >
                     <div class="min-w-max">
                         <div
                             class="flex border-b border-gray-100 bg-gray-50/80 dark:border-white/10 dark:bg-white/5"
@@ -613,15 +642,23 @@ const emit = defineEmits<{
                             v-for="(time, rowIndex) in med.times"
                             :key="time"
                             class="flex items-center"
-                            :class="rowIndex % 2 ? 'bg-gray-50/60 dark:bg-white/5' : 'bg-white dark:bg-secondary'"
+                            :class="
+                                rowIndex % 2
+                                    ? 'bg-gray-50/60 dark:bg-white/5'
+                                    : 'bg-white dark:bg-secondary'
+                            "
                         >
                             <div
                                 class="sticky left-0 z-10 flex w-24 shrink-0 items-center gap-1.5 border-r border-gray-100 px-3 py-2.5 text-xs font-medium text-gray-600 dark:border-white/10 dark:text-gray-400"
                                 :class="
-                                    rowIndex % 2 ? 'bg-gray-50 dark:bg-white/5' : 'bg-white dark:bg-secondary'
+                                    rowIndex % 2
+                                        ? 'bg-gray-50 dark:bg-white/5'
+                                        : 'bg-white dark:bg-secondary'
                                 "
                             >
-                                <Clock class="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
+                                <Clock
+                                    class="h-3.5 w-3.5 text-gray-400 dark:text-gray-500"
+                                />
                                 {{ formatTime(time) }}
                             </div>
 
@@ -651,7 +688,14 @@ const emit = defineEmits<{
                                                   ? 'border-rose-300 bg-rose-50 text-rose-500 dark:bg-rose-500/10 dark:text-rose-300'
                                                   : 'border-gray-200 bg-white hover:border-emerald-400 hover:bg-emerald-50 dark:border-white/10 dark:bg-secondary dark:hover:bg-emerald-500/10'
                                         "
-                                        :disabled="disabled || !isProvider"
+                                        :disabled="
+                                            disabled || !isProvider || !canChart
+                                        "
+                                        :title="
+                                            canChart
+                                                ? ''
+                                                : chartingBlockedReason
+                                        "
                                         :aria-label="
                                             (isTaken(med, time, day.fullDate)
                                                 ? 'Mark as not taken: '

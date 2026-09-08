@@ -538,7 +538,7 @@
                                                 class="flex items-center gap-1"
                                             >
                                                 <Phone class="h-3 w-3" />
-                                                {{ employee.phone_number }}
+                                                {{ formatPhone(employee.phone_number) }}
                                             </span>
 
                                             <span

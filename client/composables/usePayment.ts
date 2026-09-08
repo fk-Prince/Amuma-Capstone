@@ -5,7 +5,6 @@ type CardPaymentOptions = {
     card: CardDetails;
     amount: number;
     createPayment: (data: {
-
         token_id: string;
         authentication_id: string;
     }) => Promise<any>;
@@ -20,7 +19,6 @@ type GCashPaymentOptions = {
     onSuccess?: (result: any) => Promise<void>;
     onClose?: () => void;
 };
-
 
 // export async function cardPayment({
 //     card,
@@ -51,7 +49,6 @@ type GCashPaymentOptions = {
 //         card_holder_email: card.email,
 //     };
 
-
 //     return new Promise((resolve, reject) => {
 //         window.Xendit.card.createToken(
 //             {
@@ -66,7 +63,6 @@ type GCashPaymentOptions = {
 //                     return;
 //                 }
 
-
 //                 window.Xendit.card.createAuthentication(
 //                     {
 //                         token_id: token.id,
@@ -79,9 +75,7 @@ type GCashPaymentOptions = {
 //                             return;
 //                         }
 
-
 //                         let popupClose: (() => void) | null = null;
-
 
 //                         const executePayment = async () => {
 //                             return await createPayment({
@@ -89,7 +83,6 @@ type GCashPaymentOptions = {
 //                                 authentication_id: auth.id,
 //                             });
 //                         };
-
 
 //                         const finish = async (result: any) => {
 //                             popupClose?.();
@@ -100,7 +93,6 @@ type GCashPaymentOptions = {
 
 //                             resolve(result);
 //                         };
-
 
 //                         try {
 //                             if (
@@ -115,9 +107,7 @@ type GCashPaymentOptions = {
 //                                     auth.payer_authentication_url,
 //                                 );
 
-
 //                                 popupClose = close;
-
 
 //                                 on3DSClose(() => {
 //                                     popupClose?.();
@@ -128,7 +118,6 @@ type GCashPaymentOptions = {
 //                                         new Error("Payment Cancelled."),
 //                                     );
 //                                 });
-
 
 //                                 onComplete(async () => {
 //                                     try {
@@ -143,10 +132,8 @@ type GCashPaymentOptions = {
 //                                     }
 //                                 });
 
-
 //                                 return;
 //                             }
-
 
 //                             if (auth.status === "VERIFIED") {
 //                                 const result =
@@ -156,7 +143,6 @@ type GCashPaymentOptions = {
 
 //                                 return;
 //                             }
-
 
 //                             reject(
 //                                 new Error(
@@ -186,17 +172,20 @@ export async function cardPayment({
     const config = useRuntimeConfig();
     const { handle3DS } = use3DS();
 
-    window.Xendit.setPublishableKey(
-        config.public.xenditPublicKey,
-    );
+    window.Xendit.setPublishableKey(config.public.xenditPublicKey);
+
+    // Xendit only authenticates whole pesos, so a balance ending in centavos is
+    // authorised to the next peso. This is a ceiling on what may be charged,
+    // not the charge: the exact amount is what the API bills.
+    const authAmount = Math.ceil(amount);
 
     const cardData = {
-        amount,
+        amount: authAmount,
         card_number: card.number.replace(/\s/g, ""),
         card_exp_month: String(card.expMonth),
         card_exp_year: String(
             Math.floor(new Date().getFullYear() / 100) * 100 +
-            Number(card.expYear),
+                Number(card.expYear),
         ),
         card_cvc: card.cvc,
         card_holder_first_name: card.firstName,
@@ -256,7 +245,7 @@ export async function cardPayment({
                 window.Xendit.card.createAuthentication(
                     {
                         token_id: token.id,
-                        amount,
+                        amount: authAmount,
                     },
 
                     async (err: any, auth: any) => {
@@ -319,9 +308,7 @@ export async function cardPayment({
                                     onClose?.();
 
                                     settleReject(
-                                        new Error(
-                                            "Payment Cancelled.",
-                                        ),
+                                        new Error("Payment Cancelled."),
                                     );
                                 });
 
@@ -360,8 +347,7 @@ export async function cardPayment({
                             }
 
                             if (auth.status === "VERIFIED") {
-                                const result =
-                                    await executePayment();
+                                const result = await executePayment();
 
                                 await finish(result);
 
@@ -383,7 +369,6 @@ export async function cardPayment({
         );
     });
 }
-
 
 export async function gcashPayment({
     createPayment,
@@ -424,11 +409,7 @@ export async function gcashPayment({
             close,
             onComplete,
             onClose: on3DSClose,
-        } = handle3DS(
-            url,
-            "GCash Payment",
-        );
-
+        } = handle3DS(url, "GCash Payment");
 
         if (closeModal) {
             closeModal.value = close;
@@ -444,7 +425,6 @@ export async function gcashPayment({
             settleResolve(result);
         };
 
-
         on3DSClose(() => {
             close();
             onClose?.();
@@ -452,7 +432,6 @@ export async function gcashPayment({
             //     new Error("Payment Cancelled."),
             // );
         });
-
 
         onComplete(async () => {
             try {

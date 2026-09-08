@@ -42,6 +42,7 @@ export const profileMenuDropDownList = [
         label: "Family Portal",
         to: "/portal/bookings",
         types: ["isClient"],
+        requiresAny: ["hasBooking", "hasPatient"],
     },
     {
         icon: "Subscription Management",
@@ -49,5 +50,4 @@ export const profileMenuDropDownList = [
         to: "/app/owner/dashboard",
         types: ["isSystemOwner"],
     },
-    // { icon: "user", label: "Settings", to: "/" },
 ];

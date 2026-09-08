@@ -1,0 +1,297 @@
+<template>
+    <div class="min-h-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div class="mb-6">
+            <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
+                Branches
+            </h1>
+            <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
+                Browse every branch already on a subscription, and its
+                billing status.
+            </p>
+        </div>
+
+        <SubscriptionOverview
+            :overview="overview"
+            :loading="overviewLoading"
+            :active-view="view === 'approved' ? 'approved' : undefined"
+            :active-status="approvedStatus"
+            :show-requests="false"
+            class="mb-6"
+            @select="applyStatSelection"
+        />
+
+        <div
+            class="mb-6 flex flex-col gap-4 border-b border-slate-100 dark:border-white/10 pb-6 lg:flex-row lg:items-center lg:justify-between"
+        >
+            <SubscriptionFilterBar
+                v-model:search="search"
+                v-model:view="view"
+                v-model:approvedStatus="approvedStatus"
+                :views="['approved', 'rejected']"
+                class="lg:flex-1"
+            />
+
+            <button
+                type="button"
+                :disabled="loading"
+                class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-secondary px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-gray-300 transition hover:bg-slate-50 dark:hover:bg-white/10 disabled:opacity-50 lg:shrink-0"
+                @click="fetchSubscriptions()"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    class="h-3.5 w-3.5"
+                    :class="{ 'animate-spin': loading }"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                </svg>
+                Refresh
+            </button>
+        </div>
+
+        <div
+            v-if="loading"
+            class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+        >
+            <div
+                v-for="n in 6"
+                :key="n"
+                class="overflow-hidden rounded-2xl border border-slate-100 dark:border-white/10 bg-white dark:bg-secondary shadow-sm"
+            >
+                <div class="animate-pulse space-y-0 divide-y divide-slate-100 dark:divide-white/10">
+                    <div class="space-y-2 bg-slate-50/70 dark:bg-white/5 p-4">
+                        <div class="h-4 w-2/3 rounded bg-slate-200 dark:bg-white/10" />
+                        <div class="h-3 w-1/3 rounded bg-slate-100 dark:bg-white/5" />
+                    </div>
+
+                    <div class="space-y-3 p-4">
+                        <div class="h-3 w-1/4 rounded bg-slate-100 dark:bg-white/5" />
+                        <div class="flex gap-3">
+                            <div
+                                class="h-9 w-9 shrink-0 rounded-full bg-slate-200 dark:bg-white/10"
+                            />
+                            <div class="flex-1 space-y-2">
+                                <div class="h-3 w-3/4 rounded bg-slate-200 dark:bg-white/10" />
+                                <div class="h-3 w-1/2 rounded bg-slate-100 dark:bg-white/5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 p-4">
+                        <div class="h-3 w-1/4 rounded bg-slate-100 dark:bg-white/5" />
+                        <div class="flex gap-3">
+                            <div
+                                class="h-9 w-9 shrink-0 rounded-full bg-slate-200 dark:bg-white/10"
+                            />
+                            <div class="flex-1 space-y-2">
+                                <div class="h-3 w-3/4 rounded bg-slate-200 dark:bg-white/10" />
+                                <div class="h-3 w-1/2 rounded bg-slate-100 dark:bg-white/5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 bg-slate-50/70 dark:bg-white/5 p-3">
+                        <div class="h-8 flex-1 rounded-xl bg-slate-200 dark:bg-white/10" />
+                        <div class="h-8 flex-1 rounded-xl bg-slate-100 dark:bg-white/5" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div
+            v-else-if="subscriptions.length === 0"
+            class="flex min-h-80 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 px-6 text-center"
+        >
+            <div
+                class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent-50 dark:bg-accent-500/10 text-accent-500 dark:text-accent-300 ring-1 ring-inset ring-accent-100 dark:ring-accent-500/20"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    class="h-7 w-7"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m5 12 4 4L19 6"
+                    />
+                </svg>
+            </div>
+
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
+                {{ emptyStateTitle }}
+            </h2>
+
+            <p class="mt-1 max-w-sm text-xs text-slate-500 dark:text-gray-400">
+                {{ emptyStateDescription }}
+            </p>
+
+            <button
+                type="button"
+                class="mt-4 inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-secondary px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-gray-300 transition hover:bg-slate-50 dark:hover:bg-white/10"
+                @click="isSearching ? clearSearch() : fetchSubscriptions()"
+            >
+                <svg
+                    v-if="!isSearching"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    class="h-3.5 w-3.5"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                </svg>
+                <svg
+                    v-else
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    class="h-3.5 w-3.5"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M6 18 18 6M6 6l12 12"
+                    />
+                </svg>
+                {{ isSearching ? "Clear search" : "Check again" }}
+            </button>
+        </div>
+
+        <template v-else>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <SubscriptionCard
+                    v-for="subscription in subscriptions"
+                    :key="subscription.uuid"
+                    :subscription="subscription"
+                    :show-actions="false"
+                    :action-loading="
+                        processingAction[subscription.uuid] ?? null
+                    "
+                    @approve="approveSubscription"
+                    @reject="rejectSubscription"
+                />
+            </div>
+
+            <div class="mt-8 flex flex-col items-center gap-3">
+                <button
+                    v-if="hasMore"
+                    type="button"
+                    :disabled="loadingMore"
+                    class="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-secondary px-5 py-2.5 text-xs font-semibold text-slate-700 dark:text-gray-300 shadow-sm transition hover:bg-slate-50 dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    @click="loadMore"
+                >
+                    <svg
+                        v-if="loadingMore"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        class="h-3.5 w-3.5 animate-spin"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                    </svg>
+                    {{ loadingMore ? "Loading..." : "Load more" }}
+                </button>
+            </div>
+        </template>
+    </div>
+</template>
+
+<script setup lang="ts">
+import SubscriptionCard from "~/components/sections/owner/SubscriptionCard.vue";
+import SubscriptionFilterBar from "~/components/sections/owner/SubscriptionFilter.vue";
+import SubscriptionOverview from "~/components/sections/owner/SubscriptionOverview.vue";
+import {
+    useSubscriptionBrowser,
+    type ApprovedStatus,
+} from "~/composables/useSubscriptionBrowser";
+
+definePageMeta({
+    layout: "owner",
+    middleware: "auth-client",
+});
+
+useHead({
+    title: "AMUMA Branches",
+});
+
+const {
+    subscriptions,
+    loading,
+    loadingMore,
+    hasMore,
+    overview,
+    overviewLoading,
+    processingAction,
+    search,
+    view,
+    approvedStatus,
+    isSearching,
+    fetchSubscriptions,
+    loadMore,
+    clearSearch,
+    approveSubscription,
+    rejectSubscription,
+} = useSubscriptionBrowser("approved");
+
+const applyStatSelection = (payload: {
+    view: "requests" | "approved";
+    status?: ApprovedStatus;
+}) => {
+    view.value = "approved";
+
+    if (payload.status) {
+        approvedStatus.value = payload.status;
+    }
+};
+
+const emptyStateTitle = computed(() => {
+    if (isSearching.value) return "No matches found";
+
+    return view.value === "rejected"
+        ? "No rejected subscriptions"
+        : "No subscriptions found";
+});
+
+const emptyStateDescription = computed(() => {
+    const query = search.value.trim();
+
+    if (isSearching.value) {
+        const scope =
+            view.value === "rejected"
+                ? "rejected subscriptions"
+                : `${approvedStatus.value} subscriptions`;
+
+        return `No ${scope} match "${query}". Try a different agency or branch name.`;
+    }
+
+    if (view.value === "rejected") {
+        return "No subscription requests have been rejected.";
+    }
+
+    return `There are no ${approvedStatus.value} subscriptions right now.`;
+});
+</script>

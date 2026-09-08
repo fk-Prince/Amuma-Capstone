@@ -1003,7 +1003,7 @@ const filteredLogs = computed<AuditRow[]>(() => {
     });
 });
 
-const NOT_YET_DONE_STATUSES = ["pending", "confirmed"];
+const NOT_YET_DONE_STATUSES = ["pending"];
 
 const upcomingLogs = computed(() =>
     filteredLogs.value.filter((log) =>
@@ -1146,8 +1146,6 @@ function statusPill(status: string) {
     const map: Record<string, string> = {
         pending:
             "bg-violet-50 text-violet-700 ring-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20",
-        confirmed:
-            "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/20",
         ongoing:
             "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20",
         completed:

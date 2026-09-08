@@ -13,7 +13,9 @@
                             :style="{ width: `${progress}%` }"
                         ></div>
                     </div>
-                    <span class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500">
+                    <span
+                        class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500"
+                    >
                         {{ Math.round(progress) }}%
                     </span>
                 </div>
@@ -36,6 +38,7 @@
                             :patient="bookingStore.patient"
                             :guardian="bookingStore.guardian"
                             :assessment="bookingStore.assessment"
+                            :diagnoses="bookingStore.diagnoses"
                             :payment="bookingStore.payment"
                             @edit-step="goEditStep"
                         />
@@ -51,10 +54,14 @@
                             !
                         </span>
                         <div>
-                            <p class="text-sm font-medium text-amber-800 dark:text-amber-300">
+                            <p
+                                class="text-sm font-medium text-amber-800 dark:text-amber-300"
+                            >
                                 No room or bed reserved
                             </p>
-                            <p class="text-xs text-amber-700 mt-0.5 dark:text-amber-300">
+                            <p
+                                class="text-xs text-amber-700 mt-0.5 dark:text-amber-300"
+                            >
                                 You need to select an accommodation and bed
                                 before you can proceed to payment.
                             </p>
@@ -105,20 +112,24 @@
                             :style="{ width: `${progress}%` }"
                         ></div>
                     </div>
-                    <span class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500">
+                    <span
+                        class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500"
+                    >
                         {{ Math.round(progress) }}%
                     </span>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto px-3 py-4">
+            <div class="min-h-0 flex-1 overflow-y-auto px-3 py-4">
                 <BookingSteps
-                    active="step5"
+                    active="step6"
                     :completed="completedSteps"
                     @go="goEditStep"
                 />
             </div>
         </aside>
+
+        <AdmissionSlipModal :slip="admissionSlip" @close="closeSlip" />
     </div>
 </template>
 
@@ -131,7 +142,9 @@ import BaseButton from "~/components/ui/BaseButton.vue";
 import { useBookingStore } from "~/stores/booking";
 import type { CardDetails } from "~/types/payment";
 import AdmissionReview from "~/components/sections/app/Admission/AdmissionReview.vue";
+import AdmissionSlipModal from "~/components/sections/app/Admission/AdmissionSlipModal.vue";
 import { admissionService } from "~/api/admission/AdmissionService";
+import type { AdmissionSlip } from "~/types/admission-slip";
 useHead({ title: "Review Admission" });
 
 definePageMeta({
@@ -184,7 +197,13 @@ const hasReservation = computed(
     () => !!bookingStore.reserved?.room && !!bookingStore.reserved?.bed,
 );
 
-const completedSteps = computed(() => ["step1", "step2", "step3", "step4"]);
+const completedSteps = computed(() => [
+    "step1",
+    "step2",
+    "step3",
+    "step4",
+    "step5",
+]);
 const progress = computed(() => 100);
 
 function goEditStep(step: string) {
@@ -203,9 +222,17 @@ const bookingData = computed(() => ({
     patient: bookingStore.patient,
     guardian: bookingStore.guardian,
     assessment: bookingStore.assessment,
+    diagnoses: bookingStore.diagnoses,
     reserved: bookingStore.reserved,
     payment: bookingStore.payment,
 }));
+
+const admissionSlip = ref<AdmissionSlip | null>(null);
+
+function closeSlip() {
+    admissionSlip.value = null;
+    router.push(`/app/branches/${uuid}/admissions/`);
+}
 
 async function handleSubmit() {
     if (submitting.value) return;
@@ -228,12 +255,24 @@ async function handleSubmit() {
         toast.success(
             res.message ?? "Your admission request was submitted successfully!",
         );
+
+        const slip = res.data?.portal ? (res.data as AdmissionSlip) : null;
+
         bookingStore.$reset();
+
+        if (slip) {
+            admissionSlip.value = slip;
+
+            return;
+        }
+
         router.push(`/app/branches/${uuid}/admissions/`);
     } catch (err: any) {
         console.error(err);
         toast.error(
-            err.message ??
+            err?.data?.message ??
+                err?.response?.data?.message ??
+                err?.message ??
                 "Something went wrong while submitting your admission request.",
         );
     } finally {

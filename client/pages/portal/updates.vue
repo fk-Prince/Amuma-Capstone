@@ -7,10 +7,8 @@ import {
     MapPin,
     UserRound,
     Activity,
-    Clock3,
     HeartPulse,
     Building2,
-    ClipboardList,
     AlertCircle,
     RefreshCw,
 } from "lucide-vue-next";
@@ -33,21 +31,35 @@ interface LovedOne {
     photo: string;
     branchName: string;
     locationName: string;
+    roomNo: string | null;
+    bedNo: string | null;
     status: string;
     locationType: "facility" | "homecare" | "none";
     activities: PatientActivity[];
 }
 
-const PLACEHOLDER_PHOTO = "https://placehold.co/200x200?text=Patient";
+function initialsAvatar(name: string) {
+    const initials =
+        name
+            .split(" ")
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((part) => part[0]?.toUpperCase())
+            .join("") || "P";
+
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=3182ED&color=fff&bold=true`;
+}
 
 function fallbackLovedOne(): LovedOne {
     return {
         patient_id: 0,
         uuid: null,
         name: "Unnamed Resident",
-        photo: PLACEHOLDER_PHOTO,
+        photo: initialsAvatar("Unnamed Resident"),
         branchName: "N/A",
         locationName: "N/A",
+        roomNo: null,
+        bedNo: null,
         status: "Inactive",
         locationType: "none",
         activities: [],
@@ -73,6 +85,12 @@ const lovedOne = computed(
 );
 
 const totalItems = computed(() => lovedOne.value.activities.length);
+
+const careTypeLabel = computed(() => {
+    if (lovedOne.value.locationType === "facility") return "In-house Facility";
+    if (lovedOne.value.locationType === "homecare") return "Homecare";
+    return "No Active Care";
+});
 
 const totalPages = computed(() =>
     Math.max(1, Math.ceil(totalItems.value / itemsPerPage)),
@@ -191,15 +209,7 @@ const defaultTypeStyle = {
     label: "Activity",
 };
 
-const typeStyles: Record<
-    string,
-    {
-        icon: string;
-        bg: string;
-        text: string;
-        label: string;
-    }
-> = {
+const ACTIVITY_TYPES = {
     appointment: {
         icon: "calendar-clock",
         bg: "bg-violet-50 dark:bg-violet-500/10",
@@ -222,8 +232,18 @@ const typeStyles: Record<
 };
 
 function styleFor(type: string) {
-    return typeStyles[type] ?? defaultTypeStyle;
+    return (
+        (ACTIVITY_TYPES as Record<string, typeof defaultTypeStyle>)[type] ??
+        defaultTypeStyle
+    );
 }
+
+const activityLegend = [
+    { key: "appointment", ...ACTIVITY_TYPES.appointment },
+    { key: "therapy", ...ACTIVITY_TYPES.therapy },
+    { key: "meal", ...ACTIVITY_TYPES.meal },
+    { key: "activity", ...ACTIVITY_TYPES.activity },
+];
 
 function isSameDay(a: Date, b: Date) {
     return (
@@ -309,9 +329,13 @@ function mapPatientRecord(item: any): LovedOne {
         patient_id: patient.patient_id ?? 0,
         uuid: patient.uuid ?? null,
         name: patient.full_name || "Unnamed Resident",
-        photo: patient.avatar || PLACEHOLDER_PHOTO,
+        photo:
+            patient.avatar ||
+            initialsAvatar(patient.full_name || "Unnamed Resident"),
         branchName: org.name || "N/A",
         locationName: org.full_address || "N/A",
+        roomNo: ctx?.room?.room_no ?? null,
+        bedNo: ctx?.bed?.bed_no ?? null,
         status: deriveStatusLabel(ctx),
         locationType: deriveLocationType(ctx),
         activities: Array.isArray(item?.activities) ? item.activities : [],
@@ -353,7 +377,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="min-h-full space-y-6 p-5">
+    <div class="min-h-full space-y-6 p-5 pb-16">
         <div v-if="isLoading" class="space-y-5">
             <div
                 class="overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
@@ -365,13 +389,21 @@ onMounted(() => {
                         />
 
                         <div class="flex-1 space-y-2">
-                            <div class="h-4 w-40 rounded bg-gray-200 dark:bg-white/15" />
-                            <div class="h-3 w-28 rounded bg-gray-100 dark:bg-white/10" />
-                            <div class="h-5 w-20 rounded-full bg-gray-100 dark:bg-white/10" />
+                            <div
+                                class="h-4 w-40 rounded bg-gray-200 dark:bg-white/15"
+                            />
+                            <div
+                                class="h-3 w-28 rounded bg-gray-100 dark:bg-white/10"
+                            />
+                            <div
+                                class="h-5 w-20 rounded-full bg-gray-100 dark:bg-white/10"
+                            />
                         </div>
                     </div>
 
-                    <div class="mt-5 h-12 rounded-xl bg-gray-50 dark:bg-white/5" />
+                    <div
+                        class="mt-5 h-12 rounded-xl bg-gray-50 dark:bg-white/5"
+                    />
                 </div>
             </div>
 
@@ -381,7 +413,9 @@ onMounted(() => {
                 class="overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div class="animate-pulse">
-                    <div class="mb-5 h-3 w-32 rounded bg-gray-200 dark:bg-white/15" />
+                    <div
+                        class="mb-5 h-3 w-32 rounded bg-gray-200 dark:bg-white/15"
+                    />
 
                     <div class="space-y-4">
                         <div
@@ -398,9 +432,13 @@ onMounted(() => {
                             />
 
                             <div class="flex-1 space-y-2">
-                                <div class="h-3.5 w-48 rounded bg-gray-200 dark:bg-white/15" />
+                                <div
+                                    class="h-3.5 w-48 rounded bg-gray-200 dark:bg-white/15"
+                                />
 
-                                <div class="h-3 w-32 rounded bg-gray-100 dark:bg-white/10" />
+                                <div
+                                    class="h-3 w-32 rounded bg-gray-100 dark:bg-white/10"
+                                />
                             </div>
                         </div>
                     </div>
@@ -426,11 +464,15 @@ onMounted(() => {
                     <AlertCircle class="h-7 w-7" />
                 </div>
 
-                <h2 class="mt-4 text-sm font-semibold text-gray-900 dark:text-white">
+                <h2
+                    class="mt-4 text-sm font-semibold text-gray-900 dark:text-white"
+                >
                     Unable to load updates
                 </h2>
 
-                <p class="mt-1 max-w-sm text-sm leading-6 text-gray-500 dark:text-gray-400">
+                <p
+                    class="mt-1 max-w-sm text-sm leading-6 text-gray-500 dark:text-gray-400"
+                >
                     {{ loadError }}
                 </p>
 
@@ -462,7 +504,7 @@ onMounted(() => {
                                 />
 
                                 <span
-                                    class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white"
+                                    class="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full ring-[3px] ring-white dark:ring-secondary"
                                     :class="
                                         lovedOne.locationType === 'facility'
                                             ? 'bg-violet-500'
@@ -555,7 +597,9 @@ onMounted(() => {
                             v-if="lovedOnes.length > 1"
                             class="flex items-center justify-between gap-3 sm:justify-end"
                         >
-                            <span class="text-xs font-medium text-gray-400 dark:text-gray-500">
+                            <span
+                                class="text-xs font-medium text-gray-400 dark:text-gray-500"
+                            >
                                 {{ selectedIndex + 1 }} of
                                 {{ lovedOnes.length }}
                             </span>
@@ -585,64 +629,49 @@ onMounted(() => {
                     </div>
 
                     <div
-                        class="mt-5 grid grid-cols-2 gap-3 border-t border-gray-100 pt-5 sm:grid-cols-3 dark:border-white/10"
+                        class="mt-5 flex flex-col divide-y divide-gray-100 border-t border-gray-100 pt-4 sm:flex-row sm:divide-x sm:divide-y-0 dark:divide-white/10 dark:border-white/10"
                     >
-                        <div class="rounded-xl bg-gray-50 px-3.5 py-3 dark:bg-white/5">
-                            <div
-                                class="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
-                            >
-                                <Activity class="h-3.5 w-3.5" />
-                                Updates
-                            </div>
+                        <div class="flex items-center gap-2.5 py-2.5 sm:pr-6">
+                            <Activity
+                                class="h-4 w-4 shrink-0 text-gray-300 dark:text-gray-600"
+                            />
 
-                            <p
-                                class="mt-1.5 text-sm font-semibold text-gray-800 dark:text-white"
-                            >
-                                {{ totalItems }}
-                                {{ totalItems === 1 ? "update" : "updates" }}
-                            </p>
+                            <div class="min-w-0">
+                                <p
+                                    class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                >
+                                    Updates
+                                </p>
+
+                                <p
+                                    class="text-sm font-semibold text-gray-800 dark:text-white"
+                                >
+                                    {{ totalItems }}
+                                    {{
+                                        totalItems === 1 ? "update" : "updates"
+                                    }}
+                                </p>
+                            </div>
                         </div>
 
-                        <div class="rounded-xl bg-gray-50 px-3.5 py-3 dark:bg-white/5">
-                            <div
-                                class="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
-                            >
-                                <CalendarDays class="h-3.5 w-3.5" />
-                                Care Type
+                        <div class="flex items-center gap-2.5 py-2.5 sm:px-6">
+                            <CalendarDays
+                                class="h-4 w-4 shrink-0 text-gray-300 dark:text-gray-600"
+                            />
+
+                            <div class="min-w-0">
+                                <p
+                                    class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                >
+                                    Care Type
+                                </p>
+
+                                <p
+                                    class="text-sm font-semibold text-gray-800 dark:text-white"
+                                >
+                                    {{ careTypeLabel }}
+                                </p>
                             </div>
-
-                            <p
-                                class="mt-1.5 text-sm font-semibold text-gray-800 dark:text-white"
-                            >
-                                {{
-                                    lovedOne.locationType === "facility"
-                                        ? "Facility Care"
-                                        : lovedOne.locationType === "homecare"
-                                          ? "Homecare"
-                                          : "No Active Care"
-                                }}
-                            </p>
-                        </div>
-
-                        <div
-                            class="col-span-2 rounded-xl bg-gray-50 px-3.5 py-3 sm:col-span-1 dark:bg-white/5"
-                        >
-                            <div
-                                class="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
-                            >
-                                <MapPin class="h-3.5 w-3.5" />
-                                Location
-                            </div>
-
-                            <p
-                                class="mt-1.5 truncate text-sm font-semibold text-gray-800 dark:text-white"
-                            >
-                                {{
-                                    lovedOne.branchName !== "N/A"
-                                        ? lovedOne.branchName
-                                        : "Not assigned"
-                                }}
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -659,14 +688,32 @@ onMounted(() => {
                         <Activity class="h-7 w-7" />
                     </div>
 
-                    <h2 class="mt-4 text-sm font-semibold text-gray-900 dark:text-white">
+                    <h2
+                        class="mt-4 text-sm font-semibold text-gray-900 dark:text-white"
+                    >
                         No updates yet
                     </h2>
 
-                    <p class="mt-1 max-w-sm text-sm leading-6 text-gray-500 dark:text-gray-400">
+                    <p
+                        class="mt-1 max-w-sm text-sm leading-6 text-gray-500 dark:text-gray-400"
+                    >
                         Activities and updates logged by the care team will
                         appear here.
                     </p>
+
+                    <div
+                        class="mt-6 flex flex-wrap items-center justify-center gap-2 border-t border-gray-100 pt-6 dark:border-white/10"
+                    >
+                        <span
+                            v-for="entry in activityLegend"
+                            :key="entry.key"
+                            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium"
+                            :class="[entry.bg, entry.text]"
+                        >
+                            <Icon :name="entry.icon" class="h-3.5 w-3.5" />
+                            {{ entry.label }}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -686,11 +733,15 @@ onMounted(() => {
                         </div>
 
                         <div>
-                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                            <h3
+                                class="text-sm font-semibold text-gray-900 dark:text-white"
+                            >
                                 {{ group.label }}
                             </h3>
 
-                            <p class="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                            <p
+                                class="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500"
+                            >
                                 {{ group.items.length }}
                                 {{
                                     group.items.length === 1

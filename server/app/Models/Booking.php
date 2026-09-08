@@ -44,6 +44,9 @@ class Booking extends Model
         'valid_until',
         'booking_type'
     ];
+    protected $casts = [
+        'booking_data' => 'array',
+    ];
 
 
     protected static function booted()
@@ -72,14 +75,7 @@ class Booking extends Model
 
     public function patientsBooking()
     {
-        return $this->hasManyThrough(
-            Patient::class,
-            PatientBooking::class,
-            'booking_id',
-            'patient_id',
-            'booking_id',
-            'patient_id'
-        );
+        return $this->hasManyThrough(Patient::class, PatientBooking::class, 'booking_id', 'patient_id', 'booking_id', 'patient_id');
     }
 
     public function patientBookings()
@@ -110,8 +106,4 @@ class Booking extends Model
     {
         return data_get($this->booking_data, 'reserved.bed.bed_id');
     }
-
-    protected $casts = [
-        'booking_data' => 'array',
-    ];
 }

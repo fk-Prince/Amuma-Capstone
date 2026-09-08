@@ -21,10 +21,7 @@ export function useDischargeRefund(admission: Ref<Admission | undefined>) {
         getNumber(calculation.value?.contract_price),
     );
 
-    // The amount the termination-fee % was actually applied to — paid
-    // amount for the <7-day tier, invoiceAccommodation.price for the yearly
-    // 7-day-to-6-month tier. Not the same as currentContractPrice, which
-    // is just the branch contract's price and may not match either.
+    // What the halving is applied to: this period's own charged price.
     const feeBaseAmount = computed(() =>
         getNumber(calculation.value?.fee_base_amount),
     );
@@ -45,35 +42,67 @@ export function useDischargeRefund(admission: Ref<Admission | undefined>) {
         return currentBillingCycle.value || "Billing period";
     });
 
-    const terminationFeePercent = computed(() =>
-        getNumber(calculation.value?.termination_fee_percent),
+
+
+
+    const consumedDays = computed(() =>
+        getNumber(calculation.value?.consumed_days),
     );
 
-    const terminationFeeAmount = computed(() =>
-        getNumber(calculation.value?.termination_fee_amount),
+    const remainingDays = computed(() =>
+        getNumber(calculation.value?.remaining_days),
     );
 
-    // Value of the days already stayed (priced off invoiceAccommodation.price),
-    // subtracted from half the fee base to arrive at the actual refund —
-    // shown separately so the retained amount isn't mistaken for a flat 50%.
+    const dailyRate = computed(() => getNumber(calculation.value?.daily_rate));
+
+    const hasDaysStayed = computed(() => daysStayedAmount.value > 0);
+
+    // What this period is actually charged, taken from its invoice lines. The
+    // contract's own price is wrong to show once an accommodation change has
+    // re-priced the period to a prorated remainder.
+    const periodPrice = computed(() =>
+        getNumber(calculation.value?.period_price),
+    );
+
+    // What the invoice as a whole asks for. An accommodation change splits a
+    // month across two periods on one invoice, so this can exceed the current
+    // period's own price, and it is what the paid and required amounts are
+    // measured against.
+    const invoiceTotal = computed(() =>
+        getNumber(calculation.value?.invoice_total),
+    );
+
+    const invoiceCoversMorePeriods = computed(
+        () => invoiceTotal.value > 0 && invoiceTotal.value > periodPrice.value,
+    );
+
+    const retainedHalf = computed(() =>
+        getNumber(calculation.value?.retained_half),
+    );
+
+    const periodDays = computed(() =>
+        getNumber(calculation.value?.period_days),
+    );
+
+    const periodStart = computed(() => calculation.value?.period_start ?? null);
+
+    const periodEnd = computed(() => calculation.value?.period_end ?? null);
+
+    // Value of the days already lived in, priced at the period's own rate.
     const daysStayedAmount = computed(() =>
         getNumber(calculation.value?.days_stayed_amount),
     );
 
     const halfYearlyPrice = computed(() =>
-        getNumber(calculation.value?.retention_amount),
+        getNumber(calculation.value?.retained_amount),
     );
 
     const daysSinceAdmissionStart = computed<number | null>(
         () => calculation.value?.days_since_admission ?? null,
     );
 
-    const isWithinTerminationFeeWindow = computed(
-        () => !!calculation.value?.is_within_termination_fee_window,
-    );
-
-    const isWithinYearlyHalfRefundWindow = computed(
-        () => !!calculation.value?.is_within_yearly_half_refund_window,
+    const isWithinRefundWindow = computed(
+        () => !!calculation.value?.is_within_refund_window,
     );
 
     const isEligibleForRefund = computed(
@@ -112,26 +141,25 @@ export function useDischargeRefund(admission: Ref<Admission | undefined>) {
         () => calculation.value?.policy_description ?? "No refund applies.",
     );
 
+    // Describes the period actually being discharged, not the branch contract —
+    // an accommodation change re-prices the period, so the contract's own figure
+    // no longer matches what is being charged.
     const requiredPaymentDescription = computed(() => {
-        const feePercent = terminationFeePercent.value;
-
-        if (isWithinTerminationFeeWindow.value) {
-            return `A ${feePercent}% termination fee is retained because the patient is being discharged within the first 7 days of admission.`;
+        if (!isWithinRefundWindow.value) {
+            return currentBillingCycle.value === "MONTHLY"
+                ? "A monthly plan is charged in full for the month, so the days stayed are not worked out and nothing is refunded."
+                : "The whole period is charged because the patient is being discharged after 6 months.";
         }
 
-        if (isWithinYearlyHalfRefundWindow.value) {
-            return "50% of the yearly contract price is retained because the patient is being discharged after 7 days but before 6 months.";
+        const stayed = consumedDays.value;
+
+        if (stayed <= 0) {
+            return "Half of the period is retained. No days have been stayed yet, so the rest is refunded.";
         }
 
-        if (currentBillingCycle.value === "YEARLY") {
-            return "The full yearly contract amount is required because the 6-month yearly refund period has passed.";
-        }
-
-        if (currentBillingCycle.value === "MONTHLY") {
-            return "The full monthly contract amount is required because the 7-day termination-fee period has passed.";
-        }
-
-        return "The required amount must be paid before the patient can be discharged.";
+        return `Half of the period is retained, plus the ${stayed} ${
+            stayed === 1 ? "day" : "days"
+        } already stayed. The rest is refunded.`;
     });
 
     return {
@@ -140,16 +168,22 @@ export function useDischargeRefund(admission: Ref<Admission | undefined>) {
         feeBaseAmount,
         currentBillingCycle,
         currentBillingCycleLabel,
-
-        terminationFeePercent,
-        terminationFeeAmount,
+        consumedDays,
+        remainingDays,
+        dailyRate,
+        hasDaysStayed,
+        periodPrice,
+        invoiceTotal,
+        invoiceCoversMorePeriods,
+        retainedHalf,
+        periodDays,
+        periodStart,
+        periodEnd,
         halfYearlyPrice,
         daysStayedAmount,
 
         daysSinceAdmissionStart,
-
-        isWithinTerminationFeeWindow,
-        isWithinYearlyHalfRefundWindow,
+        isWithinRefundWindow,
 
         isEligibleForRefund,
         currentRefundAmount,

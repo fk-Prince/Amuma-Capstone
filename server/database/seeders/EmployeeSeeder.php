@@ -89,7 +89,7 @@ class EmployeeSeeder extends Seeder
                     'status' => Employee::STATUS_ACTIVE,
                     'avatar' => 'https://ui-avatars.com/api/?name=' . strtoupper(substr($role, 0, 2)),
                     'birth_date' => now()->subYears(25 + $index)->subDays($index * 30)->toDateString(),
-                    'phone_number' => '0917' . str_pad((string) (1000000 + $index), 7, '0', STR_PAD_LEFT),
+                    'phone_number' => '917' . str_pad((string) (1000000 + $index), 7, '0', STR_PAD_LEFT),
                 ]
             );
 

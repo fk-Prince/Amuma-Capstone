@@ -11,7 +11,11 @@ class InvoiceAdjustment extends Model
 
     protected $primaryKey = 'invoice_adjustment_id';
 
-    public const TYPE_TERMINATION_FEE = 'termination_fee';
+    public const UPDATED_AT = null;
+
+    public const TYPE_REFUND = 'refund';
+    public const TYPE_CORRECTION = 'correction';
+    public const TYPE_VOID = 'void';
 
 
     protected $fillable = [
@@ -23,14 +27,11 @@ class InvoiceAdjustment extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'created_at' => 'datetime',
     ];
 
-    public function invoice(): BelongsTo
+    public function invoice()
     {
-        return $this->belongsTo(
-            Invoice::class,
-            'invoice_id',
-            'invoice_id'
-        );
+        return $this->belongsTo(Invoice::class, 'invoice_id', 'invoice_id');
     }
 }

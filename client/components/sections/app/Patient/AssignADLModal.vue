@@ -407,7 +407,7 @@
                                                         employee.phone_number
                                                     "
                                                 >
-                                                    {{ employee.phone_number }}
+                                                    {{ formatPhone(employee.phone_number) }}
                                                 </span>
 
                                                 <span

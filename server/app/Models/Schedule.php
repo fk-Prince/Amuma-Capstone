@@ -44,7 +44,7 @@ class Schedule extends Model
         return $this->belongsTo(Location::class, 'location_id', 'location_id');
     }
 
-    public function isOnsite(): bool
+    public function isOnsite()
     {
         return $this->category === self::CATEGORYFACILITY;
     }

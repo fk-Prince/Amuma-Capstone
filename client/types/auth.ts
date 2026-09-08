@@ -25,7 +25,8 @@ export interface User {
     birth_date?: string,
     occupation?: string,
     address?: string,
-    has_booking?: string,
+    hasBooking?: boolean,
+    hasPatient?: boolean,
     // is_active: boolean,
     // is_verified: boolean
     isEmployee?: false,

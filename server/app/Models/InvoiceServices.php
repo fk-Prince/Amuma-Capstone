@@ -18,12 +18,12 @@ class InvoiceServices extends Model
         'price' => 'decimal:2',
     ];
 
-    public function invoice(): BelongsTo
+    public function invoice()
     {
         return $this->belongsTo(Invoice::class, 'invoice_id', 'invoice_id');
     }
 
-    public function scheduleService(): BelongsTo
+    public function scheduleService()
     {
         return $this->belongsTo(
             ScheduleService::class,

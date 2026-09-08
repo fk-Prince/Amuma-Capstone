@@ -16,15 +16,10 @@ use Override;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, HasUuids;
     protected $primaryKey = 'user_id';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+
     protected $fillable = [
         'uuid',
         'email',
@@ -33,11 +28,7 @@ class User extends Authenticatable
         'provider_id',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -45,7 +36,20 @@ class User extends Authenticatable
         'client',
         'systemOwner',
     ];
-
+    protected $appends = [
+        'isEmployee',
+        'isClient',
+        'isSystemOwner',
+        'hasBooking',
+        'hasPatient',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'avatar',
+        'phone_number',
+        'occupation',
+        'address',
+    ];
 
 
     #[Override]
@@ -59,15 +63,9 @@ class User extends Authenticatable
         return $this->belongsTo(Location::class, 'location_id', 'location_id');
     }
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            // 'email_verified_at' => 'datetime',
             'is_active' => 'boolean',
             'password' => 'hashed',
         ];
@@ -102,23 +100,18 @@ class User extends Authenticatable
         return $this->hasMany(Notifiable::class, 'user_id', 'from_user_id');
     }
 
-    protected $appends = [
-        'isEmployee',
-        'isClient',
-        'isSystemOwner',
-        'hasBooking',
-        'first_name',
-        'middle_name',
-        'last_name',
-        'avatar',
-        'phone_number',
-        'occupation',
-        'address',
-    ];
+
 
     public function getHasBookingAttribute(): bool
     {
         return $this->bookings()->exists();
+    }
+
+    public function getHasPatientAttribute(): bool
+    {
+        return $this->client()
+            ->whereHas('patientAccess', fn($q) => $q->where('have_access', true))
+            ->exists();
     }
 
     public function employee()

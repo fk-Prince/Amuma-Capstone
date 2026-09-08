@@ -49,7 +49,7 @@ class PatientAssessment extends Model
         'dressing' => 'integer',
     ];
 
-    public function uniqueIds(): array
+    public function uniqueIds()
     {
         return ['uuid'];
     }
@@ -59,12 +59,12 @@ class PatientAssessment extends Model
         return 'patient_assessment_id';
     }
 
-    public function patient(): BelongsTo
+    public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
     }
 
-    public function getLifeSystemProfileAttribute(): array
+    public function getLifeSystemProfileAttribute()
     {
         return collect(self::LIFE_SYSTEM_ACTIVITIES)
             ->mapWithKeys(fn($activity) => [$activity => (int) $this->{$activity}])

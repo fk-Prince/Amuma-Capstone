@@ -17,21 +17,26 @@ use App\Repository\PatientRepository;
 use App\Repository\UserRepository;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Log;
 
 class PatientService
 {
+    public const REPORT_SECTIONS = [
+        'profile',
+        'admission',
+        'billing',
+        'schedule',
+        'medication',
+        'vitals',
+        'activity',
+    ];
+
     public function __construct(
         private PatientRepository $patientRepository,
         private UserRepository $userRepository,
         private LocationRepository $locationRepository,
     ) {}
 
-    /**
-     * The booking form collects allergies as a single comma-separated
-     * string; stored as a JSON array to match how the portal renders them
-     * as individual badges.
-     */
+
     private function parseAllergies(?string $allergies): ?array
     {
         if (!$allergies) {
@@ -212,11 +217,10 @@ class PatientService
         return [
             'patient' => $patient,
             'patientAccess' => $patientAccess,
+            'credentials' => $this->portalCredentials($patientAccess),
         ];
     }
 
-    // The booking keeps its own assessment snapshot inside booking_data; this
-    // turns that snapshot into the patient's own assessment rows.
     public function syncAssessments(object $patient, mixed $assessment): void
     {
         if (empty($assessment)) {
@@ -342,7 +346,26 @@ class PatientService
             'relationship_type' => $guardian['relationship'] ?? 'relative',
         ]);
 
+        $client->setRelation('user', $user);
+
         return $client;
+    }
+
+    // Only a freshly made account still has the default password. An existing
+    // family keeps whatever they set, so nothing is printed for them.
+    public function portalCredentials(?object $client): array
+    {
+        $user = $client?->user;
+        $isNew = (bool) $user?->wasRecentlyCreated;
+
+        return [
+            'name' => trim(($client?->first_name ?? '') . ' ' . ($client?->last_name ?? '')),
+            'email' => $user?->email,
+            'is_new_account' => $isNew,
+            'default_password' => $isNew
+                ? UserRepository::defaultPassword($client->last_name, $user->created_at)
+                : null,
+        ];
     }
 
     // DONE RETREIVE PATIETN
@@ -369,15 +392,7 @@ class PatientService
         return new PatientResource($patient);
     }
 
-    public const REPORT_SECTIONS = [
-        'profile',
-        'admission',
-        'billing',
-        'schedule',
-        'medication',
-        'vitals',
-        'activity',
-    ];
+
 
     public function buildPatientReport(string $uuid, array $requestedSections)
     {
@@ -457,7 +472,7 @@ class PatientService
                 'invoice_code' => $invoice->invoice_code,
                 'status' => $invoice->status,
                 'created_at' => $invoice->created_at?->format('Y-m-d'),
-                'total' => (float) $invoice->total,
+                'total' => (float) $invoice->total_amount,
                 'amount_paid' => (float) $invoice->amount_paid,
                 'refunded_amount' => (float) $invoice->refunded_amount,
                 'balance_due' => (float) $invoice->balance_due,
@@ -465,7 +480,7 @@ class PatientService
                     'amount' => (float) $payment->amount,
                     'payment_method' => $payment->payment_method,
                     'reference_id' => $payment->reference_id,
-                    'receipt_no' => $payment->receipt?->receipt_no,
+                    'receipt_no' => $payment->receipt_no,
                     'paid_at' => $payment->created_at?->format('Y-m-d H:i'),
                 ])->values()->all(),
             ])->values()->all(),

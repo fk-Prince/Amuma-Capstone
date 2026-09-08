@@ -1,16 +1,30 @@
 <template>
     <div
-        class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] overflow-hidden dark:bg-secondary dark:border-primary-500/20"
+        :class="
+            flat
+                ? ''
+                : 'rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] overflow-hidden dark:bg-secondary dark:border-primary-500/20'
+        "
     >
-        <div class="border-b border-primary-100 px-5 py-4 dark:border-primary-500/20">
-            <h3 class="text-sm font-semibold text-primary-900 dark:text-primary-300">
+        <div
+            :class="
+                flat
+                    ? 'mb-4'
+                    : 'border-b border-primary-100 px-5 py-4 dark:border-primary-500/20'
+            "
+        >
+            <h3
+                class="text-sm font-semibold text-primary-900 dark:text-primary-300"
+            >
                 Admission Timeline
             </h3>
 
-            <p class="text-xs text-muted mt-1 dark:text-gray-400">Complete admission history</p>
+            <p class="text-xs text-muted mt-1 dark:text-gray-400">
+                Billing periods for this admission
+            </p>
         </div>
 
-        <div class="p-5">
+        <div :class="flat ? '' : 'p-5'">
             <div
                 v-if="!allAdmissions.length"
                 class="py-8 text-center text-sm text-slate-400 dark:text-gray-500"
@@ -79,160 +93,164 @@
 
                         <div
                             v-if="admission.invoices?.length"
-                            class="ml-6 space-y-3"
+                            class="ml-6 overflow-hidden rounded-xl"
+                            :class="
+                                flat
+                                    ? 'border border-slate-200/70 dark:border-white/10'
+                                    : 'border border-slate-200/80 bg-white shadow-sm dark:border-white/10 dark:bg-secondary'
+                            "
                         >
                             <div
-                                v-for="invoice in sortedInvoices(
+                                v-for="(invoice, i) in sortedInvoices(
                                     admission.invoices,
                                 ).filter(isInvoiceVisible)"
-                                :key="invoice.invoice_accommodation_id"
-                                class="group relative"
+                                :key="invoice.invoice_admission_id"
+                                class="px-4 py-3.5 transition-colors"
+                                :class="[
+                                    i !== 0
+                                        ? 'border-t border-slate-100 dark:border-white/10'
+                                        : '',
+                                    isInEffect(invoice, admission)
+                                        ? 'bg-emerald-50/40 dark:bg-emerald-500/5'
+                                        : 'hover:bg-slate-50/60 dark:hover:bg-white/5',
+                                    isCancelled(invoice) ? 'opacity-60' : '',
+                                ]"
                             >
                                 <div
-                                    class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md dark:border-white/10 dark:bg-secondary dark:hover:border-white/10"
+                                    class="flex flex-wrap items-center gap-x-2 gap-y-1.5"
                                 >
-                                    <div
-                                        class="flex items-start justify-between gap-4 px-4 py-3.5"
+                                    <span
+                                        class="text-[12px] font-semibold capitalize text-slate-800 dark:text-white"
                                     >
-                                        <div class="min-w-0">
-                                            <div
-                                                class="flex items-center gap-2 flex-wrap"
-                                            >
-                                                <span
-                                                    class="text-[12px] font-semibold text-slate-800 dark:text-white"
-                                                >
-                                                    {{
-                                                        formatDate(
-                                                            invoice.start_date,
-                                                        )
-                                                    }}
-                                                </span>
+                                        {{
+                                            billingCycleLabel(
+                                                invoice,
+                                                admission,
+                                            )
+                                        }}
+                                    </span>
 
-                                                <span class="text-slate-300 dark:text-gray-500">
-                                                    →
-                                                </span>
-
-                                                <span
-                                                    class="text-[12px] font-semibold text-slate-800 dark:text-white"
-                                                >
-                                                    {{
-                                                        formatDate(
-                                                            invoice.end_date,
-                                                        )
-                                                    }}
-                                                </span>
-
-                                                <span
-                                                    v-if="
-                                                        admission.status !==
-                                                            'discharged' &&
-                                                        admission
-                                                            .current_invoice
-                                                            ?.invoice_accommodation_id ===
-                                                            invoice.invoice_accommodation_id
-                                                    "
-                                                    class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300"
-                                                >
-                                                    <span
-                                                        class="h-1.5 w-1.5 rounded-full bg-emerald-500"
-                                                    ></span>
-                                                    Current
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div class="shrink-0 text-right">
-                                            <p
-                                                class="text-sm font-bold tracking-tight text-slate-900 dark:text-white"
-                                            >
-                                                {{
-                                                    formatCurrency(
-                                                        invoice.price,
-                                                    )
-                                                }}
-                                            </p>
-
-                                            <p
-                                                class="mt-0.5 text-[9px] uppercase tracking-wider text-slate-400 dark:text-gray-500"
-                                            >
-                                                Total
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        class="border-t border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-white/10 dark:bg-white/5"
+                                    <span
+                                        v-if="invoice.accommodation_reason"
+                                        class="rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                                        :class="
+                                            reasonClass(
+                                                invoice.accommodation_reason,
+                                            )
+                                        "
                                     >
-                                        <div
-                                            class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-3"
+                                        {{
+                                            reasonLabel(
+                                                invoice.accommodation_reason,
+                                            )
+                                        }}
+                                    </span>
+
+                                    <span
+                                        class="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                                        :class="
+                                            coverageClass(invoice, admission)
+                                        "
+                                    >
+                                        <span
+                                            v-if="
+                                                isInEffect(invoice, admission)
+                                            "
+                                            class="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                                        ></span>
+                                        {{ coverageLabel(invoice, admission) }}
+                                    </span>
+                                </div>
+
+                                <div
+                                    class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500 dark:text-gray-400"
+                                >
+                                    <span
+                                        class="font-medium text-slate-700 dark:text-gray-300"
+                                    >
+                                        {{
+                                            invoice.contract
+                                                ?.accommodation_type ??
+                                            admission.current_contract
+                                                ?.accommodation_type ??
+                                            "—"
+                                        }}
+                                    </span>
+
+                                    <template v-if="invoice.period_start">
+                                        <span
+                                            class="text-slate-300 dark:text-gray-600"
                                         >
-                                            <div class="min-w-0">
-                                                <p
-                                                    class="text-[9px] font-medium uppercase tracking-wider text-slate-400 dark:text-gray-500"
-                                                >
-                                                    Accommodation
-                                                </p>
+                                            ·
+                                        </span>
 
-                                                <p
-                                                    class="mt-0.5 truncate text-[11px] font-semibold text-slate-700 dark:text-gray-400"
-                                                >
-                                                    {{
-                                                        invoice.contract
-                                                            ?.accommodation_type ??
-                                                        admission
-                                                            .current_contract
-                                                            ?.accommodation_type ??
-                                                        "—"
-                                                    }}
-                                                </p>
-                                            </div>
+                                        <span>
+                                            {{ boundary(invoice.period_start) }}
+                                        </span>
 
-                                            <div class="min-w-0">
-                                                <p
-                                                    class="text-[9px] font-medium uppercase tracking-wider text-slate-400 dark:text-gray-500"
-                                                >
-                                                    Billing Cycle
-                                                </p>
+                                        <svg
+                                            class="h-3 w-3 shrink-0 text-slate-300 dark:text-gray-600"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2.5"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        >
+                                            <path d="M5 12h14" />
+                                            <path d="m12 5 7 7-7 7" />
+                                        </svg>
 
-                                                <p
-                                                    class="mt-0.5 truncate text-[11px] font-semibold text-slate-700 dark:text-gray-400"
-                                                >
-                                                    {{
-                                                        invoice.contract
-                                                            ?.billing_cycle ??
-                                                        admission
-                                                            .current_contract
-                                                            ?.billing_cycle ??
-                                                        "—"
-                                                    }}
-                                                </p>
-                                            </div>
+                                        <span>
+                                            {{ boundary(invoice.period_end) }}
+                                        </span>
 
-                                            <div class="min-w-0">
-                                                <p
-                                                    class="text-[9px] font-medium uppercase tracking-wider text-slate-400 dark:text-gray-500"
-                                                >
-                                                    Payment Status
-                                                </p>
+                                        <span
+                                            v-if="
+                                                periodLength(invoice) &&
+                                                !isCancelled(invoice)
+                                            "
+                                            class="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-white/10 dark:text-gray-400"
+                                        >
+                                            {{ periodLength(invoice) }}
+                                        </span>
+                                    </template>
 
-                                                <span
-                                                    class="inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide"
-                                                    :class="
-                                                        invoiceStatusClass(
-                                                            invoice.status,
-                                                        )
-                                                    "
-                                                >
-                                                    {{
-                                                        invoice.status ===
-                                                        "partial"
-                                                            ? "Partially Paid"
-                                                            : invoice.status
-                                                    }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <!-- <span
+                                        v-if="movedLabel(invoice)"
+                                        class="text-slate-400 dark:text-gray-500"
+                                    >
+                                        · moved {{ movedLabel(invoice) }}
+                                    </span> -->
+                                </div>
+
+                                <div
+                                    class="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[11px]"
+                                >
+                                    <span
+                                        class="text-[12px] font-semibold"
+                                        :class="
+                                            isCancelled(invoice)
+                                                ? 'text-slate-400 line-through dark:text-gray-500'
+                                                : 'text-slate-800 dark:text-white'
+                                        "
+                                    >
+                                        {{ formatCurrency(invoice.price) }}
+                                    </span>
+
+                                    <span
+                                        v-if="isCancelled(invoice)"
+                                        class="text-rose-500 dark:text-rose-300"
+                                    >
+                                        not charged — invoice voided
+                                    </span>
+
+                                    <span
+                                        v-else-if="priceNote(invoice)"
+                                        class="text-slate-400 dark:text-gray-500"
+                                    >
+                                        {{ priceNote(invoice) }}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -277,14 +295,19 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
-import { formatDate } from "~/utils/time";
+import { formatCurrency } from "~/utils/currency";
+import { formatDate, stringToDateTime } from "~/utils/time";
 import type { Admission, InvoiceAccommodation } from "~/types/patient";
-import { INVOICE_STATUS } from "~/types/invoice";
 
-const props = defineProps<{
-    admissions?: Admission[] | null;
-}>();
+const props = withDefaults(
+    defineProps<{
+        admissions?: Admission[] | null;
+        // Drops the card chrome so the timeline can sit inside a parent card
+        // without stacking a second border around it.
+        flat?: boolean;
+    }>(),
+    { admissions: null, flat: false },
+);
 
 const allAdmissions = computed(() => props.admissions ?? []);
 
@@ -296,7 +319,7 @@ const sortedAdmissions = computed(() =>
     ),
 );
 
-const DEFAULT_VISIBLE_COUNT = 2;
+const DEFAULT_VISIBLE_COUNT = 5;
 
 const expanded = ref(false);
 
@@ -307,7 +330,7 @@ const orderedInvoiceIds = computed(() => {
 
     for (const admission of sortedAdmissions.value) {
         for (const invoice of sortedInvoices(admission.invoices ?? [])) {
-            ids.push(invoice.invoice_accommodation_id);
+            ids.push(invoice.invoice_admission_id);
         }
     }
 
@@ -325,7 +348,7 @@ const visibleInvoiceIdSet = computed(() => {
 function isInvoiceVisible(invoice: InvoiceAccommodation) {
     return (
         visibleInvoiceIdSet.value === null ||
-        visibleInvoiceIdSet.value.has(invoice.invoice_accommodation_id)
+        visibleInvoiceIdSet.value.has(invoice.invoice_admission_id)
     );
 }
 
@@ -335,23 +358,6 @@ const canToggle = computed(
 
 function toggleExpanded() {
     expanded.value = !expanded.value;
-}
-
-function invoiceStatusClass(status?: string | null) {
-    const normalized: Record<string, string> = {
-        unpaid: "pending",
-        voided: "void",
-        canceled: "cancelled",
-        partially_paid: "partial",
-    };
-
-    const s = (status ?? "").toLowerCase();
-    const key = normalized[s] ?? s;
-
-    return (
-        INVOICE_STATUS[key] ?? // border-primary-100
-        "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
-    );
 }
 
 watch(
@@ -374,25 +380,229 @@ function isCurrent(admission: Admission) {
 }
 
 function sortedInvoices(invoices: InvoiceAccommodation[]) {
-    return [...invoices].sort(
-        (a, b) =>
-            new Date(a.start_date ?? 0).getTime() -
-            new Date(b.start_date ?? 0).getTime(),
+    const byId = [...invoices].sort(
+        (a, b) => (a.admission_period_id ?? 0) - (b.admission_period_id ?? 0),
+    );
+
+    const ids = new Set(
+        byId
+            .map((invoice) => invoice.admission_period_id)
+            .filter((id): id is number => !!id),
+    );
+
+    const children = new Map<number, InvoiceAccommodation[]>();
+
+    for (const invoice of byId) {
+        const parent = invoice.parent_admission_period_id;
+
+        if (!parent || !ids.has(parent)) continue;
+
+        children.set(parent, [...(children.get(parent) ?? []), invoice]);
+    }
+
+    const ordered: InvoiceAccommodation[] = [];
+    const seen = new Set<InvoiceAccommodation>();
+
+    function walk(invoice: InvoiceAccommodation) {
+        if (seen.has(invoice)) return;
+
+        seen.add(invoice);
+        ordered.push(invoice);
+
+        for (const child of children.get(invoice.admission_period_id ?? -1) ??
+            []) {
+            walk(child);
+        }
+    }
+
+    for (const invoice of byId) {
+        const parent = invoice.parent_admission_period_id;
+
+        if (parent && ids.has(parent)) continue;
+
+        walk(invoice);
+    }
+
+    byId.forEach(walk);
+
+    return ordered;
+}
+
+function isInEffect(invoice: InvoiceAccommodation, admission: Admission) {
+    const currentId = admission.current_period?.admission_period_id;
+
+    return (
+        !!currentId &&
+        invoice.admission_period_id === currentId &&
+        admission.status !== "discharged"
     );
 }
 
-function formatCurrency(value?: string | number | null) {
-    if (value === undefined || value === null || value === "") {
-        return "—";
+function isCancelled(invoice: InvoiceAccommodation) {
+    return invoice.accommodation_status === "cancelled";
+}
+
+function coverageLabel(invoice: InvoiceAccommodation, admission: Admission) {
+    if (isCancelled(invoice)) return "Cancelled";
+
+    if (isInEffect(invoice, admission)) return "In effect";
+
+    if (invoice.accommodation_status === "inactive") return "Ended";
+
+    if (invoice.accommodation_status === "pending") return "Awaiting payment";
+
+    return "Upcoming";
+}
+
+function coverageClass(invoice: InvoiceAccommodation, admission: Admission) {
+    if (isCancelled(invoice)) {
+        return "bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300";
     }
 
-    const num = Number(value);
-
-    if (Number.isNaN(num)) {
-        return String(value);
+    if (isInEffect(invoice, admission)) {
+        return "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300";
     }
 
-    return formatCurrencyUtil(num);
+    if (invoice.accommodation_status === "inactive") {
+        return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
+    }
+
+    if (invoice.accommodation_status === "pending") {
+        return "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300";
+    }
+
+    return "bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300";
+}
+
+function boundary(value?: string | null) {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    const midnight =
+        date.getHours() === 0 &&
+        date.getMinutes() === 0 &&
+        date.getSeconds() === 0;
+
+    return midnight ? formatDate(value) : stringToDateTime(value);
+}
+
+function movedLabel(invoice: InvoiceAccommodation) {
+    if (!invoice.moved_at || !invoice.period_start) return "";
+
+    const moved = new Date(invoice.moved_at);
+    const start = new Date(invoice.period_start);
+
+    if (Number.isNaN(moved.getTime()) || Number.isNaN(start.getTime())) {
+        return "";
+    }
+
+    if (moved.toDateString() === start.toDateString()) return "";
+
+    return stringToDateTime(invoice.moved_at);
+}
+
+function periodLength(invoice: InvoiceAccommodation) {
+    if (!invoice.period_start || !invoice.period_end) return "";
+
+    const start = new Date(invoice.period_start);
+    const end = new Date(invoice.period_end);
+
+    if (
+        Number.isNaN(start.getTime()) ||
+        Number.isNaN(end.getTime()) ||
+        end <= start
+    ) {
+        return "";
+    }
+
+    const hours = (end.getTime() - start.getTime()) / 3_600_000;
+
+    if (hours < 24) {
+        const rounded = Math.max(1, Math.round(hours));
+        return `${rounded} hr${rounded === 1 ? "" : "s"}`;
+    }
+
+    // Billing runs on calendar months, which are 28 to 31 days long. Measuring
+    // in days made a 30-day month read as "30 days" while a 31-day one read as
+    // "1 month", so whole months are counted on the calendar instead.
+    const months =
+        (end.getFullYear() - start.getFullYear()) * 12 +
+        (end.getMonth() - start.getMonth());
+
+    if (months > 0) {
+        const anniversary = new Date(start);
+        anniversary.setMonth(anniversary.getMonth() + months);
+
+        if (anniversary.getTime() === end.getTime()) {
+            if (months % 12 === 0) {
+                const years = months / 12;
+                return `${years} year${years === 1 ? "" : "s"}`;
+            }
+
+            return `${months} month${months === 1 ? "" : "s"}`;
+        }
+    }
+
+    const days = Math.round(hours / 24);
+
+    return `${days} day${days === 1 ? "" : "s"}`;
+}
+
+// A period charged less than its plan was cut short or started late, so the
+// full price is worth showing next to what it actually came to.
+function priceNote(invoice: InvoiceAccommodation) {
+    const charged = Number(invoice.price ?? 0);
+    const plan = Number(invoice.contract?.price ?? 0);
+
+    if (!plan || !charged || Math.abs(plan - charged) < 0.01) {
+        return "";
+    }
+
+    const length = periodLength(invoice);
+    const basis = `of ${formatCurrency(plan)}`;
+
+    return length ? `${basis} · ${length} charged` : basis;
+}
+
+function reasonLabel(reason: string) {
+    return (
+        {
+            admitted: "Admitted",
+            extended: "Extension",
+            room_change: "Room change",
+            accommodation_change: "Accommodation change",
+        }[reason] ?? reason.replace(/_/g, " ")
+    );
+}
+
+function reasonClass(reason: string) {
+    return (
+        {
+            admitted:
+                "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400",
+            extended:
+                "bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+            room_change:
+                "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400",
+            accommodation_change:
+                "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+        }[reason] ??
+        "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400"
+    );
+}
+
+function billingCycleLabel(
+    invoice: InvoiceAccommodation,
+    admission: Admission,
+) {
+    const cycle =
+        invoice.contract?.billing_cycle ??
+        admission.current_contract?.billing_cycle;
+
+    return cycle ? cycle.toLowerCase() : "—";
 }
 
 function statusBadgeClass(status?: string) {

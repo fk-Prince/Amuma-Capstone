@@ -5,10 +5,16 @@
     >
         <div class="mb-8 flex items-baseline gap-3">
             <template v-if="loading">
-                <div class="h-6 w-6 shrink-0 rounded bg-slate-200 dark:bg-white/15" />
+                <div
+                    class="h-6 w-6 shrink-0 rounded bg-slate-200 dark:bg-white/15"
+                />
                 <div class="flex-1 space-y-2">
-                    <div class="h-5 w-40 rounded bg-slate-200 dark:bg-white/15" />
-                    <div class="h-3 w-64 rounded bg-slate-200 dark:bg-white/15" />
+                    <div
+                        class="h-5 w-40 rounded bg-slate-200 dark:bg-white/15"
+                    />
+                    <div
+                        class="h-3 w-64 rounded bg-slate-200 dark:bg-white/15"
+                    />
                 </div>
             </template>
 
@@ -28,7 +34,9 @@
         <div class="space-y-8">
             <div>
                 <template v-if="loading">
-                    <div class="mb-3 h-4 w-36 rounded bg-slate-200 dark:bg-white/15" />
+                    <div
+                        class="mb-3 h-4 w-36 rounded bg-slate-200 dark:bg-white/15"
+                    />
 
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div
@@ -178,14 +186,18 @@
                     <template v-if="loading">
                         <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                             <div class="space-y-2">
-                                <div class="h-4 w-32 rounded bg-slate-200 dark:bg-white/15" />
+                                <div
+                                    class="h-4 w-32 rounded bg-slate-200 dark:bg-white/15"
+                                />
                                 <div
                                     class="h-11 w-full rounded-xl bg-slate-200 dark:bg-white/15"
                                 />
                             </div>
 
                             <div class="space-y-2">
-                                <div class="h-4 w-28 rounded bg-slate-200 dark:bg-white/15" />
+                                <div
+                                    class="h-4 w-28 rounded bg-slate-200 dark:bg-white/15"
+                                />
                                 <div
                                     class="h-11 w-full rounded-xl bg-slate-200 dark:bg-white/15"
                                 />
@@ -291,19 +303,28 @@
 
                 <button
                     type="button"
-                    class="group flex w-full items-center justify-between rounded-xl border p-3.5 text-left transition-all duration-200"
+                    class="group flex w-full items-center justify-between gap-3 rounded-xl border p-3.5 text-left transition-all duration-200"
                     :class="
                         errors?.services
                             ? 'border-red-400 bg-red-50/30 dark:bg-red-500/10'
-                            : 'border-slate-200 hover:border-primary-200 hover:bg-primary-50/30 dark:border-white/10 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/5'
+                            : selectedService
+                              ? 'border-primary bg-primary/5 dark:bg-primary-500/10'
+                              : 'border-slate-200 hover:border-primary-200 hover:bg-primary-50/30 dark:border-white/10 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/5'
                     "
                     @click="isServiceModalOpen = true"
                 >
                     <div class="flex min-w-0 items-center gap-3">
                         <div
-                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                            :class="
+                                selectedService
+                                    ? 'bg-primary text-white'
+                                    : 'bg-primary/10 text-primary'
+                            "
                         >
-                            <span class="text-lg">+</span>
+                            <Check v-if="selectedService" class="h-5 w-5" />
+
+                            <Stethoscope v-else class="h-5 w-5" />
                         </div>
 
                         <div class="min-w-0">
@@ -317,23 +338,31 @@
                             >
                                 {{
                                     selectedService?.service_name ||
-                                    "Select medical service"
+                                    "Choose the service for this booking"
                                 }}
                             </p>
 
                             <p
-                                v-if="selectedService"
                                 class="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500"
                             >
-                                {{ formatCurrency(selectedService.price) }}
+                                {{
+                                    selectedService
+                                        ? formatCurrency(selectedService.price)
+                                        : "One service per booking"
+                                }}
                             </p>
                         </div>
                     </div>
 
                     <span
-                        class="text-lg text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-primary dark:text-gray-500"
+                        class="shrink-0 whitespace-nowrap text-xs font-semibold transition-colors"
+                        :class="
+                            selectedService
+                                ? 'text-primary'
+                                : 'text-slate-400 group-hover:text-primary dark:text-gray-500'
+                        "
                     >
-                        →
+                        {{ selectedService ? "Change" : "Choose" }}
                     </span>
                 </button>
 
@@ -462,18 +491,48 @@
             </div>
 
             <div>
-                <div class="mb-2">
-                    <h3
-                        class="text-sm font-semibold text-slate-900 dark:text-white"
-                    >
-                        Homecare Service Address
-                        <span class="text-danger">*</span>
-                    </h3>
+                <div
+                    class="mb-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+                >
+                    <div>
+                        <h3
+                            class="text-sm font-semibold text-slate-900 dark:text-white"
+                        >
+                            Homecare Service Address
+                            <span class="text-danger">*</span>
+                        </h3>
 
-                    <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
-                        Where the caregiver or nurse should visit. This can
-                        differ from the patient's home address.
-                    </p>
+                        <p
+                            class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
+                        >
+                            Where the caregiver or nurse should visit. This can
+                            differ from the patient's home address.
+                        </p>
+                    </div>
+
+                    <div
+                        class="flex w-fit shrink-0 items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-white/10 dark:bg-white/5"
+                    >
+                        <button
+                            v-for="option in [
+                                { value: 'map', label: 'Pick on map' },
+                                { value: 'type', label: 'Type address' },
+                            ]"
+                            :key="option.value"
+                            type="button"
+                            class="rounded-lg uppercase px-3 py-1.5 text-xs font-semibold transition"
+                            :class="
+                                addressMode === option.value
+                                    ? 'bg-white text-primary shadow-sm dark:bg-secondary'
+                                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
+                            "
+                            @click="
+                                addressMode = option.value as 'map' | 'type'
+                            "
+                        >
+                            {{ option.label }}
+                        </button>
+                    </div>
                 </div>
 
                 <div class="bg-white dark:bg-secondary">
@@ -481,7 +540,9 @@
                         <LocationSelector
                             :initial-lat="model.latitude ?? undefined"
                             :initial-lng="model.longitude ?? undefined"
+                            :mode="addressMode"
                             @location-selected="handleLocationSelected"
+                            @location-cleared="handleLocationCleared"
                         />
 
                         <template #fallback>
@@ -621,6 +682,15 @@ const handleLocationSelected = (location: {
     clearError("address");
 };
 
+const handleLocationCleared = () => {
+    emit("update:model", {
+        ...props.model,
+        address: "",
+        latitude: null,
+        longitude: null,
+    });
+};
+
 const adlTotal = computed(() => {
     const hours = Number(props.model.time_span);
 
@@ -647,6 +717,7 @@ const scheduledHoursLabel = computed(() => {
 });
 
 const isServiceModalOpen = ref(false);
+const addressMode = ref<"map" | "type">("map");
 
 const todayStr = getLocalDateStr(new Date());
 

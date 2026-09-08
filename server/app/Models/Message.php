@@ -24,16 +24,12 @@ class Message extends Model
         'read_at' => 'datetime',
     ];
 
-    public function conversation(): BelongsTo
+    public function conversation()
     {
-        return $this->belongsTo(
-            Conversation::class,
-            'conversation_id',
-            'conversation_id'
-        );
+        return $this->belongsTo(Conversation::class, 'conversation_id', 'conversation_id');
     }
 
-    public function sender(): BelongsTo
+    public function sender()
     {
         return $this->belongsTo(User::class, 'sender_user_id', 'user_id');
     }

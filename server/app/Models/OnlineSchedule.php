@@ -25,10 +25,6 @@ class OnlineSchedule extends Model
 
     public function assigned()
     {
-        return $this->belongsTo(
-            ScheduleAssigned::class,
-            'schedule_assigned_id',
-            'schedule_assigned_id'
-        );
+        return $this->belongsTo(ScheduleAssigned::class, 'schedule_assigned_id',  'schedule_assigned_id');
     }
 }

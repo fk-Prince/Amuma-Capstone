@@ -4,15 +4,19 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
+use App\Events\NotificationEvent;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Http\Resources\EmployeeScheduleResource;
 use App\Repository\ScheduleRepository;
 use App\Http\Resources\ScheduleResource;
+use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\Invoice;
+use App\Models\Module;
 use App\Models\User;
 use App\Repository\InvoiceRepository;
+use App\Repository\NotificationRepository;
 use App\Repository\PatientRepository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -25,10 +29,11 @@ class ScheduleService
         private ScheduleRepository $scheduleRepository,
         private PatientRepository $patientRepository,
         private InvoiceRepository $invoiceRepository,
-        private RefundService $refundService
+        private RefundService $refundService,
+        private NotificationRepository $notificationRepository
     ) {}
 
-    public function createSchedule(User $user, array $payload)
+    public function createSchedule(array $payload)
     {
 
         return DB::transaction(function () use ($payload) {
@@ -52,7 +57,7 @@ class ScheduleService
             $invoice = $this->invoiceRepository->create([
                 'branch_id' => $payload['branch_id'],
                 'status' => Invoice::STATUS_PENDING,
-                'total' => 0
+                'total_amount' => 0
             ]);
 
             $total = 0;
@@ -71,7 +76,7 @@ class ScheduleService
             }
 
             $invoice->update([
-                'total' => $total,
+                'total_amount' => $total,
             ]);
 
             return response()->json([
@@ -150,13 +155,13 @@ class ScheduleService
             ], 200);
         }
 
-        return $this->updateSchedule($schedule, $payload);
+        return $this->updateSchedule($user, $schedule, $payload);
     }
 
 
-    public function updateSchedule(Schedule $schedule, array $payload)
+    public function updateSchedule(User $user, Schedule $schedule, array $payload)
     {
-        return DB::transaction(function () use ($schedule, $payload) {
+        return DB::transaction(function () use ($user, $schedule, $payload) {
             if (strtolower($schedule->status) === Schedule::STATUS_CANCELLED) {
                 throw new Exception(
                     'This schedule has been cancelled and can no longer be updated.',
@@ -193,6 +198,8 @@ class ScheduleService
 
             $assignmentsByService = collect($payload['assignments'])
                 ->groupBy('schedule_services_id');
+
+            $assignedEmployeeIds = [];
 
             foreach ($assignmentsByService as $scheduleServicesId => $rows) {
                 $scheduleService = $schedule->scheduleServices()
@@ -261,11 +268,21 @@ class ScheduleService
                         ['employee_id' => $employeeId],
                         ['is_active' => true, 'note' => $note]
                     );
+
+                    $assignedEmployeeIds[] = $employeeId;
                 }
             }
 
             if ($newStatus === Schedule::STATUS_CANCELLED) {
-                $this->refundCancelledSchedule($schedule);
+                $this->refundCancelledSchedule($user, $schedule);
+            } else {
+                $this->notifyAssignedStaff(
+                    $user,
+                    $schedule,
+                    $branch,
+                    array_unique($assignedEmployeeIds),
+                    $targetStart
+                );
             }
 
             return response()->json([
@@ -281,9 +298,59 @@ class ScheduleService
         });
     }
 
-    private function refundCancelledSchedule(Schedule $schedule): void
+    private function notifyAssignedStaff(
+        User $user,
+        Schedule $schedule,
+        object $branch,
+        array $employeeIds,
+        Carbon $scheduledAt
+    ): void {
+        if (empty($employeeIds)) {
+            return;
+        }
+
+        $schedule->loadMissing('patient');
+
+        $patientName = trim(
+            ($schedule->patient?->first_name ?? '') . ' ' .
+                ($schedule->patient?->last_name ?? '')
+        );
+
+        $message = "You have been assigned to schedule {$schedule->schedule_code}"
+            . ($patientName !== '' ? " for {$patientName}" : '')
+            . ' on ' . $scheduledAt->format('M j, Y \a\t g:i A') . '.';
+
+        $employees = Employee::with('users')
+            ->whereIn('employee_id', $employeeIds)
+            ->get();
+
+        foreach ($employees as $employee) {
+            if (!$employee->user_id || !$employee->users?->uuid) {
+                continue;
+            }
+
+            $this->notificationRepository->create([
+                'branch_id' => $branch->branch_id,
+                'to_user_id' => $employee->user_id,
+                'from_user_id' => $user->user_id,
+                'message_type' => 'Schedule',
+                'message' => $message,
+            ]);
+
+            event(new NotificationEvent(
+                $employee->users->uuid,
+                (string) $branch->uuid,
+                $message,
+                (string) $schedule->schedule_id,
+                'Schedule',
+                null,
+            ));
+        }
+    }
+
+    private function refundCancelledSchedule(User $user, Schedule $schedule)
     {
-        $schedule->load('scheduleServices.invoiceServices.invoice.payments.refunds');
+        $schedule->load('scheduleServices.invoiceServices.invoice.allocations.refundAllocations.refund');
 
         $invoiceIds = $schedule->scheduleServices
             ->flatMap(fn($scheduleService) => $scheduleService->invoiceServices)
@@ -295,20 +362,71 @@ class ScheduleService
             return;
         }
 
-        $invoices = Invoice::with('payments.refunds')
+        $invoices = Invoice::with('allocations.refundAllocations.refund')
             ->whereIn('invoice_id', $invoiceIds)
             ->where('status', '!=', Invoice::STATUS_VOID)
             ->get();
 
         foreach ($invoices as $invoice) {
-            $this->refundService->createRefundFull(
-                $invoice,
-                'Invoice refunded due to schedule cancellation.'
-            );
+            // $this->refundService->createRefundFull(
+            //     $invoice,
+            //     'Invoice refunded due to schedule cancellation.'
+            // );
 
-            $invoice->update([
-                'status' => Invoice::STATUS_VOID,
+            // $invoice->update([
+            //     'status' => Invoice::STATUS_VOID,
+            // ]);
+            $this->notifyAccounting($user, $schedule, $invoice);
+        }
+    }
+
+    private function notifyAccounting(User $user, Schedule $schedule, Invoice $invoice): void
+    {
+        $module = Module::where('module_name', ModuleEnum::BillingAndInvoices->value)
+            ->first();
+
+        if (!$module) {
+            return;
+        }
+
+        $recipients = Employee::query()
+            ->with('users')
+            ->whereHas(
+                'employeeBranch',
+                fn($q) => $q->where('branch_id', $invoice->branch_id)
+            )
+            ->whereHas(
+                'permissions',
+                fn($q) => $q->where('module_id', $module->module_id)
+                    ->where('branch_id', $invoice->branch_id)
+                    ->where('can_read', true)
+            )
+            ->get();
+
+        $message = "Schedule {$schedule->schedule_code} was cancelled."
+            . " Please void invoice {$invoice->invoice_code}.";
+
+        foreach ($recipients as $employee) {
+            if (!$employee->user_id || !$employee->users?->uuid) {
+                continue;
+            }
+
+            $this->notificationRepository->create([
+                'branch_id' => $invoice->branch_id,
+                'to_user_id' => $employee->user_id,
+                'from_user_id' => $user->user_id,
+                'message_type' => 'Billing',
+                'message' => $message,
             ]);
+
+            event(new NotificationEvent(
+                $employee->users->uuid,
+                (string) $invoice->branch?->uuid,
+                $message,
+                (string) $invoice->invoice_id,
+                'Billing',
+                null,
+            ));
         }
     }
 
@@ -337,7 +455,7 @@ class ScheduleService
         );
     }
 
-    public function assignEmployee(User $user, array $payload)
+    public function assignEmployee(array $payload)
     {
         return DB::transaction(function () use ($payload) {
             $schedule = $this->scheduleRepository->findByFields([

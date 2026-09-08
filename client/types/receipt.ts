@@ -6,9 +6,7 @@ export interface ReceiptLine {
     invoice_code: string;
     description?: string | null;
     invoice_date: string | null;
-    prior_balance: number;
     amount_applied: number;
-    new_balance: number;
 }
 
 export type ReceiptChannel = "portal" | "counter";
@@ -17,9 +15,6 @@ export interface PaymentReceipt {
     receipt_no: string;
     channel: ReceiptChannel;
     issued_at: string | null;
-    is_voided: boolean;
-    voided_at: string | null;
-    void_reason: string | null;
 
     issuer: {
         branch_name: string | null;

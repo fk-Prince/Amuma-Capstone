@@ -101,16 +101,34 @@
                             </p>
 
                             <p class="mt-1 text-lg font-bold text-primary-800 dark:text-primary-300">
-                                ₱{{ formatMoney(admissionTotal(admission)) }}
+                                ₱{{ formatMoney(admission.total_amount) }}
                             </p>
                         </div>
                     </div>
 
                     <div
-                        v-if="canViewDischarge(admission)"
-                        class="mt-5 flex justify-end"
+                        v-if="
+                            canViewDischarge(admission) ||
+                            isCurrentAdmission(admission)
+                        "
+                        class="mt-5 flex flex-wrap justify-end gap-2"
                     >
                         <button
+                            v-if="isCurrentAdmission(admission)"
+                            type="button"
+                            class="inline-flex items-center gap-2 rounded-xl border border-primary-200 px-4 py-2.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-500/30 dark:text-primary-300 dark:hover:bg-primary-500/10"
+                            @click="
+                                emit(
+                                    'extend-stay',
+                                    admission.patient_admission_id,
+                                )
+                            "
+                        >
+                            Extend Stay
+                        </button>
+
+                        <button
+                            v-if="canViewDischarge(admission)"
                             type="button"
                             class="inline-flex items-center gap-2 rounded-xl bg-danger px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-danger/90"
                             @click="
@@ -125,205 +143,40 @@
                     </div>
 
                     <div
-                        v-if="admission.invoices?.length"
-                        class="mt-6 border-t border-primary-100 pt-5 dark:border-primary-500/20"
+                        class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-primary-100 pt-5 dark:border-primary-500/20"
                     >
-                        <div
-                            class="mb-3 flex items-center justify-between gap-3"
-                        >
+                        <div class="min-w-0">
                             <p
                                 class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted dark:text-gray-400"
                             >
                                 Admission Invoices
                             </p>
 
-                            <span class="text-[11px] text-muted dark:text-gray-400">
-                                {{ admission.invoices.length }}
-                                invoice(s)
-                            </span>
+                            <p class="mt-1 text-xs text-muted dark:text-gray-400">
+                                {{ admission.invoice_count ?? 0 }} invoice(s)
+
+                                <span
+                                    v-if="Number(admission.balance_due ?? 0) > 0"
+                                    class="font-semibold text-danger"
+                                >
+                                    · ₱{{ formatMoney(admission.balance_due) }} due
+                                </span>
+                            </p>
                         </div>
 
-                        <div class="space-y-3">
-                            <div
-                                v-for="invoice in admission.invoices"
-                                :key="invoice.invoice_id"
-                                class="overflow-hidden rounded-xl border border-primary-100 bg-white dark:border-primary-500/20 dark:bg-secondary"
-                            >
-                                <button
-                                    type="button"
-                                    class="group w-full p-4 text-left transition hover:bg-primary-50/30 dark:hover:bg-primary-500/10"
-                                    @click="
-                                        emit(
-                                            'view-invoice',
-                                            invoice.invoice_code,
-                                        )
-                                    "
-                                >
-                                    <div
-                                        class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-                                    >
-                                        <div class="min-w-0">
-                                            <div
-                                                class="flex flex-wrap items-center gap-2"
-                                            >
-                                                <span
-                                                    class="font-mono text-xs font-semibold text-primary-700 dark:text-primary-300"
-                                                >
-                                                    {{ invoice.invoice_code }}
-                                                </span>
-
-                                                <span
-                                                    class="rounded-full px-2 py-1 text-[10px] font-medium"
-                                                    :class="
-                                                        statusClasses(
-                                                            invoice.status,
-                                                        )
-                                                    "
-                                                >
-                                                    {{ invoice.status }}
-                                                </span>
-
-                                                <span
-                                                    v-if="hasRefund(invoice)"
-                                                    class="rounded-full bg-danger/10 px-2 py-1 text-[10px] font-medium text-danger"
-                                                >
-                                                    Refunded
-                                                </span>
-                                            </div>
-
-                                            <p
-                                                class="mt-1 text-[11px] text-muted dark:text-gray-400"
-                                            >
-                                                {{
-                                                    formatDate(
-                                                        invoice.created_at,
-                                                    )
-                                                }}
-                                            </p>
-                                        </div>
-
-                                        <div
-                                            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:flex sm:items-center"
-                                        >
-                                            <div>
-                                                <p
-                                                    class="text-[10px] text-muted dark:text-gray-400"
-                                                >
-                                                    Total
-                                                </p>
-
-                                                <p
-                                                    class="mt-1 text-xs font-semibold text-secondary dark:text-white"
-                                                >
-                                                    ₱{{
-                                                        formatMoney(
-                                                            invoice.total,
-                                                        )
-                                                    }}
-                                                </p>
-                                            </div>
-
-                                            <div>
-                                                <p
-                                                    class="text-[10px] text-muted dark:text-gray-400"
-                                                >
-                                                    Paid
-                                                </p>
-
-                                                <p
-                                                    class="mt-1 text-xs font-semibold text-primary-700 dark:text-primary-300"
-                                                >
-                                                    ₱{{
-                                                        formatMoney(
-                                                            invoice.amount_paid,
-                                                        )
-                                                    }}
-                                                </p>
-                                            </div>
-
-                                            <div>
-                                                <p
-                                                    class="text-[10px] text-muted dark:text-gray-400"
-                                                >
-                                                    Balance
-                                                </p>
-
-                                                <p
-                                                    class="mt-1 text-xs font-semibold"
-                                                    :class="
-                                                        Number(
-                                                            invoice.balance_due,
-                                                        ) > 0
-                                                            ? 'text-danger'
-                                                            : 'text-primary-700 dark:text-primary-300'
-                                                    "
-                                                >
-                                                    ₱{{
-                                                        formatMoney(
-                                                            invoice.balance_due,
-                                                        )
-                                                    }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </button>
-
-                                <div
-                                    v-if="hasRefund(invoice)"
-                                    class="border-t border-danger/10 bg-danger/5 px-4 py-4"
-                                >
-                                    <div class="flex items-start gap-3">
-                                        <div
-                                            class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-danger/10 text-danger"
-                                        >
-                                            ↩
-                                        </div>
-
-                                        <div class="min-w-0">
-                                            <p
-                                                class="text-[10px] font-bold uppercase tracking-[0.14em] text-danger"
-                                            >
-                                                Refund Reason
-                                            </p>
-
-                                            <p
-                                                class="mt-1 text-xs leading-5 text-secondary dark:text-white"
-                                            >
-                                                {{ refundReason(invoice) }}
-                                            </p>
-
-                                            <div
-                                                v-if="refundAmount(invoice) > 0"
-                                                class="mt-2 text-[11px] text-muted dark:text-gray-400"
-                                            >
-                                                Refunded:
-                                                <span
-                                                    class="font-semibold text-danger"
-                                                >
-                                                    ₱{{
-                                                        formatMoney(
-                                                            refundAmount(
-                                                                invoice,
-                                                            ),
-                                                        )
-                                                    }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        v-else
-                        class="mt-5 rounded-xl border border-dashed border-primary-100 px-4 py-5 text-center dark:border-primary-500/20"
-                    >
-                        <p class="text-xs text-muted dark:text-gray-400">
-                            No invoices for this admission.
-                        </p>
+                        <button
+                            v-if="admission.invoice_count"
+                            type="button"
+                            class="shrink-0 rounded-xl border border-primary-200 px-4 py-2.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-500/30 dark:text-primary-300 dark:hover:bg-primary-500/10"
+                            @click="
+                                emit(
+                                    'view-admission-invoices',
+                                    admission.patient_admission_id,
+                                )
+                            "
+                        >
+                            View invoices
+                        </button>
                     </div>
                 </div>
             </article>
@@ -339,6 +192,7 @@
 
 <script setup lang="ts">
 import { formatAmount } from "~/utils/currency";
+import { statusClasses } from "~/utils/invoiceStatus";
 import { formatDate } from "~/utils/time";
 import type { DischargeCalculation, PatientAdmission } from "~/types/invoice";
 
@@ -348,8 +202,9 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-    (event: "view-invoice", invoiceCode: string): void;
+    (event: "view-admission-invoices", admissionId: number): void;
     (event: "view-discharge-termination", admissionId: number): void;
+    (event: "extend-stay", admissionId: number): void;
 }>();
 
 function isCurrentAdmission(admission: PatientAdmission) {
@@ -368,86 +223,15 @@ function canViewDischarge(admission: PatientAdmission) {
     }
 
     return (
-        calculation.is_within_termination_fee_window === true ||
-        calculation.is_within_yearly_half_refund_window === true
+        
+        calculation.is_within_refund_window === true
     );
-}
-
-function admissionTotal(admission: PatientAdmission) {
-    return (admission.invoices ?? []).reduce(
-        (total, invoice) => total + Number(invoice.total ?? 0),
-        0,
-    );
-}
-
-function getRefunds(invoice: any) {
-    return (invoice.payments ?? []).flatMap(
-        (payment: any) => payment.refunds ?? [],
-    );
-}
-
-function hasRefund(invoice: any) {
-    return getRefunds(invoice).some((refund: any) =>
-        ["completed", "processing"].includes(refund.status?.toLowerCase()),
-    );
-}
-
-function refundReason(invoice: any) {
-    const refunds = getRefunds(invoice).filter((refund: any) =>
-        ["completed", "processing"].includes(refund.status?.toLowerCase()),
-    );
-
-    return (
-        refunds
-            .map((refund: any) => refund.reason)
-            .filter(Boolean)
-            .join(" • ") || "No refund reason provided."
-    );
-}
-
-function refundAmount(invoice: any) {
-    return getRefunds(invoice)
-        .filter((refund: any) =>
-            ["completed", "processing"].includes(refund.status?.toLowerCase()),
-        )
-        .reduce(
-            (total: number, refund: any) => total + Number(refund.amount ?? 0),
-            0,
-        );
 }
 
 function formatMoney(amount: number | string | null | undefined) {
     return formatAmount(amount, { treatMissingAsZero: true });
 }
 
-
-function statusClasses(status: string | null | undefined) {
-    switch (status?.toLowerCase()) {
-        case "paid":
-            return "bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300";
-
-        case "partial":
-            return "bg-accent-50 text-accent-700 dark:bg-accent-500/15 dark:text-accent-300";
-
-        case "pending":
-            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
-
-        case "admitted":
-            return "bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300";
-
-        case "discharged":
-            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
-
-        case "overdue":
-            return "bg-danger/10 text-danger";
-
-        case "cancelled":
-            return "bg-danger/10 text-danger";
-
-        default:
-            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
-    }
-}
 
 const Field = (props: { label: string; value: unknown }) =>
     h(

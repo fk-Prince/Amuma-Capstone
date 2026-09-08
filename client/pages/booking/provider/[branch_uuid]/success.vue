@@ -1,8 +1,18 @@
 <template>
     <div
-        class="min-h-[calc(100vh-90px)] bg-slate-200 dark:bg-surface flex items-center justify-center px-5 py-12"
+        class="relative min-h-screen overflow-hidden bg-slate-200 dark:bg-surface flex items-center justify-center px-5 py-12"
     >
-        <div class="max-w-lg w-full">
+        <img
+            :src="backdrop"
+            class="pointer-events-none absolute inset-0 h-full w-full select-none object-cover"
+            alt=""
+        />
+
+        <div
+            class="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-900/55 via-slate-900/45 to-secondary/65 dark:from-surface/90 dark:via-surface/85 dark:to-surface/95"
+        />
+
+        <div class="relative z-10 max-w-lg w-full">
             <div
                 class="rounded-2xl border border-gray-100 bg-white shadow-sm p-8 md:p-10 text-center dark:bg-secondary dark:border-white/10"
             >
@@ -12,11 +22,15 @@
                     <CheckCircle2 class="h-9 w-9 text-primary" />
                 </div>
 
-                <h1 class="font-serif text-2xl text-gray-900 mt-6 dark:text-white">
+                <h1
+                    class="font-serif text-2xl text-gray-900 mt-6 dark:text-white"
+                >
                     Booking Request Submitted
                 </h1>
 
-                <p class="text-[15px] text-gray-500 mt-2 leading-relaxed dark:text-gray-400">
+                <p
+                    class="text-[15px] text-gray-500 mt-2 leading-relaxed dark:text-gray-400"
+                >
                     Thank you. Your
                     {{
                         category === "facility"
@@ -30,8 +44,12 @@
                     v-if="referenceId"
                     class="mt-6 inline-flex items-center gap-2 rounded-full bg-gray-50 border border-gray-100 px-4 py-2 dark:bg-white/5 dark:border-white/10"
                 >
-                    <span class="text-xs text-gray-400 dark:text-gray-500">Reference No.</span>
-                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <span class="text-xs text-gray-400 dark:text-gray-500"
+                        >Reference No.</span
+                    >
+                    <span
+                        class="text-sm font-semibold text-gray-700 dark:text-gray-300"
+                    >
                         {{ referenceId }}
                     </span>
                 </div>
@@ -44,8 +62,8 @@
                             class="h-4 w-4 shrink-0 mt-0.5 text-primary"
                         />
                         <span>
-                            You'll be notified once your booking request has
-                            been reviewed and accepted.
+                            You'll be notified in the app and by email once your
+                            booking request has been reviewed and accepted.
                         </span>
                     </div>
                     <div
@@ -62,22 +80,35 @@
                 </div>
 
                 <BaseButton
-                    v-if="acknowledgement"
+                    v-if="isLoadingAcknowledgement || acknowledgement"
                     variant="secondary"
                     class="mt-8 w-full rounded-xl py-3"
+                    :loading="isLoadingAcknowledgement"
+                    :disabled="isLoadingAcknowledgement"
                     @click="showAcknowledgement = true"
                 >
-                    <Printer class="h-4 w-4" />
-                    Print booking form
+                    <Printer v-if="!isLoadingAcknowledgement" class="h-4 w-4" />
+
+                    {{
+                        isLoadingAcknowledgement
+                            ? "Preparing booking form..."
+                            : "Print booking form"
+                    }}
                 </BaseButton>
 
                 <div class="mt-3 flex flex-col sm:flex-row gap-3">
                     <BaseButton
                         variant="secondary"
                         class="w-full rounded-xl py-3"
+                        :loading="isOpeningBookings"
+                        :disabled="isOpeningBookings"
                         @click="viewBookings"
                     >
-                        View My Bookings
+                        {{
+                            isOpeningBookings
+                                ? "Loading..."
+                                : "View My Bookings"
+                        }}
                     </BaseButton>
                     <BaseButton
                         variant="primary"
@@ -104,6 +135,7 @@ import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { CheckCircle2, BellRing, Printer, ShieldCheck } from "lucide-vue-next";
 import BaseButton from "~/components/ui/BaseButton.vue";
+import backdrop from "~/assets/images/Booking_Logo.png";
 import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.vue";
 import { patientAccessService } from "~/api/patient-access/PatientAccessService";
 import { useBookingStore } from "~/stores/booking";
@@ -111,8 +143,7 @@ import { fetchAuthUser } from "~/composables/useAuthUser";
 
 useHead({ title: "Booking Submitted" });
 definePageMeta({
-    navVariant: 4,
-    navTheme: "dark",
+    navVariant: 6,
 });
 
 const router = useRouter();
@@ -126,10 +157,12 @@ const referenceId = computed(() => bookingStore.lastSubmittedId ?? "");
 
 const acknowledgement = ref<any>(null);
 const showAcknowledgement = ref(false);
+const isLoadingAcknowledgement = ref(false);
+const isOpeningBookings = ref(false);
 
-// The store is cleared on arrival, so the printable copy is read back from the
-// server — that way it also survives a refresh of this page.
 async function loadAcknowledgement(reference: string) {
+    isLoadingAcknowledgement.value = true;
+
     try {
         const res = await patientAccessService.retrieveAction({
             action: "bookings",
@@ -143,6 +176,8 @@ async function loadAcknowledgement(reference: string) {
             ) ?? null;
     } catch {
         acknowledgement.value = null;
+    } finally {
+        isLoadingAcknowledgement.value = false;
     }
 }
 
@@ -159,7 +194,13 @@ function goHome() {
     router.push("/");
 }
 
-function viewBookings() {
-    router.push("/portal/bookings");
+async function viewBookings() {
+    isOpeningBookings.value = true;
+
+    try {
+        await router.push("/portal/bookings");
+    } finally {
+        isOpeningBookings.value = false;
+    }
 }
 </script>

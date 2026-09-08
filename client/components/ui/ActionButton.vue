@@ -42,12 +42,14 @@ const variantClasses = {
     outline: {
         enabled:
             "border-primary-200 dark:border-primary-500/30 text-primary dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-500/10",
-        disabled: "border-gray-200 dark:border-white/10 text-gray-400 dark:text-gray-500",
+        disabled:
+            "border-gray-200 dark:border-white/10 text-gray-400 dark:text-gray-500",
     },
     danger: {
         enabled:
             "border-rose-200 dark:border-rose-500/30 text-rose-600 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10",
-        disabled: "border-gray-200 dark:border-white/10 text-gray-400 dark:text-gray-500",
+        disabled:
+            "border-gray-200 dark:border-white/10 text-gray-400 dark:text-gray-500",
     },
 };
 
@@ -78,7 +80,7 @@ onBeforeUnmount(() => {
         <button
             :type="type"
             :disabled="isBlocked"
-            class="rounded-lg border px-4 py-2 text-sm font-medium transition dark:border-white/10"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-3 sm:px-4 py-2 text-sm font-medium transition dark:border-white/10"
             :class="[
                 disabled
                     ? variantClasses[variant].disabled

@@ -30,9 +30,7 @@ class Service extends Model
         'is_available' => 'boolean',
     ];
 
-    /**
-     * Branch that owns the service.
-     */
+
     public function branches()
     {
         return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
@@ -47,11 +45,6 @@ class Service extends Model
 
     public function staff()
     {
-        return $this->belongsToMany(
-            User::class,
-            'staff_services',
-            'service_id',
-            'user_id'
-        )->withPivot('is_active');
+        return $this->belongsToMany(User::class,   'staff_services',  'service_id', 'user_id')->withPivot('is_active');
     }
 }

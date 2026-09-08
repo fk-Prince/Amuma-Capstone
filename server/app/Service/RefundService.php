@@ -4,16 +4,16 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Events\NotificationEvent;
-use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Invoice;
 use App\Models\InvoiceAdjustment;
-use App\Models\InvoiceAccommodation;
+use App\Models\AdmissionPeriod;
 use App\Models\Module;
 use App\Models\PatientAdmission;
 use App\Models\Refund;
 use App\Models\User;
 use App\Repository\NotificationRepository;
+use App\Utils\DischargeCalculator;
 use App\Utils\MaskUtil;
 use Carbon\Carbon;
 use Exception;
@@ -21,61 +21,47 @@ use Illuminate\Support\Facades\DB;
 
 class RefundService
 {
+    private const YEARLY_HALF_REFUND_WINDOW_DAYS = 183;
+    private const YEARLY_HALF_REFUND_RATE = 0.50;
+
+
     public function __construct(
         private NotificationRepository $notificationRepository
     ) {}
 
-    private const TERMINATION_FEE_WINDOW_DAYS = 7;
-
-
-    private function terminationFeeRate(?int $branchId): float
-    {
-        if (!$branchId) {
-            return 0.0;
-        }
-
-        $percent = (float) data_get(
-            Branch::find($branchId)?->settings,
-            'termination_fee_percent',
-            0
-        );
-
-        return max(0.0, min(100.0, $percent)) / 100;
-    }
-
-    private const YEARLY_HALF_REFUND_WINDOW_DAYS = 183;
-    private const YEARLY_HALF_REFUND_RATE = 0.50;
-
-    public function getPaidAmount(Invoice $invoice): float
+    public function getPaidAmount(Invoice $invoice)
     {
         return round(
-            (float) $invoice->payments()->sum('amount'),
+            (float) $invoice->allocations()->sum('amount'),
             2
         );
     }
 
-    public function getRefundedAmount(Invoice $invoice): float
+    public function getRefundedAmount(Invoice $invoice)
     {
         return round(
-            (float) $invoice->payments()
-                ->with('refunds')
+            (float) $invoice->allocations()
+                ->with('refundAllocations.refund')
                 ->get()
-                ->flatMap(fn($payment) => $payment->refunds)
-                ->whereIn('status', [
-                    Refund::STATUS_COMPLETED,
-                    Refund::STATUS_PROCESSING,
-                ])
+                ->flatMap(fn($allocation) => $allocation->refundAllocations)
+                ->filter(
+                    fn($line) => in_array(
+                        $line->refund?->status,
+                        Refund::SETTLED_STATUSES,
+                        true
+                    )
+                )
                 ->sum('amount'),
             2
         );
     }
 
-    public function getNetPaidAmount(Invoice $invoice): float
+    public function getNetPaidAmount(Invoice $invoice)
     {
         return round(max(0,   $this->getPaidAmount($invoice)   - $this->getRefundedAmount($invoice)), 2);
     }
 
-    public function getRetainedAmount(Invoice $invoice): float
+    public function getRetainedAmount(Invoice $invoice)
     {
         return round(
             (float) InvoiceAdjustment::query()
@@ -85,32 +71,26 @@ class RefundService
         );
     }
 
-    // Nothing is written when an invoice becomes refundable — the balance is
-    // read back from what was paid, what has already been refunded, and what
-    // the adjustments retain.
-    public function getRefundableAmount(Invoice $invoice): float
+
+    public function getRefundableAmount(Invoice $invoice)
     {
-        return round(
-            max(
-                0,
-                $this->getPaidAmount($invoice)
-                    - $this->getRefundedAmount($invoice)
-                    - $this->getRetainedAmount($invoice)
-            ),
-            2
-        );
+        $invoice->loadMissing('allocations.refundAllocations.refund', 'invoiceAdjustments');
+
+        return round(max(0, $this->getNetPaidAmount($invoice) - (float) $invoice->adjusted_total), 2);
     }
 
-    // A family's request is just a refund parked at 'pending': it is not money
-    // moved yet, so it never counts against the refundable balance.
+
     public function getPendingRefunds(Invoice $invoice)
     {
         return Refund::query()
-            ->whereIn(
-                'payment_id',
-                $invoice->payments()->select('payment_id')
+            ->whereHas(
+                'allocations',
+                fn($query) => $query->whereIn(
+                    'allocation_id',
+                    $invoice->allocations()->select('allocation_id')
+                )
             )
-            ->where('status', Refund::STATUS_PENDING)
+            ->where('status', Refund::STATUS_REQUESTED)
             ->get();
     }
 
@@ -127,28 +107,27 @@ class RefundService
             'refundable_amount' => $refundable,
             'has_refundable_balance' => $refundable > 0,
             'requested_refund' => $first ? [
+                'refund_id' => $first->refund_id,
+                'refund_code' => $first->refund_code,
                 'amount' => round((float) $pending->sum('amount'), 2),
                 'method' => $first->refund_method,
                 'account_details' => $first->masked_card_number,
-                'reason' => $first->reason,
                 'requested_at' => $first->created_at?->toIso8601String(),
             ] : null,
         ];
     }
 
 
-    public function getCancellationRefundAmount(
-        Invoice $invoice,
-        PatientAdmission $admission,
-        InvoiceAccommodation $invoiceAccommodation
-    ): float {
+
+    public function getCancellationRefundAmount(Invoice $invoice, PatientAdmission $admission, AdmissionPeriod $period)
+    {
         $paid = $this->getNetPaidAmount($invoice);
 
         if ($paid <= 0) {
             return 0;
         }
 
-        $days = $this->calculateAdmissionDays(
+        $days = DischargeCalculator::calculateAdmissionDays(
             $admission->admitted_at
                 ? Carbon::parse($admission->admitted_at)
                 : null
@@ -158,23 +137,14 @@ class RefundService
             return $paid;
         }
 
-        if ($days < self::TERMINATION_FEE_WINDOW_DAYS) {
-            $retain = round(
-                $paid * $this->terminationFeeRate($invoice->branch_id),
-                2
-            );
-
-            return round(max(0, $paid - $retain), 2);
-        }
-
-        $contract = $invoiceAccommodation->branchContract;
-        $billingCycle = $contract ? $this->getBillingCycle($contract) : '';
+        $contract = $period->branchContract;
+        $billingCycle = $contract ? DischargeCalculator::getBillingCycle($contract) : '';
 
         if ($billingCycle === 'YEARLY' && $days < self::YEARLY_HALF_REFUND_WINDOW_DAYS) {
             $half = round($paid / 2, 2);
 
             $daysStayedAmount = round(
-                ($days / 365) * (float) $invoiceAccommodation->price,
+                ($days / 365) * DischargeCalculator::periodPrice($period),
                 2
             );
 
@@ -184,30 +154,23 @@ class RefundService
         return 0;
     }
 
-    public function getRequiredPaymentAmount(InvoiceAccommodation $invoiceAccommodation,  PatientAdmission $admission)
+    public function getRequiredPaymentAmount(AdmissionPeriod $period,  PatientAdmission $admission)
     {
-        $contract = $invoiceAccommodation->branchContract;
+        $contract = $period->branchContract;
 
         if (!$contract) {
             return 0;
         }
 
-        $price = $this->getContractPrice($contract);
+        $price = DischargeCalculator::getContractPrice($contract);
 
         if ($price <= 0) {
             return 0;
         }
 
-        $billingCycle = $this->getBillingCycle($contract);
+        $billingCycle = DischargeCalculator::getBillingCycle($contract);
 
-        if ($this->isWithinTerminationFeeWindow($admission)) {
-            return round(
-                $price * $this->terminationFeeRate($contract->branch_id),
-                2
-            );
-        }
-
-        if ($billingCycle === 'YEARLY' && $this->isWithinYearlyHalfRefundWindow($admission)) {
+        if ($billingCycle === 'YEARLY' && DischargeCalculator::isWithinYearlyHalfRefundWindow($admission)) {
             return round($price * self::YEARLY_HALF_REFUND_RATE,  2);
         }
 
@@ -222,12 +185,12 @@ class RefundService
         return 0;
     }
 
-    public function validateRequiredPayment(Invoice $invoice,  InvoiceAccommodation $invoiceAccommodation, PatientAdmission $admission)
+    public function validateRequiredPayment(Invoice $invoice,  AdmissionPeriod $period, PatientAdmission $admission)
     {
         $paid = $this->getNetPaidAmount($invoice);
 
         $required = $this->getRequiredPaymentAmount(
-            $invoiceAccommodation,
+            $period,
             $admission
         );
 
@@ -241,17 +204,17 @@ class RefundService
         }
     }
 
-    public function hasRequiredPayment(Invoice $invoice, InvoiceAccommodation $invoiceAccommodation, PatientAdmission $admission)
+    public function hasRequiredPayment(Invoice $invoice, AdmissionPeriod $period, PatientAdmission $admission)
     {
-        return $this->getNetPaidAmount($invoice) >= $this->getRequiredPaymentAmount($invoiceAccommodation, $admission);
+        return $this->getNetPaidAmount($invoice) >= $this->getRequiredPaymentAmount($period, $admission);
     }
 
-    public function createRefundCurrentInvoice(Invoice $invoice,    PatientAdmission $admission,  InvoiceAccommodation $invoiceAccommodation)
+    public function createRefundCurrentInvoice(Invoice $invoice, PatientAdmission $admission,  AdmissionPeriod $period)
     {
-        $calculation = $this->getDischargeCalculation(
+        $calculation = DischargeCalculator::getDischargeCalculation(
             $invoice,
             $admission,
-            $invoiceAccommodation
+            $period
         );
 
         if (!$calculation['eligible_for_refund']) {
@@ -261,8 +224,7 @@ class RefundService
         $paid = $calculation['amount_paid'];
         $requiredPayment = $calculation['required_payment'];
         $refundAmount = $calculation['refund_amount'];
-        $terminationFee = $calculation['termination_fee_amount'];
-
+        
         if ($paid < $requiredPayment) {
             throw new Exception(
                 "Required payment has not been met. "
@@ -277,92 +239,108 @@ class RefundService
             return;
         }
 
-        $existingTerminationFee = InvoiceAdjustment::query()
+        $existingCredit = InvoiceAdjustment::query()
             ->where('invoice_id', $invoice->invoice_id)
             ->where(
                 'type',
-                InvoiceAdjustment::TYPE_TERMINATION_FEE
+                InvoiceAdjustment::TYPE_CORRECTION
             )
             ->exists();
 
-        if (!$existingTerminationFee && $terminationFee > 0) {
-            InvoiceAdjustment::create([
-                'invoice_id' => $invoice->invoice_id,
-                'type' => InvoiceAdjustment::TYPE_TERMINATION_FEE,
-                'amount' => $terminationFee,
-                'reason' => 'Termination fee due to early admission termination',
-            ]);
-        }
-    }
-
-    public function createRefundFutureInvoice(Invoice $invoice, array $payload)
-    {
-        if (empty($payload['refund'])) {
+        if ($existingCredit) {
             return;
         }
+
+        $delta = round($requiredPayment - (float) $invoice->adjusted_total, 2);
+
+        if (abs($delta) < 0.01) {
+            return;
+        }
+
+        InvoiceAdjustment::create([
+            'invoice_id' => $invoice->invoice_id,
+            'type' => InvoiceAdjustment::TYPE_CORRECTION,
+            'amount' => $delta,
+            'reason' => 'Discharged early. Invoice reduced to the days stayed.',
+        ]);
+
+        $invoice->syncStatus();
+    }
+
+    // A period the patient is discharged before ever reaching is cancelled and
+    // paid back in full. There is no judgement call in that, so it happens on
+    // every discharge rather than being asked for.
+    public function createRefundFutureInvoice(Invoice $invoice, array $payload)
+    {
+        $existingCredit = InvoiceAdjustment::query()
+            ->where('invoice_id', $invoice->invoice_id)
+            ->where(
+                'type',
+                InvoiceAdjustment::TYPE_CORRECTION
+            )
+            ->exists();
+
+        $adjustedTotal = (float) $invoice->adjusted_total;
+
+        if (!$existingCredit && $adjustedTotal > 0) {
+            InvoiceAdjustment::create([
+                'invoice_id' => $invoice->invoice_id,
+                'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                'amount' => round(-$adjustedTotal, 2),
+                'reason' => 'Discharged before this period started. Invoice cancelled.',
+            ]);
+        }
+
+        $invoice->refresh();
 
         $refundableAmount = $this->getRefundableAmount($invoice);
 
         if ($refundableAmount <= 0) {
+            $invoice->syncStatus();
+
             return;
         }
 
-        $this->createRefundsForInvoice($invoice, $refundableAmount,  'Future invoice refunded due to admission discharge.');
-
-        $existingTerminationFee = InvoiceAdjustment::query()
-            ->where('invoice_id', $invoice->invoice_id)
-            ->where(
-                'type',
-                InvoiceAdjustment::TYPE_TERMINATION_FEE
-            )
-            ->exists();
-
-        if (!$existingTerminationFee) {
-            InvoiceAdjustment::create([
-                'invoice_id' => $invoice->invoice_id,
-                'type' => InvoiceAdjustment::TYPE_TERMINATION_FEE,
-                'amount' => 0,
-                'reason' => 'Future invoice refund due to early admission termination',
-            ]);
-        }
+        $this->createRefundsForInvoice($invoice, $refundableAmount);
     }
 
     public function createRefundFull(Invoice $invoice, string $reason)
     {
-        $refundableAmount = $this->getRefundableAmount($invoice);
-
-        if ($refundableAmount <= 0) {
-            return;
-        }
-
         $existingAdjustment = InvoiceAdjustment::query()
             ->where('invoice_id', $invoice->invoice_id)
             ->where(
                 'type',
-                InvoiceAdjustment::TYPE_TERMINATION_FEE
+                InvoiceAdjustment::TYPE_CORRECTION
             )
             ->exists();
 
-        if (!$existingAdjustment) {
+        $adjustedTotal = (float) $invoice->adjusted_total;
+
+        if (!$existingAdjustment && $adjustedTotal > 0) {
             InvoiceAdjustment::create([
                 'invoice_id' => $invoice->invoice_id,
-                'type' => InvoiceAdjustment::TYPE_TERMINATION_FEE,
-                'amount' => 0,
+                'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                'amount' => round(-$adjustedTotal, 2),
                 'reason' => $reason,
             ]);
         }
 
-        $this->createRefundsForInvoice($invoice,  $refundableAmount,   $reason);
+        $invoice->refresh();
+
+        $refundableAmount = $this->getRefundableAmount($invoice);
+
+        if ($refundableAmount <= 0) {
+            $invoice->syncStatus();
+
+            return;
+        }
+
+        $this->createRefundsForInvoice($invoice, $refundableAmount);
     }
 
-    public function createRefundsForInvoice(
-        Invoice $invoice,
-        float $amount,
-        string $reason,
-        string $status = Refund::STATUS_PROCESSING,
-        ?string $method = null,
-        ?string $accountDetails = null
-    ) {
+
+    public function createRefundsForInvoice(Invoice $invoice, float $amount,  string $status = Refund::STATUS_COMPLETED,  ?string $method = null, ?string $accountDetails = null)
+    {
         $amount = round($amount, 2);
 
         if ($amount <= 0) {
@@ -378,55 +356,68 @@ class RefundService
             );
         }
 
-        $invoice->loadMissing('payments.refunds');
+        $invoice->loadMissing(
+            'allocations.refundAllocations.refund',
+            'allocations.payment'
+        );
 
+        // Worked out first, so one refund is written with its split rather than
+        // a separate refund per allocation. The family asked for one refund and
+        // it is approved or declined as one.
         $remainingAmount = $amount;
+        $split = [];
+        $source = null;
 
-        foreach ($invoice->payments as $payment) {
+        foreach ($invoice->allocations as $allocation) {
             if ($remainingAmount <= 0) {
                 break;
             }
 
-            $alreadyRefunded = (float) $payment->refunds
-                ->whereIn('status', [
-                    Refund::STATUS_COMPLETED,
-                    Refund::STATUS_PROCESSING,
-                ])
-                ->sum('amount');
+            $allocationRefundable = max(
+                0,
+                (float) $allocation->amount
+                    - $allocation->refundedAmount(Refund::SETTLED_STATUSES)
+            );
 
-            $paymentAmount = (float) $payment->amount;
-
-            $paymentRefundable = max(0,  $paymentAmount - $alreadyRefunded);
-
-            if ($paymentRefundable <= 0) {
+            if ($allocationRefundable <= 0) {
                 continue;
             }
 
-            $refundAmount = round(min($remainingAmount, $paymentRefundable),   2);
+            $refundAmount = round(min($remainingAmount, $allocationRefundable), 2);
 
             if ($refundAmount <= 0) {
                 continue;
             }
 
-            Refund::create([
-                'payment_id' => $payment->payment_id,
+            $split[] = [
+                'allocation_id' => $allocation->allocation_id,
                 'amount' => $refundAmount,
-                'refund_method' => $method ?? $payment->payment_method,
-                'status' => $status,
-                'reason' => $reason,
-                'masked_card_number' => $accountDetails
-                    ?? $payment->masked_card_number,
-            ]);
+            ];
 
-            $remainingAmount = round(
-                $remainingAmount - $refundAmount,
-                2
-            );
+            $source ??= $allocation;
+
+            $remainingAmount = round($remainingAmount - $refundAmount, 2);
         }
 
         if ($remainingAmount > 0) {
             throw new Exception('Unable to process the requested refund amount.',  422);
         }
+
+        $refund = Refund::create([
+            'amount' => $amount,
+            'refund_method' => $method ?? $source?->payment?->payment_method,
+            'status' => $status,
+            'masked_card_number' => $accountDetails
+                ?? $source?->payment?->masked_card_number,
+        ]);
+
+        foreach ($split as $line) {
+            $refund->allocations()->create($line + ['created_at' => now()]);
+        }
+
+        $invoice->refresh()->syncStatus();
+
+        return $refund;
     }
 
 
@@ -449,7 +440,21 @@ class RefundService
             );
         }
 
-        $amount = $this->getRefundableAmount($invoice);
+        $refundable = $this->getRefundableAmount($invoice);
+
+        // The family may ask for part of the credit and leave the rest sitting,
+        // so an amount is honoured when given and the whole credit is the
+        // default. Capped either way: they can never claim more than is theirs.
+        $amount = isset($payload['amount'])
+            ? round((float) $payload['amount'], 2)
+            : $refundable;
+
+        if ($amount <= 0 || $amount > $refundable) {
+            throw new Exception(
+                'Refund amount must be between 0 and ' . $refundable . '.',
+                422
+            );
+        }
 
         return DB::transaction(function () use (
             $invoice,
@@ -462,8 +467,7 @@ class RefundService
             $this->createRefundsForInvoice(
                 $invoice,
                 $amount,
-                $payload['reason'] ?? 'Refund requested by the patient\'s family.',
-                Refund::STATUS_PENDING,
+                Refund::STATUS_REQUESTED,
                 $method,
                 $accountDetails
             );
@@ -559,7 +563,6 @@ class RefundService
             $this->createRefundsForInvoice(
                 $invoice,
                 $amount,
-                $payload['reason'] ?? 'Refund issued by accounting.',
                 Refund::STATUS_COMPLETED,
                 $method ?: null,
                 $accountDetails
@@ -573,241 +576,4 @@ class RefundService
         });
     }
 
-    public function getTerminationFeeAmount(PatientAdmission $admission, mixed $contract)
-    {
-        if (!$contract) {
-            return 0;
-        }
-
-        if (!$this->isWithinTerminationFeeWindow($admission)) {
-            return 0;
-        }
-
-        $price = $this->getContractPrice($contract);
-
-        return round(
-            $price * $this->terminationFeeRate($contract->branch_id),
-            2
-        );
-    }
-
-    public function getDischargeCalculation(Invoice $invoice,  PatientAdmission $admission,  InvoiceAccommodation $invoiceAccommodation)
-    {
-        $contract = $invoiceAccommodation->branchContract;
-
-        $admissionDate = $admission->admitted_at
-            ? Carbon::parse($admission->admitted_at)
-            : null;
-
-        $dischargeDate = $admission->end_date
-            ? Carbon::parse($admission->end_date)
-            : (
-                $admission->discharge_date
-                ? Carbon::parse($admission->discharge_date)
-                : null
-            );
-
-        $paid = $this->getNetPaidAmount($invoice);
-
-        if (!$contract) {
-            return $this->emptyDischargeCalculation($admission, $admissionDate,  $dischargeDate, $paid);
-        }
-
-        $billingCycle = $this->getBillingCycle($contract);
-        $contractPrice = $this->getContractPrice($contract);
-        $days = $this->calculateAdmissionDays($admissionDate);
-
-        $withinTerminationWindow = $days !== null && $days < self::TERMINATION_FEE_WINDOW_DAYS;
-        $withinYearlyHalfWindow = $days !== null && $billingCycle === 'YEARLY' && $days >= self::TERMINATION_FEE_WINDOW_DAYS && $days < self::YEARLY_HALF_REFUND_WINDOW_DAYS;
-
-        $daysStayedAmount = 0;
-
-        if ($withinTerminationWindow) {
-            $rate = $this->terminationFeeRate($invoice->branch_id);
-            $feeBaseAmount = $paid;
-            $terminationFeePercent = round($rate * 100);
-            $terminationFeeAmount = round($paid * $rate, 2);
-            $refundAmount = round(max(0, $paid - $terminationFeeAmount), 2);
-        } elseif ($withinYearlyHalfWindow) {
-            $feeBaseAmount = (float) $invoiceAccommodation->price;
-            $half = round($feeBaseAmount / 2, 2);
-            $daysStayedAmount = round(($days / 365) * $feeBaseAmount, 2);
-            $refundAmount = round(max(0, min($paid, $half - $daysStayedAmount)), 2);
-            $terminationFeePercent = 50;
-            $terminationFeeAmount = round($paid - $refundAmount, 2);
-        } else {
-            $feeBaseAmount = $paid;
-            $terminationFeePercent = 100;
-            $terminationFeeAmount = $paid;
-            $refundAmount = 0;
-        }
-
-        $requiredPayment = round($paid - $refundAmount, 2);
-        $eligibleForRefund = $refundAmount > 0;
-
-        [$policy, $policyTitle, $policyDescription] = $this->getDischargePolicyText(
-            $withinTerminationWindow,
-            $withinYearlyHalfWindow,
-            $eligibleForRefund,
-            $billingCycle,
-            $terminationFeePercent
-        );
-
-        return [
-            'admission_id' => $admission->patient_admission_id,
-            'eligible_for_refund' => $eligibleForRefund,
-            'billing_cycle' => $billingCycle,
-            'admission_date' => $admissionDate?->toIso8601String(),
-            'discharge_date' => $dischargeDate?->toIso8601String(),
-            'days_since_admission' => $days,
-            'contract_price' => $contractPrice,
-            'amount_paid' => round($paid, 2),
-            'required_payment' => round($requiredPayment, 2),
-            'fee_base_amount' => round($feeBaseAmount, 2),
-            'days_stayed_amount' => round($daysStayedAmount, 2),
-            'retention_percent' => $terminationFeePercent,
-            'retention_amount' => round($terminationFeeAmount, 2),
-            'termination_fee_percent' => $terminationFeePercent,
-            'termination_fee_amount' => round($terminationFeeAmount,  2),
-            'refund_amount' => round($refundAmount, 2),
-            'policy' => $policy,
-            'policy_title' => $policyTitle,
-            'policy_description' => $policyDescription,
-            'is_within_termination_fee_window' => $withinTerminationWindow,
-            'is_within_yearly_half_refund_window' => $withinYearlyHalfWindow,
-            'is_under_required_payment' => $paid < $requiredPayment,
-            'payment_shortfall' => round(max(0, $requiredPayment - $paid), 2),
-        ];
-    }
-
-
-    private function getDischargePolicyText(
-        bool $withinTerminationWindow,
-        bool $withinYearlyHalfWindow,
-        bool $eligibleForRefund,
-        string $billingCycle,
-        int $terminationFeePercent
-    ): array {
-        if ($withinTerminationWindow) {
-            return [
-                $eligibleForRefund ? 'Refund available' : 'Payment required',
-                '7-day termination policy',
-                "Discharged within 7 days of admission. The payment is refunded less the {$terminationFeePercent}% termination fee.",
-            ];
-        }
-
-        if ($withinYearlyHalfWindow) {
-            return [
-                $eligibleForRefund ? 'Refund available' : 'No refund',
-                'Yearly refund policy',
-                'Discharged after 7 days and before 6 months. Half of the yearly payment is refunded, half is retained.',
-            ];
-        }
-
-        if ($billingCycle === 'MONTHLY') {
-            return [
-                'No refund',
-                'Outside refund window',
-                'The 7-day monthly refund window has passed. No refund applies.',
-            ];
-        }
-
-        if ($billingCycle === 'YEARLY') {
-            return [
-                'No refund',
-                'Outside refund window',
-                'The 6-month yearly refund window has passed. No refund applies.',
-            ];
-        }
-
-        return [
-            'No refund',
-            'Outside refund window',
-            'No refund applies.',
-        ];
-    }
-
-    protected function isWithinTerminationFeeWindow(PatientAdmission $admission)
-    {
-        $days = $this->calculateAdmissionDays(
-            $admission->admitted_at
-                ? Carbon::parse($admission->admitted_at)
-                : null
-        );
-
-        return $days !== null
-            && $days < self::TERMINATION_FEE_WINDOW_DAYS;
-    }
-
-    protected function isWithinYearlyHalfRefundWindow(PatientAdmission $admission)
-    {
-        $days = $this->calculateAdmissionDays(
-            $admission->admitted_at
-                ? Carbon::parse($admission->admitted_at)
-                : null
-        );
-
-        return $days !== null
-            && $days >= self::TERMINATION_FEE_WINDOW_DAYS
-            && $days < self::YEARLY_HALF_REFUND_WINDOW_DAYS;
-    }
-
-    private function calculateAdmissionDays(?Carbon $admissionDate)
-    {
-        if (!$admissionDate) {
-            return null;
-        }
-
-        $now = now();
-
-        if ($now->isBefore($admissionDate)) {
-            return 0;
-        }
-
-        return $admissionDate
-            ->copy()
-            ->startOfDay()
-            ->diffInDays(
-                $now->copy()->startOfDay()
-            );
-    }
-
-    private function getContractPrice(mixed $contract)
-    {
-        return round((float) ($contract->price ?? 0), 2);
-    }
-
-    private function getBillingCycle(mixed $contract)
-    {
-        return strtoupper(trim($contract->billing_cycle ?? ''));
-    }
-
-    private function emptyDischargeCalculation(PatientAdmission $admission, ?Carbon $admissionDate, ?Carbon $dischargeDate,  float $paid)
-    {
-        return [
-            'admission_id' => $admission->patient_admission_id,
-            'eligible_for_refund' => false,
-            'billing_cycle' => null,
-            'admission_date' => $admissionDate?->toIso8601String(),
-            'discharge_date' => $dischargeDate?->toIso8601String(),
-            'days_since_admission' => $this->calculateAdmissionDays($admissionDate),
-            'contract_price' => 0,
-            'amount_paid' => round($paid, 2),
-            'required_payment' => 0,
-            'fee_base_amount' => 0,
-            'days_stayed_amount' => 0,
-            'retention_percent' => 0,
-            'retention_amount' => 0,
-            'termination_fee_percent' => 0,
-            'termination_fee_amount' => 0,
-            'refund_amount' => 0,
-            'policy' => 'No refund',
-            'policy_title' => 'Outside refund window',
-            'policy_description' => 'No refund applies.',
-            'is_within_termination_fee_window' => false,
-            'is_within_yearly_half_refund_window' => false,
-            'is_under_required_payment' => false,
-            'payment_shortfall' => 0,
-        ];
-    }
 }

@@ -39,7 +39,7 @@ class PatientActivityService
         ], 200);
     }
 
-    public function createPatientActivity(User $user, array $payload)
+    public function createPatientActivity(array $payload)
     {
         $patient = $this->patientRepository->findByFields([
             ['uuid', '=', $payload['patient_uuid']]
@@ -66,7 +66,7 @@ class PatientActivityService
         ], 200);
     }
 
-    public function updatePatientActivity(User $user, array $payload, string $id)
+    public function updatePatientActivity(array $payload, string $id)
     {
         $activity = PatientActivity::whereHas(
             'patient',

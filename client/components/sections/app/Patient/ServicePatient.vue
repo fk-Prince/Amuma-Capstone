@@ -5,7 +5,9 @@
     >
         <div class="mb-8">
             <template v-if="loading">
-                <div class="h-6 w-40 rounded bg-slate-200 mb-2 dark:bg-white/15" />
+                <div
+                    class="h-6 w-40 rounded bg-slate-200 mb-2 dark:bg-white/15"
+                />
                 <div class="h-3 w-64 rounded bg-slate-200 dark:bg-white/15" />
             </template>
 
@@ -15,8 +17,8 @@
                 </h2>
 
                 <p class="mt-1 text-sm text-muted dark:text-gray-400">
-                    Assist the patient by selecting and scheduling the
-                    appropriate medical service.
+                    Assist the patient by scheduling one medical service.
+                    Choosing another replaces the current pick.
                 </p>
             </template>
         </div>
@@ -60,16 +62,18 @@
 
                     <div>
                         <div class="mb-3 flex items-center justify-between">
-                            <label class="text-sm font-semibold text-slate-700 dark:text-gray-400">
-                                Select Service
+                            <label
+                                class="text-sm font-semibold text-slate-700 dark:text-gray-400"
+                            >
+                                Select one service
                                 <span class="text-danger">*</span>
                             </label>
 
                             <span
-                                v-if="selectedServices.length"
-                                class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+                                v-if="selectedService"
+                                class="max-w-[55%] truncate rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
                             >
-                                {{ selectedServices.length }} selected
+                                {{ selectedService.service_name }}
                             </span>
                         </div>
 
@@ -96,11 +100,17 @@
                             v-if="!groupedServices.length"
                             class="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-200 py-12 text-center dark:border-white/10"
                         >
-                            <PackageSearch class="h-6 w-6 text-slate-300 dark:text-gray-500" />
-                            <p class="text-sm font-medium text-slate-500 dark:text-gray-400">
+                            <PackageSearch
+                                class="h-6 w-6 text-slate-300 dark:text-gray-500"
+                            />
+                            <p
+                                class="text-sm font-medium text-slate-500 dark:text-gray-400"
+                            >
                                 No services found
                             </p>
-                            <p class="text-xs text-slate-400 dark:text-gray-500">
+                            <p
+                                class="text-xs text-slate-400 dark:text-gray-500"
+                            >
                                 Try a different search term.
                             </p>
                         </div>
@@ -131,7 +141,7 @@
                                             v-if="group.selectedCount"
                                             class="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
                                         >
-                                            {{ group.selectedCount }} chosen
+                                            Selected
                                         </span>
                                     </div>
 
@@ -153,8 +163,9 @@
                                         v-for="service in group.items"
                                         :key="service.service_uuid"
                                         type="button"
+                                        :aria-pressed="isSelected(service)"
                                         :disabled="!service.is_available"
-                                        class="flex w-full items-center justify-between gap-3 rounded-lg border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10"
+                                        class="flex w-full items-center justify-between gap-3 rounded-lg border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-50"
                                         :class="
                                             isSelected(service)
                                                 ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
@@ -165,20 +176,6 @@
                                         <div
                                             class="flex min-w-0 items-center gap-3"
                                         >
-                                            <span
-                                                class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition dark:border-white/10"
-                                                :class="
-                                                    isSelected(service)
-                                                        ? 'border-primary bg-primary text-white'
-                                                        : 'border-slate-300 bg-white dark:border-white/10 dark:bg-secondary'
-                                                "
-                                            >
-                                                <Check
-                                                    v-if="isSelected(service)"
-                                                    class="h-3 w-3"
-                                                />
-                                            </span>
-
                                             <div class="min-w-0">
                                                 <p
                                                     class="truncate text-sm font-medium text-slate-800 dark:text-white"
@@ -219,10 +216,14 @@
             <aside
                 class="flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 md:h-full dark:border-white/10 dark:bg-white/5"
             >
-                <div class="border-b border-slate-100 bg-white p-4 sm:p-6 dark:border-white/10 dark:bg-secondary">
+                <div
+                    class="border-b border-slate-100 bg-white p-4 sm:p-6 dark:border-white/10 dark:bg-secondary"
+                >
                     <div class="flex items-center gap-2">
                         <ClipboardList class="h-4 w-4 text-primary" />
-                        <h3 class="font-semibold text-slate-800 dark:text-white">
+                        <h3
+                            class="font-semibold text-slate-800 dark:text-white"
+                        >
                             Service Summary
                         </h3>
                     </div>
@@ -240,7 +241,11 @@
                                 class="h-4 w-4 shrink-0 text-primary"
                             />
                             <div class="min-w-0 flex-1">
-                                <p class="text-[11px] text-muted dark:text-gray-400">Date</p>
+                                <p
+                                    class="text-[11px] text-muted dark:text-gray-400"
+                                >
+                                    Date
+                                </p>
                                 <p
                                     class="truncate text-sm font-medium text-slate-800 dark:text-white"
                                 >
@@ -262,7 +267,11 @@
                         >
                             <Clock class="h-4 w-4 shrink-0 text-primary" />
                             <div class="min-w-0 flex-1">
-                                <p class="text-[11px] text-muted dark:text-gray-400">Time</p>
+                                <p
+                                    class="text-[11px] text-muted dark:text-gray-400"
+                                >
+                                    Time
+                                </p>
                                 <p
                                     class="truncate text-sm font-medium text-slate-800 dark:text-white"
                                 >
@@ -277,27 +286,24 @@
                     </div>
 
                     <div class="mt-6">
-                        <div class="mb-2.5 flex items-center justify-between">
+                        <!-- <div class="mb-2.5 flex items-center justify-between">
                             <p
                                 class="text-xs font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
                             >
                                 Service
                             </p>
-                            <span
-                                v-if="selectedServices.length"
-                                class="text-xs text-muted dark:text-gray-400"
-                            >
-                                {{ selectedServices.length }} item{{
-                                    selectedServices.length === 1 ? "" : "s"
-                                }}
+                            <span class="text-xs text-muted dark:text-gray-400">
+                                One only
                             </span>
-                        </div>
+                        </div> -->
 
                         <div
                             v-if="!selectedServices.length"
                             class="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-white py-8 text-center dark:border-white/10 dark:bg-secondary"
                         >
-                            <ClipboardX class="h-5 w-5 text-slate-300 dark:text-gray-500" />
+                            <ClipboardX
+                                class="h-5 w-5 text-slate-300 dark:text-gray-500"
+                            />
                             <p class="text-xs text-muted dark:text-gray-400">
                                 No service selected yet.
                             </p>
@@ -349,20 +355,23 @@
                     </div>
                 </div>
 
-                <div class="border-t border-slate-100 bg-white p-6 dark:border-white/10 dark:bg-secondary">
+                <div
+                    class="border-t border-slate-100 bg-white p-6 dark:border-white/10 dark:bg-secondary"
+                >
                     <div class="flex items-center justify-between text-sm">
                         <span class="text-muted dark:text-gray-400">
-                            Subtotal ({{ selectedServices.length }} item{{
-                                selectedServices.length === 1 ? "" : "s"
-                            }})
+                            Subtotal
                         </span>
-                        <span class="font-medium tabular-nums text-slate-700 dark:text-gray-400">
+                        <span
+                            class="font-medium tabular-nums text-slate-700 dark:text-gray-400"
+                        >
                             {{ formatCurrency(totalPrice) }}
                         </span>
                     </div>
 
                     <div class="mt-1.5 flex items-center justify-between">
-                        <span class="text-sm font-semibold text-slate-800 dark:text-white"
+                        <span
+                            class="text-sm font-semibold text-slate-800 dark:text-white"
                             >Total</span
                         >
                         <span
@@ -410,7 +419,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
 import {
-    Check,
     ChevronDown,
     CircleAlert,
     ClipboardList,
@@ -509,6 +517,9 @@ const groupedServices = computed(() => {
             selectedCount: items.filter((s) => isSelected(s)).length,
         }));
 });
+
+// Only one service is ever booked, so the list is really a single choice.
+const selectedService = computed(() => selectedServices.value[0] ?? null);
 
 function isSelected(service: Service) {
     return selectedServices.value.some(

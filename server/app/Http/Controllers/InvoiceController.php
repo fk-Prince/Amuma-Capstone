@@ -64,6 +64,14 @@ class InvoiceController extends Controller
         BranchGuard::mergeRequest($request, $branch);
         if ($request->type === 'refund') {
             return $this->invoiceService->completeRefund($request->all());
+        } else if ($request->type === 'decline-refund') {
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Update);
+            return $this->invoiceService->declineRefund($request->all());
+        } else if ($request->type === 'void') {
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Update);
+            return $this->invoiceService->voidInvoice(
+                $request->all() + ['user_id' => $request->user()?->user_id]
+            );
         }
     }
 }

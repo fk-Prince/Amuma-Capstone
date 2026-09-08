@@ -23,13 +23,20 @@ class Bed extends Model
         return $this->belongsTo(Room::class, 'room_id', 'room_id');
     }
 
+    public function roomTransfers()
+    {
+        return $this->hasMany(RoomTransfer::class, 'to_bed_id', 'bed_id');
+    }
+
     public function currentAdmission()
     {
-        return $this->hasOne(PatientAdmission::class, 'bed_id', 'bed_id')->where('status', PatientAdmission::STATUS_ADMITTED);
+        return $this->hasOne(PatientAdmission::class, 'bed_id', 'bed_id')
+            ->where('status', PatientAdmission::STATUS_ADMITTED);
     }
 
     public function reservedAdmission()
     {
-        return $this->hasOne(PatientAdmission::class, 'bed_id', 'bed_id')->where('status', PatientAdmission::STATUS_WAITING);
+        return $this->hasOne(PatientAdmission::class, 'bed_id', 'bed_id')
+            ->where('status', PatientAdmission::STATUS_WAITING);
     }
 }

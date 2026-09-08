@@ -86,7 +86,7 @@ class BranchContractRepository
                 PatientAdmission::STATUS_ADMITTED,
                 PatientAdmission::STATUS_WAITING,
             ])
-            ->whereHas('invoiceAdmission', fn($query) => $query->whereNotNull('branch_contract_id'))
+            ->whereHas('periods', fn($query) => $query->whereNotNull('branch_contract_id'))
             ->distinct('patient_id')
             ->count('patient_id');
 

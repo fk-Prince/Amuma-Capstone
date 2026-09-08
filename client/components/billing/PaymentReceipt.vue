@@ -16,19 +16,31 @@ const lines = computed(() => props.receipt.lines ?? []);
 
 const isOnline = computed(() => props.receipt.channel === "portal");
 
+const isCredit = computed(() => props.receipt.payment.method === "CREDIT");
+
 const hasChange = computed(() => Number(props.receipt.payment.change_due) > 0);
 
 const settled = computed(
     () => Number(props.receipt.account.balance_after) <= 0,
 );
 
-const channelLabel = computed(() =>
-    isOnline.value ? "Online Payment" : "Counter Payment",
-);
+const channelLabel = computed(() => {
+    if (isCredit.value) return "Credit Applied";
 
-const payorLabel = computed(() =>
-    isOnline.value ? "Paid online by" : "Received from",
-);
+    return isOnline.value ? "Online Payment" : "Counter Payment";
+});
+
+const payorLabel = computed(() => {
+    if (isCredit.value) return "Credit of";
+
+    return isOnline.value ? "Paid online by" : "Received from";
+});
+
+const tenderedLabel = computed(() => {
+    if (isCredit.value) return "Credit used";
+
+    return isOnline.value ? "Amount paid" : "Tendered";
+});
 
 const vatExemptSales = computed(() =>
     Number(props.receipt.payment.amount_applied),
@@ -72,7 +84,7 @@ onBeforeUnmount(() => {
 <template>
     <Teleport to="body">
         <div
-            class="receipt-overlay fixed inset-0 z-50 overflow-y-auto bg-gray-950/50 p-4 backdrop-blur-sm"
+            class="receipt-overlay fixed inset-0 z-[90] overflow-y-auto bg-gray-950/50 p-4 backdrop-blur-sm"
         >
             <div class="mx-auto my-4 w-full max-w-[1000px]">
                 <div
@@ -105,17 +117,6 @@ onBeforeUnmount(() => {
                     id="receipt-print"
                     class="receipt-form relative bg-white p-6 text-black shadow-2xl"
                 >
-                    <div
-                        v-if="receipt.is_voided"
-                        class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
-                    >
-                        <span
-                            class="-rotate-12 text-8xl font-black tracking-widest text-rose-600/20"
-                        >
-                            VOID
-                        </span>
-                    </div>
-
                     <div class="border-2 border-black">
                         <!-- Masthead -->
                         <div class="flex items-stretch border-b border-black">
@@ -225,7 +226,7 @@ onBeforeUnmount(() => {
                                     </span>
 
                                     <span class="px-2 py-1 font-bold">
-                                        {{ receipt.payor.name || "—" }}
+                                        {{ receipt.payor.name }}
                                     </span>
                                 </div>
 
@@ -253,7 +254,7 @@ onBeforeUnmount(() => {
                                 </span>
 
                                 <span class="truncate px-2 py-1 font-bold">
-                                    {{ receipt.issued_by || "—" }}
+                                    {{ receipt.issued_by }}
                                 </span>
                             </div>
                         </div>
@@ -264,12 +265,6 @@ onBeforeUnmount(() => {
                                 <tr
                                     class="border-b border-black uppercase tracking-wide"
                                 >
-                                    <th
-                                        class="w-[130px] border-r border-black px-2 py-1 text-left font-bold"
-                                    >
-                                        Invoice
-                                    </th>
-
                                     <th
                                         class="border-r border-black px-2 py-1 text-left font-bold"
                                     >
@@ -290,17 +285,20 @@ onBeforeUnmount(() => {
                                     :key="line.line_no"
                                     class="align-top"
                                 >
-                                    <td
-                                        class="border-r border-black px-2 py-1 font-mono font-bold"
-                                    >
-                                        {{ line.invoice_code }}
-                                    </td>
-
                                     <td class="border-r border-black px-2 py-1">
                                         {{
                                             line.description ||
                                             "Payment for balance"
                                         }}
+
+                                        <span
+                                            v-if="
+                                                Number(line.amount_applied) < 0
+                                            "
+                                            class="ml-1 uppercase tracking-wide"
+                                        >
+                                            — credit drawn
+                                        </span>
                                     </td>
 
                                     <td
@@ -317,10 +315,6 @@ onBeforeUnmount(() => {
                                     <td class="border-r border-black px-2 py-1">
                                         &nbsp;
                                     </td>
-
-                                    <td
-                                        class="border-r border-black px-2 py-1"
-                                    />
 
                                     <td class="px-2 py-1" />
                                 </tr>
@@ -349,11 +343,7 @@ onBeforeUnmount(() => {
                                         class="flex-1 border-r border-black px-2 py-1"
                                     >
                                         <span class="uppercase">
-                                            {{
-                                                isOnline
-                                                    ? "Amount paid"
-                                                    : "Tendered"
-                                            }}
+                                            {{ tenderedLabel }}
                                         </span>
 
                                         <span class="ml-2 font-mono font-bold">
@@ -367,7 +357,7 @@ onBeforeUnmount(() => {
                                     </div>
 
                                     <div
-                                        v-if="!isOnline"
+                                        v-if="!isOnline && !isCredit"
                                         class="flex-1 border-r border-black px-2 py-1"
                                     >
                                         <span class="uppercase">Change</span>
@@ -489,16 +479,6 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
 
-                    <p
-                        v-if="receipt.is_voided"
-                        class="mt-2 border-2 border-rose-600 px-3 py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-rose-700"
-                    >
-                        Voided {{ longDateTime(receipt.voided_at) }}
-
-                        <template v-if="receipt.void_reason">
-                            — {{ receipt.void_reason }}
-                        </template>
-                    </p>
                 </article>
             </div>
         </div>

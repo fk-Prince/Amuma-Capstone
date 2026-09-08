@@ -210,7 +210,7 @@ class PatientAccessResource extends JsonResource
             'invoice_id' => $invoice->invoice_id,
             'invoice_code' => $invoice->invoice_code,
             'status' => $invoice->status,
-            'total' => (float) $invoice->total,
+            'total' => (float) $invoice->adjusted_total,
             'adjusted_total' => (float) $invoice->adjusted_total,
             'amount_paid' => (float) $invoice->amount_paid,
             'balance_due' => (float) $invoice->balance_due,
@@ -227,14 +227,13 @@ class PatientAccessResource extends JsonResource
 
     private function formatInvoiceSource(object $invoice): ?array
     {
-        if ($invoice->invoiceAccommodation && $invoice->invoiceAccommodation->isNotEmpty()) {
-            $facility = $invoice->invoiceAccommodation->first();
+        if ($invoice->invoiceAdmissionLines && $invoice->invoiceAdmissionLines->isNotEmpty()) {
+            $facility = $invoice->invoiceAdmissionLines->first();
 
             return [
                 'type' => 'Facility Admission',
                 'patient_admission_id' => $facility->patient_admission_id,
-                'start_date' => $facility->start_date?->format('Y-m-d'),
-                'end_date' => $facility->end_date?->format('Y-m-d'),
+                'accommodation_status' => $facility->status,
                 'admission_status' => $facility->patientAdmission?->status,
                 'admitted_at' => $facility->patientAdmission?->admitted_at?->format('Y-m-d H:i:s'),
 
@@ -283,46 +282,45 @@ class PatientAccessResource extends JsonResource
         return null;
     }
 
+    // Read through the allocations, not the payments. One payment can settle
+    // several invoices, so its own total and its refunds across all of them
+    // would both overstate what belongs to this one.
     private function formatPayments(object $invoice): array
     {
-        if (!$invoice->relationLoaded('payments')) {
-            return [];
-        }
+        $invoice->loadMissing('allocations.payment', 'allocations.refundAllocations.refund');
 
-        // One query for the whole invoice rather than one per payment row.
-        $invoice->payments->loadMissing('receipt');
+        return $invoice->allocations
+            ->map(fn($allocation) => [
+                'payment_id' => $allocation->payment_id,
+                'allocation_id' => $allocation->allocation_id,
+                'reference_id' => $allocation->payment?->reference_id,
+                'receipt_no' => $allocation->payment?->receipt_no,
+                'amount' => (float) $allocation->amount,
+                'description' => $allocation->description,
+                'payment_method' => $allocation->payment?->payment_method,
+                'masked_card_number' => $allocation->payment?->masked_card_number,
+                'created_at' => $allocation->payment?->created_at?->format('Y-m-d H:i:s'),
 
-        return $invoice->payments
-            ->map(fn($payment) => [
-                'payment_id' => $payment->payment_id,
-                'reference_id' => $payment->reference_id,
-                'receipt_no' => $payment->receipt?->receipt_no,
-                'amount' => (float) $payment->amount,
-                'payment_method' => $payment->payment_method,
-                'masked_card_number' => $payment->masked_card_number,
-                'created_at' => $payment->created_at?->format('Y-m-d H:i:s'),
-
-                'refunds' => $this->formatRefunds($payment),
+                'refunds' => $this->formatRefunds($allocation),
             ])
             ->values()
             ->toArray();
     }
 
-    private function formatRefunds(object $payment): array
+    // The slice of each refund that came off this allocation, since a refund
+    // can be drawn from several payments at once.
+    private function formatRefunds(object $allocation): array
     {
-        if (!$payment->relationLoaded('refunds')) {
-            return [];
-        }
-
-        return $payment->refunds
-            ->map(fn($refund) => [
-                'refund_id' => $refund->refund_id,
-                'amount' => (float) $refund->amount,
-                'refund_method' => $refund->refund_method,
-                'reference_id' => $refund->reference_id,
-                'status' => $refund->status,
-                'reason' => $refund->reason,
-                'created_at' => $refund->created_at?->format('Y-m-d H:i:s'),
+        return $allocation->refundAllocations
+            ->map(fn($line) => [
+                'refund_id' => $line->refund_id,
+                'amount' => (float) $line->amount,
+                'refund_total' => (float) ($line->refund?->amount ?? 0),
+                'refund_method' => $line->refund?->refund_method,
+                'refund_code' => $line->refund?->refund_code,
+                'status' => $line->refund?->status,
+                'declined_reason' => $line->refund?->declined_reason,
+                'created_at' => $line->refund?->created_at?->format('Y-m-d H:i:s'),
             ])
             ->values()
             ->toArray();

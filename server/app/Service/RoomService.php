@@ -2,14 +2,8 @@
 
 namespace App\Service;
 
-use App\Enums\ModuleEnum;
-use App\Enums\PermissionAction;
-use App\Guard\AuthGuard;
-use App\Guard\BranchGuard;
 use App\Repository\RoomRepository;
 use App\Http\Resources\RoomResource;
-use App\Models\User;
-use App\Repository\BranchRepository;
 
 use Exception;
 
@@ -22,13 +16,13 @@ class RoomService
         $this->roomRepository = $roomRepository;
     }
 
-    public function overview(User $user, array $payload)
+    public function overview(array $payload)
     {
         return $this->roomRepository->getRoomStats($payload['branch_id']);
     }
 
 
-    public function createRoom(User $user, array $payload)
+    public function createRoom(array $payload)
     {
         $existingRoom = $this->roomRepository->findByField([
             ['branch_id', '=', $payload['branch_id']],
@@ -52,13 +46,13 @@ class RoomService
     }
 
 
-    public function listRoom(User $user, array $payload)
+    public function listRoom(array $payload)
     {
         $model = $this->roomRepository->paginate($payload['branch_id'], $payload, $payload['per_page']);
         return RoomResource::collection($model);
     }
 
-    public function updateRoom(User $user, string $id, array $payload)
+    public function updateRoom(string $id, array $payload)
     {
         $existingRoom = $this->roomRepository->findByField([
             ['branch_id', '=', $payload['branch_id']],

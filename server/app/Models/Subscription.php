@@ -49,12 +49,12 @@ class Subscription extends Model
         return $this->belongsTo(Plan::class, 'pending_plan_id', 'plan_id');
     }
 
-    public function effectivePlan(): ?Plan
+    public function effectivePlan()
     {
         return $this->pendingPlanIsDue() ? $this->pendingPlan : $this->plans;
     }
 
-    public function pendingPlanIsDue(): bool
+    public function pendingPlanIsDue()
     {
         return $this->pending_plan_id
             && $this->pending_plan_starts_at

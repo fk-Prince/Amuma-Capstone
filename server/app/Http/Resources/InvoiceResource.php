@@ -19,10 +19,10 @@ class InvoiceResource extends JsonResource
         return [
             'invoice_id'   => $this->invoice_id,
             'invoice_code' => $this->invoice_code,
-            'total'        => (float) $this->total,
+            'total'        => (float) $this->total_amount,
             'amount_paid'  => $this->amount_paid,
             'refunded_amount'          => $this->refunded_amount,
-            'refund_processing_amount' => $this->refunded_processing_amount,
+            'refund_requested_amount' => $this->refunded_requested_amount,
             'refund_status'            => $this->refund_status,
             'balance_due'  => $this->balance_due,
             'status'       => $this->resolveStatus(),
@@ -49,13 +49,14 @@ class InvoiceResource extends JsonResource
             ),
 
             'facilities' => $this->whenLoaded(
-                'invoiceAccommodation',
+                'invoiceAdmissionLines',
                 fn() =>
-                $this->invoiceAccommodation->map(fn($facility) => [
-                    'invoice_accommodation_id'  => $facility->invoice_accommodation_id,
-                    'branch_contract_id'   => $facility->branch_contract_id,
+                $this->invoiceAdmissionLines->map(fn($facility) => [
+                    'invoice_admission_id' => $facility->invoice_admission_id,
+                    'admission_period_id'  => $facility->admission_period_id,
+                    'branch_contract_id'   => $facility->branchContract?->branch_contract_id,
                     'price'                => (float) $facility->price,
-                    'patient_admission_id' => $facility->patient_admission_id,
+                    'patient_admission_id' => $facility->patientAdmission?->patient_admission_id,
 
                     'patient_name' => trim(
                         ($facility->patientAdmission->patient->first_name ?? '') . ' ' .
@@ -64,29 +65,36 @@ class InvoiceResource extends JsonResource
                 ])
             ),
 
+            // Through the allocations: a payment split across invoices only
+            // contributes its own share, and its refunds here are the ones
+            // raised against this invoice.
             'payments' => $this->whenLoaded(
-                'payments',
+                'allocations',
                 fn() =>
-                $this->payments->map(fn($payment) => [
-                    'payment_id'     => $payment->payment_id,
-                    'reference_id'   => $payment->reference_id,
-                    'amount'         => (float) $payment->amount,
-                    'payment_method' => $payment->payment_method,
-                    'created_at'     => $payment->created_at?->toIso8601String(),
+                $this->allocations->map(fn($allocation) => [
+                    'payment_id'     => $allocation->payment_id,
+                    'allocation_id'  => $allocation->allocation_id,
+                    'receipt_no'     => $allocation->payment?->receipt_no,
+                    'reference_id'   => $allocation->payment?->reference_id,
+                    'amount'         => (float) $allocation->amount,
+                    'description'    => $allocation->description,
+                    'payment_method' => $allocation->payment?->payment_method,
+                    'created_at'     => $allocation->payment?->created_at?->toIso8601String(),
 
-                    'refunds' => $payment->relationLoaded('refunds')
-                        ? $payment->refunds->map(fn($refund) => [
-                            'refund_id'           => $refund->refund_id,
-                            'reference_id'        => $refund->reference_id,
-                            'amount'              => (float) $refund->amount,
-                            'status'              => $refund->status,
-                            'refund_method'       => $refund->refund_method,
-                            'reason'              => $refund->reason,
-                            'masked_card_number'  => $refund->masked_card_number,
-                            'created_at'          => $refund->created_at?->toIso8601String(),
-                        ])
-                        : [],
-                ])
+                    'refunds' => $allocation->refundAllocations->map(fn($line) => [
+                        'refund_id'           => $line->refund_id,
+                        'refund_code'         => $line->refund?->refund_code,
+                        // This allocation's share; refund_total is the whole
+                        // refund, which may span other payments.
+                        'amount'              => (float) $line->amount,
+                        'refund_total'        => (float) ($line->refund?->amount ?? 0),
+                        'status'              => $line->refund?->status,
+                        'refund_method'       => $line->refund?->refund_method,
+                        'declined_reason'     => $line->refund?->declined_reason,
+                        'masked_card_number'  => $line->refund?->masked_card_number,
+                        'created_at'          => $line->refund?->created_at?->toIso8601String(),
+                    ])->values(),
+                ])->values()
             ),
 
             'adjustments' => $this->whenLoaded(
@@ -108,7 +116,7 @@ class InvoiceResource extends JsonResource
             */
 
             'discharge_calculation' => $this->when(
-                $this->resource->relationLoaded('invoiceAccommodation'),
+                $this->resource->relationLoaded('invoiceAdmissionLines'),
                 fn() => $this->resolveDischargeCalculation()
             ),
         ];
@@ -123,7 +131,7 @@ class InvoiceResource extends JsonResource
      */
     protected function resolveDischargeCalculation(): ?array
     {
-        $facility = $this->invoiceAccommodation->first();
+        $facility = $this->invoiceAdmissionLines->first();
 
         if (!$facility) {
             return null;
@@ -175,26 +183,6 @@ class InvoiceResource extends JsonResource
         |--------------------------------------------------------------------------
         */
 
-        $terminationFeePercent = max(0, min(100, (float) data_get(
-            $this->branch?->settings,
-            'termination_fee_percent',
-            0
-        )));
-
-        $terminationFee = round(
-            $contractPrice * ($terminationFeePercent / 100),
-            2
-        );
-
-        $normalRefund = 0;
-
-        if ($daysSinceAdmission <= 7) {
-            $normalRefund = max(
-                0,
-                $paidAmount - $terminationFee
-            );
-        }
-
         /*
         |--------------------------------------------------------------------------
         | DISCHARGE TODAY
@@ -233,30 +221,6 @@ class InvoiceResource extends JsonResource
             'contract_price' => $contractPrice,
 
             'paid_amount' => $paidAmount,
-
-            /*
-            |--------------------------------------------------------------------------
-            | NORMAL
-            |--------------------------------------------------------------------------
-            */
-
-            'normal' => [
-                'within_termination_window' =>
-                    $daysSinceAdmission <= 7,
-
-                'termination_fee_percent' =>
-                    $daysSinceAdmission <= 7
-                        ? $terminationFeePercent
-                        : 0,
-
-                'termination_fee' =>
-                    $daysSinceAdmission <= 7
-                        ? $terminationFee
-                        : 0,
-
-                'refund_amount' =>
-                    $normalRefund,
-            ],
 
             /*
             |--------------------------------------------------------------------------
@@ -378,8 +342,8 @@ class InvoiceResource extends JsonResource
     {
         $patient = null;
 
-        if ($this->resource->relationLoaded('invoiceAccommodation')) {
-            $patient = $this->invoiceAccommodation
+        if ($this->resource->relationLoaded('invoiceAdmissionLines')) {
+            $patient = $this->invoiceAdmissionLines
                 ->first()?->patientAdmission?->patient;
         }
 

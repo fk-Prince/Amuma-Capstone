@@ -34,19 +34,14 @@ const props = defineProps<{
 
 const variant = computed(() => route.meta.navVariant ?? 1);
 
-// Same box the landing sections use, so the floating bar tracks the content
-// column at every width instead of only where the two percentages happen to
-// meet. Its px-10 below matches the sections' inner padding.
 const CONTENT_BOX = "inset-x-0 mx-auto w-[94%] max-w-[1600px]";
 
 const navInner = computed(() => {
     if (variant.value === 2 || variant.value === 3) return "px-10";
-    // Percentage padding drifts against a capped container — it only lines up
-    // at one viewport width — so variant 1 uses the same box as the sections.
     if (variant.value === 1 || variant.value === 4)
         return "mx-auto max-w-[100rem] px-6";
-    // Sits over the auth pages' left panel, so it tracks that panel's padding.
     if (variant.value === 5) return "px-8 md:px-10 lg:px-20";
+    if (variant.value === 6) return "mx-auto max-w-[100rem] px-6 sm:px-10";
 
     return "px-6";
 });
@@ -108,6 +103,13 @@ const header = computed(() => {
                 scrolled.value
                     ? "bg-white dark:bg-secondary border-b border-muted-light dark:border-white/10"
                     : "bg-transparent border-b border-transparent",
+            ]
+                .filter(Boolean)
+                .join(" ");
+        case 6:
+            return [
+                "relative w-full h-[90px] flex items-center",
+                "border-b border-muted-light dark:bg-secondary dark:border-white/10", //dark:bg-secondary dark:border-white/10
             ]
                 .filter(Boolean)
                 .join(" ");
@@ -225,6 +227,27 @@ watch(
                     />
                 </ClientOnly>
             </nav>
+            <nav
+                v-if="variant === 6"
+                class="flex h-[90px] w-full items-center justify-between"
+            >
+                <NuxtLink to="/" class="shrink-0">
+                    <img
+                        :src="logoAmuma"
+                        alt="AMUMA logo"
+                        class="w-[180px] object-contain transition-all duration-300"
+                    />
+                </NuxtLink>
+
+                <NavbarProfileDropdown
+                    v-if="hydrated && user"
+                    :user="user"
+                    :scrolled="scrolled"
+                    :navTheme="navTheme"
+                    :theme-aware="true"
+                />
+            </nav>
+
             <template
                 v-if="
                     variant === 1 ||

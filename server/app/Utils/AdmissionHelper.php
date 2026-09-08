@@ -2,14 +2,13 @@
 
 namespace App\Utils;
 
+use App\Models\AdmissionPeriod;
 use Carbon\Carbon;
 use Exception;
 
 class AdmissionHelper
 {
     public function __construct() {}
-
-
 
 
     public static function calculateEndDate(Carbon $admissionDate, string $billingCycle)
@@ -22,7 +21,7 @@ class AdmissionHelper
         };
     }
 
-    public static function billingCycle(string $billingCycle): int
+    public static function billingCycle(string $billingCycle)
     {
         return match (strtolower(trim($billingCycle))) {
             'monthly' => 1,
@@ -34,5 +33,31 @@ class AdmissionHelper
             'yearly' => 12,
             default => throw new Exception('Invalid billing cycle.'),
         };
+    }
+
+    public static function cycleDays(Carbon $start, string $billingCycle)
+    {
+        $cycleEnd = self::calculateEndDate($start->copy(), $billingCycle);
+
+        return max(1, (int) ceil($start->diffInDays($cycleEnd)));
+    }
+
+    public static function dailyRate(string $billingCycle, float $price)
+    {
+        return $price / self::cycleDays(Carbon::today(), $billingCycle);
+    }
+
+
+    public static function periodConsumption(AdmissionPeriod $period): array
+    {
+        $totalDays = $period->totalDays();
+        $consumedDays = $period->consumedDays();
+
+        return [
+            'total'     => $totalDays,
+            'consumed'  => $consumedDays,
+            'remaining' => $totalDays - $consumedDays,
+            'ratio'     => $consumedDays / $totalDays,
+        ];
     }
 }

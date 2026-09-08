@@ -62,16 +62,34 @@
                         </div>
                     </div>
 
-                    <div class="shrink-0 text-left sm:text-right">
-                        <p
-                            class="text-[10px] uppercase tracking-[0.12em] text-muted dark:text-gray-400"
-                        >
-                            Amount
-                        </p>
+                    <div class="flex shrink-0 items-center gap-4">
+                        <div class="text-left sm:text-right">
+                            <p
+                                class="text-[10px] uppercase tracking-[0.12em] text-muted dark:text-gray-400"
+                            >
+                                Amount
+                            </p>
 
-                        <p class="mt-1 text-base font-bold text-accent-700 dark:text-accent-300">
-                            ₱{{ formatMoney(service.price) }}
-                        </p>
+                            <p
+                                class="mt-1 text-base font-bold text-accent-700 dark:text-accent-300"
+                            >
+                                ₱{{ formatMoney(service.price) }}
+                            </p>
+                        </div>
+
+                        <button
+                            v-if="service.schedule_services_id"
+                            type="button"
+                            class="shrink-0 rounded-xl border border-primary-200 px-3.5 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-500/30 dark:text-primary-300 dark:hover:bg-primary-500/10"
+                            @click="
+                                emit(
+                                    'view-service-invoices',
+                                    service.schedule_services_id,
+                                )
+                            "
+                        >
+                            View invoices
+                        </button>
                     </div>
                 </div>
 
@@ -115,6 +133,10 @@ import type { InvoiceServiceLine } from "~/types/invoice";
 
 defineProps<{
     services: InvoiceServiceLine[];
+}>();
+
+const emit = defineEmits<{
+    (event: "view-service-invoices", scheduleServiceId: number): void;
 }>();
 
 function formatMoney(amount: number | string | null | undefined) {

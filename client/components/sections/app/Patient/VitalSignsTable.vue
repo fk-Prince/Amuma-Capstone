@@ -9,6 +9,9 @@ import {
     Plus,
 } from "lucide-vue-next";
 import type { Vital } from "~/types/medication";
+import ActionButton from "~/components/ui/ActionButton.vue";
+
+const { canChart, chartingBlockedReason } = usePermissions();
 
 const props = withDefaults(
     defineProps<{
@@ -85,11 +88,17 @@ const emit = defineEmits<{
         </div>
 
         <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5">
-                <p class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500">
+            <div
+                class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5"
+            >
+                <p
+                    class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                >
                     Blood Pressure
                 </p>
-                <p class="mt-1 text-sm font-semibold text-slate-800 dark:text-white">
+                <p
+                    class="mt-1 text-sm font-semibold text-slate-800 dark:text-white"
+                >
                     {{
                         latestVital.bloodPressureSystolic &&
                         latestVital.bloodPressureDiastolic
@@ -99,20 +108,32 @@ const emit = defineEmits<{
                 </p>
             </div>
 
-            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5">
-                <p class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500">
+            <div
+                class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5"
+            >
+                <p
+                    class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                >
                     Heart Rate
                 </p>
-                <p class="mt-1 text-sm font-semibold text-slate-800 dark:text-white">
+                <p
+                    class="mt-1 text-sm font-semibold text-slate-800 dark:text-white"
+                >
                     {{ latestVital.heartRate || "—" }}
                 </p>
             </div>
 
-            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5">
-                <p class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500">
+            <div
+                class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5"
+            >
+                <p
+                    class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                >
                     Oxygen
                 </p>
-                <p class="mt-1 text-sm font-semibold text-slate-800 dark:text-white">
+                <p
+                    class="mt-1 text-sm font-semibold text-slate-800 dark:text-white"
+                >
                     {{
                         latestVital.oxygenSaturation
                             ? `${latestVital.oxygenSaturation}%`
@@ -121,11 +142,17 @@ const emit = defineEmits<{
                 </p>
             </div>
 
-            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5">
-                <p class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500">
+            <div
+                class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5"
+            >
+                <p
+                    class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                >
                     Temperature
                 </p>
-                <p class="mt-1 text-sm font-semibold text-slate-800 dark:text-white">
+                <p
+                    class="mt-1 text-sm font-semibold text-slate-800 dark:text-white"
+                >
                     {{
                         latestVital.temperature
                             ? `${latestVital.temperature}°F`
@@ -134,38 +161,62 @@ const emit = defineEmits<{
                 </p>
             </div>
 
-            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5">
-                <p class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500">
+            <div
+                class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5"
+            >
+                <p
+                    class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                >
                     Resp. Rate
                 </p>
-                <p class="mt-1 text-sm font-semibold text-slate-800 dark:text-white">
+                <p
+                    class="mt-1 text-sm font-semibold text-slate-800 dark:text-white"
+                >
                     {{ latestVital.respiratoryRate || "—" }}
                 </p>
             </div>
 
-            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5">
-                <p class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500">
+            <div
+                class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5"
+            >
+                <p
+                    class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                >
                     Glucose
                 </p>
-                <p class="mt-1 text-sm font-semibold text-slate-800 dark:text-white">
+                <p
+                    class="mt-1 text-sm font-semibold text-slate-800 dark:text-white"
+                >
                     {{ latestVital.bloodGlucose || "—" }}
                 </p>
             </div>
 
-            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5">
-                <p class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500">
+            <div
+                class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5"
+            >
+                <p
+                    class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                >
                     Pain
                 </p>
-                <p class="mt-1 text-sm font-semibold text-slate-800 dark:text-white">
+                <p
+                    class="mt-1 text-sm font-semibold text-slate-800 dark:text-white"
+                >
                     {{ latestVital.painLevel || "—" }}
                 </p>
             </div>
 
-            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5">
-                <p class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500">
+            <div
+                class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5"
+            >
+                <p
+                    class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                >
                     Recorded
                 </p>
-                <p class="mt-1 text-sm font-semibold text-slate-800 dark:text-white">
+                <p
+                    class="mt-1 text-sm font-semibold text-slate-800 dark:text-white"
+                >
                     {{ latestVital.recordedDate }}
                     {{ latestVital.recordedTime }}
                 </p>
@@ -201,14 +252,17 @@ const emit = defineEmits<{
                 </button>
             </div>
 
-            <button
-                class="rounded-xl bg-primary flex items-center gap-3 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/50"
+            <ActionButton
+                variant="primary"
+                extra-class="px-5 py-2"
+                :disabled="!canChart"
+                :tooltip="canChart ? '' : chartingBlockedReason"
                 @click="emit('add-vital')"
             >
                 <Plus class="h-4 w-4" />
 
                 Add Vital
-            </button>
+            </ActionButton>
         </div>
 
         <div
@@ -217,7 +271,9 @@ const emit = defineEmits<{
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[1200px] text-left">
                     <thead>
-                        <tr class="border-b border-slate-100 dark:border-white/10">
+                        <tr
+                            class="border-b border-slate-100 dark:border-white/10"
+                        >
                             <th
                                 class="px-6 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                             >
@@ -280,7 +336,9 @@ const emit = defineEmits<{
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-slate-50 dark:divide-white/10">
+                    <tbody
+                        class="divide-y divide-slate-50 dark:divide-white/10"
+                    >
                         <tr v-if="filteredVitals.length === 0">
                             <td
                                 colspan="9"
@@ -295,15 +353,21 @@ const emit = defineEmits<{
                             :key="vital.id"
                             class="transition hover:bg-slate-50/60 dark:hover:bg-white/5"
                         >
-                            <td class="px-6 py-4 text-sm text-slate-600 dark:text-gray-400">
+                            <td
+                                class="px-6 py-4 text-sm text-slate-600 dark:text-gray-400"
+                            >
                                 {{ vital.recordedDate }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400">
+                            <td
+                                class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
+                            >
                                 {{ vital.recordedTime }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400">
+                            <td
+                                class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
+                            >
                                 {{
                                     vital.bloodPressureSystolic &&
                                     vital.bloodPressureDiastolic
@@ -312,15 +376,21 @@ const emit = defineEmits<{
                                 }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400">
+                            <td
+                                class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
+                            >
                                 {{ vital.heartRate ?? "—" }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400">
+                            <td
+                                class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
+                            >
                                 {{ vital.respiratoryRate ?? "—" }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400">
+                            <td
+                                class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
+                            >
                                 {{
                                     vital.oxygenSaturation
                                         ? `${vital.oxygenSaturation}%`
@@ -328,7 +398,9 @@ const emit = defineEmits<{
                                 }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400">
+                            <td
+                                class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
+                            >
                                 {{
                                     vital.temperature
                                         ? `${vital.temperature}°F`
@@ -336,11 +408,15 @@ const emit = defineEmits<{
                                 }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400">
+                            <td
+                                class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
+                            >
                                 {{ vital.bloodGlucose ?? "—" }}
                             </td>
 
-                            <td class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400">
+                            <td
+                                class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
+                            >
                                 {{ vital.painLevel ?? "—" }}
                             </td>
 

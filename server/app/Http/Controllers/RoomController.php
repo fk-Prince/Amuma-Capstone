@@ -26,7 +26,7 @@ class RoomController extends Controller
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Read);
         BranchGuard::mergeRequest($request, $branch);
-        return $this->roomService->listRoom($request->user(), $request->all());
+        return $this->roomService->listRoom($request->all());
     }
 
     public function store(StoreRoomRequest $request)
@@ -35,7 +35,7 @@ class RoomController extends Controller
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Create);
         BranchGuard::mergeRequest($request, $branch);
 
-        return $this->roomService->createRoom($request->user(), $request->all());
+        return $this->roomService->createRoom($request->all());
     }
 
     public function update(UpdateRoomRequest $request, string $id)
@@ -43,7 +43,7 @@ class RoomController extends Controller
         $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Update);
         BranchGuard::mergeRequest($request, $branch);
-        return $this->roomService->updateRoom($request->user(), $id, $request->all());
+        return $this->roomService->updateRoom($id, $request->all());
     }
 
     public function overview(Request $request)
@@ -51,6 +51,6 @@ class RoomController extends Controller
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::RoomsAndBeds, PermissionAction::Read);
         BranchGuard::mergeRequest($request, $branch);
-        return $this->roomService->overview($request->user(), $request->all());
+        return $this->roomService->overview($request->all());
     }
 }

@@ -1,8 +1,7 @@
 <template>
     <div class="min-h-screen bg-slate-50/70 pt-[100px] dark:bg-surface">
         <div class="mx-auto w-full max-w-[100rem] px-6 pb-16">
-            <div class="max-w-4xl">
-                <!-- Header -->
+            <div class="w-full">
                 <div
                     class="flex flex-col gap-4 py-6 sm:flex-row sm:items-start sm:justify-between"
                 >
@@ -263,22 +262,26 @@ let handler: ((event: any) => void) | null = null;
 const TONES: Record<string, { icon: any; wrapper: string }> = {
     Booking: {
         icon: ClipboardList,
-        wrapper: "bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300",
+        wrapper:
+            "bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300",
     },
     Schedule: {
         icon: CalendarClock,
-        wrapper: "bg-accent-50 text-accent-700 dark:bg-accent-500/10 dark:text-accent-300",
+        wrapper:
+            "bg-accent-50 text-accent-700 dark:bg-accent-500/10 dark:text-accent-300",
     },
     Billing: {
         icon: CreditCard,
-        wrapper: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+        wrapper:
+            "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
     },
 };
 
 const toneFor = (type: string) =>
     TONES[type] ?? {
         icon: MessageSquare,
-        wrapper: "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-gray-400",
+        wrapper:
+            "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-gray-400",
     };
 
 // Guards against a slow earlier page landing after a filter switch.

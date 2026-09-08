@@ -23,17 +23,17 @@ class Branch extends Model
         'email'
     ];
 
-    public function hasFacilitySubscription(): bool
+    public function hasFacilitySubscription()
     {
         return $this->hasPlanAccess(['B', 'C']);
     }
 
-    public function hasHomecareSubscription(): bool
+    public function hasHomecareSubscription()
     {
         return $this->hasPlanAccess(['A', 'C']);
     }
 
-    private function hasPlanAccess(array $planCodes): bool
+    private function hasPlanAccess(array $planCodes)
     {
         return $this->subscriptions()
             ->wherePivot('status', BranchSubscription::STATUS_APPROVED)

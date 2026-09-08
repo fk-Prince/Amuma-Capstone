@@ -5,50 +5,45 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class InvoiceAccommodation extends Model
+class InvoiceAdmission extends Model
 {
-    protected $table = 'invoice_accommodations';
+    protected $table = 'invoice_admission';
 
-    protected $primaryKey = 'invoice_accommodation_id';
+    protected $primaryKey = 'invoice_admission_id';
 
     protected $fillable = [
-        'branch_contract_id',
-        'patient_admission_id',
         'invoice_id',
+        'admission_period_id',
         'price',
-        'start_date',
-        'end_date',
     ];
 
-    protected $casts = [
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
-    ];
-
-    public function branchContract(): BelongsTo
+    public function admissionPeriod()
     {
-        return $this->belongsTo(
-            BranchContract::class,
-            'branch_contract_id',
-            'branch_contract_id'
-        );
+        return $this->belongsTo(AdmissionPeriod::class, 'admission_period_id',   'admission_period_id');
     }
 
-    public function patientAdmission(): BelongsTo
+    public function invoice()
     {
-        return $this->belongsTo(
-            PatientAdmission::class,
-            'patient_admission_id',
-            'patient_admission_id'
-        );
+        return $this->belongsTo(Invoice::class,  'invoice_id', 'invoice_id');
     }
 
-    public function invoice(): BelongsTo
+    public function getPatientAdmissionAttribute()
     {
-        return $this->belongsTo(
-            Invoice::class,
-            'invoice_id',
-            'invoice_id'
-        );
+        return $this->admissionPeriod?->patientAdmission;
+    }
+
+    public function getBranchContractAttribute()
+    {
+        return $this->admissionPeriod?->branchContract;
+    }
+
+    public function getBedAttribute()
+    {
+        return $this->admissionPeriod?->patientAdmission?->bed;
+    }
+
+    public function getStatusAttribute()
+    {
+        return $this->admissionPeriod?->status;
     }
 }

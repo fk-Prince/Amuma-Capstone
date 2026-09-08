@@ -12,6 +12,9 @@ import {
     assessmentLabel,
     lifeSystemLabel,
 } from "~/utils/assessment";
+import ActionButton from "~/components/ui/ActionButton.vue";
+
+const { canLogActivity, careTeamBlockedReason } = usePermissions();
 
 const props = defineProps<{
     patient: PatientRetrieve;
@@ -38,8 +41,8 @@ const diagnoses = computed<any[]>(() => {
         Array.isArray(provided) && provided.length
             ? provided
             : assessments.value.filter(
-                (entry: any) => entry?.diagnosis || entry?.diagnosis_notes,
-            );
+                  (entry: any) => entry?.diagnosis || entry?.diagnosis_notes,
+              );
 
     return [...existing, ...added.value];
 });
@@ -84,7 +87,8 @@ function onFileChange(event: Event) {
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-        draftErrors.diagnosis_file = "Only PDF, PNG, and JPG files are allowed.";
+        draftErrors.diagnosis_file =
+            "Only PDF, PNG, and JPG files are allowed.";
         input.value = "";
         return;
     }
@@ -157,18 +161,22 @@ const activeAssessment = computed(
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2">
                 <FileText class="h-4 w-4 text-primary" />
-                <h3 class="font-semibold text-secondary dark:text-white">Diagnosis</h3>
+                <h3 class="font-semibold text-secondary dark:text-white">
+                    Diagnosis
+                </h3>
             </div>
 
-            <button
+            <ActionButton
                 v-if="!adding"
-                type="button"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-gray-400"
+                variant="outline"
+                extra-class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
+                :disabled="!canLogActivity"
+                :tooltip="canLogActivity ? '' : careTeamBlockedReason"
                 @click="adding = true"
             >
                 <Plus class="h-3.5 w-3.5" />
                 Add diagnosis
-            </button>
+            </ActionButton>
         </div>
 
         <form
@@ -200,7 +208,9 @@ const activeAssessment = computed(
             />
 
             <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-semibold text-slate-700 dark:text-gray-400">
+                <label
+                    class="text-sm font-semibold text-slate-700 dark:text-gray-400"
+                >
                     Supporting Document
                 </label>
 
@@ -223,7 +233,9 @@ const activeAssessment = computed(
 
                     <template v-if="draft.diagnosis_file">
                         <FileText class="h-4 w-4 text-primary" />
-                        <span class="font-medium text-slate-700 dark:text-gray-400">
+                        <span
+                            class="font-medium text-slate-700 dark:text-gray-400"
+                        >
                             {{ draft.diagnosis_file.name }}
                         </span>
                         <button
@@ -273,7 +285,10 @@ const activeAssessment = computed(
             </div>
         </form>
 
-        <p v-if="!diagnoses.length && !adding" class="mt-4 text-sm text-muted dark:text-gray-400">
+        <p
+            v-if="!diagnoses.length && !adding"
+            class="mt-4 text-sm text-muted dark:text-gray-400"
+        >
             No diagnosis recorded.
         </p>
 
@@ -292,28 +307,42 @@ const activeAssessment = computed(
 
                 <div class="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
                     <div>
-                        <p class="text-xs text-muted dark:text-gray-400">Diagnosis</p>
-                        <p class="mt-0.5 font-medium text-secondary dark:text-white">
+                        <p class="text-xs text-muted dark:text-gray-400">
+                            Diagnosis
+                        </p>
+                        <p
+                            class="mt-0.5 font-medium text-secondary dark:text-white"
+                        >
                             {{ entry.diagnosis || "—" }}
                         </p>
                     </div>
 
                     <div>
-                        <p class="text-xs text-muted dark:text-gray-400">Diagnosis Date</p>
-                        <p class="mt-0.5 font-medium text-secondary dark:text-white">
+                        <p class="text-xs text-muted dark:text-gray-400">
+                            Diagnosis Date
+                        </p>
+                        <p
+                            class="mt-0.5 font-medium text-secondary dark:text-white"
+                        >
                             {{ formatDate(entry.diagnosis_date) }}
                         </p>
                     </div>
 
                     <div class="sm:col-span-2">
-                        <p class="text-xs text-muted dark:text-gray-400">Diagnosis Notes</p>
-                        <p class="mt-0.5 font-medium text-secondary dark:text-white">
+                        <p class="text-xs text-muted dark:text-gray-400">
+                            Diagnosis Notes
+                        </p>
+                        <p
+                            class="mt-0.5 font-medium text-secondary dark:text-white"
+                        >
                             {{ entry.diagnosis_notes || "—" }}
                         </p>
                     </div>
 
                     <div v-if="entry.diagnosis_file" class="sm:col-span-2">
-                        <p class="text-xs text-muted dark:text-gray-400">Supporting Document</p>
+                        <p class="text-xs text-muted dark:text-gray-400">
+                            Supporting Document
+                        </p>
                         <a
                             :href="entry.diagnosis_file"
                             target="_blank"
@@ -331,7 +360,9 @@ const activeAssessment = computed(
     <section class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary">
         <div class="flex items-center gap-2">
             <Stethoscope class="h-4 w-4 text-primary" />
-            <h3 class="font-semibold text-secondary dark:text-white">Assessment</h3>
+            <h3 class="font-semibold text-secondary dark:text-white">
+                Assessment
+            </h3>
         </div>
 
         <p
@@ -372,8 +403,12 @@ const activeAssessment = computed(
 
                     <div class="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
                         <div>
-                            <p class="text-xs text-muted dark:text-gray-400">Mobility</p>
-                            <p class="mt-0.5 font-medium text-secondary dark:text-white">
+                            <p class="text-xs text-muted dark:text-gray-400">
+                                Mobility
+                            </p>
+                            <p
+                                class="mt-0.5 font-medium text-secondary dark:text-white"
+                            >
                                 {{
                                     assessmentLabel(
                                         activeAssessment.condition,
@@ -386,7 +421,9 @@ const activeAssessment = computed(
                             <p class="text-xs text-muted dark:text-gray-400">
                                 Level of Consciousness
                             </p>
-                            <p class="mt-0.5 font-medium text-secondary dark:text-white">
+                            <p
+                                class="mt-0.5 font-medium text-secondary dark:text-white"
+                            >
                                 {{
                                     assessmentLabel(
                                         activeAssessment.mental_state,
@@ -396,8 +433,12 @@ const activeAssessment = computed(
                         </div>
 
                         <div>
-                            <p class="text-xs text-muted dark:text-gray-400">Affect</p>
-                            <p class="mt-0.5 font-medium text-secondary dark:text-white">
+                            <p class="text-xs text-muted dark:text-gray-400">
+                                Affect
+                            </p>
+                            <p
+                                class="mt-0.5 font-medium text-secondary dark:text-white"
+                            >
                                 {{
                                     assessmentLabel(activeAssessment.affect) ||
                                     "—"
@@ -406,8 +447,12 @@ const activeAssessment = computed(
                         </div>
 
                         <div>
-                            <p class="text-xs text-muted dark:text-gray-400">Behavior</p>
-                            <p class="mt-0.5 font-medium text-secondary dark:text-white">
+                            <p class="text-xs text-muted dark:text-gray-400">
+                                Behavior
+                            </p>
+                            <p
+                                class="mt-0.5 font-medium text-secondary dark:text-white"
+                            >
                                 {{
                                     assessmentLabel(
                                         activeAssessment.behavior,
@@ -417,16 +462,27 @@ const activeAssessment = computed(
                         </div>
 
                         <div>
-                            <p class="text-xs text-muted dark:text-gray-400">Communication</p>
-                            <p class="mt-0.5 font-medium text-secondary dark:text-white">
+                            <p class="text-xs text-muted dark:text-gray-400">
+                                Communication
+                            </p>
+                            <p
+                                class="mt-0.5 font-medium text-secondary dark:text-white"
+                            >
                                 {{ activeAssessment.communication || "—" }}
                             </p>
                         </div>
 
                         <div>
-                            <p class="text-xs text-muted dark:text-gray-400">Speech</p>
-                            <p class="mt-0.5 font-medium text-secondary dark:text-white">
-                                {{ assessmentLabel(activeAssessment.speech) || "—" }}
+                            <p class="text-xs text-muted dark:text-gray-400">
+                                Speech
+                            </p>
+                            <p
+                                class="mt-0.5 font-medium text-secondary dark:text-white"
+                            >
+                                {{
+                                    assessmentLabel(activeAssessment.speech) ||
+                                    "—"
+                                }}
                             </p>
                         </div>
                     </div>
@@ -440,10 +496,23 @@ const activeAssessment = computed(
                     </h5>
 
                     <div class="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
-                        <div v-for="activity in LIFE_SYSTEM_ACTIVITIES" :key="activity">
-                            <p class="text-xs text-muted dark:text-gray-400">{{ activityLabel(activity) }}</p>
-                            <p class="mt-0.5 font-medium text-secondary dark:text-white">
-                                {{ lifeSystemLabel(activeAssessment.life_system_profile?.[activity]) || "—" }}
+                        <div
+                            v-for="activity in LIFE_SYSTEM_ACTIVITIES"
+                            :key="activity"
+                        >
+                            <p class="text-xs text-muted dark:text-gray-400">
+                                {{ activityLabel(activity) }}
+                            </p>
+                            <p
+                                class="mt-0.5 font-medium text-secondary dark:text-white"
+                            >
+                                {{
+                                    lifeSystemLabel(
+                                        activeAssessment.life_system_profile?.[
+                                            activity
+                                        ],
+                                    ) || "—"
+                                }}
                             </p>
                         </div>
                     </div>

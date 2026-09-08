@@ -21,11 +21,15 @@
         </div>
 
         <div class="space-y-6">
-            <div class="rounded-xl border border-slate-200 dark:border-white/10">
+            <div
+                class="rounded-xl border border-slate-200 dark:border-white/10"
+            >
                 <div
                     class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
-                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
+                    <h3
+                        class="text-sm font-semibold text-slate-800 dark:text-white"
+                    >
                         Booking Details
                     </h3>
                     <button
@@ -66,14 +70,19 @@
                                 * Your payment will be fully refunded once it is
                                 rejected.
                             </p>
-                            <p v-else class="mt-1.5 text-[11px] text-slate-400 dark:text-gray-500">
+                            <p
+                                v-else
+                                class="mt-1.5 text-[11px] text-slate-400 dark:text-gray-500"
+                            >
                                 * Prices are estimates and may change without
                                 further notice.
                             </p>
                         </dd>
 
                         <div v-else>
-                            <dt class="text-xs text-slate-400 dark:text-gray-500">
+                            <dt
+                                class="text-xs text-slate-400 dark:text-gray-500"
+                            >
                                 {{ row.label }}
                             </dt>
                             <dd
@@ -90,11 +99,15 @@
                 </dl>
             </div>
 
-            <div class="rounded-xl border border-slate-200 dark:border-white/10">
+            <div
+                class="rounded-xl border border-slate-200 dark:border-white/10"
+            >
                 <div
                     class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
-                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
+                    <h3
+                        class="text-sm font-semibold text-slate-800 dark:text-white"
+                    >
                         Patient Information
                     </h3>
                     <button
@@ -128,11 +141,15 @@
                 </dl>
             </div>
 
-            <div class="rounded-xl border border-slate-200 dark:border-white/10">
+            <div
+                class="rounded-xl border border-slate-200 dark:border-white/10"
+            >
                 <div
                     class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
-                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
+                    <h3
+                        class="text-sm font-semibold text-slate-800 dark:text-white"
+                    >
                         Guardian Information
                     </h3>
                     <button
@@ -166,11 +183,15 @@
                 </dl>
             </div>
 
-            <div class="rounded-xl border border-slate-200 dark:border-white/10">
+            <div
+                class="rounded-xl border border-slate-200 dark:border-white/10"
+            >
                 <div
                     class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
-                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
+                    <h3
+                        class="text-sm font-semibold text-slate-800 dark:text-white"
+                    >
                         Diagnosis
                         <span
                             class="ml-1 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
@@ -188,7 +209,7 @@
 
                 <div class="p-5">
                     <p
-                        v-if="!diagnoses.length"
+                        v-if="!diagnosisGroups.length"
                         class="text-sm text-slate-400 dark:text-gray-500"
                     >
                         No diagnoses were provided.
@@ -196,7 +217,7 @@
 
                     <div v-else class="space-y-6">
                         <div
-                            v-for="(entry, index) in diagnoses"
+                            v-for="(rows, index) in diagnosisGroups"
                             :key="index"
                             class="pb-6 border-b border-slate-100 last:pb-0 last:border-b-0 dark:border-white/10"
                         >
@@ -209,10 +230,7 @@
                             <dl
                                 class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3"
                             >
-                                <div
-                                    v-for="row in getDiagnosisRows(entry)"
-                                    :key="row.label"
-                                >
+                                <div v-for="row in rows" :key="row.label">
                                     <dt
                                         class="text-xs text-slate-400 dark:text-gray-500"
                                     >
@@ -230,7 +248,9 @@
                 </div>
             </div>
 
-            <div class="rounded-xl border border-slate-200 dark:border-white/10">
+            <div
+                class="rounded-xl border border-slate-200 dark:border-white/10"
+            >
                 <div
                     class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-white/10"
                 >
@@ -418,6 +438,18 @@ const facilityTotal = computed<number>(() => {
     return Number(facility?.price ?? 0);
 });
 
+const preferredTime = computed(() => {
+    const time = props.homecare?.prefered_time;
+
+    if (!time) return "";
+
+    return new Date(`1970-01-01T${time}`).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+    });
+});
+
 const bookingRows = computed<Row[]>(() => {
     if (props.category === "homecare") {
         const hc = props.homecare;
@@ -431,20 +463,10 @@ const bookingRows = computed<Row[]>(() => {
                         : (hc.type ?? ""),
             },
             {
-                label: "Date",
-                value: formatDate(hc.date),
-            },
-            {
-                label: "Preferred Time",
-                value: hc.prefered_time
-                    ? new Date(
-                          `1970-01-01T${hc.prefered_time}`,
-                      ).toLocaleTimeString("en-US", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                          hour12: true,
-                      })
-                    : "",
+                label: "Date & Time",
+                value: [formatDate(hc.date), preferredTime.value]
+                    .filter(Boolean)
+                    .join(" · "),
             },
         ];
 
@@ -558,13 +580,12 @@ const patientRows = computed<Row[]>(() => {
         },
         {
             label: "Phone Number",
-            value: p.phone_number ?? "",
+            value: formatPhone(p.phone_number),
         },
         {
             // The patient's own address. Homecare bookings show the visit
             // address separately under the service section.
-            label:
-                props.category === "facility" ? "Address" : "Home Address",
+            label: props.category === "facility" ? "Address" : "Home Address",
             value: p.address ?? "",
             span: true,
         },
@@ -610,7 +631,7 @@ const guardianRows = computed<Row[]>(() => {
         },
         {
             label: "Phone Number",
-            value: g.phone_number ?? "",
+            value: formatPhone(g.phone_number),
         },
         {
             label: "Email",
@@ -631,11 +652,23 @@ const guardianRows = computed<Row[]>(() => {
 function getDiagnosisRows(entry: Diagnosis): Row[] {
     return [
         { label: "Primary Diagnosis", value: entry.diagnosis ?? "" },
-        { label: "Date Diagnosed", value: entry.diagnosis_date ? formatDate(entry.diagnosis_date) : "" },
+        {
+            label: "Date Diagnosed",
+            value: entry.diagnosis_date ? formatDate(entry.diagnosis_date) : "",
+        },
         { label: "Diagnosis Notes", value: entry.diagnosis_notes ?? "" },
-        { label: "Supporting Document", value: entry.diagnosis_file_name ?? "" },
+        {
+            label: "Supporting Document",
+            value: entry.diagnosis_file_name ?? "",
+        },
     ].filter((row) => Boolean(row.value));
 }
+
+const diagnosisGroups = computed(() =>
+    props.diagnoses
+        .map((entry) => getDiagnosisRows(entry))
+        .filter((rows) => rows.length),
+);
 
 function lifeSystemRows(assessment?: Assessment): Row[] {
     return LIFE_SYSTEM_ACTIVITIES.map((activity) => ({

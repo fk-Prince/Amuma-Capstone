@@ -119,10 +119,90 @@
                         >
                     </template>
 
+                    <template #cell-total_refundable="{ row }">
+                        <span
+                            class="font-medium"
+                            :class="
+                                totalRefundable(row) > 0
+                                    ? 'text-emerald-600 dark:text-emerald-300'
+                                    : 'text-slate-400 dark:text-gray-500'
+                            "
+                            >₱{{ formatMoney(totalRefundable(row)) }}</span
+                        >
+                    </template>
+
                     <template #cell-total_balance="{ value }">
                         <span class="font-medium text-red-500"
                             >₱{{ formatMoney(value) }}</span
                         >
+                    </template>
+                </DataTable>
+
+                <DataTable
+                    v-else-if="activeTab === 'invoices'"
+                    class="flex-1 min-h-0"
+                    :columns="invoiceColumns"
+                    :rows="invoiceRows"
+                    :pagination="invoicePagination"
+                    :loading="invoiceRowsLoading"
+                    :searchable="false"
+                    row-key="invoice_code"
+                    empty-title="No invoices found"
+                    empty-description="Try a different search term."
+                    :on-row-click="viewInvoice"
+                    @page-change="fetchInvoiceRows"
+                >
+                    <template #cell-invoice_code="{ value }">
+                        <span
+                            class="font-mono font-semibold text-slate-800 dark:text-white"
+                        >
+                            {{ value }}
+                        </span>
+                    </template>
+
+                    <template #cell-status="{ value }">
+                        <span
+                            class="rounded-full border px-2.5 py-1 text-[11px] font-semibold capitalize"
+                            :class="
+                                invoiceStatusClass(String(value).toLowerCase())
+                            "
+                        >
+                            {{ value }}
+                        </span>
+                    </template>
+
+                    <template #cell-total="{ value }">
+                        <span class="font-medium"
+                            >₱{{ formatMoney(value) }}</span
+                        >
+                    </template>
+
+                    <template #cell-paid="{ value }">
+                        <span class="font-medium text-green-600"
+                            >₱{{ formatMoney(value) }}</span
+                        >
+                    </template>
+
+                    <template #cell-amount="{ value }">
+                        <span class="font-medium text-red-500"
+                            >₱{{ formatMoney(value) }}</span
+                        >
+                    </template>
+
+                    <template #cell-created_at="{ value }">
+                        <span class="text-slate-600 dark:text-gray-400">
+                            {{ formatDateTime(value) }}
+                        </span>
+                    </template>
+
+                    <template #cell-actions="{ row }">
+                        <button
+                            type="button"
+                            class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-500/20 dark:text-red-300 dark:hover:bg-red-500/10"
+                            @click.stop="openVoidModal(row)"
+                        >
+                            Void
+                        </button>
                     </template>
                 </DataTable>
 
@@ -197,6 +277,61 @@
             :receipt="activeReceipt"
             @close="activeReceipt = null"
         />
+
+        <Teleport to="body">
+            <div
+                v-if="voidTarget"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4"
+                @click.self="!voidingInvoice && closeVoidModal()"
+            >
+                <div
+                    class="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
+                >
+                    <h3
+                        class="text-base font-semibold text-gray-900 dark:text-white"
+                    >
+                        Void invoice {{ voidTarget.invoice_code }}?
+                    </h3>
+
+                    <p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+                        This refunds any amount already paid on this invoice
+                        and marks it void. This cannot be undone.
+                    </p>
+
+                    <label
+                        class="mt-4 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                    >
+                        Reason
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea
+                        v-model="voidReason"
+                        rows="2"
+                        class="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                    />
+
+                    <div class="mt-5 flex justify-end gap-2.5">
+                        <button
+                            type="button"
+                            :disabled="voidingInvoice"
+                            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
+                            @click="closeVoidModal"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="button"
+                            :disabled="voidingInvoice || !voidReason.trim()"
+                            class="flex min-w-[110px] items-center justify-center gap-2 rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-70"
+                            @click="confirmVoid"
+                        >
+                            {{ voidingInvoice ? "Voiding..." : "Void invoice" }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>
 
@@ -210,8 +345,9 @@ import InvoiceOverview from "~/components/sections/app/Billing/InvoiceOverview.v
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
 import { usePagination } from "~/composables/usePagination";
 import { invoiceService } from "~/api/invoice/InvoiceService";
-import type { PatientSummaryRow } from "~/types/invoice";
+import { INVOICE_STATUS, type InvoiceRow, type PatientSummaryRow } from "~/types/invoice";
 import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
+import { useToast } from "~/composables/useToast";
 
 definePageMeta({
     layout: "dashboard",
@@ -225,10 +361,11 @@ useHead({
 const route = useRoute();
 const router = useRouter();
 
-type TabKey = "patients" | "receipts";
+type TabKey = "patients" | "invoices" | "receipts";
 
 const tabs: { key: TabKey; label: string }[] = [
     { key: "patients", label: "Patients" },
+    { key: "invoices", label: "Invoices" },
     { key: "receipts", label: "Receipts" },
 ];
 
@@ -244,7 +381,24 @@ const patientColumns: DataTableColumn[] = [
         align: "right",
         sortable: false,
     },
+    {
+        key: "total_refundable",
+        label: "Credit",
+        align: "right",
+        sortable: false,
+    },
     { key: "total_balance", label: "Balance", align: "right", sortable: false },
+];
+
+const invoiceColumns: DataTableColumn[] = [
+    { key: "invoice_code", label: "Invoice Code", sortable: false },
+    { key: "patient", label: "Patient", sortable: false },
+    { key: "status", label: "Status", sortable: false },
+    { key: "total", label: "Total", align: "right", sortable: false },
+    { key: "paid", label: "Paid", align: "right", sortable: false },
+    { key: "amount", label: "Balance", align: "right", sortable: false },
+    { key: "created_at", label: "Date", sortable: false },
+    { key: "actions", label: "", align: "right", sortable: false },
 ];
 
 const receiptColumns: DataTableColumn[] = [
@@ -263,6 +417,12 @@ const pagination = usePagination({
     pageSize: 10,
 });
 
+const invoiceRows = ref<InvoiceRow[]>([]);
+const invoiceRowsLoading = ref(false);
+const invoicePagination = usePagination({
+    pageSize: 10,
+});
+
 const receipts = ref<PaymentReceiptData[]>([]);
 const receiptsLoading = ref(false);
 const activeReceipt = ref<PaymentReceiptData | null>(null);
@@ -270,11 +430,18 @@ const receiptPagination = usePagination({
     pageSize: 10,
 });
 
-const searchPlaceholder = computed(() =>
-    activeTab.value === "patients"
-        ? "Enter patient name..."
-        : "Receipt no., patient, payor or invoice code...",
-);
+const { success, error } = useToast();
+
+const voidTarget = ref<InvoiceRow | null>(null);
+const voidReason = ref("");
+const voidingInvoice = ref(false);
+
+const searchPlaceholder = computed(() => {
+    if (activeTab.value === "patients") return "Enter patient name...";
+    if (activeTab.value === "invoices") return "Search by invoice code...";
+
+    return "Receipt no., patient, payor or invoice code...";
+});
 
 function switchTab(tab: TabKey) {
     if (activeTab.value === tab) return;
@@ -284,6 +451,8 @@ function switchTab(tab: TabKey) {
 
     if (tab === "receipts" && !receipts.value.length) {
         fetchReceipts(1);
+    } else if (tab === "invoices" && !invoiceRows.value.length) {
+        fetchInvoiceRows(1);
     }
 }
 
@@ -291,6 +460,12 @@ function onSearch() {
     if (activeTab.value === "patients") {
         pagination.reset();
         fetchInvoices(1);
+        return;
+    }
+
+    if (activeTab.value === "invoices") {
+        invoicePagination.reset();
+        fetchInvoiceRows(1);
         return;
     }
 
@@ -326,6 +501,87 @@ async function fetchInvoices(page = pagination.currentPage.value) {
         pagination.setTotal(0);
     } finally {
         loading.value = false;
+    }
+}
+
+async function fetchInvoiceRows(page = invoicePagination.currentPage.value) {
+    invoiceRowsLoading.value = true;
+
+    invoicePagination.currentPage.value = page;
+
+    try {
+        const res = await invoiceService.list({
+            branch_uuid: route.params.uuid,
+            search: query.value,
+            search_type: "invoice",
+            page,
+            per_page: invoicePagination.pageSize.value,
+        });
+
+        invoiceRows.value = res.data ?? [];
+
+        invoicePagination.setTotal(res.total ?? invoiceRows.value.length);
+    } catch (err) {
+        console.error(err);
+        invoiceRows.value = [];
+        invoicePagination.setTotal(0);
+    } finally {
+        invoiceRowsLoading.value = false;
+    }
+}
+
+function invoiceStatusClass(status: string) {
+    return INVOICE_STATUS[status] ?? "bg-slate-50 text-slate-600 border-slate-200";
+}
+
+function viewInvoice(row: InvoiceRow) {
+    router.push({
+        path: `/app/branches/${uuid.value}/invoices/${row.invoice_code}`,
+        query: { mode: "invoice" },
+    });
+}
+
+function openVoidModal(row: InvoiceRow) {
+    voidTarget.value = row;
+    voidReason.value = "";
+}
+
+function closeVoidModal() {
+    if (voidingInvoice.value) return;
+
+    voidTarget.value = null;
+    voidReason.value = "";
+}
+
+async function confirmVoid() {
+    if (!voidTarget.value || voidingInvoice.value || !voidReason.value.trim())
+        return;
+
+    voidingInvoice.value = true;
+
+    try {
+        const res = await invoiceService.action({
+            type: "void",
+            branch_uuid: route.params.uuid,
+            invoice_code: voidTarget.value.invoice_code,
+            reason: voidReason.value.trim() || undefined,
+        });
+
+        success(res.message ?? "Invoice voided successfully.");
+
+        invoiceRows.value = invoiceRows.value.filter(
+            (row) => row.invoice_code !== voidTarget.value?.invoice_code,
+        );
+        invoicePagination.setTotal(
+            Math.max(0, invoicePagination.totalItems.value - 1),
+        );
+
+        voidTarget.value = null;
+        voidReason.value = "";
+    } catch (err: any) {
+        error(err?.message ?? "Failed to void invoice. Please try again.");
+    } finally {
+        voidingInvoice.value = false;
     }
 }
 
@@ -375,10 +631,16 @@ function viewPatient(row: PatientSummaryRow) {
     });
 }
 
+// Money paid that no invoice claims any more. It sits on the account until
+// someone refunds it, so it is shown apart from what has already gone back.
+function totalRefundable(row: PatientSummaryRow) {
+    return Number(row.total_refundable ?? 0);
+}
+
 function totalRefunded(row: PatientSummaryRow) {
     return (
         Number(row.total_refunded ?? 0) +
-        Number(row.total_refund_processing ?? 0)
+        Number(row.total_refund_requested ?? 0)
     );
 }
 

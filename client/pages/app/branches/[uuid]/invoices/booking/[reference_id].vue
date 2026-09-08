@@ -330,7 +330,7 @@
                         />
                         <Field
                             label="Phone"
-                            :value="booking.patient.phone_number"
+                            :value="formatPhone(booking.patient.phone_number)"
                         />
                         <Field
                             label="Citizenship"

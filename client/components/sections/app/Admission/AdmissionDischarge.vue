@@ -96,16 +96,18 @@
                                                 class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
                                             >
                                                 {{
-                                                    formatDate(
-                                                        currentInvoice?.start_date,
-                                                    )
+                                                    currentInvoice?.invoice_code
                                                 }}
-                                                –
-                                                {{
-                                                    formatDate(
-                                                        currentInvoice?.end_date,
-                                                    )
-                                                }}
+                                            </p>
+
+                                            <p
+                                                v-if="invoiceCoversMorePeriods"
+                                                class="mt-1 text-[11px] text-slate-400 dark:text-gray-500"
+                                            >
+                                                This period
+                                                {{ formatCurrency(periodPrice) }}
+                                                — the invoice also covers
+                                                another period of this stay
                                             </p>
                                         </div>
 
@@ -114,15 +116,21 @@
                                         >
                                             {{
                                                 formatCurrency(
-                                                    currentContractPrice,
+                                                    invoiceTotal || periodPrice,
                                                 )
                                             }}
                                         </p>
                                     </div>
 
                                     <!-- PAYMENT SUMMARY -->
-                                    <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                        <div class="rounded-lg bg-slate-50 p-3 dark:bg-white/5">
+                                    <div
+                                        v-if="hasPaidAmount || hasRefundableAmount"
+                                        class="mt-5 flex flex-col sm:flex-row gap-2.5"
+                                    >
+                                        <div
+                                            v-if="hasPaidAmount"
+                                            class="flex-1 rounded-lg bg-slate-50 p-3 dark:bg-white/5"
+                                        >
                                             <p
                                                 class="text-[11px] text-slate-500 dark:text-gray-400"
                                             >
@@ -141,7 +149,8 @@
                                         </div>
 
                                         <div
-                                            class="rounded-lg p-3"
+                                            v-if="hasRefundableAmount"
+                                            class="flex-1 rounded-lg p-3"
                                             :class="
                                                 isEligibleForRefund
                                                     ? 'bg-emerald-50 dark:bg-emerald-500/10'
@@ -233,146 +242,315 @@
 
                                     <!-- CALCULATION -->
                                     <div
-                                        v-if="isEligibleForRefund"
+                                        v-if="showWorking"
                                         class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5"
                                     >
-                                        <p
-                                            class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
-                                        >
-                                            Refund calculation
-                                        </p>
+                                        <div class="flex items-center gap-1.5">
+                                            <p
+                                                class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                                            >
+                                                Refund calculation
+                                            </p>
+
+                                            <span
+                                                class="group relative inline-flex"
+                                                tabindex="0"
+                                                role="button"
+                                                aria-label="How this was worked out"
+                                            >
+                                                <svg
+                                                    class="h-3.5 w-3.5 cursor-help text-slate-400 transition hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    stroke-width="2"
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                >
+                                                    <circle
+                                                        cx="12"
+                                                        cy="12"
+                                                        r="10"
+                                                    />
+                                                    <path d="M12 16v-4" />
+                                                    <path d="M12 8h.01" />
+                                                </svg>
+
+                                                <span
+                                                    class="pointer-events-none invisible absolute left-0 top-full z-20 mt-2 w-72 rounded-lg border border-slate-200 bg-white p-3 text-left opacity-0 shadow-lg transition duration-150 group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100 dark:border-white/10 dark:bg-secondary"
+                                                >
+                                                    <span
+                                                        class="mb-2 block text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                                                    >
+                                                        How this was worked out
+                                                    </span>
+
+                                                    <span
+                                                        class="block space-y-1 text-[11px] leading-5"
+                                                    >
+                                                        <span
+                                                            class="flex justify-between gap-3"
+                                                        >
+                                                            <span
+                                                                class="text-slate-500 dark:text-gray-400"
+                                                            >
+                                                                {{
+                                                                    formatDate(
+                                                                        periodStart,
+                                                                    )
+                                                                }}
+                                                                →
+                                                                {{
+                                                                    formatDate(
+                                                                        periodEnd,
+                                                                    )
+                                                                }}
+                                                            </span>
+
+                                                            <span
+                                                                class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
+                                                            >
+                                                                {{ periodDays }}
+                                                                {{
+                                                                    periodDays ===
+                                                                    1
+                                                                        ? "day"
+                                                                        : "days"
+                                                                }}
+                                                            </span>
+                                                        </span>
+
+                                                        <span
+                                                            class="flex justify-between gap-3"
+                                                        >
+                                                            <span
+                                                                class="text-slate-500 dark:text-gray-400"
+                                                            >
+                                                                Stayed so far
+                                                            </span>
+
+                                                            <span
+                                                                class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
+                                                            >
+                                                                {{
+                                                                    consumedDays
+                                                                }}
+                                                                {{
+                                                                    consumedDays ===
+                                                                    1
+                                                                        ? "day"
+                                                                        : "days"
+                                                                }}
+                                                            </span>
+                                                        </span>
+
+                                                        <span
+                                                            class="flex justify-between gap-3"
+                                                        >
+                                                            <span
+                                                                class="text-slate-500 dark:text-gray-400"
+                                                            >
+                                                                Unused
+                                                            </span>
+
+                                                            <span
+                                                                class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
+                                                            >
+                                                                {{
+                                                                    remainingDays
+                                                                }}
+                                                                {{
+                                                                    remainingDays ===
+                                                                    1
+                                                                        ? "day"
+                                                                        : "days"
+                                                                }}
+                                                            </span>
+                                                        </span>
+
+                                                        <span
+                                                            class="mt-1 flex justify-between gap-3 border-t border-slate-100 pt-1 dark:border-white/10"
+                                                        >
+                                                            <span
+                                                                class="text-slate-500 dark:text-gray-400"
+                                                            >
+                                                                {{ periodDays }}
+                                                                ×
+                                                                {{
+                                                                    formatCurrency(
+                                                                        dailyRate,
+                                                                    )
+                                                                }}/day
+                                                            </span>
+
+                                                            <span
+                                                                class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
+                                                            >
+                                                                {{
+                                                                    formatCurrency(
+                                                                        periodPrice,
+                                                                    )
+                                                                }}
+                                                            </span>
+                                                        </span>
+
+                                                        <span
+                                                            v-if="hasRetainedHalf"
+                                                            class="flex justify-between gap-3"
+                                                        >
+                                                            <span
+                                                                class="text-slate-500 dark:text-gray-400"
+                                                            >
+                                                                Half retained ÷
+                                                                2
+                                                            </span>
+
+                                                            <span
+                                                                class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
+                                                            >
+                                                                {{
+                                                                    formatCurrency(
+                                                                        retainedHalf,
+                                                                    )
+                                                                }}
+                                                            </span>
+                                                        </span>
+
+                                                        <span
+                                                            v-if="hasDaysStayed"
+                                                            class="flex justify-between gap-3"
+                                                        >
+                                                            <span
+                                                                class="text-slate-500 dark:text-gray-400"
+                                                            >
+                                                                Days stayed
+                                                                {{
+                                                                    consumedDays
+                                                                }}
+                                                                ×
+                                                                {{
+                                                                    formatCurrency(
+                                                                        dailyRate,
+                                                                    )
+                                                                }}
+                                                            </span>
+
+                                                            <span
+                                                                class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
+                                                            >
+                                                                {{
+                                                                    formatCurrency(
+                                                                        daysStayedAmount,
+                                                                    )
+                                                                }}
+                                                            </span>
+                                                        </span>
+
+                                                        <span
+                                                            class="mt-1 flex justify-between gap-3 border-t border-slate-100 pt-1 dark:border-white/10"
+                                                        >
+                                                            <span
+                                                                class="text-slate-500 dark:text-gray-400"
+                                                            >
+                                                                Half + days
+                                                                stayed
+                                                            </span>
+
+                                                            <span
+                                                                class="shrink-0 font-semibold text-slate-700 dark:text-gray-300"
+                                                            >
+                                                                {{
+                                                                    formatCurrency(
+                                                                        requiredPaymentAmount,
+                                                                    )
+                                                                }}
+                                                            </span>
+                                                        </span>
+                                                    </span>
+                                                </span>
+                                            </span>
+                                        </div>
 
                                         <div class="mt-3 space-y-2 text-sm">
-                                            <div class="flex justify-between">
-                                                <span class="text-slate-500 dark:text-gray-400">
+                                            <div
+                                                v-if="hasPaidAmount"
+                                                class="flex justify-between gap-4"
+                                            >
+                                                <span
+                                                    class="text-slate-500 dark:text-gray-400"
+                                                >
                                                     Amount paid
                                                 </span>
 
                                                 <span
-                                                    class="font-medium text-slate-700 dark:text-gray-400"
+                                                    class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
                                                 >
-                                                    <div
-                                                        class="flex justify-between"
-                                                    >
-                                                        <span
-                                                            class="font-medium text-slate-700 dark:text-gray-400"
-                                                        >
-                                                            {{
-                                                                formatCurrency(
-                                                                    currentNetPaidAmount,
-                                                                )
-                                                            }}
-                                                        </span>
-                                                    </div>
-                                                </span>
-                                            </div>
-
-                                            <div
-                                                v-if="
-                                                    isWithinTerminationFeeWindow
-                                                "
-                                                class="flex justify-between text-slate-600 dark:text-gray-400"
-                                            >
-                                                <span class="text-slate-500 dark:text-gray-400">
-                                                    Termination fee ({{
-                                                        terminationFeePercent
-                                                    }}% of
                                                     {{
                                                         formatCurrency(
-                                                            feeBaseAmount,
-                                                        )
-                                                    }})
-                                                </span>
-
-                                                <span class="font-medium">
-                                                    {{
-                                                        formatCurrency(
-                                                            terminationFeeAmount,
+                                                            currentNetPaidAmount,
                                                         )
                                                     }}
                                                 </span>
                                             </div>
 
                                             <div
-                                                v-else-if="
-                                                    isWithinYearlyHalfRefundWindow
-                                                "
-                                                class="space-y-2"
+                                                v-if="hasRequiredPayment"
+                                                class="flex justify-between gap-4"
                                             >
-                                                <div
-                                                    class="flex justify-between text-slate-600 dark:text-gray-400"
+                                                <span
+                                                    class="text-slate-500 dark:text-gray-400"
                                                 >
-                                                    <span
-                                                        class="text-slate-500 dark:text-gray-400"
-                                                    >
-                                                        Half of price ({{
-                                                            terminationFeePercent
-                                                        }}% of
-                                                        {{
-                                                            formatCurrency(
-                                                                feeBaseAmount,
-                                                            )
-                                                        }})
-                                                    </span>
+                                                    Charged for the stay
+                                                </span>
 
-                                                    <span
-                                                        class="font-medium"
-                                                    >
-                                                        {{
-                                                            formatCurrency(
-                                                                (feeBaseAmount *
-                                                                    terminationFeePercent) /
-                                                                    100,
-                                                            )
-                                                        }}
-                                                    </span>
-                                                </div>
-
-                                                <div
-                                                    class="flex justify-between text-slate-600 dark:text-gray-400"
+                                                <span
+                                                    class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
                                                 >
-                                                    <span
-                                                        class="text-slate-500 dark:text-gray-400"
-                                                    >
-                                                        Days stayed ({{
-                                                            daysSinceAdmissionStart
-                                                        }}
-                                                        {{
-                                                            daysSinceAdmissionStart ===
-                                                            1
-                                                                ? "day"
-                                                                : "days"
-                                                        }})
-                                                    </span>
-
-                                                    <span
-                                                        class="font-medium"
-                                                    >
-                                                        −
-                                                        {{
-                                                            formatCurrency(
-                                                                daysStayedAmount,
-                                                            )
-                                                        }}
-                                                    </span>
-                                                </div>
+                                                    {{
+                                                        formatCurrency(
+                                                            requiredPaymentAmount,
+                                                        )
+                                                    }}
+                                                </span>
                                             </div>
 
                                             <div
-                                                class="border-t border-slate-200 pt-2 flex justify-between dark:border-white/10"
+                                                v-if="currentRefundAmount > 0"
+                                                class="border-t border-slate-200 pt-2 flex justify-between gap-4 dark:border-white/10"
                                             >
                                                 <span
-                                                    class="font-semibold text-slate-700 dark:text-gray-400"
+                                                    class="font-semibold text-slate-700 dark:text-gray-300"
                                                 >
                                                     Refund
                                                 </span>
 
                                                 <span
-                                                    class="font-bold text-emerald-600 dark:text-emerald-300"
+                                                    class="shrink-0 font-bold text-emerald-600 dark:text-emerald-300"
                                                 >
                                                     {{
                                                         formatCurrency(
                                                             currentRefundAmount,
+                                                        )
+                                                    }}
+                                                </span>
+                                            </div>
+
+                                            <div
+                                                v-else-if="isUnderRequiredPayment"
+                                                class="border-t border-slate-200 pt-2 flex justify-between gap-4 dark:border-white/10"
+                                            >
+                                                <span
+                                                    class="font-semibold text-slate-700 dark:text-gray-300"
+                                                >
+                                                    Still to collect
+                                                </span>
+
+                                                <span
+                                                    class="shrink-0 font-bold text-rose-600 dark:text-rose-300"
+                                                >
+                                                    {{
+                                                        formatCurrency(
+                                                            requiredPaymentShortfall,
                                                         )
                                                     }}
                                                 </span>
@@ -431,7 +609,7 @@
                                     >
                                         <div
                                             v-for="invoice in futureInvoices"
-                                            :key="invoice.invoice_accommodation_id"
+                                            :key="invoice.invoice_admission_id"
                                             class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/10 dark:bg-white/5"
                                         >
                                             <div
@@ -462,25 +640,30 @@
                                                     </div>
 
                                                     <p
-                                                        class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
+                                                        class="mt-0.5 text-xs lowercase text-slate-500 dark:text-gray-400"
                                                     >
                                                         {{
-                                                            formatDate(
-                                                                invoice.start_date,
-                                                            )
+                                                            invoice.contract
+                                                                ?.billing_cycle ??
+                                                            "—"
                                                         }}
-                                                        –
-                                                        {{
-                                                            formatDate(
-                                                                invoice.end_date,
-                                                            )
-                                                        }}
+                                                        billing
                                                     </p>
 
                                                     <div
+                                                        v-if="
+                                                            hasAnyAmount(
+                                                                invoice,
+                                                            )
+                                                        "
                                                         class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs"
                                                     >
                                                         <span
+                                                            v-if="
+                                                                hasAmount(
+                                                                    invoice.paid_amount,
+                                                                )
+                                                            "
                                                             class="text-slate-500 dark:text-gray-400"
                                                         >
                                                             Paid
@@ -492,6 +675,11 @@
                                                         </span>
 
                                                         <span
+                                                            v-if="
+                                                                hasAmount(
+                                                                    invoice.refunded_amount,
+                                                                )
+                                                            "
                                                             class="text-rose-500 dark:text-rose-300"
                                                         >
                                                             Refunded
@@ -503,6 +691,11 @@
                                                         </span>
 
                                                         <span
+                                                            v-if="
+                                                                hasAmount(
+                                                                    invoice.net_paid_amount,
+                                                                )
+                                                            "
                                                             class="font-medium text-emerald-600 dark:text-emerald-300"
                                                         >
                                                             Refundable
@@ -528,31 +721,24 @@
                                         </div>
                                     </div>
 
-                                    <label
+                                    <div
                                         v-if="hasRefundableFutureInvoices"
-                                        class="mt-5 flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3.5 transition hover:border-primary/40 hover:bg-primary-50/40 dark:border-white/10 dark:hover:bg-primary-500/10"
+                                        class="mt-5 rounded-lg border border-emerald-200 bg-emerald-50/60 p-3.5 dark:border-emerald-500/20 dark:bg-emerald-500/10"
                                     >
-                                        <input
-                                            v-model="refund"
-                                            type="checkbox"
-                                            class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-white/10"
-                                        />
+                                        <p
+                                            class="text-sm font-medium text-emerald-900 dark:text-emerald-300"
+                                        >
+                                            These periods will be refunded
+                                        </p>
 
-                                        <div>
-                                            <p
-                                                class="text-sm font-medium text-slate-700 dark:text-gray-400"
-                                            >
-                                                Refund future periods
-                                            </p>
-
-                                            <p
-                                                class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
-                                            >
-                                                Refund the upcoming periods that
-                                                still have a balance.
-                                            </p>
-                                        </div>
-                                    </label>
+                                        <p
+                                            class="mt-0.5 text-xs leading-5 text-emerald-800/80 dark:text-emerald-300/70"
+                                        >
+                                            The patient never stays them, so
+                                            everything paid on the upcoming
+                                            periods is returned automatically.
+                                        </p>
+                                    </div>
 
                                     <p
                                         v-else
@@ -575,10 +761,37 @@
                         </div>
 
                         <div
-                            v-if="
-                                showCurrentPeriodBlock &&
-                                requiredPaymentAmount !== null
-                            "
+                            v-if="hasAccountCredit"
+                            class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50/60 px-5 py-4 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+                        >
+                            <div
+                                class="flex items-center justify-between gap-4"
+                            >
+                                <p
+                                    class="text-sm font-semibold text-emerald-900 dark:text-emerald-300"
+                                >
+                                    Credit on the patient's account
+                                </p>
+
+                                <p
+                                    class="text-lg font-bold text-emerald-700 dark:text-emerald-300"
+                                >
+                                    {{ formatCurrency(accountCredit) }}
+                                </p>
+                            </div>
+
+                            <p
+                                class="mt-2 text-xs leading-5 text-emerald-800/80 dark:text-emerald-300/70"
+                            >
+                                Paid more than the invoices now ask for, usually
+                                after a downgrade or a cancelled period. It stays
+                                on the account and can be refunded whenever the
+                                family asks.
+                            </p>
+                        </div>
+
+                        <div
+                            v-if="showCurrentPeriodBlock && hasRequiredPayment"
                             class="mt-6 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div>
@@ -728,7 +941,11 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import type { Admission, InvoiceAccommodation } from "~/types/patient";
+import type {
+    Admission,
+    InvoiceAccommodation,
+    PatientBilling,
+} from "~/types/patient";
 import { INVOICE_STATUS } from "~/types/invoice";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
@@ -739,10 +956,12 @@ const props = withDefaults(
         open: boolean;
         admission?: Admission;
         futureInvoices?: InvoiceAccommodation[];
+        billing?: PatientBilling | null;
         loading?: boolean;
     }>(),
     {
         futureInvoices: () => [],
+        billing: null,
         loading: false,
     },
 );
@@ -758,7 +977,6 @@ const emit = defineEmits<{
     cancel: [];
 }>();
 
-const refund = ref(false);
 const dischargeNote = ref("");
 
 const currentInvoice = computed(() => {
@@ -767,15 +985,22 @@ const currentInvoice = computed(() => {
 
 const {
     currentNetPaidAmount,
-    currentContractPrice,
     currentBillingCycleLabel,
-    terminationFeePercent,
-    terminationFeeAmount,
+    consumedDays,
+    remainingDays,
+    dailyRate,
+    hasDaysStayed,
+    periodPrice,
+    invoiceTotal,
+    invoiceCoversMorePeriods,
+    retainedHalf,
+    periodDays,
+    periodStart,
+    periodEnd,
     daysStayedAmount,
     daysSinceAdmissionStart,
     feeBaseAmount,
-    isWithinTerminationFeeWindow,
-    isWithinYearlyHalfRefundWindow,
+    isWithinRefundWindow,
     isEligibleForRefund,
     currentRefundAmount,
     requiredPaymentAmount,
@@ -821,6 +1046,48 @@ const showCurrentPeriodBlock = computed(() => {
     return !!currentInvoice.value;
 });
 
+// Money already paid that no invoice claims any more. It is not a debt and not
+// automatically returned — it sits until someone refunds it.
+const accountCredit = computed(() => getNumber(props.billing?.refundable));
+
+const hasAccountCredit = computed(() => accountCredit.value > 0);
+
+const hasRetainedHalf = computed(() => retainedHalf.value > 0);
+
+// Worth showing whenever there is a figure to explain, not only when money is
+// coming back — a discharge that owes money needs the working just as much.
+// The working explains the half-retention split, so it only makes sense inside
+// the refund window. A monthly plan is charged whole and its days are never
+// worked out, so there is nothing to show.
+const showWorking = computed(
+    () =>
+        isWithinRefundWindow.value &&
+        periodPrice.value > 0 &&
+        (isEligibleForRefund.value ||
+            isUnderRequiredPayment.value ||
+            hasRequiredPayment.value),
+);
+
+const hasPaidAmount = computed(() => currentNetPaidAmount.value > 0);
+
+const hasRefundableAmount = computed(() => currentRefundAmount.value > 0);
+
+const hasRequiredPayment = computed(
+    () => requiredPaymentAmount.value !== null && requiredPaymentAmount.value > 0,
+);
+
+function hasAmount(value: unknown): boolean {
+    return getNumber(value) > 0;
+}
+
+function hasAnyAmount(invoice: InvoiceAccommodation): boolean {
+    return (
+        hasAmount(invoice.paid_amount) ||
+        hasAmount(invoice.refunded_amount) ||
+        hasAmount(invoice.net_paid_amount)
+    );
+}
+
 const isCurrentInvoiceRefundable = computed(() => {
     return getNetPaid(currentInvoice.value) > 0;
 });
@@ -857,7 +1124,9 @@ function handleConfirm() {
 
 function proceedWithDischarge() {
     emit("confirm", {
-        refund: refund.value && hasRefundableFutureInvoices.value,
+        // A period the patient will never stay is always refunded — there is
+        // nothing to decide, so it is not asked.
+        refund: hasRefundableFutureInvoices.value,
 
         currentRefundAmount: isCurrentInvoiceRefundable.value
             ? currentRefundAmount.value
@@ -872,7 +1141,6 @@ function handleClose() {
         return;
     }
 
-    refund.value = false;
     dischargeNote.value = "";
 
     emit("cancel");
@@ -882,7 +1150,6 @@ watch(
     () => props.open,
     (open) => {
         if (open) {
-            refund.value = false;
             dischargeNote.value = "";
         }
     },

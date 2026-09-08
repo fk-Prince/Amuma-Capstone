@@ -1,14 +1,30 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, defineComponent, h } from "vue";
-import * as LucideIcons from "lucide-vue-next";
+import { ref, computed, watch, onMounted } from "vue";
 import { patientAccessService } from "~/api/patient-access/PatientAccessService.js";
 import { refundService } from "~/api/refund/RefundService";
 import { paymentService } from "~/api/payment/PaymentService";
+import PaymentForm from "~/components/forms/PaymentForm.vue";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
+import { cardPayment } from "~/composables/usePayment";
+import { useSubscriptionCheckout } from "~/stores/subscription";
+import type { CardDetails } from "~/types/payment";
 import EmptyState from "~/components/ui/EmptyState.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
+import AppIcon from "~/components/ui/AppIcon.vue";
+import BalanceInvoiceList from "~/components/sections/portal/BalanceInvoiceList.vue";
+import BalanceTransactionList from "~/components/sections/portal/BalanceTransactionList.vue";
 import { formatCurrency } from "~/utils/currency";
+import {
+    formatBillingDateTime as formatDateTime,
+    formatBillingStatus as formatStatus,
+} from "~/utils/portal-billing";
 import { useToast } from "~/composables/useToast";
+
+import type {
+    PortalInvoice as InvoiceSummary,
+    PortalInvoiceService as InvoiceService,
+    PortalTransaction as Transaction,
+} from "~/types/portal-billing";
 
 import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
 
@@ -18,22 +34,28 @@ definePageMeta({
     layout: "portal",
 });
 
-type RefundMethod = "GCash" | "Bank Transfer" | "Cash Pickup";
-
-type PaymentMethod = "GCash" | "Bank Transfer";
+type RefundMethod = "GCash" | "Credit Card";
 
 interface RefundRequest {
     id: number;
+    reference: string | null;
     amount: number;
+    method: string | null;
     reason: string;
+    // Raw timestamp for sorting; created_at is the formatted label.
+    requestedAt: string;
     created_at: string;
-    status: "Pending" | "Approved" | "Released" | "Rejected";
+    status: "Requested" | "Completed" | "Declined";
+    invoiceCodes: string[];
 }
 
 interface LovedOne {
     patient_id: number;
     uuid: string | null;
     full_name: string;
+    photo: string | null;
+    branch_name: string | null;
+    branch_address: string | null;
     status: "Active" | "Discharged" | "On Leave";
     room_label: string;
     room_type: string | null;
@@ -52,95 +74,11 @@ interface BillingInfo {
     adjustedTotal?: number;
     amountPaid?: number;
     balanceDue?: number;
-    dueDate?: string;
-    billingPeriod?: string;
     invoiceCount?: number;
 }
 
-interface Transaction {
-    id: string;
-    invoiceId: number;
-    invoiceCode: string;
-    type: "invoice" | "payment" | "refund" | "adjustment";
-    label: string;
-    reference?: string;
-    date: string;
-    amount: number;
-    method?: string;
-    status?: string;
-    reason?: string;
-    maskedCardNumber?: string | null;
-    receiptNo?: string | null;
-}
-
-interface InvoiceService {
-    type: string | null;
-    schedule_services_id: number;
-    price: number;
-    hours_booked: number | null;
-    service: {
-        service_id: number;
-        service_name: string;
-        type: string;
-    } | null;
-    schedule: {
-        schedule_id: number;
-        schedule_code: string;
-        scheduled_at: string | null;
-    } | null;
-}
-
-interface InvoiceSummary {
-    invoice_id: number;
-    invoice_code: string;
-    status: string;
-    total: number;
-    adjusted_total: number;
-    amount_paid: number;
-    balance_due: number;
-    refund_status: string;
-    created_at: string;
-    accommodation_type: string | null;
-    billing_cycle: string | null;
-    start_date: string | null;
-    end_date: string | null;
-    source_type: string | null;
-    services: InvoiceService[];
-    adjustments: Array<{
-        invoice_adjustment_id?: number;
-        type?: string;
-        reason: string;
-        amount: number;
-        created_at?: string;
-    }>;
-}
-
-const AppIcon = defineComponent({
-    name: "AppIcon",
-    inheritAttrs: false,
-    props: {
-        name: {
-            type: String,
-            required: true,
-        },
-    },
-    setup(props, { attrs }) {
-        return () => {
-            const pascalName = props.name
-                .split("-")
-                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-                .join("");
-
-            const IconComponent =
-                (LucideIcons as Record<string, any>)[pascalName] ||
-                LucideIcons.CircleHelp;
-
-            return h(IconComponent, attrs);
-        };
-    },
-});
-
 const { success, error } = useToast();
+const checkout = useSubscriptionCheckout();
 
 const isLoading = ref(true);
 const loadError = ref<string | null>(null);
@@ -164,13 +102,12 @@ const billing = ref<BillingInfo>({
     adjustedTotal: 0,
     amountPaid: 0,
     balanceDue: 0,
-    dueDate: "",
-    billingPeriod: "",
     invoiceCount: 0,
 });
 
 const transactions = ref<Transaction[]>([]);
 const invoices = ref<InvoiceSummary[]>([]);
+const voidedInvoices = ref<InvoiceSummary[]>([]);
 const residentName = ref("");
 const residentStatus = ref<"Active" | "Discharged" | "On Leave">("Active");
 const advanceBalance = ref(0);
@@ -178,8 +115,29 @@ const refundRequests = ref<RefundRequest[]>([]);
 
 const invoiceTransactions = computed(() =>
     transactions.value.filter(
-        (transaction) => transaction.type !== "adjustment",
+        (transaction) =>
+            transaction.type === "payment" || transaction.type === "refund",
     ),
+);
+
+const RECENT_LIMIT = 5;
+
+// Voided invoices are shown alongside the live ones so a cancelled bill does
+// not simply vanish from the family's records.
+const listedInvoices = computed(() =>
+    [...invoices.value, ...voidedInvoices.value].sort(
+        (a, b) =>
+            new Date(b.created_at || 0).getTime() -
+            new Date(a.created_at || 0).getTime(),
+    ),
+);
+
+const recentInvoices = computed(() =>
+    listedInvoices.value.slice(0, RECENT_LIMIT),
+);
+
+const recentTransactions = computed(() =>
+    invoiceTransactions.value.slice(0, RECENT_LIMIT),
 );
 
 const totalInvoiceAmount = computed(() =>
@@ -205,7 +163,11 @@ const totalPaidAmount = computed(() =>
 
 const totalRefundedAmount = computed(() =>
     transactions.value
-        .filter((transaction) => transaction.type === "refund")
+        .filter(
+            (transaction) =>
+                transaction.type === "refund" &&
+                (transaction.status ?? "").toLowerCase() === "completed",
+        )
         .reduce((total, transaction) => total + transaction.amount, 0),
 );
 
@@ -219,12 +181,37 @@ const netPaidAmount = computed(() =>
     Math.max(0, totalPaidAmount.value - totalRefundedAmount.value),
 );
 
+function round2(value: number) {
+    return Math.round((Number(value) || 0) * 100) / 100;
+}
+
+// Summed per invoice, never netted across them. Subtracting all payments from
+// all charges let credit sitting on a settled invoice cancel out a debt on an
+// unpaid one, so a family that still owed money was shown a zero balance.
 const currentBalance = computed(() =>
-    Math.max(0, totalAdjustedAmount.value - netPaidAmount.value),
+    round2(
+        invoices.value.reduce(
+            (total, invoice) =>
+                total + Math.max(0, Number(invoice.balance_due || 0)),
+            0,
+        ),
+    ),
 );
 
 const hasBalanceDue = computed(() => currentBalance.value > 0);
+
+const unpaidInvoiceCount = computed(
+    () =>
+        invoices.value.filter((invoice) => Number(invoice.balance_due || 0) > 0)
+            .length,
+);
 const isDischarged = computed(() => residentStatus.value === "Discharged");
+
+const refundableAmount = computed(
+    () =>
+        Number(lovedOnes.value[selectedIndex.value]?.refundable_amount ?? 0) ||
+        0,
+);
 
 const refundReason = computed(() => {
     const explicit = lovedOnes.value[selectedIndex.value]?.refundable_reason;
@@ -249,9 +236,11 @@ const refundReason = computed(() => {
 const paymentProgress = computed(() => {
     if (totalAdjustedAmount.value <= 0) return 0;
 
+    if (currentBalance.value <= 0) return 100;
+
     return Math.min(
-        100,
-        Math.round((netPaidAmount.value / totalAdjustedAmount.value) * 100),
+        99,
+        Math.floor((netPaidAmount.value / totalAdjustedAmount.value) * 100),
     );
 });
 
@@ -276,26 +265,28 @@ function mapResidentStatus(
 function lovedOneStatusClasses(status: string) {
     const map: Record<string, string> = {
         active: "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20",
-        discharged: "bg-gray-100 text-gray-600 ring-1 ring-inset ring-gray-200 dark:bg-white/10 dark:text-gray-400 dark:ring-white/10",
+        discharged:
+            "bg-gray-100 text-gray-600 ring-1 ring-inset ring-gray-200 dark:bg-white/10 dark:text-gray-400 dark:ring-white/10",
         "on leave":
             "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20",
     };
 
-    return map[status?.toLowerCase()] ?? "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-400";
+    return (
+        map[status?.toLowerCase()] ??
+        "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-400"
+    );
 }
 
+// A refund is only ever requested, completed or declined. The page used to
+// invent Approved and Released stages that the record never had.
 function mapRefundRequestStatus(status?: string): RefundRequest["status"] {
     switch ((status || "").toLowerCase()) {
-        case "approved":
-            return "Approved";
-        case "released":
         case "completed":
-            return "Released";
-        case "rejected":
-        case "denied":
-            return "Rejected";
+            return "Completed";
+        case "declined":
+            return "Declined";
         default:
-            return "Pending";
+            return "Requested";
     }
 }
 
@@ -313,131 +304,8 @@ function formatDateLabel(dateStr?: string): string {
     });
 }
 
-function formatDateTime(dateStr?: string): string {
-    if (!dateStr) return "";
-
-    const parsed = new Date(dateStr);
-
-    if (Number.isNaN(parsed.getTime())) return dateStr;
-
-    return parsed.toLocaleString("en-PH", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
-
 function peso(amount: number) {
     return formatCurrency(amount, { treatMissingAsZero: true });
-}
-
-function formatStatus(status?: string) {
-    return (status || "Unknown")
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function transactionStatusClasses(status?: string) {
-    switch ((status || "").toLowerCase()) {
-        case "paid":
-        case "completed":
-        case "released":
-            return "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20";
-        case "partial":
-        case "processing":
-        case "pending":
-            return "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20";
-        case "refunded":
-        case "partially refunded":
-            return "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/20";
-        case "cancelled":
-        case "rejected":
-            return "bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20";
-        default:
-            return "bg-gray-100 text-gray-600 ring-1 ring-inset ring-gray-200 dark:bg-white/10 dark:text-gray-400 dark:ring-white/10";
-    }
-}
-
-function transactionIcon(type: Transaction["type"]) {
-    switch (type) {
-        case "payment":
-            return "banknote";
-        case "refund":
-            return "arrow-down-circle";
-        case "adjustment":
-            return "sliders-horizontal";
-        default:
-            return "receipt";
-    }
-}
-
-function transactionSign(type: Transaction["type"]) {
-    switch (type) {
-        case "payment":
-            return "-";
-        case "refund":
-            return "+";
-        default:
-            return "";
-    }
-}
-
-function transactionAmountColor(type: Transaction["type"]) {
-    switch (type) {
-        case "payment":
-            return "text-emerald-600 dark:text-emerald-300";
-        case "refund":
-            return "text-blue-600 dark:text-blue-300";
-        case "adjustment":
-            return "text-amber-600 dark:text-amber-300";
-        default:
-            return "text-rose-500 dark:text-rose-300";
-    }
-}
-
-function transactionIconClasses(type: Transaction["type"]) {
-    switch (type) {
-        case "payment":
-            return "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300";
-        case "refund":
-            return "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300";
-        case "adjustment":
-            return "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300";
-        default:
-            return "bg-rose-50 text-rose-500 dark:bg-rose-500/10 dark:text-rose-300";
-    }
-}
-
-function getSourceTypeLabel(sourceType?: string | null): string {
-    if (!sourceType) return "Unknown";
-
-    if (sourceType.toLowerCase() === "adl") {
-        return "Activities of Daily Living (ADL)";
-    }
-
-    if (sourceType.toLowerCase() === "medical") {
-        return "Medical Services";
-    }
-
-    return sourceType;
-}
-
-function invoiceStatusClasses(status?: string) {
-    switch ((status || "").toLowerCase()) {
-        case "paid":
-        case "completed":
-            return "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300";
-        case "partial":
-        case "partially_paid":
-            return "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300";
-        case "cancelled":
-        case "rejected":
-            return "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300";
-        default:
-            return "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-400";
-    }
 }
 
 function mapInvoices(items: any[]): InvoiceSummary[] {
@@ -485,6 +353,7 @@ function mapInvoices(items: any[]): InvoiceSummary[] {
         result.push({
             invoice_id: invoice.invoice_id,
             invoice_code: invoice.invoice_code,
+            description: invoice.description || "No line items recorded",
             status: invoice.status,
             total: Number(invoice.total ?? 0),
             adjusted_total: Number(
@@ -493,11 +362,12 @@ function mapInvoices(items: any[]): InvoiceSummary[] {
             amount_paid: Number(invoice.amount_paid ?? 0),
             balance_due: Number(invoice.balance_due ?? 0),
             refund_status: invoice.refund_status ?? "none",
+            void_reason: invoice.void_reason ?? null,
+            voided_at: invoice.voided_at ?? null,
             created_at: invoice.created_at,
             accommodation_type: contract.accommodation_type ?? null,
             billing_cycle: contract.billing_cycle ?? null,
-            start_date: source.start_date ?? null,
-            end_date: source.end_date ?? null,
+            accommodation_status: source.accommodation_status ?? null,
             source_type:
                 source.type ?? (services.length ? services[0]?.type : null),
             services,
@@ -508,100 +378,130 @@ function mapInvoices(items: any[]): InvoiceSummary[] {
     return result;
 }
 
-function buildTransactionsFromInvoices(invoiceList: any[]): Transaction[] {
-    const entries: Transaction[] = [];
+// The API returns the statement already grouped: one entry per receipt and
+// one per refund, however many invoices each of them touched.
+function mapTransactions(list: any[]): Transaction[] {
+    return (list || []).map((entry: any) => {
+        const amount = Number(entry.amount ?? 0);
+        const isRefund = entry.type === "refund";
+        const isCredit = entry.payment_method === "CREDIT";
 
-    for (const invoice of invoiceList || []) {
-        const invoiceId = invoice.invoice_id;
-        const invoiceCode = invoice.invoice_code || `Invoice #${invoiceId}`;
+        return {
+            id: entry.id,
+            invoiceCode: entry.invoice_codes?.[0] ?? "",
+            invoiceCodes: entry.invoice_codes ?? [],
+            type: isRefund ? "refund" : "payment",
+            label: isRefund
+                ? `Refund · ${entry.refund_method || "Unknown"}`
+                : isCredit
+                  ? amount < 0
+                      ? "Credit moved to another invoice"
+                      : "Credit applied"
+                  : `Payment · ${entry.payment_method || "Unknown"}`,
+            reference: entry.reference_id ?? entry.refund_code ?? undefined,
+            date: formatDateTime(entry.created_at),
+            amount,
+            method: entry.payment_method ?? entry.refund_method ?? undefined,
+            status: entry.status,
+            reason: entry.declined_reason ?? undefined,
+            maskedCardNumber: entry.masked_card_number ?? null,
+            receiptNo: entry.receipt_no ?? null,
+        };
+    });
+}
 
-        if (invoice.total !== undefined && invoice.total !== null) {
-            entries.push({
-                id: `invoice-${invoiceId}`,
-                invoiceId,
-                invoiceCode,
-                type: "invoice",
-                label: `Invoice ${invoiceCode}`,
-                reference: invoiceCode,
-                date: formatDateTime(invoice.created_at),
-                amount: Number(invoice.total ?? 0),
-                status: invoice.status,
-            });
-        }
+function refundStatusHeader(status: RefundRequest["status"]) {
+    switch (status) {
+        case "Completed":
+            return "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300";
 
-        for (const payment of invoice.payments || []) {
-            entries.push({
-                id: `payment-${payment.payment_id}`,
-                invoiceId,
-                invoiceCode,
-                type: "payment",
-                label: `Payment · ${payment.payment_method || "Unknown"}`,
-                reference:
-                    payment.reference_id || `Payment #${payment.payment_id}`,
-                date: formatDateTime(payment.created_at),
-                amount: Number(payment.amount ?? 0),
-                method: payment.payment_method,
-                status: "completed",
-                maskedCardNumber: payment.masked_card_number ?? null,
-                receiptNo: payment.receipt_no ?? null,
-            });
+        case "Declined":
+            return "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300";
 
-            for (const refund of payment.refunds || []) {
-                entries.push({
-                    id: `refund-${refund.refund_id}`,
-                    invoiceId,
-                    invoiceCode,
-                    type: "refund",
-                    label: `Refund · ${refund.refund_method || "Unknown"}`,
-                    reference:
-                        refund.reference_id || `Refund #${refund.refund_id}`,
-                    date: formatDateTime(refund.created_at),
-                    amount: Number(refund.amount ?? 0),
-                    method: refund.refund_method,
-                    status: refund.status,
-                    reason: refund.reason,
-                    maskedCardNumber: refund.masked_card_number ?? null,
-                });
-            }
-        }
+        default:
+            return "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300";
     }
+}
 
-    return entries.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-    );
+function refundRows(request: RefundRequest) {
+    return [
+        { label: "Date of request", value: request.created_at },
+        { label: "Payment method", value: request.method },
+        { label: "Amount", value: peso(request.amount) },
+        {
+            label: request.invoiceCodes.length > 1 ? "Invoices" : "Invoice",
+            value: request.invoiceCodes.join(", "),
+        },
+        { label: "Status", value: refundStatusNote(request.status) },
+    ].filter((row) => !!row.value);
+}
+
+function refundStatusNote(status: RefundRequest["status"]) {
+    switch (status) {
+        case "Completed":
+            return "Sent — please allow time for it to reach your account.";
+
+        case "Declined":
+            return "Declined";
+
+        default:
+            return "Waiting for the branch to review it.";
+    }
 }
 
 function buildRefundRequestsFromInvoices(invoiceList: any[]): RefundRequest[] {
-    const requests: RefundRequest[] = [];
+    const byRefund = new Map<number, RefundRequest>();
 
     for (const invoice of invoiceList || []) {
         for (const payment of invoice.payments || []) {
             for (const refund of payment.refunds || []) {
-                requests.push({
-                    id: refund.refund_id,
-                    amount: Number(refund.amount ?? 0),
-                    reason: refund.reason || "",
+                const id = Number(refund.refund_id);
+
+                if (byRefund.has(id)) {
+                    const existing = byRefund.get(id)!;
+
+                    if (!existing.invoiceCodes.includes(invoice.invoice_code)) {
+                        existing.invoiceCodes.push(invoice.invoice_code);
+                    }
+
+                    continue;
+                }
+
+                byRefund.set(id, {
+                    id,
+                    reference: refund.refund_code ?? null,
+                    amount: Number(refund.refund_total ?? refund.amount ?? 0),
+                    method: refund.refund_method ?? null,
+                    reason: refund.declined_reason || "",
+                    requestedAt: refund.created_at ?? "",
                     created_at: formatDateLabel(refund.created_at),
                     status: mapRefundRequestStatus(refund.status),
+                    invoiceCodes: [invoice.invoice_code].filter(Boolean),
                 });
             }
         }
     }
 
-    return requests.sort(
+    // Sorted on the raw timestamp; the formatted label does not parse back.
+    return [...byRefund.values()].sort(
         (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+            new Date(b.requestedAt || 0).getTime() -
+            new Date(a.requestedAt || 0).getTime(),
     );
 }
 
 function mapPatientRecord(item: any): LovedOne {
     const patient = item.patient;
     const ctx = item.location_context ?? {};
+    const org = item.organization ?? {};
 
     return {
         patient_id: patient.patient_id,
         uuid: patient.uuid ?? null,
         full_name: patient.full_name,
+        photo: patient.photo ?? null,
+        branch_name: org.name ?? null,
+        branch_address: org.full_address ?? null,
         status: mapResidentStatus(ctx.status),
         room_label: ctx.room?.room_no ? `Room ${ctx.room.room_no}` : "",
         room_type: ctx.room?.room_type ?? null,
@@ -626,7 +526,17 @@ function updateBillingFromRecord(item: any) {
 
     const mappedInvoices = mapInvoices(invoiceList);
 
+    const voidedList = Array.isArray(item.voided_invoices)
+        ? item.voided_invoices
+        : [];
+
+    const mappedVoided = mapInvoices(voidedList);
+
     invoices.value = mappedInvoices;
+
+    // Kept apart from the billing figures — a voided invoice asks for nothing —
+    // but still listed, so a family can see it was cancelled and why.
+    voidedInvoices.value = mappedVoided;
 
     const latestInvoice =
         mappedInvoices[0] ??
@@ -658,23 +568,22 @@ function updateBillingFromRecord(item: any) {
             (sum, invoice) => sum + invoice.adjusted_total,
             0,
         ),
-        amountPaid: mappedInvoices.reduce(
+        // Counts every invoice: money paid on one that was later voided still
+        // left the family's pocket.
+        amountPaid: [...mappedInvoices, ...mappedVoided].reduce(
             (sum, invoice) => sum + invoice.amount_paid,
             0,
         ),
         balanceDue: currentBalance.value,
-        dueDate: latestInvoice?.end_date
-            ? formatDateLabel(latestInvoice.end_date)
-            : "",
-        billingPeriod:
-            latestInvoice?.start_date && latestInvoice?.end_date
-                ? `${formatDateLabel(latestInvoice.start_date)} - ${formatDateLabel(latestInvoice.end_date)}`
-                : "",
         invoiceCount: mappedInvoices.length,
     };
 
-    transactions.value = buildTransactionsFromInvoices(invoiceList);
-    refundRequests.value = buildRefundRequestsFromInvoices(invoiceList);
+    // A voided invoice is left out of the billing totals above, but the money
+    // paid and refunded against it still belongs in the ledger.
+    const ledgerInvoices = [...invoiceList, ...voidedList];
+
+    transactions.value = mapTransactions(item.transactions);
+    refundRequests.value = buildRefundRequestsFromInvoices(ledgerInvoices);
 }
 
 watch(selectedIndex, (idx) => {
@@ -731,27 +640,84 @@ async function loadPatientData() {
 
 onMounted(loadPatientData);
 
-function statusClasses(status: RefundRequest["status"]) {
-    if (status === "Pending") return "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300";
-    if (status === "Approved") return "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300";
-    if (status === "Released") return "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300";
-    return "bg-rose-50 text-rose-500 dark:bg-rose-500/10 dark:text-rose-300";
+const showAllInvoices = ref(false);
+const showAllTransactions = ref(false);
+const isLoadingLedger = ref(false);
+
+async function openAllInvoices() {
+    showAllInvoices.value = true;
+
+    await refreshLedger();
 }
+
+async function openAllTransactions() {
+    showAllTransactions.value = true;
+
+    await refreshLedger();
+}
+
+async function refreshLedger() {
+    const patientId = lovedOnes.value[selectedIndex.value]?.patient_id;
+
+    if (!patientId) return;
+
+    isLoadingLedger.value = true;
+
+    try {
+        const res = await patientAccessService.retrieveAction({
+            action: "overview",
+            section: "financials",
+            patient_id: patientId,
+        });
+
+        const record = res?.data;
+
+        if (!record) return;
+
+        const merged = {
+            ...(rawRecords.value[selectedIndex.value] ?? {}),
+            ...record,
+        };
+
+        rawRecords.value[selectedIndex.value] = merged;
+
+        updateBillingFromRecord(merged);
+    } catch (err: any) {
+        error(err?.message || "Unable to load the full billing history.");
+    } finally {
+        isLoadingLedger.value = false;
+    }
+}
+
+// Only one refund can be in flight: a second request while accounting is
+// still deciding would double-claim the same credit.
+const openRefundRequest = computed(
+    () =>
+        refundRequests.value.find(
+            (request) => request.status === "Requested",
+        ) ?? null,
+);
+
+const requestsCollapsed = ref(false);
 
 const showModal = ref(false);
 
 const form = ref({
     method: "GCash" as RefundMethod,
     accountDetails: "",
+    amount: null as number | null,
 });
 
 const formError = ref("");
 const isRefunding = ref(false);
 
 function openModal() {
+    if (openRefundRequest.value) return;
+
     form.value = {
         method: "GCash",
         accountDetails: "",
+        amount: refundableAmount.value,
     };
 
     formError.value = "";
@@ -763,11 +729,25 @@ function closeModal() {
 }
 
 async function submit() {
+    const requestedAmount = Number(form.value.amount ?? 0);
+
+    if (requestedAmount < 1) {
+        formError.value = "Enter an amount of at least ₱1.";
+
+        return;
+    }
+
+    if (requestedAmount > refundableAmount.value + 0.01) {
+        formError.value = `Only ${peso(refundableAmount.value)} is available on this account.`;
+
+        return;
+    }
+
     if (!form.value.accountDetails.trim()) {
         formError.value =
-            form.value.method === "Cash Pickup"
-                ? "Enter the name of who will pick up the refund."
-                : "Enter the account details to receive the refund.";
+            form.value.method === "GCash"
+                ? "Enter the GCash number to receive the refund."
+                : "Enter the card number to receive the refund.";
 
         return;
     }
@@ -784,10 +764,13 @@ async function submit() {
     formError.value = "";
 
     try {
+        const requested = Number(form.value.amount ?? 0);
+
         const res = await refundService.claim({
             patient_id: patientId,
             method: form.value.method,
             account_details: form.value.accountDetails,
+            ...(requested > 0 ? { amount: requested } : {}),
         });
 
         success(res?.message || "Your refund has been claimed.");
@@ -803,26 +786,23 @@ async function submit() {
 
 const showPaymentModal = ref(false);
 const payAmount = ref(0);
-const paymentError = ref("");
 const isPaying = ref(false);
 const activeReceipt = ref<PaymentReceiptData | null>(null);
 
-const paymentForm = ref({
-    method: "GCash" as PaymentMethod,
-    accountDetails: "",
+const card = ref<CardDetails>({
+    number: "4000000000002503",
+    expMonth: "04",
+    expYear: "29",
+    cvc: "123",
+    firstName: "prince",
+    lastName: "sestoso",
+    email: "prince.sestoso@gmail.com",
 });
 
 function openPaymentModal() {
     if (!hasBalanceDue.value) return;
-
+    checkout.payment_method = "CREDIT-CARD";
     payAmount.value = currentBalance.value;
-
-    paymentForm.value = {
-        method: "GCash",
-        accountDetails: "",
-    };
-
-    paymentError.value = "";
     showPaymentModal.value = true;
 }
 
@@ -838,54 +818,63 @@ async function payBalance() {
         return;
     }
 
-    if (!payAmount.value || payAmount.value <= 0) {
-        paymentError.value = "Enter an amount greater than ₱0.";
+    const amount = round2(Number(payAmount.value) || 0);
+
+    if (amount <= 0) {
+        error("Enter an amount greater than ₱0.");
         return;
     }
 
-    if (payAmount.value > currentBalance.value) {
-        paymentError.value = `Amount can't exceed your balance of ${peso(
-            currentBalance.value,
-        )}.`;
+    if (amount > currentBalance.value) {
+        error(
+            `Amount can't exceed your balance of ${peso(currentBalance.value)}.`,
+        );
         return;
     }
 
-    if (!paymentForm.value.accountDetails.trim()) {
-        paymentError.value = "Enter the account details you're paying from.";
-
-        return;
-    }
+    payAmount.value = amount;
 
     isPaying.value = true;
-    paymentError.value = "";
 
     try {
-        const res = await paymentService.pay({
-            patient_id: patientId,
-            amount: payAmount.value,
-            method: paymentForm.value.method,
-            account_details: paymentForm.value.accountDetails,
+        await cardPayment({
+            card: card.value,
+            amount,
+
+            onClose: () => {
+                isPaying.value = false;
+            },
+
+            createPayment: ({ token_id, authentication_id }) =>
+                paymentService.pay({
+                    patient_id: patientId,
+                    amount,
+                    token_id,
+                    authentication_id,
+                }),
+
+            onSuccess: async (res: any) => {
+                const receipt: PaymentReceiptData | null = res?.receipt ?? null;
+
+                showPaymentModal.value = false;
+
+                if (!receipt) {
+                    success(res?.message || "Payment recorded successfully.");
+
+                    await loadPatientData();
+
+                    return;
+                }
+
+                applyReceiptLocally(receipt);
+
+                activeReceipt.value = receipt;
+
+                success(`Payment recorded. Receipt ${receipt.receipt_no}.`);
+            },
         });
-
-        const receipt: PaymentReceiptData | null = res?.receipt ?? null;
-
-        showPaymentModal.value = false;
-
-        if (!receipt) {
-            success(res?.message || "Payment recorded successfully.");
-
-            await loadPatientData();
-
-            return;
-        }
-
-        applyReceiptLocally(receipt);
-
-        activeReceipt.value = receipt;
-
-        success(`Payment recorded. Receipt ${receipt.receipt_no}.`);
     } catch (err: any) {
-        paymentError.value = err?.message || "Failed to process payment.";
+        error(err?.message || "Failed to process payment.");
     } finally {
         isPaying.value = false;
     }
@@ -894,7 +883,9 @@ async function payBalance() {
 function applyReceiptLocally(receipt: PaymentReceiptData) {
     const issuedAt = formatDateTime(receipt.issued_at ?? undefined);
 
-    const entries: Transaction[] = [];
+    let applied = 0;
+
+    const codes: string[] = [];
 
     for (const line of receipt.lines) {
         const invoice = invoices.value.find(
@@ -902,29 +893,40 @@ function applyReceiptLocally(receipt: PaymentReceiptData) {
         );
 
         if (invoice) {
+            const remaining = Math.max(
+                0,
+                Number(invoice.balance_due || 0) - line.amount_applied,
+            );
+
             invoice.amount_paid =
                 Number(invoice.amount_paid) + line.amount_applied;
-            invoice.balance_due = line.new_balance;
-            invoice.status = line.new_balance <= 0 ? "paid" : "partial";
+            invoice.balance_due = remaining;
+            invoice.status = remaining <= 0 ? "paid" : "partial";
         }
 
-        entries.push({
-            id: `payment-${line.payment_id ?? `${receipt.receipt_no}-${line.line_no}`}`,
-            invoiceId: line.invoice_id,
-            invoiceCode: line.invoice_code,
-            type: "payment",
-            label: `Payment · ${receipt.payment.method || "Unknown"}`,
-            reference: line.payment_reference ?? receipt.receipt_no,
-            date: issuedAt,
-            amount: line.amount_applied,
-            method: receipt.payment.method ?? undefined,
-            status: "completed",
-            maskedCardNumber: receipt.payment.masked_account,
-            receiptNo: receipt.receipt_no,
-        });
+        applied += line.amount_applied;
+        codes.push(line.invoice_code);
     }
 
-    transactions.value = [...entries, ...transactions.value];
+    // One line for the receipt, matching how the ledger groups the payments it
+    // loads from the API.
+    const entry: Transaction = {
+        id: `payment-${receipt.lines[0]?.payment_id ?? receipt.receipt_no}-in`,
+        invoiceId: receipt.lines[0]?.invoice_id ?? 0,
+        invoiceCode: codes[0] ?? "",
+        invoiceCodes: codes,
+        type: "payment",
+        label: `Payment · ${receipt.payment.method || "Unknown"}`,
+        reference: receipt.lines[0]?.payment_reference ?? receipt.receipt_no,
+        date: issuedAt,
+        amount: round2(applied),
+        method: receipt.payment.method ?? undefined,
+        status: "completed",
+        maskedCardNumber: receipt.payment.masked_account,
+        receiptNo: receipt.receipt_no,
+    };
+
+    transactions.value = [entry, ...transactions.value];
 
     billing.value = {
         ...billing.value,
@@ -933,8 +935,12 @@ function applyReceiptLocally(receipt: PaymentReceiptData) {
     };
 }
 
+const loadingReceiptNo = ref<string | null>(null);
+
 async function openReceipt(receiptNo?: string | null) {
-    if (!receiptNo) return;
+    if (!receiptNo || loadingReceiptNo.value) return;
+
+    loadingReceiptNo.value = receiptNo;
 
     try {
         const res = await paymentService.receipt({ receipt_no: receiptNo });
@@ -942,6 +948,8 @@ async function openReceipt(receiptNo?: string | null) {
         activeReceipt.value = res?.data ?? res ?? null;
     } catch (err: any) {
         error(err?.message || "Unable to load that receipt.");
+    } finally {
+        loadingReceiptNo.value = null;
     }
 }
 </script>
@@ -950,7 +958,7 @@ async function openReceipt(receiptNo?: string | null) {
     <div class="min-h-full bg-slate-50/60 p-5 dark:bg-surface">
         <div v-if="isLoading" class="space-y-5">
             <div
-                class="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(420px,0.85fr)]"
+                class="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.6fr)]"
             >
                 <section
                     class="overflow-hidden rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
@@ -1053,6 +1061,89 @@ async function openReceipt(receiptNo?: string | null) {
         />
 
         <div v-else class="space-y-5">
+            <section
+                v-if="refundRequests.length"
+                class="overflow-hidden rounded-2xl border border-emerald-200 shadow-sm dark:border-emerald-500/30"
+            >
+                <!-- && refundRequests[0]?.status.toLocaleLowerCase() === 'requested' -->
+                <button
+                    type="button"
+                    class="flex w-full items-center justify-between gap-3 bg-emerald-600 px-5 py-3 text-left text-white transition hover:bg-emerald-700"
+                    @click="requestsCollapsed = !requestsCollapsed"
+                >
+                    <span class="text-sm font-semibold">
+                        Refund requests
+                        <span class="ml-1 text-white/80">
+                            ({{ refundRequests.length }})
+                        </span>
+                    </span>
+
+                    <AppIcon
+                        :name="
+                            requestsCollapsed ? 'chevron-down' : 'chevron-up'
+                        "
+                        class="h-4 w-4 shrink-0"
+                    />
+                </button>
+
+                <div
+                    v-show="!requestsCollapsed"
+                    class="grid gap-4 bg-white p-4 sm:grid-cols-2 dark:bg-secondary"
+                >
+                    <article
+                        v-for="request in refundRequests"
+                        :key="request.id"
+                        class="overflow-hidden rounded-xl border border-gray-100 dark:border-white/10"
+                    >
+                        <div
+                            class="flex items-center justify-between gap-3 px-4 py-2.5"
+                            :class="refundStatusHeader(request.status)"
+                        >
+                            <span class="font-mono text-[11px] font-semibold">
+                                {{ request.reference ?? `#${request.id}` }}
+                            </span>
+
+                            <span
+                                class="text-[10px] font-bold uppercase tracking-wide"
+                            >
+                                {{ request.status }}
+                            </span>
+                        </div>
+
+                        <dl
+                            class="divide-y divide-gray-100 dark:divide-white/10"
+                        >
+                            <div
+                                v-for="row in refundRows(request)"
+                                :key="row.label"
+                                class="flex items-start justify-between gap-3 px-4 py-2"
+                            >
+                                <dt
+                                    class="shrink-0 text-[11px] text-gray-400 dark:text-gray-500"
+                                >
+                                    {{ row.label }}
+                                </dt>
+
+                                <dd
+                                    class="min-w-0 truncate text-right text-[11px] font-medium text-gray-700 dark:text-gray-200"
+                                >
+                                    {{ row.value }}
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <p
+                            v-if="
+                                request.status === 'Declined' && request.reason
+                            "
+                            class="border-t border-gray-100 bg-rose-50/60 px-4 py-2.5 text-[11px] leading-4 text-rose-700 dark:border-white/10 dark:bg-rose-500/10 dark:text-rose-300"
+                        >
+                            Reason for refusal: {{ request.reason }}
+                        </p>
+                    </article>
+                </div>
+            </section>
+
             <!-- <div
                 v-if="selectedLovedOne"
                 class="inline-flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm dark:bg-secondary dark:border-white/10"
@@ -1086,7 +1177,7 @@ async function openReceipt(receiptNo?: string | null) {
             </div> -->
 
             <div
-                class="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(420px,0.85fr)]"
+                class="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.6fr)]"
             >
                 <section
                     class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
@@ -1168,133 +1259,90 @@ async function openReceipt(receiptNo?: string | null) {
                                     class="w-full shrink-0"
                                 >
                                     <div
-                                        class="rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-5 dark:border-white/10 dark:from-white/5 dark:to-white/5"
+                                        class="flex flex-col items-center rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-6 text-center dark:border-white/10 dark:from-white/5 dark:to-white/5"
                                     >
+                                        <img
+                                            v-if="lo.photo"
+                                            :src="lo.photo"
+                                            :alt="lo.full_name"
+                                            class="h-20 w-20 rounded-full object-cover object-top"
+                                        />
+
                                         <div
-                                            class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between"
+                                            v-else
+                                            class="flex h-20 w-20 items-center justify-center rounded-full bg-primary-100 text-xl font-bold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300"
                                         >
-                                            <div
-                                                class="flex min-w-0 items-center gap-4"
-                                            >
-                                                <div
-                                                    class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-100 text-lg font-bold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300"
-                                                >
-                                                    {{
-                                                        lo.full_name
-                                                            .split(" ")
-                                                            .map((n) => n[0])
-                                                            .slice(0, 2)
-                                                            .join("")
-                                                    }}
-                                                </div>
-
-                                                <div class="min-w-0">
-                                                    <p
-                                                        class="truncate text-lg font-bold text-gray-900 dark:text-white"
-                                                    >
-                                                        {{ lo.full_name }}
-                                                    </p>
-
-                                                    <div
-                                                        class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1"
-                                                    >
-                                                        <span
-                                                            v-if="lo.room_label"
-                                                            class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400"
-                                                        >
-                                                            <AppIcon
-                                                                name="home"
-                                                                class="h-3.5 w-3.5"
-                                                            />
-                                                            {{ lo.room_label }}
-                                                        </span>
-
-                                                        <span
-                                                            v-else-if="
-                                                                lo.full_address
-                                                            "
-                                                            class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400"
-                                                        >
-                                                            <AppIcon
-                                                                name="map-pin"
-                                                                class="h-3.5 w-3.5"
-                                                            />
-                                                            {{
-                                                                lo.full_address
-                                                            }}
-                                                        </span>
-
-                                                        <span
-                                                            v-if="lo.room_type"
-                                                            class="text-xs text-primary-600 dark:text-primary-300"
-                                                        >
-                                                            {{ lo.room_type }}
-                                                        </span>
-                                                    </div>
-
-                                                    <span
-                                                        class="mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                                                        :class="
-                                                            lovedOneStatusClasses(
-                                                                lo.status,
-                                                            )
-                                                        "
-                                                    >
-                                                        {{ lo.status }}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <div
-                                                class="hidden h-16 w-px bg-gray-100 sm:block dark:bg-white/10"
-                                            />
-
-                                            <div
-                                                class="flex items-center gap-3"
-                                            >
-                                                <div
-                                                    class="flex h-10 w-10 items-center justify-center rounded-xl"
-                                                    :class="
-                                                        lo.location_type ===
-                                                        'homecare'
-                                                            ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300'
-                                                            : 'bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300'
-                                                    "
-                                                >
-                                                    <AppIcon
-                                                        :name="
-                                                            lo.location_type ===
-                                                            'homecare'
-                                                                ? 'map-pin'
-                                                                : 'building'
-                                                        "
-                                                        class="h-5 w-5"
-                                                    />
-                                                </div>
-
-                                                <div>
-                                                    <p
-                                                        class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500"
-                                                    >
-                                                        Care Type
-                                                    </p>
-
-                                                    <p
-                                                        class="mt-0.5 text-sm font-semibold text-gray-800 dark:text-white"
-                                                    >
-                                                        {{
-                                                            lo.location_type ===
-                                                            "homecare"
-                                                                ? "Homecare"
-                                                                : lo.location_type ===
-                                                                    "facility"
-                                                                  ? "Facility"
-                                                                  : "Not Assigned"
-                                                        }}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                            {{
+                                                lo.full_name
+                                                    .split(" ")
+                                                    .map((n) => n[0])
+                                                    .slice(0, 2)
+                                                    .join("")
+                                            }}
                                         </div>
+
+                                        <p
+                                            class="mt-3 text-lg font-bold text-gray-900 dark:text-white"
+                                        >
+                                            {{ lo.full_name }}
+                                        </p>
+
+                                        <p
+                                            v-if="lo.branch_name"
+                                            class="mt-1 text-xs font-medium text-primary-600 dark:text-primary-300"
+                                        >
+                                            {{ lo.branch_name }}
+                                        </p>
+
+                                        <p
+                                            v-if="lo.branch_address"
+                                            class="text-xs text-gray-400 dark:text-gray-500"
+                                        >
+                                            {{ lo.branch_address }}
+                                        </p>
+
+                                        <div
+                                            class="mt-2 flex flex-wrap items-center justify-center gap-2"
+                                        >
+                                            <span
+                                                class="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                                                :class="
+                                                    lovedOneStatusClasses(
+                                                        lo.status,
+                                                    )
+                                                "
+                                            >
+                                                {{ lo.status }}
+                                            </span>
+
+                                            <span
+                                                v-if="lo.room_label"
+                                                class="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600 dark:bg-white/10 dark:text-gray-300"
+                                            >
+                                                {{ lo.room_label
+                                                }}<template v-if="lo.room_type">
+                                                    ·
+                                                    {{ lo.room_type }}</template
+                                                >
+                                            </span>
+
+                                            <span
+                                                v-else-if="
+                                                    lo.location_type ===
+                                                    'homecare'
+                                                "
+                                                class="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-600 dark:bg-blue-500/10 dark:text-blue-300"
+                                            >
+                                                Homecare
+                                            </span>
+                                        </div>
+
+                                        <NuxtLink
+                                            :to="`/portal/loved-ones?patient=${lo.uuid ?? ''}`"
+                                            class="mt-5 w-full rounded-full border border-primary-600 py-2 text-center text-sm font-medium text-primary-600 transition hover:border-primary-500 hover:bg-primary-500 hover:text-white dark:text-primary-300"
+                                        >
+                                            View Full Profile
+                                        </NuxtLink>
                                     </div>
                                 </div>
                             </div>
@@ -1326,7 +1374,9 @@ async function openReceipt(receiptNo?: string | null) {
                                 <AppIcon name="alert-circle" class="h-5 w-5" />
                             </div>
 
-                            <p class="mt-3 text-sm font-medium text-rose-700 dark:text-rose-300">
+                            <p
+                                class="mt-3 text-sm font-medium text-rose-700 dark:text-rose-300"
+                            >
                                 {{ loadError }}
                             </p>
 
@@ -1503,7 +1553,11 @@ async function openReceipt(receiptNo?: string | null) {
 
                         <div
                             class="relative overflow-hidden bg-white p-5 sm:p-6 dark:bg-secondary"
-                            :class="hasBalanceDue ? 'bg-rose-50/30 dark:bg-rose-500/10' : ''"
+                            :class="
+                                hasBalanceDue
+                                    ? 'bg-rose-50/30 dark:bg-rose-500/10'
+                                    : ''
+                            "
                         >
                             <div class="flex items-start justify-between">
                                 <div
@@ -1549,6 +1603,21 @@ async function openReceipt(receiptNo?: string | null) {
                                 {{ peso(currentBalance) }}
                             </p>
 
+                            <!-- Says what the figure is made of, so a family
+                                 holding credit on one invoice while owing on
+                                 another can see why the two do not cancel. -->
+                            <p
+                                v-if="unpaidInvoiceCount"
+                                class="mt-1 text-[11px] text-gray-400 dark:text-gray-500"
+                            >
+                                Across {{ unpaidInvoiceCount }} unpaid
+                                {{
+                                    unpaidInvoiceCount === 1
+                                        ? "invoice"
+                                        : "invoices"
+                                }}
+                            </p>
+
                             <button
                                 v-if="hasBalanceDue"
                                 @click="openPaymentModal"
@@ -1561,7 +1630,10 @@ async function openReceipt(receiptNo?: string | null) {
                                 />
                             </button>
 
-                            <p v-else class="mt-1 text-[11px] text-emerald-600 dark:text-emerald-300">
+                            <p
+                                v-else
+                                class="mt-1 text-[11px] text-emerald-600 dark:text-emerald-300"
+                            >
                                 No outstanding balance
                             </p>
                         </div>
@@ -1588,15 +1660,35 @@ async function openReceipt(receiptNo?: string | null) {
                             <p
                                 class="mt-5 text-xs font-medium text-gray-400 dark:text-gray-500"
                             >
-                                Available Refund
+                                Credit
                             </p>
 
-                            <p class="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-300">
+                            <p
+                                class="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-300"
+                            >
                                 {{ peso(advanceBalance) }}
                             </p>
 
+                            <!-- Matches the staff dashboard: the credit is what
+                                 sits on the account now, with what has already
+                                 gone back stated separately. -->
+                            <p
+                                v-if="totalRefundedAmount > 0"
+                                class="mt-1 text-[11px] text-gray-400 dark:text-gray-500"
+                            >
+                                {{ peso(totalRefundedAmount) }} already refunded
+                            </p>
+
+                            <p
+                                v-if="advanceBalance > 0 && openRefundRequest"
+                                class="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-[11px] leading-4 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                            >
+                                A refund request is already being reviewed. You
+                                can ask for another once it is settled.
+                            </p>
+
                             <button
-                                v-if="isDischarged && advanceBalance > 0"
+                                v-else-if="advanceBalance > 0"
                                 @click="openModal"
                                 class="mt-4 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/15"
                             >
@@ -1608,17 +1700,10 @@ async function openReceipt(receiptNo?: string | null) {
                             </button>
 
                             <p
-                                v-else-if="advanceBalance > 0"
-                                class="mt-1 line-clamp-2 text-[11px] leading-4 text-gray-400 dark:text-gray-500"
-                            >
-                                {{ refundReason }}
-                            </p>
-
-                            <p
                                 v-else
                                 class="mt-1 text-[11px] text-gray-400 dark:text-gray-500"
                             >
-                                No refundable balance
+                                No credit on this account
                             </p>
                         </div>
                     </div>
@@ -1662,7 +1747,9 @@ async function openReceipt(receiptNo?: string | null) {
                                     />
                                 </div>
 
-                                <p class="mt-1 text-lg font-bold text-blue-600 dark:text-blue-300">
+                                <p
+                                    class="mt-1 text-lg font-bold text-blue-600 dark:text-blue-300"
+                                >
                                     {{ peso(totalRefundedAmount) }}
                                 </p>
                             </div>
@@ -1705,519 +1792,234 @@ async function openReceipt(receiptNo?: string | null) {
                 </section>
             </div>
 
-            <section
-                v-if="invoices.length"
-                class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6 dark:bg-secondary dark:border-white/10"
-            >
-                <div
-                    class="flex flex-col gap-2 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"
+            <div class="grid gap-5 xl:grid-cols-2">
+                <section
+                    class="flex flex-col rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6 dark:border-white/10 dark:bg-secondary"
                 >
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <div
-                                class="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-primary-500/10 dark:text-blue-300"
-                            >
-                                <AppIcon name="file-text" class="h-4 w-4" />
-                            </div>
-
-                            <p
-                                class="text-sm font-bold text-gray-900 dark:text-white"
-                            >
-                                Invoices
-                            </p>
-                        </div>
-
-                        <p
-                            class="mt-1 pl-10 text-xs text-gray-400 dark:text-gray-500"
-                        >
-                            Detailed billing records for
-                            {{ selectedLovedOne?.full_name || "this resident" }}
-                        </p>
-                    </div>
-
-                    <span
-                        class="w-fit rounded-full bg-gray-50 px-3 py-1.5 text-[11px] font-semibold text-gray-500 dark:bg-white/5 dark:text-gray-400"
+                    <div
+                        class="flex items-start justify-between gap-3 border-b border-gray-100 pb-4 dark:border-white/10"
                     >
-                        {{ invoices.length }} invoice{{
-                            invoices.length === 1 ? "" : "s"
-                        }}
-                    </span>
-                </div>
-
-                <div class="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <article
-                        v-for="invoice in invoices"
-                        :key="invoice.invoice_id"
-                        class="group overflow-hidden rounded-2xl border border-gray-100 bg-white transition hover:border-gray-200 hover:shadow-md dark:bg-secondary dark:border-white/10 dark:hover:border-white/10"
-                    >
-                        <div class="p-5">
-                            <div class="flex items-start justify-between gap-4">
-                                <div class="min-w-0">
-                                    <div
-                                        class="flex flex-wrap items-center gap-2"
-                                    >
-                                        <p
-                                            class="text-sm font-bold text-gray-900 dark:text-white"
-                                        >
-                                            {{ invoice.invoice_code }}
-                                        </p>
-
-                                        <span
-                                            class="rounded-full px-2 py-0.5 text-[9px] font-semibold"
-                                            :class="
-                                                invoiceStatusClasses(
-                                                    invoice.status,
-                                                )
-                                            "
-                                        >
-                                            {{ formatStatus(invoice.status) }}
-                                        </span>
-
-                                        <span
-                                            v-if="
-                                                invoice.adjusted_total !==
-                                                invoice.total
-                                            "
-                                            class="rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-bold text-amber-600 dark:bg-amber-500/10 dark:text-amber-300"
-                                        >
-                                            ADJUSTED
-                                        </span>
-                                    </div>
-
-                                    <div
-                                        v-if="invoice.source_type"
-                                        class="mt-2 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-medium text-blue-600 dark:bg-primary-500/10 dark:text-blue-300"
-                                    >
-                                        {{
-                                            getSourceTypeLabel(
-                                                invoice.source_type,
-                                            )
-                                        }}
-                                    </div>
-
-                                    <p
-                                        class="mt-2 text-[11px] text-gray-400 dark:text-gray-500"
-                                    >
-                                        {{ formatDateTime(invoice.created_at) }}
-                                    </p>
-                                </div>
-
-                                <div class="shrink-0 text-right">
-                                    <p
-                                        v-if="
-                                            invoice.adjusted_total !==
-                                            invoice.total
-                                        "
-                                        class="text-[11px] text-gray-400 line-through dark:text-gray-500"
-                                    >
-                                        {{ peso(invoice.total) }}
-                                    </p>
-
-                                    <p
-                                        class="text-base font-bold"
-                                        :class="
-                                            invoice.adjusted_total !==
-                                            invoice.total
-                                                ? 'text-emerald-600 dark:text-emerald-300'
-                                                : 'text-gray-900 dark:text-white'
-                                        "
-                                    >
-                                        {{ peso(invoice.adjusted_total) }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="mt-5 grid grid-cols-2 gap-3">
+                        <div>
+                            <div class="flex items-center gap-2">
                                 <div
-                                    class="rounded-xl bg-gray-50 p-3 dark:bg-white/5"
+                                    class="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-primary-500/10 dark:text-blue-300"
                                 >
-                                    <p
-                                        class="text-[10px] font-medium text-gray-400 dark:text-gray-500"
-                                    >
-                                        Paid
-                                    </p>
-
-                                    <p
-                                        class="mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-300"
-                                    >
-                                        {{ peso(invoice.amount_paid) }}
-                                    </p>
+                                    <AppIcon name="file-text" class="h-4 w-4" />
                                 </div>
 
-                                <div
-                                    class="rounded-xl p-3"
-                                    :class="
-                                        invoice.balance_due > 0
-                                            ? 'bg-rose-50 dark:bg-rose-500/10'
-                                            : 'bg-gray-50 dark:bg-white/5'
-                                    "
-                                >
-                                    <p
-                                        class="text-[10px] font-medium"
-                                        :class="
-                                            invoice.balance_due > 0
-                                                ? 'text-rose-400'
-                                                : 'text-gray-400 dark:text-gray-500'
-                                        "
-                                    >
-                                        Balance
-                                    </p>
-
-                                    <p
-                                        class="mt-1 text-sm font-bold"
-                                        :class="
-                                            invoice.balance_due > 0
-                                                ? 'text-rose-600 dark:text-rose-300'
-                                                : 'text-gray-800 dark:text-white'
-                                        "
-                                    >
-                                        {{ peso(invoice.balance_due) }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div
-                                v-if="
-                                    invoice.start_date ||
-                                    invoice.end_date ||
-                                    invoice.billing_cycle
-                                "
-                                class="mt-3 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3 dark:border-white/10"
-                            >
-                                <div>
-                                    <p
-                                        class="text-[10px] text-gray-400 dark:text-gray-500"
-                                    >
-                                        Billing Period
-                                    </p>
-
-                                    <p
-                                        class="mt-1 text-xs font-medium text-gray-700 dark:text-gray-300"
-                                    >
-                                        {{
-                                            invoice.start_date &&
-                                            invoice.end_date
-                                                ? `${formatDateLabel(invoice.start_date)} - ${formatDateLabel(invoice.end_date)}`
-                                                : "N/A"
-                                        }}
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <p
-                                        class="text-[10px] text-gray-400 dark:text-gray-500"
-                                    >
-                                        Cycle
-                                    </p>
-
-                                    <p
-                                        class="mt-1 text-xs font-medium text-gray-700 dark:text-gray-300"
-                                    >
-                                        {{ invoice.billing_cycle || "N/A" }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div
-                                v-if="invoice.adjustments.length"
-                                class="mt-4 rounded-xl border border-amber-100 bg-amber-50/50 p-3 dark:border-amber-500/20 dark:bg-amber-500/10"
-                            >
-                                <div class="mb-2 flex items-center gap-1.5">
-                                    <AppIcon
-                                        name="sliders-horizontal"
-                                        class="h-3.5 w-3.5 text-amber-600 dark:text-amber-300"
-                                    />
-
-                                    <p
-                                        class="text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300"
-                                    >
-                                        Adjustments
-                                    </p>
-                                </div>
-
-                                <div
-                                    v-for="(adj, idx) in invoice.adjustments"
-                                    :key="idx"
-                                    class="flex items-start justify-between gap-3 border-t border-amber-100 py-2 first:border-t-0 first:pt-0 last:pb-0 dark:border-amber-500/20"
-                                >
-                                    <p
-                                        class="text-[10px] leading-4 text-gray-600 dark:text-gray-300"
-                                    >
-                                        {{ adj.reason }}
-                                    </p>
-
-                                    <span
-                                        class="shrink-0 text-[10px] font-bold text-amber-600 dark:text-amber-300"
-                                    >
-                                        -{{ peso(adj.amount) }}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div
-                                v-if="invoice.services.length"
-                                class="mt-4 border-t border-gray-100 pt-4 dark:border-white/10"
-                            >
                                 <p
-                                    class="mb-2 text-[10px] font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500"
+                                    class="text-sm font-bold text-gray-900 dark:text-white"
                                 >
-                                    Services
+                                    Invoices
                                 </p>
-
-                                <div class="space-y-2">
-                                    <div
-                                        v-for="service in invoice.services.slice(
-                                            0,
-                                            3,
-                                        )"
-                                        :key="service.schedule_services_id"
-                                        class="flex items-center justify-between gap-3"
-                                    >
-                                        <div class="min-w-0">
-                                            <p
-                                                class="truncate text-xs font-medium text-gray-700 dark:text-gray-300"
-                                            >
-                                                {{
-                                                    service.service
-                                                        ?.service_name ||
-                                                    "Service"
-                                                }}
-                                            </p>
-
-                                            <p
-                                                v-if="
-                                                    service.schedule
-                                                        ?.scheduled_at
-                                                "
-                                                class="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500"
-                                            >
-                                                {{
-                                                    formatDateTime(
-                                                        service.schedule
-                                                            .scheduled_at,
-                                                    )
-                                                }}
-                                            </p>
-                                        </div>
-
-                                        <p
-                                            class="shrink-0 text-xs font-semibold text-gray-700 dark:text-gray-300"
-                                        >
-                                            {{ peso(service.price) }}
-                                        </p>
-                                    </div>
-
-                                    <p
-                                        v-if="invoice.services.length > 3"
-                                        class="pt-1 text-[10px] font-medium text-primary-600 dark:text-primary-300"
-                                    >
-                                        +{{ invoice.services.length - 3 }} more
-                                        service{{
-                                            invoice.services.length - 3 === 1
-                                                ? ""
-                                                : "s"
-                                        }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </article>
-                </div>
-            </section>
-
-            <section
-                class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6 dark:bg-secondary dark:border-white/10"
-            >
-                <div
-                    class="flex flex-col gap-2 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"
-                >
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <div
-                                class="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-50 text-purple-600"
-                            >
-                                <AppIcon name="activity" class="h-4 w-4" />
                             </div>
 
                             <p
-                                class="text-sm font-bold text-gray-900 dark:text-white"
+                                class="mt-1 pl-10 text-xs text-gray-400 dark:text-gray-500"
                             >
-                                Transaction History
+                                Latest billing records for
+                                {{
+                                    selectedLovedOne?.full_name ||
+                                    "this resident"
+                                }}
                             </p>
                         </div>
 
-                        <p
-                            class="mt-1 pl-10 text-xs text-gray-400 dark:text-gray-500"
+                        <span
+                            class="shrink-0 rounded-full bg-gray-50 px-3 py-1.5 text-[11px] font-semibold text-gray-500 dark:bg-white/5 dark:text-gray-400"
                         >
-                            All billing transactions and payment activity
-                        </p>
+                            {{ listedInvoices.length }} invoice{{
+                                invoices.length === 1 ? "" : "s"
+                            }}
+                        </span>
                     </div>
 
-                    <span
-                        v-if="invoiceTransactions.length"
-                        class="w-fit rounded-full bg-gray-50 px-3 py-1.5 text-[11px] font-semibold text-gray-500 dark:bg-white/5 dark:text-gray-400"
-                    >
-                        {{ invoiceTransactions.length }} transaction{{
-                            invoiceTransactions.length === 1 ? "" : "s"
-                        }}
-                    </span>
-                </div>
+                    <BalanceInvoiceList
+                        :invoices="recentInvoices"
+                        class="mt-4 flex-1"
+                    />
 
-                <div
-                    v-if="
-                        !invoiceTransactions || invoiceTransactions.length === 0
-                    "
-                    class="py-14 text-center"
+                    <button
+                        v-if="listedInvoices.length > RECENT_LIMIT"
+                        type="button"
+                        class="mt-4 w-full rounded-xl border border-gray-200 py-2.5 text-xs font-semibold text-gray-600 transition hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                        @click="openAllInvoices"
+                    >
+                        View all {{ listedInvoices.length }} invoices
+                    </button>
+                </section>
+
+                <section
+                    class="flex flex-col rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6 dark:border-white/10 dark:bg-secondary"
                 >
                     <div
-                        class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 dark:bg-white/5"
+                        class="flex items-start justify-between gap-3 border-b border-gray-100 pb-4 dark:border-white/10"
                     >
-                        <AppIcon name="receipt" class="h-7 w-7 text-gray-300 dark:text-gray-500" />
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-300"
+                                >
+                                    <AppIcon name="activity" class="h-4 w-4" />
+                                </div>
+
+                                <p
+                                    class="text-sm font-bold text-gray-900 dark:text-white"
+                                >
+                                    Payments &amp; Refunds
+                                </p>
+                            </div>
+
+                            <p
+                                class="mt-1 pl-10 text-xs text-gray-400 dark:text-gray-500"
+                            >
+                                Money paid and returned on this account
+                            </p>
+                        </div>
+
+                        <span
+                            v-if="invoiceTransactions.length"
+                            class="shrink-0 rounded-full bg-gray-50 px-3 py-1.5 text-[11px] font-semibold text-gray-500 dark:bg-white/5 dark:text-gray-400"
+                        >
+                            {{ invoiceTransactions.length }} transaction{{
+                                invoiceTransactions.length === 1 ? "" : "s"
+                            }}
+                        </span>
                     </div>
 
-                    <p
-                        class="mt-4 text-sm font-medium text-gray-600 dark:text-gray-300"
+                    <BalanceTransactionList
+                        :transactions="recentTransactions"
+                        :loading-receipt-no="loadingReceiptNo"
+                        class="mt-4 flex-1"
+                        @receipt="openReceipt"
+                    />
+
+                    <button
+                        v-if="invoiceTransactions.length > RECENT_LIMIT"
+                        type="button"
+                        class="mt-4 w-full rounded-xl border border-gray-200 py-2.5 text-xs font-semibold text-gray-600 transition hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                        @click="openAllTransactions"
                     >
-                        No transactions yet
-                    </p>
+                        View all {{ invoiceTransactions.length }} transactions
+                    </button>
+                </section>
+            </div>
+        </div>
 
-                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                        Your billing activity will appear here.
-                    </p>
-                </div>
-
+        <Transition name="modal">
+            <div
+                v-if="showAllInvoices"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm"
+                @click.self="showAllInvoices = false"
+            >
                 <div
-                    v-else
-                    class="mt-5 divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-100 dark:border-white/10 dark:divide-white/10"
+                    class="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-secondary"
                 >
                     <div
-                        v-for="transaction in invoiceTransactions"
-                        :key="transaction.id"
-                        class="group flex items-start gap-3 p-4 transition hover:bg-gray-50/70 sm:gap-4 sm:p-5 dark:hover:bg-white/5"
+                        class="flex items-center justify-between gap-3 border-b border-gray-100 px-6 py-4 dark:border-white/10"
                     >
+                        <div>
+                            <p
+                                class="text-sm font-bold text-gray-900 dark:text-white"
+                            >
+                                All invoices
+                            </p>
+
+                            <p
+                                class="mt-0.5 text-xs text-gray-400 dark:text-gray-500"
+                            >
+                                Every bill raised for
+                                {{
+                                    selectedLovedOne?.full_name ||
+                                    "this resident"
+                                }}
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/10"
+                            @click="showAllInvoices = false"
+                        >
+                            <AppIcon name="x" class="h-4 w-4" />
+                        </button>
+                    </div>
+
+                    <div class="min-h-0 flex-1 overflow-y-auto px-6 py-4">
                         <div
-                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-                            :class="transactionIconClasses(transaction.type)"
+                            v-if="isLoadingLedger"
+                            class="flex items-center justify-center gap-2 py-14 text-xs text-gray-400 dark:text-gray-500"
                         >
                             <AppIcon
-                                :name="transactionIcon(transaction.type)"
-                                class="h-5 w-5"
+                                name="loader-circle"
+                                class="h-4 w-4 animate-spin"
                             />
+                            Loading invoices…
                         </div>
 
-                        <div class="min-w-0 flex-1">
-                            <div
-                                class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
-                            >
-                                <div class="min-w-0">
-                                    <div
-                                        class="flex flex-wrap items-center gap-2"
-                                    >
-                                        <p
-                                            class="text-sm font-semibold text-gray-800 dark:text-white"
-                                        >
-                                            {{ transaction.label }}
-                                        </p>
-
-                                        <span
-                                            v-if="transaction.status"
-                                            class="rounded-full px-2 py-0.5 text-[9px] font-semibold"
-                                            :class="
-                                                transactionStatusClasses(
-                                                    transaction.status,
-                                                )
-                                            "
-                                        >
-                                            {{
-                                                formatStatus(transaction.status)
-                                            }}
-                                        </span>
-                                    </div>
-
-                                    <div
-                                        class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400 dark:text-gray-500"
-                                    >
-                                        <span
-                                            v-if="
-                                                transaction.reference &&
-                                                transaction.type !== 'invoice'
-                                            "
-                                            class="truncate"
-                                        >
-                                            Ref:
-                                            {{ transaction.reference }}
-                                        </span>
-
-                                        <span
-                                            v-if="transaction.maskedCardNumber"
-                                        >
-                                            Account:
-                                            {{ transaction.maskedCardNumber }}
-                                        </span>
-
-                                        <span>
-                                            {{ transaction.date }}
-                                        </span>
-
-                                        <button
-                                            v-if="transaction.receiptNo"
-                                            type="button"
-                                            class="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2.5 py-1 text-[10px] font-semibold text-primary-600 transition hover:bg-primary-50 dark:bg-white/5 dark:text-primary-300 dark:hover:bg-primary-500/10"
-                                            @click="
-                                                openReceipt(
-                                                    transaction.receiptNo,
-                                                )
-                                            "
-                                        >
-                                            <AppIcon
-                                                name="receipt"
-                                                class="h-3 w-3"
-                                            />
-                                            {{ transaction.receiptNo }}
-                                        </button>
-                                    </div>
-
-                                    <p
-                                        v-if="transaction.reason"
-                                        class="mt-2 rounded-lg bg-gray-50 px-2.5 py-1.5 text-[11px] text-gray-500 dark:bg-white/5 dark:text-gray-400"
-                                    >
-                                        {{ transaction.reason }}
-                                    </p>
-                                </div>
-
-                                <div
-                                    class="flex shrink-0 items-center justify-between gap-4 sm:block sm:text-right"
-                                >
-                                    <p
-                                        class="text-sm font-bold"
-                                        :class="
-                                            transactionAmountColor(
-                                                transaction.type,
-                                            )
-                                        "
-                                    >
-                                        {{ transactionSign(transaction.type)
-                                        }}{{ peso(transaction.amount) }}
-                                    </p>
-
-                                    <p
-                                        class="mt-1 text-[10px] text-gray-400 dark:text-gray-500"
-                                    >
-                                        {{
-                                            transaction.type === "invoice"
-                                                ? "Billed"
-                                                : transaction.type === "payment"
-                                                  ? "Paid"
-                                                  : "Returned"
-                                        }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                        <BalanceInvoiceList v-else :invoices="listedInvoices" />
                     </div>
                 </div>
-            </section>
-        </div>
+            </div>
+        </Transition>
+
+        <Transition name="modal">
+            <div
+                v-if="showAllTransactions"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm"
+                @click.self="showAllTransactions = false"
+            >
+                <div
+                    class="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-secondary"
+                >
+                    <div
+                        class="flex items-center justify-between gap-3 border-b border-gray-100 px-6 py-4 dark:border-white/10"
+                    >
+                        <div>
+                            <p
+                                class="text-sm font-bold text-gray-900 dark:text-white"
+                            >
+                                All payments &amp; refunds
+                            </p>
+
+                            <p
+                                class="mt-0.5 text-xs text-gray-400 dark:text-gray-500"
+                            >
+                                Money paid and returned on this account
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-white/10"
+                            @click="showAllTransactions = false"
+                        >
+                            <AppIcon name="x" class="h-4 w-4" />
+                        </button>
+                    </div>
+
+                    <div class="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+                        <div
+                            v-if="isLoadingLedger"
+                            class="flex items-center justify-center gap-2 py-14 text-xs text-gray-400 dark:text-gray-500"
+                        >
+                            <AppIcon
+                                name="loader-circle"
+                                class="h-4 w-4 animate-spin"
+                            />
+                            Loading transactions…
+                        </div>
+
+                        <BalanceTransactionList
+                            v-else
+                            :transactions="invoiceTransactions"
+                            :loading-receipt-no="loadingReceiptNo"
+                            @receipt="openReceipt"
+                        />
+                    </div>
+                </div>
+            </div>
+        </Transition>
 
         <Transition name="modal">
             <div
@@ -2252,8 +2054,8 @@ async function openReceipt(receiptNo?: string | null) {
                         <p class="mt-4 text-lg font-bold">Request Refund</p>
 
                         <p class="mt-1 text-xs leading-5 text-white/75">
-                            Your available refundable balance will be sent using
-                            your selected method.
+                            The credit on this account will be sent using your
+                            selected method.
                         </p>
                     </div>
 
@@ -2267,7 +2069,9 @@ async function openReceipt(receiptNo?: string | null) {
                                 Refund Amount
                             </p>
 
-                            <p class="mt-1 text-3xl font-bold text-emerald-700 dark:text-emerald-300">
+                            <p
+                                class="mt-1 text-3xl font-bold text-emerald-700 dark:text-emerald-300"
+                            >
                                 {{ peso(advanceBalance) }}
                             </p>
 
@@ -2291,6 +2095,48 @@ async function openReceipt(receiptNo?: string | null) {
                             <label
                                 class="text-xs font-semibold text-gray-600 dark:text-gray-300"
                             >
+                                How much would you like back?
+                            </label>
+
+                            <input
+                                v-model.number="form.amount"
+                                type="number"
+                                step="1"
+                                min="1"
+                                :max="refundableAmount"
+                                class="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-sm text-gray-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:bg-secondary dark:border-white/10 dark:text-white"
+                            />
+
+                            <div
+                                class="mt-1.5 flex items-center justify-between gap-3"
+                            >
+                                <button
+                                    type="button"
+                                    class="text-xs font-medium text-primary-600 hover:underline dark:text-primary-300"
+                                    @click="form.amount = refundableAmount"
+                                >
+                                    Request all
+                                </button>
+
+                                <p
+                                    v-if="Number(form.amount) > 0"
+                                    class="text-xs text-gray-500 dark:text-gray-400"
+                                >
+                                    {{
+                                        peso(
+                                            refundableAmount -
+                                                Number(form.amount),
+                                        )
+                                    }}
+                                    stays on the account
+                                </p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label
+                                class="text-xs font-semibold text-gray-600 dark:text-gray-300"
+                            >
                                 Refund Method
                             </label>
 
@@ -2300,8 +2146,7 @@ async function openReceipt(receiptNo?: string | null) {
                                     class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-3.5 py-3 pr-10 text-sm text-gray-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:bg-secondary dark:border-white/10 dark:text-white"
                                 >
                                     <option>GCash</option>
-                                    <option>Bank Transfer</option>
-                                    <option>Cash Pickup</option>
+                                    <option>Credit Card</option>
                                 </select>
 
                                 <AppIcon
@@ -2314,18 +2159,14 @@ async function openReceipt(receiptNo?: string | null) {
                         <BaseInput
                             v-model="form.accountDetails"
                             :label="
-                                form.method === 'Cash Pickup'
-                                    ? 'Authorized Pickup Name'
-                                    : form.method === 'GCash'
-                                      ? 'GCash Number'
-                                      : 'Bank Account Details'
+                                form.method === 'GCash'
+                                    ? 'GCash Number'
+                                    : 'Card Number'
                             "
                             :placeholder="
-                                form.method === 'Cash Pickup'
-                                    ? 'e.g. Bunny Wawa'
-                                    : form.method === 'GCash'
-                                      ? 'e.g. 0917 123 4567'
-                                      : 'e.g. BDO – 1234 5678 9012'
+                                form.method === 'GCash'
+                                    ? 'e.g. 0917 123 4567'
+                                    : 'e.g. 4000 0000 0000 2503'
                             "
                         />
 
@@ -2376,166 +2217,143 @@ async function openReceipt(receiptNo?: string | null) {
                 @click.self="closePaymentModal"
             >
                 <div
-                    class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-secondary"
+                    class="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Pay balance"
                 >
                     <div
-                        class="bg-gradient-to-br from-primary-600 to-primary-700 px-6 py-5 text-white"
+                        class="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
                     >
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
                             <div
-                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15"
+                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
                             >
                                 <AppIcon name="credit-card" class="h-5 w-5" />
                             </div>
 
-                            <button
-                                @click="closePaymentModal"
-                                class="flex h-8 w-8 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white dark:hover:bg-white/10"
-                            >
-                                <AppIcon name="x" class="h-4 w-4" />
-                            </button>
+                            <div>
+                                <h2
+                                    class="text-lg font-semibold text-gray-900 dark:text-white"
+                                >
+                                    Pay balance
+                                </h2>
+
+                                <p
+                                    class="mt-0.5 text-sm text-gray-500 dark:text-gray-400"
+                                >
+                                    {{
+                                        selectedLovedOne?.full_name ||
+                                        "This resident"
+                                    }}
+                                    ·
+                                    {{ peso(currentBalance) }} outstanding
+                                </p>
+                            </div>
                         </div>
 
-                        <p class="mt-4 text-lg font-bold">Pay Balance</p>
-
-                        <p class="mt-1 text-xs leading-5 text-white/75">
-                            Make a payment toward the outstanding balance across
-                            all invoices.
-                        </p>
+                        <button
+                            type="button"
+                            aria-label="Close dialog"
+                            :disabled="isPaying"
+                            class="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-200"
+                            @click="closePaymentModal"
+                        >
+                            <AppIcon name="x" class="h-5 w-5" />
+                        </button>
                     </div>
 
-                    <div class="space-y-5 p-6">
-                        <div
-                            class="rounded-2xl border border-rose-100 bg-rose-50 p-4 dark:bg-rose-500/10 dark:border-rose-500/20"
-                        >
-                            <div class="flex items-center justify-between">
+                    <div
+                        class="grid min-h-0 flex-1 gap-6 overflow-y-auto px-6 py-5 lg:grid-cols-2 lg:items-start"
+                    >
+                        <div class="space-y-5">
+                            <div
+                                class="rounded-2xl border border-rose-100 bg-rose-50 p-5 dark:border-rose-500/20 dark:bg-rose-500/10"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <p
+                                        class="text-xs font-bold uppercase tracking-wide text-rose-500 dark:text-rose-300"
+                                    >
+                                        Amount to charge
+                                    </p>
+
+                                    <AppIcon
+                                        name="alert-circle"
+                                        class="h-4 w-4 text-rose-400"
+                                    />
+                                </div>
+
                                 <p
-                                    class="text-[10px] font-bold uppercase tracking-wide text-rose-500 dark:text-rose-300"
+                                    class="mt-1 text-4xl font-bold text-rose-600 dark:text-rose-300"
                                 >
-                                    Balance Due
+                                    {{ peso(payAmount) }}
                                 </p>
 
-                                <AppIcon
-                                    name="alert-circle"
-                                    class="h-4 w-4 text-rose-400"
-                                />
+                                <p
+                                    class="mt-3 border-t border-rose-100 pt-3 text-xs text-rose-500/80 dark:border-rose-500/20 dark:text-rose-300/70"
+                                >
+                                    {{ peso(currentBalance) }} outstanding in
+                                    total across {{ unpaidInvoiceCount }} bill{{
+                                        unpaidInvoiceCount === 1 ? "" : "s"
+                                    }}
+                                </p>
                             </div>
 
-                            <p class="mt-1 text-3xl font-bold text-rose-600 dark:text-rose-300">
-                                {{ peso(currentBalance) }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <div class="flex items-center justify-between">
+                            <div>
                                 <label
-                                    class="text-xs font-semibold text-gray-600 dark:text-gray-300"
+                                    class="text-sm font-semibold text-gray-700 dark:text-gray-200"
                                 >
-                                    Payment Amount
+                                    How much would you like to pay?
                                 </label>
 
-                                <button
-                                    @click="payAmount = currentBalance"
-                                    class="text-[11px] font-semibold text-primary-600 transition hover:text-primary-700 dark:text-primary-300 dark:hover:text-primary-200"
-                                >
-                                    Pay full balance
-                                </button>
-                            </div>
-
-                            <BaseInput
-                                v-model.number="payAmount"
-                                mode="number"
-                                min="0"
-                                :max="String(currentBalance)"
-                                class-name="mt-1.5"
-                            >
-                                <template #prefix>₱</template>
-                            </BaseInput>
-
-                            <div
-                                class="mt-2 flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500"
-                            >
-                                <span>Maximum payment</span>
-                                <span
-                                    class="font-medium text-gray-500 dark:text-gray-400"
-                                >
-                                    {{ peso(currentBalance) }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label
-                                class="text-xs font-semibold text-gray-600 dark:text-gray-300"
-                            >
-                                Payment Method
-                            </label>
-
-                            <div class="relative mt-1.5">
-                                <select
-                                    v-model="paymentForm.method"
-                                    class="w-full appearance-none rounded-xl border border-gray-200 bg-white px-3.5 py-3 pr-10 text-sm text-gray-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:bg-secondary dark:border-white/10 dark:text-white"
-                                >
-                                    <option>GCash</option>
-                                    <option>Bank Transfer</option>
-                                </select>
-
-                                <AppIcon
-                                    name="chevron-down"
-                                    class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+                                <input
+                                    v-model.number="payAmount"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    :max="currentBalance"
+                                    class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base font-semibold text-gray-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:border-white/10 dark:bg-secondary dark:text-white"
                                 />
+
+                                <div
+                                    class="mt-2 flex items-center justify-between gap-3"
+                                >
+                                    <button
+                                        type="button"
+                                        class="text-xs font-medium text-primary-600 hover:underline dark:text-primary-300"
+                                        @click="payAmount = currentBalance"
+                                    >
+                                        Pay the full balance
+                                    </button>
+
+                                    <span
+                                        class="text-xs text-gray-400 dark:text-gray-500"
+                                    >
+                                        Max {{ peso(currentBalance) }}
+                                    </span>
+                                </div>
                             </div>
+
+                            <!-- <p
+                                class="rounded-xl bg-gray-50 p-4 text-xs leading-5 text-gray-500 dark:bg-white/5 dark:text-gray-400"
+                            >
+                                Your payment is applied to the oldest bill first,
+                                then to the next one, until the amount runs out.
+                            </p> -->
                         </div>
 
-                        <BaseInput
-                            v-model="paymentForm.accountDetails"
-                            :label="
-                                paymentForm.method === 'GCash'
-                                    ? 'GCash Number'
-                                    : 'Bank Account Details'
-                            "
-                            :placeholder="
-                                paymentForm.method === 'GCash'
-                                    ? 'e.g. 0917 123 4567'
-                                    : 'e.g. 1234 5678 9012'
-                            "
-                        />
-
-                        <div
-                            v-if="paymentError"
-                            class="flex items-start gap-2 rounded-xl bg-rose-50 p-3 text-xs text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
-                        >
-                            <AppIcon
-                                name="alert-circle"
-                                class="mt-0.5 h-4 w-4 shrink-0"
+                        <div class="space-y-5">
+                            <PaymentForm
+                                v-model:card="card"
+                                :total-amount="payAmount"
+                                :processing="isPaying"
+                                :on-card-pay="payBalance"
+                                gcash-label="GCash is not available yet"
+                                gcash-description="GCash payments aren't available yet. Please use a card for now."
+                                title="Card details"
+                                description="Your card is charged securely through Xendit."
+                                submit-label="Pay now"
                             />
-                            <span>{{ paymentError }}</span>
-                        </div>
-
-                        <div class="flex gap-2.5 pt-1">
-                            <button
-                                @click="closePaymentModal"
-                                class="flex-1 rounded-full border border-gray-200 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
-                            >
-                                Cancel
-                            </button>
-
-                            <button
-                                @click="payBalance"
-                                :disabled="isPaying"
-                                class="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary-600 py-3 text-sm font-semibold text-white shadow-sm shadow-primary-600/20 transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                <span
-                                    v-if="isPaying"
-                                    class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
-                                />
-
-                                {{
-                                    isPaying
-                                        ? "Processing..."
-                                        : "Confirm Payment"
-                                }}
-                            </button>
                         </div>
                     </div>
                 </div>

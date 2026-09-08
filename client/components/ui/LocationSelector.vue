@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import L_module from "leaflet";
+import BaseInput from "~/components/ui/BaseInput.vue";
 
 interface Location {
     lat: number;
@@ -12,14 +13,20 @@ interface Location {
     country: string;
 }
 
-const props = defineProps<{
-    initialLat?: number;
-    initialLng?: number;
-    initialStreet?: string;
-    initialCity?: string;
-    initialProvince?: string;
-    initialCountry?: string;
-}>();
+const props = withDefaults(
+    defineProps<{
+        initialLat?: number;
+        initialLng?: number;
+        initialStreet?: string;
+        initialCity?: string;
+        initialProvince?: string;
+        initialCountry?: string;
+        mode?: "map" | "type";
+    }>(),
+    {
+        mode: "map",
+    },
+);
 
 const emit = defineEmits<{
     (e: "location-selected", payload: Location): void;
@@ -28,6 +35,76 @@ const emit = defineEmits<{
 
 const selectedLocation = ref<Location | null>(null);
 const mapContainerEl = ref<HTMLElement | null>(null);
+
+const typedAddress = ref("");
+const isLocating = ref(false);
+const typeError = ref("");
+
+watch(
+    () => props.mode,
+    (next) => {
+        typeError.value = "";
+
+        if (next === "type") {
+            typedAddress.value = selectedLocation.value?.label ?? "";
+
+            return;
+        }
+        nextTick(() => map?.invalidateSize());
+    },
+);
+
+async function applyTypedAddress() {
+    const query = typedAddress.value.trim();
+
+    if (!query) {
+        typeError.value = "Enter an address.";
+        return;
+    }
+
+    isLocating.value = true;
+    typeError.value = "";
+
+    try {
+        const config = useRuntimeConfig();
+
+        const res = await fetch(
+            `${config.public.backendApi}/api/geocode?q=${encodeURIComponent(query)}`,
+            { headers: { Accept: "application/json" } },
+        );
+
+        const data = res.ok ? await res.json() : null;
+        const lat = Number(data?.lat);
+        const lng = Number(data?.lng);
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            typeError.value =
+                "We couldn't find that address. Try adding the city, or pick it on the map.";
+            return;
+        }
+
+        map?.setView([lat, lng], 16);
+        placeMarker(lat, lng);
+
+        selectedLocation.value = {
+            lat,
+            lng,
+            label: query,
+            street: query,
+            city: "",
+            province: "",
+            country: "",
+        };
+
+        confirmLocation();
+    } catch (error) {
+        console.error("[geocode] Failed:", error);
+
+        typeError.value = "We couldn't look up that address right now.";
+    } finally {
+        isLocating.value = false;
+    }
+}
 
 let map: L_module.Map | null = null;
 let marker: L_module.Marker | null = null;
@@ -230,6 +307,8 @@ const clearSelection = (): void => {
     }
 
     selectedLocation.value = null;
+    typedAddress.value = "";
+    typeError.value = "";
 
     emit("location-cleared");
 };
@@ -355,7 +434,9 @@ onUnmounted(() => {
             >
                 {{
                     selectedLocation?.label ||
-                    "Click the map to select a location"
+                    (props.mode === "map"
+                        ? "Click the map to select a location"
+                        : "Type the address below")
                 }}
             </span>
 
@@ -383,11 +464,34 @@ onUnmounted(() => {
         </div>
 
         <div
+            v-show="props.mode === 'type'"
+            class="flex flex-col gap-2 sm:flex-row"
+        >
+            <BaseInput
+                v-model="typedAddress"
+                class="flex-1"
+                placeholder="House/unit no., street, barangay, city"
+                :error="typeError"
+                @keyup.enter="applyTypedAddress"
+            />
+
+            <button
+                type="button"
+                :disabled="isLocating"
+                class="h-fit rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+                @click="applyTypedAddress"
+            >
+                {{ isLocating ? "Locating..." : "Use this address" }}
+            </button>
+        </div>
+
+        <div
+            v-show="props.mode === 'map' || selectedLocation"
             ref="mapContainerEl"
             class="w-full h-[400px] z-20 rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm"
         />
 
-        <div class="flex gap-2">
+        <div v-show="props.mode === 'map'" class="flex gap-2">
             <button
                 @click="useMyLocation"
                 class="flex items-center gap-2 px-5 py-2 text-sm bg-white dark:bg-secondary dark:text-white border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors shadow-sm"

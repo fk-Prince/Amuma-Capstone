@@ -2,12 +2,8 @@
 
 namespace App\Providers;
 
-use App\Models\Booking;
-use App\Models\Client;
-use App\Models\Patient;
-use App\Observers\BookingObserver;
-use App\Observers\ClientObserver;
-use App\Observers\PatientObserver;
+use App\Models\Invoice;
+use App\Observers\InvoiceObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,5 +17,8 @@ class AppServiceProvider extends ServiceProvider
     }
 
 
-    public function boot(): void {}
+    public function boot(): void
+    {
+        Invoice::observe(InvoiceObserver::class);
+    }
 }

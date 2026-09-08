@@ -16,9 +16,7 @@ class Category extends Model
         'category_name',
     ];
 
-    /**
-     * Branch that owns the category.
-     */
+
     public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');

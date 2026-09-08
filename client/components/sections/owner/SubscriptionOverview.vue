@@ -2,14 +2,40 @@
 type ApprovedStatus = "active" | "inactive" | "expired";
 type StatSelectPayload =
     | { view: "requests" }
-    | { view: "approved"; status: ApprovedStatus };
+    | { view: "approved"; status: ApprovedStatus }
+    | { view: "rejected" };
 
-const props = defineProps<{
-    overview?: any | null;
-    loading?: boolean;
-    activeView?: "requests" | "approved";
-    activeStatus?: ApprovedStatus;
-}>();
+const props = withDefaults(
+    defineProps<{
+        overview?: any | null;
+        loading?: boolean;
+        activeView?: "requests" | "approved" | "rejected";
+        activeStatus?: ApprovedStatus;
+        showRequests?: boolean;
+        showApproved?: boolean;
+        showRejected?: boolean;
+    }>(),
+    {
+        showRequests: true,
+        showApproved: true,
+        showRejected: false,
+    },
+);
+
+const visibleCount = computed(
+    () =>
+        (props.showRequests ? 1 : 0) +
+        (props.showApproved ? 3 : 0) +
+        (props.showRejected ? 1 : 0),
+);
+
+const gridClass = computed(() => {
+    if (visibleCount.value >= 4) return "sm:grid-cols-2 lg:grid-cols-4";
+    if (visibleCount.value === 3) return "sm:grid-cols-3";
+    if (visibleCount.value === 2) return "sm:grid-cols-2 max-w-xl";
+
+    return "sm:grid-cols-1 max-w-xs";
+});
 
 const emit = defineEmits<{
     (e: "select", payload: StatSelectPayload): void;
@@ -22,11 +48,13 @@ const overview = computed<any>(() => {
             active: 0,
             inactive: 0,
             expired: 0,
+            rejected: 0,
         }
     );
 });
 
 const isRequestsActive = computed(() => props.activeView === "requests");
+const isRejectedActive = computed(() => props.activeView === "rejected");
 
 function isApprovedActive(status: ApprovedStatus) {
     return props.activeView === "approved" && props.activeStatus === status;
@@ -39,9 +67,10 @@ function select(payload: StatSelectPayload) {
 
 <template>
     <div class="w-full">
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-1 gap-4" :class="gridClass">
             <!-- Requests (pending) -->
             <button
+                v-if="showRequests"
                 type="button"
                 :aria-pressed="isRequestsActive"
                 class="group relative w-full overflow-hidden rounded-2xl border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-amber-200"
@@ -83,7 +112,7 @@ function select(payload: StatSelectPayload) {
                     <p
                         class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                     >
-                        Requests
+                        Awaiting
                     </p>
 
                     <template v-if="!loading">
@@ -109,6 +138,7 @@ function select(payload: StatSelectPayload) {
 
             <!-- Active -->
             <button
+                v-if="showApproved"
                 type="button"
                 :aria-pressed="isApprovedActive('active')"
                 class="group relative w-full overflow-hidden rounded-2xl border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-accent-200"
@@ -178,6 +208,7 @@ function select(payload: StatSelectPayload) {
 
             <!-- Inactive -->
             <button
+                v-if="showApproved"
                 type="button"
                 :aria-pressed="isApprovedActive('inactive')"
                 class="group relative w-full overflow-hidden rounded-2xl border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300"
@@ -257,6 +288,7 @@ function select(payload: StatSelectPayload) {
 
             <!-- Expired -->
             <button
+                v-if="showApproved"
                 type="button"
                 :aria-pressed="isApprovedActive('expired')"
                 class="group relative w-full overflow-hidden rounded-2xl border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200"
@@ -309,6 +341,74 @@ function select(payload: StatSelectPayload) {
                             {{ overview.expired }}
                         </p>
                         <p class="mt-3 text-xs text-rose-500 dark:text-rose-300">Needs renewal</p>
+                    </template>
+                    <template v-else>
+                        <div
+                            class="mt-2 h-8 w-14 animate-pulse rounded bg-slate-200 dark:bg-white/10"
+                        />
+                        <div
+                            class="mt-3 h-3 w-28 animate-pulse rounded bg-slate-100 dark:bg-white/5"
+                        />
+                    </template>
+                </div>
+            </button>
+
+            <!-- Rejected -->
+            <button
+                v-if="showRejected"
+                type="button"
+                :aria-pressed="isRejectedActive"
+                class="group relative w-full overflow-hidden rounded-2xl border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200"
+                :class="
+                    isRejectedActive
+                        ? '-translate-y-1 border-rose-300 shadow-xl ring-2 ring-rose-100 dark:ring-rose-500/20'
+                        : 'border-slate-200 dark:border-white/10'
+                "
+                @click="select({ view: 'rejected' })"
+            >
+                <div
+                    class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-rose-100/50 dark:bg-rose-500/10 blur-2xl"
+                />
+
+                <div class="relative">
+                    <div class="flex items-center justify-between">
+                        <div
+                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-500/10"
+                        >
+                            <svg
+                                class="h-5 w-5 text-rose-500 dark:text-rose-300"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="m9.5 9.5 5 5M14.5 9.5l-5 5" />
+                            </svg>
+                        </div>
+
+                        <span
+                            class="rounded-full bg-rose-50 dark:bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-500 dark:text-rose-300"
+                        >
+                            Declined
+                        </span>
+                    </div>
+
+                    <p
+                        class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                    >
+                        Rejected
+                    </p>
+
+                    <template v-if="!loading">
+                        <p
+                            class="mt-1 text-3xl font-bold tabular-nums text-slate-800 dark:text-white"
+                        >
+                            {{ overview.rejected }}
+                        </p>
+                        <p class="mt-3 text-xs text-rose-500 dark:text-rose-300">
+                            Not verified
+                        </p>
                     </template>
                     <template v-else>
                         <div

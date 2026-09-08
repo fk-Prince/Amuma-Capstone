@@ -68,7 +68,7 @@ const rows = computed(() =>
             employee.avatar ||
             `https://ui-avatars.com/api/?name=${employee.first_name}+${employee.last_name}`,
         email: employee.email,
-        phone: employee.phone_number || "-",
+        phone: formatPhone(employee.phone_number) || "-",
         assignment: formatAssignmentType(employee.assignment_type),
         status: employee.status,
         raw: employee,

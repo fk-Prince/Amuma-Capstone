@@ -249,7 +249,7 @@
                         />
                     </section>
 
-                    <section class="px-6" id="step1" ref="step2">
+                    <section class="px-6" id="step3" ref="step3">
                         <GuardianForm
                             :isAdmission="true"
                             :model="guardianData"
@@ -259,7 +259,7 @@
                         />
                     </section>
 
-                    <section class="px-6" id="step1" ref="step4">
+                    <section class="px-6" id="step4" ref="step4">
                         <DiagnosisForm
                             :model="diagnosisData"
                             :errors="assessmentErrors"
@@ -338,7 +338,15 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, onMounted, toRaw, watch, nextTick } from "vue";
+import {
+    computed,
+    ref,
+    onMounted,
+    onBeforeUnmount,
+    toRaw,
+    watch,
+    nextTick,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useBookingFlowValidation } from "~/composables/useBookingFlowValidation";
 
@@ -845,6 +853,44 @@ const scrollTo = (step: string) => {
         });
     });
 };
+
+const stepRefs: Record<string, typeof step1> = {
+    step1,
+    step2,
+    step3,
+    step4,
+};
+const stepOrder = ["step1", "step2", "step3", "step4"];
+
+const updateActiveStepFromScroll = () => {
+    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+    const offset = (isDesktop ? 32 : 112) + 24;
+
+    let current = stepOrder[0];
+
+    for (const key of stepOrder) {
+        const el = stepRefs[key]?.value;
+        if (!el) continue;
+
+        if (el.getBoundingClientRect().top - offset <= 0) {
+            current = key;
+        }
+    }
+
+    activeStep.value = current;
+};
+
+onMounted(() => {
+    window.addEventListener("scroll", updateActiveStepFromScroll, {
+        passive: true,
+    });
+
+    updateActiveStepFromScroll();
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener("scroll", updateActiveStepFromScroll);
+});
 const viewModes = ["form", "table", "bookings"] as const;
 const sliderOffset = computed(() => {
     const index = viewModes.indexOf(

@@ -6,13 +6,49 @@ use App\Http\Resources\PaymentReceiptResource;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\PatientAccess;
-use App\Models\PaymentReceipt;
-use App\Utils\MaskUtil;
+use App\Models\Payment;
+use App\Utils\AccommodationHelper;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class PaymentService
 {
+    private function chargeCard(Client $client, float $amount, array $payload): array
+    {
+        if (empty($payload['token_id']) || empty($payload['authentication_id'])) {
+            throw new Exception('Card details are required to pay online.', 422);
+        }
+
+        $response = Http::withOptions(['verify' => false])
+            ->withBasicAuth(config('services.xendit.secret_key'), '')
+            ->post('https://api.xendit.co/credit_card_charges', [
+                'token_id' => $payload['token_id'],
+                'authentication_id' => $payload['authentication_id'],
+                'capture' => true,
+                'descriptor' => 'balance',
+                'currency' => 'PHP',
+                'external_id' => (string) Str::uuid(),
+                'amount' => $amount,
+                'payer_email' => $client->user?->email,
+                'payment_methods' => ['CREDIT-CARD'],
+                'metadata' => [
+                    'type' => 'patient_balance',
+                    'patient_id' => $payload['patient_id'],
+                    'client_id' => $client->client_id,
+                ],
+            ]);
+
+        if ($response->failed()) {
+            throw new Exception(
+                $response->json('message') ?? 'The card was declined.',
+                422
+            );
+        }
+
+        return $response->json();
+    }
 
     public function payBalance(Client $client, array $payload): array
     {
@@ -31,13 +67,15 @@ class PaymentService
             throw new Exception('Enter an amount greater than 0.', 422);
         }
 
-        $method = trim((string) $payload['method']);
-        $maskedAccountDetails = MaskUtil::accountDetails(
-            $method,
-            trim((string) $payload['account_details'])
-        );
+        $charge = $this->chargeCard($client, $amount, $payload);
 
-        return DB::transaction(function () use ($access, $client, $amount, $method, $maskedAccountDetails) {
+        $method = 'CREDIT-CARD';
+        $maskedAccountDetails = $charge['masked_card_number'] ?? null;
+        $reference = $charge['id'] ?? null;
+
+        $codes = array_filter((array) ($payload['invoice_codes'] ?? []));
+
+        return DB::transaction(function () use ($access, $client, $amount, $method, $maskedAccountDetails, $reference, $codes) {
             $invoiceIds = $access->patient->patient_invoices
                 ->pluck('invoice_id');
 
@@ -46,9 +84,14 @@ class PaymentService
                     Invoice::STATUS_PENDING,
                     Invoice::STATUS_PARTIAL,
                 ])
+                ->when($codes, fn($q) => $q->whereIn('invoice_code', $codes))
                 ->orderBy('created_at')
                 ->lockForUpdate()
                 ->get();
+
+            if ($codes && $invoices->isEmpty()) {
+                throw new Exception('The selected invoices are no longer payable.', 422);
+            }
 
             $totalBalance = round((float) $invoices->sum('balance_due'), 2);
 
@@ -63,16 +106,19 @@ class PaymentService
                 );
             }
 
-            $receipt = PaymentReceipt::create([
-                'branch_id'       => $invoices->first()->branch_id,
-                'patient_id'      => $access->patient_id,
-                'client_id'       => $client->client_id,
-                'payor_name'      => trim(
+            $receipt = Payment::create([
+                'branch_id'          => $invoices->first()->branch_id,
+                'patient_id'         => $access->patient_id,
+                'client_id'          => $client->client_id,
+                'payor_name'         => trim(
                     ($client->first_name ?? '') . ' ' . ($client->last_name ?? '')
                 ) ?: null,
-                'amount_tendered' => $amount,
-                'balance_before'  => $totalBalance,
-                'created_at'      => now(),
+                'amount'             => $amount,
+                'prior_balance'      => $totalBalance,
+                'payment_method'     => $method,
+                'reference_id'       => $reference,
+                'masked_card_number' => $maskedAccountDetails,
+                'created_at'         => now(),
             ]);
 
             $remaining = $amount;
@@ -91,46 +137,40 @@ class PaymentService
 
                 $paymentAmount = round(min($remaining, $priorBalance), 2);
 
-                $payment = $invoice->payments()->create([
-                    'receipt_id' => $receipt->receipt_id,
+                $receipt->allocations()->create([
+                    'invoice_id' => $invoice->invoice_id,
                     'amount' => $paymentAmount,
-                    'payment_method' => $method,
                     'description' => $invoice->paymentDescription(),
-                    'masked_card_number' => $maskedAccountDetails,
-                    'prior_balance' => $priorBalance,
+                    'created_at' => now(),
                 ]);
 
                 $remaining = round($remaining - $paymentAmount, 2);
 
                 $invoice->refresh();
 
-                $status = $invoice->balance_due <= 0
-                    ? Invoice::STATUS_PAID
-                    : Invoice::STATUS_PARTIAL;
+                $invoice->syncStatus();
 
-                $invoice->update([
-                    'status' => $status,
-                ]);
-
-                $payment->update([
-                    'new_balance' => $invoice->balance_due,
-                ]);
+                AccommodationHelper::activate($invoice);
 
                 $paidInvoiceIds[] = $invoice->invoice_id;
             }
 
             $applied = round($amount - $remaining, 2);
 
+            $receipt->update([
+                'new_balance' => round(max($totalBalance - $applied, 0), 2),
+            ]);
+
             return [
                 'success' => true,
                 'message' => 'Payment recorded successfully.',
                 'invoice_ids' => $paidInvoiceIds,
-                'remaining_balance' => round($totalBalance - $applied, 2),
+                'remaining_balance' => round(max($totalBalance - $applied, 0), 2),
                 'receipt' => new PaymentReceiptResource(
                     $receipt->load([
-                        'payments.invoice.invoiceServices.scheduleService.service',
-                'payments.invoice.invoiceAccommodation.branchContract',
-                'payments.invoice.invoiceAccommodation.patientAdmission.bed.room',
+                        'allocations.invoice.invoiceServices.scheduleService.service',
+                        'allocations.invoice.invoiceAdmissionLines.admissionPeriod.branchContract',
+                        'allocations.invoice.invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                         'branch.location',
                         'patient',
                         'client',
@@ -142,15 +182,15 @@ class PaymentService
 
     public function receipt(Client $client, array $payload): PaymentReceiptResource
     {
-        $receipt = PaymentReceipt::where('receipt_no', $payload['receipt_no'])
+        $receipt = Payment::where('receipt_no', $payload['receipt_no'])
             ->with([
-                'payments.invoice.invoiceServices.scheduleService.service',
-                'payments.invoice.invoiceAccommodation.branchContract',
-                'payments.invoice.invoiceAccommodation.patientAdmission.bed.room',
+                'allocations.invoice.invoiceServices.scheduleService.service',
+                'allocations.invoice.invoiceAdmissionLines.admissionPeriod.branchContract',
+                'allocations.invoice.invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                 'branch.location',
                 'patient',
                 'client',
-                'issuer',
+                'issuedBy',
             ])
             ->first();
 

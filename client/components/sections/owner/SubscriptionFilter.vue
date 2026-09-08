@@ -48,65 +48,26 @@
             </button>
         </div>
         <div
-            class="relative inline-flex shrink-0 rounded-full bg-slate-100 dark:bg-white/5 p-1"
+            v-if="views.length > 1"
+            class="inline-flex shrink-0 gap-1 rounded-full bg-slate-100 dark:bg-white/5 p-1"
             role="tablist"
             aria-label="Subscription view"
         >
-            <span
-                class="absolute inset-y-1 left-1 w-[104px] rounded-full bg-white dark:bg-white/10 shadow-sm transition-transform duration-200 ease-out"
-                :style="{
-                    transform:
-                        view === 'approved'
-                            ? 'translateX(104px)'
-                            : view === 'rejected'
-                              ? 'translateX(208px)'
-                              : 'translateX(0)',
-                }"
-            />
-
             <button
+                v-for="option in views"
+                :key="option"
                 type="button"
                 role="tab"
-                :aria-selected="view === 'requests'"
-                class="relative z-10 w-[104px] rounded-full py-1.5 text-xs font-semibold transition-colors"
+                :aria-selected="view === option"
+                class="w-[104px] rounded-full py-1.5 text-xs font-semibold capitalize transition-colors"
                 :class="
-                    view === 'requests'
-                        ? 'text-primary-600 dark:text-primary-300'
+                    view === option
+                        ? 'bg-white text-primary-600 shadow-sm dark:bg-white/10 dark:text-primary-300'
                         : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white'
                 "
-                @click="setView('requests')"
+                @click="setView(option)"
             >
-                Requests
-            </button>
-
-            <button
-                type="button"
-                role="tab"
-                :aria-selected="view === 'approved'"
-                class="relative z-10 w-[104px] rounded-full py-1.5 text-xs font-semibold transition-colors"
-                :class="
-                    view === 'approved'
-                        ? 'text-primary-600 dark:text-primary-300'
-                        : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white'
-                "
-                @click="setView('approved')"
-            >
-                Approved
-            </button>
-
-            <button
-                type="button"
-                role="tab"
-                :aria-selected="view === 'rejected'"
-                class="relative z-10 w-[104px] rounded-full py-1.5 text-xs font-semibold transition-colors"
-                :class="
-                    view === 'rejected'
-                        ? 'text-danger'
-                        : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white'
-                "
-                @click="setView('rejected')"
-            >
-                Rejected
+                {{ option }}
             </button>
         </div>
         <div
@@ -137,11 +98,17 @@ type ComboboxItem = {
     value: ApprovedStatus;
 };
 
-const props = defineProps<{
-    search: string;
-    view: SubscriptionView;
-    approvedStatus: ApprovedStatus;
-}>();
+const props = withDefaults(
+    defineProps<{
+        search: string;
+        view: SubscriptionView;
+        approvedStatus: ApprovedStatus;
+        views?: SubscriptionView[];
+    }>(),
+    {
+        views: () => ["requests", "approved", "rejected"],
+    },
+);
 
 const emit = defineEmits<{
     (e: "update:search", value: string): void;

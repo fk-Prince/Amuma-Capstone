@@ -3,9 +3,7 @@
 namespace App\Repository;
 
 use App\Models\Bed;
-use App\Models\Booking;
 use App\Models\Room;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class RoomRepository
 {

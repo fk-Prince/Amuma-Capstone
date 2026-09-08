@@ -6,8 +6,6 @@ namespace App\Service;
 use App\Models\Location;
 use App\Models\User;
 use App\Repository\BranchRepository;
-use App\Repository\LocationRepository;
-use App\Repository\UserRepository;
 use App\Service\External\SupabaseService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -46,8 +44,7 @@ class UserService
 
                 $settings = $branch->settings ?? [];
 
-                // Older rows stored these as strings ("1", "8"), which leaves
-                // checkboxes unchecked on the client.
+
                 foreach (
                     ['enable_booking_pre_admission', 'enable_booking_complete_admission', 'requires_full_payment_on_admit', 'is_open']
                     as $key
@@ -63,7 +60,6 @@ class UserService
                     }
                 }
 
-                $settings['termination_fee_percent'] = max(0, min(100, (float) ($settings['termination_fee_percent'] ?? 0)));
                 return [
                     'uuid' => $branch?->uuid,
                     'name' => $branch?->name,
@@ -96,9 +92,6 @@ class UserService
                     'settings' => $settings,
                     'plan' => $branch?->subscriptions
                         ? $branch->subscriptions->map(function ($subscription) {
-                            // effectivePlan(), not plans: a deferred upgrade
-                            // takes over on its start date, and the menu has
-                            // to match what the gate already allows.
                             $plan = $subscription->effectivePlan();
 
                             return [
@@ -139,7 +132,6 @@ class UserService
 
         return [
             'user' => $user,
-            'has_booking' => $user->bookings()->exists(),
         ];
     }
 

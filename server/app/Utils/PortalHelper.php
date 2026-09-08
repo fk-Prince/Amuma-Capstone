@@ -3,6 +3,7 @@
 namespace App\Utils;
 
 use App\Models\Booking;
+use App\Models\Invoice;
 use App\Models\PatientAccess;
 use App\Models\Schedule;
 use App\Models\ScheduleService;
@@ -99,6 +100,8 @@ class PortalHelper
             $payload += self::financials($patient);
             $payload['latest_invoice'] = $invoices[0] ?? null;
             $payload['invoices'] = $invoices;
+            $payload['voided_invoices'] = self::invoices($patient, true);
+            $payload['transactions'] = self::transactions($patient);
         }
 
         if ($wantsSchedule) {
@@ -106,89 +109,13 @@ class PortalHelper
         }
 
         if ($wantsActivity) {
-            $logged = $patient->activities
+            $payload['activities'] = $patient->activities
                 ->map(fn($activity) => PatientActivityPresenter::patientActivity($activity))
-                ->values();
-
-            // Nothing writes activity rows on its own, so the feed is built
-            // from the records care actually leaves behind.
-            $payload['activities'] = $logged
-                ->concat(self::derivedActivities($patient))
                 ->sortByDesc('occurredAt')
                 ->values();
         }
 
         return $payload;
-    }
-
-    private static function derivedActivities(object $patient)
-    {
-        $items = collect();
-
-        foreach ($patient->schedules ?? [] as $schedule) {
-            $items->push([
-                'id' => 'schedule-' . $schedule->schedule_id,
-                'title' => match (strtolower((string) $schedule->status)) {
-                    'completed' => 'Visit completed',
-                    'ongoing' => 'Visit in progress',
-                    'missed' => 'Visit missed',
-                    'cancelled' => 'Visit cancelled',
-                    default => 'Visit scheduled',
-                },
-                'subtitle' => $schedule->category ?? 'Schedule',
-                'description' => $schedule->schedule_code
-                    ? 'Reference ' . $schedule->schedule_code
-                    : '',
-                'type' => 'schedule',
-                'occurredAt' => optional($schedule->scheduled_at)->toISOString()
-                    ?? $schedule->created_at?->toISOString(),
-            ]);
-        }
-
-        foreach ($patient->vitals ?? [] as $vital) {
-            $items->push([
-                'id' => 'vital-' . $vital->vital_id,
-                'title' => 'Vitals recorded',
-                'subtitle' => trim(implode(' · ', array_filter([
-                    $vital->blood_pressure_systolic && $vital->blood_pressure_diastolic
-                        ? "BP {$vital->blood_pressure_systolic}/{$vital->blood_pressure_diastolic}"
-                        : null,
-                    $vital->heart_rate ? "HR {$vital->heart_rate}" : null,
-                    $vital->temperature ? "Temp {$vital->temperature}" : null,
-                ]))),
-                'description' => $vital->notes ?? '',
-                'type' => 'vital',
-                'occurredAt' => $vital->created_at?->toISOString(),
-            ]);
-        }
-
-        foreach ($patient->medications ?? [] as $medication) {
-            $items->push([
-                'id' => 'medication-' . $medication->medication_id,
-                'title' => 'Medication added',
-                'subtitle' => trim(
-                    $medication->name . ' ' . ($medication->strength ?? '')
-                ),
-                'description' => $medication->instructions ?? '',
-                'type' => 'medication',
-                'occurredAt' => optional($medication->recorded_at)->toISOString()
-                    ?? $medication->created_at?->toISOString(),
-            ]);
-        }
-
-        foreach ($patient->admissions ?? [] as $admission) {
-            $items->push([
-                'id' => 'admission-' . $admission->patient_admission_id,
-                'title' => 'Admission ' . strtolower((string) $admission->status),
-                'subtitle' => 'Facility',
-                'description' => '',
-                'type' => 'admission',
-                'occurredAt' => optional($admission->admitted_at)->toISOString()
-                    ?? $admission->created_at?->toISOString(),
-            ]);
-        }
-
-        return $items->filter(fn($item) => !empty($item['occurredAt']));
     }
 
     private function scheduleContext(object $patient)
@@ -298,6 +225,141 @@ class PortalHelper
                 'diagnosis_file' => $diagnosis->diagnosis_file,
             ])
             ->values();
+    }
+
+    private function invoicePayments(object $invoice)
+    {
+        $rows = [];
+
+        foreach ($invoice->allocations as $allocation) {
+            $payment = $allocation->payment;
+            $amount = (float) $allocation->amount;
+
+            $key = $allocation->payment_id . ($amount < 0 ? '-out' : '-in');
+
+            if (!isset($rows[$key])) {
+                $rows[$key] = [
+                    'payment_id' => $allocation->payment_id,
+                    'receipt_no' => $payment?->receipt_no,
+                    'reference_id' => $payment?->reference_id,
+                    'amount' => 0.0,
+                    'description' => $allocation->description,
+                    'payment_method' => $payment?->payment_method,
+                    'masked_card_number' => $payment?->masked_card_number,
+                    'created_at' => $payment?->created_at?->format('Y-m-d H:i:s'),
+                    'refunds' => [],
+                ];
+            }
+
+            $rows[$key]['amount'] = round($rows[$key]['amount'] + $amount, 2);
+            foreach ($allocation->refundAllocations as $line) {
+                $refund = $line->refund;
+                $refundKey = $line->refund_id;
+
+                if (!isset($rows[$key]['refunds'][$refundKey])) {
+                    $rows[$key]['refunds'][$refundKey] = [
+                        'refund_id' => $line->refund_id,
+                        'amount' => 0.0,
+                        'refund_total' => (float) ($refund?->amount ?? 0),
+                        'refund_method' => $refund?->refund_method,
+                        'refund_code' => $refund?->refund_code,
+                        'status' => $refund?->status,
+                        'declined_reason' => $refund?->declined_reason,
+                        'masked_card_number' => $refund?->masked_card_number,
+                        'created_at' => $refund?->created_at?->format('Y-m-d H:i:s'),
+                    ];
+                }
+
+                $rows[$key]['refunds'][$refundKey]['amount'] = round(
+                    $rows[$key]['refunds'][$refundKey]['amount'] + (float) $line->amount,
+                    2
+                );
+            }
+        }
+
+        return collect($rows)
+            ->map(function ($row) {
+                $row['refunds'] = array_values($row['refunds']);
+
+                return $row;
+            })
+            ->values()
+            ->toArray();
+    }
+
+
+    private function transactions(object $patient)
+    {
+        $payments = [];
+        $refunds = [];
+
+        foreach ($patient->patient_invoices as $invoice) {
+            $code = $invoice->invoice_code;
+
+            foreach ($invoice->allocations as $allocation) {
+                $payment = $allocation->payment;
+                $amount = (float) $allocation->amount;
+                $key = 'payment-' . $allocation->payment_id . ($amount < 0 ? '-out' : '-in');
+
+                if (!isset($payments[$key])) {
+                    $payments[$key] = [
+                        'id' => $key,
+                        'type' => 'payment',
+                        'payment_id' => $allocation->payment_id,
+                        'amount' => 0.0,
+                        'payment_method' => $payment?->payment_method,
+                        'receipt_no' => $payment?->receipt_no,
+                        'reference_id' => $payment?->reference_id,
+                        'masked_card_number' => $payment?->masked_card_number,
+                        'status' => 'completed',
+                        'created_at' => $payment?->created_at?->format('Y-m-d H:i:s'),
+                        'invoice_codes' => [],
+                    ];
+                }
+
+                $payments[$key]['amount'] = round($payments[$key]['amount'] + $amount, 2);
+                $payments[$key]['invoice_codes'][] = $code;
+
+                foreach ($allocation->refundAllocations as $line) {
+                    $refund = $line->refund;
+                    $refundKey = 'refund-' . $line->refund_id;
+
+                    if (!isset($refunds[$refundKey])) {
+                        $refunds[$refundKey] = [
+                            'id' => $refundKey,
+                            'type' => 'refund',
+                            'refund_id' => $line->refund_id,
+                            'amount' => 0.0,
+                            'refund_method' => $refund?->refund_method,
+                            'refund_code' => $refund?->refund_code,
+                            'masked_card_number' => $refund?->masked_card_number,
+                            'declined_reason' => $refund?->declined_reason,
+                            'status' => $refund?->status,
+                            'created_at' => $refund?->created_at?->format('Y-m-d H:i:s'),
+                            'invoice_codes' => [],
+                        ];
+                    }
+
+                    $refunds[$refundKey]['amount'] = round(
+                        $refunds[$refundKey]['amount'] + (float) $line->amount,
+                        2
+                    );
+
+                    $refunds[$refundKey]['invoice_codes'][] = $code;
+                }
+            }
+        }
+
+        return collect($payments)
+            ->concat($refunds)
+            ->map(function ($entry) {
+                $entry['invoice_codes'] = array_values(array_unique($entry['invoice_codes']));
+
+                return $entry;
+            })
+            ->sortByDesc('created_at')
+            ->values()
+            ->toArray();
     }
 
     private function financials(object $patient)
@@ -607,43 +669,29 @@ class PortalHelper
 
 
 
-    private function invoices(object $patient)
+    private function invoices(object $patient, bool $voided = false)
     {
         return $patient->patient_invoices
+            ->filter(
+                fn($invoice) => $voided
+                    ? $invoice->status === Invoice::STATUS_VOID
+                    : $invoice->status !== Invoice::STATUS_VOID
+            )
+            ->values()
             ->map(fn($invoice) => [
                 'invoice_id' => $invoice->invoice_id,
                 'invoice_code' => $invoice->invoice_code,
+                'description' => $invoice->paymentDescription(),
                 'status' => $invoice->status,
-                'total' => (float) $invoice->total,
+                'total' => (float) $invoice->adjusted_total,
                 'adjusted_total' => (float) $invoice->adjusted_total,
                 'amount_paid' => (float) $invoice->amount_paid,
                 'balance_due' => (float) $invoice->balance_due,
                 'refund_status' => $invoice->refund_status,
+                'void_reason' => $invoice->void_reason,
+                'voided_at' => $invoice->voided_at?->format('Y-m-d H:i:s'),
                 'created_at' => $invoice->created_at?->format('Y-m-d H:i:s'),
-
-                'payments' => $invoice->payments
-                    ->map(fn($payment) => [
-                        'payment_id' => $payment->payment_id,
-                        'reference_id' => $payment->reference_id,
-                        'amount' => (float) $payment->amount,
-                        'payment_method' => $payment->payment_method,
-                        'masked_card_number' => $payment->masked_card_number,
-                        'created_at' => $payment->created_at?->format('Y-m-d H:i:s'),
-
-                        'refunds' => $payment->refunds
-                            ->map(fn($refund) => [
-                                'refund_id' => $refund->refund_id,
-                                'amount' => (float) $refund->amount,
-                                'refund_method' => $refund->refund_method,
-                                'reference_id' => $refund->reference_id,
-                                'status' => $refund->status,
-                                'reason' => $refund->reason,
-                                'masked_card_number' => $refund->masked_card_number,
-                                'created_at' => $refund->created_at?->format('Y-m-d H:i:s'),
-                            ])
-                            ->values(),
-                    ])
-                    ->values(),
+                'payments' => self::invoicePayments($invoice),
 
                 'adjustments' => $invoice->invoiceAdjustments
                     ->map(fn($adjustment) => [

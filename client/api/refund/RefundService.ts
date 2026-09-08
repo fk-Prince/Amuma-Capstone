@@ -15,12 +15,27 @@ class RefundService extends BaseService {
         return RefundService.instance;
     }
 
+    // amount is optional — omit it to claim the whole credit, or pass a smaller
+    // figure to leave the rest sitting on the account.
     async claim(payload: {
         patient_id: number;
         method: string;
         account_details: string;
+        amount?: number;
+        reason?: string;
     }): Promise<any> {
         return await this.request(this.resource + '/action', 'POST', payload);
+    }
+
+    async issue(payload: {
+        invoice_code: string;
+        branch_uuid: string;
+        amount?: number;
+        method?: string;
+        account_details?: string;
+        reason?: string;
+    }): Promise<any> {
+        return await this.request(this.resource + '/issue', 'POST', payload);
     }
 
     private get resource(): string {

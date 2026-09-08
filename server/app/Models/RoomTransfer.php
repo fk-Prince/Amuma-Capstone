@@ -7,7 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class RoomTransfer extends Model
 {
     protected $table = 'room_transfers';
+
     protected $primaryKey = 'room_transfer_id';
+
+    public $timestamps = false;
+
+    public const TYPE_ROOM_CHANGE = 'room_change';
+    public const TYPE_ACCOMMODATION_CHANGE = 'accommodation_change';
 
     protected $fillable = [
         'patient_admission_id',
@@ -15,22 +21,22 @@ class RoomTransfer extends Model
         'to_room_id',
         'from_bed_id',
         'to_bed_id',
+        'type',
+        'transfer_date',
         'reason',
     ];
 
-    public function admission()
-    {
-        return $this->belongsTo(PatientAdmission::class, 'patient_admission_id', 'patient_admission_id');
-    }
+    protected $casts = [
+        'transfer_date' => 'datetime',
+    ];
 
-    public function fromBed()
+    public function patientAdmission()
     {
-        return $this->belongsTo(Bed::class, 'from_bed_id', 'bed_id');
-    }
-
-    public function toBed()
-    {
-        return $this->belongsTo(Bed::class, 'to_bed_id', 'bed_id');
+        return $this->belongsTo(
+            PatientAdmission::class,
+            'patient_admission_id',
+            'patient_admission_id'
+        );
     }
 
     public function fromRoom()
@@ -41,5 +47,15 @@ class RoomTransfer extends Model
     public function toRoom()
     {
         return $this->belongsTo(Room::class, 'to_room_id', 'room_id');
+    }
+
+    public function fromBed()
+    {
+        return $this->belongsTo(Bed::class, 'from_bed_id', 'bed_id');
+    }
+
+    public function toBed()
+    {
+        return $this->belongsTo(Bed::class, 'to_bed_id', 'bed_id');
     }
 }

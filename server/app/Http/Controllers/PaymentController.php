@@ -24,8 +24,10 @@ class PaymentController extends Controller
         $validated = $request->validate([
             'patient_id' => ['required', 'integer'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'method' => ['required', 'string', 'max:100'],
-            'account_details' => ['required', 'string', 'max:255'],
+            'token_id' => ['required', 'string'],
+            'authentication_id' => ['required', 'string'],
+            'invoice_codes' => ['sometimes', 'array'],
+            'invoice_codes.*' => ['string'],
         ]);
 
         return $this->paymentService->payBalance($user->client, $validated);

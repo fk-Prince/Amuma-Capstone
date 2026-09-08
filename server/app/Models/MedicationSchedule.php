@@ -29,12 +29,12 @@ class MedicationSchedule extends Model
         'recorded_at' => 'datetime',
     ];
 
-    public function medication(): BelongsTo
+    public function medication()
     {
         return $this->belongsTo(Medication::class, 'medication_id', 'medication_id');
     }
 
-    public function markedBy(): BelongsTo
+    public function markedBy()
     {
         return $this->belongsTo(User::class, 'marked_by', 'user_id');
     }

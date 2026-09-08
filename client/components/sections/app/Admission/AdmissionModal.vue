@@ -202,7 +202,7 @@
                                     />
                                     <InfoField
                                         label="Phone number"
-                                        :value="patient.phone_number"
+                                        :value="formatPhone(patient.phone_number)"
                                     />
                                     <InfoField
                                         label="Address"

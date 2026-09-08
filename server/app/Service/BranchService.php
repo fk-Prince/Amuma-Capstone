@@ -153,7 +153,6 @@ class BranchService
             'enable_booking_complete_admission',
             'requires_full_payment_on_admit',
             'minimum_adl_hours',
-            'termination_fee_percent',
             'is_open',
             'time_zone',
             'opening',
@@ -179,10 +178,6 @@ class BranchService
             if (array_key_exists($key, $settingPayload)) {
                 $settingPayload[$key] = (int) $settingPayload[$key];
             }
-        }
-
-        if (array_key_exists('termination_fee_percent', $settingPayload)) {
-            $settingPayload['termination_fee_percent'] = max(0, min(100, (float) $settingPayload['termination_fee_percent']));
         }
 
         // Merged rather than replaced: settings also holds keys this form does

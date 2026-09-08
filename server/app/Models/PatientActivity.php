@@ -27,7 +27,7 @@ class PatientActivity extends Model
         'occurred_at' => 'datetime',
     ];
 
-    public function patient(): BelongsTo
+    public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
     }

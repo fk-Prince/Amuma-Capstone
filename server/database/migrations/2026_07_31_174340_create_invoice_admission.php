@@ -11,16 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('invoice_accommodations', function (Blueprint $table) {
-            $table->id('invoice_accommodation_id');
-            $table->foreignId('branch_contract_id')
-                ->constrained('branch_contracts', 'branch_contract_id');
-            $table->foreignId('patient_admission_id')
-                ->constrained('patient_admissions', 'patient_admission_id');
+        Schema::create('invoice_admission', function (Blueprint $table) {
+            $table->id('invoice_admission_id');
+            $table->foreignId('admission_period_id')
+                ->constrained('admission_periods', 'admission_period_id');
             $table->foreignId('invoice_id')
                 ->constrained('invoices', 'invoice_id');
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
             $table->decimal('price', 10, 2);
             $table->timestamps();
         });
@@ -31,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('invoice_accommodations');
+        Schema::dropIfExists('invoice_admission');
     }
 };

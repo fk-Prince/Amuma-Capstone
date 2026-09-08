@@ -120,9 +120,15 @@ export const ownerMenuList: MenuItems[] = [
         modules: ["AMUMA Dashboard"],
     },
     {
-        label: "AMUMA Subscription",
+        label: "AMUMA Verification",
         icon: CreditCard,
-        to: "/app/owner/subscription",
+        to: "/app/owner/verification",
+        modules: ["AMUMA Subscription"],
+    },
+    {
+        label: "AMUMA Branches",
+        icon: Building2,
+        to: "/app/owner/branches",
         modules: ["AMUMA Subscription"],
     },
 ];

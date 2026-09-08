@@ -76,9 +76,13 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
         subtitle:
             "Subscriptions, verification, payments, and recent activity across every agency.",
     },
-    "/app/owner/subscription": {
-        title: "Subscriptions",
-        subtitle: "Review and manage subscription requests across every branch.",
+    "/app/owner/verification": {
+        title: "Verification",
+        subtitle: "Review agency and branch documents before a subscription goes live.",
+    },
+    "/app/owner/branches": {
+        title: "Branches",
+        subtitle: "Browse every branch already on a subscription, and its billing status.",
     },
     "/app/owner/plans": {
         title: "Plans",

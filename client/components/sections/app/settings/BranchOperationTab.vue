@@ -34,22 +34,6 @@
                 </p>
             </div>
 
-            <div class="bg-white p-1 dark:bg-transparent">
-                <BaseInput
-                    v-model="setting.termination_fee_percent"
-                    label="Early Discharge Termination Fee (%)"
-                    mode="number"
-                    placeholder="Example: 0"
-                    :error="errors.termination_fee_percent"
-                    @update:modelValue="clearError('termination_fee_percent')"
-                />
-
-                <p class="text-xs text-slate-400 mt-2 dark:text-gray-500">
-                    Percentage kept from what a resident already paid when they
-                    are discharged within 7 days of admission. Leave at 0% to
-                    always refund in full.
-                </p>
-            </div>
 
             <div class="bg-white p-1 md:col-span-2 dark:bg-transparent">
                 <div class="flex gap-5 items-start">
@@ -322,8 +306,6 @@ const setting = reactive<OperationSetting>({
     requires_full_payment_on_admit:
         activeBranch.value?.settings?.requires_full_payment_on_admit ?? true,
     minimum_adl_hours: activeBranch.value?.settings?.minimum_adl_hours ?? 8,
-    termination_fee_percent:
-        activeBranch.value?.settings?.termination_fee_percent ?? 0,
     // billing_due_date: activeBranch.value?.settings?.billing_due_date ?? 31,
     is_open: activeBranch.value?.settings?.is_open ?? false,
     time_zone: activeBranch.value?.settings?.time_zone ?? "",

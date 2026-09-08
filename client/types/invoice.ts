@@ -11,7 +11,7 @@
 // }
 
 // export interface InvoiceAccommodationLine {
-//     invoice_accommodation_id: number;
+//     invoice_admission_id: number;
 //     branch_contract_id: number;
 //     price: number;
 //     patient_admission_id: number;
@@ -111,7 +111,6 @@
 //     invoices: PatientInvoiceItem[];
 // }
 
-
 export interface InvoiceBranch {
     branch_id: number;
     name: string | null;
@@ -127,34 +126,46 @@ export interface InvoiceServiceLine {
 }
 
 export interface InvoiceAccommodationLine {
-    invoice_accommodation_id: number;
+    invoice_admission_id: number;
     branch_contract_id: number;
     price: number;
     patient_admission_id: number;
     patient_name: string;
 }
 
-export type RefundStatus =
-    | 'pending'
-    | 'processing'
-    | 'completed'
-    | 'failed'
-    | 'cancelled';
+export type RefundStatus = "requested" | "completed" | "declined";
 
 export type RefundSummaryStatus =
-    | 'none'
-    | 'partially refunded'
-    | 'full refunded';
+    "none" | "partially refunded" | "full refunded";
 
 export interface InvoiceRefund {
     refund_id: number;
-    reference_id: string | null;
+    refund_code: string | null;
     amount: number;
+    refund_total?: number;
     refund_method: string | null;
     status: RefundStatus;
-    reason: string | null;
+    declined_reason: string | null;
     masked_card_number: string | null;
     created_at: string | null;
+}
+
+// A refund read from the refunds table rather than through one payment's
+// allocation, so it carries every invoice it touched.
+export interface PatientRefund extends InvoiceRefund {
+    invoice_codes: string[];
+}
+
+export interface PatientPayment {
+    payment_id: number;
+    receipt_no: string | null;
+    reference_id: string | null;
+    amount: number;
+    payment_method: string | null;
+    masked_card_number: string | null;
+    payor_name: string | null;
+    created_at: string | null;
+    invoice_codes: string[];
 }
 
 export interface InvoiceAdjustmentDetail {
@@ -167,10 +178,13 @@ export interface InvoiceAdjustmentDetail {
 
 export interface InvoicePayment {
     payment_id: number;
+    allocation_id?: number;
     receipt_no?: string | null;
     reference_id: string;
     amount: number;
+    description?: string | null;
     payment_method: string;
+    masked_card_number?: string | null;
     created_at: string | null;
     refunds: InvoiceRefund[];
 }
@@ -205,9 +219,22 @@ export interface PatientAdmission {
     status: string;
     admission_date: string | null;
     discharge_date: string | null;
+    // Same value as discharge_date, under the name the extend-stay modal reads.
+    end_date: string | null;
+    current_contract: {
+        branch_contract_id: number;
+        category: string | null;
+        accommodation_type: string | null;
+        billing_cycle: string | null;
+        price: number | string;
+    } | null;
     room: AdmissionRoom | null;
     bed: AdmissionBed | null;
-    invoices: PatientInvoiceItem[];
+    // Figures for the card. The invoices themselves are fetched when the stay
+    // is opened, so they are not carried in the admissions list.
+    invoice_count: number;
+    total_amount: number;
+    balance_due: number;
 }
 
 export interface DischargeCalculation {
@@ -222,15 +249,22 @@ export interface DischargeCalculation {
     required_payment: number;
     fee_base_amount: number;
     days_stayed_amount: number;
-    retention_amount: number;
-    termination_fee_percent: number;
-    termination_fee_amount: number;
+    retained_amount: number;
     refund_amount: number;
+    consumed_days: number;
+    remaining_days: number;
+    period_days: number;
+    period_start: string | null;
+    period_end: string | null;
+    daily_rate: number;
+    period_price: number;
+    invoice_total: number;
+    invoice_code: string | null;
+    retained_half: number;
     policy: string;
     policy_title: string;
     policy_description: string;
-    is_within_termination_fee_window: boolean;
-    is_within_yearly_half_refund_window: boolean;
+    is_within_refund_window: boolean;
     is_under_required_payment: boolean;
     payment_shortfall: number;
 }
@@ -240,9 +274,12 @@ export interface InvoiceDetail {
     invoice_code: string;
     schedule_code?: string | null;
     total: number;
+    adjusted_total?: number;
     amount_paid: number;
     refunded_amount: number;
-    refund_processing_amount: number;
+    refund_requested_amount: number;
+    refundable_amount?: number;
+    has_pending_refund?: boolean;
     balance_due: number;
     status: string;
     refund_status: RefundSummaryStatus;
@@ -258,15 +295,22 @@ export interface InvoiceDetail {
 export interface PatientInvoiceItem {
     invoice_id: number;
     invoice_code: string;
+    description?: string | null;
     schedule_code?: string | null;
     total: number;
+    adjusted_total?: number;
     amount_paid: number;
     refunded_amount: number;
-    refund_processing_amount: number;
+    refund_requested_amount: number;
+    refundable_amount?: number;
+    has_pending_refund?: boolean;
     balance_due: number;
     status: string;
     refund_status: RefundSummaryStatus;
     created_at: string | null;
+    void_reason?: string | null;
+    voided_at?: string | null;
+    voided_by?: string | null;
     branch?: InvoiceBranch;
     services?: InvoiceServiceLine[];
     facilities?: InvoiceAccommodationLine[];
@@ -277,6 +321,7 @@ export interface PatientInvoiceItem {
         bed_no: string | null;
     }[];
     payments?: InvoicePayment[];
+    adjustments?: InvoiceAdjustmentDetail[];
 }
 
 export interface PatientInvoiceSummary {
@@ -284,27 +329,21 @@ export interface PatientInvoiceSummary {
     total_amount: number;
     total_paid: number;
     total_refunded: number;
-    total_refund_processing: number;
+    total_refund_requested: number;
+    total_refundable: number;
     total_balance: number;
     refund_status: RefundSummaryStatus;
     status: string;
     invoice_count: number;
     latest_invoice: PatientInvoiceItem | null;
     invoices: PatientInvoiceItem[];
+    voided_invoices: PatientInvoiceItem[];
+    payments: PatientPayment[];
+    refunds: PatientRefund[];
     admissions: PatientAdmission[];
     services: InvoiceServiceLine[];
     discharge_calculation: DischargeCalculation | null;
 }
-
-
-
-
-
-
-
-
-
-
 
 //  0000000000000000000000
 export interface ScheduleInvoiceSummary {
@@ -358,7 +397,8 @@ export interface PatientSummaryRow {
     total_amount: number | string;
     total_paid: number | string;
     total_refunded: number | string;
-    total_refund_processing: number | string;
+    total_refund_requested: number | string;
+    total_refundable: number | string;
     total_balance: number | string;
     status: string;
     invoice_count: number;
@@ -428,11 +468,16 @@ export interface BookingDetail {
     } | null;
 }
 
-
 export const INVOICE_STATUS: Record<string, string> = {
-    pending: "bg-amber-50 text-amber-700 border-amber-200",
-    partial: "bg-blue-50 text-blue-700 border-blue-200",
+    unpaid: "bg-amber-50 text-amber-700 border-amber-200",
+    partially_paid: "bg-blue-50 text-blue-700 border-blue-200",
     paid: "bg-green-50 text-green-700 border-green-200",
     void: "bg-red-50 text-red-700 border-red-200",
-    // refunded: "bg-purple-50 text-purple-700 border-purple-200",
+};
+
+export const INVOICE_STATUS_LABEL: Record<string, string> = {
+    unpaid: "Unpaid",
+    partially_paid: "Partially Paid",
+    paid: "Paid",
+    void: "Void",
 };

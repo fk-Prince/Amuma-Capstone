@@ -500,6 +500,7 @@ class SubscriptionService
 
                 $subscription->payments()->create([
                     'subscription_id' => $subscription->subscription_id,
+                    'plan_id' => $plan['plan_id'],
                     'xendit_invoice_id' => $xendit_invoice_id,
                     'payment_reference_id' => $reference_id,
                     'masked_card_number' => $masked_card_number,

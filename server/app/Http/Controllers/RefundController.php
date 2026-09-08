@@ -30,6 +30,9 @@ class RefundController extends Controller
             'patient_id' => ['required', 'integer'],
             'method' => ['required', 'string', 'max:100'],
             'account_details' => ['required', 'string', 'max:255'],
+            // Omitted claims the whole credit. The ceiling is enforced in the
+            // service against what is actually refundable, not here.
+            'amount' => ['nullable', 'numeric', 'gt:0'],
             'reason' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -48,7 +51,7 @@ class RefundController extends Controller
     public function issue(Request $request)
     {
         $validated = $request->validate([
-            'invoice_uuid' => ['required', 'string', 'exists:invoices,uuid'],
+            'invoice_code' => ['required', 'string', 'exists:invoices,invoice_code'],
             'branch_uuid' => ['required', 'string', 'exists:branches,uuid'],
             'amount' => ['nullable', 'numeric', 'min:0.01'],
             'method' => ['nullable', 'string', 'max:100'],
@@ -65,7 +68,7 @@ class RefundController extends Controller
             PermissionAction::Update
         );
 
-        $invoice = Invoice::where('uuid', $validated['invoice_uuid'])
+        $invoice = Invoice::where('invoice_code', $validated['invoice_code'])
             ->where('branch_id', $branch->branch_id)
             ->first();
 

@@ -135,5 +135,8 @@ export interface RoomTransfer {
     to_room?: { room_id: number; room_no: string } | null;
     to_bed?: { bed_id: number; bed_no: string } | null;
     reason?: string | null;
+    accommodation_change?: boolean;
+    from_contract?: { accommodation_type: string; billing_cycle: string } | null;
+    to_contract?: { accommodation_type: string; billing_cycle: string } | null;
     created_at: string;
 }

@@ -13,23 +13,23 @@ class PatientAdmissionResource extends JsonResource
             return [];
         }
 
-        $currentInvoice = $this->currentInvoiceAccommodation;
+        $currentInvoice = $this->currentInvoiceAdmission;
 
-        $invoiceAccommodations = $this->relationLoaded('invoiceAdmission')
+        $invoiceAdmissionLiness = $this->relationLoaded('invoiceAdmission')
             ? $this->invoiceAdmission
             : collect();
 
-        $allFacilities = $invoiceAccommodations;
+        $allFacilities = $invoiceAdmissionLiness;
 
         if ($currentInvoice && !$allFacilities->contains(
-            fn($f) => $f->invoice_accommodation_id === $currentInvoice->invoice_accommodation_id
+            fn($f) => $f->invoice_admission_id === $currentInvoice->invoice_admission_id
         )) {
             $allFacilities = $allFacilities->push($currentInvoice);
         }
 
         $invoices = $allFacilities->map->invoice->filter();
 
-        $totalAmount   = (float) $invoices->sum('total');
+        $totalAmount   = (float) $invoices->sum('total_amount');
         $totalPaid     = (float) $invoices->sum(fn($inv) => $inv->net_paid_amount);
         $totalRefunded = (float) $invoices->sum(fn($inv) => $inv->refunded_amount);
         $totalBalance  = max($totalAmount - $totalPaid, 0);
@@ -54,7 +54,7 @@ class PatientAdmissionResource extends JsonResource
             ],
 
             'current_contract' => new BranchContractResource($currentInvoice?->branchContract),
-            'current_invoice'  => $this->formatInvoiceAccommodation($currentInvoice),
+            'current_invoice'  => $this->formatInvoiceAdmission($currentInvoice),
 
             'total_amount'   => $totalAmount,
             'total_paid'     => $totalPaid,
@@ -67,35 +67,34 @@ class PatientAdmissionResource extends JsonResource
                 default             => 'Pending',
             },
 
-            'invoices' => $invoiceAccommodations
-                ->map(fn($f) => $this->formatInvoiceAccommodation($f))
+            'invoices' => $invoiceAdmissionLiness
+                ->map(fn($f) => $this->formatInvoiceAdmission($f))
                 ->values(),
         ];
     }
 
-    private function formatInvoiceAccommodation(mixed $invoiceAccommodation): ?array
+    private function formatInvoiceAdmission(mixed $invoiceAdmissionLines): ?array
     {
-        if (!$invoiceAccommodation) {
+        if (!$invoiceAdmissionLines) {
             return null;
         }
 
-        $invoice = $invoiceAccommodation->invoice;
+        $invoice = $invoiceAdmissionLines->invoice;
 
         return [
-            'invoice_accommodation_id' => $invoiceAccommodation->invoice_accommodation_id,
-            'invoice_id'          => $invoiceAccommodation->invoice_id,
+            'invoice_admission_id' => $invoiceAdmissionLines->invoice_admission_id,
+            'invoice_id'          => $invoiceAdmissionLines->invoice_id,
             'invoice_code'        => $invoice?->invoice_code,
             'status'              => $invoice?->status,
-            'price'               => $invoice?->total,
+            'price'               => $invoice?->total_amount,
 
             'paid_amount'     => $invoice?->amount_paid ?? 0,
             'refunded_amount' => $invoice?->refunded_amount ?? 0,
             'net_paid_amount' => $invoice?->net_paid_amount ?? 0,
 
-            'start_date' => $invoiceAccommodation->start_date,
-            'end_date'   => $invoiceAccommodation->end_date,
+            'accommodation_status' => $invoiceAdmissionLines->status,
 
-            'contract' => new BranchContractResource($invoiceAccommodation->branchContract),
+            'contract' => new BranchContractResource($invoiceAdmissionLines->branchContract),
         ];
     }
 }

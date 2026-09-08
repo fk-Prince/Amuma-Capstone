@@ -171,16 +171,16 @@
                             </button>
 
                             <div
-                                class="flex items-center rounded-full bg-slate-100 p-0.5 text-xs font-medium dark:bg-secondary"
+                                class="flex items-center gap-0.5 rounded-full border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold dark:border-white/10 dark:bg-white/5"
                             >
                                 <button
                                     type="button"
                                     @click="idSide = 'id_front'"
-                                    class="px-2.5 py-1 rounded-full transition"
+                                    class="min-w-[52px] rounded-full px-3 py-1.5 text-center transition"
                                     :class="
                                         idSide === 'id_front'
-                                            ? 'bg-primary shadow-sm text-white'
-                                            : 'text-slate-500 dark:text-gray-400'
+                                            ? 'bg-primary text-white shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
                                     "
                                 >
                                     Front
@@ -189,11 +189,11 @@
                                 <button
                                     type="button"
                                     @click="idSide = 'id_back'"
-                                    class="px-2.5 py-1 rounded-full transition"
+                                    class="min-w-[52px] rounded-full px-3 py-1.5 text-center transition"
                                     :class="
                                         idSide === 'id_back'
-                                            ? 'bg-primary shadow-sm text-white'
-                                            : 'text-slate-500 dark:text-gray-400'
+                                            ? 'bg-primary text-white shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
                                     "
                                 >
                                     Back

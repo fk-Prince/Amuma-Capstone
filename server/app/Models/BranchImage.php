@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class BranchImage extends Model
 {
-    // use HasFactory;
     protected $primaryKey = 'branch_image_id';
 
     public const IMAGE_VIP_ROOM = 'vip_room';

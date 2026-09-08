@@ -210,7 +210,7 @@
 
                         <NuxtLink
                             v-if="stats.pending"
-                            to="/app/owner/subscription"
+                            to="/app/owner/verification"
                             class="group/link relative mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-200"
                         >
                             Review requests
@@ -652,7 +652,7 @@
                                     </div>
 
                                     <NuxtLink
-                                        to="/app/owner/subscription"
+                                        to="/app/owner/verification"
                                         class="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-primary-600 hover:text-primary-700 dark:text-primary-300 dark:hover:text-primary-200"
                                     >
                                         Review {{ agencyUnverified }} pending
@@ -817,7 +817,7 @@
                                     </div>
 
                                     <NuxtLink
-                                        to="/app/owner/subscription"
+                                        to="/app/owner/verification"
                                         class="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-accent-700 hover:text-accent-800 dark:text-accent-300 dark:hover:text-accent-200"
                                     >
                                         Review {{ branchUnverified }} pending
@@ -991,7 +991,7 @@
                         </div>
 
                         <NuxtLink
-                            to="/app/owner/subscription"
+                            to="/app/owner/branches"
                             class="group inline-flex w-fit items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-primary-600 transition-colors hover:bg-primary-50 hover:text-primary-700 dark:text-primary-300 dark:hover:bg-white/10 dark:hover:text-primary-200"
                         >
                             View all

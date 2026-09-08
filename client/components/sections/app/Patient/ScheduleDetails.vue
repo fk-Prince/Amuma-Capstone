@@ -147,7 +147,7 @@
                                 class="flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline"
                             >
                                 <Phone class="h-3.5 w-3.5" />
-                                {{ schedule.patient.guardian.phone_number }}
+                                {{ formatPhone(schedule.patient.guardian.phone_number) }}
                             </a>
                         </div>
                     </div>
@@ -1065,7 +1065,7 @@
         :open="cancelConfirmOpen"
         title="Cancel this schedule?"
         message="This action cannot be undone."
-        description="The payment will be refunded if there is any, and the invoice will be voided."
+        description="This schedule will be cancelled and the accounting staff will be notified to void its invoice."
         confirm-label="Cancel Schedule"
         cancel-label="Keep Schedule"
         variant="danger"

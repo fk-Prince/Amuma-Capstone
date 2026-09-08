@@ -79,8 +79,7 @@ export interface ContractInfo {
 export interface FacilitySource {
     type: "Facility Admission";
     patient_admission_id: number;
-    start_date: string | null;
-    end_date: string | null;
+    accommodation_status: string | null;
     admission_status: string | null;
     admitted_at: string | null;
     contract: ContractInfo | null;

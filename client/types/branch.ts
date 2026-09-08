@@ -44,8 +44,7 @@ export interface BranchSettings {
     minimum_adl_hours: number | null;
     // billing_due_date: number | null;
     is_open: boolean;
-    status?: 'OPEN' | 'CLOSED';
-    termination_fee_percent?: number | null;
+    status?: 'OPEN' | 'CLOSED';
 }
 
 export const getBranchImage = (image: File | string | null | undefined) => {

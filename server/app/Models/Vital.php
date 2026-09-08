@@ -29,7 +29,7 @@ class Vital extends Model
         'recorded_date' => 'date',
     ];
 
-    public function patient(): BelongsTo
+    public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
     }

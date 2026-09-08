@@ -35,7 +35,7 @@
                 :value="formatDate(patient?.date_of_birth)"
             />
             <Field label="Blood Type" :value="patient?.blood_type" />
-            <Field label="Phone" :value="patient?.phone_number" />
+            <Field label="Phone" :value="formatPhone(patient?.phone_number)" />
             <Field label="Occupation" :value="patient?.occupation" />
             <Field label="Allergies" :value="patient?.allergies" />
             <!-- The patient's own home address. The homecare visit address is

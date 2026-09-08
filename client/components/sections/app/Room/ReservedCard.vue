@@ -125,7 +125,7 @@ const admissionStatusClasses = (status?: string) => {
                 class="flex items-center gap-1 truncate"
             >
                 <Phone class="h-3 w-3 text-gray-400 shrink-0 dark:text-gray-500" />
-                {{ reservation.patient.phone_number }}
+                {{ formatPhone(reservation.patient.phone_number) }}
             </div>
 
             <div

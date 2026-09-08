@@ -37,13 +37,25 @@ class BranchContract extends Model
         'is_active' => 'boolean',
     ];
 
-    public function branch(): BelongsTo
+    public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
     }
 
+    public function periods()
+    {
+        return $this->hasMany(AdmissionPeriod::class, 'branch_contract_id', 'branch_contract_id');
+    }
+
     public function invoices()
     {
-        return $this->hasMany(InvoiceAccommodation::class, 'branch_contract_id', 'branch_contract_id');
+        return $this->hasManyThrough(
+            InvoiceAdmission::class,
+            AdmissionPeriod::class,
+            'branch_contract_id',
+            'admission_period_id',
+            'branch_contract_id',
+            'admission_period_id'
+        );
     }
 }

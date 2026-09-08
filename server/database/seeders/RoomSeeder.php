@@ -8,6 +8,8 @@ use Illuminate\Database\Seeder;
 
 class RoomSeeder extends Seeder
 {
+    private const FLOORS = ['1st', '2nd', '3rd', '4th', '5th'];
+
     public function run(): void
     {
         $branches = Branch::all();
@@ -18,16 +20,22 @@ class RoomSeeder extends Seeder
         }
 
         foreach ($branches as $branch) {
-            foreach (range(1, 5) as $floor) {
+            foreach (self::FLOORS as $index => $floor) {
+                $level = $index + 1;
+
                 foreach (['Common', 'VIP'] as $type) {
-                    Room::create([
-                        'branch_id'  => $branch->branch_id,
-                        'room_no'    => strtoupper($type[0]) . $floor . '0' . rand(1, 9),
-                        'floor'      => $floor,
-                        'room_type'  => $type,
-                        'capacity'   => $type === 'VIP' ? 1 : 4,
-                        'status'     => 'Available',
-                    ]);
+                    Room::firstOrCreate(
+                        [
+                            'branch_id' => $branch->branch_id,
+                            'room_no'   => strtoupper($type[0]) . $level . '01',
+                        ],
+                        [
+                            'floor'     => $floor,
+                            'room_type' => $type,
+                            'capacity'  => $type === 'VIP' ? 1 : 4,
+                            'status'    => 'Available',
+                        ]
+                    );
                 }
             }
         }

@@ -19,20 +19,130 @@
                 Back
             </button>
 
-            <div v-if="loading" class="space-y-6">
+            <!-- Mirrors the loaded layout: one card, header above a split grid,
+                 so nothing jumps when the data arrives. -->
+            <div
+                v-if="loading"
+                class="animate-pulse overflow-hidden rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] dark:bg-secondary dark:border-primary-500/20"
+            >
                 <div
-                    class="rounded-2xl border border-primary-100 bg-white p-6 animate-pulse dark:border-primary-500/20 dark:bg-secondary"
+                    class="p-4 sm:p-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between xl:gap-6"
                 >
-                    <div class="h-6 w-64 bg-slate-200 rounded dark:bg-white/15"></div>
-                    <div class="h-3 w-80 bg-slate-100 rounded mt-3 dark:bg-white/10"></div>
+                    <div class="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                        <div
+                            class="h-12 w-12 sm:h-14 sm:w-14 shrink-0 rounded-2xl bg-slate-200 dark:bg-white/15"
+                        ></div>
+
+                        <div class="min-w-0 flex-1 space-y-2">
+                            <div
+                                class="h-5 w-48 max-w-full rounded bg-slate-200 dark:bg-white/15"
+                            ></div>
+                            <div
+                                class="h-3 w-64 max-w-full rounded bg-slate-100 dark:bg-white/10"
+                            ></div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 xl:justify-end">
+                        <div
+                            v-for="width in [96, 64, 112, 92, 168, 84, 72]"
+                            :key="width"
+                            class="h-9 rounded-lg bg-slate-100 dark:bg-white/10"
+                            :style="{ width: `${width}px` }"
+                        ></div>
+                    </div>
                 </div>
-                <div class="grid lg:grid-cols-3 gap-6">
+
+                <div
+                    class="grid lg:grid-cols-3 border-t border-primary-100 dark:border-primary-500/20"
+                >
                     <div
-                        class="lg:col-span-2 rounded-2xl border border-primary-100 bg-white p-6 animate-pulse h-48 dark:border-primary-500/20 dark:bg-secondary"
-                    ></div>
-                    <div
-                        class="rounded-2xl border border-primary-100 bg-white p-6 animate-pulse h-48 dark:border-primary-500/20 dark:bg-secondary"
-                    ></div>
+                        class="lg:col-span-2 divide-y divide-primary-100 lg:border-r lg:border-primary-100 dark:divide-primary-500/20 dark:lg:border-primary-500/20"
+                    >
+                        <div class="p-6">
+                            <div
+                                class="h-2.5 w-32 rounded bg-slate-100 dark:bg-white/10"
+                            ></div>
+
+                            <div
+                                class="mt-3 rounded-xl border border-primary-100 p-5 dark:border-primary-500/20"
+                            >
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="space-y-2">
+                                        <div
+                                            class="h-4 w-40 rounded bg-slate-200 dark:bg-white/15"
+                                        ></div>
+                                        <div
+                                            class="h-3 w-56 rounded bg-slate-100 dark:bg-white/10"
+                                        ></div>
+                                    </div>
+                                    <div
+                                        class="h-4 w-20 rounded bg-slate-100 dark:bg-white/10"
+                                    ></div>
+                                </div>
+
+                                <div
+                                    class="mt-5 h-1.5 rounded-full bg-slate-100 dark:bg-white/10"
+                                ></div>
+                            </div>
+                        </div>
+
+                        <div class="p-6">
+                            <div
+                                class="h-3.5 w-36 rounded bg-slate-200 dark:bg-white/15"
+                            ></div>
+                            <div
+                                class="mt-2 h-2.5 w-44 rounded bg-slate-100 dark:bg-white/10"
+                            ></div>
+
+                            <div
+                                class="mt-4 ml-6 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200/70 dark:divide-white/10 dark:border-white/10"
+                            >
+                                <div v-for="row in 3" :key="row" class="px-4 py-3.5">
+                                    <div class="flex items-center gap-2">
+                                        <div
+                                            class="h-3 w-14 rounded bg-slate-200 dark:bg-white/15"
+                                        ></div>
+                                        <div
+                                            class="h-3 w-24 rounded bg-slate-100 dark:bg-white/10"
+                                        ></div>
+                                        <div
+                                            class="ml-auto h-3 w-16 rounded bg-slate-100 dark:bg-white/10"
+                                        ></div>
+                                    </div>
+                                    <div
+                                        class="mt-2 h-2.5 w-3/4 rounded bg-slate-100 dark:bg-white/10"
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="divide-y divide-primary-100 dark:divide-primary-500/20">
+                        <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div
+                                v-for="tile in 2"
+                                :key="tile"
+                                class="rounded-xl border border-primary-100 p-4 space-y-2 dark:border-primary-500/20"
+                            >
+                                <div
+                                    class="h-2.5 w-20 rounded bg-slate-100 dark:bg-white/10"
+                                ></div>
+                                <div
+                                    class="h-5 w-12 rounded bg-slate-200 dark:bg-white/15"
+                                ></div>
+                            </div>
+                        </div>
+
+                        <div class="p-5">
+                            <div
+                                class="h-2.5 w-28 rounded bg-slate-100 dark:bg-white/10"
+                            ></div>
+                            <div
+                                class="mt-3 h-24 rounded-xl border border-dashed border-slate-200 dark:border-white/10"
+                            ></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -44,16 +154,20 @@
             </div>
 
             <template v-else>
+                <!-- One card for the whole record: the patient, their current
+                     admission, the timeline and the side panels are sections
+                     inside it rather than separately bordered boxes. -->
                 <div
-                    class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 dark:bg-secondary dark:border-primary-500/20"
+                    class="overflow-hidden rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] dark:bg-secondary dark:border-primary-500/20"
                 >
-                    <div class="flex items-center gap-4 min-w-0">
+                <div class="p-4 sm:p-6 flex flex-col gap-5">
+                    <div class="flex items-start gap-3 sm:gap-4 min-w-0">
                         <div
-                            class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary text-lg font-semibold"
+                            class="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary text-base sm:text-lg font-semibold"
                         >
                             {{ initials }}
                         </div>
-                        <div class="min-w-0">
+                        <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2.5 flex-wrap">
                                 <h1
                                     class="text-lg font-semibold text-primary-900 truncate dark:text-primary-300"
@@ -69,47 +183,55 @@
                                 >
                                     {{ latestAdmission.status }}
                                 </span>
+
+                                <NuxtLink
+                                    v-if="patient.uuid"
+                                    :to="`/app/branches/${uuid}/patients/${patient.uuid}`"
+                                    class="shrink-0 text-xs font-medium text-primary hover:underline dark:text-primary-300"
+                                >
+                                    View full profile →
+                                </NuxtLink>
                             </div>
 
-                            <div
-                                class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-muted dark:text-gray-400"
+                            <!-- Packed rather than gridded: the fields have very
+                                 different widths, so fixed columns left the
+                                 address stranded on a row of its own. -->
+                            <dl
+                                class="mt-2.5 flex flex-wrap gap-x-7 gap-y-2.5"
                             >
-                                <span>{{ patient.gender }}</span>
-                                <span
-                                    class="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20"
-                                />
-                                <span>{{ patient.age }} years old</span>
-                                <template v-if="patient.blood_type">
-                                    <span
-                                        class="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20"
-                                    />
-                                    <span>{{ patient.blood_type }}</span>
-                                </template>
-                                <template v-if="patient.phone_number">
-                                    <span
-                                        class="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20"
-                                    />
-                                    <span>{{ patient.phone_number }}</span>
-                                </template>
-                                <template v-if="patient.location?.full_address">
-                                    <span
-                                        class="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20"
-                                    />
-                                    <span class="truncate">{{
-                                        patient.location.full_address
-                                    }}</span>
-                                </template>
-                            </div>
+                                <div
+                                    v-for="fact in patientFacts"
+                                    :key="fact.label"
+                                    class="min-w-0 max-w-full"
+                                >
+                                    <dt
+                                        class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                                    >
+                                        {{ fact.label }}
+                                    </dt>
+
+                                    <dd
+                                        class="truncate text-[13px] font-medium text-slate-700 dark:text-gray-200"
+                                        :title="fact.value"
+                                    >
+                                        {{ fact.value }}
+                                    </dd>
+                                </div>
+                            </dl>
                         </div>
                     </div>
 
-                 <div
-                        class="flex flex-wrap items-center gap-2 sm:gap-2.5 sm:flex-nowrap sm:shrink-0"
+                    <div
+                        class="flex flex-wrap items-center gap-2 min-w-0 border-t border-slate-100 pt-4 dark:border-white/10"
                     >
                         <ActionButton
                             variant="primary"
                             :disabled="isWaiting || isAdmitted"
-                            tooltip="You don't have permission to admit this patient."
+                            :tooltip="
+                                isAdmitted
+                                    ? 'This patient is already admitted. Discharge them before starting a new admission.'
+                                    : 'This patient already has an admission waiting to be admitted.'
+                            "
                             @click="openNewAdmissionModal"
                         >
                             New Admission
@@ -118,7 +240,11 @@
                         <ActionButton
                             variant="primary"
                             :disabled="!isWaiting"
-                            tooltip="You don't have permission to admit this patient."
+                            :tooltip="
+                                isAdmitted
+                                    ? 'This patient is already admitted.'
+                                    : 'There is no waiting admission to admit. Start a new admission first.'
+                            "
                             @click="handleAdmitClick"
                         >
                             Admit
@@ -127,7 +253,7 @@
                         <ActionButton
                             variant="outline"
                             :disabled="!isAdmitted"
-                            tooltip="Transfer history is only available for currently admitted patients."
+                            :tooltip="unavailableWhileNotAdmitted"
                             @click="transferHistoryModalOpen = true"
                         >
                             Transfer History
@@ -135,7 +261,7 @@
                         <ActionButton
                             variant="outline"
                             :disabled="!isAdmitted"
-                            tooltip="You cannot extend the stay because this patient is not currently admitted."
+                            :tooltip="unavailableWhileNotAdmitted"
                             @click="handleExtendClick"
                         >
                             Extend Stay
@@ -144,16 +270,16 @@
                         <ActionButton
                             variant="outline"
                             :disabled="!isAdmitted"
-                            tooltip="You cannot change the room because this patient is not currently admitted."
+                            :tooltip="unavailableWhileNotAdmitted"
                             @click="openChangeRoomModal"
                         >
-                            Change Room
+                            Change Room / Accommodation
                         </ActionButton>
 
                         <ActionButton
                             variant="danger"
                             :disabled="!isAdmitted"
-                            tooltip="This patient cannot be discharged because they are not currently admitted.  "
+                            :tooltip="unavailableWhileNotAdmitted"
                             @click="dischargeDialogOpen = true"
                         >
                             Discharge
@@ -161,7 +287,11 @@
                         <ActionButton
                             variant="danger"
                             :disabled="!isWaiting"
-                            tooltip="You can only cancel an admission that is still waiting."
+                            :tooltip="
+                                isAdmitted
+                                    ? 'This patient is already admitted. Use Discharge instead of Cancel.'
+                                    : 'Only an admission still waiting to be admitted can be cancelled.'
+                            "
                             @click="cancelAdmissionDialogOpen = true"
                         >
                             Cancel
@@ -169,9 +299,13 @@
                     </div>
                 </div>
 
-                <div class="grid lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 space-y-6">
-                        <section>
+                <div
+                    class="grid lg:grid-cols-3 border-t border-primary-100 dark:border-primary-500/20"
+                >
+                    <div
+                        class="lg:col-span-2 divide-y divide-primary-100 lg:border-r lg:border-primary-100 dark:divide-primary-500/20 dark:lg:border-primary-500/20"
+                    >
+                        <section class="p-6">
                             <h2
                                 class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2.5 dark:text-gray-400"
                             >
@@ -186,8 +320,8 @@
                                     )
                                 "
                                 type="button"
-                                class="w-full text-left rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 hover:bg-primary-50/40 transition dark:bg-secondary dark:border-primary-500/20 dark:hover:bg-primary-500/10"
-                                @click="admissionTimelineModalOpen = true"
+                                class="w-full text-left rounded-xl border border-primary-100 p-5 hover:bg-primary-50/40 transition dark:border-primary-500/20 dark:hover:bg-primary-500/10"
+                                @click="timelineAdmission = latestAdmission ?? null"
                             >
                                 <div
                                     class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
@@ -248,6 +382,7 @@
                                                 </span>
                                             </span>
                                         </p>
+
                                     </div>
 
                                     <div
@@ -278,44 +413,20 @@
                                             }"
                                         ></div>
                                     </div>
-                                    <p class="text-[11px] text-muted mt-1.5 dark:text-gray-400">
-                                        Day {{ dayOfStay ?? 0 }} of
-                                        {{ totalStayDays }}
-                                    </p>
-                                </div>
-
-                                <!-- <div
-                                    v-if="latestInvoice"
-                                    class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between dark:border-primary-500/20"
-                                >
-                                    <p class="text-xs text-muted dark:text-gray-400">
-                                        Invoice
-                                        <span
-                                            class="text-primary-900 font-medium dark:text-primary-300"
-                                        >
-                                            #{{ latestInvoice.invoice_code }}
-                                        </span>
-
-                                        :
-                                        <span
-                                            class="font-medium border rounded-md px-2 py-1 uppercase dark:border-white/10"
-                                            :class="
-                                                INVOICE_STATUS[
-                                                    latestInvoice.status
-                                                ]
-                                            "
-                                        >
-                                            {{ latestInvoice.status }}
-                                        </span>
-                                    </p>
-                                    <p
-                                        class="text-sm font-semibold text-primary-900 dark:text-primary-300"
+                                    <div
+                                        class="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 text-[11px] text-muted dark:text-gray-400"
                                     >
-                                        {{
-                                            formatCurrency(latestInvoice.price)
-                                        }}
-                                    </p>
-                                </div> -->
+                                        <span>
+                                            Day {{ dayOfStay ?? 0 }} of
+                                            {{ totalStayDays }}
+                                        </span>
+
+                                        <span v-if="periodEndsOn">
+                                            Renews
+                                            {{ formatDate(periodEndsOn) }}
+                                        </span>
+                                    </div>
+                                </div>
                             </button>
 
                             <div
@@ -326,15 +437,45 @@
                             </div>
                         </section>
 
-                        <AdmissionTimeline
-                            :admissions="patient?.admissions"
-                        />
+                        <section v-if="timelineAdmissions.length" class="p-6">
+                            <div
+                                v-if="showingEndedAdmission"
+                                class="mb-4 flex items-start gap-2.5 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/5"
+                            >
+                                <svg
+                                    class="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-gray-500"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <path d="M12 16v-4" />
+                                    <path d="M12 8h.01" />
+                                </svg>
+
+                                <p
+                                    class="text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                >
+                                    This admission has ended. Showing the
+                                    patient's most recent stay — admit them
+                                    again to start a new one.
+                                </p>
+                            </div>
+
+                            <AdmissionTimeline
+                                flat
+                                :admissions="timelineAdmissions"
+                            />
+                        </section>
                     </div>
 
-                  <aside class="space-y-6">
-                        <div
-                            class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-5 dark:bg-secondary dark:border-primary-500/20"
-                        >
+                  <aside
+                        class="divide-y divide-primary-100 dark:divide-primary-500/20"
+                    >
+                        <div class="p-5">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div
                                     class="rounded-xl bg-primary-50/60 border border-primary-100 p-4 dark:bg-primary-500/10 dark:border-primary-500/20"
@@ -348,9 +489,9 @@
                                     <p
                                         class="text-xl font-semibold text-primary-900 mt-1 dark:text-primary-300"
                                     >
-                                        {{ dayOfStay ?? 0 }}
+                                        {{ daysAdmitted }}
                                         <span class="text-xs font-medium text-muted dark:text-gray-400">
-                                            day{{ dayOfStay === 1 ? "" : "s" }}
+                                            day{{ daysAdmitted === 1 ? "" : "s" }}
                                         </span>
                                     </p>
 
@@ -385,7 +526,7 @@
                         </div>
                     </div>
                    
-                      <section>
+                      <section class="p-5">
                             <h2
                                 class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2.5 dark:text-gray-400"
                             >
@@ -397,16 +538,18 @@
 
                             <div
                                 v-if="!pastAdmissions.length"
-                                class="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
+                                class="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
                             >
                                 No previous admissions.
                             </div>
 
-                            <div v-else class="space-y-4">
-                                <div
+                            <div v-else class="space-y-3">
+                                <button
                                     v-for="admission in pastAdmissions"
                                     :key="admission.patient_admission_id"
-                                    class="rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] p-6 hover:bg-primary-50/40 transition dark:bg-secondary dark:border-primary-500/20 dark:hover:bg-primary-500/10"
+                                    type="button"
+                                    class="w-full text-left rounded-xl border border-primary-100 p-5 hover:bg-primary-50/40 transition dark:border-primary-500/20 dark:hover:bg-primary-500/10"
+                                    @click="timelineAdmission = admission"
                                 >
                                     <div
                                         class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
@@ -488,13 +631,95 @@
                                     >
                                         {{ admission.note }}
                                     </p>
-                                </div>
+
+                                    <p
+                                        class="mt-3 text-[11px] font-medium text-primary"
+                                    >
+                                        View timeline →
+                                    </p>
+                                </button>
                             </div>
                         </section>
                  </aside>
                 </div>
+                </div>
             </template>
         </div>
+
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition duration-150"
+                enter-from-class="opacity-0"
+                leave-active-class="transition duration-100"
+                leave-to-class="opacity-0"
+            >
+                <div
+                    v-if="timelineAdmission"
+                    class="fixed inset-0 z-[70] flex items-center justify-center bg-primary-900/50 p-4 backdrop-blur-sm"
+                    @click.self="timelineAdmission = null"
+                >
+                    <div
+                        class="w-full max-w-2xl max-h-[85dvh] overflow-y-auto rounded-2xl bg-white shadow-xl dark:bg-secondary"
+                    >
+                        <div
+                            class="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-primary-100 bg-white px-5 py-4 dark:border-primary-500/20 dark:bg-secondary"
+                        >
+                            <div class="min-w-0">
+                                <h3
+                                    class="text-sm font-semibold text-primary-900 dark:text-primary-300"
+                                >
+                                    {{
+                                        timelineAdmission.room?.room_no
+                                            ? `Room ${timelineAdmission.room.room_no}`
+                                            : "Admission"
+                                    }}
+                                    <span
+                                        v-if="timelineAdmission.bed?.bed_no"
+                                        class="font-normal text-muted dark:text-gray-400"
+                                    >
+                                        · Bed
+                                        {{ timelineAdmission.bed.bed_no }}
+                                    </span>
+                                </h3>
+
+                                <p class="mt-1 text-xs text-muted dark:text-gray-400">
+                                    Admitted
+                                    {{
+                                        formatDate(
+                                            timelineAdmission.admitted_at,
+                                        )
+                                    }}
+                                    <span v-if="timelineAdmission.end_date">
+                                        — Ended
+                                        {{
+                                            formatDate(
+                                                timelineAdmission.end_date,
+                                            )
+                                        }}
+                                    </span>
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10"
+                                aria-label="Close"
+                                @click="timelineAdmission = null"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div class="p-5">
+                            <AdmissionTimeline
+                                flat
+                                :admissions="[timelineAdmission]"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
 
         <Teleport to="body">
             <div
@@ -558,29 +783,11 @@
             />
         </Teleport>
 
-        <!-- <ConfirmDialog
-            :open="dischargeDialogOpen"
-            title="Discharge Patient"
-            message="Are you sure you want to discharge this patient?"
-            description="This will end the current admission and mark it as discharged and cannot be undone."
-            confirm-label="Discharge"
-            variant="danger"
-            :loading="actionLoading"
-            @confirm="confirmDischarge"
-            @cancel="dischargeDialogOpen = false"
-        /> -->
-       <!-- <AdmissionDischarge
-            :open="dischargeDialogOpen"
-            :admission="latestAdmission ?? null"
-            :loading="actionLoading"
-            @confirm="confirmDischarge"
-            @cancel="dischargeDialogOpen = false"
-        /> -->
-
         <AdmissionDischarge
             :open="dischargeDialogOpen"
             :admission="currentAdmission"
             :future-invoices="notStartedInvoices"
+            :billing="patient?.billing ?? null"
             :loading="actionLoading"
             @confirm="confirmDischarge"
             @cancel="dischargeDialogOpen = false"
@@ -605,17 +812,6 @@
             @cancel="cancelNewAdmissionConfirm"
         />
 
-        <!-- <ConfirmDialog
-            :open="unpaidAdmitDialogOpen"
-            title="Unpaid Admission"
-            message="This patient hasn't paid yet."
-            description="Are you sure you want to admit this patient without full payment?"
-            confirm-label="Yes, Continue"
-            variant="danger"
-            :loading="actionLoading"
-            @confirm="proceedToAdmitModal"
-            @cancel="unpaidAdmitDialogOpen = false"
-        /> -->
         <ConfirmDialog
             :open="unpaidAdmitDialogOpen"
             title="Payment Incomplete"
@@ -720,6 +916,21 @@ const currentAdmission = computed<Admission | undefined>(
     () => patient.value?.current_admission,
 );
 
+// One stay at a time: the one in progress, or the most recent if the patient has
+// been discharged. Earlier admissions are reached through the Admission History
+// panel, which opens each one's own timeline in a modal.
+const timelineAdmissions = computed<Admission[]>(() => {
+    const admission = currentAdmission.value ?? latestAdmission.value;
+
+    return admission ? [admission] : [];
+});
+
+// The timeline still shows after a discharge, so it has to say so — otherwise a
+// finished stay reads as one still running.
+const showingEndedAdmission = computed(
+    () => !currentAdmission.value && !!latestAdmission.value,
+);
+
 const pastAdmissions = computed<Admission[]>(() => {
     const all = patient.value?.admissions ?? [];
     const latestId = latestAdmission.value?.patient_admission_id;
@@ -759,9 +970,43 @@ const initials = computed(() => {
     ).toUpperCase();
 });
 
+const patientFacts = computed(() => {
+    const age = patient.value?.age;
+
+    return [
+        { label: "Gender", value: patient.value?.gender },
+        { label: "Age", value: age ? `${age} years old` : null },
+        { label: "Blood type", value: patient.value?.blood_type },
+        { label: "Contact", value: patient.value?.phone_number },
+        {
+            label: "Address",
+            value: patient.value?.location?.full_address,
+            wide: true,
+        },
+    ].filter((fact) => !!fact.value);
+});
+
 const status = computed(() => latestAdmission.value?.status?.toLowerCase());
 const isWaiting = computed(() => status.value === "waiting");
 const isAdmitted = computed(() => status.value === "admitted");
+
+// Most actions need an in-progress stay, and the reason they are unavailable
+// depends on where the patient actually is.
+const unavailableWhileNotAdmitted = computed(() => {
+    if (isWaiting.value) {
+        return "This admission is still waiting. Admit the patient first.";
+    }
+
+    if (status.value === "discharged") {
+        return "This patient has been discharged. Start a new admission first.";
+    }
+
+    if (status.value === "cancelled") {
+        return "This admission was cancelled. Start a new admission first.";
+    }
+
+    return "This patient has no active admission. Start a new admission first.";
+});
 
 const isInvoiceUnpaid = computed(() => {
     return (latestInvoice.value?.status ?? "").toLowerCase() !== "paid";
@@ -779,7 +1024,9 @@ const cancelAdmissionDialogOpen = ref(false);
 const todayStr = toLocalDateString(new Date());
 const changeRoomModalOpen = ref(false);
 const transferHistoryModalOpen = ref(false);
-const admissionTimelineModalOpen = ref(false);
+// The inline timeline covers the current stay only; any other admission is
+// opened in a modal showing just that one.
+const timelineAdmission = ref<Admission | null>(null);
 
 const newAdmissionModalOpen = ref(false);
 const newAdmissionDialogOpen = ref(false);
@@ -792,19 +1039,9 @@ const pendingAdmission = ref<Reserved | null>(null);
 function openChangeRoomModal() {
     changeRoomModalOpen.value = true;
 }
-const notStartedInvoices = computed(() => {
-    const now = Date.now();
-
-    return (patient.value?.latest_admission?.invoices ?? []).filter(
-        (invoice) => {
-            if (!invoice.start_date) return false;
-
-            const start = new Date(invoice.start_date).getTime();
-
-            return !Number.isNaN(start) && start > now;
-        },
-    );
-});
+const notStartedInvoices = computed(
+    () => patient.value?.latest_admission?.future_periods?.invoices ?? [],
+);
 
 
 function confirmDischarge(payload: {
@@ -945,10 +1182,13 @@ async function handleChangeRoomSelect(payload: {
     room: Room;
     bed: Bed;
     reason: string;
+    contractId: number;
+    isAccommodationChange: boolean;
 }) {
     await runAction("change_room", {
         room_id: payload.room.room_id,
         bed_id: payload.bed.bed_id,
+        contract_id: payload.contractId,
         reason: payload.reason,
     });
     changeRoomModalOpen.value = false;
@@ -1000,24 +1240,79 @@ async function confirmNewAdmission() {
     }
 }
 
-const dayOfStay = computed(() => {
-    if (!latestAdmission.value) return null;
-    if (status.value !== "admitted" || !latestAdmission.value.admitted_at) {
-        return 0;
+// Progress tracks the billing period actually in effect, not the whole stay.
+// A prepaid extension pushes admission.end_date years out, and folding that
+// into one bar made a patient on day 211 of a year read as "day 211 of 731".
+const currentPeriod = computed(
+    () => latestAdmission.value?.current_period ?? null,
+);
+
+const periodCycleDays = computed(() =>
+    (currentPeriod.value?.contract?.billing_cycle ?? "").toUpperCase() ===
+    "YEARLY"
+        ? 365
+        : 30,
+);
+
+function wholeDaysBetween(from?: string | null, to?: string | null) {
+    if (!from || !to) return null;
+
+    const start = new Date(from);
+    const end = new Date(to);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        return null;
     }
-    const start = new Date(latestAdmission.value.admitted_at).getTime();
-    const now = Date.now();
-    if (Number.isNaN(start)) return 0;
-    return Math.max(1, Math.ceil((now - start) / 86400000));
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+
+    return Math.round((end.getTime() - start.getTime()) / 86400000);
+}
+
+// The bar covers everything the stay is paid up to, prepaid periods included,
+// so a patient a day into a two-year booking reads as "Day 1 of 730".
+const totalStayDays = computed(() => {
+    const total = wholeDaysBetween(
+        latestAdmission.value?.admitted_at,
+        latestAdmission.value?.end_date,
+    );
+
+    return total && total > 0 ? total : null;
 });
 
-const totalStayDays = computed(() => {
-    if (!latestAdmission.value?.end_date) return null;
-    const startRaw = latestAdmission.value.admitted_at ?? todayStr;
-    const start = new Date(startRaw).getTime();
-    const end = new Date(latestAdmission.value.end_date).getTime();
-    if (Number.isNaN(start) || Number.isNaN(end)) return null;
-    return Math.max(1, Math.ceil((end - start) / 86400000));
+const daysAdmitted = computed(() => {
+    if (status.value !== "admitted" || !latestAdmission.value?.admitted_at) {
+        return 0;
+    }
+
+    const elapsed = wholeDaysBetween(
+        latestAdmission.value.admitted_at,
+        new Date().toISOString(),
+    );
+
+    return Math.max(0, elapsed ?? 0) + 1;
+});
+
+const dayOfStay = computed(() => {
+    if (!latestAdmission.value) return null;
+    if (status.value !== "admitted") return 0;
+
+    return totalStayDays.value
+        ? Math.min(totalStayDays.value, daysAdmitted.value)
+        : daysAdmitted.value;
+});
+
+const periodEndsOn = computed(() => {
+    const startedAt = currentPeriod.value?.started_at;
+    if (!startedAt) return null;
+
+    const end = new Date(startedAt);
+    if (Number.isNaN(end.getTime())) return null;
+
+    end.setDate(end.getDate() + periodCycleDays.value);
+
+    return end.toISOString();
 });
 
 const stayProgress = computed(() => {

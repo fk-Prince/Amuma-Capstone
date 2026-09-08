@@ -56,7 +56,26 @@
                     </div>
 
                     <span class="shrink-0 text-xs text-muted dark:text-gray-400">
-                        {{ formatDate(transfer.created_at) }}
+                        {{ stringToDateTime(transfer.created_at) }}
+                    </span>
+                </div>
+
+                <div
+                    v-if="transfer.accommodation_change"
+                    class="mt-2 flex flex-wrap items-center gap-2 text-xs"
+                >
+                    <span
+                        class="rounded-full bg-amber-50 px-2 py-0.5 font-semibold uppercase tracking-wide text-[10px] text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+                    >
+                        Accommodation change
+                    </span>
+
+                    <span class="text-slate-500 dark:text-gray-400">
+                        {{ transfer.from_contract?.accommodation_type ?? "—" }}
+                        {{ transfer.from_contract?.billing_cycle ?? "" }}
+                        →
+                        {{ transfer.to_contract?.accommodation_type ?? "—" }}
+                        {{ transfer.to_contract?.billing_cycle ?? "" }}
                     </span>
                 </div>
 
@@ -71,7 +90,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { RoomTransfer } from "~/types/room";
-import { formatDate } from "~/utils/time";
+import { stringToDateTime } from "~/utils/time";
 
 const props = defineProps<{
     transfers?: RoomTransfer[] | null;

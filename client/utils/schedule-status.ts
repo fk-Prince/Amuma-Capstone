@@ -14,13 +14,6 @@ export function scheduleStatusTheme(status?: string | null) {
                 accent: "text-emerald-700 dark:text-emerald-300",
             };
 
-        case "confirmed":
-            return {
-                card: "border-l-4 border-l-blue-400 bg-blue-50/70 dark:bg-blue-500/10",
-                badge: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
-                accent: "text-blue-700 dark:text-blue-300",
-            };
-
         case "missed":
             return {
                 card: "border-l-4 border-l-rose-400 bg-rose-50/70 dark:bg-rose-500/10",
@@ -51,8 +44,6 @@ export function scheduleStatusLabel(status?: string | null) {
             return "Complete";
         case "ongoing":
             return "Ongoing";
-        case "confirmed":
-            return "Confirmed";
         case "missed":
             return "Missed";
         case "cancelled":

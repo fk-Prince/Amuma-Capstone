@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-[calc(100vh-90px)] w-full bg-slate-50 flex items-center justify-center px-4 dark:bg-secondary"
+        class="min-h-screen w-full bg-slate-50 flex items-center justify-center px-4 dark:bg-secondary"
     >
         <div
             class="w-full max-w-md bg-white rounded-3xl shadow-sm p-8 text-center dark:bg-secondary"
@@ -30,7 +30,7 @@
 
                 <p class="mt-3 text-sm text-slate-500 dark:text-gray-400">
                     We'll verify your subscription and notify you of your
-                    request's status within 2-3 business days.
+                    request's status within 1-2 business days.
                 </p>
             </template>
 
@@ -95,12 +95,26 @@
             </div>
 
             <NuxtLink
-                v-if="isSuccess"
-                :to="dashboardUrl ?? '/'"
+                v-if="isSuccess && dashboardUrl"
+                :to="dashboardUrl"
                 class="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
             >
                 View Dashboard
             </NuxtLink>
+
+            <button
+                v-else-if="isSuccess"
+                type="button"
+                :disabled="isPreparing"
+                class="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+                @click="resolveBranch"
+            >
+                <LoaderCircle v-if="isPreparing" class="h-4 w-4 animate-spin" />
+
+                {{
+                    isPreparing ? "Preparing your workspace..." : "Check again"
+                }}
+            </button>
 
             <NuxtLink
                 v-else
@@ -114,7 +128,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { LoaderCircle } from "lucide-vue-next";
 import { useBranchStore } from "~/stores/branch";
 import { fetchAuthUser } from "~/composables/useAuthUser";
 
@@ -129,18 +144,38 @@ const isSuccess = computed(() => {
     return route.query.status === "true";
 });
 
+const isPreparing = ref(false);
+
 onMounted(async () => {
     await fetchAuthUser();
-    await branchStore.refreshBranch();
 
-    if (!branchStore.branches.length) {
-        await branchStore.fetchBranches();
-    }
+    await resolveBranch();
 });
+
+// The branch is created by the payment webhook, so it usually does not exist
+// yet when this page loads. Without the wait the button falls back to "/" and
+// looks like it does nothing.
+async function resolveBranch() {
+    isPreparing.value = true;
+
+    try {
+        for (let attempt = 0; attempt < 8; attempt++) {
+            await branchStore.refreshBranch();
+
+            if (branchStore.branches.length) return;
+
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+    } finally {
+        isPreparing.value = false;
+    }
+}
 
 const dashboardUrl = computed(() => {
     const uuid =
-        branchStore.activeBranch?.uuid ?? branchStore.branches?.[0]?.uuid;
+        branchStore.activeBranch?.uuid ??
+        branchStore.lastSelectedBranch?.uuid ??
+        branchStore.branches?.[0]?.uuid;
 
     if (!uuid) {
         return null;

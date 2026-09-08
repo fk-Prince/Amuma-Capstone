@@ -5,9 +5,11 @@ namespace App\Factories;
 use App\Models\Booking;
 use App\Models\Invoice;
 use App\Models\Patient;
+use App\Models\Payment;
 use App\Repository\InvoiceRepository;
 use App\Service\PatientAdmissionService;
 use App\Service\PatientService;
+use App\Utils\AccommodationHelper;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -39,40 +41,60 @@ class BookingFactory
     {
         $data = $this->patientService->createFacilityPatient($payload);
         $patient = $data['patient'];
+        $client = $data['patientAccess'];
         $payload['patient_id'] = $patient['patient_id'];
-
 
         $admission = $this->patientAdmissionService->registerPatientBed($payload);
 
-
-
         $invoice = $this->invoiceRepository->create([
-            'total' => $payload['payment']['total_amount'],
+            'total_amount' => $payload['payment']['total_amount'],
             'branch_id' => $payload['branch_id'],
             'status' => Invoice::STATUS_PAID,
         ]);
 
 
-        $invoice->invoiceAccommodation()->create([
+        $invoice->invoiceAdmissionLines()->create([
             'price' => $payload['payment']['total_amount'],
             'patient_admission_id' => $admission['patient_admission_id'],
-            'branch_contract_id' => $payload['reserved']['contract_id']
+            'branch_contract_id' => $payload['reserved']['contract_id'],
         ]);
 
+        $amount = (float) ($payload['payment']['total_amount'] ?? 0);
 
-        $invoice->payments()->create([
-            'amount' => $payload['payment']['total_amount'] ?? null,
+        $receipt = Payment::create([
+            'branch_id' => $payload['branch_id'],
+            'patient_id' => $patient['patient_id'],
+            'client_id' => $client->client_id,
+            'payor_name' => trim(
+                ($client->first_name ?? '') . ' ' . ($client->last_name ?? '')
+            ) ?: null,
+            'amount'          => $amount,
+            'prior_balance' => $amount,
+            'new_balance' => 0,
+            'created_at' => now(),
+        ]);
+
+        $receipt->update([
             'payment_method' => $payload['payment']['payment_method'] ?? 'cash',
             'reference_id' => $payload['payment']['xendit_invoice_id'] ?? null,
             'masked_card_number' => $payload['payment']['masked_card_number'] ?? null,
         ]);
 
+        $receipt->allocations()->create([
+            'invoice_id' => $invoice->invoice_id,
+            'amount' => $amount,
+            'description' => $invoice->paymentDescription(),
+            'created_at' => now(),
+        ]);
+
+        AccommodationHelper::activate($invoice);
 
         return [
             'patient'        => $patient,
             'invoice'        => $invoice,
             'admission'      => $admission,
-            'patient_access' => $data['patientAccess']
+            'patient_access' => $data['patientAccess'],
+            'receipt'        => $receipt,
         ];
     }
 
@@ -88,9 +110,9 @@ class BookingFactory
         $invoiceServices = $data['invoiceServices'];
 
         $invoice = $this->invoiceRepository->create([
-            'total'     => $payload['payment']['total_amount'],
-            'branch_id' => $payload['branch_id'],
-            'status'    => Invoice::STATUS_PENDING,
+            'total_amount' => $payload['payment']['total_amount'],
+            'branch_id'    => $payload['branch_id'],
+            'status'       => Invoice::STATUS_PENDING,
         ]);
 
         $invoice->invoiceServices()->createMany($invoiceServices);
@@ -101,10 +123,7 @@ class BookingFactory
         ];
     }
 
-    /**
-     * The portal's "Book Again" booking — the patient already exists, so
-     * only the visit itself (schedule + invoice) needs creating.
-     */
+
     private function handleHomecareBookingForExistingPatient(int $patientId, array $payload)
     {
         $patient = Patient::findOrFail($patientId);
@@ -117,9 +136,9 @@ class BookingFactory
         );
 
         $invoice = $this->invoiceRepository->create([
-            'total'     => $payload['payment']['total_amount'] ?? 0,
-            'branch_id' => $payload['branch_id'] ?? $patient->branch_id,
-            'status'    => Invoice::STATUS_PENDING,
+            'total_amount' => $payload['payment']['total_amount'] ?? 0,
+            'branch_id'    => $payload['branch_id'] ?? $patient->branch_id,
+            'status'       => Invoice::STATUS_PENDING,
         ]);
 
         $invoice->invoiceServices()->createMany($data['invoiceServices']);

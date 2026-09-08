@@ -53,11 +53,33 @@
                     </span>
 
                     <p class="mt-1 text-[10px] text-muted dark:text-gray-400">
-                        {{ subscription.start_date }} →
-                        {{ subscription.end_date }}
+                        {{ formatDate(subscription.start_date) }} →
+                        {{ formatDate(subscription.end_date) }}
                     </p>
                 </div>
             </div>
+        </div>
+
+        <div
+            v-if="otherBranchesCount > 0"
+            class="flex items-center gap-2 border-b border-primary/10 bg-primary/5 px-5 py-2 text-[11px] font-medium text-primary dark:border-primary-500/20 dark:bg-primary-500/10 dark:text-primary-300"
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                class="h-3.5 w-3.5 shrink-0"
+            >
+                <path d="M3 21h18" />
+                <path d="M5 21V5l7-3 7 3v16" />
+                <path d="M9 21v-4h6v4" />
+            </svg>
+
+            Not the first branch on this subscription — {{ otherBranchesCount }}
+            other {{ otherBranchesCount === 1 ? "branch is" : "branches are" }}
+            already linked
         </div>
 
         <div
@@ -399,6 +421,7 @@
 <script setup lang="ts">
 import DocumentLink from "~/components/ui/DocumentLink.vue";
 import { formatCurrency } from "~/utils/currency";
+import { formatDate } from "~/utils/time";
 import type { SubscriptionPaymentRecord } from "~/types/subscription";
 
 interface SubscriptionCardData {
@@ -436,6 +459,15 @@ interface SubscriptionCardData {
         plan_id: number;
         name: string;
         plan_code: string;
+    };
+
+    subscription?: {
+        covered_branches: {
+            uuid: string;
+            name: string;
+            is_verified: boolean;
+            status: "pending" | "approved" | "rejected";
+        }[];
     };
 }
 
@@ -476,6 +508,13 @@ const hasAgencyDocuments = computed(() => {
 
 const isPending = computed(() => props.subscription.status === "pending");
 const canShowActions = computed(() => isPending.value && props.showActions);
+
+const otherBranchesCount = computed(() => {
+    const covered = props.subscription.subscription?.covered_branches ?? [];
+
+    return covered.filter((b) => b.uuid !== props.subscription.branch.uuid)
+        .length;
+});
 
 const statusClass = (status: SubscriptionCardData["status"]) => {
     switch (status) {

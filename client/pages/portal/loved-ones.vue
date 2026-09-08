@@ -932,10 +932,6 @@ interface Invoice {
     amount_paid: number;
     balance_due: number;
     refund_status: string;
-    facilityPeriod: {
-        start_date: string | null;
-        end_date: string | null;
-    };
     latestPayment: Payment | null;
 }
 
@@ -1276,7 +1272,7 @@ function mapPatientRecord(item: any): LovedOne {
                 [client.first_name, client.last_name]
                     .filter(Boolean)
                     .join(" ") || "N/A",
-            phone: client.phone_number || "N/A",
+            phone: formatPhone(client.phone_number) || "N/A",
             email: client.email || "N/A",
         },
         accessGrantedAt: access.granted_at

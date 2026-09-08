@@ -3,25 +3,26 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Refund extends Model
 {
     protected $primaryKey = 'refund_id';
 
-    public const STATUS_PENDING = 'pending';
-    public const STATUS_PROCESSING = 'processing';
+
+    public const STATUS_REQUESTED = 'requested';
     public const STATUS_COMPLETED = 'completed';
-    public const STATUS_FAILED = 'failed';
-    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_DECLINED = 'declined';
+
+    public const SETTLED_STATUSES = [
+        self::STATUS_COMPLETED,
+    ];
 
     protected $fillable = [
-        'payment_id',
         'amount',
         'refund_method',
-        'reference_id',
+        'refund_code',
         'status',
-        'reason',
+        'declined_reason',
         'masked_card_number',
     ];
 
@@ -29,25 +30,59 @@ class Refund extends Model
         'amount' => 'decimal:2',
     ];
 
-    public function payment(): BelongsTo
+    public function allocations()
     {
-        return $this->belongsTo(Payment::class, 'payment_id', 'payment_id');
+        return $this->hasMany(
+            RefundAllocation::class,
+            'refund_id',
+            'refund_id'
+        );
+    }
+
+    public function payments()
+    {
+        return $this->hasManyThrough(
+            PaymentInvoiceAllocation::class,
+            RefundAllocation::class,
+            'refund_id',
+            'allocation_id',
+            'refund_id',
+            'allocation_id'
+        );
+    }
+
+    public function getInvoicesAttribute()
+    {
+        return $this->allocations
+            ->map(fn($allocation) => $allocation->allocation?->invoice)
+            ->filter()
+            ->unique('invoice_id')
+            ->values();
+    }
+
+    public function getInvoiceAttribute()
+    {
+        return $this->invoices->first();
     }
 
     protected static function booted()
     {
         static::creating(function ($refund) {
-            if (!$refund->reference_id) {
+            if (!$refund->status) {
+                $refund->status = self::STATUS_REQUESTED;
+            }
+
+            if (!$refund->refund_code) {
                 $lastRefund = self::lockForUpdate()
-                    ->whereNotNull('reference_id')
+                    ->whereNotNull('refund_code')
                     ->orderByDesc('refund_id')
                     ->first();
 
                 $nextNumber = $lastRefund
-                    ? ((int) substr($lastRefund->reference_id, 7)) + 1
+                    ? ((int) substr($lastRefund->refund_code, 7)) + 1
                     : 1;
 
-                $refund->reference_id = 'REFUND-' . str_pad(
+                $refund->refund_code = 'REFUND-' . str_pad(
                     $nextNumber,
                     6,
                     '0',

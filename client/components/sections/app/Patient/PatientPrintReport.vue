@@ -62,7 +62,7 @@
                         <th>Gender</th>
                         <td>{{ report.patient.gender ?? "—" }}</td>
                         <th>Contact</th>
-                        <td>{{ report.patient.phone_number ?? "—" }}</td>
+                        <td>{{ formatPhone(report.patient.phone_number) || "—" }}</td>
                     </tr>
                     <tr>
                         <th>Address</th>

@@ -13,318 +13,373 @@
                 class="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-5"
             >
                 <div
-                    class="w-full max-w-2xl max-h-[88vh] overflow-y-auto rounded-2xl bg-white p-6 md:p-7 shadow-xl dark:bg-secondary"
+                    class="flex w-full max-w-2xl max-h-[88dvh] flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
                 >
-                    <h3 class="text-lg font-semibold">Extend Stay</h3>
-
-                    <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
-                        Choose a billing cycle, or switch accommodation if
-                        needed.
-                    </p>
-
+                    <!-- HEADER -->
                     <div
-                        v-if="admission?.end_date"
-                        class="mt-4 rounded-xl bg-slate-50 p-3 dark:bg-white/5"
+                        class="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5 dark:border-white/10"
                     >
-                        <p class="text-xs text-slate-500 dark:text-gray-400">
-                            Current discharge date
-                        </p>
-                        <p class="font-semibold">
-                            {{ formatDate(admission.end_date) }}
-                        </p>
-                    </div>
+                        <div class="min-w-0">
+                            <h3 class="text-lg font-semibold tracking-tight">
+                                Extend Stay
+                            </h3>
 
-                    <div v-if="loading" class="mt-6 grid sm:grid-cols-2 gap-4">
-                        <div
-                            v-for="i in 2"
-                            :key="i"
-                            class="animate-pulse rounded-xl border p-4 space-y-3 dark:border-white/10"
-                        >
-                            <div class="h-4 w-28 rounded bg-slate-200 dark:bg-white/15" />
-                            <div class="h-3 w-40 rounded bg-slate-100 dark:bg-white/10" />
+                            <p
+                                class="mt-1 text-sm text-slate-500 dark:text-gray-400"
+                            >
+                                Add another billing cycle, and switch
+                                accommodation at the same time if needed.
+                            </p>
                         </div>
+
+                        <button
+                            type="button"
+                            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10"
+                            aria-label="Close"
+                            @click="$emit('close')"
+                        >
+                            ✕
+                        </button>
                     </div>
 
-                    <div
-                        v-else-if="!accommodationTypes.length"
-                        class="mt-6 rounded-xl border border-dashed py-10 text-center text-sm text-slate-500 dark:text-gray-400 dark:border-white/10"
-                    >
-                        No billing contracts are currently available.
-                    </div>
-
-                    <template v-else>
+                    <!-- BODY -->
+                    <div class="flex-1 overflow-y-auto px-6 py-5">
                         <div
-                            v-if="hasYearlyOption"
-                            class="mt-5 flex items-center justify-center gap-3"
+                            v-if="admission?.end_date"
+                            class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-slate-200 px-4 py-3 dark:border-white/10"
                         >
                             <span
-                                class="text-sm font-medium transition-colors"
-                                :class="
-                                    billingCycle === 'monthly'
-                                        ? 'text-slate-900 dark:text-white'
-                                        : 'text-slate-400 dark:text-gray-500'
-                                "
+                                class="text-xs text-slate-500 dark:text-gray-400"
                             >
-                                Monthly
+                                Discharge date
                             </span>
 
-                            <button
-                                type="button"
-                                role="switch"
-                                :aria-checked="billingCycle === 'yearly'"
-                                aria-label="Toggle billing interval"
-                                @click="
-                                    billingCycle =
-                                        billingCycle === 'monthly'
-                                            ? 'yearly'
-                                            : 'monthly'
-                                "
-                                class="relative h-7 w-12 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                                :class="
-                                    billingCycle === 'yearly'
-                                        ? 'bg-primary'
-                                        : 'bg-slate-200 dark:bg-white/15'
-                                "
-                            >
-                                <span
-                                    class="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform duration-200 dark:bg-secondary"
-                                    :class="
-                                        billingCycle === 'yearly'
-                                            ? 'translate-x-5'
-                                            : 'translate-x-0'
-                                    "
-                                />
-                            </button>
+                            <span class="text-sm font-semibold">
+                                {{ formatDate(admission.end_date) }}
+                            </span>
 
-                            <span
-                                class="text-sm font-medium transition-colors flex items-center gap-1.5"
-                                :class="
-                                    billingCycle === 'yearly'
-                                        ? 'text-slate-900 dark:text-white'
-                                        : 'text-slate-400 dark:text-gray-500'
-                                "
-                            >
-                                Yearly
-                                <span
-                                    v-if="activeDiscountPercent !== null"
-                                    class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                            <template v-if="selectedContract">
+                                <svg
+                                    class="h-3.5 w-3.5 shrink-0 text-slate-300 dark:text-gray-600"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2.5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
                                 >
-                                    Save {{ activeDiscountPercent }}%
+                                    <path d="M5 12h14" />
+                                    <path d="m12 5 7 7-7 7" />
+                                </svg>
+
+                                <span class="text-sm font-semibold text-primary">
+                                    {{ formatDate(calculatedDischargeDate) }}
                                 </span>
-                            </span>
-                        </div>
-
-                        <div class="mt-6 grid sm:grid-cols-2 gap-4">
-                            <button
-                                v-for="type in accommodationTypes"
-                                :key="type.value"
-                                type="button"
-                                :disabled="
-                                    !contractFor(type.value, 'monthly') &&
-                                    !contractFor(type.value, 'yearly')
-                                "
-                                class="text-left rounded-xl border p-4 transition hover:border-primary hover:bg-primary/5 disabled:opacity-40 disabled:cursor-not-allowed dark:border-white/10"
-                                :class="
-                                    selectedType === type.value
-                                        ? 'border-primary ring-1 ring-primary/30 bg-primary/5'
-                                        : ''
-                                "
-                                @click="selectedType = type.value"
-                            >
-                                <div class="flex items-center justify-between">
-                                    <p class="font-semibold uppercase">
-                                        {{ type.value.toLowerCase() }}
-                                    </p>
-                                    <span
-                                        v-if="type.value === currentType"
-                                        class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400"
-                                    >
-                                        Current
-                                    </span>
-                                </div>
-                                <p
-                                    class="text-sm text-primary font-medium mt-1"
-                                >
-                                    {{ formatPrice(type.value) }}
-                                    <span
-                                        class="text-xs font-normal text-slate-400 dark:text-gray-500"
-                                    >
-                                        /
-                                        {{
-                                            billingCycle === "yearly"
-                                                ? "yr"
-                                                : "mo"
-                                        }}
-                                    </span>
-                                </p>
-                            </button>
-                        </div>
-
-                        <div
-                            v-if="!typeChanged"
-                            class="mt-5 rounded-xl border p-4 flex items-center justify-between dark:border-white/10"
-                        >
-                            <div>
-                                <p class="text-xs text-slate-500 dark:text-gray-400">Room & Bed</p>
-                                <p class="font-semibold">
-                                    Room {{ admission?.room?.room_no ?? "—" }}
-                                    <span
-                                        v-if="admission?.bed?.bed_no"
-                                        class="text-slate-400 font-normal dark:text-gray-500"
-                                    >
-                                        · Bed {{ admission.bed.bed_no }}
-                                    </span>
-                                </p>
-                            </div>
-                            <span
-                                class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
-                            >
-                                Unchanged
-                            </span>
-                        </div>
-
-                        <div v-else class="mt-5 space-y-4">
-                            <div class="rounded-xl border p-4 dark:border-white/10">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-xs text-slate-500 dark:text-gray-400">
-                                            Room & Bed
-                                        </p>
-                                        <p class="font-semibold">
-                                            Room
-                                            {{
-                                                admission?.room?.room_no ?? "—"
-                                            }}
-                                            <span
-                                                v-if="admission?.bed?.bed_no"
-                                                class="text-slate-400 font-normal dark:text-gray-500"
-                                            >
-                                                · Bed
-                                                {{ admission.bed.bed_no }}
-                                            </span>
-                                        </p>
-                                    </div>
-
-                                    <div class="flex rounded-lg border p-0.5 dark:border-white/10">
-                                        <button
-                                            type="button"
-                                            class="rounded-md px-3 py-1.5 text-xs font-medium transition"
-                                            :class="
-                                                keepSameRoomBed
-                                                    ? 'bg-primary text-white'
-                                                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
-                                            "
-                                            @click="keepSameRoomBed = true"
-                                        >
-                                            Keep same
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="rounded-md px-3 py-1.5 text-xs font-medium transition"
-                                            :class="
-                                                !keepSameRoomBed
-                                                    ? 'bg-primary text-white'
-                                                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-400'
-                                            "
-                                            @click="keepSameRoomBed = false"
-                                        >
-                                            Change room
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <p
-                                    v-if="keepSameRoomBed"
-                                    class="mt-3 text-xs text-slate-500 dark:text-gray-400"
-                                >
-                                    The patient will stay in the same room and
-                                    bed under the new accommodation type.
-                                </p>
-                            </div>
-
-                            <template v-if="!keepSameRoomBed">
-                                <p
-                                    class="text-xs font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
-                                >
-                                    Select a room for
-                                    {{ selectedType?.toLowerCase() }}
-                                </p>
-
-                                <div
-                                    v-if="!roomsForSelection.length"
-                                    class="rounded-xl border border-dashed py-8 text-center text-sm text-slate-500 dark:text-gray-400 dark:border-white/10"
-                                >
-                                    No rooms currently available for this type.
-                                </div>
-
-                                <div v-else class="grid sm:grid-cols-2 gap-4">
-                                    <div
-                                        v-for="room in roomsForSelection"
-                                        :key="room.room_id"
-                                        class="rounded-xl border p-4 transition dark:border-white/10"
-                                        :class="
-                                            selectedRoom?.room_id ===
-                                            room.room_id
-                                                ? 'border-primary ring-1 ring-primary/30'
-                                                : ''
-                                        "
-                                    >
-                                        <div class="flex justify-between">
-                                            <div>
-                                                <p class="font-semibold">
-                                                    Room {{ room.room_no }}
-                                                </p>
-                                                <p
-                                                    class="text-xs text-slate-500 dark:text-gray-400"
-                                                >
-                                                    {{ room.floor }} Floor
-                                                </p>
-                                            </div>
-                                            <span
-                                                class="text-xs h-fit rounded-full px-2.5 py-1 font-medium"
-                                                :class="
-                                                    availableBeds(room).length >
-                                                    0
-                                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
-                                                        : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'
-                                                "
-                                            >
-                                                {{
-                                                    availableBeds(room).length >
-                                                    0
-                                                        ? "Available"
-                                                        : "Fully Reserved"
-                                                }}
-                                            </span>
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            :disabled="
-                                                availableBeds(room).length === 0
-                                            "
-                                            class="mt-4 w-full rounded-lg bg-primary text-white py-2 text-sm font-medium transition hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-                                            @click="openBeds(room)"
-                                        >
-                                            {{
-                                                selectedRoom?.room_id ===
-                                                    room.room_id && selectedBed
-                                                    ? `Bed ${selectedBed.bed_no} selected`
-                                                    : "Select Bed"
-                                            }}
-                                        </button>
-                                    </div>
-                                </div>
                             </template>
                         </div>
 
+                        <div v-if="loading" class="mt-5 space-y-4">
+                            <div
+                                class="h-10 animate-pulse rounded-xl bg-slate-100 dark:bg-white/10"
+                            />
+                            <div class="grid sm:grid-cols-2 gap-3">
+                                <div
+                                    v-for="i in 2"
+                                    :key="i"
+                                    class="animate-pulse space-y-3 rounded-xl border p-4 dark:border-white/10"
+                                >
+                                    <div
+                                        class="h-4 w-28 rounded bg-slate-200 dark:bg-white/15"
+                                    />
+                                    <div
+                                        class="h-3 w-40 rounded bg-slate-100 dark:bg-white/10"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            v-else-if="!accommodationTypes.length"
+                            class="mt-5 rounded-xl border border-dashed py-10 text-center text-sm text-slate-500 dark:border-white/10 dark:text-gray-400"
+                        >
+                            No billing contracts are currently available.
+                        </div>
+
+                        <template v-else>
+                            <!-- 1 · BILLING CYCLE -->
+                            <section v-if="hasYearlyOption" class="mt-6">
+                                <h4
+                                    class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                                >
+                                    1 · Billing cycle
+                                </h4>
+
+                                <div
+                                    class="mt-2.5 grid grid-cols-2 gap-1 rounded-xl border border-slate-200 p-1 dark:border-white/10"
+                                >
+                                    <button
+                                        v-for="cycle in cycleOptions"
+                                        :key="cycle"
+                                        type="button"
+                                        class="rounded-lg px-3 py-2 text-sm font-medium capitalize transition"
+                                        :class="
+                                            billingCycle === cycle
+                                                ? 'bg-primary text-white shadow-sm'
+                                                : 'text-slate-500 hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5'
+                                        "
+                                        @click="billingCycle = cycle"
+                                    >
+                                        {{ cycle }}
+
+                                        <span
+                                            v-if="
+                                                cycle === 'yearly' &&
+                                                activeDiscountPercent !== null
+                                            "
+                                            class="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+                                            :class="
+                                                billingCycle === 'yearly'
+                                                    ? 'bg-white/20 text-white'
+                                                    : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                            "
+                                        >
+                                            Save {{ activeDiscountPercent }}%
+                                        </span>
+                                    </button>
+                                </div>
+                            </section>
+
+                            <!-- 2 · ACCOMMODATION -->
+                            <section class="mt-6">
+                                <h4
+                                    class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                                >
+                                    {{ hasYearlyOption ? "2 · " : "" }}Accommodation
+                                </h4>
+
+                                <div
+                                    class="mt-2.5 grid gap-3"
+                                    :class="
+                                        accommodationTypes.length > 1
+                                            ? 'sm:grid-cols-2'
+                                            : ''
+                                    "
+                                >
+                                    <button
+                                        v-for="type in accommodationTypes"
+                                        :key="type.value"
+                                        type="button"
+                                        :disabled="
+                                            !contractFor(type.value, 'monthly') &&
+                                            !contractFor(type.value, 'yearly')
+                                        "
+                                        class="rounded-xl border p-4 text-left transition hover:border-primary/60 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10"
+                                        :class="
+                                            selectedType === type.value
+                                                ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                                                : ''
+                                        "
+                                        @click="selectedType = type.value"
+                                    >
+                                        <div
+                                            class="flex items-center justify-between gap-2"
+                                        >
+                                            <p class="font-semibold uppercase">
+                                                {{ type.value.toLowerCase() }}
+                                            </p>
+
+                                            <span
+                                                v-if="type.value === currentType"
+                                                class="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-white/10 dark:text-gray-400"
+                                            >
+                                                Current
+                                            </span>
+                                        </div>
+
+                                        <p class="mt-1 text-sm font-semibold text-primary">
+                                            {{ formatPrice(type.value) }}
+                                            <span
+                                                class="text-xs font-normal text-slate-400 dark:text-gray-500"
+                                            >
+                                                /
+                                                {{
+                                                    billingCycle === "yearly"
+                                                        ? "yr"
+                                                        : "mo"
+                                                }}
+                                            </span>
+                                        </p>
+                                    </button>
+                                </div>
+                            </section>
+
+                            <!-- 3 · ROOM & BED -->
+                            <section class="mt-6">
+                                <h4
+                                    class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                                >
+                                    {{ hasYearlyOption ? "3 · " : "2 · " }}Room &amp; bed
+                                </h4>
+
+                                <div
+                                    class="mt-2.5 rounded-xl border p-4 dark:border-white/10"
+                                >
+                                    <div
+                                        class="flex flex-wrap items-center justify-between gap-3"
+                                    >
+                                        <div class="min-w-0">
+                                            <p class="font-semibold">
+                                                Room
+                                                {{ admission?.room?.room_no ?? "—" }}
+                                                <span
+                                                    v-if="admission?.bed?.bed_no"
+                                                    class="font-normal text-slate-400 dark:text-gray-500"
+                                                >
+                                                    · Bed {{ admission.bed.bed_no }}
+                                                </span>
+                                            </p>
+
+                                            <p
+                                                class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
+                                            >
+                                                {{
+                                                    typeChanged && !keepSameRoomBed
+                                                        ? `Pick a room for ${selectedType?.toLowerCase()}.`
+                                                        : "The patient keeps this room and bed."
+                                                }}
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            v-if="typeChanged"
+                                            class="flex shrink-0 rounded-lg border p-0.5 dark:border-white/10"
+                                        >
+                                            <button
+                                                type="button"
+                                                class="rounded-md px-3 py-1.5 text-xs font-medium transition"
+                                                :class="
+                                                    keepSameRoomBed
+                                                        ? 'bg-primary text-white'
+                                                        : 'text-slate-500 hover:text-slate-700 dark:text-gray-400'
+                                                "
+                                                @click="keepSameRoomBed = true"
+                                            >
+                                                Keep same
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="rounded-md px-3 py-1.5 text-xs font-medium transition"
+                                                :class="
+                                                    !keepSameRoomBed
+                                                        ? 'bg-primary text-white'
+                                                        : 'text-slate-500 hover:text-slate-700 dark:text-gray-400'
+                                                "
+                                                @click="keepSameRoomBed = false"
+                                            >
+                                                Change room
+                                            </button>
+                                        </div>
+
+                                        <span
+                                            v-else
+                                            class="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                                        >
+                                            Unchanged
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <template v-if="typeChanged && !keepSameRoomBed">
+                                    <div
+                                        v-if="!roomsForSelection.length"
+                                        class="mt-3 rounded-xl border border-dashed py-8 text-center text-sm text-slate-500 dark:border-white/10 dark:text-gray-400"
+                                    >
+                                        No rooms currently available for this type.
+                                    </div>
+
+                                    <div
+                                        v-else
+                                        class="mt-3 grid gap-3 sm:grid-cols-2"
+                                    >
+                                        <div
+                                            v-for="room in roomsForSelection"
+                                            :key="room.room_id"
+                                            class="rounded-xl border p-4 transition dark:border-white/10"
+                                            :class="
+                                                selectedRoom?.room_id ===
+                                                room.room_id
+                                                    ? 'border-primary ring-1 ring-primary/30'
+                                                    : ''
+                                            "
+                                        >
+                                            <div
+                                                class="flex items-start justify-between gap-2"
+                                            >
+                                                <div class="min-w-0">
+                                                    <p class="font-semibold">
+                                                        Room {{ room.room_no }}
+                                                    </p>
+                                                    <p
+                                                        class="text-xs text-slate-500 dark:text-gray-400"
+                                                    >
+                                                        {{ room.floor }} Floor
+                                                    </p>
+                                                </div>
+
+                                                <span
+                                                    class="h-fit shrink-0 rounded-full px-2.5 py-1 text-xs font-medium"
+                                                    :class="
+                                                        availableBeds(room).length > 0
+                                                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                                            : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'
+                                                    "
+                                                >
+                                                    {{
+                                                        availableBeds(room).length > 0
+                                                            ? "Available"
+                                                            : "Fully Reserved"
+                                                    }}
+                                                </span>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                :disabled="
+                                                    availableBeds(room).length === 0
+                                                "
+                                                class="mt-4 w-full rounded-lg bg-primary py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                                                @click="openBeds(room)"
+                                            >
+                                                {{
+                                                    selectedRoom?.room_id ===
+                                                        room.room_id && selectedBed
+                                                        ? `Bed ${selectedBed.bed_no} selected`
+                                                        : "Select Bed"
+                                                }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </section>
+                        </template>
+                    </div>
+
+                    <!-- FOOTER -->
+                    <div
+                        class="border-t border-slate-100 px-6 py-4 dark:border-white/10"
+                    >
                         <div
                             v-if="selectedContract"
-                            class="mt-5 rounded-xl bg-primary/5 border border-primary/20 p-4 text-sm"
+                            class="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1"
                         >
-                            <div class="flex items-center justify-between">
-                                <span class="text-slate-500 dark:text-gray-400">Price</span>
-                                <span class="font-semibold text-primary">
+                            <div class="min-w-0">
+                                <p
+                                    class="text-xs text-slate-500 dark:text-gray-400"
+                                >
+                                    Extends to
+                                    {{ formatDate(calculatedDischargeDate) }}
+                                </p>
+                                <p class="text-lg font-bold tracking-tight">
                                     ₱{{
                                         Number(
                                             selectedContract.price,
@@ -340,53 +395,50 @@
                                                 : "mo"
                                         }}
                                     </span>
-                                </span>
-                            </div>
-                            <div class="mt-2 flex items-center justify-between">
-                                <span class="text-slate-500 dark:text-gray-400"
-                                    >New discharge date</span
-                                >
-                                <span class="font-semibold">{{
-                                    formatDate(calculatedDischargeDate)
-                                }}</span>
+                                </p>
                             </div>
                         </div>
-                    </template>
 
-                    <button
-                        class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-medium text-white disabled:opacity-50"
-                        :disabled="!canConfirm"
-                        @click="confirmSelection"
-                    >
-                        <svg
-                            v-if="submitting"
-                            class="h-4 w-4 animate-spin"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                        >
-                            <circle
-                                class="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                stroke-width="4"
-                            />
-                            <path
-                                class="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                            />
-                        </svg>
-                        {{ submitting ? "Extending..." : "Confirm" }}
-                    </button>
-                    <button
-                        class="mt-3 w-full rounded-xl border py-2.5 text-sm dark:border-white/10"
-                        @click="$emit('close')"
-                    >
-                        Cancel
-                    </button>
+                        <div class="flex gap-3">
+                            <button
+                                type="button"
+                                class="flex-1 rounded-xl border py-2.5 text-sm font-medium transition hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
+                                @click="$emit('close')"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                class="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                :disabled="!canConfirm"
+                                @click="confirmSelection"
+                            >
+                                <svg
+                                    v-if="submitting"
+                                    class="h-4 w-4 animate-spin"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        class="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        stroke-width="4"
+                                    />
+                                    <path
+                                        class="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                    />
+                                </svg>
+                                {{ submitting ? "Extending..." : "Confirm Extension" }}
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <transition
@@ -498,6 +550,8 @@ const loading = ref(false);
 const submitting = ref(false);
 
 const billingCycle = ref<"monthly" | "yearly">("monthly");
+
+const cycleOptions = ["monthly", "yearly"] as const;
 const selectedType = ref<string | null>(null);
 
 const selectedRoom = ref<Room | null>(null);

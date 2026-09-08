@@ -8,7 +8,7 @@ use App\Models\Vital;
 
 class MedicationPresenter
 {
-    public static function medication(Medication $medication): array
+    public static function medication(Medication $medication)
     {
         return [
             'id' => (string) $medication->medication_id,
@@ -32,7 +32,7 @@ class MedicationPresenter
         ];
     }
 
-    public static function schedule(MedicationSchedule $schedule): array
+    public static function schedule(MedicationSchedule $schedule)
     {
         return [
             'id' => (string) $schedule->medication_schedule_id,
@@ -43,7 +43,7 @@ class MedicationPresenter
         ];
     }
 
-    public static function vital(Vital $vital): array
+    public static function vital(Vital $vital)
     {
         return [
             'id' => (string) $vital->vital_id,

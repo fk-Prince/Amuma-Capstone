@@ -185,7 +185,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="min-h-full space-y-6 p-5">
+    <div class="min-h-full space-y-6 p-5 mb-10">
         <div v-if="isLoading" class="space-y-5">
             <div
                 class="animate-pulse rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
@@ -203,11 +203,17 @@ onBeforeUnmount(() => {
                 class="animate-pulse rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div class="mb-5 flex items-center gap-3">
-                    <div class="h-10 w-10 rounded-xl bg-gray-100 dark:bg-white/10" />
+                    <div
+                        class="h-10 w-10 rounded-xl bg-gray-100 dark:bg-white/10"
+                    />
 
                     <div class="space-y-2">
-                        <div class="h-4 w-36 rounded bg-gray-200 dark:bg-white/15" />
-                        <div class="h-3 w-24 rounded bg-gray-100 dark:bg-white/10" />
+                        <div
+                            class="h-4 w-36 rounded bg-gray-200 dark:bg-white/15"
+                        />
+                        <div
+                            class="h-3 w-24 rounded bg-gray-100 dark:bg-white/10"
+                        />
                     </div>
                 </div>
 
@@ -219,10 +225,18 @@ onBeforeUnmount(() => {
                         :key="row"
                         class="grid grid-cols-4 gap-4 border-b border-gray-50 px-4 py-4 dark:border-white/10"
                     >
-                        <div class="h-3.5 w-32 rounded bg-gray-100 dark:bg-white/10" />
-                        <div class="h-3.5 w-24 rounded bg-gray-100 dark:bg-white/10" />
-                        <div class="h-3.5 w-28 rounded bg-gray-100 dark:bg-white/10" />
-                        <div class="h-3.5 w-16 rounded bg-gray-100 dark:bg-white/10" />
+                        <div
+                            class="h-3.5 w-32 rounded bg-gray-100 dark:bg-white/10"
+                        />
+                        <div
+                            class="h-3.5 w-24 rounded bg-gray-100 dark:bg-white/10"
+                        />
+                        <div
+                            class="h-3.5 w-28 rounded bg-gray-100 dark:bg-white/10"
+                        />
+                        <div
+                            class="h-3.5 w-16 rounded bg-gray-100 dark:bg-white/10"
+                        />
                     </div>
                 </div>
             </div>
@@ -233,11 +247,17 @@ onBeforeUnmount(() => {
                 class="animate-pulse rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div class="mb-5 flex items-center gap-3">
-                    <div class="h-10 w-10 rounded-xl bg-gray-100 dark:bg-white/10" />
+                    <div
+                        class="h-10 w-10 rounded-xl bg-gray-100 dark:bg-white/10"
+                    />
 
                     <div class="space-y-2">
-                        <div class="h-4 w-28 rounded bg-gray-200 dark:bg-white/15" />
-                        <div class="h-3 w-20 rounded bg-gray-100 dark:bg-white/10" />
+                        <div
+                            class="h-4 w-28 rounded bg-gray-200 dark:bg-white/15"
+                        />
+                        <div
+                            class="h-3 w-20 rounded bg-gray-100 dark:bg-white/10"
+                        />
                     </div>
                 </div>
 
@@ -271,11 +291,15 @@ onBeforeUnmount(() => {
                     <AlertCircle class="h-7 w-7" />
                 </div>
 
-                <h2 class="mt-4 text-sm font-semibold text-gray-900 dark:text-white">
+                <h2
+                    class="mt-4 text-sm font-semibold text-gray-900 dark:text-white"
+                >
                     Unable to load care information
                 </h2>
 
-                <p class="mt-1 max-w-sm text-sm leading-6 text-gray-500 dark:text-gray-400">
+                <p
+                    class="mt-1 max-w-sm text-sm leading-6 text-gray-500 dark:text-gray-400"
+                >
                     {{ loadError }}
                 </p>
 
@@ -295,16 +319,22 @@ onBeforeUnmount(() => {
                 v-if="lovedOnes.length"
                 class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
-                <div class="border-b border-gray-100 px-5 py-4 sm:px-6 dark:border-white/10">
+                <div
+                    class="border-b border-gray-100 px-5 py-4 sm:px-6 dark:border-white/10"
+                >
                     <div
                         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                     >
                         <div>
-                            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                            <p
+                                class="text-sm font-semibold text-gray-900 dark:text-white"
+                            >
                                 Select a loved one
                             </p>
 
-                            <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                            <p
+                                class="mt-0.5 text-xs text-gray-400 dark:text-gray-500"
+                            >
                                 Choose who you want to view
                             </p>
                         </div>
@@ -395,7 +425,9 @@ onBeforeUnmount(() => {
             <div
                 class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
-                <div class="border-b border-gray-100 px-5 py-5 sm:px-6 dark:border-white/10">
+                <div
+                    class="border-b border-gray-100 px-5 py-5 sm:px-6 dark:border-white/10"
+                >
                     <div
                         class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
                     >
@@ -459,9 +491,13 @@ onBeforeUnmount(() => {
 
                 <div class="p-5 sm:p-6">
                     <div class="mb-4 flex items-center gap-2">
-                        <Pill class="h-4 w-4 text-primary-600 dark:text-primary-300" />
+                        <Pill
+                            class="h-4 w-4 text-primary-600 dark:text-primary-300"
+                        />
 
-                        <h3 class="text-sm font-semibold text-gray-800 dark:text-white">
+                        <h3
+                            class="text-sm font-semibold text-gray-800 dark:text-white"
+                        >
                             Medication Schedule
                         </h3>
                     </div>
@@ -483,7 +519,9 @@ onBeforeUnmount(() => {
                             <Pill class="h-5 w-5" />
                         </div>
 
-                        <p class="mt-4 text-sm font-semibold text-gray-600 dark:text-gray-400">
+                        <p
+                            class="mt-4 text-sm font-semibold text-gray-600 dark:text-gray-400"
+                        >
                             No medications recorded
                         </p>
 
@@ -495,46 +533,24 @@ onBeforeUnmount(() => {
                         </p>
                     </div>
                 </div>
-            </div>
 
-            <div
-                class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
-            >
-                <div class="border-b border-gray-100 px-5 py-5 sm:px-6 dark:border-white/10">
-                    <div class="flex items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
+                <div
+                    class="border-t border-gray-100 p-5 sm:p-6 dark:border-white/10"
+                >
+                    <div class="mb-4 flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-2">
+                            <HeartPulse
+                                class="h-4 w-4 text-emerald-600 dark:text-emerald-300"
+                            />
+
+                            <h3
+                                class="text-sm font-semibold text-gray-800 dark:text-white"
                             >
-                                <HeartPulse class="h-5 w-5" />
-                            </div>
-
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-800 dark:text-white">
-                                    Vital Signs
-                                </h3>
-
-                                <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-                                    Recorded health measurements
-                                </p>
-                            </div>
-                        </div>
-
-                        <div
-                            class="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 sm:flex dark:bg-emerald-500/10"
-                        >
-                            <Activity class="h-3 w-3 text-emerald-600 dark:text-emerald-300" />
-
-                            <span
-                                class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300"
-                            >
-                                {{ vitalCount }} records
-                            </span>
+                                Vital Signs
+                            </h3>
                         </div>
                     </div>
-                </div>
 
-                <div class="p-5 sm:p-6">
                     <VitalSignsTable v-if="vitals.length" :vitals="vitals" />
 
                     <div
@@ -547,7 +563,9 @@ onBeforeUnmount(() => {
                             <HeartPulse class="h-5 w-5" />
                         </div>
 
-                        <p class="mt-4 text-sm font-semibold text-gray-600 dark:text-gray-400">
+                        <p
+                            class="mt-4 text-sm font-semibold text-gray-600 dark:text-gray-400"
+                        >
                             No vital signs recorded
                         </p>
 
@@ -560,140 +578,6 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
             </div>
-
-            <!-- <div
-                class="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm dark:border-blue-500/20 dark:bg-secondary"
-            >
-                <div
-                    class="border-b border-blue-50 bg-blue-50/50 px-5 py-4 sm:px-6 dark:border-blue-500/20 dark:bg-blue-500/10"
-                >
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300"
-                        >
-                            <ShieldCheck class="h-5 w-5" />
-                        </div>
-
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-800 dark:text-white">
-                                Important Care Reminders
-                            </h3>
-
-                            <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-                                General medication safety guidance
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="p-5 sm:p-6">
-                    <div class="grid gap-3 sm:grid-cols-2">
-                        <div
-                            class="flex items-start gap-3 rounded-xl bg-gray-50 p-3.5 dark:bg-white/5"
-                        >
-                            <span
-                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
-                            >
-                                <Clock3 class="h-4 w-4" />
-                            </span>
-
-                            <div>
-                                <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                                    Follow the schedule
-                                </p>
-
-                                <p
-                                    class="mt-1 text-[11px] leading-5 text-gray-500 dark:text-gray-400"
-                                >
-                                    Always take medications at their scheduled
-                                    times.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div
-                            class="flex items-start gap-3 rounded-xl bg-gray-50 p-3.5 dark:bg-white/5"
-                        >
-                            <span
-                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300"
-                            >
-                                <ClipboardList class="h-4 w-4" />
-                            </span>
-
-                            <div>
-                                <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                                    Do not skip doses
-                                </p>
-
-                                <p
-                                    class="mt-1 text-[11px] leading-5 text-gray-500 dark:text-gray-400"
-                                >
-                                    Continue the prescribed schedule even when
-                                    feeling better.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div
-                            class="flex items-start gap-3 rounded-xl bg-gray-50 p-3.5 dark:bg-white/5"
-                        >
-                            <span
-                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
-                            >
-                                <HeartPulse class="h-4 w-4" />
-                            </span>
-
-                            <div>
-                                <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                                    Watch for side effects
-                                </p>
-
-                                <p
-                                    class="mt-1 text-[11px] leading-5 text-gray-500 dark:text-gray-400"
-                                >
-                                    Report unusual reactions or side effects to
-                                    the caregiver promptly.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div
-                            class="flex items-start gap-3 rounded-xl bg-gray-50 p-3.5 dark:bg-white/5"
-                        >
-                            <span
-                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-300"
-                            >
-                                <Info class="h-4 w-4" />
-                            </span>
-
-                            <div>
-                                <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                                    Store properly
-                                </p>
-
-                                <p
-                                    class="mt-1 text-[11px] leading-5 text-gray-500 dark:text-gray-400"
-                                >
-                                    Keep medications in a cool, dry, and
-                                    appropriate storage area.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        class="mt-4 flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50/60 px-3.5 py-3 dark:border-blue-500/20 dark:bg-blue-500/10"
-                    >
-                        <Info class="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-300" />
-
-                        <p class="text-[11px] leading-5 text-blue-700 dark:text-blue-300">
-                            These reminders are general guidelines. Follow the
-                            patient's prescribed care plan and instructions from
-                            their healthcare provider.
-                        </p>
-                    </div>
-                </div>
-            </div> -->
         </template>
     </div>
 </template>

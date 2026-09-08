@@ -20,15 +20,17 @@
                             :style="{ width: `${progress}%` }"
                         ></div>
                     </div>
-                    <span class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500">
+                    <span
+                        class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500"
+                    >
                         {{ Math.round(progress) }}%
                     </span>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto px-3 py-4">
+            <div class="min-h-0 flex-1 overflow-y-auto px-3 py-4">
                 <BookingSteps
-                    active="step5"
+                    active="step6"
                     :completed="completedSteps"
                     @go="goEditStep"
                 />
@@ -62,7 +64,9 @@
                             :style="{ width: `${progress}%` }"
                         ></div>
                     </div>
-                    <span class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500">
+                    <span
+                        class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500"
+                    >
                         {{ Math.round(progress) }}%
                     </span>
                 </div>
@@ -115,6 +119,36 @@
                                     : "Confirm & Submit Booking"
                             }}
                         </BaseButton>
+
+                        <div class="mt-4 flex flex-col gap-3">
+                            <div
+                                class="flex items-start gap-3 text-[13px] text-gray-500 dark:text-gray-400"
+                            >
+                                <ShieldCheck
+                                    class="h-4 w-4 shrink-0 mt-0.5 text-primary"
+                                />
+
+                                <span>
+                                    All patient information is kept confidential
+                                    and used only to provide the best care
+                                    possible.
+                                </span>
+                            </div>
+
+                            <div
+                                class="flex items-start gap-3 text-[13px] text-gray-500 dark:text-gray-400"
+                            >
+                                <BellRing
+                                    class="h-4 w-4 shrink-0 mt-0.5 text-primary"
+                                />
+
+                                <span>
+                                    You'll be notified in the app and by email
+                                    once your booking request has been reviewed
+                                    and accepted.
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -144,6 +178,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from "vue";
+import { BellRing, ShieldCheck } from "lucide-vue-next";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "~/composables/useToast";
 import ReviewSection from "~/components/sections/booking/provider/ReviewSection.vue";
@@ -161,7 +196,11 @@ useHead({ title: "Review Booking" });
 definePageMeta({
     navVariant: 4,
     navTheme: "dark",
-    middleware: ["auth-client", "prevent-staff-booking", "booking-review-guard"],
+    middleware: [
+        "auth-client",
+        "prevent-staff-booking",
+        "booking-review-guard",
+    ],
 });
 
 const route = useRoute();
@@ -225,7 +264,13 @@ const showPayment = computed(
         bookingStore.category === "facility" &&
         bookingStore.facility?.type === "Complete",
 );
-const completedSteps = computed(() => ["step1", "step2", "step3", "step4"]);
+const completedSteps = computed(() => [
+    "step1",
+    "step2",
+    "step3",
+    "step4",
+    "step5",
+]);
 const progress = computed(() => 100);
 
 function goEditStep(step: string) {

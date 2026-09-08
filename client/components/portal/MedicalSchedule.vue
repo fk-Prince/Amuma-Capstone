@@ -253,7 +253,7 @@ const {
     toLocalDateString,
 } = useSchedule();
 
-const NOT_YET_DONE_STATUSES = ["pending", "confirmed"];
+const NOT_YET_DONE_STATUSES = ["pending"];
 
 const upcomingSchedules = computed(() =>
     props.logs.filter((schedule) =>

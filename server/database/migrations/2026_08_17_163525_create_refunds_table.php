@@ -6,30 +6,30 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        // `payments` is created later in the sequence, so the foreign key is
-        // added by its own migration once that table exists.
         Schema::create('refunds', function (Blueprint $table) {
             $table->id('refund_id');
-            $table->unsignedBigInteger('payment_id');
+
+            $table->foreignId('allocation_id')
+                ->constrained('payment_invoice_allocation', 'allocation_id')
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
+            $table->string('refund_code')->nullable();
+
             $table->decimal('amount', 10, 2);
-            $table->string('refund_method', 50);
-            $table->string('reference_id')->nullable();
+            $table->string('refund_method', 50)->nullable();
             $table->string('masked_card_number', 25)->nullable();
-            $table->string('status', 50);
-            $table->text('reason')->nullable();
+
+            $table->enum('status', ['requested', 'completed', 'declined'])
+                ->default('requested');
+
+            $table->text('declined_reason')->nullable();
             $table->timestamps();
             $table->index('reference_id');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('refunds');

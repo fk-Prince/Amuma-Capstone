@@ -21,19 +21,11 @@ class PatientAccess extends Model
 
     public function client()
     {
-        return $this->belongsTo(
-            Client::class,
-            'client_id',
-            'client_id'
-        );
+        return $this->belongsTo(Client::class,   'client_id',  'client_id');
     }
 
     public function patient()
     {
-        return $this->belongsTo(
-            Patient::class,
-            'patient_id',
-            'patient_id'
-        );
+        return $this->belongsTo(Patient::class,   'patient_id',   'patient_id');
     }
 }

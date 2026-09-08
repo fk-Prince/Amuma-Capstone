@@ -2,8 +2,10 @@
 
 namespace App\Http\Resources;
 
+use App\Models\AdmissionPeriod;
 use App\Models\Schedule;
-use App\Service\RefundService;
+use App\Models\ScheduleService;
+use App\Utils\DischargeCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -38,8 +40,7 @@ class PatientResource extends JsonResource
                 'full_address' => $this->location?->full_address,
             ]),
 
-            // Ongoing first, then pending, then everything else newest-first —
-            // the overview shows the most actionable one at the top.
+
             'schedules' => $this->whenLoaded('schedules', fn() => $this->schedules
                 ->sortBy(fn($schedule) => [
                     match ($schedule->status) {
@@ -56,6 +57,14 @@ class PatientResource extends JsonResource
                     'category' => $schedule->category,
                     'scheduled_at' => $schedule->scheduled_at,
                     'address' => $schedule->location?->full_address,
+                    'latitude' => $schedule->location?->latitude,
+                    'longitude' => $schedule->location?->longitude,
+                    'type' => $schedule->relationLoaded('scheduleServices')
+                        && $schedule->scheduleServices->contains(
+                            fn($service) => $service->type === ScheduleService::TYPE_ADL
+                        )
+                        ? ScheduleService::TYPE_ADL
+                        : ScheduleService::TYPE_MEDICAL,
                 ])
                 ->values()),
 
@@ -82,8 +91,39 @@ class PatientResource extends JsonResource
                 ])
                 ->values(),
 
+
+            'family' => $this->whenLoaded('patientAccess', function () {
+                $ordered = $this->patientAccess->sortBy('patient_access_id');
+
+                $primaryId = $ordered
+                    ->firstWhere('have_access', true)
+                    ?->patient_access_id;
+
+                return $ordered
+                    ->map(fn($access) => [
+                        'patient_access_id' => $access->patient_access_id,
+                        'relationship_type' => $access->relationship_type,
+                        'have_access' => (bool) $access->have_access,
+                        'is_primary' => $access->patient_access_id === $primaryId,
+                        'client' => $access->client ? [
+                            'client_id' => $access->client->client_id,
+                            'full_name' => trim(
+                                ($access->client->first_name ?? '') . ' ' .
+                                    ($access->client->last_name ?? '')
+                            ) ?: null,
+                            'phone_number' => $access->client->phone_number,
+                            'email' => $access->client->user?->email,
+                            'occupation' => $access->client->occupation,
+                            'avatar' => $access->client->avatar,
+                        ] : null,
+                    ])
+                    ->values();
+            }),
+
             'medications_count' => $this->medications_count ?? 0,
             'vitals_count' => $this->vitals_count ?? 0,
+
+            'billing' => $this->billing_summary,
 
             'admissions' => $this->whenLoaded('admissions', function () {
                 return $this->admissions
@@ -93,29 +133,48 @@ class PatientResource extends JsonResource
             }),
 
             'current_admission' => $this->whenLoaded('currentAdmission', function () {
-                return $this->currentAdmission
-                    ? $this->formatAdmission($this->currentAdmission, true)
+                $admission = $this->loadedAdmission($this->currentAdmission);
+
+                return $admission
+                    ? $this->formatAdmission($admission, true)
                     : null;
             }),
 
             'latest_admission' => $this->whenLoaded('latestAdmission', function () {
-                return $this->latestAdmission
-                    ? $this->formatAdmission($this->latestAdmission)
-                    : null;
+                $admission = $this->loadedAdmission($this->latestAdmission);
+
+                return $admission ? $this->formatAdmission($admission) : null;
             }),
         ];
     }
 
+    // The current and latest stays are already in the admissions collection
+    // with their periods and invoices loaded, so the same rows are reused
+    // rather than that whole tree being fetched again for each of them.
+    private function loadedAdmission(mixed $admission): mixed
+    {
+        if (!$admission || !$this->resource->relationLoaded('admissions')) {
+            return $admission;
+        }
+
+        return $this->admissions->firstWhere(
+            'patient_admission_id',
+            $admission->patient_admission_id
+        ) ?? $admission;
+    }
+
     private function formatAdmission(mixed $admission, bool $includeDischargeCalculation = false): array
     {
-        $currentInvoice = $admission->currentInvoiceAccommodation;
+        $currentInvoice = $admission->currentInvoiceAdmission;
 
         $invoice = $currentInvoice
             ?? $admission->invoiceAdmission
             ->sortByDesc('created_at')
             ->first();
 
-        $contract = $invoice?->branchContract;
+        $period = $admission->currentPeriod ?? $admission->latestPeriod;
+
+        $contract = $period?->branchContract;
 
         return [
             'patient_admission_id' => $admission->patient_admission_id,
@@ -139,48 +198,106 @@ class PatientResource extends JsonResource
 
             'current_contract' => $this->formatContract($contract),
 
-            'current_invoice' => $this->formatInvoiceAccommodation($currentInvoice),
+            'current_period' => $this->formatPeriod($period),
 
-            'discharge_calculation' => ($includeDischargeCalculation && $invoice && $contract)
-                ? app(RefundService::class)->getDischargeCalculation(
+            'future_periods' => $this->formatFuturePeriods($admission, $period),
+
+            'current_invoice' => $this->formatInvoiceAdmission($currentInvoice),
+
+            'discharge_calculation' => ($includeDischargeCalculation && $invoice && $period && $contract)
+                ? DischargeCalculator::getDischargeCalculation(
                     $invoice->invoice,
                     $admission,
-                    $invoice
+                    $period
                 )
                 : null,
 
             'invoices' => $admission->relationLoaded('invoiceAdmission')
                 ? $admission->invoiceAdmission
-                ->map(fn($invoice) => $this->formatInvoiceAccommodation($invoice))
+                ->map(fn($invoice) => $this->formatInvoiceAdmission($invoice))
                 ->values()
                 : [],
         ];
     }
 
-    private function formatInvoiceAccommodation(mixed $invoiceAccommodation): ?array
+    private function formatFuturePeriods(mixed $admission, mixed $current): array
     {
-        if (!$invoiceAccommodation) {
+        // Every period still standing except the one in effect. Keyed off the
+        // period rather than its payment status, since "pending" means awaiting
+        // payment and not "starts later" — the period in effect is often pending.
+        $future = $admission->periods
+            ->whereNotIn('status', AdmissionPeriod::CLOSED_STATUSES)
+            ->when(
+                $current,
+                fn($periods) => $periods->where(
+                    'admission_period_id',
+                    '!=',
+                    $current->admission_period_id
+                )
+            );
+
+        $lines = $future->flatMap(fn($period) => $period->invoiceAdmissionLines);
+
+        return [
+            'count' => $future->count(),
+            'charged_amount' => round((float) $lines->sum('price'), 2),
+            'invoices' => $lines
+                ->map(fn($line) => $this->formatInvoiceAdmission($line))
+                ->filter()
+                ->values(),
+        ];
+    }
+
+    private function formatPeriod(mixed $period): ?array
+    {
+        if (!$period) {
             return null;
         }
 
-        $invoice = $invoiceAccommodation->invoice;
+        $charged = $period->invoiceAdmissionLines->sum('price');
 
         return [
-            'invoice_accommodation_id' => $invoiceAccommodation->invoice_accommodation_id,
-            'invoice_id' => $invoiceAccommodation->invoice_id,
+            'admission_period_id' => $period->admission_period_id,
+            'status' => $period->status,
+            'reason' => $period->reason,
+            'note' => $period->note,
+            'started_at' => $period->start_date,
+            'ended_at' => $period->end_date,
+            'charged_amount' => round((float) $charged, 2),
+            'contract' => $this->formatContract($period->branchContract),
+        ];
+    }
+
+    private function formatInvoiceAdmission(mixed $invoiceAdmissionLines): ?array
+    {
+        if (!$invoiceAdmissionLines) {
+            return null;
+        }
+
+        $invoice = $invoiceAdmissionLines->invoice;
+
+        return [
+            'invoice_admission_id' => $invoiceAdmissionLines->invoice_admission_id,
+            'invoice_id' => $invoiceAdmissionLines->invoice_id,
             'invoice_code' => $invoice?->invoice_code,
             'status' => $invoice?->status,
-            'price' => $invoice?->total,
+            'price' => round((float) $invoiceAdmissionLines->price, 2),
 
             'paid_amount' => $invoice?->amount_paid ?? 0,
             'refunded_amount' => $invoice?->refunded_amount ?? 0,
             'net_paid_amount' => $invoice?->net_paid_amount ?? 0,
             'refund_status' => $invoice?->refund_status ?? 'none',
 
-            'start_date' => $invoiceAccommodation->start_date,
-            'end_date' => $invoiceAccommodation->end_date,
+            'admission_period_id' => $invoiceAdmissionLines->admission_period_id,
+            'parent_admission_period_id' => $invoiceAdmissionLines->admissionPeriod?->parent_admission_period_id,
+            'accommodation_status' => $invoiceAdmissionLines->status,
+            'accommodation_reason' => $invoiceAdmissionLines->admissionPeriod?->reason,
+            'period_start' => $invoiceAdmissionLines->admissionPeriod?->start_date,
+            'period_end' => $invoiceAdmissionLines->admissionPeriod?->end_date,
+            // When the move was made, as opposed to when its billing starts.
+            'moved_at' => $invoiceAdmissionLines->admissionPeriod?->created_at,
 
-            'contract' => $this->formatContract($invoiceAccommodation->branchContract),
+            'contract' => $this->formatContract($invoiceAdmissionLines->branchContract),
         ];
     }
 

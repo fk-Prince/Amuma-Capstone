@@ -37,12 +37,11 @@ class RoomResource extends JsonResource
 
                         'reserved_admission' => $bed->reservedAdmission ? [
                             'patient_admission_id' => $bed->reservedAdmission->patient_admission_id,
-                            'bed_id' => $bed->reservedAdmission->bed_id,
+                            'bed_id' => $bed->bed_id,
                             'status' => $bed->reservedAdmission->status,
                             'note' => $bed->reservedAdmission->note,
                             'admitted_at' => $bed->reservedAdmission->admitted_at,
                             'end_date' =>  $bed->reservedAdmission->end_date,
-                            'booking_reference_id' => $bed->reservedAdmission->bookings?->reference_id,
                             'patient' => $bed->reservedAdmission->patient
                                 ? [
                                     'patient_id' => $bed->reservedAdmission->patient->patient_id,
@@ -61,7 +60,7 @@ class RoomResource extends JsonResource
                         'current_admission' => $bed->currentAdmission
                             ? [
                                 'patient_admission_id' => $bed->currentAdmission->patient_admission_id,
-                                'bed_id' => $bed->currentAdmission->bed_id,
+                                'bed_id' => $bed->bed_id,
                                 'status' => $bed->currentAdmission->status,
                                 'note' => $bed->currentAdmission->note,
                                 'admitted_at' => $bed->currentAdmission->admitted_at,

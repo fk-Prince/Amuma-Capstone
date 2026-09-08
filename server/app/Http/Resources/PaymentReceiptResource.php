@@ -13,9 +13,6 @@ class PaymentReceiptResource extends JsonResource
             'receipt_no'   => $this->receipt_no,
             'channel'      => $this->client_id ? 'portal' : 'counter',
             'issued_at'    => $this->created_at?->toIso8601String(),
-            'is_voided'    => $this->is_voided,
-            'voided_at'    => $this->voided_at?->toIso8601String(),
-            'void_reason'  => $this->void_reason,
 
             'issuer' => [
                 'branch_name' => $this->branch?->name,
@@ -44,30 +41,31 @@ class PaymentReceiptResource extends JsonResource
             'payment' => [
                 'method'          => $this->payment_method,
                 'masked_account'  => $this->masked_account,
-                'amount_tendered' => (float) $this->amount_tendered,
+                'amount_tendered' => (float) $this->amount,
                 'amount_applied'  => (float) $this->amount_applied,
                 'change_due'      => (float) $this->change_due,
                 'amount_in_words' => $this->amount_in_words,
             ],
 
             'account' => [
-                'balance_before' => (float) $this->balance_before,
+                'balance_before' => (float) $this->prior_balance,
                 'balance_after'  => (float) $this->balance_after,
             ],
 
-            'lines' => $this->payments->values()->map(fn($payment, $index) => [
+            // One line per invoice this payment was split across, each with its
+            // own description — the reference belongs to the payment as a whole.
+            'lines' => $this->allocations->values()->map(fn($allocation, $index) => [
                 'line_no'           => $index + 1,
-                'invoice_id'        => $payment->invoice_id,
-                'payment_id'        => $payment->payment_id,
-                'payment_reference' => $payment->reference_id,
-                'invoice_code'      => $payment->invoice?->invoice_code,
-                'description'       => $payment->description
-                    ?: $payment->invoice?->paymentDescription()
+                'allocation_id'     => $allocation->allocation_id,
+                'invoice_id'        => $allocation->invoice_id,
+                'payment_id'        => $allocation->payment_id,
+                'payment_reference' => $this->reference_id,
+                'invoice_code'      => $allocation->invoice?->invoice_code,
+                'description'       => $allocation->description
+                    ?: $allocation->invoice?->paymentDescription()
                     ?: 'Payment for balance',
-                'invoice_date'      => $payment->invoice?->created_at?->toIso8601String(),
-                'prior_balance'     => (float) $payment->prior_balance,
-                'amount_applied'    => (float) $payment->amount,
-                'new_balance'       => (float) $payment->new_balance,
+                'invoice_date'      => $allocation->invoice?->created_at?->toIso8601String(),
+                'amount_applied'    => (float) $allocation->amount,
             ]),
         ];
     }
@@ -78,7 +76,7 @@ class PaymentReceiptResource extends JsonResource
             return null;
         }
 
-        $issuer = $this->issuer;
+        $issuer = $this->issuedBy;
 
         if (!$issuer) {
             return null;

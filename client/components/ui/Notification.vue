@@ -59,8 +59,35 @@
                 <div
                     class="max-h-[400px] overflow-y-auto divide-y divide-gray-100 dark:divide-white/10"
                 >
+                    <div
+                        v-if="isLoading && !notifications.length"
+                        class="divide-y divide-gray-100 dark:divide-white/10"
+                    >
+                        <div
+                            v-for="n in 3"
+                            :key="n"
+                            class="flex animate-pulse gap-3 px-4 py-3"
+                        >
+                            <div
+                                class="h-9 w-9 shrink-0 rounded-full bg-gray-100 dark:bg-white/10"
+                            />
+
+                            <div class="min-w-0 flex-1 space-y-2 py-0.5">
+                                <div
+                                    class="h-3 w-24 rounded bg-gray-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-3 w-full rounded bg-gray-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-2.5 w-16 rounded bg-gray-100 dark:bg-white/10"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <p
-                        v-if="!notifications.length"
+                        v-else-if="!notifications.length"
                         class="px-4 py-8 text-center text-xs text-gray-400 dark:text-gray-500"
                     >
                         No notifications yet.
@@ -97,7 +124,9 @@
                             >
                                 {{ notif.message }}
                             </p>
-                            <p class="text-[11px] text-gray-400 mt-0.5 dark:text-gray-500">
+                            <p
+                                class="text-[11px] text-gray-400 mt-0.5 dark:text-gray-500"
+                            >
                                 {{ notifcationFormatDate(notif.created_at) }}
                             </p>
                         </div>
@@ -236,7 +265,11 @@ const markAllRead = async () => {
 
 onClickOutside(dropdownRef, () => (open.value = false));
 
+const isLoading = ref(false);
+
 const loadNotifications = async (branchUuid?: string) => {
+    isLoading.value = true;
+
     try {
         const res = await notificationService.list({
             per_page: 4,
@@ -246,6 +279,8 @@ const loadNotifications = async (branchUuid?: string) => {
     } catch (err) {
         console.error(err);
         notifications.value = [];
+    } finally {
+        isLoading.value = false;
     }
 };
 

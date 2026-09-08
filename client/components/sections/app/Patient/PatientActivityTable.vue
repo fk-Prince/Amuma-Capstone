@@ -1,6 +1,16 @@
 <script setup lang="ts">
-import { CalendarClock, Activity, Utensils, Users, Plus, Pencil } from "lucide-vue-next";
+import {
+    CalendarClock,
+    Activity,
+    Utensils,
+    Users,
+    Plus,
+    Pencil,
+} from "lucide-vue-next";
 import type { PatientActivity } from "~/types/patient-activity";
+import ActionButton from "~/components/ui/ActionButton.vue";
+
+const { canLogActivity, careTeamBlockedReason } = usePermissions();
 
 withDefaults(
     defineProps<{
@@ -70,15 +80,17 @@ function formatOccurredAt(value: string) {
 <template>
     <div class="space-y-4">
         <div class="flex items-center justify-end">
-            <button
-                type="button"
-                class="rounded-xl bg-primary flex items-center gap-3 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/50"
+            <ActionButton
+                variant="primary"
+                extra-class="px-5 py-2"
+                :disabled="!canLogActivity"
+                :tooltip="canLogActivity ? '' : careTeamBlockedReason"
                 @click="emit('add-activity')"
             >
                 <Plus class="h-4 w-4" />
 
                 Add Activity
-            </button>
+            </ActionButton>
         </div>
 
         <div
@@ -104,14 +116,22 @@ function formatOccurredAt(value: string) {
                             styleFor(item.type).text,
                         ]"
                     >
-                        <component :is="styleFor(item.type).icon" class="h-5 w-5" />
+                        <component
+                            :is="styleFor(item.type).icon"
+                            class="h-5 w-5"
+                        />
                     </span>
 
                     <div class="min-w-0 flex-1">
-                        <p class="text-sm font-medium text-slate-800 dark:text-white">
+                        <p
+                            class="text-sm font-medium text-slate-800 dark:text-white"
+                        >
                             {{ item.title }}
                         </p>
-                        <p v-if="item.subtitle" class="text-xs text-slate-400 dark:text-gray-500">
+                        <p
+                            v-if="item.subtitle"
+                            class="text-xs text-slate-400 dark:text-gray-500"
+                        >
                             {{ item.subtitle }}
                         </p>
                         <p
@@ -122,7 +142,9 @@ function formatOccurredAt(value: string) {
                         </p>
                     </div>
 
-                    <span class="shrink-0 text-xs text-slate-400 dark:text-gray-500">
+                    <span
+                        class="shrink-0 text-xs text-slate-400 dark:text-gray-500"
+                    >
                         {{ formatOccurredAt(item.occurredAt) }}
                     </span>
 

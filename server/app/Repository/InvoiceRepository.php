@@ -4,15 +4,19 @@ namespace App\Repository;
 
 use App\Http\Resources\PatientInvoiceSummaryResource;
 use App\Models\Invoice;
+use App\Models\InvoiceAdjustment;
+use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Refund;
-use App\Service\RefundService;
+use App\Models\RefundAllocation;
+use App\Utils\DischargeCalculator;
+use App\Utils\InvoiceMoney;
 use Carbon\Carbon;
 
 class InvoiceRepository
 {
     public function __construct(
-        private RefundService $refundService
+        private RefundRepository $refundRepository
     ) {}
 
     public function create(array $payload)
@@ -44,11 +48,12 @@ class InvoiceRepository
         return Invoice::with([
             'branch',
             'invoiceServices.scheduleService.service',
-            'invoiceAccommodation.patientAdmission.patient',
-            'invoiceAccommodation.patientAdmission.bed.room',
-            'invoiceAccommodation.branchContract',
-            'payments.refunds',
-            'payments.receipt',
+            'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
+            'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
+            'invoiceAdmissionLines.admissionPeriod.branchContract',
+            'allocations.refundAllocations.refund',
+            'allocations.payment',
+            'payments',
             'invoiceAdjustments',
         ])
             ->where('invoice_code', $payload['invoice_code'])
@@ -65,13 +70,14 @@ class InvoiceRepository
         $query = Invoice::where('branch_id', $branchId)
             ->where('status', '!=', Invoice::STATUS_VOID)
             ->with([
-                'payments.refunds',
-            'payments.receipt',
+                'allocations.refundAllocations.refund',
+                'allocations.payment',
+                'payments',
                 'invoiceServices.scheduleService.schedule.patient',
                 'invoiceServices.scheduleService.service',
-                'invoiceAccommodation.patientAdmission.patient',
-                'invoiceAccommodation.patientAdmission.bed.room',
-                'invoiceAccommodation.branchContract',
+                'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
+                'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
+                'invoiceAdmissionLines.admissionPeriod.branchContract',
             ]);
 
         if (!empty($search)) {
@@ -114,95 +120,103 @@ class InvoiceRepository
         $branchId = $payload['branch_id'];
         $patientUuid = $payload['p_uuid'];
 
-        $query = Invoice::where(function ($q) use ($patientUuid) {
+        $scoped = fn() => Invoice::where(function ($q) use ($patientUuid) {
             $q->whereHas(
                 'invoiceServices.scheduleService.schedule.patient',
                 fn($p) => $p->where('uuid', $patientUuid)
             )->orWhereHas(
-                'invoiceAccommodation.patientAdmission.patient',
+                'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
                 fn($p) => $p->where('uuid', $patientUuid)
             );
         })
-            ->where('status', '!=', Invoice::STATUS_VOID);
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->with([
+                'branch',
+                'allocations.refundAllocations.refund',
+                'allocations.payment',
+                'payments',
+                'invoiceServices.scheduleService.schedule.patient',
+                'invoiceServices.scheduleService.service',
+                'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
+                'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
+                'invoiceAdmissionLines.admissionPeriod.branchContract',
+                'invoiceAdjustments',
+            ]);
 
-        if ($branchId) {
-            $query->where('branch_id', $branchId);
-        }
+        $invoices = $scoped()
+            ->where('status', '!=', Invoice::STATUS_VOID)
+            ->get();
 
-        $query->with([
-            'branch',
-            'payments.refunds',
-            'payments.receipt',
-            'invoiceServices.scheduleService.schedule.patient',
-            'invoiceServices.scheduleService.service',
-            'invoiceAccommodation.patientAdmission.patient',
-            'invoiceAccommodation.patientAdmission.bed.room',
-            'invoiceAccommodation.branchContract',
-        ]);
+        $voided = $scoped()
+            ->where('status', Invoice::STATUS_VOID)
+            ->get();
 
-        $invoices = $query->get();
+        $patient = Patient::where('uuid', $patientUuid)->first();
 
-        if ($invoices->isEmpty()) {
+        if (!$patient && $invoices->isEmpty() && $voided->isEmpty()) {
             return null;
         }
 
-        $summary = $this->patientInvoice($invoices);
+        // Passed explicitly so the header keeps its patient once every invoice
+        // has been voided and there is nothing left to infer it from.
+        $summary = $this->patientInvoice(
+            $invoices,
+            $voided,
+            $this->requestedSections($payload),
+            isset($payload['admission_id']) ? (int) $payload['admission_id'] : null,
+            isset($payload['schedule_services_id'])
+                ? (int) $payload['schedule_services_id']
+                : null,
+            $patient
+        );
 
         return new PatientInvoiceSummaryResource($summary);
     }
 
+    // Driven by the patients, not the invoices: someone with no billing record
+    // yet still belongs in the branch's billing list, showing zeroes.
     public function getPatientInvoiceSummary(array $payload)
     {
-        $search = $payload['search'];
+        $search = trim((string) ($payload['search'] ?? ''));
         $branchId = $payload['branch_id'] ?? null;
 
-        $query = Invoice::where(function ($q) use ($search) {
-            $q->whereHas(
+        $patients = Patient::query()
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->when($search !== '', function ($q) use ($search) {
+                $term = '%' . strtolower($search) . '%';
+
+                $q->where(function ($name) use ($term) {
+                    $name->whereRaw('LOWER(first_name) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(last_name) LIKE ?', [$term])
+                        ->orWhereRaw(
+                            "LOWER(first_name || ' ' || last_name) LIKE ?",
+                            [$term]
+                        );
+                });
+            })
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
+
+        if ($patients->isEmpty()) {
+            return PatientInvoiceSummaryResource::collection(collect());
+        }
+
+        $invoices = Invoice::query()
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->where('status', '!=', Invoice::STATUS_VOID)
+            ->with([
+                'branch',
+                'allocations.refundAllocations.refund',
+                'allocations.payment',
+                'payments',
                 'invoiceServices.scheduleService.schedule.patient',
-                fn($p) => $p
-                    ->whereRaw(
-                        'LOWER(first_name) LIKE ?',
-                        ["%" . strtolower($search) . "%"]
-                    )
-                    ->orWhereRaw(
-                        'LOWER(last_name) LIKE ?',
-                        ["%" . strtolower($search) . "%"]
-                    )
-            )->orWhereHas(
-                'invoiceAccommodation.patientAdmission.patient',
-                fn($p) => $p
-                    ->whereRaw(
-                        'LOWER(first_name) LIKE ?',
-                        ["%" . strtolower($search) . "%"]
-                    )
-                    ->orWhereRaw(
-                        'LOWER(last_name) LIKE ?',
-                        ["%" . strtolower($search) . "%"]
-                    )
-            );
-        })
-            ->where('status', '!=', Invoice::STATUS_VOID);
-
-        if ($branchId) {
-            $query->where('branch_id', $branchId);
-        }
-
-        $query->with([
-            'branch',
-            'payments.refunds',
-            'payments.receipt',
-            'invoiceServices.scheduleService.schedule.patient',
-            'invoiceServices.scheduleService.service',
-            'invoiceAccommodation.patientAdmission.patient',
-            'invoiceAccommodation.patientAdmission.bed.room',
-            'invoiceAccommodation.branchContract',
-        ]);
-
-        $invoices = $query->get();
-
-        if ($invoices->isEmpty()) {
-            return [];
-        }
+                'invoiceServices.scheduleService.service',
+                'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
+                'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
+                'invoiceAdmissionLines.admissionPeriod.branchContract',
+            ])
+            ->get();
 
         $grouped = $invoices->groupBy(function ($invoice) {
             $patient =
@@ -212,7 +226,7 @@ class InvoiceRepository
                 ?->schedule
                 ?->patient
                 ??
-                $invoice->invoiceAccommodation
+                $invoice->invoiceAdmissionLines
                 ->first()
                 ?->patientAdmission
                 ?->patient;
@@ -220,24 +234,58 @@ class InvoiceRepository
             return $patient?->patient_id ?? 'unknown';
         });
 
-        $summaries = $grouped->map(
-            fn($patientInvoices) => $this->patientInvoice(
-                $patientInvoices
-            )
-        )->values();
+        $summaries = $patients
+            ->map(fn($patient) => $this->patientInvoice(
+                $grouped->get($patient->patient_id, collect()),
+                null,
+                ['all'],
+                null,
+                null,
+                $patient
+            ))
+            ->values();
 
-        return PatientInvoiceSummaryResource::collection(
-            $summaries
-        );
+        return PatientInvoiceSummaryResource::collection($summaries);
     }
 
-    private function patientInvoice(mixed $patientInvoices)
+    // The admissions and services panels are the expensive parts of this
+    // payload and each is only read when its tab is open, so the caller says
+    // which it needs. Anything not asked for is left out of the array rather
+    // than sent empty, which lets the client tell "not loaded" from "none".
+    private function requestedSections(array $payload): array
     {
+        $sections = $payload['sections'] ?? null;
+
+        if (is_string($sections)) {
+            $sections = array_filter(explode(',', $sections));
+        }
+
+        return $sections ? array_map('trim', (array) $sections) : ['all'];
+    }
+
+    private function wants(array $sections, string $section): bool
+    {
+        return in_array('all', $sections, true)
+            || in_array($section, $sections, true);
+    }
+
+    private function patientInvoice(
+        mixed $patientInvoices,
+        mixed $voidedInvoices = null,
+        array $sections = ['all'],
+        ?int $admissionId = null,
+        ?int $scheduleServiceId = null,
+        mixed $patient = null
+    ) {
+        $voidedInvoices = collect($voidedInvoices ?? []);
+
         $patientInvoices = $patientInvoices
             ->where('status', '!=', Invoice::STATUS_VOID)
             ->values();
 
-        $patientModel = $patientInvoices
+        // Given by the caller when the list is built from patients, so someone
+        // who has never been billed still gets a row.
+        $patientModel = $patient ?? $patientInvoices
             ->map(
                 fn($invoice) =>
                 $invoice->invoiceServices
@@ -246,7 +294,7 @@ class InvoiceRepository
                     ?->schedule
                     ?->patient
                     ??
-                    $invoice->invoiceAccommodation
+                    $invoice->invoiceAdmissionLines
                     ->first()
                     ?->patientAdmission
                     ?->patient
@@ -254,23 +302,48 @@ class InvoiceRepository
             ->filter()
             ->first();
 
-        $overallTotal = (float) $patientInvoices->sum('total');
+        // Billing figures cover what is actually owed, so they ignore voided
+        // invoices. Money that moved is counted across every invoice, since a
+        // payment or refund on a voided invoice still left the till.
+        $settledInvoices = $patientInvoices->concat($voidedInvoices);
 
-        $overallPaid = (float) $patientInvoices->sum(
+        // What the invoices actually ask for. The raw total ignores every credit
+        // note, so a downgraded stay kept reporting the price before the credit.
+        $overallTotal = (float) $patientInvoices->sum('adjusted_total');
+
+        $activePaid = (float) $patientInvoices->sum(
             fn($invoice) => $invoice->net_paid_amount
         );
 
-        $overallRefunded = (float) $patientInvoices->sum(
+        $overallPaid = (float) $settledInvoices->sum(
+            fn($invoice) => $invoice->amount_paid
+        );
+
+        $overallRefunded = (float) $settledInvoices->sum(
             fn($invoice) => $invoice->refunded_completed_amount
         );
 
-        $overallRefundProcessing = (float) $patientInvoices->sum(
-            fn($invoice) => $invoice->refunded_processing_amount
+        $overallRefundProcessing = (float) $settledInvoices->sum(
+            fn($invoice) => $invoice->refunded_requested_amount
         );
 
-        $overallBalance = max(
-            $overallTotal - $overallPaid,
-            0
+        // Money paid that no invoice claims any more, wherever it sits. Voiding
+        // is not the only way to get there — a downgrade credit leaves an
+        // overpayment on a perfectly live invoice, and that is owed back too.
+        $overallRefundable = round(
+            (float) $settledInvoices->sum(
+                fn($invoice) => InvoiceMoney::refundable($invoice)
+            ),
+            2
+        );
+
+        // Summed per invoice, not netted across them. Subtracting one total from
+        // another let a credit on a settled invoice cancel out a debt on an
+        // unpaid one, so a patient owing money read as fully paid. What is owed
+        // and what is held as credit are two separate figures.
+        $overallBalance = round(
+            (float) $patientInvoices->sum('balance_due'),
+            2
         );
 
         $totalRefundedAny =
@@ -284,27 +357,27 @@ class InvoiceRepository
         };
 
         $formattedInvoices = $patientInvoices
-            ->map(fn($invoice) => $this->formatInvoiceDetail($invoice))
+            ->map(function ($invoice) {
+                $detail = $this->formatInvoiceDetail($invoice);
+
+                $detail['refundable_amount'] = InvoiceMoney::refundable($invoice);
+                $detail['has_pending_refund'] = $this->refundRepository
+                    ->pendingForInvoice($invoice)
+                    ->isNotEmpty();
+
+                return $detail;
+            })
             ->values();
 
         $latestInvoice = $formattedInvoices
             ->sortByDesc('created_at')
             ->first();
 
-        $admissions = $this->formatAdmissions(
-            $patientInvoices
-        );
+        $wantsInvoices = $this->wants($sections, 'invoices');
+        $wantsAdmissions = $this->wants($sections, 'admissions');
+        $wantsServices = $this->wants($sections, 'services');
 
-        $services = $this->formatPatientServices(
-            $patientInvoices
-        );
-
-        $dischargeCalculation =
-            $this->getPatientDischargeCalculation(
-                $patientInvoices
-            );
-
-        return [
+        $summary = [
             'patient' => $patientModel ? [
                 'patient_id' => $patientModel->patient_id,
                 'patient_uuid' => $patientModel->uuid,
@@ -326,7 +399,8 @@ class InvoiceRepository
             'total_amount' => $overallTotal,
             'total_paid' => $overallPaid,
             'total_refunded' => $overallRefunded,
-            'total_refund_processing' => $overallRefundProcessing,
+            'total_refund_requested' => $overallRefundProcessing,
+            'total_refundable' => $overallRefundable,
             'refund_status' => $refundStatus,
             'total_balance' => $overallBalance,
 
@@ -339,17 +413,66 @@ class InvoiceRepository
             'invoice_count' => $patientInvoices->count(),
 
             'latest_invoice' => $latestInvoice,
-
-            'invoices' => $formattedInvoices
-                ->sortByDesc('created_at')
-                ->values(),
-
-            'admissions' => $admissions,
-
-            'services' => $services,
-
-            'discharge_calculation' => $dischargeCalculation,
         ];
+
+        if ($wantsInvoices) {
+            $summary['invoices'] = $formattedInvoices
+                ->sortByDesc('created_at')
+                ->values();
+
+            $summary['voided_invoices'] = $voidedInvoices
+                ->map(function ($invoice) {
+                    $detail = $this->formatInvoiceDetail($invoice);
+
+                    $detail['status'] = 'Void';
+                    $detail['void_reason'] = $invoice->void_reason;
+                    $detail['voided_at'] = $invoice->voided_at?->toIso8601String();
+                    $detail['voided_by'] = $this->voidedByName($invoice);
+                    $detail['refundable_amount'] =
+                        InvoiceMoney::refundable($invoice);
+                    $detail['has_pending_refund'] =
+                        $this->refundRepository->pendingForInvoice($invoice)->isNotEmpty();
+
+                    return $detail;
+                })
+                ->sortByDesc('created_at')
+                ->values();
+
+            $summary['payments'] = $this->formatPayments($settledInvoices);
+        }
+
+        // Refund requests are reviewed from the page header, so they travel with
+        // every response rather than waiting for the invoices section.
+        $summary['refunds'] = $this->formatRefunds($settledInvoices);
+
+        if ($wantsAdmissions) {
+            $summary['admissions'] = $this->formatAdmissions($patientInvoices);
+
+            // The admissions panel is the only reader of this, so it travels
+            // with that section rather than being computed for every request.
+            $summary['discharge_calculation'] =
+                $this->getPatientDischargeCalculation($patientInvoices);
+        }
+
+        if ($wantsServices) {
+            $summary['services'] = $this->formatPatientServices($patientInvoices);
+        }
+
+        if ($this->wants($sections, 'admission_invoices') && $admissionId) {
+            $summary['admission_invoices'] = $this->formatAdmissionInvoices(
+                $patientInvoices,
+                $admissionId
+            );
+        }
+
+        if ($this->wants($sections, 'service_invoices') && $scheduleServiceId) {
+            $summary['service_invoices'] = $this->formatServiceInvoices(
+                $patientInvoices,
+                $scheduleServiceId
+            );
+        }
+
+        return $summary;
     }
 
     private function formatAdmissions($patientInvoices)
@@ -357,11 +480,11 @@ class InvoiceRepository
         $admissions = $patientInvoices
             ->flatMap(
                 fn($invoice) =>
-                $invoice->invoiceAccommodation->map(
-                    fn($invoiceAccommodation) => [
-                        'admission' => $invoiceAccommodation->patientAdmission,
+                $invoice->invoiceAdmissionLines->map(
+                    fn($invoiceAdmissionLines) => [
+                        'admission' => $invoiceAdmissionLines->patientAdmission,
                         'invoice' => $invoice,
-                        'invoice_accommodation' => $invoiceAccommodation,
+                        'invoice_admission' => $invoiceAdmissionLines,
                     ]
                 )
             )
@@ -378,13 +501,11 @@ class InvoiceRepository
                 $admission =
                     $items->first()['admission'];
 
+                // Only the figures the card shows. The invoices themselves are
+                // fetched when the stay is opened, so listing a patient's
+                // admissions does not format every invoice behind them.
                 $invoices = $items
-                    ->map(
-                        fn($item) =>
-                        $this->formatInvoiceDetail(
-                            $item['invoice']
-                        )
-                    )
+                    ->map(fn($item) => $item['invoice'])
                     ->unique('invoice_id')
                     ->values();
 
@@ -401,6 +522,12 @@ class InvoiceRepository
                     'discharge_date' =>
                     $admission->end_date,
 
+                    'end_date' =>
+                    $admission->end_date,
+
+                    'current_contract' => $this->formatAdmissionContract(
+                        $admission->currentPeriod?->branchContract
+                    ),
 
                     'room' => $admission->bed?->room ? [
                         'room_id' =>
@@ -418,10 +545,67 @@ class InvoiceRepository
                         $admission->bed->bed_no,
                     ] : null,
 
-                    'invoices' => $invoices,
+                    'invoice_count' => $invoices->count(),
+
+                    'total_amount' => round(
+                        (float) $invoices->sum('adjusted_total'),
+                        2
+                    ),
+
+                    'balance_due' => round(
+                        (float) $invoices->sum('balance_due'),
+                        2
+                    ),
                 ];
             })
             ->sortByDesc('admission_date')
+            ->values();
+    }
+
+    // The invoices behind one stay, loaded when that stay is opened rather
+    // than with every admission on the patient.
+    private function formatAdmissionInvoices($patientInvoices, int $admissionId)
+    {
+        return $patientInvoices
+            ->filter(
+                fn($invoice) => $invoice->invoiceAdmissionLines->contains(
+                    fn($line) => (int) $line->admissionPeriod
+                        ?->patient_admission_id === $admissionId
+                )
+            )
+            ->map(function ($invoice) {
+                $detail = $this->formatInvoiceDetail($invoice);
+
+                $detail['refundable_amount'] = InvoiceMoney::refundable($invoice);
+                $detail['has_pending_refund'] = $this->refundRepository
+                    ->pendingForInvoice($invoice)
+                    ->isNotEmpty();
+
+                return $detail;
+            })
+            ->sortByDesc('created_at')
+            ->values();
+    }
+
+    private function formatServiceInvoices($patientInvoices, int $scheduleServiceId)
+    {
+        return $patientInvoices
+            ->filter(
+                fn($invoice) => $invoice->invoiceServices->contains(
+                    fn($line) => (int) $line->schedule_services_id === $scheduleServiceId
+                )
+            )
+            ->map(function ($invoice) {
+                $detail = $this->formatInvoiceDetail($invoice);
+
+                $detail['refundable_amount'] = InvoiceMoney::refundable($invoice);
+                $detail['has_pending_refund'] = $this->refundRepository
+                    ->pendingForInvoice($invoice)
+                    ->isNotEmpty();
+
+                return $detail;
+            })
+            ->sortByDesc('created_at')
             ->values();
     }
 
@@ -511,7 +695,7 @@ class InvoiceRepository
      * Patient
      *   -> Admission
      *      -> Invoice
-     *         -> InvoiceAccommodation
+     *         -> InvoiceAdmission
      *
      * The calculation is based on the latest admission
      * that has an invoice facility.
@@ -522,36 +706,86 @@ class InvoiceRepository
         $admissionItems = $patientInvoices
             ->flatMap(
                 fn($invoice) =>
-                $invoice->invoiceAccommodation->map(
-                    fn($invoiceAccommodation) => [
+                $invoice->invoiceAdmissionLines->map(
+                    fn($invoiceAdmissionLines) => [
                         'invoice' => $invoice,
-                        'invoice_accommodation' => $invoiceAccommodation,
-                        'admission' => $invoiceAccommodation->patientAdmission,
+                        'period' => $invoiceAdmissionLines->admissionPeriod,
+                        'admission' => $invoiceAdmissionLines->patientAdmission,
                     ]
                 )
             )
             ->filter(
                 fn($item) =>
                 $item['admission'] !== null &&
+                    $item['period'] !== null &&
                     strtolower($item['admission']->status) === 'admitted'
             )
-            ->sortByDesc(
-                fn($item) => $item['admission']->admitted_at
-            )
+            ->sortBy(fn($item) => $item['period']->start_date)
             ->values();
 
         if ($admissionItems->isEmpty()) {
             return null;
         }
 
+        // Read through the admission so the screen and the discharge itself
+        // agree on which period is current. Sorting the lines here instead
+        // picked whichever invoice came back first, which could show a prepaid
+        // future period in place of the stay being ended.
+        $currentPeriodId = $admissionItems->first()['admission']
+            ->currentPeriod()
+            ->value('admission_period_id');
 
-        $item = $admissionItems->first();
+        $item = $admissionItems->first(
+            fn($item) => $item['period']->admission_period_id === $currentPeriodId
+        ) ?? $admissionItems->first();
 
-        return $this->refundService->getDischargeCalculation(
+        return DischargeCalculator::getDischargeCalculation(
             $item['invoice'],
             $item['admission'],
-            $item['invoice_accommodation']
+            $item['period']
         );
+    }
+
+    // Summed from the refund allocations rather than the refunds, so a refund
+    // drawn from two payments is counted once, for the amount that actually
+    // left this branch.
+    private function refundsIssuedBetween(
+        mixed $branchId,
+        Carbon $from,
+        Carbon $to
+    ): float {
+        return round(
+            (float) RefundAllocation::query()
+                ->whereHas(
+                    'refund',
+                    fn($query) => $query
+                        ->where('status', Refund::STATUS_COMPLETED)
+                        ->whereBetween('refunds.created_at', [$from, $to])
+                )
+                ->whereHas(
+                    'allocation.invoice',
+                    fn($query) => $query
+                        ->where('branch_id', $branchId)
+                        ->where('status', '!=', Invoice::STATUS_VOID)
+                )
+                ->sum('amount'),
+            2
+        );
+    }
+
+    private function formatAdmissionContract(mixed $contract): ?array
+    {
+        if (!$contract) {
+            return null;
+        }
+
+        return [
+            'branch_contract_id' => $contract->branch_contract_id,
+            'category' => $contract->category,
+            'accommodation_type' => $contract->accommodation_type,
+            'billing_cycle' => $contract->billing_cycle,
+            'price' => $contract->price,
+        ];
     }
 
     private function formatInvoice(object $invoice)
@@ -563,12 +797,12 @@ class InvoiceRepository
             ?->schedule
             ?->patient
             ??
-            $invoice->invoiceAccommodation
+            $invoice->invoiceAdmissionLines
             ->first()
             ?->patientAdmission
             ?->patient;
 
-        $total = (float) $invoice->total;
+        $total = (float) $invoice->adjusted_total;
         $paid = $invoice->net_paid_amount;
         $balance = $invoice->balance_due;
 
@@ -578,7 +812,7 @@ class InvoiceRepository
             $category[] = 'Homecare';
         }
 
-        if ($invoice->invoiceAccommodation->isNotEmpty()) {
+        if ($invoice->invoiceAdmissionLines->isNotEmpty()) {
             $category[] = 'Facility';
         }
 
@@ -619,10 +853,96 @@ class InvoiceRepository
         ];
     }
 
+    // Read from the payments themselves: a payment is one record with one
+    // amount, and the allocations only say which invoices it settled.
+    private function formatPayments(mixed $invoices)
+    {
+        $paymentIds = collect($invoices)
+            ->flatMap(fn($invoice) => $invoice->allocations)
+            ->pluck('payment_id')
+            ->filter()
+            ->unique();
+
+        if ($paymentIds->isEmpty()) {
+            return collect();
+        }
+
+        return Payment::with('allocations.invoice')
+            ->whereIn('payment_id', $paymentIds)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn(Payment $payment) => [
+                'payment_id' => $payment->payment_id,
+                'receipt_no' => $payment->receipt_no,
+                'reference_id' => $payment->reference_id,
+                'amount' => (float) $payment->amount,
+                'payment_method' => $payment->payment_method,
+                'masked_card_number' => $payment->masked_card_number,
+                'payor_name' => $payment->payor_name,
+                'created_at' => $payment->created_at?->toIso8601String(),
+                'invoice_codes' => $payment->allocations
+                    ->map(fn($allocation) => $allocation->invoice?->invoice_code)
+                    ->filter()
+                    ->unique()
+                    ->values(),
+            ])
+            ->values();
+    }
+
+    // Read from the refunds themselves: a refund is one record with one total,
+    // and the allocations only say which invoices it was drawn from.
+    private function formatRefunds(mixed $invoices)
+    {
+        $refundIds = collect($invoices)
+            ->flatMap(fn($invoice) => $invoice->allocations)
+            ->flatMap(fn($allocation) => $allocation->refundAllocations)
+            ->pluck('refund_id')
+            ->filter()
+            ->unique();
+
+        if ($refundIds->isEmpty()) {
+            return collect();
+        }
+
+        return Refund::with('allocations.allocation.invoice')
+            ->whereIn('refund_id', $refundIds)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn(Refund $refund) => [
+                'refund_id' => $refund->refund_id,
+                'refund_code' => $refund->refund_code,
+                'amount' => (float) $refund->amount,
+                'refund_method' => $refund->refund_method,
+                'masked_card_number' => $refund->masked_card_number,
+                'status' => $refund->status,
+                'declined_reason' => $refund->declined_reason,
+                'created_at' => $refund->created_at?->toIso8601String(),
+                'invoice_codes' => $refund->allocations
+                    ->map(fn($line) => $line->allocation?->invoice?->invoice_code)
+                    ->filter()
+                    ->unique()
+                    ->values(),
+            ])
+            ->values();
+    }
+
+    private function voidedByName(object $invoice): ?string
+    {
+        $user = $invoice->voidedBy;
+
+        if (!$user) {
+            return null;
+        }
+
+        $name = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+
+        return $name !== '' ? $name : $user->email;
+    }
+
     private function formatInvoiceDetail(
         object $invoice
     ): array {
-        $total = (float) $invoice->total;
+        $total = (float) $invoice->adjusted_total;
 
         $paid =
             $invoice->net_paid_amount;
@@ -631,7 +951,7 @@ class InvoiceRepository
             $invoice->refunded_completed_amount;
 
         $refundProcessing =
-            $invoice->refunded_processing_amount;
+            $invoice->refunded_requested_amount;
 
         $balance =
             $invoice->balance_due;
@@ -639,10 +959,11 @@ class InvoiceRepository
         return [
             'invoice_id' => $invoice->invoice_id,
             'invoice_code' => $invoice->invoice_code,
+            'description' => $invoice->paymentDescription(),
             'total' => $total,
             'amount_paid' => $paid,
             'refunded_amount' =>   $refunded,
-            'refund_processing_amount' =>   $refundProcessing,
+            'refund_requested_amount' =>   $refundProcessing,
             'balance_due' => $balance - $refundProcessing,
             'status' => match (true) {
                 $balance <= 0 && $paid > 0 => 'Paid',
@@ -666,13 +987,16 @@ class InvoiceRepository
                 : null,
 
             'accommodations' =>
-            $invoice->invoiceAccommodation
+            $invoice->invoiceAdmissionLines
                 ->map(fn($accommodation) => [
                     'accommodation_type' =>
                     $accommodation->branchContract?->accommodation_type,
 
                     'billing_cycle' =>
                     $accommodation->branchContract?->billing_cycle,
+
+                    'accommodation_status' =>
+                    $accommodation->status,
 
                     'room_no' =>
                     $accommodation->patientAdmission?->bed?->room?->room_no,
@@ -714,46 +1038,54 @@ class InvoiceRepository
                 ->values(),
 
             'payments' =>
-            $invoice->payments
-                ->map(fn($payment) => [
+            $invoice->allocations
+                ->map(fn($allocation) => [
                     'payment_id' =>
-                    $payment->payment_id,
+                    $allocation->payment_id,
 
                     'receipt_no' =>
-                    $payment->receipt?->receipt_no,
+                    $allocation->payment?->receipt_no,
 
                     'reference_id' =>
-                    $payment->reference_id,
+                    $allocation->payment?->reference_id,
 
                     'amount' =>
-                    (float) $payment->amount,
+                    (float) $allocation->amount,
 
                     'payment_method' =>
-                    $payment->payment_method,
+                    $allocation->payment?->payment_method,
 
                     'created_at' =>
-                    $payment->created_at,
+                    $allocation->payment?->created_at,
 
+                    // This allocation's share of each refund; refund_total is
+                    // the whole refund, which may span other payments.
                     'refunds' =>
-                    $payment->refunds
-                        ->map(fn($refund) => [
+                    $allocation->refundAllocations
+                        ->map(fn($line) => [
                             'refund_id' =>
-                            $refund->refund_id,
+                            $line->refund_id,
 
-                            'reference_id' =>
-                            $refund->reference_id,
+                            'refund_code' =>
+                            $line->refund?->refund_code,
 
                             'amount' =>
-                            (float) $refund->amount,
+                            (float) $line->amount,
+
+                            'refund_total' =>
+                            (float) ($line->refund?->amount ?? 0),
 
                             'refund_method' =>
-                            $refund->refund_method,
+                            $line->refund?->refund_method,
 
                             'status' =>
-                            $refund->status,
+                            $line->refund?->status,
 
-                            'reason' =>
-                            $refund->reason,
+                            'declined_reason' =>
+                            $line->refund?->declined_reason,
+
+                            'created_at' =>
+                            $line->refund?->created_at,
                         ])
                         ->values(),
                 ])
@@ -771,7 +1103,7 @@ class InvoiceRepository
                 fn($p) =>
                 $p->where('uuid', $patientUuid)
             )->orWhereHas(
-                'invoiceAccommodation.patientAdmission.patient',
+                'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
                 fn($p) =>
                 $p->where('uuid', $patientUuid)
             );
@@ -838,8 +1170,11 @@ class InvoiceRepository
                 Invoice::STATUS_VOID
             );
 
+        // Credit applications move money that was already received, so counting
+        // them again would report the same peso twice.
         $paymentQuery = Payment::query()
-            ->whereHas('invoice', function ($query) use ($branchId) {
+            ->where('payment_method', '!=', Payment::METHOD_CREDIT)
+            ->whereHas('invoices', function ($query) use ($branchId) {
                 $query
                     ->where('branch_id', $branchId)
                     ->where(
@@ -854,7 +1189,8 @@ class InvoiceRepository
                 $currentMonthStart,
                 $currentMonthEnd,
             ])
-            ->sum('total');
+            ->get()
+            ->sum('adjusted_total');
 
         $paymentsReceived = (clone $paymentQuery)
             ->whereBetween('created_at', [
@@ -863,36 +1199,11 @@ class InvoiceRepository
             ])
             ->sum('amount');
 
-        $refundsIssued = (clone $paymentQuery)
-            ->whereHas('refunds', function ($query) use (
-                $currentMonthStart,
-                $currentMonthEnd
-            ) {
-                $query
-                    ->where(
-                        'status',
-                        Refund::STATUS_COMPLETED
-                    )
-                    ->whereBetween('created_at', [
-                        $currentMonthStart,
-                        $currentMonthEnd,
-                    ]);
-            })
-            ->get()
-            ->flatMap
-            ->refunds
-            ->where(
-                'status',
-                Refund::STATUS_COMPLETED
-            )
-            ->whereBetween(
-                'created_at',
-                [
-                    $currentMonthStart,
-                    $currentMonthEnd,
-                ]
-            )
-            ->sum('amount');
+        $refundsIssued = $this->refundsIssuedBetween(
+            $branchId,
+            $currentMonthStart,
+            $currentMonthEnd
+        );
 
         $outstandingBalance = (clone $invoiceQuery)
             ->whereBetween('created_at', [
@@ -908,7 +1219,8 @@ class InvoiceRepository
                 $lastMonthStart,
                 $lastMonthEnd,
             ])
-            ->sum('total');
+            ->get()
+            ->sum('adjusted_total');
 
         $lastPayments = (clone $paymentQuery)
             ->whereBetween('created_at', [
@@ -917,36 +1229,11 @@ class InvoiceRepository
             ])
             ->sum('amount');
 
-        $lastRefunds = (clone $paymentQuery)
-            ->whereHas('refunds', function ($query) use (
-                $lastMonthStart,
-                $lastMonthEnd
-            ) {
-                $query
-                    ->where(
-                        'status',
-                        Refund::STATUS_COMPLETED
-                    )
-                    ->whereBetween('created_at', [
-                        $lastMonthStart,
-                        $lastMonthEnd,
-                    ]);
-            })
-            ->get()
-            ->flatMap
-            ->refunds
-            ->where(
-                'status',
-                Refund::STATUS_COMPLETED
-            )
-            ->whereBetween(
-                'created_at',
-                [
-                    $lastMonthStart,
-                    $lastMonthEnd,
-                ]
-            )
-            ->sum('amount');
+        $lastRefunds = $this->refundsIssuedBetween(
+            $branchId,
+            $lastMonthStart,
+            $lastMonthEnd
+        );
 
         $lastOutstanding = (clone $invoiceQuery)
             ->whereBetween('created_at', [

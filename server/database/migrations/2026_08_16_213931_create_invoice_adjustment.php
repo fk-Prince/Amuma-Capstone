@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id('invoice_adjustment_id');
             $table->foreignId('invoice_id')
                 ->constrained('invoices', 'invoice_id');
-            $table->enum('type', ['refund', 'correction', 'termination_fee']);
+            $table->enum('type', ['refund', 'correction', 'termination_fee', 'void']);
             $table->decimal('amount', 10, 2);
             $table->text('reason')->nullable();
-            $table->timestamps();
+            $table->timestamp('created_at')->useCurrent();
         });
     }
 

@@ -78,7 +78,9 @@
                             >
                                 Invoice
                             </h1>
-                            <p class="text-sm text-[#6B8A87] dark:text-gray-400">
+                            <p
+                                class="text-sm text-[#6B8A87] dark:text-gray-400"
+                            >
                                 {{ invoice.branch?.name ?? "Branch" }}
                             </p>
                         </div>
@@ -88,7 +90,9 @@
                             >
                                 Invoice No.
                             </p>
-                            <p class="text-sm font-semibold text-[#16302E] dark:text-white">
+                            <p
+                                class="text-sm font-semibold text-[#16302E] dark:text-white"
+                            >
                                 #{{ invoice.invoice_code }}
                             </p>
                         </div>
@@ -111,7 +115,9 @@
                             >
                                 {{ invoice.patient?.full_name ?? "—" }}
                             </h2>
-                            <p class="text-sm text-[#6B8A87] truncate dark:text-gray-400">
+                            <p
+                                class="text-sm text-[#6B8A87] truncate dark:text-gray-400"
+                            >
                                 {{ invoice.branch?.name ?? "—" }}
                             </p>
                         </div>
@@ -124,7 +130,9 @@
                             >
                                 Created
                             </p>
-                            <p class="text-sm font-medium text-[#16302E] dark:text-white">
+                            <p
+                                class="text-sm font-medium text-[#16302E] dark:text-white"
+                            >
                                 {{ formatDate(invoice.created_at) }}
                             </p>
                         </div>
@@ -148,7 +156,9 @@
                         >
                             Total
                         </p>
-                        <p class="text-2xl font-bold text-[#16302E] dark:text-white">
+                        <p
+                            class="text-2xl font-bold text-[#16302E] dark:text-white"
+                        >
                             ₱{{ formatMoney(invoice.total) }}
                         </p>
                     </div>
@@ -159,7 +169,9 @@
                         >
                             Amount Paid
                         </p>
-                        <p class="text-2xl font-bold text-[#1F7A4D] dark:text-emerald-300">
+                        <p
+                            class="text-2xl font-bold text-[#1F7A4D] dark:text-emerald-300"
+                        >
                             ₱{{ formatMoney(invoice.amount_paid) }}
                         </p>
                     </div>
@@ -173,7 +185,9 @@
                         >
                             Refunded
                         </p>
-                        <p class="text-2xl font-bold text-[#966B1F] dark:text-amber-300">
+                        <p
+                            class="text-2xl font-bold text-[#966B1F] dark:text-amber-300"
+                        >
                             ₱{{ formatMoney(invoice.refunded_amount) }}
                         </p>
                     </div>
@@ -184,7 +198,9 @@
                         >
                             Balance Due
                         </p>
-                        <p class="text-2xl font-bold text-[#B3402F] dark:text-rose-300">
+                        <p
+                            class="text-2xl font-bold text-[#B3402F] dark:text-rose-300"
+                        >
                             ₱{{ formatMoney(invoice.balance_due) }}
                         </p>
                     </div>
@@ -250,7 +266,7 @@
                         <div class="space-y-3">
                             <div
                                 v-for="facility in invoice.facilities"
-                                :key="facility.invoice_accommodation_id"
+                                :key="facility.invoice_admission_id"
                                 class="rounded-xl border border-[#EDF4F3] px-5 py-4 dark:border-white/10"
                             >
                                 <div
@@ -314,7 +330,9 @@
                             />
                             <Field
                                 label="Phone"
-                                :value="invoice.patient.phone_number"
+                                :value="
+                                    formatPhone(invoice.patient.phone_number)
+                                "
                             />
                             <Field
                                 label="Citizenship"
@@ -323,7 +341,9 @@
                         </div>
                     </section>
 
-                    <section class="pt-5 border-t border-[#EDF4F3] dark:border-white/10">
+                    <section
+                        class="pt-5 border-t border-[#EDF4F3] dark:border-white/10"
+                    >
                         <SectionHeader>
                             <template #icon>
                                 <svg
@@ -370,7 +390,9 @@
                                         :value="`₱${formatMoney(payment.amount)}`"
                                     />
                                 </div>
-                                <p class="text-xs text-[#6B8A87] mt-2 dark:text-gray-400">
+                                <p
+                                    class="text-xs text-[#6B8A87] mt-2 dark:text-gray-400"
+                                >
                                     {{ formatDate(payment.created_at) }}
                                 </p>
 
@@ -390,7 +412,7 @@
                                                 class="text-xs font-mono text-[#966B1F] dark:text-amber-300"
                                             >
                                                 {{
-                                                    refund.reference_id ??
+                                                    refund.refund_code ??
                                                     "Refund"
                                                 }}
                                             </span>
@@ -414,7 +436,7 @@
                                                 class="text-xs text-[#6B8A87] dark:text-gray-400"
                                             >
                                                 {{
-                                                    refund.reason ??
+                                                    refund.declined_reason ??
                                                     "No reason provided."
                                                 }}
                                             </p>
@@ -504,9 +526,7 @@
                                     <span
                                         class="shrink-0 text-sm font-semibold text-[#16302E] dark:text-white"
                                     >
-                                        ₱{{
-                                            formatMoney(adjustment.amount)
-                                        }}
+                                        ₱{{ formatMoney(adjustment.amount) }}
                                     </span>
                                 </div>
                             </div>
@@ -547,11 +567,15 @@
                 v-if="paymentChange > 0"
                 class="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center dark:border-emerald-500/20 dark:bg-emerald-500/10"
             >
-                <p class="text-xs uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                <p
+                    class="text-xs uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
+                >
                     Change Returned
                 </p>
 
-                <p class="mt-1 text-3xl font-bold text-emerald-800 dark:text-emerald-300">
+                <p
+                    class="mt-1 text-3xl font-bold text-emerald-800 dark:text-emerald-300"
+                >
                     ₱{{ formatMoney(paymentChange) }}
                 </p>
             </div>
@@ -755,7 +779,11 @@ onMounted(() => {
 
 const Field = (fieldProps: { label: string; value: any }, { slots }: any) =>
     h("p", { class: "flex flex-col gap-0.5" }, [
-        h("span", { class: "text-xs text-[#6B8A87] dark:text-gray-400" }, fieldProps.label),
+        h(
+            "span",
+            { class: "text-xs text-[#6B8A87] dark:text-gray-400" },
+            fieldProps.label,
+        ),
         h(
             "span",
             { class: "text-[#16302E] font-medium dark:text-white" },

@@ -46,7 +46,7 @@ class MoneyWords
     ];
 
 
-    public static function pesos(float $amount): string
+    public static function pesos(float $amount)
     {
         $amount = round(max($amount, 0), 2);
 
@@ -64,7 +64,7 @@ class MoneyWords
         return $words . ' ONLY';
     }
 
-    private static function convert(int $number): string
+    private static function convert(int $number)
     {
         if ($number < 20) {
             return self::ONES[$number];

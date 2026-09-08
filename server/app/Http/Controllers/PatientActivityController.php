@@ -18,11 +18,11 @@ class PatientActivityController extends Controller
 
     public function store(Request $request)
     {
-        return $this->patientActivityService->createPatientActivity($request->user(), $request->all());
+        return $this->patientActivityService->createPatientActivity($request->all());
     }
 
     public function update(Request $request, string $id)
     {
-        return $this->patientActivityService->updatePatientActivity($request->user(), $request->all(), $id);
+        return $this->patientActivityService->updatePatientActivity($request->all(), $id);
     }
 }

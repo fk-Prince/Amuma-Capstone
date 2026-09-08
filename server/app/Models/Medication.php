@@ -34,12 +34,12 @@ class Medication extends Model
         'recorded_at' => 'datetime',
     ];
 
-    public function patient(): BelongsTo
+    public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
     }
 
-    public function schedules(): HasMany
+    public function schedules()
     {
         return $this->hasMany(MedicationSchedule::class, 'medication_id', 'medication_id');
     }

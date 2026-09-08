@@ -42,6 +42,7 @@ interface Props {
     cashLabel?: string;
     cashProcessingLabel?: string;
     cashDescription?: string;
+    gcashDescription?: string;
     enableCard?: boolean;
     enableGCash?: boolean;
     enableCash?: boolean;
@@ -61,6 +62,8 @@ const props = withDefaults(defineProps<Props>(), {
     cashProcessingLabel: "Processing...",
     cashDescription:
         "Enter the cash amount received. Your subscription will be activated once payment is confirmed.",
+    gcashDescription:
+        "You will be redirected to GCash to securely complete your payment.",
     enableCard: true,
     enableGCash: true,
     enableCash: false,
@@ -289,7 +292,9 @@ watch(isCash, (active) => {
                             {{ title }}
                         </h2>
 
-                        <p class="mt-1 text-sm leading-5 text-slate-500 dark:text-gray-400">
+                        <p
+                            class="mt-1 text-sm leading-5 text-slate-500 dark:text-gray-400"
+                        >
                             {{ description }}
                         </p>
                     </div>
@@ -302,7 +307,9 @@ watch(isCash, (active) => {
                 class="border-b border-slate-100 px-6 py-5 dark:border-white/10"
             >
                 <div class="mb-4">
-                    <p class="text-sm font-semibold text-slate-800 dark:text-white">
+                    <p
+                        class="text-sm font-semibold text-slate-800 dark:text-white"
+                    >
                         Payment method
                     </p>
 
@@ -352,7 +359,9 @@ watch(isCash, (active) => {
                                 {{ method.label }}
                             </p>
 
-                            <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
+                            <p
+                                class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
+                            >
                                 <template v-if="method.value === 'CREDIT-CARD'">
                                     Visa, Mastercard and other cards
                                 </template>
@@ -399,7 +408,9 @@ watch(isCash, (active) => {
                 class="space-y-6 px-6 py-6 sm:px-7 sm:py-7"
             >
                 <div>
-                    <h3 class="text-sm font-bold text-slate-800 dark:text-white">
+                    <h3
+                        class="text-sm font-bold text-slate-800 dark:text-white"
+                    >
                         Card information
                     </h3>
 
@@ -542,13 +553,16 @@ watch(isCash, (active) => {
                         </div>
 
                         <div>
-                            <h3 class="text-sm font-bold text-slate-800 dark:text-white">
+                            <h3
+                                class="text-sm font-bold text-slate-800 dark:text-white"
+                            >
                                 Pay using GCash
                             </h3>
 
-                            <p class="mt-1 text-sm leading-5 text-slate-500 dark:text-gray-400">
-                                You will be redirected to GCash to securely
-                                complete your payment.
+                            <p
+                                class="mt-1 text-sm leading-5 text-slate-500 dark:text-gray-400"
+                            >
+                                {{ gcashDescription }}
                             </p>
                         </div>
                     </div>
@@ -557,9 +571,13 @@ watch(isCash, (active) => {
                 <div
                     class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 dark:bg-secondary"
                 >
-                    <span class="text-sm text-slate-500 dark:text-gray-400"> Amount to pay </span>
+                    <span class="text-sm text-slate-500 dark:text-gray-400">
+                        Amount to pay
+                    </span>
 
-                    <span class="text-base font-bold text-slate-900 dark:text-white">
+                    <span
+                        class="text-base font-bold text-slate-900 dark:text-white"
+                    >
                         {{ currency }}{{ formatMoney(totalAmount) }}
                     </span>
                 </div>
@@ -567,7 +585,7 @@ watch(isCash, (active) => {
                 <button
                     type="button"
                     @click="onGCashPay"
-                    :disabled="processing"
+                    :disabled="processing || !onGCashPay"
                     class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     <LoaderCircle
@@ -599,11 +617,15 @@ watch(isCash, (active) => {
                         </div>
 
                         <div>
-                            <h3 class="text-sm font-bold text-slate-800 dark:text-white">
+                            <h3
+                                class="text-sm font-bold text-slate-800 dark:text-white"
+                            >
                                 Pay with cash
                             </h3>
 
-                            <p class="mt-1 text-sm leading-5 text-slate-500 dark:text-gray-400">
+                            <p
+                                class="mt-1 text-sm leading-5 text-slate-500 dark:text-gray-400"
+                            >
                                 {{ cashDescription }}
                             </p>
                         </div>
@@ -618,7 +640,9 @@ watch(isCash, (active) => {
                             Total to pay
                         </span>
 
-                        <span class="text-base font-bold text-slate-900 dark:text-white">
+                        <span
+                            class="text-base font-bold text-slate-900 dark:text-white"
+                        >
                             {{ currency }}{{ formatMoney(totalAmount) }}
                         </span>
                     </div>

@@ -11,12 +11,21 @@ return new class extends Migration
         Schema::create('invoices', function (Blueprint $table) {
             $table->id('invoice_id');
             $table->string('invoice_code')->unique();
-            $table->decimal('total', 10, 2);
-            $table->enum('status', ['pending', 'partial', 'paid', 'void', 'refunded'])->default('pending');
+            $table->decimal('total_amount', 10, 2);
+            $table->enum('status', ['unpaid', 'partially_paid', 'paid', 'void'])
+                ->default('unpaid');
             $table->foreignId('branch_id')
                 ->constrained('branches', 'branch_id')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
+            $table->timestamp('voided_at')->nullable();
+            $table->unsignedBigInteger('voided_by')->nullable();
+            $table->text('void_reason')->nullable();
+
+            $table->foreign('voided_by')
+                ->references('user_id')
+                ->on('users')
+                ->nullOnDelete();
             $table->timestamp('created_at')->useCurrent();
         });
     }

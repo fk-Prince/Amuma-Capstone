@@ -4,11 +4,8 @@ namespace App\Service;
 
 use App\Guard\BranchGuard;
 use App\Repository\ReviewRepository;
-use App\Http\Resources\ReviewResource;
 use App\Models\User;
 use App\Service\External\SupabaseService;
-use Exception;
-use Illuminate\Support\Facades\Log;
 
 class ReviewService
 {

@@ -44,7 +44,9 @@
                                 Overall progress
                             </span>
 
-                            <span class="text-xs font-bold text-primary-600 dark:text-primary-300">
+                            <span
+                                class="text-xs font-bold text-primary-600 dark:text-primary-300"
+                            >
                                 {{ Math.round(progress) }}%
                             </span>
                         </div>
@@ -68,7 +70,9 @@
                     />
                 </div>
 
-                <div class="shrink-0 border-t border-gray-100/80 px-6 py-4 dark:border-white/10">
+                <div
+                    class="shrink-0 border-t border-gray-100/80 px-6 py-4 dark:border-white/10"
+                >
                     <div
                         class="flex items-start gap-3 rounded-xl bg-white/60 p-3 ring-1 ring-gray-100 dark:bg-white/5 dark:ring-white/10"
                     >
@@ -154,7 +158,9 @@
                             >
                                 Booking Progress
                             </span>
-                            <span class="text-xs font-bold text-primary-600 dark:text-primary-300">
+                            <span
+                                class="text-xs font-bold text-primary-600 dark:text-primary-300"
+                            >
                                 {{ Math.round(progress) }}%
                             </span>
                         </div>
@@ -328,7 +334,7 @@
                     class="w-full rounded-xl py-3"
                     @click="submit"
                 >
-                    Submit Booking Registration
+                    Review Booking Request
                 </BaseButton>
 
                 <div class="mt-4 flex flex-col gap-3">
@@ -350,8 +356,8 @@
                             class="h-4 w-4 shrink-0 mt-0.5 text-primary"
                         />
                         <span>
-                            You'll be notified once your booking request has
-                            been reviewed and accepted.
+                            You'll be notified in the app and by email once your
+                            booking request has been reviewed and accepted.
                         </span>
                     </div>
                 </div>
@@ -544,21 +550,44 @@ function goToStepMobile(step: string) {
 
 const sidebarTop = ref(90);
 
+const stepRefs: Record<string, typeof step1> = {
+    step1,
+    step2,
+    step3,
+    step4,
+    step5,
+};
+const stepOrder = ["step1", "step2", "step3", "step4", "step5"];
+
+const updateActiveStepFromScroll = () => {
+    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+    const offset = (isDesktop ? 32 : 112) + 24;
+
+    let current = stepOrder[0];
+
+    for (const key of stepOrder) {
+        const el = stepRefs[key]?.value;
+        if (!el) continue;
+
+        if (el.getBoundingClientRect().top - offset <= 0) {
+            current = key;
+        }
+    }
+
+    activeStep.value = current;
+};
+
 const handleScroll = () => {
     const sidebar = document.querySelector(
         "[data-booking-sidebar]",
     ) as HTMLElement | null;
 
-    if (!sidebar) return;
-
-    const top = sidebar.getBoundingClientRect().top;
-
-    if (top <= 90) {
-        sidebarTop.value = 0;
-    } else {
-        sidebarTop.value = 90;
-        sidebarTop.value = 90;
+    if (sidebar) {
+        const top = sidebar.getBoundingClientRect().top;
+        sidebarTop.value = top <= 90 ? 0 : 90;
     }
+
+    updateActiveStepFromScroll();
 };
 
 onMounted(() => {

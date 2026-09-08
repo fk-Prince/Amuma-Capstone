@@ -70,4 +70,17 @@ html.dark {
     html:has(body.printing-report) {
         height: auto !important;
     }
+
+    body.printing-slip > *:not(.admission-slip-sheet) {
+        display: none !important;
+    }
+
+    body.printing-slip {
+        background: #ffffff !important;
+        height: auto !important;
+    }
+
+    html:has(body.printing-slip) {
+        height: auto !important;
+    }
 }

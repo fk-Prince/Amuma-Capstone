@@ -220,7 +220,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="min-h-full space-y-6 p-5">
+    <div class="min-h-full space-y-6 p-5 pb-16">
         <div
             v-if="meta"
             class="inline-flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm dark:border-white/10 dark:bg-secondary"

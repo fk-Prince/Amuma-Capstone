@@ -801,15 +801,23 @@
             class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full dark:bg-secondary dark:border-white/10"
         >
             <p class="text-sm font-semibold text-gray-800 mb-4 dark:text-white">
-                Latest's Updates
+                Latest Updates
             </p>
 
-            <p
+            <div
                 v-if="!updates.length"
-                class="py-6 text-center text-xs text-gray-400 dark:text-gray-500"
+                class="flex flex-col items-center gap-1.5 py-8 text-center"
             >
-                No updates recorded yet.
-            </p>
+                <Bell class="h-5 w-5 text-gray-300 dark:text-gray-600" />
+
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    No updates yet
+                </p>
+
+                <p class="text-xs text-gray-400 dark:text-gray-500">
+                    Care notes and activities will appear here.
+                </p>
+            </div>
 
             <ul v-else class="space-y-3">
                 <li
@@ -905,86 +913,130 @@
                 Upcoming Payment
             </p>
 
-            <div class="flex gap-5 items-stretch w-full">
-                <div
-                    class="flex-1 bg-primary-50 rounded-xl p-4 flex items-center justify-between dark:bg-primary-500/10"
-                >
+            <div
+                class="rounded-xl p-4"
+                :class="
+                    billing.overall_balance > 0
+                        ? 'bg-rose-50 dark:bg-rose-500/10'
+                        : 'bg-emerald-50 dark:bg-emerald-500/10'
+                "
+            >
+                <div class="flex items-start justify-between gap-3">
                     <div>
-                        <p class="text-xs text-gray-400 dark:text-gray-500">
-                            Overall Balance
+                        <p
+                            class="text-[11px] font-semibold uppercase tracking-wide"
+                            :class="
+                                billing.overall_balance > 0
+                                    ? 'text-rose-500 dark:text-rose-300'
+                                    : 'text-emerald-600 dark:text-emerald-300'
+                            "
+                        >
+                            Outstanding balance
                         </p>
 
                         <p
-                            class="text-lg font-semibold text-gray-900 dark:text-white"
+                            class="mt-1 text-2xl font-bold"
+                            :class="
+                                billing.overall_balance > 0
+                                    ? 'text-rose-600 dark:text-rose-300'
+                                    : 'text-emerald-700 dark:text-emerald-300'
+                            "
                         >
                             {{ peso(billing.overall_balance) }}
                         </p>
                     </div>
 
                     <span
-                        class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 shrink-0 dark:bg-primary-500/15 dark:text-primary-300"
+                        class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                        :class="
+                            billing.overall_balance > 0
+                                ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300'
+                                : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300'
+                        "
                     >
                         <Calendar class="w-[18px] h-[18px]" />
                     </span>
                 </div>
 
-                <div
-                    class="flex-1 bg-emerald-50 rounded-xl p-4 flex items-center justify-between dark:bg-emerald-500/10"
+                <p
+                    v-if="billing.overall_balance <= 0"
+                    class="mt-1 text-xs text-emerald-600/80 dark:text-emerald-300/70"
                 >
-                    <div>
-                        <p
-                            class="text-xs text-emerald-600 dark:text-emerald-300"
-                        >
-                            Refundable Amount
-                        </p>
+                    Everything billed so far has been settled.
+                </p>
+            </div>
 
-                        <p
-                            class="text-lg font-semibold text-emerald-700 dark:text-emerald-300"
-                        >
-                            {{ peso(billing.refundable_amount) }}
-                        </p>
-                    </div>
-
+            <div
+                v-if="billing.refundable_amount > 0"
+                class="mt-3 flex items-center justify-between gap-3 rounded-xl bg-emerald-50 px-4 py-3 dark:bg-emerald-500/10"
+            >
+                <div class="flex items-center gap-2.5">
                     <span
-                        class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 dark:bg-emerald-500/15 dark:text-emerald-300"
+                        class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 dark:bg-emerald-500/15 dark:text-emerald-300"
                     >
-                        <ArrowDownCircle class="w-[18px] h-[18px]" />
+                        <ArrowDownCircle class="w-4 h-4" />
                     </span>
+
+                    <p
+                        class="text-xs font-medium text-emerald-700 dark:text-emerald-300"
+                    >
+                        Credit on the account
+                    </p>
                 </div>
+
+                <p
+                    class="text-sm font-bold text-emerald-700 dark:text-emerald-300"
+                >
+                    {{ peso(billing.refundable_amount) }}
+                </p>
             </div>
 
             <div
                 v-if="billing.latest_invoice_code"
-                class="mt-4 text-xs space-y-1"
+                class="mt-4 rounded-xl border border-gray-100 p-3 dark:border-white/10"
             >
-                <p class="text-gray-400 dark:text-gray-500">Latest Invoice</p>
+                <div class="flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[11px] text-gray-400 dark:text-gray-500">
+                            Latest invoice
+                        </p>
 
-                <p class="font-semibold text-gray-800 dark:text-white">
-                    {{ billing.latest_invoice_code }}
-                </p>
+                        <p
+                            class="truncate text-sm font-semibold text-gray-800 dark:text-white"
+                        >
+                            {{ billing.latest_invoice_code }}
+                        </p>
+                    </div>
 
-                <p class="text-gray-400 mt-2 dark:text-gray-500">Status</p>
+                    <span
+                        class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold capitalize"
+                        :class="invoiceStatusBadge(billing.status)"
+                    >
+                        {{ (billing.status || "N/A").replace("_", " ") }}
+                    </span>
+                </div>
 
-                <p
-                    class="font-semibold text-gray-800 capitalize dark:text-white"
+                <div
+                    v-if="billing.balance_due > 0"
+                    class="mt-2 flex items-center justify-between border-t border-gray-100 pt-2 text-xs dark:border-white/10"
                 >
-                    {{ billing.status || "N/A" }}
-                </p>
+                    <span class="text-gray-400 dark:text-gray-500">
+                        Still due on this invoice
+                    </span>
 
-                <p class="text-gray-400 mt-2 dark:text-gray-500">
-                    Invoice Balance
-                </p>
-
-                <p class="font-semibold text-gray-800 dark:text-white">
-                    {{ peso(billing.balance_due) }}
-                </p>
+                    <span
+                        class="font-semibold text-rose-600 dark:text-rose-300"
+                    >
+                        {{ peso(billing.balance_due) }}
+                    </span>
+                </div>
             </div>
 
             <NuxtLink
-                to="/portal/balance"
+                :to="balanceLink"
                 class="mt-4 w-full border border-primary-600 text-primary-600 text-sm font-medium py-2 rounded-full transition-colors hover:bg-primary-500 hover:text-white hover:border-primary-500 text-center block dark:text-primary-300"
             >
-                View Bill Date
+                View Full Patient Balance
             </NuxtLink>
         </div>
 
@@ -997,7 +1049,7 @@
                 </p>
 
                 <NuxtLink
-                    to="/portal/balance"
+                    :to="balanceLink"
                     class="text-xs text-primary-600 font-medium dark:text-primary-300"
                 >
                     View All
@@ -1007,46 +1059,63 @@
             <ul v-if="transactions.length" class="space-y-3">
                 <li
                     v-for="t in transactions.slice(0, 3)"
-                    :key="t.payment_id"
-                    class="flex items-center justify-between"
+                    :key="t.receipt_no || t.payment_id"
+                    class="flex items-center justify-between gap-3"
                 >
-                    <div class="flex items-center gap-3">
+                    <div class="flex min-w-0 items-center gap-3">
                         <span
-                            class="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
+                            class="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
                         >
-                            <ArrowDownCircle class="w-4 h-4" />
+                            <ArrowUpCircle class="w-4 h-4" />
                         </span>
 
-                        <div>
+                        <div class="min-w-0">
                             <p
-                                class="text-sm font-medium text-gray-800 dark:text-white"
+                                class="truncate text-sm font-medium text-gray-800 dark:text-white"
                             >
-                                Payment Received
+                                {{ t.receipt_no ?? "Payment sent" }}
                             </p>
 
-                            <p class="text-xs text-gray-400 dark:text-gray-500">
-                                {{ t.created_at }}
+                            <p
+                                class="truncate text-xs text-gray-400 dark:text-gray-500"
+                            >
+                                <span v-if="t.invoice_codes.length > 1">
+                                    {{ t.invoice_codes.length }} bills ·
+                                </span>
+
+                                <span v-else-if="t.invoice_code">
+                                    {{ t.invoice_code }} ·
+                                </span>
+                                {{ stringToDateTime(t.created_at) }}
                             </p>
                         </div>
                     </div>
 
                     <span
-                        class="text-sm font-semibold text-emerald-600 dark:text-emerald-300"
+                        class="shrink-0 text-sm font-semibold text-rose-600 dark:text-rose-300"
                     >
-                        +{{ peso(t.amount) }}
+                        -{{ peso(t.amount) }}
                     </span>
                 </li>
             </ul>
 
-            <p
+            <div
                 v-else
-                class="text-xs text-gray-400 py-4 text-center dark:text-gray-500"
+                class="flex flex-col items-center gap-1.5 py-8 text-center"
             >
-                No transactions yet.
-            </p>
+                <Receipt class="h-5 w-5 text-gray-300 dark:text-gray-600" />
+
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    No payments yet
+                </p>
+
+                <p class="text-xs text-gray-400 dark:text-gray-500">
+                    Receipts appear here once a payment is made.
+                </p>
+            </div>
 
             <NuxtLink
-                to="/portal/balance"
+                :to="balanceLink"
                 class="mt-auto pt-4 text-xs text-primary-600 font-medium flex items-center gap-1 dark:text-primary-300"
             >
                 View All Transactions →
@@ -1062,7 +1131,7 @@ import { patientAccessService } from "../../api/patient-access/PatientAccessServ
 import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
 import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
-import { formatDuration } from "~/utils/time";
+import { formatDuration, stringToDateTime } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
 import QrCodeModal from "~/components/ui/QrCodeModal.vue";
 import EmptyState from "~/components/ui/EmptyState.vue";
@@ -1084,6 +1153,7 @@ import {
     CalendarClock,
     Calendar,
     ArrowDownCircle,
+    ArrowUpCircle,
     ChevronLeft,
     ChevronRight,
     Home,
@@ -1093,6 +1163,8 @@ import {
     QrCode,
     Stethoscope,
     UserRound,
+    Bell,
+    Receipt,
 } from "lucide-vue-next";
 
 useHead({
@@ -1112,6 +1184,7 @@ interface PatientSchedule {
 
 interface PatientData {
     patient_id: number;
+    uuid: string | null;
     full_name: string;
     branch_name: string;
     location_name: string;
@@ -1137,7 +1210,10 @@ interface BillingData {
 
 interface TransactionData {
     payment_id: number;
+    invoice_code: string | null;
+    invoice_codes: string[];
     reference_id: string | null;
+    receipt_no: string | null;
     amount: number;
     created_at: string;
 }
@@ -1180,6 +1256,14 @@ const selectedIndex = ref(0);
 const primaryLovedOne = computed(
     () => lovedOnes.value[selectedIndex.value] ?? null,
 );
+
+const balanceLink = computed(() => {
+    const uuid = primaryLovedOne.value?.uuid;
+
+    return uuid
+        ? { path: "/portal/balance", query: { patient: uuid } }
+        : "/portal/balance";
+});
 
 const isAdmission = computed(
     () => primaryLovedOne.value?.location_type === "facility",
@@ -1363,6 +1447,19 @@ function peso(amount: number) {
     return formatCurrency(amount, { treatMissingAsZero: true });
 }
 
+function invoiceStatusBadge(status: string) {
+    switch ((status || "").toLowerCase()) {
+        case "paid":
+            return "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300";
+        case "partially_paid":
+            return "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300";
+        case "void":
+            return "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300";
+        default:
+            return "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400";
+    }
+}
+
 function statusStyle(status: string) {
     const map: Record<string, { badge: string }> = {
         admitted: {
@@ -1500,6 +1597,8 @@ function mapPatientRecord(item: any): PatientData {
     return {
         patient_id: Number(patient?.patient_id ?? 0),
 
+        uuid: patient?.uuid ?? null,
+
         full_name:
             patient?.full_name ??
             [patient?.first_name, patient?.middle_name, patient?.last_name]
@@ -1547,17 +1646,30 @@ function updateBillingFromRecord(item: any) {
         status: invoice?.status ?? "",
     };
 
-    transactions.value = Array.isArray(invoice?.payments)
-        ? invoice.payments.map((payment: any) => ({
-              payment_id: Number(payment?.payment_id ?? 0),
+    // Every payment on the account, newest first, as the API groups them: one
+    // entry per receipt rather than per invoice it was split across.
+    transactions.value = (
+        Array.isArray(item?.transactions) ? item.transactions : []
+    )
+        .filter(
+            (entry: any) =>
+                entry?.type === "payment" && Number(entry?.amount ?? 0) > 0,
+        )
+        .map((entry: any) => ({
+            payment_id: Number(entry?.payment_id ?? 0),
 
-              reference_id: payment?.reference_id ?? null,
+            invoice_code: entry?.invoice_codes?.[0] ?? null,
 
-              amount: Number(payment?.amount ?? 0),
+            invoice_codes: entry?.invoice_codes ?? [],
 
-              created_at: payment?.created_at ?? "",
-          }))
-        : [];
+            reference_id: entry?.reference_id ?? null,
+
+            receipt_no: entry?.receipt_no ?? null,
+
+            amount: Number(entry?.amount ?? 0),
+
+            created_at: entry?.created_at ?? "",
+        }));
 }
 
 watch(selectedIndex, (idx) => {

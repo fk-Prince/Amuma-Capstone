@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Models\Client;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 
 class UserRepository
@@ -15,6 +16,14 @@ class UserRepository
     public function create(array $payload)
     {
         return User::create($payload);
+    }
+
+    public static function defaultPassword(string $lastName, mixed $createdAt = null): string
+    {
+        $name = strtolower(preg_replace('/[^A-Za-z]/', '', $lastName));
+
+        return ($name !== '' ? $name : 'client')
+            . ($createdAt ? Carbon::parse($createdAt)->year : now()->year);
     }
 
     public function createUpdateTypeUser(array $payload, string $type)
@@ -33,13 +42,17 @@ class UserRepository
             $user = User::where('email', $payload['email'])->first();
 
             if (!$user) {
-                $password = strtolower($payload['last_name']) . rand(100000, 999999);
-
                 $user = User::create([
                     'email' => $payload['email'],
-                    'password' => Hash::make($password),
+                    'password' => Hash::make(
+                        self::defaultPassword($payload['last_name'])
+                    ),
                 ]);
             }
+
+            $initials = strtoupper(
+                substr($payload['first_name'], 0, 1) . substr($payload['last_name'], 0, 1)
+            );
 
             $user->client()->updateOrCreate(
                 [
@@ -52,6 +65,7 @@ class UserRepository
                     'location_id' => $payload['location_id'] ?? null,
                     'phone_number' => $payload['phone_number'] ?? null,
                     'occupation' => $payload['occupation'] ?? null,
+                    'avatar' => 'https://ui-avatars.com/api/?name=' . $initials,
                 ]
             );
 

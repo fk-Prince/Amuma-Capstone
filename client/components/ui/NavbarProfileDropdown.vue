@@ -201,8 +201,31 @@ const isDark = useIsDark();
 
 const visibleMenuItems = computed(() =>
     profileMenuDropDownList.filter((item) => {
-        if (!item.types) return true;
-        return item.types.some((type) => props.user[type as keyof User]);
+        if (
+            item.types &&
+            !item.types.some((type: string) => props.user[type as keyof User])
+        ) {
+            return false;
+        }
+
+        if (
+            item.requires &&
+            !item.requires.every((key: string) => props.user[key as keyof User])
+        ) {
+            return false;
+        }
+
+        // Any one of these is enough, unlike `requires` which needs them all.
+        if (
+            item.requiresAny &&
+            !item.requiresAny.some(
+                (key: string) => props.user[key as keyof User],
+            )
+        ) {
+            return false;
+        }
+
+        return true;
     }),
 );
 

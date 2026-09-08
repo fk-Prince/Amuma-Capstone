@@ -18,8 +18,9 @@ return new class extends Migration
             $table->foreignId('to_room_id')->constrained('rooms', 'room_id');
             $table->foreignId('from_bed_id')->constrained('beds', 'bed_id');
             $table->foreignId('to_bed_id')->constrained('beds', 'bed_id');
-            $table->string('reason')->nullable(true);
-            $table->timestamps();
+            $table->enum('type', ['room_change', 'accommodation_change'])->index();
+            $table->timestamp('transfer_date')->useCurrent();
+            $table->string('reason', 255)->nullable();
         });
     }
 

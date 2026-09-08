@@ -32,12 +32,16 @@
                         class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-white/10"
                     >
                         <div>
-                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <h2
+                                class="text-lg font-semibold text-gray-900 dark:text-white"
+                            >
                                 Select Service
                             </h2>
 
-                            <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-                                Select one service for this booking
+                            <p
+                                class="mt-0.5 text-xs text-gray-400 dark:text-gray-500"
+                            >
+                                Only one service can be booked at a time
                             </p>
                         </div>
 
@@ -83,7 +87,7 @@
                         class="flex items-center justify-between border-b border-primary/10 bg-primary/5 px-6 py-2"
                     >
                         <p class="text-xs font-medium text-primary">
-                            1 service selected ·
+                            {{ selectedService.service_name }} ·
                             {{ formatCurrency(selectedService.price) }}
                         </p>
 
@@ -101,9 +105,13 @@
                             v-if="!filteredServices.length"
                             class="flex flex-col items-center gap-2 py-14 text-center"
                         >
-                            <PackageSearch class="h-6 w-6 text-gray-300 dark:text-gray-600" />
+                            <PackageSearch
+                                class="h-6 w-6 text-gray-300 dark:text-gray-600"
+                            />
 
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            <p
+                                class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                            >
                                 No services found
                             </p>
 
@@ -124,64 +132,53 @@
                                 {{ group.category }}
                             </p>
 
-                            <label
+                            <button
                                 v-for="service in group.items"
                                 :key="service.service_id"
-                                class="flex cursor-pointer items-center justify-between rounded-xl border p-3 transition-all"
+                                type="button"
+                                :aria-pressed="isChecked(service)"
+                                class="flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition-all"
                                 :class="
                                     isChecked(service)
-                                        ? 'border-primary/40 bg-primary/5 ring-1 ring-primary/20 dark:bg-primary-500/10'
+                                        ? 'border-primary bg-primary/5 ring-1 ring-primary/20 dark:bg-primary-500/10'
                                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-white/10 dark:hover:border-white/20 dark:hover:bg-white/5'
                                 "
+                                @click="select(service)"
                             >
-                                <div class="flex min-w-0 items-center gap-3">
-                                    <span
-                                        class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition"
-                                        :class="
-                                            isChecked(service)
-                                                ? 'border-primary bg-primary text-white'
-                                                : 'border-gray-300 bg-white dark:border-white/20 dark:bg-white/5'
-                                        "
+                                <div class="min-w-0">
+                                    <p
+                                        class="truncate text-sm font-medium leading-tight text-gray-900 dark:text-white"
                                     >
-                                        <Check
-                                            v-if="isChecked(service)"
-                                            class="h-3 w-3"
-                                        />
+                                        {{ service.service_name }}
+                                    </p>
+
+                                    <p
+                                        v-if="
+                                            groupedServices.length <= 1 &&
+                                            service.category_name
+                                        "
+                                        class="mt-0.5 text-xs text-gray-400 dark:text-gray-500"
+                                    >
+                                        {{ service.category_name }}
+                                    </p>
+                                </div>
+
+                                <div class="flex shrink-0 items-center gap-3">
+                                    <span
+                                        class="whitespace-nowrap text-sm font-semibold text-primary"
+                                    >
+                                        {{ formatCurrency(service.price) }}
                                     </span>
 
-                                    <input
-                                        type="radio"
-                                        name="booking-service"
-                                        :value="service.service_id"
-                                        v-model="localSelected"
-                                        class="sr-only"
-                                    />
-
-                                    <div class="min-w-0">
-                                        <p
-                                            class="truncate text-sm font-medium leading-tight text-gray-900 dark:text-white"
-                                        >
-                                            {{ service.service_name }}
-                                        </p>
-
-                                        <p
-                                            v-if="
-                                                groupedServices.length <= 1 &&
-                                                service.category_name
-                                            "
-                                            class="mt-0.5 text-xs text-gray-400 dark:text-gray-500"
-                                        >
-                                            {{ service.category_name }}
-                                        </p>
-                                    </div>
+                                    <span
+                                        v-if="isChecked(service)"
+                                        class="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-[10px] font-semibold text-white"
+                                    >
+                                        <Check class="h-3 w-3" />
+                                        Selected
+                                    </span>
                                 </div>
-
-                                <div
-                                    class="whitespace-nowrap pl-3 text-sm font-semibold text-primary"
-                                >
-                                    {{ formatCurrency(service.price) }}
-                                </div>
-                            </label>
+                            </button>
                         </div>
                     </div>
 
@@ -189,11 +186,15 @@
                         class="flex items-center justify-between gap-2 rounded-b-2xl border-t border-gray-100 bg-gray-50/60 px-6 py-4 dark:border-white/10 dark:bg-white/5"
                     >
                         <div class="flex items-center gap-3">
-                            <p class="text-xs leading-tight text-gray-400 dark:text-gray-500">
+                            <p
+                                class="text-xs leading-tight text-gray-400 dark:text-gray-500"
+                            >
                                 Total
                             </p>
 
-                            <p class="text-base font-semibold text-gray-900 dark:text-white">
+                            <p
+                                class="text-base font-semibold text-gray-900 dark:text-white"
+                            >
                                 {{ formatCurrency(selectedTotal) }}
                             </p>
                         </div>
@@ -357,6 +358,14 @@ function isChecked(service: Service) {
     return (
         service.service_id != null && service.service_id === localSelected.value
     );
+}
+
+// Tapping the chosen service again clears it, which is the only way out of a
+// selection now that there is no checkbox to untick.
+function select(service: Service) {
+    if (service.service_id == null) return;
+
+    localSelected.value = isChecked(service) ? null : service.service_id;
 }
 
 function selectCategory(value: string | null) {

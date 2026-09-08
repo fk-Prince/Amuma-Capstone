@@ -36,7 +36,7 @@ class PatientDiagnosis extends Model
         return 'patient_diagnosis_id';
     }
 
-    public function patient(): BelongsTo
+    public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
     }

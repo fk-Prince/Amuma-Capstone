@@ -128,6 +128,9 @@ class SubscriptionRepository
             'active' => (int) ($counts['active'] ?? 0),
             'inactive' => (int) ($counts['inactive'] ?? 0),
             'expired' => (int) ($counts['expired'] ?? 0),
+            // The requests/branches pages reject per branch link, not per
+            // subscription, so this counts BranchSubscription rows instead.
+            'rejected' => BranchSubscription::where('status', BranchSubscription::STATUS_REJECTED)->count(),
         ];
     }
 
@@ -241,15 +244,18 @@ class SubscriptionRepository
 
         $availableYears = collect(range(Carbon::now()->year, $earliestYear))->values();
 
-        $recent = Subscription::query()
+        // Listed per branch link, like the approval queue above: the resource
+        // reads a branch off each row, which a subscription itself does not
+        // have — it can cover several branches.
+        $recent = BranchSubscription::query()
             ->with([
                 'branch.agencies',
-                'plans',
+                'subscription.plans',
             ])
             ->latest('created_at')
             ->limit(6)
             ->get()
-            ->map(fn(Subscription $subscription) => (new SubscriptionResource($subscription))->resolve());
+            ->map(fn(BranchSubscription $link) => (new SubscriptionResource($link))->resolve());
 
         return [
             'data' => [

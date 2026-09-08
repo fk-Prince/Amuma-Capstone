@@ -138,9 +138,36 @@ export interface PatientRetrieve {
         location_id: number;
         full_address: string;
     };
+    billing?: PatientBilling | null;
+    family?: PatientFamilyMember[];
     admissions: Admission[];
     current_admission?: Admission;
     latest_admission?: Admission;
+}
+
+export interface PatientFamilyMember {
+    patient_access_id: number;
+    relationship_type: string | null;
+    have_access: boolean;
+    is_primary: boolean;
+    client: {
+        client_id: number;
+        full_name: string | null;
+        phone_number: string | null;
+        email: string | null;
+        occupation: string | null;
+        avatar: string | null;
+    } | null;
+}
+
+export interface PatientBilling {
+    balance_due: number;
+    total_paid: number;
+    refundable: number;
+    adjusted: number;
+    accommodation_balance: number;
+    service_balance: number;
+    unpaid_invoice_count: number;
 }
 
 export interface Admission {
@@ -153,13 +180,30 @@ export interface Admission {
     room?: Room;
     invoices: InvoiceAccommodation[];
     current_contract?: Contract | null;
+    current_period?: AdmissionPeriod | null;
+    future_periods?: {
+        count: number;
+        charged_amount: number;
+        invoices: InvoiceAccommodation[];
+    } | null;
     current_invoice?: InvoiceAccommodation | null;
     discharge_calculation?: DischargeCalculation | null;
     room_transfers?: RoomTransfer[];
 }
 
+export interface AdmissionPeriod {
+    admission_period_id: number;
+    status: "pending" | "active" | "inactive";
+    reason: "admitted" | "extended" | "room_change" | "accommodation_change";
+    note?: string | null;
+    started_at?: string | null;
+    ended_at?: string | null;
+    charged_amount: number;
+    contract?: Contract | null;
+}
+
 export interface InvoiceAccommodation {
-    invoice_accommodation_id: number;
+    invoice_admission_id: number;
     invoice_code: string;
     invoice_id: number;
     price: string;
@@ -169,8 +213,13 @@ export interface InvoiceAccommodation {
     net_paid_amount: string;
     refund_status: string;
 
-    start_date?: string;
-    end_date?: string | null;
+    admission_period_id?: number | null;
+    parent_admission_period_id?: number | null;
+    accommodation_status?: string | null;
+    accommodation_reason?: string | null;
+    period_start?: string | null;
+    period_end?: string | null;
+    moved_at?: string | null;
     contract?: Contract | null;
     status: string;
 }

@@ -92,7 +92,7 @@ const admission = computed(() => props.bed.current_admission);
                 class="flex items-center gap-1 truncate"
             >
                 <Phone class="h-3 w-3 text-gray-400 shrink-0 dark:text-gray-500" />
-                {{ patient.phone_number }}
+                {{ formatPhone(patient.phone_number) }}
             </div>
 
             <div

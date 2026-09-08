@@ -46,40 +46,37 @@ class Conversation extends Model
         )->latestOfMany('message_id');
     }
 
-    public function branch(): BelongsTo
+    public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
     }
 
-    public function client(): BelongsTo
+    public function client()
     {
         return $this->belongsTo(Client::class, 'client_id', 'client_id');
     }
 
-    public function patient(): BelongsTo
+    public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
     }
 
-    public function employeeOne(): BelongsTo
+    public function employeeOne()
     {
         return $this->belongsTo(Employee::class, 'employee_one_id', 'employee_id');
     }
 
-    public function employeeTwo(): BelongsTo
+    public function employeeTwo()
     {
         return $this->belongsTo(Employee::class, 'employee_two_id', 'employee_id');
     }
 
-    public function isStaffThread(): bool
+    public function isStaffThread()
     {
         return $this->type === self::TYPE_STAFF;
     }
 
-    /**
-     * On a staff thread both sides send as "staff", so unread is counted by
-     * who sent it rather than which side they are on.
-     */
+
     public function unreadForUser(int $userId): int
     {
         return $this->messages()

@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Invoice extends Model
 {
-    public const STATUS_PENDING = 'pending';
-    public const STATUS_PARTIAL = 'partial';
+    public const STATUS_PENDING = 'unpaid';
+    public const STATUS_PARTIAL = 'partially_paid';
     public const STATUS_PAID = 'paid';
     public const STATUS_VOID = 'void';
 
@@ -18,15 +18,19 @@ class Invoice extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'total',
+        'total_amount',
         'branch_id',
         'invoice_code',
         'status',
+        'voided_at',
+        'voided_by',
+        'void_reason',
     ];
 
     protected $casts = [
-        'total' => 'decimal:2',
+        'total_amount' => 'decimal:2',
         'created_at' => 'datetime',
+        'voided_at' => 'datetime',
     ];
 
     public function branch(): BelongsTo
@@ -38,17 +42,43 @@ class Invoice extends Model
         );
     }
 
+    public function voidedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'voided_by', 'user_id');
+    }
+
+    public function getIsVoidedAttribute(): bool
+    {
+        return $this->status === self::STATUS_VOID;
+    }
+
     public function invoiceServices(): HasMany
     {
-        return $this->hasMany(
-            InvoiceServices::class,
-            'invoice_id',
-            'invoice_id'
-        );
+        return $this->hasMany(InvoiceServices::class, 'invoice_id', 'invoice_id');
     }
+
+    public function invoiceAdmissionLines(): HasMany
+    {
+        return $this->hasMany(InvoiceAdmission::class, 'invoice_id', 'invoice_id');
+    }
+
 
     public function paymentDescription(): string
     {
+        $stay = $this->invoiceAdmissionLines
+            ->sortByDesc('invoice_admission_id')
+            ->first();
+
+        if ($stay) {
+            $contract = $stay->branchContract;
+
+            return collect([
+                'ADMISSION',
+                $contract?->accommodation_type,
+                $contract?->billing_cycle,
+            ])->filter()->implode(' - ');
+        }
+
         $services = $this->invoiceServices
             ->map(fn($line) => $line->scheduleService?->service_id === null
                 ? 'Activities of Daily Living (ADL)'
@@ -61,48 +91,33 @@ class Invoice extends Model
             return $services->implode(', ');
         }
 
-        $stays = $this->invoiceAccommodation
-            ->map(function ($accommodation) {
-                return collect([
-                    $accommodation->branchContract?->accommodation_type,
-                    $accommodation->branchContract?->billing_cycle
-                ])->filter()->implode(' · ');
-            })
-            ->filter()
-            ->values();
-
-        if ($stays->isNotEmpty()) {
-            return $stays->implode(' | ');
-        }
-
         return 'Payment for balance';
     }
 
-    public function payments(): HasMany
+    public function allocations(): HasMany
     {
         return $this->hasMany(
-            Payment::class,
+            PaymentInvoiceAllocation::class,
             'invoice_id',
             'invoice_id'
         );
     }
 
-    public function invoiceAccommodation(): HasMany
+    public function payments()
     {
-        return $this->hasMany(
-            InvoiceAccommodation::class,
+        return $this->belongsToMany(
+            Payment::class,
+            'payment_invoice_allocation',
             'invoice_id',
-            'invoice_id'
-        );
+            'payment_id',
+            'invoice_id',
+            'payment_id'
+        )->withPivot(['allocation_id', 'amount', 'description']);
     }
 
     public function invoiceAdjustments(): HasMany
     {
-        return $this->hasMany(
-            InvoiceAdjustment::class,
-            'invoice_id',
-            'invoice_id'
-        );
+        return $this->hasMany(InvoiceAdjustment::class, 'invoice_id',    'invoice_id');
     }
 
     protected static function booted()
@@ -134,117 +149,108 @@ class Invoice extends Model
         });
     }
 
-    public function getAmountPaidAttribute(): float
+    public function getAmountPaidAttribute()
     {
-        return round(
-            (float) $this->payments->sum('amount'),
-            2
+        return round((float) $this->allocations->sum('amount'), 2);
+    }
+
+
+    private function refundsOfThisInvoice()
+    {
+        return $this->allocations->flatMap(
+            fn(PaymentInvoiceAllocation $allocation) => $allocation->refundAllocations
         );
     }
 
-    public function getRefundedAmountAttribute(): float
+    private function refundedWithStatus(array $statuses): float
     {
         return round(
-            (float) $this->payments
-                ->flatMap(
-                    fn(Payment $payment) => $payment->refunds
-                )
-                ->whereIn('status', [
-                    Refund::STATUS_COMPLETED,
-                    Refund::STATUS_PROCESSING,
-                ])
-                ->sum('amount'),
-            2
-        );
-    }
-
-    public function getRefundedCompletedAmountAttribute(): float
-    {
-        return round(
-            (float) $this->payments
-                ->flatMap(
-                    fn(Payment $payment) => $payment->refunds
-                )
-                ->where(
-                    'status',
-                    Refund::STATUS_COMPLETED
+            (float) $this->refundsOfThisInvoice()
+                ->filter(
+                    fn($line) => in_array($line->refund?->status, $statuses, true)
                 )
                 ->sum('amount'),
             2
         );
     }
 
-    public function getRefundedProcessingAmountAttribute(): float
+    public function getRefundedAmountAttribute()
     {
-        return round(
-            (float) $this->payments
-                ->flatMap(
-                    fn(Payment $payment) => $payment->refunds
-                )
-                ->where(
-                    'status',
-                    Refund::STATUS_PROCESSING
-                )
-                ->sum('amount'),
-            2
-        );
+        return $this->refundedWithStatus(Refund::SETTLED_STATUSES);
     }
 
-    public function getNetPaidAmountAttribute(): float
+    public function getRefundedCompletedAmountAttribute()
     {
-        return round(
-            max(
-                $this->amount_paid - $this->refunded_amount,
-                0
-            ),
-            2
-        );
+        return $this->refundedWithStatus([Refund::STATUS_COMPLETED]);
     }
 
-    public function getLatestAdjustmentAttribute(): float
+    public function getRefundedRequestedAmountAttribute()
+    {
+        return $this->refundedWithStatus([Refund::STATUS_REQUESTED]);
+    }
+
+    public function getNetPaidAmountAttribute()
+    {
+        return round(max($this->amount_paid - $this->refunded_amount,  0),  2);
+    }
+
+
+    public function syncStatus()
+    {
+        if ($this->status === self::STATUS_VOID) {
+            return $this;
+        }
+
+        $this->load('invoiceAdjustments', 'allocations.refundAllocations.refund');
+
+        $status = match (true) {
+            $this->balance_due <= 0 => self::STATUS_PAID,
+            $this->net_paid_amount > 0 => self::STATUS_PARTIAL,
+            default => self::STATUS_PENDING,
+        };
+
+        if ($status !== $this->status) {
+            $this->update(['status' => $status]);
+        }
+
+        return $this;
+    }
+
+    public function getLatestAdjustmentAttribute()
     {
         $adjustment = $this->invoiceAdjustments
             ->sortByDesc('created_at')
             ->first();
 
-        return round(
-            (float) ($adjustment?->amount ?? 0),
-            2
-        );
+        return round((float) ($adjustment?->amount ?? 0), 2);
     }
 
-    public function getAdjustedTotalAttribute(): float
+
+    public function getTotalAdjustmentAttribute()
     {
-        $adjustment = $this->latest_adjustment;
-
-        if ($adjustment <= 0) {
-            return round(
-                (float) $this->total,
-                2
-            );
-        }
-
-        return round(
-            $adjustment,
-            2
-        );
+        return round((float) $this->invoiceAdjustments->sum('amount'),  2);
     }
 
-    public function getBalanceDueAttribute(): float
+    public function getAdjustedTotalAttribute()
     {
-        return round(
-            max(
-                $this->adjusted_total - $this->net_paid_amount,
-                0
-            ),
-            2
-        );
+        return round((float) $this->total_amount + $this->total_adjustment, 2);
     }
 
+    public function getBalanceDueAttribute()
+    {
+        return round(max($this->adjusted_total - $this->net_paid_amount, 0),      2);
+    }
+
+    // Read in the invoice lists, the portal and the patient resources, so it has
+    // to answer for every invoice rather than only refunded ones. A requested
+    // refund is a claim awaiting a decision, which is worth showing but is not
+    // money that has moved.
     public function getRefundStatusAttribute(): string
     {
         if ($this->refunded_amount <= 0) {
-            return 'none';
+            return $this->refunded_requested_amount > 0
+                ? 'refund requested'
+                : 'none';
         }
 
         return $this->net_paid_amount <= 0
