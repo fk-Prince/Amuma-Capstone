@@ -97,7 +97,8 @@ class PatientRepository
                 $search = $payload['search'];
 
                 $query->where(function ($q) use ($search) {
-                    $q->where('first_name', 'like', "%{$search}%")
+                    $q->where('patient_code', 'ilike', "{$search}%")
+                        ->orWhere('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhere('middle_name', 'like', "%{$search}%")
                         ->orWhereRaw(
@@ -134,16 +135,16 @@ class PatientRepository
             'admissions.bed.room',
             'admissions.invoiceAdmission.admissionPeriod.branchContract',
             'admissions.invoiceAdmission.invoice',
-            'admissions.invoiceAdmission.invoice.allocations.refundAllocations.refund',
+            'admissions.invoiceAdmission.invoice.allocations.refundAllocations',
 
             'admissions.currentPeriod.branchContract',
-            'admissions.currentPeriod.invoiceAdmissionLines.invoice.allocations.refundAllocations.refund',
+            'admissions.currentPeriod.invoiceAdmissionLines.invoice.allocations.refundAllocations',
             'admissions.currentPeriod.invoiceAdmissionLines.invoice.invoiceAdjustments',
             'admissions.latestPeriod.branchContract',
-            'admissions.futurePeriods.invoiceAdmissionLines.invoice.allocations.refundAllocations.refund',
+            'admissions.futurePeriods.invoiceAdmissionLines.invoice.allocations.refundAllocations',
             'admissions.futurePeriods.invoiceAdmissionLines.invoice.invoiceAdjustments',
             'admissions.currentInvoiceAdmission.invoice',
-            'admissions.currentInvoiceAdmission.invoice.allocations.refundAllocations.refund',
+            'admissions.currentInvoiceAdmission.invoice.allocations.refundAllocations',
             'currentAdmission',
             'latestAdmission',
 

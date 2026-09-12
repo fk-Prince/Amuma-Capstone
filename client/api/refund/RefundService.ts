@@ -1,4 +1,4 @@
-import BaseService from '~/api/BaseService';
+import BaseService from "~/api/BaseService";
 
 class RefundService extends BaseService {
     private static instance: RefundService;
@@ -15,8 +15,6 @@ class RefundService extends BaseService {
         return RefundService.instance;
     }
 
-    // amount is optional — omit it to claim the whole credit, or pass a smaller
-    // figure to leave the rest sitting on the account.
     async claim(payload: {
         patient_id: number;
         method: string;
@@ -24,23 +22,27 @@ class RefundService extends BaseService {
         amount?: number;
         reason?: string;
     }): Promise<any> {
-        return await this.request(this.resource + '/action', 'POST', payload);
+        return await this.request(this.resource + "/action", "POST", payload);
+    }
+
+    async requests(payload: { patient_id: number }): Promise<any> {
+        return await this.request(this.resource + "/requests", "POST", payload);
     }
 
     async issue(payload: {
-        invoice_code: string;
+        p_uuid: string;
         branch_uuid: string;
         amount?: number;
         method?: string;
         account_details?: string;
         reason?: string;
     }): Promise<any> {
-        return await this.request(this.resource + '/issue', 'POST', payload);
+        return await this.request(this.resource + "/issue", "POST", payload);
     }
 
     private get resource(): string {
         const backend = this.getBackendApi;
-        return `${backend}/api/refunds`;
+        return `${backend}/api/withdrawals`;
     }
 }
 

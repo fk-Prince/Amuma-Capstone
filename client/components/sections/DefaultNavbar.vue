@@ -34,7 +34,15 @@ const props = defineProps<{
 
 const variant = computed(() => route.meta.navVariant ?? 1);
 
-const CONTENT_BOX = "inset-x-0 mx-auto w-[94%] max-w-[1600px]";
+const CONTENT_BOX = "inset-x-0 mx-auto w-[88%] max-w-[1600px]";
+
+const DARK_CHROME_SOLID = "dark:border-white/10 dark:bg-secondary";
+
+const DARK_CHROME_RAISED = "dark:border-white/10 dark:bg-[#212A3E]";
+
+const DARK_GLOW = "dark:shadow-[0_10px_40px_-12px_rgba(0,0,0,0.8)]";
+
+const INDICATOR_BLEED = 8;
 
 const navInner = computed(() => {
     if (variant.value === 2 || variant.value === 3) return "px-10";
@@ -53,66 +61,58 @@ const header = computed(() => {
                 "fixed top-0 left-0 z-50 w-full h-[90px] ",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? "bg-white dark:bg-secondary border-b border-muted-light dark:border-white/10"
+                    ? `bg-white border-b border-muted-light ${DARK_CHROME_SOLID}`
                     : navTheme.value === "dark"
                       ? "bg-transparent border-b border-transparent"
-                      : "bg-transparent border-b border-transparent dark:bg-secondary/95 dark:border-white/10 dark:backdrop-blur-md",
+                      : `bg-transparent border-b border-transparent ${DARK_CHROME_SOLID}`,
             ]
                 .filter(Boolean)
                 .join(" ");
 
         case 2:
             return [
-                "fixed top-4 z-50",
+                "fixed top-6 z-50",
                 CONTENT_BOX,
-                "rounded-xl h-[90px] ",
+                "rounded-[20px] h-[90px] ",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? "border border-muted-light bg-light"
+                    ? `border border-muted-light bg-light ${DARK_CHROME_SOLID} ${DARK_GLOW}`
                     : navTheme.value === "dark"
                       ? "border border-transparent bg-transparent"
-                      : "border border-transparent bg-transparent dark:border-white/10 dark:bg-secondary/95 dark:backdrop-blur-md",
+                      : `border border-transparent bg-transparent ${DARK_CHROME_RAISED} ${DARK_GLOW}`,
             ]
                 .filter(Boolean)
                 .join(" ");
         case 3:
             return [
-                "fixed top-4 z-50",
+                "fixed top-6 z-50",
                 CONTENT_BOX,
-                "h-[90px] rounded-xl",
+                "h-[90px] rounded-[20px]",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? "border border-muted-light dark:border-white/10 bg-light dark:bg-secondary"
+                    ? `border border-muted-light bg-light ${DARK_CHROME_SOLID} ${DARK_GLOW}`
                     : navTheme.value === "dark"
                       ? "border border-light/20 bg-light/10 "
-                      : "border border-muted-light dark:border-white/10 bg-light/90 dark:bg-secondary backdrop-blur-md",
+                      : `border border-muted-light bg-light ${DARK_CHROME_RAISED} ${DARK_GLOW}`,
             ]
                 .filter(Boolean)
                 .join(" ");
         case 4:
             return [
                 "relative w-full h-[70px] flex items-center",
-                "transition-all duration-300 ease-out bg-secondary",
+                "transition-all duration-300 ease-out bg-secondary dark:bg-surface",
             ]
                 .filter(Boolean)
                 .join(" ");
         case 5:
-            return [
-                "fixed top-0 left-0 z-50 w-full h-[90px] flex items-center",
-                "transition-colors duration-200 ease-out",
-                scrolled.value
-                    ? "bg-white dark:bg-secondary border-b border-muted-light dark:border-white/10"
-                    : "bg-transparent border-b border-transparent",
-            ]
-                .filter(Boolean)
-                .join(" ");
+            return "relative z-50 w-full h-[90px] flex items-center bg-transparent";
         case 6:
-            return [
-                "relative w-full h-[90px] flex items-center",
-                "border-b border-muted-light dark:bg-secondary dark:border-white/10", //dark:bg-secondary dark:border-white/10
-            ]
-                .filter(Boolean)
-                .join(" ");
+            return (
+                ["relative w-full h-[90px] flex items-center bg-transparent"]
+                    //${DARK_CHROME_SOLID} border-b border-muted-light
+                    .filter(Boolean)
+                    .join(" ")
+            );
     }
 });
 
@@ -142,6 +142,20 @@ const navLinkClass = (to: string) => {
         : "text-secondary/80 hover:text-secondary";
 };
 
+const indicatorColor = computed(() =>
+    navTheme.value === "dark" && !scrolled.value ? "bg-light" : "bg-primary",
+);
+
+const signInLinkClass = computed(() => {
+    if (!isChromeSolid.value) return "text-light/80 hover:text-light";
+
+    return "text-primary hover:text-primary-600 dark:text-primary-300 dark:hover:text-primary-200";
+});
+
+const dividerClass = computed(() =>
+    !isChromeSolid.value ? "bg-light/20" : "bg-muted-light dark:bg-white/15",
+);
+
 const menuIconClass = computed(() => {
     if (scrolled.value) {
         return "text-secondary hover:bg-primary-50 dark:text-white dark:hover:bg-white/10";
@@ -169,21 +183,25 @@ const pillStyle = ref({
 });
 
 const setNavRef = (el: any, index: number) => {
-    navRefs.value[index] = el;
+    navRefs.value[index] = el?.$el ?? el;
 };
 
 const updatePillPosition = () => {
     const el = navRefs.value[activeIndex.value];
 
-    if (!el) {
+    if (!el?.offsetWidth) {
         pillStyle.value = { ...pillStyle.value, opacity: "0" };
         return;
     }
 
+    const styles = window.getComputedStyle(el);
+    const padLeft = parseFloat(styles.paddingLeft) || 0;
+    const padRight = parseFloat(styles.paddingRight) || 0;
+
     pillStyle.value = {
-        width: `${el.offsetWidth}px`,
+        width: `${el.offsetWidth - padLeft - padRight + INDICATOR_BLEED * 2}px`,
         opacity: "1",
-        transform: `translateX(${el.offsetLeft}px)`,
+        transform: `translateX(${el.offsetLeft + padLeft - INDICATOR_BLEED}px)`,
     };
 };
 
@@ -206,7 +224,7 @@ watch(
 <template>
     <header :class="header">
         <nav
-            class="flex justify-between items-center w-full h-[90px]"
+            class="relative flex justify-between items-center w-full h-[90px]"
             :class="navInner"
         >
             <nav
@@ -217,7 +235,7 @@ watch(
                     <img
                         :src="logoAmuma"
                         alt="AMUMA logo"
-                        class="w-[180px] object-contain transition-all duration-300"
+                        class="w-[180px] md:w-[250px] object-contain transition-all duration-300"
                     />
                 </NuxtLink>
 
@@ -229,7 +247,7 @@ watch(
             </nav>
             <nav
                 v-if="variant === 6"
-                class="flex h-[90px] w-full items-center justify-between"
+                class="flex w-full items-center justify-between"
             >
                 <NuxtLink to="/" class="shrink-0">
                     <img
@@ -256,7 +274,7 @@ watch(
                     variant === 4
                 "
             >
-                <div class="flex items-center gap-8">
+                <div class="flex flex-1 items-center">
                     <NuxtLink to="/" class="shrink-0">
                         <img
                             :src="logoAmuma"
@@ -264,37 +282,63 @@ watch(
                             class="w-[180px] object-contain transition-all duration-300"
                         />
                     </NuxtLink>
-
-                    <div
-                        v-if="variant === 1 || variant === 2 || variant === 3"
-                        class="relative hidden 2xl:flex items-center gap-1"
-                    >
-                        <span
-                            class="absolute inset-y-1 left-0 z-0 rounded-lg transition-all duration-300 ease-out"
-                            :class="
-                                navTheme === 'dark' && !scrolled
-                                    ? 'bg-light/15'
-                                    : isChromeSolid
-                                      ? 'bg-primary-50 dark:bg-primary-500/10'
-                                      : 'bg-primary-50'
-                            "
-                            :style="pillStyle"
-                        />
-                        <NuxtLink
-                            v-for="(i, index) in navList"
-                            :key="i.to"
-                            :ref="(el) => setNavRef(el, index)"
-                            :to="i.to"
-                            class="relative z-10 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-300"
-                            :class="navLinkClass(i.to)"
-                        >
-                            {{ i.label }}
-                        </NuxtLink>
-                    </div>
                 </div>
 
-                <div class="flex items-center gap-3">
+                <div
+                    v-if="variant === 1 || variant === 2 || variant === 3"
+                    class="relative hidden shrink-0 items-center xl:flex"
+                >
+                    <span
+                        class="absolute bottom-0 left-0 h-[3px] rounded-full transition-all duration-300 ease-out"
+                        :class="indicatorColor"
+                        :style="pillStyle"
+                    />
+
+                    <NuxtLink
+                        v-for="(i, index) in navList"
+                        :key="i.to"
+                        :ref="(el) => setNavRef(el, index)"
+                        :to="i.to"
+                        class="group relative z-10 whitespace-nowrap py-2 text-sm font-medium transition-colors duration-300 px-5"
+                        :class="navLinkClass(i.to)"
+                    >
+                        {{ i.label }}
+
+                        <span
+                            v-if="!isActive(i.to)"
+                            class="pointer-events-none absolute inset-x-3 bottom-0 h-[3px] origin-center scale-x-0 rounded-full transition-transform duration-300 ease-out group-hover:scale-x-100"
+                            :class="indicatorColor"
+                        />
+                    </NuxtLink>
+                </div>
+
+                <div class="flex flex-1 items-center justify-end gap-6">
                     <template v-if="!hydrated || !user">
+                        <NuxtLink
+                            :to="hydrated ? '/auth/signin' : undefined"
+                            class="hidden shrink-0 whitespace-nowrap md:px-5 text-sm font-medium transition-colors duration-200 sm:block"
+                            :class="signInLinkClass"
+                        >
+                            Sign in
+                        </NuxtLink>
+
+                        <span
+                            class="hidden h-6 w-px shrink-0 sm:block"
+                            :class="dividerClass"
+                        />
+
+                        <NuxtLink
+                            :to="hydrated ? '/auth/signup' : undefined"
+                            class="hidden sm:block shrink-0"
+                        >
+                            <BaseButton
+                                buttonClass="md:px-9 h-[46px] rounded-xl whitespace-nowrap min-w-fit shadow-sm shadow-primary-500/25 transition-all duration-200 hover:shadow-md hover:shadow-primary-500/30 active:scale-[0.97]"
+                                class="bg-primary text-white border border-primary hover:bg-primary-600"
+                            >
+                                Sign up
+                            </BaseButton>
+                        </NuxtLink>
+
                         <ClientOnly>
                             <ThemeToggle
                                 :class="
@@ -304,35 +348,6 @@ watch(
                                 "
                             />
                         </ClientOnly>
-
-                        <NuxtLink
-                            :to="hydrated ? '/auth/signin' : undefined"
-                            class="hidden sm:block shrink-0"
-                        >
-                            <BaseButton
-                                buttonClass="px-[18px] lg:px-[28px] h-11 rounded-lg whitespace-nowrap min-w-fit shadow-sm shadow-primary-500/25 transition-all duration-200 hover:shadow-md hover:shadow-primary-500/30 active:scale-[0.97]"
-                                class="bg-primary text-white border border-primary hover:bg-primary-600"
-                            >
-                                Sign in
-                            </BaseButton>
-                        </NuxtLink>
-
-                        <NuxtLink
-                            :to="hydrated ? '/auth/signup' : undefined"
-                            class="hidden sm:block shrink-0"
-                        >
-                            <BaseButton
-                                variant="outline"
-                                class="h-11 rounded-lg border-[1.5px] px-[20px] lg:px-[24px] whitespace-nowrap min-w-fit font-semibold transition-all duration-200 active:scale-[0.97]"
-                                :class="
-                                    !isChromeSolid
-                                        ? 'border-white/30 bg-white/5 text-white hover:bg-white/15'
-                                        : 'border-primary/30 text-primary bg-primary-50/60 hover:bg-primary-50 hover:border-primary/50 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-300 dark:hover:bg-primary-500/20'
-                                "
-                            >
-                                Sign up
-                            </BaseButton>
-                        </NuxtLink>
                     </template>
 
                     <NavbarProfileDropdown
@@ -345,7 +360,7 @@ watch(
 
                     <button
                         v-if="variant === 1 || variant === 2 || variant === 3"
-                        class="2xl:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors duration-300"
+                        class="xl:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors duration-300"
                         :class="menuIconClass"
                         aria-label="Open menu"
                         @click="mobileMenuOpen = true"
@@ -373,7 +388,7 @@ watch(
                 :logo="logoAmuma"
                 :authMenu="navList"
                 :user="user"
-                :desktop-breakpoint="1536"
+                :desktop-breakpoint="1280"
                 @close="mobileMenuOpen = false"
             />
         </ClientOnly>

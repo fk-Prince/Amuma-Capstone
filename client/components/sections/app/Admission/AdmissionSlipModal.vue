@@ -64,7 +64,7 @@
 
     <!-- Lives outside the dialog so the print stylesheet can keep this alone. -->
     <Teleport to="body">
-        <div v-if="slip" class="admission-slip-sheet hidden print:block">
+        <div v-if="slip" class="print-slip-sheet hidden print:block">
             <AdmissionSlipSheet :slip="slip" print />
         </div>
     </Teleport>

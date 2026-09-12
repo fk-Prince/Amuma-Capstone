@@ -15,7 +15,7 @@
                         <p
                             class="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-600 dark:text-amber-300"
                         >
-                            Refund requests
+                            Withdrawal requests
                         </p>
 
                         <h3
@@ -38,7 +38,7 @@
                     class="flex items-center justify-between gap-3 border-b border-primary-100 bg-slate-50 px-6 py-3 dark:border-white/10 dark:bg-white/5"
                 >
                     <span class="text-xs text-muted dark:text-gray-400">
-                        Credit available
+                        Credit on account
                     </span>
 
                     <span
@@ -52,10 +52,10 @@
                     <article
                         v-for="request in requests"
                         :key="request.refund_id"
-                        class="overflow-hidden rounded-xl border border-primary-100 dark:border-white/10"
+                        class="overflow-hidden rounded-md border border-primary-500 dark:border-primary-500/50"
                     >
                         <div
-                            class="flex items-center justify-between gap-3 bg-amber-50 px-4 py-2.5 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                            class="flex items-center justify-between gap-3 bg-primary px-3 py-1.5 text-white"
                         >
                             <span class="font-mono text-[11px] font-semibold">
                                 {{
@@ -64,31 +64,53 @@
                                 }}
                             </span>
 
-                            <span
-                                class="text-[10px] font-bold uppercase tracking-wide"
-                            >
-                                Requested
+                            <span class="text-[11px] font-semibold">
+                                Withdraw credits
                             </span>
                         </div>
 
-                        <dl
-                            class="divide-y divide-primary-100 dark:divide-white/10"
-                        >
+                        <dl class="text-[11px]">
                             <div
-                                v-for="row in rowsFor(request)"
+                                v-for="(row, index) in rowsFor(request)"
                                 :key="row.label"
-                                class="flex items-start justify-between gap-3 px-4 py-2"
+                                class="flex items-start justify-between gap-3 px-3 py-1.5"
+                                :class="
+                                    index % 2
+                                        ? 'bg-white dark:bg-secondary'
+                                        : 'bg-primary-50/60 dark:bg-white/5'
+                                "
                             >
                                 <dt
-                                    class="shrink-0 text-[11px] text-muted dark:text-gray-500"
+                                    class="shrink-0 text-muted dark:text-gray-400"
                                 >
                                     {{ row.label }}
                                 </dt>
 
                                 <dd
-                                    class="min-w-0 truncate text-right text-[11px] font-medium text-secondary dark:text-gray-200"
+                                    class="min-w-0 truncate text-right font-medium text-secondary dark:text-gray-100"
                                 >
                                     {{ row.value }}
+                                </dd>
+                            </div>
+
+                            <div
+                                class="flex items-start justify-between gap-3 px-3 py-1.5"
+                                :class="
+                                    rowsFor(request).length % 2
+                                        ? 'bg-white dark:bg-secondary'
+                                        : 'bg-primary-50/60 dark:bg-white/5'
+                                "
+                            >
+                                <dt
+                                    class="shrink-0 text-muted dark:text-gray-400"
+                                >
+                                    Status
+                                </dt>
+
+                                <dd
+                                    class="min-w-0 text-right font-medium text-amber-600 dark:text-amber-400"
+                                >
+                                    Requested
                                 </dd>
                             </div>
                         </dl>
@@ -131,7 +153,7 @@
                         v-if="!requests.length"
                         class="py-6 text-center text-xs text-muted dark:text-gray-400"
                     >
-                        No refund requests are waiting for review.
+                        No withdrawal requests are waiting for review.
                     </p>
 
                     <p
@@ -173,18 +195,18 @@ function exceedsCredit(request: any) {
     return Number(request.amount ?? 0) > Number(props.credit ?? 0) + 0.001;
 }
 
+// Same rows the family sees in the portal: the credit is claimed against the
+// account, so the invoice it is drawn from is left out.
 function rowsFor(request: any) {
-    const codes = request.invoice_codes ?? [];
-
     return [
         { label: "Date of request", value: formatDate(request.created_at) },
-        { label: "Payment method", value: request.refund_method },
-        { label: "Amount requested", value: `₱${formatMoney(request.amount)}` },
+        { label: "Requested by", value: request.requested_by?.name },
         {
-            label: codes.length > 1 ? "Invoices" : "Invoice",
-            value: codes.join(", "),
+            label: "Electronic method",
+            value: methodLabel(request.refund_method, ""),
         },
-        { label: "Account", value: request.masked_card_number },
+        { label: "Amount", value: `₱${formatMoney(request.amount)}` },
+        { label: "Account", value: request.masked_account_detail },
     ].filter((row) => !!row.value);
 }
 </script>

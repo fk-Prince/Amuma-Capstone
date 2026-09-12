@@ -151,9 +151,7 @@
                                                     class="text-xs text-slate-500 dark:text-gray-400"
                                                 >
                                                     {{ group.billing_cycle }} ·
-                                                    {{
-                                                        group.rooms.length
-                                                    }}
+                                                    {{ group.rooms.length }}
                                                     rooms ·
                                                     {{
                                                         group.available_beds_count
@@ -549,7 +547,8 @@
                                                 <span
                                                     class="text-slate-500 dark:text-gray-400"
                                                 >
-                                                    Each × {{
+                                                    Each ×
+                                                    {{
                                                         proration.remainingDays
                                                     }}
                                                     unused days
@@ -559,7 +558,8 @@
                                                     class="shrink-0 font-semibold text-slate-700 dark:text-gray-300"
                                                 >
                                                     {{
-                                                        proration.difference >= 0
+                                                        proration.difference >=
+                                                        0
                                                             ? "+"
                                                             : "−"
                                                     }}
@@ -654,40 +654,40 @@
                                 </div>
 
                                 <div
-                                    v-if="proration.futureCount"
+                                    v-for="group in proration.futureGroups"
+                                    :key="group.billingCycle ?? 'unknown'"
                                     class="flex justify-between gap-4 border-t border-amber-200 pt-1.5 dark:border-amber-500/20"
                                 >
                                     <span
                                         class="text-slate-600 dark:text-gray-400"
                                     >
-                                        {{ proration.futureCount }} prepaid
+                                        {{ group.count }} prepaid
                                         {{
-                                            proration.futureCount === 1
+                                            group.billingCycle
+                                                ? `${group.billingCycle.toLowerCase()} `
+                                                : ""
+                                        }}{{
+                                            group.count === 1
                                                 ? "period"
                                                 : "periods"
                                         }}
-                                        →
+                                    </span>
+
+                                    <span
+                                        v-if="group.delta === null"
+                                        class="text-amber-700 dark:text-amber-300"
+                                    >
+                                        No {{ group.billingCycle }} plan for
                                         {{
                                             selectedContract?.accommodation_type
                                         }}
+                                        — left unchanged
                                     </span>
-                                    <span
-                                        class="font-medium"
-                                        :class="
-                                            proration.futureDelta < 0
-                                                ? 'text-emerald-700 dark:text-emerald-300'
-                                                : ''
-                                        "
-                                    >
+
+                                    <span v-else class="font-medium">
+                                        will be re-priced to
                                         {{
-                                            proration.futureDelta >= 0
-                                                ? "+"
-                                                : "−"
-                                        }}
-                                        {{
-                                            formatCurrency(
-                                                Math.abs(proration.futureDelta),
-                                            )
+                                            selectedContract?.accommodation_type
                                         }}
                                     </span>
                                 </div>
@@ -696,11 +696,30 @@
                             <p
                                 class="mt-3 text-xs text-amber-800/80 dark:text-amber-300/70"
                             >
-                                One adjustment on
-                                {{
-                                    currentInvoiceCode ?? "the current invoice"
-                                }}. Payments already made stay put.
+                                Payments already made stay put.
                             </p>
+
+                            <div
+                                v-if="priceReference.length"
+                                class="mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t border-amber-200 pt-2 text-[11px] text-amber-800/70 dark:border-amber-500/20 dark:text-amber-300/60"
+                            >
+                                <span
+                                    v-for="row in priceReference"
+                                    :key="row.type"
+                                >
+                                    <span class="font-semibold uppercase">
+                                        {{ row.type }}
+                                    </span>
+                                    <template v-if="row.monthly !== null">
+                                        · Monthly
+                                        {{ formatCurrency(row.monthly) }}
+                                    </template>
+                                    <template v-if="row.yearly !== null">
+                                        · Yearly
+                                        {{ formatCurrency(row.yearly) }}
+                                    </template>
+                                </span>
+                            </div>
                         </div>
 
                         <div v-if="selectedRoom && selectedBed" class="mt-4">
@@ -982,6 +1001,34 @@ const contractGroups = computed<RoomContract[]>(() =>
         }),
 );
 
+// Every accommodation type's monthly/yearly rate, for reference beside the
+// prepaid-period notice — the room picker above only offers the current
+// cycle, so this is the only place the other cycle's rate is visible.
+const priceReference = computed(() => {
+    const types = [
+        ...new Set(contracts.value.map((c) => c.accommodation_type)),
+    ];
+
+    return types
+        .map((type) => {
+            const forType = contracts.value.filter(
+                (c) => c.accommodation_type === type,
+            );
+
+            return {
+                type,
+                monthly:
+                    forType.find(
+                        (c) => normalize(c.billing_cycle) === "MONTHLY",
+                    )?.price ?? null,
+                yearly:
+                    forType.find((c) => normalize(c.billing_cycle) === "YEARLY")
+                        ?.price ?? null,
+            };
+        })
+        .filter((row) => row.monthly !== null || row.yearly !== null);
+});
+
 function normalize(value?: string | null) {
     return (value ?? "").trim().toUpperCase();
 }
@@ -1118,14 +1165,40 @@ const proration = computed(() => {
     const oldRemaining = round2(oldDailyRate * remainingDays);
     const newRemaining = round2(newDailyRate * remainingDays);
     const difference = round2(newRemaining - oldRemaining);
-    const futureCount = Number(props.admission?.future_periods?.count ?? 0);
-    const futureCharged = Number(
-        props.admission?.future_periods?.charged_amount ?? 0,
-    );
 
-    const futureDelta = round2(
-        futureCount * Number(selectedContract.value?.price ?? 0) -
-            futureCharged,
+    const futureGroups = (props.admission?.future_periods?.groups ?? []).map(
+        (group) => {
+            const sameCycle =
+                normalize(group.billing_cycle) ===
+                normalize(selectedContract.value?.billing_cycle);
+
+            const matchedContract = sameCycle
+                ? selectedContract.value
+                : contracts.value.find(
+                      (c) =>
+                          normalize(c.accommodation_type) ===
+                              normalize(
+                                  selectedContract.value?.accommodation_type,
+                              ) &&
+                          normalize(c.billing_cycle) ===
+                              normalize(group.billing_cycle),
+                  );
+
+            return {
+                billingCycle: group.billing_cycle,
+                count: group.count,
+                chargedAmount: round2(group.charged_amount),
+                newPrice: matchedContract
+                    ? round2(Number(matchedContract.price))
+                    : null,
+                delta: matchedContract
+                    ? round2(
+                          group.count * Number(matchedContract.price) -
+                              group.charged_amount,
+                      )
+                    : null,
+            };
+        },
     );
 
     return {
@@ -1134,13 +1207,14 @@ const proration = computed(() => {
         consumedDays,
         oldDailyRate: round2(oldDailyRate),
         newDailyRate: round2(newDailyRate),
-        oldPeriodPrice: round2(Number(currentPeriod.value?.charged_amount ?? 0)),
+        oldPeriodPrice: round2(
+            Number(currentPeriod.value?.charged_amount ?? 0),
+        ),
         newContractPrice: round2(Number(selectedContract.value?.price ?? 0)),
         oldRemaining,
         newRemaining,
         difference,
-        futureCount,
-        futureDelta,
+        futureGroups,
     };
 });
 

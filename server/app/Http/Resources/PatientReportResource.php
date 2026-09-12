@@ -15,6 +15,7 @@ class PatientReportResource extends JsonResource
         $payload = [
             'patient' => [
                 'patient_uuid' => $patient->uuid,
+                'patient_code' => $patient->patient_code,
                 'full_name' => trim(collect([
                     $patient->first_name,
                     $patient->middle_name,

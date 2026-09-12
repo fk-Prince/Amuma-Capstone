@@ -114,10 +114,6 @@ class InvoiceObserver
 
         if ($cycle) {
             try {
-                // A whole billing period stays whole on its new dates, so a
-                // month keeps landing on the same day of the month. One an
-                // accommodation change cut short keeps its exact span instead
-                // of growing into a full cycle.
                 $isWholeCycle = $originalEnd->equalTo(
                     AdmissionHelper::calculateEndDate($originalStart->copy(), $cycle)
                 );

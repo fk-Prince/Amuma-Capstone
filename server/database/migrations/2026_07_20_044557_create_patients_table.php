@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('location_id')->nullable()
                 ->constrained('locations', 'location_id');
             $table->uuid('uuid')->unique();
+            $table->string('patient_code')->unique();
             $table->string('first_name');
             $table->string('middle_name');
             $table->string('last_name');
@@ -28,7 +29,6 @@ return new class extends Migration
             $table->date('date_of_birth')->nullable();
             $table->string('phone_number', 20)->nullable();
             $table->string('citizenship', 20)->nullable();
-            // $table->json('assessment')->nullable();
             $table->json('allergies')->nullable();
             $table->timestamps();
         });

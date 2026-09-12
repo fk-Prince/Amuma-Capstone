@@ -16,13 +16,12 @@ class RefundAllocation extends Model
     protected $fillable = [
         'refund_id',
         'allocation_id',
+        'invoice_adjustment_id',
         'amount',
-        'created_at',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
-        'created_at' => 'datetime',
     ];
 
     public function refund(): BelongsTo
@@ -36,6 +35,15 @@ class RefundAllocation extends Model
             PaymentInvoiceAllocation::class,
             'allocation_id',
             'allocation_id'
+        );
+    }
+
+    public function invoiceAdjustment(): BelongsTo
+    {
+        return $this->belongsTo(
+            InvoiceAdjustment::class,
+            'invoice_adjustment_id',
+            'invoice_adjustment_id'
         );
     }
 

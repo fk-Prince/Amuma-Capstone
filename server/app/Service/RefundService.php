@@ -4,15 +4,18 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Events\NotificationEvent;
+use App\Http\Resources\RefundResource;
+use App\Models\AdmissionPeriod;
 use App\Models\Employee;
 use App\Models\Invoice;
 use App\Models\InvoiceAdjustment;
-use App\Models\AdmissionPeriod;
 use App\Models\Module;
 use App\Models\PatientAdmission;
 use App\Models\Refund;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Repository\NotificationRepository;
+use App\Repository\RefundRepository;
 use App\Utils\DischargeCalculator;
 use App\Utils\MaskUtil;
 use Carbon\Carbon;
@@ -24,41 +27,27 @@ class RefundService
     private const YEARLY_HALF_REFUND_WINDOW_DAYS = 183;
     private const YEARLY_HALF_REFUND_RATE = 0.50;
 
-
     public function __construct(
-        private NotificationRepository $notificationRepository
+        private NotificationRepository $notificationRepository,
+        private RefundRepository $refundRepository,
+        private TransactionService $transactions
     ) {}
 
     public function getPaidAmount(Invoice $invoice)
     {
-        return round(
-            (float) $invoice->allocations()->sum('amount'),
-            2
-        );
+        return round((float) $invoice->allocations()->sum('amount'), 2);
     }
 
     public function getRefundedAmount(Invoice $invoice)
     {
-        return round(
-            (float) $invoice->allocations()
-                ->with('refundAllocations.refund')
-                ->get()
-                ->flatMap(fn($allocation) => $allocation->refundAllocations)
-                ->filter(
-                    fn($line) => in_array(
-                        $line->refund?->status,
-                        Refund::SETTLED_STATUSES,
-                        true
-                    )
-                )
-                ->sum('amount'),
-            2
-        );
+        $invoice->loadMissing('allocations.refundAllocations.refund.transaction');
+
+        return round((float) $invoice->refunded_amount, 2);
     }
 
     public function getNetPaidAmount(Invoice $invoice)
     {
-        return round(max(0,   $this->getPaidAmount($invoice)   - $this->getRefundedAmount($invoice)), 2);
+        return round(max(0, $this->getPaidAmount($invoice) - $this->getRefundedAmount($invoice)), 2);
     }
 
     public function getRetainedAmount(Invoice $invoice)
@@ -71,53 +60,113 @@ class RefundService
         );
     }
 
-
-    public function getRefundableAmount(Invoice $invoice)
+    /*
+      Money on the invoice that no longer has a bill to sit against. It only
+      appears once a credit note has lowered the total, and it is turned into a
+      credit straight away, so a settled invoice reads zero here.
+    */
+    public function getCreditableAmount(Invoice $invoice)
     {
-        $invoice->loadMissing('allocations.refundAllocations.refund', 'invoiceAdjustments');
+        $invoice->loadMissing('allocations.refundAllocations.refund.transaction', 'invoiceAdjustments');
 
         return round(max(0, $this->getNetPaidAmount($invoice) - (float) $invoice->adjusted_total), 2);
     }
 
-
-    public function getPendingRefunds(Invoice $invoice)
+    public function getRefundableAmount(Invoice $invoice)
     {
-        return Refund::query()
-            ->whereHas(
-                'allocations',
-                fn($query) => $query->whereIn(
-                    'allocation_id',
-                    $invoice->allocations()->select('allocation_id')
-                )
-            )
-            ->where('status', Refund::STATUS_REQUESTED)
-            ->get();
+        return round(
+            (float) $this->refundRepository->forInvoice($invoice)
+                ->filter(fn(Refund $credit) => $credit->is_available)
+                ->sum('amount'),
+            2
+        );
+    }
+
+
+    public function creditFromAdjustment(InvoiceAdjustment $adjustment): ?Refund
+    {
+        if ((float) $adjustment->amount >= 0) {
+            return null;
+        }
+
+        $invoice = $adjustment->invoice;
+
+        if (!$invoice) {
+            return null;
+        }
+
+        $invoice->refresh()->load('allocations.refundAllocations.refund.transaction', 'invoiceAdjustments');
+
+        $amount = round(
+            min($this->getCreditableAmount($invoice), abs((float) $adjustment->amount)),
+            2
+        );
+
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $remaining = $amount;
+        $lines = [];
+
+        foreach ($invoice->allocations as $allocation) {
+            if ($remaining <= 0) {
+                break;
+            }
+
+            $available = $allocation->creditableAmount();
+
+            if ($available <= 0) {
+                continue;
+            }
+
+            $share = round(min($remaining, $available), 2);
+
+            $lines[] = [
+                'allocation_id' => $allocation->allocation_id,
+                'invoice_adjustment_id' => $adjustment->invoice_adjustment_id,
+                'amount' => $share,
+            ];
+
+            $remaining = round($remaining - $share, 2);
+        }
+
+        if (!$lines) {
+            return null;
+        }
+
+        $credit = $this->refundRepository->create(
+            round($amount - $remaining, 2),
+            $lines
+        );
+
+        $invoice->refresh()->syncStatus();
+
+        return $credit;
     }
 
     public function getRefundSummary(Invoice $invoice): array
     {
-        $pending = $this->getPendingRefunds($invoice);
-        $refundable = $this->getRefundableAmount($invoice);
-        $first = $pending->first();
+        $credits = $this->refundRepository->forInvoice($invoice);
+
+        $available = round(
+            (float) $credits->filter(fn(Refund $credit) => $credit->is_available)->sum('amount'),
+            2
+        );
+
+        $pending = $credits->first(
+            fn(Refund $credit) => $credit->transaction?->status === Transaction::STATUS_REQUESTED
+        )?->transaction;
 
         return [
             'amount_paid' => $this->getPaidAmount($invoice),
             'refunded_amount' => $this->getRefundedAmount($invoice),
             'retained_amount' => $this->getRetainedAmount($invoice),
-            'refundable_amount' => $refundable,
-            'has_refundable_balance' => $refundable > 0,
-            'requested_refund' => $first ? [
-                'refund_id' => $first->refund_id,
-                'refund_code' => $first->refund_code,
-                'amount' => round((float) $pending->sum('amount'), 2),
-                'method' => $first->refund_method,
-                'account_details' => $first->masked_card_number,
-                'requested_at' => $first->created_at?->toIso8601String(),
-            ] : null,
+            'refundable_amount' => $available,
+            'has_refundable_balance' => $available > 0,
+            'requested_refund' => $pending ? $this->formatWithdrawal($pending) : null,
         ];
     }
-
-
 
     public function getCancellationRefundAmount(Invoice $invoice, PatientAdmission $admission, AdmissionPeriod $period)
     {
@@ -224,7 +273,7 @@ class RefundService
         $paid = $calculation['amount_paid'];
         $requiredPayment = $calculation['required_payment'];
         $refundAmount = $calculation['refund_amount'];
-        
+
         if ($paid < $requiredPayment) {
             throw new Exception(
                 "Required payment has not been met. "
@@ -239,15 +288,7 @@ class RefundService
             return;
         }
 
-        $existingCredit = InvoiceAdjustment::query()
-            ->where('invoice_id', $invoice->invoice_id)
-            ->where(
-                'type',
-                InvoiceAdjustment::TYPE_CORRECTION
-            )
-            ->exists();
-
-        if ($existingCredit) {
+        if ($this->hasCreditNote($invoice)) {
             return;
         }
 
@@ -264,59 +305,32 @@ class RefundService
             'reason' => 'Discharged early. Invoice reduced to the days stayed.',
         ]);
 
-        $invoice->syncStatus();
+        $invoice->refresh()->syncStatus();
     }
 
-    // A period the patient is discharged before ever reaching is cancelled and
-    // paid back in full. There is no judgement call in that, so it happens on
-    // every discharge rather than being asked for.
-    public function createRefundFutureInvoice(Invoice $invoice, array $payload)
+    public function createRefundFutureInvoice(Invoice $invoice)
     {
-        $existingCredit = InvoiceAdjustment::query()
-            ->where('invoice_id', $invoice->invoice_id)
-            ->where(
-                'type',
-                InvoiceAdjustment::TYPE_CORRECTION
-            )
-            ->exists();
-
-        $adjustedTotal = (float) $invoice->adjusted_total;
-
-        if (!$existingCredit && $adjustedTotal > 0) {
-            InvoiceAdjustment::create([
-                'invoice_id' => $invoice->invoice_id,
-                'type' => InvoiceAdjustment::TYPE_CORRECTION,
-                'amount' => round(-$adjustedTotal, 2),
-                'reason' => 'Discharged before this period started. Invoice cancelled.',
-            ]);
-        }
-
-        $invoice->refresh();
-
-        $refundableAmount = $this->getRefundableAmount($invoice);
-
-        if ($refundableAmount <= 0) {
-            $invoice->syncStatus();
-
-            return;
-        }
-
-        $this->createRefundsForInvoice($invoice, $refundableAmount);
+        $this->cancelInvoice(
+            $invoice,
+            'Discharged before this period started. Invoice cancelled.'
+        );
     }
 
     public function createRefundFull(Invoice $invoice, string $reason)
     {
-        $existingAdjustment = InvoiceAdjustment::query()
-            ->where('invoice_id', $invoice->invoice_id)
-            ->where(
-                'type',
-                InvoiceAdjustment::TYPE_CORRECTION
-            )
-            ->exists();
+        $this->cancelInvoice($invoice, $reason);
+    }
 
+    /*
+      Writes the credit note that cancels what is left of the bill. The credit on
+      the account follows from the adjustment itself, so nothing here decides how
+      much money is owed back.
+    */
+    private function cancelInvoice(Invoice $invoice, string $reason): void
+    {
         $adjustedTotal = (float) $invoice->adjusted_total;
 
-        if (!$existingAdjustment && $adjustedTotal > 0) {
+        if (!$this->hasCreditNote($invoice) && $adjustedTotal > 0) {
             InvoiceAdjustment::create([
                 'invoice_id' => $invoice->invoice_id,
                 'type' => InvoiceAdjustment::TYPE_CORRECTION,
@@ -325,170 +339,172 @@ class RefundService
             ]);
         }
 
-        $invoice->refresh();
-
-        $refundableAmount = $this->getRefundableAmount($invoice);
-
-        if ($refundableAmount <= 0) {
-            $invoice->syncStatus();
-
-            return;
-        }
-
-        $this->createRefundsForInvoice($invoice, $refundableAmount);
-    }
-
-
-    public function createRefundsForInvoice(Invoice $invoice, float $amount,  string $status = Refund::STATUS_COMPLETED,  ?string $method = null, ?string $accountDetails = null)
-    {
-        $amount = round($amount, 2);
-
-        if ($amount <= 0) {
-            return;
-        }
-
-        $refundableAmount = $this->getRefundableAmount($invoice);
-
-        if ($amount > $refundableAmount) {
-            throw new Exception(
-                'Refund amount exceeds the refundable amount.',
-                422
-            );
-        }
-
-        $invoice->loadMissing(
-            'allocations.refundAllocations.refund',
-            'allocations.payment'
-        );
-
-        // Worked out first, so one refund is written with its split rather than
-        // a separate refund per allocation. The family asked for one refund and
-        // it is approved or declined as one.
-        $remainingAmount = $amount;
-        $split = [];
-        $source = null;
-
-        foreach ($invoice->allocations as $allocation) {
-            if ($remainingAmount <= 0) {
-                break;
-            }
-
-            $allocationRefundable = max(
-                0,
-                (float) $allocation->amount
-                    - $allocation->refundedAmount(Refund::SETTLED_STATUSES)
-            );
-
-            if ($allocationRefundable <= 0) {
-                continue;
-            }
-
-            $refundAmount = round(min($remainingAmount, $allocationRefundable), 2);
-
-            if ($refundAmount <= 0) {
-                continue;
-            }
-
-            $split[] = [
-                'allocation_id' => $allocation->allocation_id,
-                'amount' => $refundAmount,
-            ];
-
-            $source ??= $allocation;
-
-            $remainingAmount = round($remainingAmount - $refundAmount, 2);
-        }
-
-        if ($remainingAmount > 0) {
-            throw new Exception('Unable to process the requested refund amount.',  422);
-        }
-
-        $refund = Refund::create([
-            'amount' => $amount,
-            'refund_method' => $method ?? $source?->payment?->payment_method,
-            'status' => $status,
-            'masked_card_number' => $accountDetails
-                ?? $source?->payment?->masked_card_number,
-        ]);
-
-        foreach ($split as $line) {
-            $refund->allocations()->create($line + ['created_at' => now()]);
-        }
-
         $invoice->refresh()->syncStatus();
-
-        return $refund;
     }
 
-
-    public function requestPortalRefund(object $patient, array $payload, ?User $user = null): array
+    private function hasCreditNote(Invoice $invoice): bool
     {
-        $method = trim((string) $payload['method']);
-        $accountDetails = MaskUtil::accountDetails(
-            $method,
-            trim((string) $payload['account_details'])
-        );
+        return InvoiceAdjustment::query()
+            ->where('invoice_id', $invoice->invoice_id)
+            ->where('type', InvoiceAdjustment::TYPE_CORRECTION)
+            ->exists();
+    }
 
-        $invoice = $patient->patient_invoices
-            ->first(fn($invoice) => $this->getRefundableAmount($invoice) > 0
-                && $this->getPendingRefunds($invoice)->isEmpty());
+    public function creditFor(mixed $patientId): float
+    {
+        return $this->refundRepository->creditFor($patientId);
+    }
 
-        if (!$invoice) {
-            throw new Exception(
-                'There is no refundable balance to request right now.',
-                404
-            );
+    /*
+      Hands the credit on the account over to a withdrawal. Whole credits are
+      claimed in the order they were granted, and the last one is split when the
+      family asks for less than it holds.
+    */
+    public function withdraw(
+        object $patient,
+        array $payload,
+        string $status = Transaction::STATUS_COMPLETED,
+        ?User $user = null
+    ): array {
+        $available = $this->refundRepository->creditFor($patient->patient_id);
+
+        if ($available <= 0) {
+            throw new Exception('There is no credit on this account to withdraw.', 422);
         }
 
-        $refundable = $this->getRefundableAmount($invoice);
+        if (
+            $status === Transaction::STATUS_REQUESTED
+            && $this->refundRepository->openWithdrawalFor($patient->patient_id)
+        ) {
+            throw new Exception('A withdrawal is already awaiting a decision.', 422);
+        }
 
-        // The family may ask for part of the credit and leave the rest sitting,
-        // so an amount is honoured when given and the whole credit is the
-        // default. Capped either way: they can never claim more than is theirs.
-        $amount = isset($payload['amount'])
+        $amount = isset($payload['amount']) && (float) $payload['amount'] > 0
             ? round((float) $payload['amount'], 2)
-            : $refundable;
+            : $available;
 
-        if ($amount <= 0 || $amount > $refundable) {
+        if ($amount > $available) {
             throw new Exception(
-                'Refund amount must be between 0 and ' . $refundable . '.',
+                'The amount must be between 0 and ' . $available . '.',
                 422
             );
         }
+
+        $method = trim((string) ($payload['method'] ?? ''));
+
+        $accountDetails = $method && !empty($payload['account_details'])
+            ? MaskUtil::accountDetails($method, trim((string) $payload['account_details']))
+            : null;
 
         return DB::transaction(function () use (
-            $invoice,
+            $patient,
             $amount,
+            $status,
             $method,
             $accountDetails,
-            $payload,
             $user
         ) {
-            $this->createRefundsForInvoice(
-                $invoice,
+            $credits = $this->refundRepository->availableFor($patient->patient_id);
+
+            $branchId = $credits
+                ->flatMap(fn(Refund $credit) => $credit->allocations)
+                ->map(fn($line) => $line->allocation?->invoice?->branch_id)
+                ->filter()
+                ->first() ?? $patient->branch_id;
+
+            $withdrawal = $this->transactions->forWithdraw(
                 $amount,
-                Refund::STATUS_REQUESTED,
-                $method,
-                $accountDetails
+                $branchId,
+                $patient->patient_id,
+                'Withdrawal of credit on the account.',
+                $status,
+                [
+                    'client_id' => $user?->client?->client_id,
+                    'method' => $method ?: null,
+                    'masked_account_number' => $accountDetails,
+                ]
             );
 
-            $this->notifyAccounting($invoice, $amount, $user);
+            $this->claimCredits($credits, $withdrawal, $amount);
+
+            if ($status === Transaction::STATUS_REQUESTED) {
+                $this->notifyAccounting($withdrawal, $patient, $amount, $user);
+            }
 
             return [
                 'success' => true,
-                'message' => 'Your refund request has been sent to accounting.',
+                'message' => $status === Transaction::STATUS_REQUESTED
+                    ? 'Your withdrawal request has been sent to accounting.'
+                    : 'Withdrawal recorded.',
                 'amount' => $amount,
-                'invoice_id' => $invoice->invoice_id,
+                'request' => $this->formatWithdrawal($withdrawal->refresh()),
             ];
         });
     }
 
-
-    private function notifyAccounting(Invoice $invoice, float $amount, ?User $user): void
+    public function claimCredits(mixed $credits, Transaction $transaction, float $amount): float
     {
+        $remaining = round($amount, 2);
+
+        foreach ($credits as $credit) {
+            if ($remaining <= 0) {
+                break;
+            }
+
+            $value = round((float) $credit->amount, 2);
+
+            $claimed = $value <= $remaining
+                ? $credit
+                : $this->refundRepository->split($credit, $remaining);
+
+            $this->refundRepository->claim($claimed, $transaction);
+
+            $remaining = round($remaining - (float) $claimed->amount, 2);
+        }
+
+        return round($amount - $remaining, 2);
+    }
+
+    public function requestPortalRefund(object $patient, array $payload, ?User $user = null): array
+    {
+        return $this->withdraw(
+            $patient,
+            $payload,
+            Transaction::STATUS_REQUESTED,
+            $user
+        );
+    }
+
+    public function requestsForPatient(object $patient): array
+    {
+        $withdrawals = $this->refundRepository->withdrawalsFor($patient->patient_id);
+
+        return [
+            'requests' => $withdrawals
+                ->map(fn(Transaction $withdrawal) => $this->formatWithdrawal($withdrawal))
+                ->values()
+                ->all(),
+            'has_open_request' => $withdrawals->contains(
+                fn(Transaction $withdrawal) => $withdrawal->status === Transaction::STATUS_REQUESTED
+            ),
+            'available_credit' => $this->refundRepository->creditFor($patient->patient_id),
+        ];
+    }
+
+    public function formatWithdrawal(?Transaction $withdrawal): ?array
+    {
+        return RefundResource::format($withdrawal);
+    }
+
+    private function notifyAccounting(
+        Transaction $withdrawal,
+        object $patient,
+        float $amount,
+        ?User $user
+    ): void {
         $module = Module::where('module_name', ModuleEnum::BillingAndInvoices->value)->first();
 
-        if (!$module) {
+        if (!$module || !$withdrawal->branch_id) {
             return;
         }
 
@@ -496,18 +512,21 @@ class RefundService
             ->with('users')
             ->whereHas(
                 'employeeBranch',
-                fn($q) => $q->where('branch_id', $invoice->branch_id)
+                fn($q) => $q->where('branch_id', $withdrawal->branch_id)
             )
             ->whereHas(
                 'permissions',
                 fn($q) => $q->where('module_id', $module->module_id)
-                    ->where('branch_id', $invoice->branch_id)
+                    ->where('branch_id', $withdrawal->branch_id)
                     ->where('can_read', true)
             )
             ->get();
 
-        $message = 'A refund of ' . number_format($amount, 2)
-            . ' was requested on invoice ' . $invoice->invoice_code . '.';
+        $name = trim(($patient->first_name ?? '') . ' ' . ($patient->last_name ?? ''));
+
+        $message = 'A withdrawal of ' . number_format($amount, 2)
+            . ' in credit was requested'
+            . ($name !== '' ? ' for ' . $name : '') . '.';
 
         foreach ($recipients as $employee) {
             if (!$employee->user_id || !$employee->users?->uuid) {
@@ -515,7 +534,7 @@ class RefundService
             }
 
             $this->notificationRepository->create([
-                'branch_id' => $invoice->branch_id,
+                'branch_id' => $withdrawal->branch_id,
                 'to_user_id' => $employee->user_id,
                 'from_user_id' => $user?->user_id,
                 'message_type' => 'Billing',
@@ -524,56 +543,17 @@ class RefundService
 
             event(new NotificationEvent(
                 $employee->users->uuid,
-                (string) $invoice->branch?->uuid,
+                (string) $withdrawal->branch?->uuid,
                 $message,
-                (string) $invoice->invoice_id,
+                (string) $withdrawal->transaction_id,
                 'Billing',
                 null,
             ));
         }
     }
 
-    public function createRefundFromDashboard(Invoice $invoice, array $payload): array
+    public function withdrawFromDashboard(object $patient, array $payload): array
     {
-        $refundable = $this->getRefundableAmount($invoice);
-
-        if ($refundable <= 0) {
-            throw new Exception('This invoice has no refundable balance.', 422);
-        }
-
-        $amount = isset($payload['amount'])
-            ? round((float) $payload['amount'], 2)
-            : $refundable;
-
-        if ($amount <= 0 || $amount > $refundable) {
-            throw new Exception(
-                'Refund amount must be between 0 and ' . $refundable . '.',
-                422
-            );
-        }
-
-        $method = trim((string) ($payload['method'] ?? ''));
-        $accountDetails = $method && !empty($payload['account_details'])
-            ? MaskUtil::accountDetails($method, trim((string) $payload['account_details']))
-            : null;
-
-        return DB::transaction(function () use ($invoice, $amount, $payload, $method, $accountDetails) {
-            $this->getPendingRefunds($invoice)->each->delete();
-
-            $this->createRefundsForInvoice(
-                $invoice,
-                $amount,
-                Refund::STATUS_COMPLETED,
-                $method ?: null,
-                $accountDetails
-            );
-
-            return [
-                'success' => true,
-                'message' => 'Refund recorded.',
-                'amount' => $amount,
-            ];
-        });
+        return $this->withdraw($patient, $payload, Transaction::STATUS_COMPLETED);
     }
-
 }

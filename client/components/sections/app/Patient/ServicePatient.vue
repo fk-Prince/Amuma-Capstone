@@ -275,7 +275,10 @@
                                 <p
                                     class="truncate text-sm font-medium text-slate-800 dark:text-white"
                                 >
-                                    {{ form.preferred_time || "Not selected" }}
+                                    {{
+                                        format24To12(form.preferred_time) ||
+                                        "Not selected"
+                                    }}
                                 </p>
                             </div>
                             <CircleAlert
@@ -434,6 +437,7 @@ import {
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import {
+    format24To12,
     formatDate,
     getLocalDateStr,
     getTimeSlots,

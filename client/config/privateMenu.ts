@@ -6,6 +6,7 @@ export interface MenuItem {
     to: string;
     route?: string[];
     icon?: LucideIcon;
+    group?: string;
 }
 
 export const privateMenu: MenuItem[] = [
@@ -13,20 +14,24 @@ export const privateMenu: MenuItem[] = [
         label: "Dashboard",
         to: "/app/owner/dashboard",
         icon: LayoutDashboard,
+        group: "Overview",
     },
     {
         label: "Verification",
         to: "/app/owner/verification",
         icon: ShieldCheck,
+        group: "Management",
     },
     {
         label: "Branches",
         to: "/app/owner/branches",
         icon: Building2,
+        group: "Management",
     },
     {
         label: "Plans",
         to: "/app/owner/plans",
         icon: BookOpen,
+        group: "Management",
     },
 ];

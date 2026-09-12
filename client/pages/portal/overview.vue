@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div
         v-if="isLoading"
         class="grid min-h-full gap-5 items-start p-4 sm:p-6 lg:p-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
@@ -363,7 +363,7 @@
                             year: "numeric",
                         })
                     }}
-                    · {{ formattedTime }}
+                    Â· {{ formattedTime }}
                 </div>
 
                 <div
@@ -1059,7 +1059,7 @@
             <ul v-if="transactions.length" class="space-y-3">
                 <li
                     v-for="t in transactions.slice(0, 3)"
-                    :key="t.receipt_no || t.payment_id"
+                    :key="t.payment_code || t.payment_id"
                     class="flex items-center justify-between gap-3"
                 >
                     <div class="flex min-w-0 items-center gap-3">
@@ -1073,18 +1073,18 @@
                             <p
                                 class="truncate text-sm font-medium text-gray-800 dark:text-white"
                             >
-                                {{ t.receipt_no ?? "Payment sent" }}
+                                {{ t.payment_code ?? "Payment sent" }}
                             </p>
 
                             <p
                                 class="truncate text-xs text-gray-400 dark:text-gray-500"
                             >
                                 <span v-if="t.invoice_codes.length > 1">
-                                    {{ t.invoice_codes.length }} bills ·
+                                    {{ t.invoice_codes.length }} bills Â·
                                 </span>
 
                                 <span v-else-if="t.invoice_code">
-                                    {{ t.invoice_code }} ·
+                                    {{ t.invoice_code }} Â·
                                 </span>
                                 {{ stringToDateTime(t.created_at) }}
                             </p>
@@ -1173,6 +1173,7 @@ useHead({
 
 definePageMeta({
     layout: "portal",
+    middleware: "portal",
 });
 
 const roomFeedPhoto = "https://placehold.co/800x450?text=Live+Feed";
@@ -1213,7 +1214,7 @@ interface TransactionData {
     invoice_code: string | null;
     invoice_codes: string[];
     reference_id: string | null;
-    receipt_no: string | null;
+    payment_code: string | null;
     amount: number;
     created_at: string;
 }
@@ -1664,7 +1665,7 @@ function updateBillingFromRecord(item: any) {
 
             reference_id: entry?.reference_id ?? null,
 
-            receipt_no: entry?.receipt_no ?? null,
+            payment_code: entry?.payment_code ?? null,
 
             amount: Number(entry?.amount ?? 0),
 

@@ -54,4 +54,11 @@ class BranchController extends Controller
         $request->merge(['branch' => $branch]);
         return $this->branchService->updateBranch($request->all());
     }
+
+    public function dashboard(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        BranchGuard::mergeRequest($request, $branch);
+        return $this->branchService->dashboard($request->all());
+    }
 }

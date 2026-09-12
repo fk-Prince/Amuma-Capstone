@@ -18,10 +18,6 @@ class MessageController extends Controller
     {
         $user = AuthGuard::requireUser($request->user());
 
-        if (!$user->client) {
-            throw new Exception('Only family accounts can view these conversations.', 403);
-        }
-
         return $this->messageService->clientConversations($user->client);
     }
 

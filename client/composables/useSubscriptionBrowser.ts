@@ -135,7 +135,7 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
         }
     };
 
-    const rejectSubscription = async (subscription: any) => {
+    const rejectSubscription = async (subscription: any, reason = "") => {
         const uuid = subscription.uuid;
 
         if (processingAction.value[uuid]) return;
@@ -149,6 +149,7 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
             await subscriptionService.action({
                 action: "reject",
                 branch_subscription_uuid: uuid,
+                rejection_reason: reason,
             });
 
             subscriptions.value = subscriptions.value.filter(

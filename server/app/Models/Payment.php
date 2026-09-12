@@ -17,42 +17,88 @@ class Payment extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'receipt_no',
-        'reference_id',
-        'branch_id',
-        'patient_id',
-        'client_id',
+        'transaction_id',
         'payor_name',
-        'amount',
         'prior_balance',
         'new_balance',
-        'payment_method',
-        'masked_card_number',
+        'cash_tendered',
         'issued_by',
         'created_at',
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
         'prior_balance' => 'decimal:2',
         'new_balance' => 'decimal:2',
+        'cash_tendered' => 'decimal:2',
         'created_at' => 'datetime',
     ];
 
-    public function branch(): BelongsTo
+    public function transaction(): BelongsTo
     {
-        return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
+        return $this->belongsTo(Transaction::class, 'transaction_id', 'transaction_id');
     }
 
-    public function patient(): BelongsTo
+    // The money and the parties live on the ledger entry; the payment record
+    // only says how it was taken.
+    public function getAmountAttribute(): float
     {
-        return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
+        return round((float) ($this->transaction?->amount ?? 0), 2);
     }
 
-    public function client(): BelongsTo
+    // A receipt is identified by the ledger entry it belongs to; there is no
+    // separate RCP series any more.
+    public function getPaymentCodeAttribute()
     {
-        return $this->belongsTo(Client::class, 'client_id', 'client_id');
+        return $this->transaction?->transaction_code;
     }
+
+    public function getReferenceIdAttribute()
+    {
+        return $this->transaction?->transaction_reference_id;
+    }
+
+    // How the money was taken lives on the ledger entry alongside the amount,
+    // so these read through rather than duplicating the columns.
+    public function getPaymentMethodAttribute()
+    {
+        return $this->transaction?->method;
+    }
+
+    public function getMaskedAccountDetailAttribute()
+    {
+        return $this->transaction?->masked_account_number;
+    }
+
+    public function getClientIdAttribute()
+    {
+        return $this->transaction?->client_id;
+    }
+
+    public function getClientAttribute()
+    {
+        return $this->transaction?->client;
+    }
+
+    public function getBranchIdAttribute()
+    {
+        return $this->transaction?->branch_id;
+    }
+
+    public function getPatientIdAttribute()
+    {
+        return $this->transaction?->patient_id;
+    }
+
+    public function getBranchAttribute()
+    {
+        return $this->transaction?->branch;
+    }
+
+    public function getPatientAttribute()
+    {
+        return $this->transaction?->patient;
+    }
+
 
     public function issuedBy(): BelongsTo
     {
@@ -80,11 +126,6 @@ class Payment extends Model
         )->withPivot(['allocation_id', 'amount', 'description']);
     }
 
-    // A payment can settle several invoices, so its refunds are the ones raised
-    // against each of its allocations.
-    // The refund lines drawn from this payment's allocations. Each carries the
-    // slice taken from this payment; the refund it belongs to may also have
-    // drawn from others.
     public function refundAllocations()
     {
         return $this->hasManyThrough(
@@ -100,7 +141,7 @@ class Payment extends Model
     public function getRefundsAttribute()
     {
         return $this->refundAllocations
-            ->map(fn($line) => $line->refund)
+            ->map(fn(RefundAllocation $line) => $line->refund)
             ->filter()
             ->unique('refund_id')
             ->values();
@@ -111,9 +152,6 @@ class Payment extends Model
         return $this->payment_method === self::METHOD_CREDIT;
     }
 
-    // Only the lines that settled something count as applied. A credit payment
-    // also carries the negative line it was drawn from, which is a withdrawal,
-    // not an application.
     public function getAllocatedAmountAttribute(): float
     {
         return round(
@@ -134,9 +172,17 @@ class Payment extends Model
         return $this->allocated_amount;
     }
 
+    // The ledger amount is what was actually kept, so change only exists
+    // against what was physically handed over — recorded separately because
+    // it never belonged to the branch even for the moment it sat in the till.
+    public function getAmountTenderedAttribute(): float
+    {
+        return round((float) ($this->cash_tendered ?? $this->amount), 2);
+    }
+
     public function getChangeDueAttribute(): float
     {
-        return round(max((float) $this->amount - $this->amount_applied, 0), 2);
+        return round(max($this->amount_tendered - $this->amount_applied, 0), 2);
     }
 
     public function getBalanceAfterAttribute(): float
@@ -148,7 +194,7 @@ class Payment extends Model
 
     public function getMaskedAccountAttribute(): ?string
     {
-        return $this->masked_card_number;
+        return $this->masked_account_detail;
     }
 
     public function getAmountInWordsAttribute(): string
@@ -156,24 +202,4 @@ class Payment extends Model
         return MoneyWords::pesos($this->amount_applied);
     }
 
-    protected static function booted()
-    {
-        static::creating(function ($payment) {
-            if (!$payment->reference_id) {
-                $payment->reference_id = (string) Str::uuid();
-            }
-
-            if (!$payment->receipt_no) {
-                $last = self::whereNotNull('receipt_no')
-                    ->orderByDesc('payment_id')
-                    ->first();
-
-                $next = $last && $last->receipt_no
-                    ? ((int) substr($last->receipt_no, 4)) + 1
-                    : 1;
-
-                $payment->receipt_no = 'RCP-' . str_pad($next, 6, '0', STR_PAD_LEFT);
-            }
-        });
-    }
 }

@@ -240,12 +240,12 @@ class PortalHelper
             if (!isset($rows[$key])) {
                 $rows[$key] = [
                     'payment_id' => $allocation->payment_id,
-                    'receipt_no' => $payment?->receipt_no,
+                    'payment_code' => $payment?->payment_code,
                     'reference_id' => $payment?->reference_id,
                     'amount' => 0.0,
                     'description' => $allocation->description,
                     'payment_method' => $payment?->payment_method,
-                    'masked_card_number' => $payment?->masked_card_number,
+                    'masked_account_detail' => $payment?->masked_account_detail,
                     'created_at' => $payment?->created_at?->format('Y-m-d H:i:s'),
                     'refunds' => [],
                 ];
@@ -253,20 +253,22 @@ class PortalHelper
 
             $rows[$key]['amount'] = round($rows[$key]['amount'] + $amount, 2);
             foreach ($allocation->refundAllocations as $line) {
-                $refund = $line->refund;
+                $credit = $line->refund;
+                $withdrawal = $credit?->transaction;
                 $refundKey = $line->refund_id;
 
                 if (!isset($rows[$key]['refunds'][$refundKey])) {
                     $rows[$key]['refunds'][$refundKey] = [
                         'refund_id' => $line->refund_id,
                         'amount' => 0.0,
-                        'refund_total' => (float) ($refund?->amount ?? 0),
-                        'refund_method' => $refund?->refund_method,
-                        'refund_code' => $refund?->refund_code,
-                        'status' => $refund?->status,
-                        'declined_reason' => $refund?->declined_reason,
-                        'masked_card_number' => $refund?->masked_card_number,
-                        'created_at' => $refund?->created_at?->format('Y-m-d H:i:s'),
+                        'refund_total' => (float) ($credit?->amount ?? 0),
+                        'reason' => $line->invoiceAdjustment?->reason,
+                        'refund_method' => $withdrawal?->method,
+                        'refund_code' => $withdrawal?->transaction_code,
+                        'status' => $withdrawal?->status ?? 'credited',
+                        'declined_reason' => $withdrawal?->declined_reason,
+                        'masked_account_detail' => $withdrawal?->masked_account_number,
+                        'created_at' => $credit?->created_at?->format('Y-m-d H:i:s'),
                     ];
                 }
 
@@ -308,9 +310,9 @@ class PortalHelper
                         'payment_id' => $allocation->payment_id,
                         'amount' => 0.0,
                         'payment_method' => $payment?->payment_method,
-                        'receipt_no' => $payment?->receipt_no,
+                        'payment_code' => $payment?->payment_code,
                         'reference_id' => $payment?->reference_id,
-                        'masked_card_number' => $payment?->masked_card_number,
+                        'masked_account_detail' => $payment?->masked_account_detail,
                         'status' => 'completed',
                         'created_at' => $payment?->created_at?->format('Y-m-d H:i:s'),
                         'invoice_codes' => [],
@@ -321,7 +323,8 @@ class PortalHelper
                 $payments[$key]['invoice_codes'][] = $code;
 
                 foreach ($allocation->refundAllocations as $line) {
-                    $refund = $line->refund;
+                    $credit = $line->refund;
+                    $withdrawal = $credit?->transaction;
                     $refundKey = 'refund-' . $line->refund_id;
 
                     if (!isset($refunds[$refundKey])) {
@@ -330,12 +333,13 @@ class PortalHelper
                             'type' => 'refund',
                             'refund_id' => $line->refund_id,
                             'amount' => 0.0,
-                            'refund_method' => $refund?->refund_method,
-                            'refund_code' => $refund?->refund_code,
-                            'masked_card_number' => $refund?->masked_card_number,
-                            'declined_reason' => $refund?->declined_reason,
-                            'status' => $refund?->status,
-                            'created_at' => $refund?->created_at?->format('Y-m-d H:i:s'),
+                            'reason' => $line->invoiceAdjustment?->reason,
+                            'refund_method' => $withdrawal?->method,
+                            'refund_code' => $withdrawal?->transaction_code,
+                            'masked_account_detail' => $withdrawal?->masked_account_number,
+                            'declined_reason' => $withdrawal?->declined_reason,
+                            'status' => $withdrawal?->status ?? 'credited',
+                            'created_at' => $credit?->created_at?->format('Y-m-d H:i:s'),
                             'invoice_codes' => [],
                         ];
                     }
@@ -348,6 +352,7 @@ class PortalHelper
                     $refunds[$refundKey]['invoice_codes'][] = $code;
                 }
             }
+
         }
 
         return collect($payments)
@@ -369,6 +374,7 @@ class PortalHelper
         return [
             'patient_balance' => $billing['balance_due'],
             'patient_refundable' => $billing['refundable'],
+            'patient_pending_withdrawal' => $billing['pending_withdrawal'],
             'patient_adjusted' => $billing['adjusted'],
         ];
     }
@@ -683,7 +689,7 @@ class PortalHelper
                 'invoice_code' => $invoice->invoice_code,
                 'description' => $invoice->paymentDescription(),
                 'status' => $invoice->status,
-                'total' => (float) $invoice->adjusted_total,
+                'total' => (float) $invoice->total_amount,
                 'adjusted_total' => (float) $invoice->adjusted_total,
                 'amount_paid' => (float) $invoice->amount_paid,
                 'balance_due' => (float) $invoice->balance_due,

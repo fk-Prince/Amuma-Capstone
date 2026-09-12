@@ -219,9 +219,8 @@ async function resendOtp() {
 </script>
 
 <template>
-    <div
-        class="w-full max-w-[460px] rounded-2xl bg-white dark:bg-secondary px-6 sm:px-10 py-8 sm:py-11 shadow-xl"
-    >
+    <!-- class="w-full max-w-[480px] shrink-0 rounded-[20px] border border-white/10 bg-white px-6 py-8 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.65)] sm:px-8 sm:py-9 dark:bg-secondary" -->
+    <div>
         <OtpDialog
             v-if="showOtpDialog"
             :loading="otpLoading"
@@ -239,7 +238,7 @@ async function resendOtp() {
             @close="showTerms = false"
         />
 
-        <div class="mb-10 text-center">
+        <!-- <div class="mb-10 text-center">
             <h2
                 class="text-[1.85rem] font-extrabold text-slate-900 dark:text-white"
             >
@@ -252,7 +251,7 @@ async function resendOtp() {
                 >
                 today
             </p>
-        </div>
+        </div> -->
 
         <div class="flex flex-col gap-5">
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">

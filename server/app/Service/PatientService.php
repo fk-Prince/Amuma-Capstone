@@ -480,7 +480,7 @@ class PatientService
                     'amount' => (float) $payment->amount,
                     'payment_method' => $payment->payment_method,
                     'reference_id' => $payment->reference_id,
-                    'receipt_no' => $payment->receipt_no,
+                    'payment_code' => $payment->payment_code,
                     'paid_at' => $payment->created_at?->format('Y-m-d H:i'),
                 ])->values()->all(),
             ])->values()->all(),

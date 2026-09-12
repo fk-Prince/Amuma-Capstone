@@ -41,13 +41,18 @@
                             stroke="currentColor"
                             stroke-width="1.75"
                         >
-                            <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" />
+                            <path
+                                d="M6 6l12 12M18 6L6 18"
+                                stroke-linecap="round"
+                            />
                         </svg>
                     </button>
                 </div>
 
                 <div class="space-y-5 p-6">
-                    <div class="rounded-xl border border-danger/20 bg-danger/5 p-5">
+                    <div
+                        class="rounded-xl border border-danger/20 bg-danger/5 p-5"
+                    >
                         <div
                             class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                         >
@@ -59,7 +64,9 @@
                                 </p>
 
                                 <p class="mt-1 text-2xl font-bold text-danger">
-                                    ₱{{ formatMoney(calculation.refund_amount) }}
+                                    ₱{{
+                                        formatMoney(calculation.refund_amount)
+                                    }}
                                 </p>
                             </div>
 
@@ -127,6 +134,83 @@
                             <Field
                                 label="Refund"
                                 :value="`₱${formatMoney(calculation.refund_amount)}`"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- The refund above is worked out on this stay alone, but
+                         the patient is leaving the branch, so everything still
+                         owed anywhere on the account is settled with it. -->
+                    <div
+                        v-if="calculation.outstanding"
+                        class="overflow-hidden rounded-xl border"
+                        :class="
+                            calculation.outstanding.total_balance > 0
+                                ? 'border-danger/30'
+                                : 'border-primary-100 dark:border-primary-500/20'
+                        "
+                    >
+                        <div
+                            class="flex items-center justify-between gap-3 px-5 py-3"
+                            :class="
+                                calculation.outstanding.total_balance > 0
+                                    ? 'bg-danger/5'
+                                    : 'bg-emerald-50/60 dark:bg-emerald-500/10'
+                            "
+                        >
+                            <div>
+                                <p
+                                    class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted dark:text-gray-400"
+                                >
+                                    Outstanding on this patient
+                                </p>
+
+                                <p
+                                    class="mt-0.5 text-[11px] text-muted dark:text-gray-400"
+                                >
+                                    Admission and schedules combined
+                                </p>
+                            </div>
+
+                            <p
+                                class="shrink-0 text-lg font-bold"
+                                :class="
+                                    calculation.outstanding.total_balance > 0
+                                        ? 'text-danger'
+                                        : 'text-emerald-600 dark:text-emerald-300'
+                                "
+                            >
+                                ₱{{
+                                    formatMoney(
+                                        calculation.outstanding.total_balance,
+                                    )
+                                }}
+                            </p>
+                        </div>
+
+                        <div
+                            class="grid grid-cols-2 gap-4 border-t border-primary-100 px-5 py-4 sm:grid-cols-3 dark:border-primary-500/20"
+                        >
+                            <Field
+                                label="Admission"
+                                :value="`₱${formatMoney(
+                                    calculation.outstanding
+                                        .accommodation_balance,
+                                )}`"
+                            />
+
+                            <Field
+                                label="Services"
+                                :value="`₱${formatMoney(
+                                    calculation.outstanding.service_balance,
+                                )}`"
+                            />
+
+                            <Field
+                                label="Other Invoices"
+                                :value="`₱${formatMoney(
+                                    calculation.outstanding.other_balance,
+                                )}`"
                             />
                         </div>
                     </div>

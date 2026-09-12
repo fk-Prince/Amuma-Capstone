@@ -1,6 +1,18 @@
 <template>
-    <div class="min-h-screen bg-slate-50/70 pt-[100px] dark:bg-surface">
-        <div class="mx-auto max-w-[100rem] px-6 pb-16">
+    <div
+        :class="
+            embedded
+                ? 'w-full'
+                : 'min-h-screen bg-slate-50/70 pt-[100px] dark:bg-surface'
+        "
+    >
+        <div
+            :class="
+                embedded
+                    ? 'w-full px-6 pb-16'
+                    : 'mx-auto max-w-[100rem] px-6 pb-16'
+            "
+        >
             <div
                 class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between"
             >
@@ -35,472 +47,619 @@
                 </div>
             </div>
 
-            <div
-                class="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-secondary"
-            >
-                <button
-                    v-for="tab in tabs"
-                    :key="tab.value"
-                    type="button"
-                    class="rounded-lg px-4 py-1.5 text-sm font-medium transition"
-                    :class="
-                        activeTab === tab.value
-                            ? 'bg-primary text-white shadow-sm'
-                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200'
-                    "
-                    @click="activeTab = tab.value"
+            <div class="lg:flex lg:items-start lg:gap-6">
+                <!-- <div
+                    class="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-secondary lg:w-56 lg:shrink-0 lg:flex-col lg:gap-0.5 lg:rounded-2xl lg:p-2"
                 >
-                    {{ tab.label }}
-                </button>
-            </div>
-
-            <div v-if="loading" class="space-y-10 py-10">
-                <div
-                    v-for="n in 3"
-                    :key="n"
-                    class="grid gap-6 lg:grid-cols-[240px_1fr]"
-                >
-                    <div
-                        class="h-10 animate-pulse rounded bg-slate-100 dark:bg-white/10"
-                    />
-                    <div
-                        class="h-24 animate-pulse rounded bg-slate-100 dark:bg-white/10"
-                    />
-                </div>
-            </div>
-
-            <template v-else>
-                <!-- PROFILE -->
-                <div v-show="activeTab === 'profile'" class="mt-5 space-y-5">
-                    <!-- Profile photo -->
-                    <section
-                        class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                    <button
+                        v-for="tab in tabs"
+                        :key="tab.value"
+                        type="button"
+                        class="flex items-center gap-2.5 rounded-lg px-4 py-1.5 text-sm font-medium transition lg:w-full lg:px-3 lg:py-2.5"
+                        :class="
+                            activeTab === tab.value
+                                ? 'bg-primary text-white shadow-sm'
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200'
+                        "
+                        @click="activeTab = tab.value"
                     >
-                        <div>
-                            <h2
-                                class="text-sm font-semibold text-slate-900 dark:text-white"
-                            >
-                                Profile photo
-                            </h2>
-                            <p
-                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
-                            >
-                                This photo appears on your profile and anywhere
-                                you're shown across AMUMA.
-                            </p>
-                        </div>
+                        <component :is="tab.icon" class="h-4 w-4 shrink-0" />
+                        {{ tab.label }}
+                    </button>
+                </div> -->
 
-                        <div class="flex flex-wrap items-center gap-4">
-                            <img
-                                :src="avatarPreview || fallbackAvatar"
-                                alt="Profile photo"
-                                class="h-14 w-14 rounded-full object-cover ring-1 ring-slate-200 dark:ring-white/10"
-                            />
-
+                <div class="mt-5 min-w-0 flex-1 lg:mt-0">
+                    <div v-if="loading" class="space-y-10 py-10">
+                        <div
+                            class="flex flex-wrap gap-1 border-b mb-2 border-slate-200 pb-0 dark:border-white/10"
+                        >
                             <button
+                                v-for="tab in tabs"
+                                :key="tab.value"
                                 type="button"
-                                class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
-                                @click="avatarInput?.click()"
-                            >
-                                Change photo
-                            </button>
-
-                            <button
-                                v-if="avatarPreview"
-                                type="button"
-                                class="text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200"
-                                @click="removeAvatar"
-                            >
-                                Remove
-                            </button>
-
-                            <input
-                                ref="avatarInput"
-                                type="file"
-                                accept="image/*"
-                                class="hidden"
-                                @change="handleAvatar"
-                            />
-
-                            <p
-                                v-if="errors.avatar"
-                                class="w-full text-xs text-red-600"
-                            >
-                                {{ errors.avatar }}
-                            </p>
-                        </div>
-                    </section>
-
-                    <!-- Personal info -->
-                    <section
-                        class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
-                    >
-                        <div>
-                            <h2
-                                class="text-sm font-semibold text-slate-900 dark:text-white"
-                            >
-                                Personal info
-                            </h2>
-                            <p
-                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
-                            >
-                                Your name and contact details.
-                            </p>
-                        </div>
-
-                        <div class="grid gap-5 sm:grid-cols-6">
-                            <BaseInput
-                                v-model="form.first_name"
-                                label="First name"
-                                class-name="sm:col-span-2"
-                                :error="errors.first_name"
-                                @update:modelValue="clearError('first_name')"
-                            />
-
-                            <BaseInput
-                                v-model="form.middle_name"
-                                label="Middle name"
-                                class-name="sm:col-span-2"
-                                :error="errors.middle_name"
-                                @update:modelValue="clearError('middle_name')"
-                            />
-
-                            <BaseInput
-                                v-model="form.last_name"
-                                label="Last name"
-                                class-name="sm:col-span-2"
-                                :error="errors.last_name"
-                                @update:modelValue="clearError('last_name')"
-                            />
-
-                            <BaseInput
-                                v-model="form.email"
-                                label="Email"
-                                mode="email"
-                                class-name="sm:col-span-6"
-                                :error="errors.email"
-                                @update:modelValue="clearError('email')"
-                            />
-
-                            <PhoneInput
-                                v-model="form.phone_number"
-                                label="Contact number"
-                                class-name="sm:col-span-3"
-                                :error="errors.phone_number"
-                                @update:modelValue="clearError('phone_number')"
-                            />
-
-                            <BaseInput
-                                v-if="roles.is_employee"
-                                v-model="form.birth_date"
-                                label="Birth date"
-                                mode="date"
-                                class-name="sm:col-span-3"
-                                :max="today"
-                                :error="errors.birth_date"
-                                @update:modelValue="clearError('birth_date')"
-                            />
-
-                            <BaseInput
-                                v-if="roles.is_client"
-                                v-model="form.occupation"
-                                label="Occupation"
-                                class-name="sm:col-span-3"
-                                :error="errors.occupation"
-                                @update:modelValue="clearError('occupation')"
-                            />
-                        </div>
-                    </section>
-
-                    <!-- Address -->
-                    <section
-                        v-if="canEditLocation"
-                        class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
-                    >
-                        <div>
-                            <h2
-                                class="text-sm font-semibold text-slate-900 dark:text-white"
-                            >
-                                Address
-                            </h2>
-                            <p
-                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
-                            >
-                                Where you're based.
-                            </p>
-
-                            <button
-                                type="button"
-                                class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary-700"
-                                @click="useMap = !useMap"
-                            >
-                                <MapPin class="h-3.5 w-3.5" />
-                                {{ useMap ? "Enter manually" : "Pick on map" }}
-                            </button>
-                        </div>
-
-                        <div>
-                            <ClientOnly v-if="useMap">
-                                <LocationSelector
-                                    :initial-lat="form.latitude || undefined"
-                                    :initial-lng="form.longitude || undefined"
-                                    :initial-street="form.street || undefined"
-                                    :initial-city="form.city || undefined"
-                                    :initial-province="
-                                        form.province || undefined
-                                    "
-                                    :initial-country="form.country || undefined"
-                                    @location-selected="handleLocation"
-                                />
-
-                                <template #fallback>
-                                    <div
-                                        class="flex h-64 items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-400 dark:bg-white/5 dark:text-gray-500"
-                                    >
-                                        Loading map...
-                                    </div>
-                                </template>
-                            </ClientOnly>
-
-                            <div v-else class="grid gap-5 sm:grid-cols-6">
-                                <BaseInput
-                                    v-model="form.street"
-                                    label="Street"
-                                    class-name="sm:col-span-6"
-                                    :error="errors.street"
-                                    @update:modelValue="clearError('street')"
-                                />
-
-                                <BaseInput
-                                    v-model="form.city"
-                                    label="City"
-                                    class-name="sm:col-span-3"
-                                    :error="errors.city"
-                                    @update:modelValue="clearError('city')"
-                                />
-
-                                <BaseInput
-                                    v-model="form.province"
-                                    label="Province"
-                                    class-name="sm:col-span-3"
-                                    :error="errors.province"
-                                    @update:modelValue="clearError('province')"
-                                />
-
-                                <BaseInput
-                                    v-model="form.country"
-                                    label="Country"
-                                    class-name="sm:col-span-3"
-                                    :error="errors.country"
-                                    @update:modelValue="clearError('country')"
-                                />
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Password -->
-                    <section
-                        class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
-                    >
-                        <div>
-                            <h2
-                                class="text-sm font-semibold text-slate-900 dark:text-white"
-                            >
-                                Password
-                            </h2>
-                            <p
-                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
-                            >
-                                {{
-                                    meta.has_password
-                                        ? "Set a new password for your account."
-                                        : "Add a password so you can sign in without Google."
-                                }}
-                            </p>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div class="grid gap-5 sm:grid-cols-2">
-                                <BaseInput
-                                    v-if="meta.has_password"
-                                    v-model="form.current_password"
-                                    label="Current password"
-                                    mode="password"
-                                    :error="errors.current_password"
-                                    @update:modelValue="
-                                        clearError('current_password')
-                                    "
-                                />
-
-                                <div>
-                                    <BaseInput
-                                        v-model="form.password"
-                                        label="New password"
-                                        mode="password"
-                                        :error="errors.password"
-                                        @update:modelValue="
-                                            clearError('password')
-                                        "
-                                    />
-
-                                    <p
-                                        v-if="!errors.password"
-                                        class="mt-1.5 text-xs text-slate-400 dark:text-gray-500"
-                                    >
-                                        Minimum 8 characters
-                                    </p>
-                                </div>
-                            </div>
-
-                            <BaseInput
-                                v-if="form.password"
-                                v-model="form.password_confirmation"
-                                label="Confirm new password"
-                                mode="password"
-                                class="sm:max-w-[calc(50%-0.625rem)]"
-                                :error="errors.password_confirmation"
-                                @update:modelValue="
-                                    clearError('password_confirmation')
+                                class="rounded-t-lg border px-4 py-2 text-sm font-medium transition"
+                                :class="
+                                    activeTab === tab.value
+                                        ? 'border-slate-200 border-b-white bg-white text-slate-900 dark:border-white/10 dark:border-b-secondary dark:bg-secondary dark:text-white'
+                                        : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
                                 "
-                            />
-
-                            <button
-                                type="button"
-                                :disabled="saving || !form.password"
-                                class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
-                                @click="save"
+                                @click="activeTab = tab.value"
                             >
-                                Update password
+                                {{ tab.label }}
                             </button>
                         </div>
-                    </section>
-
-                    <!-- Account -->
-                    <section class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary">
-                        <div>
-                            <h2
-                                class="text-sm font-semibold text-slate-900 dark:text-white"
-                            >
-                                Account
-                            </h2>
-                            <p
-                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
-                            >
-                                Details here are read-only.
-                            </p>
-                        </div>
-
-                        <dl
-                            class="divide-y divide-slate-100 dark:divide-white/10"
+                        <div
+                            v-for="n in 3"
+                            :key="n"
+                            class="grid gap-6 lg:grid-cols-[240px_1fr]"
                         >
                             <div
-                                class="flex items-center justify-between gap-4 py-2.5"
-                            >
-                                <dt
-                                    class="text-sm text-slate-500 dark:text-gray-400"
-                                >
-                                    Sign-in method
-                                </dt>
-                                <dd
-                                    class="truncate text-sm font-medium text-slate-800 dark:text-white"
-                                >
-                                    {{ signInMethods }}
-                                </dd>
-                            </div>
-
+                                class="h-10 animate-pulse rounded bg-slate-100 dark:bg-white/10"
+                            />
                             <div
-                                v-for="row in accountRows"
-                                :key="row.label"
-                                class="flex items-center justify-between gap-4 py-2.5"
-                            >
-                                <dt
-                                    class="text-sm text-slate-500 dark:text-gray-400"
-                                >
-                                    {{ row.label }}
-                                </dt>
-                                <dd
-                                    class="truncate text-sm font-medium text-slate-800 dark:text-white"
-                                >
-                                    {{ row.value }}
-                                </dd>
-                            </div>
-                        </dl>
-                    </section>
-                </div>
-
-                <!-- NOTIFICATIONS -->
-                <div v-show="activeTab === 'notifications'" class="mt-5 space-y-5">
-                    <section class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary">
-                        <div>
-                            <h2
-                                class="text-sm font-semibold text-slate-900 dark:text-white"
-                            >
-                                Email preferences
-                            </h2>
-                            <p
-                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
-                            >
-                                What we send to your inbox.
-                            </p>
+                                class="h-24 animate-pulse rounded bg-slate-100 dark:bg-white/10"
+                            />
                         </div>
+                    </div>
 
-                        <div class="space-y-5">
-                            <div
-                                v-for="pref in preferences"
-                                :key="pref.key"
-                                class="flex items-start gap-3"
+                    <template v-else>
+                        <div
+                            class="flex flex-wrap gap-1 border-b mb-2 border-slate-200 pb-0 dark:border-white/10"
+                        >
+                            <button
+                                v-for="tab in tabs"
+                                :key="tab.value"
+                                type="button"
+                                class="rounded-t-lg border px-4 py-2 text-sm font-medium transition"
+                                :class="
+                                    activeTab === tab.value
+                                        ? 'border-slate-200 border-b-white bg-white text-slate-900 dark:border-white/10 dark:border-b-secondary dark:bg-secondary dark:text-white'
+                                        : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
+                                "
+                                @click="activeTab = tab.value"
                             >
-                                <button
-                                    type="button"
-                                    role="switch"
-                                    :aria-checked="pref.enabled"
-                                    class="relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors"
-                                    :class="
-                                        pref.enabled
-                                            ? 'bg-primary'
-                                            : 'bg-slate-200 dark:bg-white/10'
-                                    "
-                                    @click="pref.enabled = !pref.enabled"
-                                >
-                                    <span
-                                        class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform"
-                                        :class="
-                                            pref.enabled
-                                                ? 'translate-x-4'
-                                                : 'translate-x-0'
-                                        "
-                                    />
-                                </button>
-
+                                {{ tab.label }}
+                            </button>
+                        </div>
+                        <div v-show="activeTab === 'profile'" class="space-y-5">
+                            <section
+                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                            >
                                 <div>
-                                    <p
-                                        class="text-sm font-medium text-slate-800 dark:text-white"
+                                    <h2
+                                        class="text-sm font-semibold text-slate-900 dark:text-white"
                                     >
-                                        {{ pref.label }}
-                                    </p>
+                                        Profile photo
+                                    </h2>
                                     <p
-                                        class="text-sm text-slate-500 dark:text-gray-400"
+                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
                                     >
-                                        {{ pref.description }}
+                                        This photo appears on your profile and
+                                        anywhere you're shown across AMUMA.
                                     </p>
                                 </div>
-                            </div>
 
-                            <!-- <p class="text-xs text-slate-400">
+                                <div class="flex flex-wrap items-center gap-4">
+                                    <img
+                                        :src="avatarPreview || fallbackAvatar"
+                                        alt="Profile photo"
+                                        class="h-14 w-14 rounded-full object-cover ring-1 ring-slate-200 dark:ring-white/10"
+                                    />
+
+                                    <button
+                                        type="button"
+                                        class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
+                                        @click="avatarInput?.click()"
+                                    >
+                                        Change photo
+                                    </button>
+
+                                    <button
+                                        v-if="avatarPreview"
+                                        type="button"
+                                        class="text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200"
+                                        @click="removeAvatar"
+                                    >
+                                        Remove
+                                    </button>
+
+                                    <input
+                                        ref="avatarInput"
+                                        type="file"
+                                        accept="image/*"
+                                        class="hidden"
+                                        @change="handleAvatar"
+                                    />
+
+                                    <p
+                                        v-if="errors.avatar"
+                                        class="w-full text-xs text-red-600"
+                                    >
+                                        {{ errors.avatar }}
+                                    </p>
+                                </div>
+                            </section>
+
+                            <!-- Personal info -->
+                            <section
+                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                            >
+                                <div>
+                                    <h2
+                                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                                    >
+                                        Personal info
+                                    </h2>
+                                    <p
+                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                                    >
+                                        Your name and contact details.
+                                    </p>
+                                </div>
+
+                                <div class="grid gap-5 sm:grid-cols-6">
+                                    <BaseInput
+                                        v-model="form.first_name"
+                                        label="First name"
+                                        class-name="sm:col-span-2"
+                                        :error="errors.first_name"
+                                        @update:modelValue="
+                                            clearError('first_name')
+                                        "
+                                    />
+
+                                    <BaseInput
+                                        v-model="form.middle_name"
+                                        label="Middle name"
+                                        class-name="sm:col-span-2"
+                                        :error="errors.middle_name"
+                                        @update:modelValue="
+                                            clearError('middle_name')
+                                        "
+                                    />
+
+                                    <BaseInput
+                                        v-model="form.last_name"
+                                        label="Last name"
+                                        class-name="sm:col-span-2"
+                                        :error="errors.last_name"
+                                        @update:modelValue="
+                                            clearError('last_name')
+                                        "
+                                    />
+
+                                    <BaseInput
+                                        v-model="form.email"
+                                        label="Email"
+                                        mode="email"
+                                        class-name="sm:col-span-6"
+                                        :error="errors.email"
+                                        @update:modelValue="clearError('email')"
+                                    />
+
+                                    <PhoneInput
+                                        v-model="form.phone_number"
+                                        label="Contact number"
+                                        class-name="sm:col-span-3"
+                                        :error="errors.phone_number"
+                                        @update:modelValue="
+                                            clearError('phone_number')
+                                        "
+                                    />
+
+                                    <BaseInput
+                                        v-if="roles.is_employee"
+                                        v-model="form.birth_date"
+                                        label="Birth date"
+                                        mode="date"
+                                        class-name="sm:col-span-3"
+                                        :max="today"
+                                        :error="errors.birth_date"
+                                        @update:modelValue="
+                                            clearError('birth_date')
+                                        "
+                                    />
+
+                                    <BaseInput
+                                        v-if="roles.is_client"
+                                        v-model="form.occupation"
+                                        label="Occupation"
+                                        class-name="sm:col-span-3"
+                                        :error="errors.occupation"
+                                        @update:modelValue="
+                                            clearError('occupation')
+                                        "
+                                    />
+                                </div>
+                            </section>
+
+                            <!-- Address -->
+                            <section
+                                v-if="canEditLocation"
+                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                            >
+                                <div>
+                                    <h2
+                                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                                    >
+                                        Address
+                                    </h2>
+                                    <p
+                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                                    >
+                                        Where you're based.
+                                    </p>
+
+                                    <button
+                                        type="button"
+                                        class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary-700"
+                                        @click="useMap = !useMap"
+                                    >
+                                        <MapPin class="h-3.5 w-3.5" />
+                                        {{
+                                            useMap
+                                                ? "Enter manually"
+                                                : "Pick on map"
+                                        }}
+                                    </button>
+                                </div>
+
+                                <div>
+                                    <ClientOnly v-if="useMap">
+                                        <LocationSelector
+                                            :initial-lat="
+                                                form.latitude || undefined
+                                            "
+                                            :initial-lng="
+                                                form.longitude || undefined
+                                            "
+                                            :initial-street="
+                                                form.street || undefined
+                                            "
+                                            :initial-city="
+                                                form.city || undefined
+                                            "
+                                            :initial-province="
+                                                form.province || undefined
+                                            "
+                                            :initial-country="
+                                                form.country || undefined
+                                            "
+                                            @location-selected="handleLocation"
+                                        />
+
+                                        <template #fallback>
+                                            <div
+                                                class="flex h-64 items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-400 dark:bg-white/5 dark:text-gray-500"
+                                            >
+                                                Loading map...
+                                            </div>
+                                        </template>
+                                    </ClientOnly>
+
+                                    <div
+                                        v-else
+                                        class="grid gap-5 sm:grid-cols-6"
+                                    >
+                                        <BaseInput
+                                            v-model="form.street"
+                                            label="Street"
+                                            class-name="sm:col-span-6"
+                                            :error="errors.street"
+                                            @update:modelValue="
+                                                clearError('street')
+                                            "
+                                        />
+
+                                        <BaseInput
+                                            v-model="form.city"
+                                            label="City"
+                                            class-name="sm:col-span-3"
+                                            :error="errors.city"
+                                            @update:modelValue="
+                                                clearError('city')
+                                            "
+                                        />
+
+                                        <BaseInput
+                                            v-model="form.province"
+                                            label="Province"
+                                            class-name="sm:col-span-3"
+                                            :error="errors.province"
+                                            @update:modelValue="
+                                                clearError('province')
+                                            "
+                                        />
+
+                                        <BaseInput
+                                            v-model="form.country"
+                                            label="Country"
+                                            class-name="sm:col-span-3"
+                                            :error="errors.country"
+                                            @update:modelValue="
+                                                clearError('country')
+                                            "
+                                        />
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Password -->
+                            <section
+                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                            >
+                                <div>
+                                    <h2
+                                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                                    >
+                                        Password
+                                    </h2>
+                                    <p
+                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                                    >
+                                        {{
+                                            meta.has_password
+                                                ? "Set a new password for your account."
+                                                : "Add a password so you can sign in without Google."
+                                        }}
+                                    </p>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <div class="grid gap-5 sm:grid-cols-2">
+                                        <BaseInput
+                                            v-if="meta.has_password"
+                                            v-model="form.current_password"
+                                            label="Current password"
+                                            mode="password"
+                                            :error="errors.current_password"
+                                            @update:modelValue="
+                                                clearError('current_password')
+                                            "
+                                        />
+
+                                        <div>
+                                            <BaseInput
+                                                v-model="form.password"
+                                                label="New password"
+                                                mode="password"
+                                                :error="errors.password"
+                                                @update:modelValue="
+                                                    clearError('password')
+                                                "
+                                            />
+
+                                            <p
+                                                v-if="!errors.password"
+                                                class="mt-1.5 text-xs text-slate-400 dark:text-gray-500"
+                                            >
+                                                Minimum 8 characters
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <BaseInput
+                                        v-if="form.password"
+                                        v-model="form.password_confirmation"
+                                        label="Confirm new password"
+                                        mode="password"
+                                        class="sm:max-w-[calc(50%-0.625rem)]"
+                                        :error="errors.password_confirmation"
+                                        @update:modelValue="
+                                            clearError('password_confirmation')
+                                        "
+                                    />
+
+                                    <button
+                                        type="button"
+                                        :disabled="saving || !form.password"
+                                        class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
+                                        @click="save"
+                                    >
+                                        Update password
+                                    </button>
+                                </div>
+                            </section>
+
+                            <!-- Account -->
+                            <section
+                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                            >
+                                <div>
+                                    <h2
+                                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                                    >
+                                        Account
+                                    </h2>
+                                    <p
+                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                                    >
+                                        Details here are read-only.
+                                    </p>
+                                </div>
+
+                                <dl
+                                    class="divide-y divide-slate-100 dark:divide-white/10"
+                                >
+                                    <div
+                                        class="flex items-center justify-between gap-4 py-2.5"
+                                    >
+                                        <dt
+                                            class="text-sm text-slate-500 dark:text-gray-400"
+                                        >
+                                            Sign-in method
+                                        </dt>
+                                        <dd
+                                            class="truncate text-sm font-medium text-slate-800 dark:text-white"
+                                        >
+                                            {{ signInMethods }}
+                                        </dd>
+                                    </div>
+
+                                    <div
+                                        v-for="row in accountRows"
+                                        :key="row.label"
+                                        class="flex items-center justify-between gap-4 py-2.5"
+                                    >
+                                        <dt
+                                            class="text-sm text-slate-500 dark:text-gray-400"
+                                        >
+                                            {{ row.label }}
+                                        </dt>
+                                        <dd
+                                            class="truncate text-sm font-medium text-slate-800 dark:text-white"
+                                        >
+                                            {{ row.value }}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </section>
+                        </div>
+
+                        <!-- NOTIFICATIONS -->
+                        <div
+                            v-show="activeTab === 'notifications'"
+                            class="space-y-5"
+                        >
+                            <section
+                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                            >
+                                <div>
+                                    <h2
+                                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                                    >
+                                        Email preferences
+                                    </h2>
+                                    <p
+                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                                    >
+                                        What we send to your inbox.
+                                    </p>
+                                </div>
+
+                                <div class="space-y-5">
+                                    <div
+                                        v-for="pref in preferences"
+                                        :key="pref.key"
+                                        class="flex items-start gap-3"
+                                    >
+                                        <button
+                                            type="button"
+                                            role="switch"
+                                            :aria-checked="pref.enabled"
+                                            class="relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors"
+                                            :class="
+                                                pref.enabled
+                                                    ? 'bg-primary'
+                                                    : 'bg-slate-200 dark:bg-white/10'
+                                            "
+                                            @click="
+                                                pref.enabled = !pref.enabled
+                                            "
+                                        >
+                                            <span
+                                                class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform"
+                                                :class="
+                                                    pref.enabled
+                                                        ? 'translate-x-4'
+                                                        : 'translate-x-0'
+                                                "
+                                            />
+                                        </button>
+
+                                        <div>
+                                            <p
+                                                class="text-sm font-medium text-slate-800 dark:text-white"
+                                            >
+                                                {{ pref.label }}
+                                            </p>
+                                            <p
+                                                class="text-sm text-slate-500 dark:text-gray-400"
+                                            >
+                                                {{ pref.description }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- <p class="text-xs text-slate-400">
                                 Email preferences aren't saved yet — this
                                 section is a placeholder.
                             </p> -->
+                                </div>
+                            </section>
                         </div>
-                    </section>
+
+                        <!-- APPEARANCE -->
+                        <div
+                            v-show="activeTab === 'appearance'"
+                            class="space-y-5"
+                        >
+                            <section
+                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                            >
+                                <div>
+                                    <h2
+                                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                                    >
+                                        Theme
+                                    </h2>
+                                    <p
+                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                                    >
+                                        How AMUMA looks on this device.
+                                    </p>
+                                </div>
+
+                                <div
+                                    class="flex w-full max-w-sm items-center justify-between rounded-full bg-slate-100 p-1 dark:bg-white/5"
+                                >
+                                    <button
+                                        type="button"
+                                        class="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-medium transition-colors"
+                                        :class="
+                                            !isDark
+                                                ? 'bg-white text-slate-800 shadow-sm dark:bg-secondary dark:text-white'
+                                                : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400'
+                                        "
+                                        @click="setTheme(false)"
+                                    >
+                                        <Sun class="h-4 w-4" />
+                                        Light
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-medium transition-colors"
+                                        :class="
+                                            isDark
+                                                ? 'bg-secondary text-white shadow-sm'
+                                                : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400'
+                                        "
+                                        @click="setTheme(true)"
+                                    >
+                                        <Moon class="h-4 w-4" />
+                                        Dark
+                                    </button>
+                                </div>
+                            </section>
+                        </div>
+                    </template>
                 </div>
-            </template>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
-import { LoaderCircle, MapPin } from "lucide-vue-next";
+import { useRoute } from "vue-router";
+import {
+    Bell,
+    LoaderCircle,
+    MapPin,
+    Moon,
+    Sun,
+    UserRound,
+} from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
 import PhoneInput from "~/components/ui/PhoneInput.vue";
@@ -517,6 +676,21 @@ definePageMeta({
 
 useHead({ title: "My Profile" });
 
+const route = useRoute();
+
+const layoutName =
+    route.query.from === "dashboard"
+        ? "dashboard"
+        : route.query.from === "owner"
+          ? "owner"
+          : route.query.from === "portal"
+            ? "portal"
+            : "default";
+
+const embedded = layoutName !== "default";
+
+setPageLayout(layoutName);
+
 const { success, error } = useToast();
 
 const loading = ref(true);
@@ -525,9 +699,12 @@ const useMap = ref(false);
 const activeTab = ref("profile");
 
 const tabs = [
-    { label: "General", value: "profile" },
-    { label: "Notifications", value: "notifications" },
+    { label: "General", value: "profile", icon: UserRound },
+    { label: "Notifications", value: "notifications", icon: Bell },
+    { label: "Appearance", value: "appearance", icon: Sun },
 ];
+
+const isDark = useIsDark();
 
 const preferences = reactive([
     {
@@ -595,8 +772,6 @@ const original = ref<Record<string, any>>({});
 
 const today = new Date().toISOString().slice(0, 10);
 
-// Every account type (employee, client, system owner) has its own
-// phone_number column now, so this is no longer role-gated.
 const canEditPhone = computed(() => true);
 const canEditLocation = computed(
     () => roles.is_employee || roles.is_client || roles.is_system_owner,

@@ -10,7 +10,7 @@
                 <p
                     class="font-mono text-[10px] uppercase tracking-[0.2em] text-muted dark:text-gray-400"
                 >
-                    Amuma Care
+                    {{ slip.branch?.name || "Amuma Care" }}
                 </p>
 
                 <h1

@@ -1,10 +1,9 @@
 import { z } from "zod";
 import { locationSchema } from "~/types/branch";
+import { tin } from "~/schema/tin-schema";
 
 export const branchImageSchema = z.object({
-    type: z
-        .string()
-        .min(1, "Image type is required"),
+    type: z.string().min(1, "Image type is required"),
 
     description: z
         .string()
@@ -16,49 +15,33 @@ export const branchImageSchema = z.object({
         .string()
         .trim()
         .min(1, "Contact number is required")
-        .regex(
-            /^[0-9]{10,15}$/,
-            "Enter a valid contact number"
-        ),
-    email:
-        z.string()
-            .trim()
-            .min(1, "Email is required")
-            .email("Invalid email address")
-            .max(255, "Email must not exceed 255 characters"),
+        .regex(/^[0-9]{10,15}$/, "Enter a valid contact number"),
+    email: z
+        .string()
+        .trim()
+        .min(1, "Email is required")
+        .email("Invalid email address")
+        .max(255, "Email must not exceed 255 characters"),
     image: z
         .instanceof(File, {
             message: "Please select an image.",
         })
         .refine(
             (file) =>
-                [
-                    "image/jpeg",
-                    "image/jpg",
-                    "image/png",
-                ].includes(file.type),
+                ["image/jpeg", "image/jpg", "image/png"].includes(file.type),
             {
                 message: "Only JPG and PNG images are allowed.",
             },
         )
-        .refine(
-            (file) => file.size <= 5 * 1024 * 1024,
-            {
-                message: "Image size must be less than 5MB.",
-            },
-        ),
+        .refine((file) => file.size <= 5 * 1024 * 1024, {
+            message: "Image size must be less than 5MB.",
+        }),
 });
-
 
 export type BranchImageForm = z.infer<typeof branchImageSchema>;
 
-
 export const branchSchema = z.object({
-    name: z
-        .string()
-        .trim()
-        .min(1, "Branch name is required")
-        .max(255),
+    name: z.string().trim().min(1, "Branch name is required").max(255),
 
     description: z
         .string()
@@ -70,28 +53,31 @@ export const branchSchema = z.object({
         .string()
         .trim()
         .min(1, "Contact number is required")
-        .regex(
-            /^[0-9]{10,15}$/,
-            "Enter a valid contact number"
-        ),
+        .regex(/^[0-9]{10,15}$/, "Enter a valid contact number"),
 
-    email:
-        z.string()
-            .trim()
-            .min(1, "Email is required")
-            .email("Invalid email address")
-            .max(255, "Email must not exceed 255 characters"),
+    email: z
+        .string()
+        .trim()
+        .min(1, "Email is required")
+        .email("Invalid email address")
+        .max(255, "Email must not exceed 255 characters"),
+
+    tin: tin(),
 
     image: z
         .union([
-            z.instanceof(File).refine(
-                (file) =>
-                    ["image/jpeg", "image/jpg", "image/png"].includes(file.type),
-                { message: "Only JPG and PNG images are allowed." },
-            ).refine(
-                (file) => file.size <= 5 * 1024 * 1024,
-                { message: "Image size must be less than 5MB." },
-            ),
+            z
+                .instanceof(File)
+                .refine(
+                    (file) =>
+                        ["image/jpeg", "image/jpg", "image/png"].includes(
+                            file.type,
+                        ),
+                    { message: "Only JPG and PNG images are allowed." },
+                )
+                .refine((file) => file.size <= 5 * 1024 * 1024, {
+                    message: "Image size must be less than 5MB.",
+                }),
             z.string(),
         ])
         .optional()
@@ -112,13 +98,17 @@ export const branchSchema = z.object({
 
         if (val instanceof File) {
             if (
-                !["image/jpeg", "image/jpg", "image/png", "application/pdf"].includes(
-                    val.type,
-                )
+                ![
+                    "image/jpeg",
+                    "image/jpg",
+                    "image/png",
+                    "application/pdf",
+                ].includes(val.type)
             ) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
-                    message: "Only JPG, PNG, and PDF files are allowed for Document.",
+                    message:
+                        "Only JPG, PNG, and PDF files are allowed for Document.",
                 });
             }
 

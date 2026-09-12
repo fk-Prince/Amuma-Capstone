@@ -1,8 +1,10 @@
 <template>
-    <section>
+    <section class="w-full">
         <div class="mb-5 flex items-center justify-between gap-3">
             <div>
-                <h2 class="text-sm font-semibold text-secondary dark:text-white">
+                <h2
+                    class="text-sm font-semibold text-secondary dark:text-white"
+                >
                     Family
                 </h2>
 
@@ -23,11 +25,7 @@
                 v-for="member in family"
                 :key="member.patient_access_id"
                 class="rounded-xl border border-primary-100 bg-white p-4 transition dark:border-primary-500/20 dark:bg-secondary"
-                :class="
-                    member.have_access
-                        ? ''
-                        : 'opacity-70'
-                "
+                :class="member.have_access ? '' : 'opacity-70'"
             >
                 <div class="flex items-start gap-3">
                     <div
@@ -71,7 +69,10 @@
                         <p
                             class="mt-0.5 text-xs font-medium capitalize text-primary-700 dark:text-primary-300"
                         >
-                            {{ member.relationship_type || "Relationship not set" }}
+                            {{
+                                member.relationship_type ||
+                                "Relationship not set"
+                            }}
                         </p>
 
                         <dl class="mt-3 space-y-1.5">
@@ -140,12 +141,12 @@ function initials(name?: string | null) {
 
     if (!parts.length) return "—";
 
-    return (
-        (parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")
-    ).toUpperCase();
+    const first = parts[0]?.[0] ?? "";
+    const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "";
+
+    return (first + last).toUpperCase();
 }
 
-// Contact rows are dropped when empty rather than shown as a blank line.
 function details(member: FamilyMember) {
     return [
         { label: "phone", value: member.client?.phone_number, icon: Phone },
@@ -155,6 +156,8 @@ function details(member: FamilyMember) {
             value: member.client?.occupation,
             icon: Briefcase,
         },
-    ].filter((detail) => !!detail.value);
+    ]
+        .filter((detail) => !!detail.value)
+        .map((detail) => ({ ...detail, value: String(detail.value) }));
 }
 </script>

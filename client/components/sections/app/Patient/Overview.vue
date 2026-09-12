@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { computed } from "vue";
 
 import {
     Droplet,
@@ -11,67 +11,27 @@ import {
     Pill,
     HeartPulse,
     MapPin,
-    Building2,
-    DoorOpen,
-    BedDouble,
-    History,
     CalendarClock,
-    Video,
-    VideoOff,
 } from "lucide-vue-next";
-import type { PatientRetrieve, Admission } from "~/types/patient";
+import type { PatientRetrieve } from "~/types/patient";
 import { formatDate } from "~/utils/time";
-import { formatCurrency } from "~/utils/currency";
-import { useRoute, useRouter } from "vue-router";
-
-const route = useRoute();
-const router = useRouter();
 
 const props = defineProps<{
     patient: PatientRetrieve;
     isEdit?: boolean;
 }>();
 
-const admissions = ref<Admission[]>([...(props.patient.admissions ?? [])]);
-
-watch(
-    () => props.patient.admissions,
-    (val) => {
-        admissions.value = [...(val ?? [])];
-    },
-);
-
-const latestAdmission = computed(() => {
-    if (!admissions.value.length) return null;
-
-    const sorted = [...admissions.value].sort((a, b) => {
-        const aTime = a.admitted_at ? new Date(a.admitted_at).getTime() : 0;
-        const bTime = b.admitted_at ? new Date(b.admitted_at).getTime() : 0;
-        return bTime - aTime;
-    });
-
-    return sorted[0] ?? null;
-});
-
-// A VIP room is the only accommodation that comes with a camera; everyone else
-// gets the schedule instead.
-const isVipFacility = computed(() => {
-    const accommodation =
-        latestAdmission.value?.current_contract?.accommodation_type ??
-        latestAdmission.value?.room?.room_type;
-
-    return String(accommodation ?? "").toUpperCase() === "VIP";
-});
-
 const schedules = computed<any[]>(
     () => (props.patient as any)?.schedules ?? [],
 );
 
-function mapsUrl(schedule: any) {
+// undefined rather than null, so binding it to href drops the attribute
+// instead of tripping the type.
+function mapsUrl(schedule: any): string | undefined {
     const lat = Number(schedule?.latitude);
     const lng = Number(schedule?.longitude);
 
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return undefined;
 
     return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
 }
@@ -89,20 +49,6 @@ function scheduleStatusClasses(status?: string) {
         default:
             return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
     }
-}
-
-function goToAdmissionHistory() {
-    router.push(
-        `/app/branches/${route.params.uuid}/admissions/${route.params.p_uuid}`,
-    );
-}
-
-function isAdmitted(status?: string) {
-    return (status ?? "").toLowerCase() === "admitted";
-}
-
-function isWaiting(status?: string) {
-    return (status ?? "").toLowerCase() === "waiting";
 }
 
 function statusClasses(status?: string) {
@@ -125,12 +71,6 @@ function statusClasses(status?: string) {
     }
 
     return "bg-[#FDF3DE] text-[#966B1F] dark:text-amber-300 dark:bg-amber-500/15";
-}
-
-function cardClasses(status?: string) {
-    return isAdmitted(status)
-        ? "border-l-4 border-primary bg-primary-50 dark:bg-primary-500/10"
-        : "bg-muted-light/40";
 }
 </script>
 
@@ -349,235 +289,7 @@ function cardClasses(status?: string) {
             </div>
         </section>
 
-        <section
-            v-if="latestAdmission"
-            class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary"
-        >
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <div class="flex items-center gap-2">
-                    <Building2 class="h-4 w-4 text-primary" />
-                    <h3 class="font-semibold text-secondary dark:text-white">
-                        Latest Admission
-                    </h3>
-                </div>
-
-                <button
-                    type="button"
-                    class="flex items-center gap-1.5 rounded-lg border border-muted-light px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-primary/40 hover:text-primary-600 dark:hover:text-primary-300 dark:border-white/10 dark:text-white"
-                    @click="goToAdmissionHistory"
-                >
-                    <History class="h-3.5 w-3.5" />
-                    View Admission History
-                </button>
-            </div>
-
-            <div class="mt-5">
-                <div
-                    class="rounded-xl p-4 transition hover:bg-primary-50/60 dark:hover:bg-primary-500/10"
-                    :class="cardClasses(latestAdmission.status)"
-                >
-                    <div class="flex items-center justify-between gap-3">
-                        <div>
-                            <div class="flex items-center gap-1.5">
-                                <p
-                                    class="text-sm font-semibold capitalize text-secondary dark:text-white"
-                                >
-                                    {{ latestAdmission.status }}
-                                </p>
-
-                                <p
-                                    v-if="
-                                        latestAdmission.status
-                                            ?.toLowerCase()
-                                            .includes('discharge') &&
-                                        latestAdmission.end_date
-                                    "
-                                    class="mt-0.5 text-xs text-muted dark:text-gray-400"
-                                >
-                                    at
-                                    {{ formatDate(latestAdmission.end_date) }}
-                                </p>
-                            </div>
-
-                            <div class="flex items-center gap-1">
-                                <p
-                                    class="mt-0.5 text-xs text-muted dark:text-gray-400"
-                                >
-                                    {{
-                                        isWaiting(latestAdmission.status)
-                                            ? `Waiting for admission at ${formatDate(latestAdmission.admitted_at)}`
-                                            : `Admitted at ${formatDate(latestAdmission.admitted_at)}`
-                                    }}
-                                </p>
-
-                                <p
-                                    v-if="
-                                        isAdmitted(latestAdmission.status) &&
-                                        latestAdmission.end_date
-                                    "
-                                    class="mt-0.5 text-xs text-muted dark:text-gray-400"
-                                >
-                                    till
-                                    {{ formatDate(latestAdmission.end_date) }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="flex shrink-0 items-center gap-2">
-                            <span
-                                v-if="!isWaiting(latestAdmission.status)"
-                                class="rounded-full px-3 py-1 text-xs font-medium capitalize"
-                                :class="statusClasses(latestAdmission.status)"
-                            >
-                                {{ latestAdmission.status }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        <div class="flex items-center gap-2">
-                            <Building2 class="h-3.5 w-3.5 text-primary" />
-                            <div>
-                                <p
-                                    class="text-[11px] text-muted dark:text-gray-400"
-                                >
-                                    Floor
-                                </p>
-                                <p
-                                    class="text-sm font-medium text-secondary dark:text-white"
-                                >
-                                    {{ latestAdmission.room?.floor || "—" }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            <DoorOpen class="h-3.5 w-3.5 text-primary" />
-                            <div>
-                                <p
-                                    class="text-[11px] text-muted dark:text-gray-400"
-                                >
-                                    Room
-                                </p>
-                                <p
-                                    class="text-sm font-medium text-secondary dark:text-white"
-                                >
-                                    {{ latestAdmission.room?.room_no || "—" }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            <BedDouble class="h-3.5 w-3.5 text-primary" />
-                            <div>
-                                <p
-                                    class="text-[11px] text-muted dark:text-gray-400"
-                                >
-                                    Bed
-                                </p>
-                                <p
-                                    class="text-sm font-medium text-secondary dark:text-white"
-                                >
-                                    {{ latestAdmission.bed?.bed_no || "—" }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        v-if="latestAdmission.current_contract"
-                        class="mt-4 border-t border-muted-light pt-4 dark:border-white/10"
-                    >
-                        <p
-                            class="mb-2 text-xs font-semibold text-secondary dark:text-white"
-                        >
-                            Current Contract
-                        </p>
-
-                        <div class="space-y-2">
-                            <div
-                                class="rounded-lg bg-white px-3 py-2 border border-muted-light dark:bg-secondary dark:border-white/10"
-                            >
-                                <div class="flex justify-between">
-                                    <span
-                                        class="text-xs text-muted dark:text-gray-400"
-                                    >
-                                        {{
-                                            latestAdmission.current_contract
-                                                ?.category || "—"
-                                        }}
-                                    </span>
-
-                                    <span
-                                        class="text-xs font-semibold text-primary"
-                                    >
-                                        {{
-                                            formatCurrency(
-                                                latestAdmission.current_contract
-                                                    ?.price,
-                                            )
-                                        }}
-                                    </span>
-                                </div>
-
-                                <div
-                                    class="mt-1 text-xs text-secondary dark:text-white"
-                                >
-                                    {{
-                                        latestAdmission.current_contract
-                                            ?.accommodation_type || "—"
-                                    }}
-                                    ·
-                                    {{
-                                        latestAdmission.current_contract
-                                            ?.billing_cycle || "—"
-                                    }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section
-            v-if="isVipFacility"
-            class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary"
-        >
-            <div class="flex items-center gap-2">
-                <Video class="h-4 w-4 text-primary" />
-                <h3 class="font-semibold text-secondary dark:text-white">
-                    Room Camera
-                </h3>
-            </div>
-
-            <p class="mt-1 text-xs text-muted dark:text-gray-400">
-                VIP rooms include a live camera. Only the patient's authorised
-                family and assigned staff may view it.
-            </p>
-
-            <div
-                class="mt-4 flex aspect-video items-center justify-center rounded-xl bg-slate-900 text-center"
-            >
-                <div class="px-6">
-                    <VideoOff class="mx-auto h-7 w-7 text-white/40" />
-
-                    <p class="mt-2 text-sm font-medium text-white/80">
-                        Camera feed unavailable
-                    </p>
-
-                    <p class="mt-1 text-xs text-white/50">
-                        Room {{ latestAdmission?.room?.room_no || "—" }} · no
-                        stream is connected to this room yet.
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <section
-            v-else
-            class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary"
-        >
+        <section class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary">
             <div class="flex items-center gap-2">
                 <CalendarClock class="h-4 w-4 text-primary" />
                 <h3 class="font-semibold text-secondary dark:text-white">

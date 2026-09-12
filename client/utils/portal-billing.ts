@@ -42,12 +42,15 @@ export function transactionStatusClasses(status?: string) {
     switch ((status || "").toLowerCase()) {
         case "paid":
         case "completed":
+        case "approved":
         case "released":
             return "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20";
         case "partial":
         case "processing":
+        case "requested":
         case "pending":
             return "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20";
+        case "credited":
         case "refunded":
         case "partially refunded":
             return "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/20";
@@ -72,8 +75,9 @@ export function transactionIcon(type: PortalTransactionType) {
     }
 }
 
-// A refund only moves money once the branch releases it. While it is still a
-// request, and forever if it is declined, nothing has come back.
+// Credit lands on the account the moment it is issued. A withdrawal of it only
+// moves money once the branch releases it, so while it is still a request, and
+// forever if it is declined, nothing has come back.
 export function transactionMovedAmount(
     type: PortalTransactionType,
     amount: number,
@@ -81,7 +85,11 @@ export function transactionMovedAmount(
 ) {
     if (type !== "refund") return amount;
 
-    return (status || "").toLowerCase() === "completed" ? amount : 0;
+    return ["completed", "approved", "credited"].includes(
+        (status || "").toLowerCase(),
+    )
+        ? amount
+        : 0;
 }
 
 export function transactionSign(type: PortalTransactionType, amount?: number) {
@@ -137,8 +145,11 @@ export function transactionRole(type: PortalTransactionType, status?: string) {
 
     switch ((status || "").toLowerCase()) {
         case "completed":
+        case "approved":
             return "Returned";
-        case "declined":
+        case "credited":
+            return "On your credit";
+        case "rejected":
             return "Not returned";
         default:
             return "Not yet settled";

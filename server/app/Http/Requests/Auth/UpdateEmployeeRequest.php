@@ -38,7 +38,7 @@ class UpdateEmployeeRequest extends FormRequest
             'last_name' => ['required', 'string', 'max:255'],
             'avatar' => ['nullable', 'string'],
             'birth_date' => ['required', 'date'],
-            'phone_number' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{7,20}$/'],
+            'phone_number' => ['required', 'string', 'max:20', 'regex:/^9\d{2}[\s-]?\d{3}[\s-]?\d{4}$/'],
 
             'location' => ['required', 'array'],
             'location.street' => ['required', 'string', 'max:255'],
@@ -48,6 +48,7 @@ class UpdateEmployeeRequest extends FormRequest
 
             'role_name' => ['required', 'string', 'max:255'],
             'assignment_type' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'in:active,inactive,on_leave'],
 
             'branch_uuid' => ['required', 'string', 'exists:branches,uuid'],
 

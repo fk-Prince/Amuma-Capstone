@@ -42,7 +42,8 @@ class RoomRepository
 
                     ->orWhereHas('beds.currentAdmission.patient', function ($patientQuery) use ($search) {
                         $patientQuery->where(function ($p) use ($search) {
-                            $p->where('first_name', 'LIKE', "%{$search}%")
+                            $p->where('patient_code', 'ilike', "{$search}%")
+                                ->orWhere('first_name', 'LIKE', "%{$search}%")
                                 ->orWhere('last_name', 'LIKE', "%{$search}%")
                                 ->orWhereRaw(
                                     "CONCAT(first_name, ' ', last_name) LIKE ?",
@@ -53,7 +54,8 @@ class RoomRepository
 
                     ->orWhereHas('beds.reservedAdmission.patient', function ($patientQuery) use ($search) {
                         $patientQuery->where(function ($p) use ($search) {
-                            $p->where('first_name', 'LIKE', "%{$search}%")
+                            $p->where('patient_code', 'ilike', "{$search}%")
+                                ->orWhere('first_name', 'LIKE', "%{$search}%")
                                 ->orWhere('last_name', 'LIKE', "%{$search}%")
                                 ->orWhereRaw(
                                     "CONCAT(first_name, ' ', last_name) LIKE ?",

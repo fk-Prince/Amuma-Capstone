@@ -1,17 +1,15 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import BaseInput from "../ui/BaseInput.vue";
-import BaseButton from "../ui/BaseButton.vue";
+import { Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-vue-next";
 import AlertMessage from "../ui/AlertMessage.vue";
 import TermsModal from "../ui/TermsModal.vue";
 
-import { useAuthUser, fetchAuthUser } from "~/composables/useAuthUser";
+import { useAuthUser } from "~/composables/useAuthUser";
 import { authService } from "~/api/auth/AuthService";
 import type { Alert } from "~/types/alert.js";
 import type { SigninRequest } from "~/types/auth.js";
 import { useBranchStore } from "#imports";
 
-const route = useRoute();
 const branch = useBranchStore();
 const user = useAuthUser();
 const redirecting = ref(false);
@@ -35,6 +33,20 @@ const alert = ref<Alert>({
     type: "info",
     message: "",
 });
+
+const fieldClass =
+    "h-[47px] w-full rounded-xl border bg-slate-50 pl-11 pr-4 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary-500/30 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-gray-500";
+
+const affixClass =
+    "pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center text-slate-400 dark:text-gray-500";
+
+const labelClass =
+    "mb-2 block text-[13px] font-semibold text-slate-700 dark:text-white";
+
+const borderClass = (error: string) =>
+    error
+        ? "border-danger focus:border-danger focus:ring-danger/30"
+        : "border-slate-200 dark:border-white/10";
 
 async function handleSignIn() {
     errors.value = {
@@ -86,159 +98,132 @@ async function googleUrl() {
     }
 }
 </script>
+
 <template>
     <div>
         <AlertMessage
             v-if="alert.show"
             :type="alert.type"
             :message="alert.message"
-            class="mb-3"
+            class="mb-4"
         />
 
-        <form class="flex flex-col gap-3 sm:gap-4">
-            <BaseInput
-                v-model="signinData.email"
-                label="Email"
-                placeholder="Enter your email address"
-                mode="text"
-                :error="errors.email"
-            >
-                <template #prefix>
-                    <svg
-                        class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-                        <rect x="2" y="4" width="20" height="16" rx="2" />
-                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                    </svg>
-                </template>
-            </BaseInput>
+        <form @submit.prevent="handleSignIn">
+            <label for="signin-email" :class="labelClass">Email</label>
 
-            <BaseInput
-                v-model="signinData.password"
-                label="Password"
-                placeholder="Enter your password"
-                :mode="showPassword ? 'text' : 'password'"
-                :error="errors.password"
-            >
-                <template #prefix>
-                    <svg
-                        class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-                        <rect
-                            x="3"
-                            y="11"
-                            width="18"
-                            height="11"
-                            rx="2"
-                            ry="2"
-                        />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                </template>
-                <template #suffix>
-                    <button
-                        type="button"
-                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary-500/40"
-                        @click="showPassword = !showPassword"
-                    >
-                        <svg
-                            v-if="showPassword"
-                            class="w-[1.05rem] h-[1.05rem]"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        >
-                            <path
-                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
-                            />
-                            <path
-                                d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
-                            />
-                            <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
-                        <svg
-                            v-else
-                            class="w-[1.05rem] h-[1.05rem]"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        >
-                            <path
-                                d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                            />
-                            <circle cx="12" cy="12" r="3" />
-                        </svg>
-                    </button>
-                </template>
-            </BaseInput>
+            <div class="relative">
+                <span :class="affixClass">
+                    <Mail class="h-[1.05rem] w-[1.05rem]" />
+                </span>
 
-            <div class="flex justify-end -mt-1">
+                <input
+                    id="signin-email"
+                    v-model="signinData.email"
+                    type="email"
+                    autocomplete="email"
+                    placeholder="Enter your email address"
+                    :class="[fieldClass, borderClass(errors.email)]"
+                />
+            </div>
+
+            <p v-if="errors.email" class="mt-1.5 text-xs text-danger">
+                {{ errors.email }}
+            </p>
+
+            <label for="signin-password" :class="labelClass" class="mt-[22px]">
+                Password
+            </label>
+
+            <div class="relative">
+                <span :class="affixClass">
+                    <Lock class="h-[1.05rem] w-[1.05rem]" />
+                </span>
+
+                <input
+                    id="signin-password"
+                    v-model="signinData.password"
+                    :type="showPassword ? 'text' : 'password'"
+                    autocomplete="current-password"
+                    placeholder="Enter your password"
+                    :class="[fieldClass, borderClass(errors.password), 'pr-11']"
+                />
+
+                <button
+                    type="button"
+                    class="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-slate-400 outline-none transition-colors hover:text-blue-500 focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-gray-500"
+                    :aria-label="
+                        showPassword ? 'Hide password' : 'Show password'
+                    "
+                    @click="showPassword = !showPassword"
+                >
+                    <EyeOff
+                        v-if="showPassword"
+                        class="h-[1.05rem] w-[1.05rem]"
+                    />
+                    <Eye v-else class="h-[1.05rem] w-[1.05rem]" />
+                </button>
+            </div>
+
+            <p v-if="errors.password" class="mt-1.5 text-xs text-danger">
+                {{ errors.password }}
+            </p>
+
+            <div class="mt-3.5 flex justify-end">
                 <NuxtLink
                     to="/forgot-password"
-                    class="text-xs font-medium text-blue-600 hover:underline outline-none rounded focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                    class="rounded text-xs font-medium text-blue-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-blue-400"
                 >
                     Forgot Password?
                 </NuxtLink>
             </div>
 
-            <BaseButton
+            <button
                 type="submit"
-                variant="primary"
-                size="lg"
-                :full="true"
-                :loading="loading"
                 :disabled="loading || redirecting"
-                @click="handleSignIn"
+                class="mt-6 flex h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-primary text-[15px] font-semibold text-white outline-none transition-colors hover:bg-primary-600 focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
-                <span>{{ loading ? "Signing in…" : "Sign in" }}</span>
-            </BaseButton>
+                <LoaderCircle v-if="loading" class="h-4 w-4 animate-spin" />
+                {{ loading ? "Signing in…" : "Sign in" }}
+            </button>
 
-            <div class="flex items-center gap-3">
-                <span class="flex-1 h-px bg-slate-200 dark:bg-white/10" />
+            <div class="mt-5 flex items-center gap-3">
+                <span class="h-px flex-1 bg-slate-200 dark:bg-white/10" />
                 <span
-                    class="text-xs text-slate-400 dark:text-gray-500 font-medium uppercase tracking-widest"
-                    >or</span
+                    class="text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-gray-500"
                 >
-                <span class="flex-1 h-px bg-slate-200 dark:bg-white/10" />
+                    or
+                </span>
+                <span class="h-px flex-1 bg-slate-200 dark:bg-white/10" />
             </div>
 
-            <BaseButton
-                @click="googleUrl()"
-                variant="secondary"
-                size="lg"
+            <button
+                type="button"
                 :disabled="loading || redirecting"
-                :full="true"
+                class="mt-5 flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-100 text-[15px] font-semibold text-slate-700 outline-none transition-colors hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:hover:bg-white/[0.12]"
+                @click="googleUrl()"
             >
                 <img
                     src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                    alt="Google"
-                    class="w-5 h-5"
+                    alt=""
+                    class="h-5 w-5"
                 />
-                Continue with Google
-            </BaseButton>
+                Sign in with Google
+            </button>
 
-            <p class="text-center text-sm text-slate-500 dark:text-gray-400">
-                Dont have an account?
+            <p
+                class="mt-7 text-center text-sm text-slate-500 dark:text-gray-400"
+            >
+                Don't have an account?
                 <NuxtLink
                     to="/auth/signup"
-                    class="text-blue-600 dark:text-blue-400 font-semibold hover:underline outline-none rounded focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                    class="rounded font-semibold text-blue-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-blue-400"
                 >
                     Sign up
                 </NuxtLink>
             </p>
 
             <p
-                class="text-center text-xs leading-5 text-slate-400 dark:text-gray-500"
+                class="mt-3 text-center text-xs leading-5 text-slate-400 dark:text-gray-500"
             >
                 By signing in you agree to AMUMA's
                 <button

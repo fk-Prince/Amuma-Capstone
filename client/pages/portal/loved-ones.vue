@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="min-h-full p-4 sm:p-6 lg:p-8 space-y-5">
         <div v-if="isLoading" class="space-y-5 animate-pulse">
             <div class="flex items-center gap-2">
@@ -428,7 +428,7 @@
                                     {{ lovedOne.birthdate }}
                                 </p>
                                 <p class="text-xs text-gray-400 break-words dark:text-gray-500">
-                                    {{ lovedOne.age }} years old ·
+                                    {{ lovedOne.age }} years old Â·
                                     {{ lovedOne.gender }}
                                 </p>
                             </div>
@@ -602,7 +602,7 @@
                                 {{ lovedOne.client.name }}
                             </p>
                             <p class="text-xs text-gray-400 break-words dark:text-gray-500">
-                                Your relationship to this patient ·
+                                Your relationship to this patient Â·
                                 {{ lovedOne.relationship }}
                             </p>
                         </div>
@@ -912,6 +912,7 @@ useHead({ title: "My Loved Ones" });
 
 definePageMeta({
     layout: "portal",
+    middleware: "portal",
 });
 
 interface Payment {

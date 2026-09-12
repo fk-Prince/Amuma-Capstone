@@ -255,6 +255,7 @@ class BranchResource extends JsonResource
                 'requires_full_payment_on_admit' => $settings['requires_full_payment_on_admit'] ?? true,
                 'minimum_adl_hours' => $settings['minimum_adl_hours'] ?? 8,
                 'currency' => $settings['currency'] ?? 'PHP',
+                'tin' => $settings['tin'] ?? null,
             ],
 
             'location' => $this->location,

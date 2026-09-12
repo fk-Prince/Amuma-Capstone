@@ -37,7 +37,9 @@
                                 Discharge patient
                             </h3>
 
-                            <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
+                            <p
+                                class="mt-1 text-sm text-slate-500 dark:text-gray-400"
+                            >
                                 This ends the patient's current admission and
                                 future periods. This action cannot be undone.
                             </p>
@@ -100,15 +102,17 @@
                                                 }}
                                             </p>
 
-                                            <p
+                                            <!-- <p
                                                 v-if="invoiceCoversMorePeriods"
                                                 class="mt-1 text-[11px] text-slate-400 dark:text-gray-500"
                                             >
                                                 This period
-                                                {{ formatCurrency(periodPrice) }}
+                                                {{
+                                                    formatCurrency(periodPrice)
+                                                }}
                                                 — the invoice also covers
                                                 another period of this stay
-                                            </p>
+                                            </p> -->
                                         </div>
 
                                         <p
@@ -124,7 +128,9 @@
 
                                     <!-- PAYMENT SUMMARY -->
                                     <div
-                                        v-if="hasPaidAmount || hasRefundableAmount"
+                                        v-if="
+                                            hasPaidAmount || hasRefundableAmount
+                                        "
                                         class="mt-5 flex flex-col sm:flex-row gap-2.5"
                                     >
                                         <div
@@ -395,7 +401,9 @@
                                                         </span>
 
                                                         <span
-                                                            v-if="hasRetainedHalf"
+                                                            v-if="
+                                                                hasRetainedHalf
+                                                            "
                                                             class="flex justify-between gap-3"
                                                         >
                                                             <span
@@ -536,7 +544,9 @@
                                             </div>
 
                                             <div
-                                                v-else-if="isUnderRequiredPayment"
+                                                v-else-if="
+                                                    isUnderRequiredPayment
+                                                "
                                                 class="border-t border-slate-200 pt-2 flex justify-between gap-4 dark:border-white/10"
                                             >
                                                 <span
@@ -563,7 +573,9 @@
                                     v-else
                                     class="flex flex-1 items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5"
                                 >
-                                    <p class="text-sm text-slate-500 dark:text-gray-400">
+                                    <p
+                                        class="text-sm text-slate-500 dark:text-gray-400"
+                                    >
                                         No active billing period.
                                     </p>
                                 </div>
@@ -753,7 +765,9 @@
                                     v-else
                                     class="flex flex-1 items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5"
                                 >
-                                    <p class="text-sm text-slate-500 dark:text-gray-400">
+                                    <p
+                                        class="text-sm text-slate-500 dark:text-gray-400"
+                                    >
                                         No future billing periods to refund.
                                     </p>
                                 </div>
@@ -784,9 +798,8 @@
                                 class="mt-2 text-xs leading-5 text-emerald-800/80 dark:text-emerald-300/70"
                             >
                                 Paid more than the invoices now ask for, usually
-                                after a downgrade or a cancelled period. It stays
-                                on the account and can be refunded whenever the
-                                family asks.
+                                after a downgrade or a cancelled period. It
+                                stays on the account.
                             </p>
                         </div>
 
@@ -795,7 +808,9 @@
                             class="mt-6 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 dark:border-white/10 dark:bg-white/5"
                         >
                             <div>
-                                <p class="text-sm font-semibold text-slate-700 dark:text-gray-400">
+                                <p
+                                    class="text-sm font-semibold text-slate-700 dark:text-gray-400"
+                                >
                                     Required payment
                                 </p>
 
@@ -837,13 +852,89 @@
                             </div>
                         </div>
 
+                        <!-- The refund above settles this stay; the patient is
+                             leaving the branch, so what is still owed on their
+                             schedules has to be collected too. -->
+                        <div
+                            v-if="outstanding"
+                            class="mt-6 overflow-hidden rounded-xl border"
+                            :class="
+                                outstanding.total_balance > 0
+                                    ? 'border-rose-200 dark:border-rose-500/30'
+                                    : 'border-slate-200 dark:border-white/10'
+                            "
+                        >
+                            <div
+                                class="flex items-center justify-between gap-3 px-5 py-4"
+                                :class="
+                                    outstanding.total_balance > 0
+                                        ? 'bg-rose-50 dark:bg-rose-500/10'
+                                        : 'bg-emerald-50 dark:bg-emerald-500/10'
+                                "
+                            >
+                                <div>
+                                    <p
+                                        class="text-sm font-semibold text-slate-700 dark:text-gray-300"
+                                    >
+                                        Overall balance
+                                    </p>
+
+                                    <p
+                                        class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                    >
+                                        Everything this patient owes, admission
+                                        and services alike.
+                                    </p>
+                                </div>
+
+                                <p
+                                    class="shrink-0 text-lg font-bold"
+                                    :class="
+                                        outstanding.total_balance > 0
+                                            ? 'text-rose-600 dark:text-rose-300'
+                                            : 'text-emerald-600 dark:text-emerald-300'
+                                    "
+                                >
+                                    {{
+                                        formatCurrency(
+                                            outstanding.total_balance,
+                                        )
+                                    }}
+                                </p>
+                            </div>
+
+                            <dl
+                                class="grid grid-cols-2 divide-x divide-slate-200 border-t border-slate-200 dark:divide-white/10 dark:border-white/10"
+                            >
+                                <div
+                                    v-for="part in outstandingParts"
+                                    :key="part.label"
+                                    class="px-4 py-3 text-center"
+                                >
+                                    <dt
+                                        class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                                    >
+                                        {{ part.label }}
+                                    </dt>
+
+                                    <dd
+                                        class="mt-0.5 text-sm font-semibold text-slate-700 dark:text-gray-200"
+                                    >
+                                        {{ formatCurrency(part.value) }}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+
                         <div class="mt-6">
                             <label
                                 for="discharge-note"
                                 class="block text-sm font-semibold text-slate-700 mb-2 dark:text-gray-400"
                             >
                                 Discharge note
-                                <span class="font-normal text-slate-400 dark:text-gray-500">
+                                <span
+                                    class="font-normal text-slate-400 dark:text-gray-500"
+                                >
                                     (optional)
                                 </span>
                             </label>
@@ -870,7 +961,9 @@
                             class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3.5 dark:border-amber-500/20 dark:bg-amber-500/10"
                         >
                             <div>
-                                <p class="text-sm font-semibold text-amber-900 dark:text-amber-300">
+                                <p
+                                    class="text-sm font-semibold text-amber-900 dark:text-amber-300"
+                                >
                                     Payment required before discharge
                                 </p>
 
@@ -1012,6 +1105,20 @@ const {
     refundPolicyDescription,
 } = useDischargeRefund(computed(() => props.admission));
 
+const outstanding = computed(
+    () => props.admission?.discharge_calculation?.outstanding ?? null,
+);
+
+// The stay on one side, everything scheduled on the other — ADL included,
+// since it is billed the same way as any other service visit.
+const outstandingParts = computed(() => [
+    {
+        label: "Admission",
+        value: outstanding.value?.accommodation_balance ?? 0,
+    },
+    { label: "Services", value: outstanding.value?.service_balance ?? 0 },
+]);
+
 const futureInvoices = computed(() => {
     return props.futureInvoices ?? [];
 });
@@ -1073,7 +1180,8 @@ const hasPaidAmount = computed(() => currentNetPaidAmount.value > 0);
 const hasRefundableAmount = computed(() => currentRefundAmount.value > 0);
 
 const hasRequiredPayment = computed(
-    () => requiredPaymentAmount.value !== null && requiredPaymentAmount.value > 0,
+    () =>
+        requiredPaymentAmount.value !== null && requiredPaymentAmount.value > 0,
 );
 
 function hasAmount(value: unknown): boolean {
@@ -1107,7 +1215,10 @@ const canDischarge = computed(() => {
 function statusClasses(status?: string | null) {
     const s = (status ?? "").toLowerCase();
 
-    return INVOICE_STATUS[s] ?? "bg-slate-50 text-slate-500 border-slate-200 dark:bg-white/5 dark:text-gray-400 dark:border-white/10";
+    return (
+        INVOICE_STATUS[s] ??
+        "bg-slate-50 text-slate-500 border-slate-200 dark:bg-white/5 dark:text-gray-400 dark:border-white/10"
+    );
 }
 
 function handleConfirm() {

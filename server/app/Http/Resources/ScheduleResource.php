@@ -229,6 +229,7 @@ class ScheduleResource extends JsonResource
             'patient' => $patient ? [
                 'patient_id' => $patient->patient_id,
                 'patient_uuid' => $patient->uuid,
+                'patient_code' => $patient->patient_code,
                 'full_name' => trim(
                     "{$patient->first_name} {$patient->last_name}"
                 ),

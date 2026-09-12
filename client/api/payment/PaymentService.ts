@@ -1,4 +1,4 @@
-import BaseService from '~/api/BaseService';
+import BaseService from "~/api/BaseService";
 
 class PaymentService extends BaseService {
     private static instance: PaymentService;
@@ -22,11 +22,11 @@ class PaymentService extends BaseService {
         authentication_id: string;
         invoice_codes?: string[];
     }): Promise<any> {
-        return await this.request(this.resource + '/action', 'POST', payload);
+        return await this.request(this.resource + "/action", "POST", payload);
     }
 
-    async receipt(payload: { receipt_no: string }): Promise<any> {
-        return await this.request(this.resource + '/receipt', 'POST', payload);
+    async receipt(payload: { payment_code: string }): Promise<any> {
+        return await this.request(this.resource + "/receipt", "POST", payload);
     }
 
     private get resource(): string {

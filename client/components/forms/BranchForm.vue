@@ -117,20 +117,54 @@
             </div>
         </div>
 
-        <div v-if="!hideDocument" class="space-y-5">
+        <div class="space-y-5">
             <div>
                 <h2
                     class="text-lg font-semibold text-slate-900 dark:text-white"
                 >
-                    Verification Document
+                    Verification
                 </h2>
 
                 <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
-                    Upload a supporting document for this branch.
+                    {{
+                        lockVerification
+                            ? "Tax details and the document this branch was verified with, these cannot be changed here."
+                            : "Tax details and a supporting document for this branch."
+                    }}
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="max-w-md">
+                <LabelInput
+                    v-model="tin"
+                    label="TIN (Taxpayer Identification Number)"
+                    placeholder="000-000-000-000"
+                    :required="!lockVerification"
+                    :disabled="lockVerification"
+                    :error="errors?.branch_tin"
+                    data-field="branch_tin"
+                />
+            </div>
+
+            <div v-if="lockVerification" class="space-y-2">
+                <p
+                    class="text-sm font-semibold text-slate-700 dark:text-gray-300"
+                >
+                    Document
+                </p>
+
+                <DocumentLink
+                    v-if="documentUrl"
+                    :url="documentUrl"
+                    label="Branch Document"
+                />
+
+                <p v-else class="text-xs text-muted dark:text-gray-500">
+                    No document on file
+                </p>
+            </div>
+
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div class="space-y-2 p-4" data-field="branch_document">
                     <div class="flex items-center justify-between">
                         <label
@@ -429,13 +463,19 @@ import { ref, computed, watch } from "vue";
 import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
 import PhoneInput from "../ui/PhoneInput.vue";
+import DocumentLink from "../ui/DocumentLink.vue";
 import type { Branch } from "~/types/branch";
+import { formatTin } from "~/schema/tin-schema";
 
 const props = defineProps<{
     branch: Branch;
     errors?: Record<string, string> | null;
-    hideDocument?: boolean;
+    lockVerification?: boolean;
 }>();
+
+const documentUrl = computed(() =>
+    typeof props.branch.document === "string" ? props.branch.document : null,
+);
 
 const emit = defineEmits<{
     (e: "update:branch", value: Branch): void;
@@ -448,6 +488,14 @@ const branch = computed({
 });
 
 const errors = computed(() => props.errors);
+
+const tin = computed({
+    get: () => props.branch.tin ?? "",
+    set: (value: string | number) => {
+        clearError("branch_tin");
+        branch.value = { ...props.branch, tin: formatTin(String(value)) };
+    },
+});
 
 function initialPreview(value: unknown): string | null {
     if (typeof value === "string") return value;

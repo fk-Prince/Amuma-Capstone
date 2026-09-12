@@ -54,6 +54,8 @@ class BranchContractService
 
         $contract = $this->branchContractRepository->create($payload);
 
+        $contract->refresh();
+
         return [
             'message' => 'Branch contract created successfully.',
             'data' => $contract,

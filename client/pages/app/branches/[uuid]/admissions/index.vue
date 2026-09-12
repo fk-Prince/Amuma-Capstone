@@ -52,14 +52,17 @@
                 </button>
             </div>
 
-            <div v-if="viewMode === 'table'" class="min-h-[24rem] lg:h-[calc(100dvh-var(--header-h)-8rem)]">
+            <div
+                v-if="viewMode === 'table'"
+                class="min-h-[24rem] lg:h-[calc(100dvh-var(--header-h)-8rem)]"
+            >
                 <DataTable
                     :columns="admissionColumns"
                     :rows="admissionRows"
                     :pagination="admissionPagination"
                     :loading="loadingAdmissions"
                     searchable
-                    search-placeholder="Search by reference ID or patient name…"
+                    search-placeholder="Search by patient code, name or reference ID…"
                     empty-title="No admissions found"
                     empty-description="Try adjusting your search."
                     @search="onAdmissionSearch"
@@ -86,7 +89,9 @@
                     </template>
 
                     <template #cell-reference_id="{ row }">
-                        <span class="font-medium text-slate-800 dark:text-white">
+                        <span
+                            class="font-medium text-slate-800 dark:text-white"
+                        >
                             {{ row.reference_id }}
                         </span>
                     </template>
@@ -105,14 +110,17 @@
                 </DataTable>
             </div>
 
-            <div v-if="viewMode === 'bookings'" class="min-h-[24rem] lg:h-[calc(100dvh-var(--header-h)-8rem)]">
+            <div
+                v-if="viewMode === 'bookings'"
+                class="min-h-[24rem] lg:h-[calc(100dvh-var(--header-h)-8rem)]"
+            >
                 <DataTable
                     :columns="bookingColumns"
                     :rows="bookingRows"
                     :pagination="bookingPagination"
                     :loading="loadingBookings"
                     searchable
-                    search-placeholder="Search booking reference or patient name…"
+                    search-placeholder="Search by patient code, name or booking reference…"
                     empty-title="No bookings found"
                     empty-description="No pending admission bookings available."
                     @search="onBookingSearch"
@@ -189,7 +197,9 @@
                             Facility Admission
                         </p>
 
-                        <h1 class="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                        <h1
+                            class="mt-2 text-3xl font-bold text-slate-900 dark:text-white"
+                        >
                             Patient Admission Request
                         </h1>
 
@@ -567,7 +577,7 @@ async function loadRoomContracts() {
 }
 
 const admissionColumns: DataTableColumn[] = [
-    { key: "p_uuid", label: "Patient ID" },
+    { key: "patient_code", label: "Patient ID" },
     { key: "patient_name", label: "Patient", sortable: true },
     { key: "accommodation", label: "Accommodation" },
     { key: "room_bed", label: "Room & Bed" },
@@ -608,6 +618,7 @@ async function fetchBookings() {
         bookingRows.value = (response.data ?? []).map(
             (booking: BookingRetrieve) => ({
                 p_uuid: booking.patient.uuid,
+                patient_code: booking.patient.patient_code,
                 reference_id: booking.reference_id,
                 patient_name: [
                     booking.patient.first_name,
@@ -683,6 +694,7 @@ async function fetchAdmissions() {
 
                 return {
                     p_uuid: data.uuid,
+                    patient_code: data.patient_code,
                     patient_admission_id: admission?.patient_admission_id,
 
                     patient_name: data.full_name,

@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InvoiceAdjustment extends Model
 {
@@ -13,7 +12,6 @@ class InvoiceAdjustment extends Model
 
     public const UPDATED_AT = null;
 
-    public const TYPE_REFUND = 'refund';
     public const TYPE_CORRECTION = 'correction';
     public const TYPE_VOID = 'void';
 
@@ -33,5 +31,10 @@ class InvoiceAdjustment extends Model
     public function invoice()
     {
         return $this->belongsTo(Invoice::class, 'invoice_id', 'invoice_id');
+    }
+
+    public function refundAllocations()
+    {
+        return $this->hasMany(RefundAllocation::class, 'invoice_adjustment_id',  'invoice_adjustment_id');
     }
 }

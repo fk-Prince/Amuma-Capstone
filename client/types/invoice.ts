@@ -133,7 +133,7 @@ export interface InvoiceAccommodationLine {
     patient_name: string;
 }
 
-export type RefundStatus = "requested" | "completed" | "declined";
+export type RefundStatus = "requested" | "completed" | "rejected";
 
 export type RefundSummaryStatus =
     "none" | "partially refunded" | "full refunded";
@@ -146,7 +146,7 @@ export interface InvoiceRefund {
     refund_method: string | null;
     status: RefundStatus;
     declined_reason: string | null;
-    masked_card_number: string | null;
+    masked_account_detail: string | null;
     created_at: string | null;
 }
 
@@ -158,11 +158,11 @@ export interface PatientRefund extends InvoiceRefund {
 
 export interface PatientPayment {
     payment_id: number;
-    receipt_no: string | null;
+    payment_code: string | null;
     reference_id: string | null;
     amount: number;
     payment_method: string | null;
-    masked_card_number: string | null;
+    masked_account_detail: string | null;
     payor_name: string | null;
     created_at: string | null;
     invoice_codes: string[];
@@ -179,19 +179,21 @@ export interface InvoiceAdjustmentDetail {
 export interface InvoicePayment {
     payment_id: number;
     allocation_id?: number;
-    receipt_no?: string | null;
+    payment_code?: string | null;
     reference_id: string;
     amount: number;
     description?: string | null;
     payment_method: string;
-    masked_card_number?: string | null;
+    masked_account_detail?: string | null;
     created_at: string | null;
     refunds: InvoiceRefund[];
 }
 
 export interface InvoicePatient {
     patient_id: number;
+    // uuid is the key used in routes and queries; patient_code is what staff read.
     patient_uuid: string;
+    patient_code?: string | null;
     full_name: string | null;
     first_name: string | null;
     middle_name: string | null;
@@ -267,6 +269,25 @@ export interface DischargeCalculation {
     is_within_refund_window: boolean;
     is_under_required_payment: boolean;
     payment_shortfall: number;
+    // Everything the patient still owes across admissions and schedules, not
+    // only the stay being discharged.
+    outstanding?: DischargeOutstanding | null;
+}
+
+export interface DischargeOutstanding {
+    total_balance: number;
+    accommodation_balance: number;
+    service_balance: number;
+    adl_balance: number;
+    other_balance: number;
+    unpaid_invoice_count: number;
+    invoices: {
+        invoice_code: string;
+        description: string | null;
+        kind: "admission" | "service" | "adl";
+        balance_due: number;
+        is_discharge_invoice: boolean;
+    }[];
 }
 
 export interface InvoiceDetail {
@@ -297,7 +318,10 @@ export interface PatientInvoiceItem {
     invoice_code: string;
     description?: string | null;
     schedule_code?: string | null;
+    // `total` is what the invoice asks for now; `original_total` is what it
+    // asked for before any credit note.
     total: number;
+    original_total?: number;
     adjusted_total?: number;
     amount_paid: number;
     refunded_amount: number;
@@ -329,6 +353,7 @@ export interface PatientInvoiceSummary {
     total_amount: number;
     total_paid: number;
     total_refunded: number;
+    total_withdrawn: number;
     total_refund_requested: number;
     total_refundable: number;
     total_balance: number;
@@ -392,11 +417,13 @@ export interface PatientSummaryRow {
     patient: {
         patient_id: string;
         patient_uuid: string;
+        patient_code: string | null;
         full_name: string | null;
     } | null;
     total_amount: number | string;
     total_paid: number | string;
     total_refunded: number | string;
+    total_withdrawn?: number | string;
     total_refund_requested: number | string;
     total_refundable: number | string;
     total_balance: number | string;

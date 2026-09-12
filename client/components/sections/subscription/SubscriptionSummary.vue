@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="bg-white rounded-3xl shadow-sm p-6 space-y-6 dark:bg-secondary">
         <div class="flex items-center justify-between">
             <div>
@@ -26,7 +26,7 @@
                     <span class="text-slate-500 dark:text-gray-400"> Plan </span>
 
                     <span class="font-semibold text-slate-800 dark:text-white">
-                        {{ checkout.selectedPlan?.name || "—" }}
+                        {{ checkout.selectedPlan?.name || "â€”" }}
                     </span>
                 </div>
 
@@ -34,7 +34,7 @@
                     <span class="text-slate-500 dark:text-gray-400"> Billing </span>
 
                     <span class="font-semibold capitalize">
-                        {{ checkout.selectedInterval || "—" }}
+                        {{ checkout.selectedInterval || "â€”" }}
                     </span>
                 </div>
 
@@ -44,8 +44,8 @@
                     <span class="font-bold text-primary">
                         {{
                             checkout.selectedPrice != null
-                                ? `₱${checkout.selectedPrice}`
-                                : "—"
+                                ? `â‚±${checkout.selectedPrice}`
+                                : "â€”"
                         }}
                     </span>
                 </div>
@@ -86,7 +86,7 @@
                                     checkout.agency.location.country,
                                 ]
                                     .filter(Boolean)
-                                    .join(", ") || "—"
+                                    .join(", ") || "â€”"
                             }}
                         </template>
 
@@ -94,7 +94,7 @@
                             {{
                                 checkout.agency[
                                     field.key as keyof typeof checkout.agency
-                                ] || "—"
+                                ] || "â€”"
                             }}
                         </template>
                     </span>
@@ -144,7 +144,7 @@
                                     checkout.branch.location.country,
                                 ]
                                     .filter(Boolean)
-                                    .join(", ") || "—"
+                                    .join(", ") || "â€”"
                             }}
                         </template>
 
@@ -152,7 +152,7 @@
                             {{
                                 checkout.branch[
                                     field.key as keyof typeof checkout.branch
-                                ] || "—"
+                                ] || "â€”"
                             }}
                         </template>
                     </span>
@@ -168,7 +168,7 @@
                             checkout.settings?.opening &&
                             checkout.settings?.closing
                                 ? `${checkout.settings.opening} - ${checkout.settings.closing}`
-                                : "—"
+                                : "â€”"
                         }}
                     </span>
                 </div>
@@ -177,7 +177,7 @@
                     <span class="text-slate-500 dark:text-gray-400"> Currency </span>
 
                     <span class="font-semibold">
-                        {{ checkout.settings?.currency || "—" }}
+                        {{ checkout.settings?.currency || "â€”" }}
                     </span>
                 </div>
 
@@ -185,7 +185,7 @@
                     <span class="text-slate-500 dark:text-gray-400"> Time Zone </span>
 
                     <span class="font-semibold">
-                        {{ checkout.settings?.time_zone || "—" }}
+                        {{ checkout.settings?.time_zone || "â€”" }}
                     </span>
                 </div>
             </div>
@@ -264,7 +264,7 @@ const send = async () => {
             branch_contact_number: checkout.branch.contact_number,
             branch_image: checkout.branch.image,
             branch_description: checkout.branch.description,
-            branch_settings: checkout.settings,
+            branch_settings: checkout.branchSettingsPayload,
             branch_street: checkout.branch.location.street,
             branch_city: checkout.branch.location.city,
             branch_province: checkout.branch.location.province,

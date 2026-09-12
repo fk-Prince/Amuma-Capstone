@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { Permissions } from "./permission";
 import { useBranchPlan } from "~/composables/useBranchPlan";
-
+import { phoneNumber } from "~/schema/phone-schema";
 
 export interface EmployeeDocument {
     label: string;
@@ -10,8 +10,8 @@ export interface EmployeeDocument {
 }
 
 export interface Employee {
-    employee_id: string
-    uuid: string,
+    employee_id: string;
+    uuid: string;
     email: string;
     first_name: string;
     middle_name: string;
@@ -25,31 +25,27 @@ export interface Employee {
     assignment_type: string;
     formatted_assignment_type: string;
     status: string;
-    permissions: Permissions[]
+    permissions: Permissions[];
     hired_date?: string;
-    assigned: EmployeeService[]
+    assigned: EmployeeService[];
     full_name?: string;
-
-
 
     is_busy?: boolean;
     is_assigned?: boolean;
-    conflict_count?: number
+    conflict_count?: number;
     conflict_schedules?: {
         schedule_code: string;
         scheduled_at: string;
         status: string;
         category: string;
         duration_minutes: number | null;
-    }[]
+    }[];
 }
 
 export interface EmployeeService {
     service_id: string;
-    is_assigned: boolean
+    is_assigned: boolean;
 }
-
-
 
 export interface EmployeePayload {
     email: string;
@@ -68,7 +64,25 @@ export interface EmployeePayload {
     phone_number: string;
     role_name: string;
     assignment_type: string;
+    status: EmployeeStatus;
 }
+
+export type EmployeeStatus = "active" | "inactive" | "on_leave";
+
+// On leave is a flavour of active — the employee still has access, they are
+// just away, so the form's switch reads it as on.
+export const isActiveStatus = (status?: string | null) => status !== "inactive";
+
+export const formatEmployeeStatus = (status?: string | null) => {
+    switch (status) {
+        case "on_leave":
+            return "On leave";
+        case "inactive":
+            return "Inactive";
+        default:
+            return "Active";
+    }
+};
 
 export const createEmployee = (): EmployeePayload => ({
     email: "",
@@ -87,6 +101,7 @@ export const createEmployee = (): EmployeePayload => ({
     phone_number: "",
     role_name: "administrator",
     assignment_type: "both",
+    status: "active",
 });
 
 export const employeeSchema = z.object({
@@ -101,11 +116,11 @@ export const employeeSchema = z.object({
         .string()
         .nullable()
         .refine((val) => !!val, "Birth date is required")
-        .refine((val) => !isNaN(Date.parse(val as string)), "Enter a valid birth date"),
-    phone_number: z
-        .string()
-        .min(1, "Phone number is required")
-        .regex(/^[0-9\-\s()]{7,20}$/, "Enter a valid phone number"),
+        .refine(
+            (val) => !isNaN(Date.parse(val as string)),
+            "Enter a valid birth date",
+        ),
+    phone_number: phoneNumber(),
     email: z
         .string()
         .min(1, "Email is required")
@@ -121,9 +136,9 @@ export const employeeSchema = z.object({
 export type EmployeeFormData = z.infer<typeof employeeSchema>;
 
 export const unFilteredEmployeeAssignmentTypes = [
-    { label: "All", value: "both", },
+    { label: "All", value: "both" },
     { label: "Homecare", value: "homecare" },
-    { label: "Facility", value: "facility" },
+    { label: "Inhouse Facility", value: "facility" },
 ];
 
 export const employeeAssignmentTypes = computed(() => {
@@ -153,14 +168,13 @@ export const employeePositions = [
 export const formatAssignmentType = (type?: string | null) => {
     switch (type?.toLowerCase()) {
         case "both":
-            return "Homecare + Inhouse Facility";
+            return "Homecare & Inhouse Facility";
         case "homecare":
+        case "online":
             return "Homecare";
         case "facility":
             return "Inhouse Facility";
         default:
             return null;
     }
-}
-
-
+};

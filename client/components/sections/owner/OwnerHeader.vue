@@ -88,6 +88,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
         title: "Plans",
         subtitle: "Manage the subscription plans agencies can choose from.",
     },
+    "/profile": {
+        title: "My Profile",
+        subtitle: "Update your personal details, contact information, and preferences.",
+    },
 };
 
 const currentPath = computed(() =>

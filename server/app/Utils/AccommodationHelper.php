@@ -12,7 +12,7 @@ class AccommodationHelper
     public static function settle(AdmissionPeriod $period): void
     {
         $outstanding = $period->invoiceAdmissionLines()
-            ->with('invoice.allocations.refundAllocations.refund', 'invoice.invoiceAdjustments')
+            ->with('invoice.allocations.refundAllocations', 'invoice.invoiceAdjustments')
             ->get()
             ->map(fn($line) => $line->invoice)
             ->filter()

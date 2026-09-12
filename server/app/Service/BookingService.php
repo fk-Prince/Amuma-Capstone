@@ -164,7 +164,11 @@ class BookingService
                 ], 200);
             });
         } catch (Exception $e) {
-            XenditService::refundXenditPayment($result['xendit_invoice_id'], $result['total']);
+            XenditService::refundXenditPayment(
+                $result['xendit_invoice_id'],
+                $result['total'],
+                (bool) ($result['masked_card_number'] ?? null)
+            );
             return response()->json([
                 'status' => false,
                 'message' => 'Booking failed. Your payment has been refunded.',
@@ -237,6 +241,35 @@ class BookingService
     }
 
     //USED
+    public function expire(Booking $booking): bool
+    {
+        return DB::transaction(function () use ($booking) {
+            $bookingData = $booking->booking_data;
+            $payment = $bookingData['payment'] ?? [];
+
+            $refundable = ($payment['payment_status'] ?? null) === 'paid'
+                && !empty($payment['xendit_invoice_id'])
+                && (float) ($payment['total_amount'] ?? 0) > 0;
+
+            $refunded = $refundable && XenditService::refundXenditPayment(
+                $payment['xendit_invoice_id'],
+                (float) $payment['total_amount'],
+                (bool) ($payment['masked_card_number'] ?? null)
+            );
+
+            if ($refunded) {
+                $bookingData['payment']['payment_status'] = 'refunded';
+            }
+
+            $booking->update([
+                'booking_data' => $bookingData,
+                'status' => Booking::STATUS_EXPIRED,
+            ]);
+
+            return $refunded;
+        });
+    }
+
     public function reject(array $payload)
     {
         return DB::transaction(function () use ($payload) {

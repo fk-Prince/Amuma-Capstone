@@ -174,6 +174,14 @@
                                 >
                                     {{ patient.full_name }}
                                 </h1>
+
+                                <span
+                                    v-if="patient.patient_code"
+                                    class="shrink-0 rounded-lg bg-primary-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300"
+                                >
+                                    {{ patient.patient_code }}
+                                </span>
+
                                 <span
                                     v-if="latestAdmission"
                                     class="shrink-0 text-xs font-medium capitalize rounded-full px-2.5 py-1"
@@ -218,6 +226,35 @@
                                     </dd>
                                 </div>
                             </dl>
+                        </div>
+
+                        <!-- Everything the patient owes, admission and
+                             schedules alike, so it is read before any action
+                             on this page rather than only at discharge. -->
+                        <div
+                            v-if="patientOutstanding"
+                            class="hidden shrink-0 text-right sm:block"
+                        >
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                            >
+                                Overall balance
+                            </p>
+
+                            <p
+                                class="mt-0.5 text-lg font-bold"
+                                :class="
+                                    patientOutstanding.total_balance > 0
+                                        ? 'text-rose-600 dark:text-rose-300'
+                                        : 'text-emerald-600 dark:text-emerald-300'
+                                "
+                            >
+                                {{
+                                    formatCurrency(
+                                        patientOutstanding.total_balance,
+                                    )
+                                }}
+                            </p>
                         </div>
                     </div>
 
@@ -910,6 +947,15 @@ const patient = ref<PatientRetrieve | null>(null);
 
 const latestAdmission = computed<Admission | undefined>(
     () => patient.value?.latest_admission,
+);
+
+// Carried on the admission's discharge calculation, which is the one place the
+// whole account is totalled.
+const patientOutstanding = computed(
+    () =>
+        patient.value?.current_admission?.discharge_calculation?.outstanding ??
+        patient.value?.latest_admission?.discharge_calculation?.outstanding ??
+        null,
 );
 
 const currentAdmission = computed<Admission | undefined>(

@@ -26,10 +26,14 @@
                 class="hidden h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-50 ring-2 ring-primary-100 dark:bg-white/10 dark:ring-white/10 sm:flex"
             >
                 <img
-                    v-if="branchStore.activeBranch?.image"
+                    v-if="
+                        branchStore.activeBranch?.image &&
+                        !brokenImages.has(branchStore.activeBranch.uuid)
+                    "
                     :src="getBranchImage(branchStore.activeBranch.image)"
                     :alt="branchStore.activeBranch.name"
                     class="h-full w-full object-cover"
+                    @error="brokenImages.add(branchStore.activeBranch!.uuid)"
                 />
                 <Building2 v-else class="h-5 w-5 text-primary-400" />
             </div>
@@ -46,7 +50,9 @@
                     />
                 </h1>
 
-                <p class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate dark:text-gray-500">
+                <p
+                    class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate dark:text-gray-500"
+                >
                     {{
                         branchStore.activeBranch?.location?.address ||
                         "No branch selected"
@@ -68,7 +74,9 @@
                     />
 
                     <span class="flex items-center gap-1.5 whitespace-nowrap">
-                        <Clock class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300" />
+                        <Clock
+                            class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300"
+                        />
                         {{ formattedTime }}
                     </span>
                 </div>
@@ -92,6 +100,7 @@
                 <NavbarProfileDropdown
                     v-if="user"
                     :user="user"
+                    :role="branchStore.activeBranch?.role_name"
                     :theme-aware="true"
                 />
             </template>
@@ -153,12 +162,12 @@
 
                                 <div class="min-w-0">
                                     <h2
-                                        class="truncate text-sm font-semibold leading-tight text-primary-900 sm:text-base"
+                                        class="truncate text-sm font-semibold leading-tight text-primary-900 dark:text-white sm:text-base"
                                     >
                                         Select a branch
                                     </h2>
                                     <p
-                                        class="mt-0.5 truncate text-[11px] text-muted sm:text-xs"
+                                        class="mt-0.5 truncate text-[11px] text-muted dark:text-gray-400 sm:text-xs"
                                     >
                                         Choose which branch you want to manage
                                     </p>
@@ -210,10 +219,14 @@
                                         class="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-primary-50 ring-2 ring-primary-100 transition-transform duration-200 group-hover:scale-[1.03] sm:h-11 sm:w-11 dark:bg-primary-500/10 dark:ring-primary-500/20"
                                     >
                                         <img
-                                            v-if="branch.image"
+                                            v-if="
+                                                branch.image &&
+                                                !brokenImages.has(branch.uuid)
+                                            "
                                             :src="getBranchImage(branch.image)"
                                             :alt="branch.name"
                                             class="h-full w-full object-cover"
+                                            @error="brokenImages.add(branch.uuid)"
                                         />
 
                                         <div
@@ -248,7 +261,7 @@
                                             class="flex min-w-0 items-start justify-between gap-2"
                                         >
                                             <p
-                                                class="flex min-w-0 flex-1 items-center gap-1 text-[13px] font-semibold text-primary-900 sm:text-sm"
+                                                class="flex min-w-0 flex-1 items-center gap-1 text-[13px] font-semibold text-primary-900 dark:text-white sm:text-sm"
                                             >
                                                 <span class="min-w-0 truncate">
                                                     {{ branch.name }}
@@ -274,7 +287,7 @@
 
                                         <p
                                             v-if="branch.location?.address"
-                                            class="mt-1 flex w-full min-w-0 items-start gap-1.5 text-[11px] leading-4 text-muted sm:text-xs"
+                                            class="mt-1 flex w-full min-w-0 items-start gap-1.5 text-[11px] leading-4 text-muted dark:text-gray-400 sm:text-xs"
                                         >
                                             <Location
                                                 class="mt-0.5 h-3.5 w-3.5 shrink-0"
@@ -344,7 +357,7 @@
                                 </div>
 
                                 <div
-                                    class="mt-2.5 grid w-full min-w-0 grid-cols-1 gap-x-3 gap-y-1 border-t border-primary-100/70 pt-2.5 text-[10px] text-muted sm:grid-cols-2 sm:text-[11px] dark:border-primary-500/20"
+                                    class="mt-2.5 grid w-full min-w-0 grid-cols-1 gap-x-3 gap-y-1 border-t border-primary-100/70 pt-2.5 text-[10px] text-muted dark:text-gray-400 sm:grid-cols-2 sm:text-[11px] dark:border-primary-500/20"
                                 >
                                     <span
                                         v-if="branch.contact_number"
@@ -379,7 +392,12 @@
                                         class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white ring-1 ring-primary-100 sm:h-7 sm:w-7 dark:bg-secondary dark:ring-primary-500/20"
                                     >
                                         <img
-                                            v-if="branch.agency.image"
+                                            v-if="
+                                                branch.agency.image &&
+                                                !brokenImages.has(
+                                                    `agency-${branch.uuid}`,
+                                                )
+                                            "
                                             :src="
                                                 getBranchImage(
                                                     branch.agency.image,
@@ -387,23 +405,28 @@
                                             "
                                             :alt="branch.agency.name"
                                             class="h-full w-full object-cover"
+                                            @error="
+                                                brokenImages.add(
+                                                    `agency-${branch.uuid}`,
+                                                )
+                                            "
                                         />
 
                                         <Building2
                                             v-else
-                                            class="h-3.5 w-3.5 text-primary-400"
+                                            class="h-3.5 w-3.5 text-primary-400 dark:text-primary-300"
                                         />
                                     </div>
 
                                     <div class="min-w-0 flex-1">
                                         <p
-                                            class="text-[8px] font-semibold uppercase tracking-wide text-primary-400 sm:text-[9px]"
+                                            class="text-[8px] font-semibold uppercase tracking-wide text-primary-400 dark:text-primary-300 sm:text-[9px]"
                                         >
                                             Agency
                                         </p>
 
                                         <p
-                                            class="truncate text-[11px] font-medium text-primary-900 sm:text-xs"
+                                            class="truncate text-[11px] font-medium text-primary-900 dark:text-white sm:text-xs"
                                         >
                                             {{ branch.agency.name }}
                                         </p>
@@ -438,11 +461,11 @@
                                 </svg>
                             </div>
 
-                            <p class="text-sm font-medium text-primary-900">
+                            <p class="text-sm font-medium text-primary-900 dark:text-white">
                                 No branches yet
                             </p>
 
-                            <p class="max-w-[220px] text-xs text-muted">
+                            <p class="max-w-[220px] text-xs text-muted dark:text-gray-400">
                                 You don't have access to any branches at the
                                 moment.
                             </p>
@@ -455,7 +478,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import Notification from "../ui/Notification.vue";
 import MessageBell from "../ui/MessageBell.vue";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
@@ -482,6 +505,8 @@ const user = useAuthUser();
 defineEmits<{ open: [] }>();
 
 const branchStore = useBranchStore();
+
+const brokenImages = reactive(new Set<string>());
 
 const isMounted = ref(false);
 
@@ -532,6 +557,16 @@ onUnmounted(() => {
     );
     background-size: 200% 100%;
     animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.dark .skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 25%,
+        rgba(255, 255, 255, 0.12) 50%,
+        rgba(255, 255, 255, 0.04) 75%
+    );
+    background-size: 200% 100%;
 }
 
 @keyframes shimmer {

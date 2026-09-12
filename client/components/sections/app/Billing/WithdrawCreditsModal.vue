@@ -20,11 +20,11 @@
                     <h3
                         class="mt-1 text-lg font-semibold text-secondary dark:text-white"
                     >
-                        Refund from credit
+                        Withdraw credits
                     </h3>
 
                     <p class="mt-1 text-xs text-muted dark:text-gray-400">
-                        {{ formatMoney(available) }} is available. Refund part
+                        {{ formatMoney(available) }} is available. Withdraw part
                         of it and the rest stays on the account.
                     </p>
                 </div>
@@ -33,7 +33,7 @@
                     <label
                         class="mb-1.5 block text-xs font-medium text-secondary dark:text-gray-300"
                     >
-                        Amount to refund
+                        Amount to withdraw
                     </label>
 
                     <input
@@ -58,7 +58,7 @@
                             class="text-xs font-medium text-primary hover:underline"
                             @click="emit('update:amount', available)"
                         >
-                            Refund all
+                            Withdraw all
                         </button>
 
                         <p
@@ -95,7 +95,7 @@
                         class="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
                         @click="emit('confirm')"
                     >
-                        {{ processing ? "Refunding…" : "Refund" }}
+                        {{ processing ? "Withdrawing…" : "Withdraw" }}
                     </button>
                 </div>
             </div>

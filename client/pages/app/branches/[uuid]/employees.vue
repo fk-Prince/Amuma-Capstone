@@ -1,6 +1,8 @@
 <template>
-    <div class="h-full w-full mx-auto p-4 bg-slate-50 dark:bg-secondary lg:space-y-5">
-        <div v-if="!addEmployeeTab" class="h-full flex flex-col min-h-0">
+    <div
+        class="h-full w-full mx-auto bg-slate-50 dark:bg-secondary lg:space-y-5"
+    >
+        <div v-if="!addEmployeeTab" class="h-full flex flex-col min-h-0 p-4">
             <EmployeeDashboard
                 :total-employee="totalEmployee"
                 :on-duty="onDuty"

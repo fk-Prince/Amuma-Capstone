@@ -236,26 +236,28 @@
                         >
                             <li v-for="entry in entries" :key="entry.key">
                                 <component
-                                    :is="entry.receipt_no ? 'button' : 'div'"
+                                    :is="entry.payment_code ? 'button' : 'div'"
                                     :type="
-                                        entry.receipt_no ? 'button' : undefined
+                                        entry.payment_code
+                                            ? 'button'
+                                            : undefined
                                     "
                                     class="flex w-full items-start justify-between gap-3 px-6 py-3.5 text-left transition"
                                     :class="
-                                        entry.receipt_no
+                                        entry.payment_code
                                             ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5'
                                             : ''
                                     "
                                     @click="
-                                        entry.receipt_no &&
-                                        emit('view-receipt', entry.receipt_no)
+                                        entry.payment_code &&
+                                        emit('view-receipt', entry.payment_code)
                                     "
                                 >
                                     <span class="min-w-0">
                                         <span
                                             class="flex items-center gap-1.5"
                                             :class="
-                                                entry.receipt_no
+                                                entry.payment_code
                                                     ? 'font-mono text-[13px] font-semibold text-primary-700 dark:text-primary-300'
                                                     : 'text-[13px] text-muted dark:text-gray-400'
                                             "
@@ -263,21 +265,21 @@
                                             <Loader2
                                                 v-if="
                                                     loadingReceipt ===
-                                                    entry.receipt_no
+                                                    entry.payment_code
                                                 "
                                                 class="h-3.5 w-3.5 animate-spin"
                                             />
 
                                             {{
-                                                entry.receipt_no ?? entry.label
+                                                entry.payment_code ??
+                                                entry.label
                                             }}
                                         </span>
 
                                         <span
                                             class="mt-0.5 block truncate text-[12px] text-gray-400 dark:text-gray-500"
                                         >
-                                            {{ entry.invoice_code }} ·
-                                            {{ entry.method }}
+                                            {{ entry.detail }}
                                         </span>
 
                                         <span
@@ -287,7 +289,7 @@
                                         </span>
 
                                         <span
-                                            v-if="entry.receipt_no"
+                                            v-if="entry.payment_code"
                                             class="mt-1 block text-[12px] font-medium text-primary hover:underline dark:text-primary-300"
                                         >
                                             View receipt →
@@ -410,7 +412,7 @@ const outstanding = computed(() =>
 const entries = computed(() =>
     allEntries.value.filter((entry) =>
         matches(
-            entry.receipt_no,
+            entry.payment_code,
             entry.label,
             entry.invoice_code,
             entry.method,
@@ -426,10 +428,13 @@ const allEntries = computed(() =>
 
                 const paid = {
                     key: `p-${payment.allocation_id ?? payment.payment_id}-${invoice.invoice_id}`,
-                    receipt_no: payment.receipt_no ?? null,
+                    payment_code: payment.payment_code ?? null,
                     label: amount < 0 ? "Credit moved out" : "No receipt",
                     invoice_code: invoice.invoice_code,
                     method: payment.payment_method ?? "—",
+                    detail: [invoice.invoice_code, payment.payment_method ?? "—"]
+                        .filter(Boolean)
+                        .join(" · "),
                     created_at: payment.created_at,
                     amount,
                     sign: amount < 0 ? "−" : "",
@@ -439,17 +444,33 @@ const allEntries = computed(() =>
                             : "text-primary-700 dark:text-primary-300",
                 };
 
-                const refunds = (payment.refunds ?? []).map((refund) => ({
-                    key: `r-${refund.refund_id}`,
-                    receipt_no: null,
-                    label: `Refund · ${refund.status}`,
-                    invoice_code: invoice.invoice_code,
-                    method: refund.refund_method ?? "—",
-                    created_at: refund.created_at,
-                    amount: Number(refund.amount ?? 0),
-                    sign: "−",
-                    tone: "text-accent-700 dark:text-accent-300",
-                }));
+                // Until a withdrawal claims it the credit has no status of its
+                // own; it simply sits on the account. Once one does, the row is
+                // about the withdrawal, which draws on the account rather than
+                // on this bill — so the invoice and the credit note behind it
+                // stay with the credit.
+                const refunds = (payment.refunds ?? []).map((refund) => {
+                    const withdrawn = !!refund.status;
+
+                    return {
+                        key: `r-${refund.refund_id}`,
+                        payment_code: null,
+                        label: withdrawn
+                            ? `Withdrawal · ${refund.status}`
+                            : "Credit issued",
+                        invoice_code: withdrawn ? null : invoice.invoice_code,
+                        method: refund.refund_method ?? "—",
+                        detail: withdrawn
+                            ? (refund.refund_method ?? "—")
+                            : [invoice.invoice_code, refund.reason]
+                                  .filter(Boolean)
+                                  .join(" · "),
+                        created_at: refund.created_at,
+                        amount: Number(refund.amount ?? 0),
+                        sign: "−",
+                        tone: "text-accent-700 dark:text-accent-300",
+                    };
+                });
 
                 return [paid, ...refunds];
             }),

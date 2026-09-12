@@ -27,12 +27,8 @@ class SubscriptionRequest extends FormRequest
             'payment_method' => ['nullable', 'string'],
             'payment_type' => ['nullable', 'string'],
 
-            // Only sent when adding a branch against existing paid capacity,
-            // where it identifies the agency the caller already belongs to.
             'branch_uuid' => ['nullable', 'string', 'exists:branches,uuid'],
 
-            // Which of the agency's subscriptions the new branch should join;
-            // ownership is re-checked server-side against the resolved agency.
             'subscription_uuid' => ['nullable', 'string', 'exists:subscriptions,uuid'],
 
             // Agency data
@@ -43,12 +39,6 @@ class SubscriptionRequest extends FormRequest
             'agency_city'        => ['nullable', 'string', 'required_with:agency_name'],
             'agency_province'    => ['nullable', 'string', 'required_with:agency_name'],
             'agency_country'     => ['nullable', 'string', 'required_with:agency_name'],
-            // Unique only for a *new* agency. When agency_id is supplied the
-            // subscriber already has an agency (adding another branch, or any
-            // subsequent subscription), and its own email must not count as a
-            // collision — that surfaced as "the agency email has already been
-            // taken" straight after a subscription succeeded.
-            // ignore(null) is a no-op, so new agencies stay fully unique.
             'agency_email'       => [
                 'nullable',
                 'string',
@@ -82,7 +72,32 @@ class SubscriptionRequest extends FormRequest
             'branch_settings.enable_booking_complete_admission' => ['required', 'boolean'],
             'branch_settings.requires_full_payment_on_admit' => ['nullable', 'boolean'],
             'branch_settings.minimum_adl_hours' => ['required', 'integer'],
+            'branch_settings.tin' => ['required', 'string', 'regex:/^\d{3}-\d{3}-\d{3}-(\d{3}|\d{5})$/'],
             'branch_settings.is_open' => ['required', 'boolean'],
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'branch_settings.tin' => 'TIN',
+            'branch_settings.currency' => 'currency',
+            'branch_settings.opening' => 'opening time',
+            'branch_settings.closing' => 'closing time',
+            'branch_settings.time_zone' => 'time zone',
+            'branch_settings.reserved_walkin_slots' => 'reserved walk-in slots',
+            'branch_settings.minimum_adl_hours' => 'minimum ADL hours',
+            'branch_settings.enable_booking_pre_admission' => 'pre-admission booking',
+            'branch_settings.enable_booking_complete_admission' => 'complete-admission booking',
+            'branch_settings.requires_full_payment_on_admit' => 'full payment on admit',
+            'branch_settings.is_open' => 'branch availability',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'branch_settings.tin.regex' => 'The TIN must look like 000-000-000-000.',
         ];
     }
 }

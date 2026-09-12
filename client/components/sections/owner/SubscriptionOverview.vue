@@ -29,12 +29,14 @@ const visibleCount = computed(
         (props.showRejected ? 1 : 0),
 );
 
+// No max-width cap: a short row should still span the page rather than
+// trailing off into empty space beside it.
 const gridClass = computed(() => {
     if (visibleCount.value >= 4) return "sm:grid-cols-2 lg:grid-cols-4";
     if (visibleCount.value === 3) return "sm:grid-cols-3";
-    if (visibleCount.value === 2) return "sm:grid-cols-2 max-w-xl";
+    if (visibleCount.value === 2) return "sm:grid-cols-2";
 
-    return "sm:grid-cols-1 max-w-xs";
+    return "sm:grid-cols-1";
 });
 
 const emit = defineEmits<{
@@ -121,7 +123,9 @@ function select(payload: StatSelectPayload) {
                         >
                             {{ overview.pending }}
                         </p>
-                        <p class="mt-3 text-xs text-amber-600 dark:text-amber-300">
+                        <p
+                            class="mt-3 text-xs text-amber-600 dark:text-amber-300"
+                        >
                             Awaiting your review
                         </p>
                     </template>
@@ -191,7 +195,9 @@ function select(payload: StatSelectPayload) {
                         >
                             {{ overview.active }}
                         </p>
-                        <p class="mt-3 text-xs text-accent-600 dark:text-accent-300">
+                        <p
+                            class="mt-3 text-xs text-accent-600 dark:text-accent-300"
+                        >
                             Billing normally
                         </p>
                     </template>
@@ -206,73 +212,61 @@ function select(payload: StatSelectPayload) {
                 </div>
             </button>
 
-            <!-- Inactive -->
-            <button
+            <!-- Active branches -->
+            <div
                 v-if="showApproved"
-                type="button"
-                :aria-pressed="isApprovedActive('inactive')"
-                class="group relative w-full overflow-hidden rounded-2xl border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300"
-                :class="
-                    isApprovedActive('inactive')
-                        ? '-translate-y-1 border-slate-300 shadow-xl ring-2 ring-slate-200 dark:ring-white/10'
-                        : 'border-slate-200 dark:border-white/10'
-                "
-                @click="select({ view: 'approved', status: 'inactive' })"
+                class="group relative w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div
-                    class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-slate-200/50 dark:bg-white/5 blur-2xl"
+                    class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary-100/50 blur-2xl dark:bg-primary-500/10"
                 />
 
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10"
+                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 dark:bg-primary-500/10"
                         >
                             <svg
-                                class="h-5 w-5 text-slate-500 dark:text-gray-300"
+                                class="h-5 w-5 text-primary dark:text-primary-300"
                                 fill="none"
                                 stroke="currentColor"
                                 stroke-width="2"
                                 viewBox="0 0 24 24"
                             >
-                                <rect
-                                    x="6"
-                                    y="4"
-                                    width="4"
-                                    height="16"
-                                    rx="1"
-                                />
-                                <rect
-                                    x="14"
-                                    y="4"
-                                    width="4"
-                                    height="16"
-                                    rx="1"
-                                />
+                                <path d="M3 21h18" />
+                                <path d="M5 21V5l7-3 7 3v16" />
+                                <path d="M9 21v-4h6v4" />
                             </svg>
                         </div>
 
                         <span
-                            class="rounded-full bg-slate-100 dark:bg-white/10 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:text-gray-300"
+                            class="rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary dark:bg-primary-500/10 dark:text-primary-300"
                         >
-                            Paused
+                            Covered
                         </span>
                     </div>
 
                     <p
                         class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                     >
-                        Inactive
+                        Active Branches
                     </p>
 
                     <template v-if="!loading">
                         <p
                             class="mt-1 text-3xl font-bold tabular-nums text-slate-800 dark:text-white"
                         >
-                            {{ overview.inactive }}
+                            {{ overview.active_branches ?? 0 }}
                         </p>
-                        <p class="mt-3 text-xs text-slate-500 dark:text-gray-400">
-                            Paused by owner or admin
+                        <p
+                            class="mt-3 text-xs text-primary dark:text-primary-300"
+                        >
+                            Across {{ overview.active }}
+                            {{
+                                overview.active === 1
+                                    ? "subscription"
+                                    : "subscriptions"
+                            }}
                         </p>
                     </template>
                     <template v-else>
@@ -284,7 +278,7 @@ function select(payload: StatSelectPayload) {
                         />
                     </template>
                 </div>
-            </button>
+            </div>
 
             <!-- Expired -->
             <button
@@ -340,7 +334,11 @@ function select(payload: StatSelectPayload) {
                         >
                             {{ overview.expired }}
                         </p>
-                        <p class="mt-3 text-xs text-rose-500 dark:text-rose-300">Needs renewal</p>
+                        <p
+                            class="mt-3 text-xs text-rose-500 dark:text-rose-300"
+                        >
+                            Needs renewal
+                        </p>
                     </template>
                     <template v-else>
                         <div
@@ -406,7 +404,9 @@ function select(payload: StatSelectPayload) {
                         >
                             {{ overview.rejected }}
                         </p>
-                        <p class="mt-3 text-xs text-rose-500 dark:text-rose-300">
+                        <p
+                            class="mt-3 text-xs text-rose-500 dark:text-rose-300"
+                        >
                             Not verified
                         </p>
                     </template>

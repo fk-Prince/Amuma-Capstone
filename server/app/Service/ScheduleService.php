@@ -350,7 +350,7 @@ class ScheduleService
 
     private function refundCancelledSchedule(User $user, Schedule $schedule)
     {
-        $schedule->load('scheduleServices.invoiceServices.invoice.allocations.refundAllocations.refund');
+        $schedule->load('scheduleServices.invoiceServices.invoice.allocations.refundAllocations');
 
         $invoiceIds = $schedule->scheduleServices
             ->flatMap(fn($scheduleService) => $scheduleService->invoiceServices)
@@ -362,7 +362,7 @@ class ScheduleService
             return;
         }
 
-        $invoices = Invoice::with('allocations.refundAllocations.refund')
+        $invoices = Invoice::with('allocations.refundAllocations.refund.transaction')
             ->whereIn('invoice_id', $invoiceIds)
             ->where('status', '!=', Invoice::STATUS_VOID)
             ->get();

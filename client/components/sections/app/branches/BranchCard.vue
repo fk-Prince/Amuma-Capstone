@@ -1,6 +1,18 @@
 <template>
     <div
-        class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 transition-all duration-200 ease-out hover:-translate-y-1 hover:border-primary-200 hover:bg-white hover:shadow-md transform-gpu dark:border-white/10 dark:bg-white/5 dark:hover:bg-secondary dark:hover:border-primary-500/40 dark:hover:bg-white/10"
+        :role="isRejected ? undefined : 'button'"
+        :tabindex="active || isRejected ? -1 : 0"
+        class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 transition-all duration-200 ease-out transform-gpu focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-white/10 dark:bg-white/5"
+        :class="
+            isRejected
+                ? 'opacity-80'
+                : active
+                  ? 'border-primary-200 bg-white ring-1 ring-primary-200 dark:border-primary-500/40 dark:bg-white/10 dark:ring-primary-500/30'
+                  : 'cursor-pointer hover:-translate-y-1 hover:border-primary-200 hover:bg-white hover:shadow-md dark:hover:border-primary-500/40 dark:hover:bg-white/10'
+        "
+        @click="select"
+        @keydown.enter.prevent="select"
+        @keydown.space.prevent="select"
     >
         <div class="flex items-start gap-3">
             <img
@@ -148,29 +160,59 @@
                 <p class="text-sm font-semibold text-slate-900 dark:text-white">
                     {{ branch.rooms }}
                 </p>
-                <p class="text-[11px] text-slate-400 dark:text-gray-500">Rooms</p>
+                <p class="text-[11px] text-slate-400 dark:text-gray-500">
+                    Rooms
+                </p>
             </div>
             <div class="text-center">
                 <p class="text-sm font-semibold text-slate-900 dark:text-white">
                     {{ branch.staffs }}
                 </p>
-                <p class="text-[11px] text-slate-400 dark:text-gray-500">Staffs</p>
+                <p class="text-[11px] text-slate-400 dark:text-gray-500">
+                    Staffs
+                </p>
             </div>
             <div class="text-center">
                 <p class="text-sm font-semibold text-slate-900 dark:text-white">
                     {{ branch.patients }}
                 </p>
-                <p class="text-[11px] text-slate-400 dark:text-gray-500">Patients</p>
+                <p class="text-[11px] text-slate-400 dark:text-gray-500">
+                    Patients
+                </p>
             </div>
         </div>
 
         <div class="mt-4 flex items-center gap-2">
-            <button
-                type="button"
-                class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white py-2 text-xs font-medium text-slate-600 hover:border-primary hover:text-primary transition dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
-                @click="emit('edit', branch)"
+            <div
+                v-if="isRejected"
+                class="min-w-0 flex-1 rounded-lg bg-rose-50 px-3 py-2 text-left dark:bg-rose-500/10"
             >
+                <p
+                    class="text-[10px] font-semibold uppercase tracking-wide text-rose-500 dark:text-rose-300"
+                >
+                    Reason
+                </p>
+
+                <p
+                    class="mt-0.5 text-[11px] leading-4 text-rose-700 dark:text-rose-300"
+                >
+                    {{ branch.rejection_reason || "No reason was given." }}
+                </p>
+            </div>
+
+            <span
+                v-else
+                class="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-medium"
+                :class="
+                    active
+                        ? 'text-slate-400 dark:text-gray-500'
+                        : 'text-primary'
+                "
+            >
+                {{ active ? "Current branch" : "View this branch" }}
+
                 <svg
+                    v-if="!active"
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
                     fill="none"
@@ -178,16 +220,14 @@
                     stroke-width="2"
                     class="w-3.5 h-3.5"
                 >
-                    <path d="M12 20h9" />
-                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    <polyline points="9 18 15 12 9 6" />
                 </svg>
-                Edit
-            </button>
+            </span>
 
             <button
                 type="button"
                 class="h-8 w-8 shrink-0 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-500 dark:hover:text-gray-300"
-                @click="emit('menu', branch)"
+                @click.stop="emit('menu', branch)"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -216,6 +256,7 @@ interface BranchCardData {
     email: string;
     is_verified: boolean;
     review_status?: "pending" | "verified" | "rejected";
+    rejection_reason?: string | null;
     rooms: number;
     staffs: number;
     patients: number;
@@ -224,12 +265,20 @@ interface BranchCardData {
 
 const props = defineProps<{
     branch: BranchCardData;
+    active?: boolean;
 }>();
 
 const isRejected = computed(() => props.branch.review_status === "rejected");
 
 const emit = defineEmits<{
-    edit: [branch: BranchCardData];
+    select: [branch: BranchCardData];
     menu: [branch: BranchCardData];
 }>();
+
+// A rejected branch has no dashboard to open.
+function select() {
+    if (props.active || isRejected.value) return;
+
+    emit("select", props.branch);
+}
 </script>

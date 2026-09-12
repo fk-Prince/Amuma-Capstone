@@ -1,6 +1,6 @@
 <template>
     <ClientOnly>
-        <BaseDropdownMenu align="right" width="w-56">
+        <BaseDropdownMenu align="right" width="w-64">
             <template #trigger="{ toggle, open }">
                 <button
                     @click="toggle"
@@ -40,6 +40,15 @@
                             {{ user.first_name }} {{ user.last_name }}
                         </span>
                         <span
+                            v-if="roleLabel"
+                            class="mt-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none"
+                            :class="roleClass"
+                        >
+                            {{ roleLabel }}
+                        </span>
+
+                        <span
+                            v-else
                             class="text-xs transition-colors duration-300"
                             :class="[
                                 scrolled || navTheme !== 'dark'
@@ -70,12 +79,12 @@
                     class="bg-white dark:bg-secondary text-gray-800 dark:text-white rounded-2xl border border-gray-100 dark:border-white/10 shadow-lg dark:shadow-black/30 overflow-hidden transition-colors"
                 >
                     <div
-                        class="px-4 py-3 border-b border-gray-50 dark:border-white/10 flex items-center gap-3"
+                        class="px-4 py-4 border-b border-gray-50 dark:border-white/10 flex items-center gap-3"
                     >
                         <div class="relative shrink-0">
                             <img
                                 :src="user.avatar"
-                                class="w-9 h-9 rounded-full border-2 border-white shadow-sm object-cover"
+                                class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
                                 alt="Profile"
                             />
                             <span
@@ -84,30 +93,31 @@
                         </div>
                         <div class="flex flex-col min-w-0">
                             <p
-                                class="text-sm font-medium text-gray-800 dark:text-white truncate"
+                                class="text-[15px] font-medium text-gray-800 dark:text-white truncate"
                             >
                                 {{ user.first_name }} {{ user.last_name }}
                             </p>
-                            <p class="text-xs text-gray-400 dark:text-gray-400 truncate">
+                            <p
+                                class="text-xs text-gray-400 dark:text-gray-400 truncate"
+                            >
                                 {{ user.email }}
                             </p>
+
+                            <span
+                                v-if="roleLabel"
+                                class="mt-1.5 w-fit rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none"
+                                :class="roleClass"
+                            >
+                                {{ roleLabel }}
+                            </span>
                         </div>
                     </div>
 
-                    <div class="py-1">
-                        <DropdownItem
-                            v-for="item in visibleMenuItems"
-                            :key="item.label"
-                            :icon="item.icon"
-                            :label="item.label"
-                            @click="
-                                async () => {
-                                    await handleMenuClick(item);
-                                    close();
-                                }
-                            "
-                        />
-                    </div>
+                    <p
+                        class="mx-4 mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500"
+                    >
+                        Appearance
+                    </p>
 
                     <div
                         class="mx-4 my-1 flex items-center justify-between rounded-full bg-gray-50 dark:bg-white/5 p-1"
@@ -140,11 +150,29 @@
                         </button>
                     </div>
 
-                    <div class="py-1 border-t border-gray-50 dark:border-white/10">
+                    <div class="py-1">
+                        <DropdownItem
+                            v-for="item in visibleMenuItems"
+                            :key="item.label"
+                            :icon="item.icon"
+                            :label="item.label"
+                            :to="item.to"
+                            @click="
+                                async () => {
+                                    if (!item.to) await handleMenuClick(item);
+                                    close();
+                                }
+                            "
+                        />
+                    </div>
+
+                    <div
+                        class="py-1 border-t border-gray-50 dark:border-white/10"
+                    >
                         <button
                             type="button"
                             :disabled="loggingOut"
-                            class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-500 transition-colors hover:bg-rose-50 dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 dark:text-rose-300"
+                            class="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-500 transition-colors hover:bg-rose-50 dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 dark:text-rose-300"
                             @click="
                                 () => {
                                     logout();
@@ -154,32 +182,36 @@
                         >
                             <LoaderCircle
                                 v-if="loggingOut"
-                                class="w-4 h-4 animate-spin"
+                                class="w-[18px] h-[18px] animate-spin"
                             />
-                            <LogOut v-else class="w-4 h-4" />
+                            <LogOut v-else class="w-[18px] h-[18px]" />
                             Log out
                         </button>
                     </div>
                 </div>
             </template>
         </BaseDropdownMenu>
+
+        <AuthTransitionScreen v-if="loggingOut" />
     </ClientOnly>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { useRoute } from "vue-router";
 import { LogOut, LoaderCircle, Sun, Moon } from "lucide-vue-next";
 import BaseDropdownMenu from "../ui/BaseDropdownMenu.vue";
 import DropdownItem from "../ui/DropdownItem.vue";
 import ChevronIcon from "../icons/dropdown.vue";
+import AuthTransitionScreen from "./AuthTransitionScreen.vue";
 import { authService } from "~/api/auth/AuthService.js";
 import { resetAuth } from "~/composables/useAuthUser";
-import { useToast } from "~/composables/useToast";
 import {
     handleMenuClick,
     profileMenuDropDownList,
 } from "~/config/profileMenu.js";
 import type { User } from "~/types/auth.js";
+import { formatRole, roleMeta } from "~/utils/user";
 
 const props = withDefaults(
     defineProps<{
@@ -187,20 +219,44 @@ const props = withDefaults(
         scrolled?: boolean;
         navTheme?: any;
         themeAware?: boolean;
+        role?: string | null;
     }>(),
     {
         scrolled: true,
         navTheme: "light",
         themeAware: false,
+        role: null,
     },
 );
 
-const { success, error } = useToast();
+const roleLabel = computed(() => {
+    const role = props.role?.trim();
+
+    if (!role) return "";
+
+    return roleMeta[role]?.label ?? formatRole(role);
+});
+
+const roleClass = computed(
+    () =>
+        roleMeta[props.role?.trim() ?? ""]?.class ||
+        "bg-primary-50 text-primary-600 border-primary-200 dark:bg-primary-500/10 dark:text-primary-300 dark:border-primary-500/20",
+);
+
 const loggingOut = ref(false);
 const isDark = useIsDark();
+const route = useRoute();
+
+const profileFrom = computed(() => {
+    if (route.path.startsWith("/app/branches/")) return "dashboard";
+    if (route.path.startsWith("/app/owner/")) return "owner";
+    if (route.path.startsWith("/portal/")) return "portal";
+    return undefined;
+});
 
 const visibleMenuItems = computed(() =>
-    profileMenuDropDownList.filter((item) => {
+    profileMenuDropDownList
+        .filter((item) => {
         if (
             item.types &&
             !item.types.some((type: string) => props.user[type as keyof User])
@@ -215,7 +271,6 @@ const visibleMenuItems = computed(() =>
             return false;
         }
 
-        // Any one of these is enough, unlike `requires` which needs them all.
         if (
             item.requiresAny &&
             !item.requiresAny.some(
@@ -226,20 +281,34 @@ const visibleMenuItems = computed(() =>
         }
 
         return true;
-    }),
+        })
+        .map((item) => ({
+            ...item,
+            to:
+                item.to === "/profile" && profileFrom.value
+                    ? {
+                          path: "/profile",
+                          query: {
+                              from: profileFrom.value,
+                              branch:
+                                  profileFrom.value === "dashboard"
+                                      ? (route.params.uuid as string)
+                                      : undefined,
+                          },
+                      }
+                    : item.to,
+        })),
 );
 
 const logout = async () => {
     loggingOut.value = true;
 
     try {
-        const res = await authService.logout();
-        success(res.message ?? "Logged out successfully.");
+        await authService.logout();
     } catch (err: any) {
         console.error(err);
     } finally {
         resetAuth();
-        loggingOut.value = false;
         window.location.href = "/auth/signin";
     }
 };

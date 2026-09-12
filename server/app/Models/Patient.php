@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Repository\RefundRepository;
 use App\Utils\InvoiceMoney;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -38,6 +39,33 @@ class Patient extends Model
     public function uniqueIds()
     {
         return ['uuid'];
+    }
+
+    // The uuid stays the key used in routes and queries; this is the readable
+    // handle staff search by and quote to a family.
+    protected static function booted()
+    {
+        static::creating(function ($patient) {
+            if ($patient->patient_code) {
+                return;
+            }
+
+            $last = self::lockForUpdate()
+                ->whereNotNull('patient_code')
+                ->orderByDesc('patient_id')
+                ->first();
+
+            $next = $last
+                ? ((int) substr($last->patient_code, 3)) + 1
+                : 1;
+
+            $patient->patient_code = 'PT-' . str_pad(
+                (string) $next,
+                6,
+                '0',
+                STR_PAD_LEFT
+            );
+        });
     }
 
     public function branch()
@@ -143,6 +171,7 @@ class Patient extends Model
                 'balance_due' => 0.0,
                 'total_paid' => 0.0,
                 'refundable' => 0.0,
+                'pending_withdrawal' => 0.0,
                 'adjusted' => 0.0,
                 'accommodation_balance' => 0.0,
                 'service_balance' => 0.0,
@@ -157,7 +186,7 @@ class Patient extends Model
                 Invoice::STATUS_PAID,
             ])
             ->with([
-                'allocations.refundAllocations.refund',
+                'allocations.refundAllocations.refund.transaction',
                 'invoiceAdjustments',
                 'invoiceAdmissionLines',
                 'invoiceServices',
@@ -166,11 +195,9 @@ class Patient extends Model
 
         $voided = Invoice::whereIn('invoice_id', $invoiceIds)
             ->where('status', Invoice::STATUS_VOID)
-            ->with(['allocations.refundAllocations.refund', 'invoiceAdjustments'])
+            ->with(['allocations.refundAllocations.refund.transaction', 'invoiceAdjustments'])
             ->get();
 
-        // An invoice carrying admission lines is accommodation; anything else
-        // that bills a scheduled service is homecare or in-house service work.
         $accommodation = $invoices->filter(
             fn($invoice) => $invoice->invoiceAdmissionLines->isNotEmpty()
         );
@@ -183,16 +210,10 @@ class Patient extends Model
         return [
             'balance_due' => (float) $invoices->sum('balance_due'),
             'total_paid' => (float) $invoices->sum('amount_paid'),
-            // Money the patient has paid that no invoice claims any more. It sits
-            // on the account as a credit and can be refunded on request, so it
-            // has to count every invoice — an accommodation downgrade leaves an
-            // overpayment on a perfectly live invoice, not only on a voided one.
-            'refundable' => round(
-                (float) $invoices->concat($voided)->sum(
-                    fn($invoice) => InvoiceMoney::refundable($invoice)
-                ),
-                2
-            ),
+            'refundable' => app(RefundRepository::class)
+                ->creditFor($this->patient_id),
+            'pending_withdrawal' => app(RefundRepository::class)
+                ->pendingCreditFor($this->patient_id),
             'adjusted' => (float) $invoices->sum('adjusted_total'),
             'accommodation_balance' => round((float) $accommodation->sum('balance_due'), 2),
             'service_balance' => round((float) $service->sum('balance_due'), 2),
@@ -212,8 +233,8 @@ class Patient extends Model
 
         return Invoice::whereIn('invoice_id', $invoiceIds)
             ->with([
-                'allocations.refundAllocations.refund',
-                'allocations.payment',
+                'allocations.refundAllocations.refund.transaction',
+                'allocations.payment.transaction',
                 'invoiceAdjustments',
                 'invoiceServices.scheduleService.service',
                 'invoiceServices.scheduleService.schedule',
@@ -225,8 +246,6 @@ class Patient extends Model
             ->makeVisible([
                 'amount_paid',
                 'refunded_amount',
-                'refunded_completed_amount',
-                'refunded_requested_amount',
                 'net_paid_amount',
                 'adjusted_total',
                 'balance_due',
@@ -236,17 +255,6 @@ class Patient extends Model
 
     private function getPatientInvoiceIds()
     {
-        $admissionInvoiceIds = InvoiceAdmission::whereHas('admissionPeriod.patientAdmission', function ($query) {
-            $query->where('patient_id', $this->patient_id);
-        })->pluck('invoice_id');
-
-        $scheduleInvoiceIds = InvoiceServices::whereHas('scheduleService.schedule', function ($query) {
-            $query->where('patient_id', $this->patient_id);
-        })->pluck('invoice_id');
-
-        return $admissionInvoiceIds
-            ->merge($scheduleInvoiceIds)
-            ->unique()
-            ->values();
+        return Invoice::patientInvoiceIds($this->patient_id);
     }
 }

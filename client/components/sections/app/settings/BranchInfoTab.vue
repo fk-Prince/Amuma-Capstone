@@ -4,7 +4,7 @@
             <BranchForm
                 v-model:branch="localValue"
                 v-model:errors="errors"
-                hide-document
+                lock-verification
             />
         </ClientOnly>
 
@@ -20,7 +20,10 @@
         </div>
     </div>
 
-    <div v-else class="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+    <div
+        v-else
+        class="py-12 text-center text-sm text-gray-400 dark:text-gray-500"
+    >
         Loading branch information...
     </div>
 </template>
@@ -51,7 +54,9 @@ watch(
     branch,
     (value) => {
         if (value) {
-            localValue.value = structuredClone(toRaw(value));
+            const copy = structuredClone(toRaw(value));
+            copy.tin = copy.settings?.tin ?? "";
+            localValue.value = copy;
         }
     },
     {
@@ -68,11 +73,16 @@ const fieldKeyMap: Record<string, string> = {
     contact_number: "branch_contact_number",
     image: "branch_image",
     email: "branch_email",
+    tin: "branch_tin",
 };
 
 const handleSave = async (): Promise<boolean> => {
     if (!localValue.value) return false;
-    const result = branchSchema.safeParse(localValue.value);
+    // Verification is read-only here and never sent, so requiring it would
+    // block every other edit — including for branches predating the TIN.
+    const result = branchSchema
+        .omit({ tin: true, document: true })
+        .safeParse(localValue.value);
 
     if (!result.success) {
         const validationErrors: Record<string, string> = {};

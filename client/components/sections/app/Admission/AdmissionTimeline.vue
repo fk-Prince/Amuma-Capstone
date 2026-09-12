@@ -120,6 +120,13 @@
                                     class="flex flex-wrap items-center gap-x-2 gap-y-1.5"
                                 >
                                     <span
+                                        v-if="invoice.period_code"
+                                        class="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-600 dark:bg-white/10 dark:text-gray-300"
+                                    >
+                                        {{ invoice.period_code }}
+                                    </span>
+
+                                    <span
                                         class="text-[12px] font-semibold capitalize text-slate-800 dark:text-white"
                                     >
                                         {{

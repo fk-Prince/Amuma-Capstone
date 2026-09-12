@@ -2,93 +2,74 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Refund extends Model
 {
+    protected $table = 'refunds';
+
     protected $primaryKey = 'refund_id';
 
-
-    public const STATUS_REQUESTED = 'requested';
-    public const STATUS_COMPLETED = 'completed';
-    public const STATUS_DECLINED = 'declined';
-
-    public const SETTLED_STATUSES = [
-        self::STATUS_COMPLETED,
-    ];
+    public $timestamps = false;
 
     protected $fillable = [
+        'transaction_id',
         'amount',
-        'refund_method',
-        'refund_code',
-        'status',
-        'declined_reason',
-        'masked_card_number',
+        'created_at',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'created_at' => 'datetime',
     ];
 
-    public function allocations()
+    public function transaction(): BelongsTo
     {
-        return $this->hasMany(
-            RefundAllocation::class,
-            'refund_id',
-            'refund_id'
+        return $this->belongsTo(Transaction::class, 'transaction_id', 'transaction_id');
+    }
+
+    public function allocations(): HasMany
+    {
+        return $this->hasMany(RefundAllocation::class, 'refund_id', 'refund_id');
+    }
+
+    public function scopeAvailable(Builder $query): Builder
+    {
+        return $query->where(
+            fn($q) => $q->whereNull('transaction_id')
+                ->orWhereHas(
+                    'transaction',
+                    fn($t) => $t->where('status', Transaction::STATUS_REJECTED)
+                )
         );
     }
 
-    public function payments()
+    public function scopeForPatient(Builder $query, mixed $patientId): Builder
     {
-        return $this->hasManyThrough(
-            PaymentInvoiceAllocation::class,
-            RefundAllocation::class,
-            'refund_id',
-            'allocation_id',
-            'refund_id',
-            'allocation_id'
+        return $query->whereHas(
+            'allocations.allocation.invoice',
+            fn($invoice) => $invoice->whereIn(
+                'invoice_id',
+                Invoice::patientInvoiceIds($patientId)
+            )
         );
+    }
+
+    public function getIsAvailableAttribute(): bool
+    {
+        return !$this->transaction_id
+            || $this->transaction?->status === Transaction::STATUS_REJECTED;
     }
 
     public function getInvoicesAttribute()
     {
         return $this->allocations
-            ->map(fn($allocation) => $allocation->allocation?->invoice)
+            ->map(fn(RefundAllocation $line) => $line->allocation?->invoice)
             ->filter()
             ->unique('invoice_id')
             ->values();
-    }
-
-    public function getInvoiceAttribute()
-    {
-        return $this->invoices->first();
-    }
-
-    protected static function booted()
-    {
-        static::creating(function ($refund) {
-            if (!$refund->status) {
-                $refund->status = self::STATUS_REQUESTED;
-            }
-
-            if (!$refund->refund_code) {
-                $lastRefund = self::lockForUpdate()
-                    ->whereNotNull('refund_code')
-                    ->orderByDesc('refund_id')
-                    ->first();
-
-                $nextNumber = $lastRefund
-                    ? ((int) substr($lastRefund->refund_code, 7)) + 1
-                    : 1;
-
-                $refund->refund_code = 'REFUND-' . str_pad(
-                    $nextNumber,
-                    6,
-                    '0',
-                    STR_PAD_LEFT
-                );
-            }
-        });
     }
 }

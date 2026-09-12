@@ -25,24 +25,6 @@
 
                 <div class="flex flex-wrap items-center gap-3">
                     <button
-                        v-if="pendingRefundRequests.length"
-                        type="button"
-                        class="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 shadow-sm transition hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20"
-                        @click="openRefundReview"
-                    >
-                        <AppIcon name="arrow-down-circle" class="h-4 w-4" />
-
-                        View requested refund
-
-                        <span
-                            v-if="pendingRefundRequests.length > 1"
-                            class="rounded-full bg-amber-200/70 px-1.5 text-[11px] font-bold dark:bg-amber-500/30"
-                        >
-                            {{ pendingRefundRequests.length }}
-                        </span>
-                    </button>
-
-                    <button
                         type="button"
                         class="inline-flex items-center gap-2 rounded-xl border border-primary-100 bg-white px-4 py-2 text-sm font-medium text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-primary-50 dark:border-primary-500/20 dark:bg-secondary dark:text-primary-300 dark:hover:bg-primary-500/10"
                         @click="handlePrint"
@@ -216,7 +198,7 @@
                                             >
                                                 {{
                                                     summary.patient
-                                                        ?.patient_uuid ?? "—"
+                                                        ?.patient_code ?? "—"
                                                 }}
                                             </span>
                                         </div>
@@ -261,6 +243,31 @@
                             </div>
 
                             <div
+                                v-if="pendingRefundRequests.length"
+                                class="flex justify-end border-b border-primary-100 px-6 py-3 sm:px-7 no-print dark:border-primary-500/20"
+                            >
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 shadow-sm transition hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20"
+                                    @click="openRefundReview"
+                                >
+                                    <AppIcon
+                                        name="arrow-down-circle"
+                                        class="h-4 w-4"
+                                    />
+
+                                    View requested withdrawal
+
+                                    <span
+                                        v-if="pendingRefundRequests.length > 1"
+                                        class="rounded-full bg-amber-200/70 px-1.5 text-[11px] font-bold dark:bg-amber-500/30"
+                                    >
+                                        {{ pendingRefundRequests.length }}
+                                    </span>
+                                </button>
+                            </div>
+
+                            <div
                                 class="grid border-b border-primary-100 sm:grid-cols-2 lg:grid-cols-4 dark:border-primary-500/20"
                             >
                                 <SummaryCard
@@ -278,20 +285,20 @@
 
                                 <SummaryCard
                                     label="Credit"
-                                    :value="summary.total_refundable"
+                                    :value="creditOnAccount"
                                     variant="refunded"
                                     :action-label="
                                         refundHistory.length
-                                            ? 'View refunds'
+                                            ? 'View withdrawals'
                                             : undefined
                                     "
                                     :on-action="openRefundHistory"
-                                    :hint="`₱${formatMoney(summary.total_refunded)} already refunded`"
+                                    :hint="creditHint"
                                     :hint-action-label="
                                         hasRefundable
                                             ? issuingRefund
-                                                ? 'Refunding…'
-                                                : 'Refund'
+                                                ? 'Withdrawing…'
+                                                : 'Withdraw'
                                             : undefined
                                     "
                                     :hint-action="openCreditRefund"
@@ -810,6 +817,15 @@
                                                     >
                                                         {{ invoice.status }}
                                                     </span>
+
+                                                    <span
+                                                        v-if="
+                                                            isAdjusted(invoice)
+                                                        "
+                                                        class="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:bg-amber-500/10 dark:text-amber-300"
+                                                    >
+                                                        Adjusted
+                                                    </span>
                                                 </div>
 
                                                 <p
@@ -818,6 +834,49 @@
                                                 >
                                                     {{ invoice.description }}
                                                 </p>
+
+                                                <button
+                                                    v-if="
+                                                        !invoice.void_reason &&
+                                                        latestAdjustment(
+                                                            invoice,
+                                                        )
+                                                    "
+                                                    type="button"
+                                                    class="mt-1 inline-flex max-w-full items-center gap-1 text-[12px] font-medium text-amber-600 underline underline-offset-2 transition hover:no-underline dark:text-amber-300"
+                                                    @click="
+                                                        adjustmentInvoice =
+                                                            invoice
+                                                    "
+                                                >
+                                                    <span class="truncate">
+                                                        {{
+                                                            latestAdjustment(
+                                                                invoice,
+                                                            )?.reason
+                                                        }}
+                                                    </span>
+
+                                                    <span
+                                                        v-if="
+                                                            invoice.adjustments &&
+                                                            invoice.adjustments
+                                                                ?.length > 1
+                                                        "
+                                                        class="shrink-0 text-amber-500/80"
+                                                    >
+                                                        +{{
+                                                            invoice.adjustments
+                                                                .length - 1
+                                                        }}
+                                                        more
+                                                    </span>
+
+                                                    <AppIcon
+                                                        name="chevron-right"
+                                                        class="h-3 w-3 shrink-0"
+                                                    />
+                                                </button>
 
                                                 <p
                                                     v-if="invoice.void_reason"
@@ -845,6 +904,17 @@
                                             </div>
 
                                             <div class="shrink-0 text-right">
+                                                <p
+                                                    v-if="isAdjusted(invoice)"
+                                                    class="text-[12px] text-gray-400 line-through dark:text-gray-500"
+                                                >
+                                                    ₱{{
+                                                        formatMoney(
+                                                            invoice.original_total,
+                                                        )
+                                                    }}
+                                                </p>
+
                                                 <p
                                                     class="text-[13px] font-semibold text-secondary dark:text-white"
                                                 >
@@ -999,7 +1069,7 @@
                                                                     loadingReceipt ===
                                                                     entry.receiptNo
                                                                         ? "Loading…"
-                                                                        : entry.receiptNo
+                                                                        : "View receipt"
                                                                 }}
                                                             </button>
                                                         </div>
@@ -1026,14 +1096,14 @@
                                             <p
                                                 class="pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted dark:text-gray-400"
                                             >
-                                                Refunds
+                                                Withdrawals
                                             </p>
 
                                             <p
                                                 v-if="!tabRefunds.length"
                                                 class="py-8 text-center text-[13px] text-muted dark:text-gray-400"
                                             >
-                                                No refund transactions.
+                                                No withdrawals.
                                             </p>
 
                                             <ul
@@ -1077,16 +1147,6 @@
                                                         <div
                                                             class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-gray-400 dark:text-gray-500"
                                                         >
-                                                            <span
-                                                                v-if="
-                                                                    entry.invoiceCode
-                                                                "
-                                                            >
-                                                                {{
-                                                                    entry.invoiceCode
-                                                                }}
-                                                            </span>
-
                                                             <span>
                                                                 {{
                                                                     formatDate(
@@ -1587,12 +1647,17 @@
         <RefundReviewModal
             :open="refundReviewOpen"
             :requests="pendingRefundRequests"
-            :credit="Number(summary?.total_refundable ?? 0)"
+            :credit="creditOnAccount"
             :processing="processingRefund"
             :error-message="refundError"
             @approve="approveRefundRequest"
             @decline="declineRefundRequest"
             @close="closeRefundReview"
+        />
+
+        <InvoiceAdjustmentModal
+            :invoice="adjustmentInvoiceView"
+            @close="adjustmentInvoice = null"
         />
 
         <BillingCycleModal
@@ -1666,7 +1731,7 @@
             @close="invoicePickerOpen = false"
         />
     </div>
-    <CreditRefundModal
+    <WithdrawCreditsModal
         :open="creditRefundOpen"
         :available="totalRefundable"
         :amount="refundAmount"
@@ -1690,12 +1755,13 @@ import { statusClasses } from "~/utils/invoiceStatus";
 import { amountFor as resolveInvoiceAmount } from "~/utils/invoiceSelection";
 import BillingCycleModal from "~/components/sections/app/Patient/BillingCycleModal.vue";
 import BillingHistoryModal from "~/components/sections/app/Billing/BillingHistoryModal.vue";
-import CreditRefundModal from "~/components/sections/app/Billing/CreditRefundModal.vue";
+import WithdrawCreditsModal from "~/components/sections/app/Billing/WithdrawCreditsModal.vue";
 import DischargeCalculationModal from "~/components/sections/app/Billing/DischargeCalculationModal.vue";
 import EntityInvoicesModal from "~/components/sections/app/Billing/EntityInvoicesModal.vue";
 import ExtendPaymentModal from "~/components/sections/app/Billing/ExtendPaymentModal.vue";
 import InvoicePickerModal from "~/components/sections/app/Billing/InvoicePickerModal.vue";
 import RefundReviewModal from "~/components/sections/app/Billing/RefundReviewModal.vue";
+import InvoiceAdjustmentModal from "~/components/sections/portal/InvoiceAdjustmentModal.vue";
 import SectionLoader from "~/components/sections/app/Billing/SectionLoader.vue";
 import VoidInvoiceModal from "~/components/sections/app/Billing/VoidInvoiceModal.vue";
 import PatientAdmissions from "~/components/sections/app/Billing/PatientAdmissions.vue";
@@ -1824,7 +1890,7 @@ const receiptGroups = computed(() => {
         string,
         {
             key: string;
-            receipt_no: string | null;
+            payment_code: string | null;
             amount: number;
             invoice_codes: string[];
             payment_method: string;
@@ -1839,7 +1905,7 @@ const receiptGroups = computed(() => {
             continue;
         }
 
-        const key = payment.receipt_no ?? `payment-${payment.payment_id}`;
+        const key = payment.payment_code ?? `payment-${payment.payment_id}`;
         const existing = groups.get(key);
 
         if (existing) {
@@ -1854,7 +1920,7 @@ const receiptGroups = computed(() => {
 
         groups.set(key, {
             key,
-            receipt_no: payment.receipt_no ?? null,
+            payment_code: payment.payment_code ?? null,
             amount,
             invoice_codes: [payment.invoice_code],
             payment_method: payment.payment_method,
@@ -1904,19 +1970,60 @@ const allInvoices = computed(() =>
 // newest first.
 const tabInvoices = computed(() => allInvoices.value);
 
+const adjustmentInvoice = ref<any | null>(null);
+
+// The history dialog is shared with the portal, which names the pair the other
+// way round: total is what was billed, adjusted_total what is asked for now.
+const adjustmentInvoiceView = computed(() =>
+    adjustmentInvoice.value
+        ? {
+              ...adjustmentInvoice.value,
+              total: Number(adjustmentInvoice.value.original_total ?? 0),
+              adjusted_total: Number(adjustmentInvoice.value.total ?? 0),
+          }
+        : null,
+);
+
+function isAdjusted(invoice: any) {
+    return (
+        Number(invoice.original_total ?? invoice.total ?? 0) !==
+        Number(invoice.total ?? 0)
+    );
+}
+
+// However many an invoice has collected, the row carries the most recent one
+// and the rest are read in the history dialog.
+function latestAdjustment(invoice: any) {
+    return [...(invoice.adjustments ?? [])].sort(
+        (a: any, b: any) =>
+            new Date(b.created_at ?? 0).getTime() -
+            new Date(a.created_at ?? 0).getTime(),
+    )[0];
+}
+
 // Each side of the ledger is its own column, read from its own table: a
 // payment is one record with one amount, and so is a refund.
 const byNewest = (a: { createdAt: string | null }, b: typeof a) =>
     new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
 
+const entryLabel = (
+    code: string | null,
+    type: string,
+    method?: string | null,
+) => [code, type, methodLabel(method)].filter(Boolean).join(" · ");
+
 const tabPayments = computed(() =>
     (summary.value?.payments ?? [])
         .map((payment: any) => ({
             key: `payment-${payment.payment_id}`,
-            label: `Payment · ${payment.payment_method || "Unknown"}`,
+            label: entryLabel(
+                payment.transaction_code,
+                "Payment",
+                payment.payment_method,
+            ),
             invoiceCode: (payment.invoice_codes ?? []).join(", "),
             reference: payment.reference_id ?? null,
-            receiptNo: payment.receipt_no ?? null,
+            receiptNo: payment.payment_code ?? null,
             amount: Number(payment.amount ?? 0),
             createdAt: payment.created_at ?? null,
         }))
@@ -1930,12 +2037,17 @@ const tabRefunds = computed(() =>
 
             return {
                 key: `refund-${refund.refund_id}`,
-                label: `Refund · ${refund.refund_method || "Unknown"}`,
-                invoiceCode: (refund.invoice_codes ?? []).join(", "),
+                label: entryLabel(
+                    refund.refund_code,
+                    "Withdrawal",
+                    refund.refund_method,
+                ),
                 reference: refund.refund_code ?? null,
-                amount: status === "completed" ? Number(refund.amount ?? 0) : 0,
+                amount: ["completed", "approved"].includes(status)
+                    ? Number(refund.amount ?? 0)
+                    : 0,
                 status: refund.status,
-                reason: status === "declined" ? refund.declined_reason : null,
+                reason: status === "rejected" ? refund.declined_reason : null,
                 createdAt: refund.created_at ?? null,
             };
         })
@@ -1944,24 +2056,34 @@ const tabRefunds = computed(() =>
 
 const isVoided = (status?: string) => (status ?? "").toLowerCase() === "void";
 
-const voidedInvoices = computed(() => summary.value?.voided_invoices ?? []);
-
 const issuingRefund = ref(false);
 
-const hasRefundable = computed(
-    () => Number(summary.value?.total_refundable ?? 0) > 0,
+const totalRefundable = computed(() =>
+    Number(summary.value?.total_refundable ?? 0),
 );
 
-const refundableInvoices = computed(() =>
-    [...(summary.value?.invoices ?? []), ...voidedInvoices.value].filter(
-        (invoice) => Number(invoice.refundable_amount ?? 0) > 0,
-    ),
+const hasRefundable = computed(() => totalRefundable.value > 0);
+
+const pendingWithdrawal = computed(() =>
+    Number(summary.value?.total_refund_requested ?? 0),
 );
+
+// Credit claimed by a withdrawal awaiting a decision is still the family's
+// money, so it stays in the figure even though it cannot be spent yet.
+const creditOnAccount = computed(
+    () => totalRefundable.value + pendingWithdrawal.value,
+);
+
+const creditHint = computed(() => {
+    if (pendingWithdrawal.value > 0) {
+        return `₱${formatMoney(pendingWithdrawal.value)} being withdrawn`;
+    }
+
+    return `₱${formatMoney(summary.value?.total_withdrawn ?? 0)} already withdrawn`;
+});
 
 const refundAmount = ref<number | null>(null);
 
-// Empty stays null rather than becoming 0, so the field shows its placeholder
-// and "refund everything" remains the default.
 function setCreditRefundAmount(value: number | string | null) {
     refundAmount.value =
         value === "" || value === null || Number.isNaN(Number(value))
@@ -2002,19 +2124,10 @@ async function confirmCreditRefund() {
     creditRefundOpen.value = false;
 }
 
-const totalRefundable = computed(() =>
-    refundableInvoices.value.reduce(
-        (sum, invoice) => sum + Number(invoice.refundable_amount ?? 0),
-        0,
-    ),
-);
-
 async function issueRefunds() {
     if (issuingRefund.value) return;
 
-    const pending = refundableInvoices.value;
-
-    if (!pending.length) return;
+    if (totalRefundable.value <= 0) return;
 
     const requested = Number(refundAmount.value ?? 0);
 
@@ -2024,36 +2137,20 @@ async function issueRefunds() {
         return;
     }
 
-    let remaining = requested > 0 ? requested : null;
-
     issuingRefund.value = true;
 
     try {
-        for (const invoice of pending) {
-            if (remaining !== null && remaining <= 0) break;
-
-            const available = Number(invoice.refundable_amount ?? 0);
-
-            const amount =
-                remaining === null
-                    ? undefined
-                    : Math.round(Math.min(remaining, available) * 100) / 100;
-
-            await refundService.issue({
-                invoice_code: invoice.invoice_code,
-                branch_uuid: uuid.value,
-                ...(amount === undefined ? {} : { amount }),
-            });
-
-            if (remaining !== null && amount !== undefined) {
-                remaining = Math.round((remaining - amount) * 100) / 100;
-            }
-        }
+        const res = await refundService.issue({
+            p_uuid: patientUuid.value,
+            branch_uuid: uuid.value,
+            ...(requested > 0 ? { amount: requested } : {}),
+        });
 
         success(
-            requested > 0
-                ? `Refund of ₱${formatMoney(requested)} recorded.`
-                : "Refund recorded.",
+            res?.message ??
+                (requested > 0
+                    ? `Withdrawal of ₱${formatMoney(requested)} recorded.`
+                    : "Withdrawal recorded."),
         );
 
         refundAmount.value = null;
@@ -2064,7 +2161,7 @@ async function issueRefunds() {
             err?.data?.message ??
                 err?.response?.data?.message ??
                 err?.message ??
-                "Unable to issue the refund.",
+                "Unable to withdraw the credit.",
         );
 
         await fetchSummary();
@@ -2236,7 +2333,7 @@ async function openReceiptByNo(receiptNo?: string | null) {
         });
 
         const receipt = (response?.data ?? response ?? []).find(
-            (row: PaymentReceiptData) => row.receipt_no === receiptNo,
+            (row: PaymentReceiptData) => row.payment_code === receiptNo,
         );
 
         if (!receipt) {

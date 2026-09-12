@@ -73,17 +73,26 @@ const actions = [
             </div>
 
             <div class="min-w-0 flex-1">
-                <h1
-                    class="truncate text-base font-semibold text-gray-900 sm:text-lg dark:text-white"
-                >
-                    {{
-                        fullName(
-                            patient.first_name,
-                            patient.middle_name,
-                            patient.last_name,
-                        )
-                    }}
-                </h1>
+                <div class="flex flex-wrap items-center gap-2">
+                    <h1
+                        class="truncate text-base font-semibold text-gray-900 sm:text-lg dark:text-white"
+                    >
+                        {{
+                            fullName(
+                                patient.first_name,
+                                patient.middle_name,
+                                patient.last_name,
+                            )
+                        }}
+                    </h1>
+
+                    <span
+                        v-if="patient.patient_code"
+                        class="rounded-lg bg-primary-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300"
+                    >
+                        {{ patient.patient_code }}
+                    </span>
+                </div>
 
                 <!-- Label above value, packed rather than gridded, so the
                      address takes the room it needs without stranding the

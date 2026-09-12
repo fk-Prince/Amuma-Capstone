@@ -14,6 +14,7 @@ class PatientInvoiceSummaryResource extends JsonResource
             'total_amount' => $this->resource['total_amount'],
             'total_paid' => $this->resource['total_paid'],
             'total_refunded' => $this->resource['total_refunded'],
+            'total_withdrawn' => $this->resource['total_withdrawn'] ?? 0,
             'total_refund_requested' =>  $this->resource['total_refund_requested'],
             'total_refundable' => $this->resource['total_refundable'] ?? 0,
             'refund_status' =>   $this->resource['refund_status'],

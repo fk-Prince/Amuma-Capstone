@@ -50,26 +50,36 @@ class XenditService
         return $invoice['metadata'];
     }
 
-    public static function refundXenditPayment(string $chargeId, float $amount): bool
+    public static function refundXenditPayment(string $id, float $amount, bool $isCardCharge = false): bool
     {
         try {
-            Http::withOptions([
+            $request = Http::withOptions([
                 'verify' => false,
-            ])
-                ->withBasicAuth(config('services.xendit.secret_key'), '')
-                ->post(
-                    "https://api.xendit.co/credit_card_charges/{$chargeId}/refunds",
+            ])->withBasicAuth(config('services.xendit.secret_key'), '');
+
+            if ($isCardCharge) {
+                $request->post(
+                    "https://api.xendit.co/credit_card_charges/{$id}/refunds",
                     [
                         'external_id' => (string) Str::uuid(),
                         'amount' => $amount,
                     ]
-                )
-                ->throw();
+                )->throw();
+            } else {
+                $request->post('https://api.xendit.co/refunds', [
+                    'invoice_id' => $id,
+                    'reference_id' => (string) Str::uuid(),
+                    'amount' => $amount,
+                    'reason' => 'CANCELLATION',
+                ])->throw();
+            }
+
             return true;
         } catch (Exception $e) {
             Log::error('Xendit refund failed', [
-                'charge_id' => $chargeId,
+                'id' => $id,
                 'amount' => $amount,
+                'is_card_charge' => $isCardCharge,
                 'error' => $e->getMessage(),
             ]);
 

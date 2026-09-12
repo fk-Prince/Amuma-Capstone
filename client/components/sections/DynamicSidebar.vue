@@ -403,6 +403,8 @@
             </ClientOnly>
         </div>
     </aside>
+
+    <AuthTransitionScreen v-if="loadingLogout" />
 </template>
 
 <script setup lang="ts">
@@ -416,8 +418,8 @@ import {
 } from "vue";
 import { useRoute } from "vue-router";
 import { authService } from "~/api/auth/AuthService";
-import { useToast } from "~/composables/useToast";
 import { resetAuth } from "~/composables/useAuthUser";
+import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import { ChevronLeft, ChevronRight, LogOut, X } from "lucide-vue-next";
 import { useBranchStore } from "~/stores/branch";
 import { formatRole, roleMeta } from "~/utils/user";
@@ -450,7 +452,6 @@ const emit = defineEmits<{
 
 const branchStore = useBranchStore();
 const route = useRoute();
-const { success, error } = useToast();
 
 const desktopCollapsed = ref(false);
 const navItems = computed(() => props.authMenu ?? []);
@@ -602,13 +603,11 @@ const logout = async () => {
     // locally and sent to sign-in, never left stranded on the page they
     // clicked "Log out" from.
     try {
-        const res = await authService.logout();
-        success(res.message ?? "Logged out successfully.");
+        await authService.logout();
     } catch (err: any) {
         console.error(err);
     } finally {
         resetAuth();
-        loadingLogout.value = false;
         // A hard redirect (not navigateTo) — the SPA router briefly kept
         // rendering the still-mounted dashboard layout mid-transition,
         // flashing /app/branches before landing on sign-in. A full page

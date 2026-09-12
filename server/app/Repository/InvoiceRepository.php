@@ -2,15 +2,17 @@
 
 namespace App\Repository;
 
+use App\Models\Transaction;
 use App\Http\Resources\PatientInvoiceSummaryResource;
+use App\Http\Resources\RefundResource;
 use App\Models\Invoice;
 use App\Models\InvoiceAdjustment;
 use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Refund;
-use App\Models\RefundAllocation;
 use App\Utils\DischargeCalculator;
 use App\Utils\InvoiceMoney;
+use App\Utils\OutstandingBalance;
 use Carbon\Carbon;
 
 class InvoiceRepository
@@ -51,8 +53,8 @@ class InvoiceRepository
             'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
             'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
             'invoiceAdmissionLines.admissionPeriod.branchContract',
-            'allocations.refundAllocations.refund',
-            'allocations.payment',
+            'allocations.refundAllocations.refund.transaction',
+            'allocations.payment.transaction',
             'payments',
             'invoiceAdjustments',
         ])
@@ -70,8 +72,8 @@ class InvoiceRepository
         $query = Invoice::where('branch_id', $branchId)
             ->where('status', '!=', Invoice::STATUS_VOID)
             ->with([
-                'allocations.refundAllocations.refund',
-                'allocations.payment',
+                'allocations.refundAllocations.refund.transaction',
+                'allocations.payment.transaction',
                 'payments',
                 'invoiceServices.scheduleService.schedule.patient',
                 'invoiceServices.scheduleService.service',
@@ -132,8 +134,8 @@ class InvoiceRepository
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->with([
                 'branch',
-                'allocations.refundAllocations.refund',
-                'allocations.payment',
+                'allocations.refundAllocations.refund.transaction',
+                'allocations.payment.transaction',
                 'payments',
                 'invoiceServices.scheduleService.schedule.patient',
                 'invoiceServices.scheduleService.service',
@@ -185,8 +187,11 @@ class InvoiceRepository
             ->when($search !== '', function ($q) use ($search) {
                 $term = '%' . strtolower($search) . '%';
 
-                $q->where(function ($name) use ($term) {
-                    $name->whereRaw('LOWER(first_name) LIKE ?', [$term])
+                $q->where(function ($name) use ($term, $search) {
+                    // Matched from the start, so PT-0001 finds the codes it opens
+                    // but a fragment out of the middle does not.
+                    $name->whereRaw('LOWER(patient_code) LIKE ?', [strtolower($search) . '%'])
+                        ->orWhereRaw('LOWER(first_name) LIKE ?', [$term])
                         ->orWhereRaw('LOWER(last_name) LIKE ?', [$term])
                         ->orWhereRaw(
                             "LOWER(first_name || ' ' || last_name) LIKE ?",
@@ -207,8 +212,8 @@ class InvoiceRepository
             ->where('status', '!=', Invoice::STATUS_VOID)
             ->with([
                 'branch',
-                'allocations.refundAllocations.refund',
-                'allocations.payment',
+                'allocations.refundAllocations.refund.transaction',
+                'allocations.payment.transaction',
                 'payments',
                 'invoiceServices.scheduleService.schedule.patient',
                 'invoiceServices.scheduleService.service',
@@ -319,22 +324,20 @@ class InvoiceRepository
             fn($invoice) => $invoice->amount_paid
         );
 
-        $overallRefunded = (float) $settledInvoices->sum(
-            fn($invoice) => $invoice->refunded_completed_amount
+        $overallRefunded = $this->refundRepository->refundedCreditFor(
+            $patientModel?->patient_id
         );
 
-        $overallRefundProcessing = (float) $settledInvoices->sum(
-            fn($invoice) => $invoice->refunded_requested_amount
+        $overallWithdrawn = $this->refundRepository->withdrawnCreditFor(
+            $patientModel?->patient_id
         );
 
-        // Money paid that no invoice claims any more, wherever it sits. Voiding
-        // is not the only way to get there — a downgrade credit leaves an
-        // overpayment on a perfectly live invoice, and that is owed back too.
-        $overallRefundable = round(
-            (float) $settledInvoices->sum(
-                fn($invoice) => InvoiceMoney::refundable($invoice)
-            ),
-            2
+        $overallRefundProcessing = $this->refundRepository->pendingCreditFor(
+            $patientModel?->patient_id
+        );
+
+        $overallRefundable = $this->refundRepository->creditFor(
+            $patientModel?->patient_id
         );
 
         // Summed per invoice, not netted across them. Subtracting one total from
@@ -346,12 +349,8 @@ class InvoiceRepository
             2
         );
 
-        $totalRefundedAny =
-            $overallRefunded +
-            $overallRefundProcessing;
-
         $refundStatus = match (true) {
-            $totalRefundedAny <= 0 => 'none',
+            $overallRefunded <= 0 => 'none',
             $overallPaid <= 0 => 'full refunded',
             default => 'partially refunded',
         };
@@ -361,9 +360,7 @@ class InvoiceRepository
                 $detail = $this->formatInvoiceDetail($invoice);
 
                 $detail['refundable_amount'] = InvoiceMoney::refundable($invoice);
-                $detail['has_pending_refund'] = $this->refundRepository
-                    ->pendingForInvoice($invoice)
-                    ->isNotEmpty();
+                $detail['has_pending_refund'] = InvoiceMoney::hasPendingWithdrawal($invoice);
 
                 return $detail;
             })
@@ -381,6 +378,7 @@ class InvoiceRepository
             'patient' => $patientModel ? [
                 'patient_id' => $patientModel->patient_id,
                 'patient_uuid' => $patientModel->uuid,
+                'patient_code' => $patientModel->patient_code,
                 'full_name' => trim(
                     $patientModel->first_name . ' ' .
                         $patientModel->last_name
@@ -399,6 +397,7 @@ class InvoiceRepository
             'total_amount' => $overallTotal,
             'total_paid' => $overallPaid,
             'total_refunded' => $overallRefunded,
+            'total_withdrawn' => $overallWithdrawn,
             'total_refund_requested' => $overallRefundProcessing,
             'total_refundable' => $overallRefundable,
             'refund_status' => $refundStatus,
@@ -431,7 +430,7 @@ class InvoiceRepository
                     $detail['refundable_amount'] =
                         InvoiceMoney::refundable($invoice);
                     $detail['has_pending_refund'] =
-                        $this->refundRepository->pendingForInvoice($invoice)->isNotEmpty();
+                        InvoiceMoney::hasPendingWithdrawal($invoice);
 
                     return $detail;
                 })
@@ -441,17 +440,11 @@ class InvoiceRepository
             $summary['payments'] = $this->formatPayments($settledInvoices);
         }
 
-        // Refund requests are reviewed from the page header, so they travel with
-        // every response rather than waiting for the invoices section.
-        $summary['refunds'] = $this->formatRefunds($settledInvoices);
+        $summary['refunds'] = $this->formatRefunds($patientModel?->patient_id);
 
         if ($wantsAdmissions) {
             $summary['admissions'] = $this->formatAdmissions($patientInvoices);
-
-            // The admissions panel is the only reader of this, so it travels
-            // with that section rather than being computed for every request.
-            $summary['discharge_calculation'] =
-                $this->getPatientDischargeCalculation($patientInvoices);
+            $summary['discharge_calculation'] = $this->getPatientDischargeCalculation($patientInvoices);
         }
 
         if ($wantsServices) {
@@ -501,9 +494,6 @@ class InvoiceRepository
                 $admission =
                     $items->first()['admission'];
 
-                // Only the figures the card shows. The invoices themselves are
-                // fetched when the stay is opened, so listing a patient's
-                // admissions does not format every invoice behind them.
                 $invoices = $items
                     ->map(fn($item) => $item['invoice'])
                     ->unique('invoice_id')
@@ -562,8 +552,6 @@ class InvoiceRepository
             ->values();
     }
 
-    // The invoices behind one stay, loaded when that stay is opened rather
-    // than with every admission on the patient.
     private function formatAdmissionInvoices($patientInvoices, int $admissionId)
     {
         return $patientInvoices
@@ -577,9 +565,7 @@ class InvoiceRepository
                 $detail = $this->formatInvoiceDetail($invoice);
 
                 $detail['refundable_amount'] = InvoiceMoney::refundable($invoice);
-                $detail['has_pending_refund'] = $this->refundRepository
-                    ->pendingForInvoice($invoice)
-                    ->isNotEmpty();
+                $detail['has_pending_refund'] = InvoiceMoney::hasPendingWithdrawal($invoice);
 
                 return $detail;
             })
@@ -599,9 +585,7 @@ class InvoiceRepository
                 $detail = $this->formatInvoiceDetail($invoice);
 
                 $detail['refundable_amount'] = InvoiceMoney::refundable($invoice);
-                $detail['has_pending_refund'] = $this->refundRepository
-                    ->pendingForInvoice($invoice)
-                    ->isNotEmpty();
+                $detail['has_pending_refund'] = InvoiceMoney::hasPendingWithdrawal($invoice);
 
                 return $detail;
             })
@@ -739,35 +723,31 @@ class InvoiceRepository
             fn($item) => $item['period']->admission_period_id === $currentPeriodId
         ) ?? $admissionItems->first();
 
-        return DischargeCalculator::getDischargeCalculation(
+        $calculation = DischargeCalculator::getDischargeCalculation(
             $item['invoice'],
             $item['admission'],
             $item['period']
         );
+
+        $calculation['outstanding'] = OutstandingBalance::forInvoices(
+            $patientInvoices,
+            $item['invoice']
+        );
+
+        return $calculation;
     }
 
-    // Summed from the refund allocations rather than the refunds, so a refund
-    // drawn from two payments is counted once, for the amount that actually
-    // left this branch.
     private function refundsIssuedBetween(
         mixed $branchId,
         Carbon $from,
         Carbon $to
     ): float {
         return round(
-            (float) RefundAllocation::query()
-                ->whereHas(
-                    'refund',
-                    fn($query) => $query
-                        ->where('status', Refund::STATUS_COMPLETED)
-                        ->whereBetween('refunds.created_at', [$from, $to])
-                )
-                ->whereHas(
-                    'allocation.invoice',
-                    fn($query) => $query
-                        ->where('branch_id', $branchId)
-                        ->where('status', '!=', Invoice::STATUS_VOID)
-                )
+            (float) Transaction::query()
+                ->where('branch_id', $branchId)
+                ->where('type', Transaction::TYPE_WITHDRAW)
+                ->where('status', Transaction::STATUS_COMPLETED)
+                ->whereBetween('created_at', [$from, $to])
                 ->sum('amount'),
             2
         );
@@ -867,17 +847,18 @@ class InvoiceRepository
             return collect();
         }
 
-        return Payment::with('allocations.invoice')
+        return Payment::with('allocations.invoice', 'transaction')
             ->whereIn('payment_id', $paymentIds)
             ->orderByDesc('created_at')
             ->get()
             ->map(fn(Payment $payment) => [
                 'payment_id' => $payment->payment_id,
-                'receipt_no' => $payment->receipt_no,
+                'payment_code' => $payment->payment_code,
+                'transaction_code' => $payment->transaction?->transaction_code,
                 'reference_id' => $payment->reference_id,
                 'amount' => (float) $payment->amount,
                 'payment_method' => $payment->payment_method,
-                'masked_card_number' => $payment->masked_card_number,
+                'masked_account_detail' => $payment->masked_account_detail,
                 'payor_name' => $payment->payor_name,
                 'created_at' => $payment->created_at?->toIso8601String(),
                 'invoice_codes' => $payment->allocations
@@ -889,40 +870,15 @@ class InvoiceRepository
             ->values();
     }
 
-    // Read from the refunds themselves: a refund is one record with one total,
-    // and the allocations only say which invoices it was drawn from.
-    private function formatRefunds(mixed $invoices)
+    private function formatRefunds(mixed $patientId)
     {
-        $refundIds = collect($invoices)
-            ->flatMap(fn($invoice) => $invoice->allocations)
-            ->flatMap(fn($allocation) => $allocation->refundAllocations)
-            ->pluck('refund_id')
-            ->filter()
-            ->unique();
-
-        if ($refundIds->isEmpty()) {
+        if (!$patientId) {
             return collect();
         }
 
-        return Refund::with('allocations.allocation.invoice')
-            ->whereIn('refund_id', $refundIds)
-            ->orderByDesc('created_at')
-            ->get()
-            ->map(fn(Refund $refund) => [
-                'refund_id' => $refund->refund_id,
-                'refund_code' => $refund->refund_code,
-                'amount' => (float) $refund->amount,
-                'refund_method' => $refund->refund_method,
-                'masked_card_number' => $refund->masked_card_number,
-                'status' => $refund->status,
-                'declined_reason' => $refund->declined_reason,
-                'created_at' => $refund->created_at?->toIso8601String(),
-                'invoice_codes' => $refund->allocations
-                    ->map(fn($line) => $line->allocation?->invoice?->invoice_code)
-                    ->filter()
-                    ->unique()
-                    ->values(),
-            ])
+        return $this->refundRepository
+            ->withdrawalsFor($patientId)
+            ->map(fn(Transaction $withdrawal) => RefundResource::format($withdrawal))
             ->values();
     }
 
@@ -948,10 +904,10 @@ class InvoiceRepository
             $invoice->net_paid_amount;
 
         $refunded =
-            $invoice->refunded_completed_amount;
+            (float) $invoice->refunded_amount;
 
         $refundProcessing =
-            $invoice->refunded_requested_amount;
+            InvoiceMoney::pendingWithdrawal($invoice);
 
         $balance =
             $invoice->balance_due;
@@ -961,10 +917,23 @@ class InvoiceRepository
             'invoice_code' => $invoice->invoice_code,
             'description' => $invoice->paymentDescription(),
             'total' => $total,
+
+            'original_total' => (float) $invoice->total_amount,
+
+            'adjustments' => $invoice->invoiceAdjustments
+                ->map(fn($adjustment) => [
+                    'invoice_adjustment_id' => $adjustment->invoice_adjustment_id,
+                    'type' => $adjustment->type,
+                    'amount' => (float) $adjustment->amount,
+                    'reason' => $adjustment->reason,
+                    'created_at' => $adjustment->created_at?->toIso8601String(),
+                ])
+                ->values(),
+
             'amount_paid' => $paid,
             'refunded_amount' =>   $refunded,
             'refund_requested_amount' =>   $refundProcessing,
-            'balance_due' => $balance - $refundProcessing,
+            'balance_due' => $balance,
             'status' => match (true) {
                 $balance <= 0 && $paid > 0 => 'Paid',
                 $paid > 0 => 'Partial',
@@ -1043,8 +1012,8 @@ class InvoiceRepository
                     'payment_id' =>
                     $allocation->payment_id,
 
-                    'receipt_no' =>
-                    $allocation->payment?->receipt_no,
+                    'payment_code' =>
+                    $allocation->payment?->payment_code,
 
                     'reference_id' =>
                     $allocation->payment?->reference_id,
@@ -1058,8 +1027,6 @@ class InvoiceRepository
                     'created_at' =>
                     $allocation->payment?->created_at,
 
-                    // This allocation's share of each refund; refund_total is
-                    // the whole refund, which may span other payments.
                     'refunds' =>
                     $allocation->refundAllocations
                         ->map(fn($line) => [
@@ -1067,7 +1034,7 @@ class InvoiceRepository
                             $line->refund_id,
 
                             'refund_code' =>
-                            $line->refund?->refund_code,
+                            $line->refund?->transaction?->transaction_code,
 
                             'amount' =>
                             (float) $line->amount,
@@ -1076,13 +1043,16 @@ class InvoiceRepository
                             (float) ($line->refund?->amount ?? 0),
 
                             'refund_method' =>
-                            $line->refund?->refund_method,
+                            $line->refund?->transaction?->method,
+
+                            'reason' =>
+                            $line->invoiceAdjustment?->reason,
 
                             'status' =>
-                            $line->refund?->status,
+                            $line->refund?->transaction?->status,
 
                             'declined_reason' =>
-                            $line->refund?->declined_reason,
+                            $line->refund?->transaction?->declined_reason,
 
                             'created_at' =>
                             $line->refund?->created_at,
@@ -1170,10 +1140,15 @@ class InvoiceRepository
                 Invoice::STATUS_VOID
             );
 
-        // Credit applications move money that was already received, so counting
-        // them again would report the same peso twice.
+
         $paymentQuery = Payment::query()
-            ->where('payment_method', '!=', Payment::METHOD_CREDIT)
+            ->join(
+                'transactions',
+                'transactions.transaction_id',
+                '=',
+                'payments.transaction_id'
+            )
+            ->where('transactions.method', '!=', Payment::METHOD_CREDIT)
             ->whereHas('invoices', function ($query) use ($branchId) {
                 $query
                     ->where('branch_id', $branchId)
@@ -1193,11 +1168,11 @@ class InvoiceRepository
             ->sum('adjusted_total');
 
         $paymentsReceived = (clone $paymentQuery)
-            ->whereBetween('created_at', [
+            ->whereBetween('payments.created_at', [
                 $currentMonthStart,
                 $currentMonthEnd,
             ])
-            ->sum('amount');
+            ->sum('transactions.amount');
 
         $refundsIssued = $this->refundsIssuedBetween(
             $branchId,
@@ -1223,11 +1198,11 @@ class InvoiceRepository
             ->sum('adjusted_total');
 
         $lastPayments = (clone $paymentQuery)
-            ->whereBetween('created_at', [
+            ->whereBetween('payments.created_at', [
                 $lastMonthStart,
                 $lastMonthEnd,
             ])
-            ->sum('amount');
+            ->sum('transactions.amount');
 
         $lastRefunds = $this->refundsIssuedBetween(
             $branchId,

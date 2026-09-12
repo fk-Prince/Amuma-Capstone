@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="min-h-screen bg-slate-50 w-full pt-[100px] dark:bg-secondary">
         <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <div class="mb-8">
@@ -76,7 +76,7 @@ const buildSubscriptionPayload = (): SubscriptionRequest => ({
     branch_contact_number: checkout.branch.contact_number,
     branch_image: checkout.branch.image,
     branch_description: checkout.branch.description,
-    branch_settings: checkout.settings,
+    branch_settings: checkout.branchSettingsPayload,
     branch_street: checkout.branch.location.street,
     branch_city: checkout.branch.location.city,
     branch_province: checkout.branch.location.province,
@@ -113,7 +113,7 @@ const payCard = async () => {
 
     try {
         const payload = buildSubscriptionPayload();
-
+        console.log(payload);
         await cardPayment({
             card: card.value,
             amount: total.value,

@@ -10,7 +10,7 @@ class PaymentReceiptResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'receipt_no'   => $this->receipt_no,
+            'payment_code' => $this->payment_code,
             'channel'      => $this->client_id ? 'portal' : 'counter',
             'issued_at'    => $this->created_at?->toIso8601String(),
 
@@ -32,6 +32,7 @@ class PaymentReceiptResource extends JsonResource
 
             'patient' => [
                 'patient_uuid' => $this->patient?->uuid,
+                'patient_code' => $this->patient?->patient_code,
                 'full_name'    => trim(
                     ($this->patient?->first_name ?? '') . ' ' .
                         ($this->patient?->last_name ?? '')
@@ -41,7 +42,7 @@ class PaymentReceiptResource extends JsonResource
             'payment' => [
                 'method'          => $this->payment_method,
                 'masked_account'  => $this->masked_account,
-                'amount_tendered' => (float) $this->amount,
+                'amount_tendered' => (float) $this->amount_tendered,
                 'amount_applied'  => (float) $this->amount_applied,
                 'change_due'      => (float) $this->change_due,
                 'amount_in_words' => $this->amount_in_words,

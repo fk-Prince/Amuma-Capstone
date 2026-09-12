@@ -32,6 +32,13 @@ class Agency extends Model
         return ['uuid'];
     }
 
+    // `registered_by` is also a column, so reading it as a property gives the
+    // user_id rather than the relation. This name resolves to the User.
+    public function registrant()
+    {
+        return $this->belongsTo(User::class, 'registered_by', 'user_id');
+    }
+
     public function registered_by()
     {
         return $this->belongsTo(User::class, 'registered_by', 'user_id');

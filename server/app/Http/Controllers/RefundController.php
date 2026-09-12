@@ -6,7 +6,7 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
-use App\Models\Invoice;
+use App\Models\Patient;
 use App\Models\PatientAccess;
 use App\Service\RefundService;
 use Exception;
@@ -22,36 +22,34 @@ class RefundController extends Controller
     {
         $user = AuthGuard::requireUser($request->user());
 
-        if (!$user->client) {
-            throw new Exception('Only family/client accounts can request a refund.', 403);
-        }
-
         $validated = $request->validate([
             'patient_id' => ['required', 'integer'],
             'method' => ['required', 'string', 'max:100'],
             'account_details' => ['required', 'string', 'max:255'],
-            // Omitted claims the whole credit. The ceiling is enforced in the
-            // service against what is actually refundable, not here.
             'amount' => ['nullable', 'numeric', 'gt:0'],
             'reason' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $access = PatientAccess::where('patient_id', $validated['patient_id'])
-            ->where('client_id', $user->client->client_id)
-            ->where('have_access', true)
-            ->first();
+        return $this->refundService->requestPortalRefund($this->guardedPatient($user, $validated['patient_id']), $validated, $user);
+    }
 
-        if (!$access) {
-            throw new Exception('You do not have access to this patient.', 403);
-        }
+    public function index(Request $request)
+    {
+        $user = AuthGuard::requireUser($request->user());
 
-        return $this->refundService->requestPortalRefund($access->patient, $validated, $user);
+        $validated = $request->validate([
+            'patient_id' => ['required', 'integer'],
+        ]);
+
+        return $this->refundService->requestsForPatient(
+            $this->guardedPatient($user, $validated['patient_id'])
+        );
     }
 
     public function issue(Request $request)
     {
         $validated = $request->validate([
-            'invoice_code' => ['required', 'string', 'exists:invoices,invoice_code'],
+            'p_uuid' => ['required', 'string', 'exists:patients,uuid'],
             'branch_uuid' => ['required', 'string', 'exists:branches,uuid'],
             'amount' => ['nullable', 'numeric', 'min:0.01'],
             'method' => ['nullable', 'string', 'max:100'],
@@ -68,14 +66,26 @@ class RefundController extends Controller
             PermissionAction::Update
         );
 
-        $invoice = Invoice::where('invoice_code', $validated['invoice_code'])
-            ->where('branch_id', $branch->branch_id)
-            ->first();
+        $patient = Patient::where('uuid', $validated['p_uuid'])->first();
 
-        if (!$invoice) {
-            throw new Exception('Invoice not found for this branch.', 404);
+        if (!$patient) {
+            throw new Exception('Patient not found.', 404);
         }
 
-        return $this->refundService->createRefundFromDashboard($invoice, $validated);
+        return $this->refundService->withdrawFromDashboard($patient, $validated);
+    }
+
+    private function guardedPatient(object $user, mixed $patientId): Patient
+    {
+        $access = PatientAccess::where('patient_id', $patientId)
+            ->where('client_id', $user->client->client_id)
+            ->where('have_access', true)
+            ->first();
+
+        if (!$access) {
+            throw new Exception('You do not have access to this patient.', 403);
+        }
+
+        return $access->patient;
     }
 }

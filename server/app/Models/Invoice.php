@@ -72,11 +72,15 @@ class Invoice extends Model
         if ($stay) {
             $contract = $stay->branchContract;
 
-            return collect([
+            $label = collect([
                 'ADMISSION',
                 $contract?->accommodation_type,
                 $contract?->billing_cycle,
             ])->filter()->implode(' - ');
+
+            $code = AdmissionPeriod::codeFor($stay->admission_period_id);
+
+            return $code ? $code . '-' . $label : $label;
         }
 
         $services = $this->invoiceServices
@@ -155,38 +159,29 @@ class Invoice extends Model
     }
 
 
-    private function refundsOfThisInvoice()
+    public function refundAllocations()
     {
-        return $this->allocations->flatMap(
-            fn(PaymentInvoiceAllocation $allocation) => $allocation->refundAllocations
+        return $this->hasManyThrough(
+            RefundAllocation::class,
+            PaymentInvoiceAllocation::class,
+            'invoice_id',
+            'allocation_id',
+            'invoice_id',
+            'allocation_id'
         );
     }
 
-    private function refundedWithStatus(array $statuses): float
+
+    public function getRefundedAmountAttribute()
     {
         return round(
-            (float) $this->refundsOfThisInvoice()
-                ->filter(
-                    fn($line) => in_array($line->refund?->status, $statuses, true)
+            (float) $this->allocations
+                ->flatMap(
+                    fn(PaymentInvoiceAllocation $allocation) => $allocation->refundAllocations
                 )
                 ->sum('amount'),
             2
         );
-    }
-
-    public function getRefundedAmountAttribute()
-    {
-        return $this->refundedWithStatus(Refund::SETTLED_STATUSES);
-    }
-
-    public function getRefundedCompletedAmountAttribute()
-    {
-        return $this->refundedWithStatus([Refund::STATUS_COMPLETED]);
-    }
-
-    public function getRefundedRequestedAmountAttribute()
-    {
-        return $this->refundedWithStatus([Refund::STATUS_REQUESTED]);
     }
 
     public function getNetPaidAmountAttribute()
@@ -201,7 +196,7 @@ class Invoice extends Model
             return $this;
         }
 
-        $this->load('invoiceAdjustments', 'allocations.refundAllocations.refund');
+        $this->load('invoiceAdjustments', 'allocations.refundAllocations.refund.transaction');
 
         $status = match (true) {
             $this->balance_due <= 0 => self::STATUS_PAID,
@@ -241,20 +236,29 @@ class Invoice extends Model
         return round(max($this->adjusted_total - $this->net_paid_amount, 0),      2);
     }
 
-    // Read in the invoice lists, the portal and the patient resources, so it has
-    // to answer for every invoice rather than only refunded ones. A requested
-    // refund is a claim awaiting a decision, which is worth showing but is not
-    // money that has moved.
     public function getRefundStatusAttribute(): string
     {
         if ($this->refunded_amount <= 0) {
-            return $this->refunded_requested_amount > 0
-                ? 'refund requested'
-                : 'none';
+            return 'none';
         }
 
         return $this->net_paid_amount <= 0
             ? 'full refunded'
             : 'partially refunded';
+    }
+
+    public static function patientInvoiceIds(mixed $patientId)
+    {
+        $admission = InvoiceAdmission::whereHas(
+            'admissionPeriod.patientAdmission',
+            fn($query) => $query->where('patient_id', $patientId)
+        )->pluck('invoice_id');
+
+        $scheduled = InvoiceServices::whereHas(
+            'scheduleService.schedule',
+            fn($query) => $query->where('patient_id', $patientId)
+        )->pluck('invoice_id');
+
+        return $admission->merge($scheduled)->unique()->values();
     }
 }

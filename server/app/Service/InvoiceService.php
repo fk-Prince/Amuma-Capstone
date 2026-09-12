@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Models\Transaction;
 use App\Http\Resources\InvoiceResource;
 use App\Http\Resources\PaymentReceiptResource;
 use App\Models\Invoice;
@@ -11,6 +12,7 @@ use App\Models\Payment;
 use App\Models\Refund;
 use App\Models\User;
 use App\Repository\InvoiceRepository;
+use App\Repository\PaymentRepository;
 use App\Repository\RefundRepository;
 use App\Utils\AccommodationHelper;
 use App\Utils\InvoiceMoney;
@@ -23,7 +25,10 @@ class InvoiceService
 {
     public function __construct(
         private InvoiceRepository $invoiceRepository,
-        private RefundRepository $refundRepository
+        private RefundRepository $refundRepository,
+        private PaymentRepository $paymentRepository,
+        private TransactionService $transactions,
+        private RefundService $refunds
     ) {}
 
     public function overview(array $payload)
@@ -210,17 +215,24 @@ class InvoiceService
             : null;
 
 
-        $receipt = Payment::create([
-            'branch_id'          => $payable->first()->branch_id,
-            'patient_id'         => $patient->patient_id,
-            'client_id'          => null,
-            'payor_name'         => trim((string) ($payload['payor_name'] ?? '')) ?: null,
-            'amount'             => $cash,
-            'prior_balance'      => $balanceAfterCredit,
-            'payment_method'     => $method,
-            'masked_card_number' => $maskedReference,
-            'issued_by'          => $user?->user_id,
-            'created_at'         => now(),
+        $transaction = $this->transactions->forPayment(
+            $cash,
+            $payable->first()->branch_id,
+            $patient->patient_id,
+            'Payment received at the branch.',
+            [
+                'method' => $method,
+                'masked_account_number' => $maskedReference,
+            ]
+        );
+
+        $receipt = $this->paymentRepository->create([
+            'transaction_id'        => $transaction->transaction_id,
+            'payor_name'            => trim((string) ($payload['payor_name'] ?? '')) ?: null,
+            'prior_balance'         => $balanceAfterCredit,
+            'cash_tendered'         => $cash,
+            'issued_by'             => $user?->user_id,
+            'created_at'            => now(),
         ]);
 
         $remaining = $cash;
@@ -267,6 +279,13 @@ class InvoiceService
 
         $applied = round($cash - $remaining, 2);
 
+        // The transaction was opened for the cash handed over, but change goes
+        // straight back out — the ledger only ever counts what the branch
+        // actually kept.
+        if (abs($applied - (float) $transaction->amount) > 0.001) {
+            $transaction->update(['amount' => $applied]);
+        }
+
         // The balance the receipt leaves behind, recorded once on the
         // payment rather than on every line it settled.
         $receipt->update([
@@ -295,22 +314,14 @@ class InvoiceService
                 'allocations.invoice.invoiceServices.scheduleService.service',
                 'allocations.invoice.invoiceAdmissionLines.admissionPeriod.branchContract',
                 'allocations.invoice.invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
-                'branch.location',
-                'patient',
+                'transaction.branch.location',
+                'transaction.patient',
                 'issuedBy',
             ])
         );
     }
 
-    /*
-      Spends a patient's credit on what they owe. Nothing new is taken at the
-      counter, but the movement is still a payment of its own: it draws the
-      credit off the over-paid invoice as a negative line and settles the unpaid
-      one as a positive line, so the earlier receipts it came from stay exactly
-      as they were printed.
 
-      Returns the amount moved and the payment that carries it.
-    */
     private function applyCredit(
         Patient $patient,
         Collection $payable,
@@ -320,26 +331,25 @@ class InvoiceService
     ): array {
         $none = ['applied' => 0.0, 'payment' => null];
 
-        $sources = $patient->patient_invoices
-            ->filter(fn($invoice) => InvoiceMoney::refundable($invoice) > 0)
-            ->sortBy('created_at')
-            ->values();
+        $available = $this->refundRepository->creditFor($patient->patient_id);
 
-        if ($sources->isEmpty()) {
+        if ($available <= 0) {
             return $none;
         }
 
-        $credit = $sources->mapWithKeys(
-            fn($invoice) => [$invoice->invoice_id => InvoiceMoney::refundable($invoice)]
-        );
+        $budget = $limit === null
+            ? $available
+            : round(min($limit, $available), 2);
 
-        $remaining = $limit === null ? null : round($limit, 2);
-        $drawn = [];
         $settled = [];
         $applied = 0.0;
 
         foreach ($payable as $target) {
-            $target->refresh()->load('allocations.refundAllocations.refund', 'invoiceAdjustments');
+            if ($budget <= 0) {
+                break;
+            }
+
+            $target->refresh()->load('allocations.refundAllocations.refund.transaction', 'invoiceAdjustments');
 
             $due = round((float) $target->balance_due, 2);
 
@@ -347,77 +357,42 @@ class InvoiceService
                 continue;
             }
 
-            foreach ($sources as $source) {
-                if ($due <= 0 || ($remaining !== null && $remaining <= 0)) {
-                    break;
-                }
+            $move = round(min($due, $budget), 2);
 
-                if ($source->invoice_id === $target->invoice_id) {
-                    continue;
-                }
+            $settled[$target->invoice_id] = $move;
 
-                $available = round((float) $credit[$source->invoice_id], 2);
-
-                if ($available <= 0) {
-                    continue;
-                }
-
-                $move = round(min($due, $available, $remaining ?? $available), 2);
-
-                if ($move <= 0) {
-                    continue;
-                }
-
-                $credit[$source->invoice_id] = round($available - $move, 2);
-
-                $drawn[$source->invoice_id] = round(
-                    ($drawn[$source->invoice_id] ?? 0) + $move,
-                    2
-                );
-
-                $settled[$target->invoice_id] = round(
-                    ($settled[$target->invoice_id] ?? 0) + $move,
-                    2
-                );
-
-                $due = round($due - $move, 2);
-                $applied = round($applied + $move, 2);
-
-                if ($remaining !== null) {
-                    $remaining = round($remaining - $move, 2);
-                }
-            }
+            $budget = round($budget - $move, 2);
+            $applied = round($applied + $move, 2);
         }
 
         if ($applied <= 0) {
             return $none;
         }
 
-        $payment = Payment::create([
-            'branch_id'      => $payable->first()->branch_id,
-            'patient_id'     => $patient->patient_id,
-            'client_id'      => null,
+        $transaction = $this->transactions->forPayment(
+            $applied,
+            $payable->first()->branch_id,
+            $patient->patient_id,
+            'Credit on the account applied to an outstanding invoice.',
+            ['method' => Payment::METHOD_CREDIT]
+        );
+
+        $this->refunds->claimCredits(
+            $this->refundRepository->availableFor($patient->patient_id),
+            $transaction,
+            $applied
+        );
+
+        $payment = $this->paymentRepository->create([
+            'transaction_id' => $transaction->transaction_id,
             'payor_name'     => trim(
                 ($patient->first_name ?? '') . ' ' . ($patient->last_name ?? '')
             ) ?: null,
-            'amount'         => $applied,
             'prior_balance'  => $priorBalance,
             'new_balance'    => round($priorBalance - $applied, 2),
-            'payment_method' => Payment::METHOD_CREDIT,
             'issued_by'      => $user?->user_id,
             'created_at'     => now(),
         ]);
-
-        foreach ($drawn as $invoiceId => $amount) {
-            $payment->allocations()->create([
-                'invoice_id' => $invoiceId,
-                'amount' => -$amount,
-                'description' => $sources
-                    ->firstWhere('invoice_id', $invoiceId)
-                    ?->paymentDescription(),
-                'created_at' => now(),
-            ]);
-        }
 
         foreach ($settled as $invoiceId => $amount) {
             $payment->allocations()->create([
@@ -428,10 +403,6 @@ class InvoiceService
                     ?->paymentDescription(),
                 'created_at' => now(),
             ]);
-        }
-
-        foreach (array_keys($drawn) as $invoiceId) {
-            $sources->firstWhere('invoice_id', $invoiceId)?->refresh()->syncStatus();
         }
 
         foreach (array_keys($settled) as $invoiceId) {
@@ -472,20 +443,32 @@ class InvoiceService
         $search = trim((string) ($payload['search'] ?? ''));
         $perPage = (int) ($payload['per_page'] ?? 10);
 
-        $receipts = Payment::where('branch_id', $payload['branch_id'])
+        $receipts = Payment::whereHas(
+            'transaction',
+            fn($query) => $query->where('branch_id', $payload['branch_id'])
+        )
             ->when($search !== '', function ($query) use ($search) {
                 $term = '%' . $search . '%';
 
-                $query->where(function ($q) use ($term) {
-                    $q->where('receipt_no', 'ilike', $term)
+                $query->where(function ($q) use ($term, $search) {
+                    $q->whereHas(
+                        'transaction',
+                        fn($t) => $t->where('transaction_code', 'ilike', $term)
+                    )
                         ->orWhere('payor_name', 'ilike', $term)
-                        // The reference sits on the payment itself now; only the
-                        // invoice it settled is reached through an allocation.
-                        ->orWhere('reference_id', 'ilike', $term)
                         ->orWhereHas(
-                            'patient',
+                            'transaction',
+                            fn($t) => $t->where(
+                                'transaction_reference_id',
+                                'ilike',
+                                $term
+                            )
+                        )
+                        ->orWhereHas(
+                            'transaction.patient',
                             fn($p) => $p
                                 ->whereRaw("concat(first_name, ' ', last_name) ilike ?", [$term])
+                                ->orWhere('patient_code', 'ilike', "{$search}%")
                         )
                         ->orWhereHas(
                             'allocations.invoice',
@@ -497,9 +480,9 @@ class InvoiceService
                 'allocations.invoice.invoiceServices.scheduleService.service',
                 'allocations.invoice.invoiceAdmissionLines.admissionPeriod.branchContract',
                 'allocations.invoice.invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
-                'branch.location',
-                'patient',
-                'client',
+                'transaction.branch.location',
+                'transaction.patient',
+                'transaction.client',
                 'issuedBy',
             ])
             ->orderByDesc('payment_id')
@@ -540,20 +523,15 @@ class InvoiceService
     public function completeRefund(array $payload)
     {
         return DB::transaction(function () use ($payload) {
-            $refund = Refund::find($payload['refund_id'] ?? null);
+            $withdrawal = $this->openWithdrawal($payload);
 
-            if (!$refund) {
-                throw new Exception('Refund not found.', 404);
-            }
-
-            if ($refund->status !== Refund::STATUS_REQUESTED) {
-                throw new Exception('This refund has already been settled.', 422);
-            }
-
-            $refund->update(['status' => Refund::STATUS_COMPLETED]);
+            $this->transactions->settle(
+                $withdrawal,
+                Transaction::STATUS_COMPLETED
+            );
 
             return [
-                'message' => 'The refund has been completed successfully.',
+                'message' => 'The withdrawal has been completed successfully.',
                 'data' => $this->invoiceRepository->getPatientWithUuid($payload)
             ];
         });
@@ -565,29 +543,39 @@ class InvoiceService
             $reason = trim((string) ($payload['reason'] ?? ''));
 
             if ($reason === '') {
-                throw new Exception('A reason is required to decline a refund.', 422);
+                throw new Exception('A reason is required to decline a withdrawal.', 422);
             }
 
-            $refund = Refund::find($payload['refund_id'] ?? null);
+            $withdrawal = $this->openWithdrawal($payload);
 
-            if (!$refund) {
-                throw new Exception('Refund not found.', 404);
-            }
-
-            if ($refund->status !== Refund::STATUS_REQUESTED) {
-                throw new Exception('This refund has already been settled.', 422);
-            }
-
-            $refund->update([
-                'status' => Refund::STATUS_DECLINED,
-                'declined_reason' => $reason,
-            ]);
+            $this->transactions->settle(
+                $withdrawal,
+                Transaction::STATUS_REJECTED,
+                $reason
+            );
 
             return [
-                'message' => 'The refund request has been declined.',
+                'message' => 'The withdrawal request has been declined.',
                 'data' => $this->invoiceRepository->getPatientWithUuid($payload)
             ];
         });
+    }
+
+    private function openWithdrawal(array $payload): Transaction
+    {
+        $withdrawal = $this->refundRepository->findWithdrawal(
+            $payload['refund_id'] ?? null
+        );
+
+        if (!$withdrawal) {
+            throw new Exception('Withdrawal not found.', 404);
+        }
+
+        if ($withdrawal->status !== Transaction::STATUS_REQUESTED) {
+            throw new Exception('This withdrawal has already been settled.', 422);
+        }
+
+        return $withdrawal;
     }
 
     public function voidInvoice(array $payload)

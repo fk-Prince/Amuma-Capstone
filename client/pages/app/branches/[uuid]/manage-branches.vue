@@ -1,5 +1,7 @@
 <template>
-    <div class="min-h-screen-header bg-slate-50 px-4 py-8 lg:px-8 dark:bg-secondary">
+    <div
+        class="min-h-screen-header bg-slate-50 px-4 py-8 lg:px-8 dark:bg-secondary"
+    >
         <BranchDashboard :stats-data="statsData" />
 
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -79,7 +81,9 @@
             </span>
         </div>
 
-        <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-secondary">
+        <div
+            class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-secondary"
+        >
             <div
                 class="mb-6 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between"
             >
@@ -236,9 +240,13 @@
                 </div>
             </div>
 
-            <div class="mb-6 border-t border-slate-100 pt-5 dark:border-white/10">
+            <div
+                class="mb-6 border-t border-slate-100 pt-5 dark:border-white/10"
+            >
                 <div>
-                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                    <h2
+                        class="text-lg font-semibold text-slate-900 dark:text-white"
+                    >
                         Branch Directory
                     </h2>
 
@@ -263,18 +271,30 @@
                         ></div>
 
                         <div class="flex-1 space-y-2">
-                            <div class="h-4 w-2/3 rounded bg-slate-200 dark:bg-white/10"></div>
-                            <div class="h-3 w-1/3 rounded bg-slate-200 dark:bg-white/10"></div>
+                            <div
+                                class="h-4 w-2/3 rounded bg-slate-200 dark:bg-white/10"
+                            ></div>
+                            <div
+                                class="h-3 w-1/3 rounded bg-slate-200 dark:bg-white/10"
+                            ></div>
                         </div>
                     </div>
 
                     <div class="space-y-2">
-                        <div class="h-3 w-full rounded bg-slate-200 dark:bg-white/10"></div>
-                        <div class="h-3 w-4/5 rounded bg-slate-200 dark:bg-white/10"></div>
-                        <div class="h-3 w-3/5 rounded bg-slate-200 dark:bg-white/10"></div>
+                        <div
+                            class="h-3 w-full rounded bg-slate-200 dark:bg-white/10"
+                        ></div>
+                        <div
+                            class="h-3 w-4/5 rounded bg-slate-200 dark:bg-white/10"
+                        ></div>
+                        <div
+                            class="h-3 w-3/5 rounded bg-slate-200 dark:bg-white/10"
+                        ></div>
                     </div>
 
-                    <div class="h-9 rounded-lg bg-slate-200 dark:bg-white/10"></div>
+                    <div
+                        class="h-9 rounded-lg bg-slate-200 dark:bg-white/10"
+                    ></div>
                 </div>
             </div>
 
@@ -298,7 +318,9 @@
                     </svg>
                 </div>
 
-                <p class="text-sm font-medium text-slate-600 dark:text-gray-300">
+                <p
+                    class="text-sm font-medium text-slate-600 dark:text-gray-300"
+                >
                     No branches found
                 </p>
 
@@ -320,17 +342,14 @@
                     v-for="branch in branches"
                     :key="branch.branch_id"
                     :branch="branch"
-                    @edit="onEditBranch"
+                    :active="branch.uuid === route.params.uuid"
+                    @select="onSelectBranch"
                     @menu="onBranchMenu"
                 />
             </div>
 
             <div
-                v-if="
-                    !loading &&
-                    branches.length &&
-                    currentPage < lastPage
-                "
+                v-if="!loading && branches.length && currentPage < lastPage"
                 class="flex justify-center pt-6"
             >
                 <button
@@ -374,10 +393,25 @@ definePageMeta({
 });
 useHead({ title: "Branches" });
 
-function onEditBranch(branch: Branch) {}
-
 function onBranchMenu(branch: Branch) {}
 const route = useRoute();
+
+// The store holds the branches this user can actually open, so switching
+// through it keeps `lastSelectedBranch` in step. An agency branch missing from
+// that list is still navigable; the dashboard layout turns it away if the user
+// has no access.
+async function onSelectBranch(branch: Branch) {
+    if (branch.uuid === route.params.uuid) return;
+
+    const known = branchStore.branches.find((b) => b.uuid === branch.uuid);
+
+    if (known) {
+        branchStore.selectBranch(known);
+        return;
+    }
+
+    await navigateTo(`/app/branches/${branch.uuid}/dashboard`);
+}
 
 type Branch = {
     branch_id: number;
@@ -388,6 +422,7 @@ type Branch = {
     email: string;
     is_verified: boolean;
     review_status?: "pending" | "verified" | "rejected";
+    rejection_reason?: string | null;
     rooms: number;
     staffs: number;
     patients: number;
@@ -486,7 +521,6 @@ const statsData = ref({
     },
 });
 
-
 const mapBranch = (b: any): Branch => ({
     branch_id: b.branch_id,
     uuid: b.uuid,
@@ -506,6 +540,7 @@ const mapBranch = (b: any): Branch => ({
     email: b.email ?? "—",
     is_verified: Boolean(b.is_verified),
     review_status: b.review_status,
+    rejection_reason: b.rejection_reason ?? null,
     rooms: b.rooms_count ?? 0,
     staffs: b.staff_count ?? 0,
     patients: b.patients_count ?? 0,

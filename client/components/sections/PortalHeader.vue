@@ -47,7 +47,7 @@
                 class="relative w-9 h-9 sm:w-auto sm:h-auto flex items-center justify-center text-gray-700 hover:text-primary-500 dark:text-gray-300 dark:hover:text-white transition-colors"
                 @click="goToMessages"
             >
-                <MessagesSquare class="w-5 h-5" />
+                <MessageSquare class="w-5 h-5" />
 
                 <span
                     v-if="unreadMessageCount"
@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Calendar, Clock, MessagesSquare, Menu } from "lucide-vue-next";
+import { Calendar, Clock, MessageSquare, Menu } from "lucide-vue-next";
 import NavbarProfileDropdown from "~/components/ui/NavbarProfileDropdown.vue";
 import Notification from "~/components/ui/Notification.vue";
 import { useAuthUser } from "~/composables/useAuthUser";

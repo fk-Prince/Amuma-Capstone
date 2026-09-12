@@ -13,8 +13,22 @@ defineProps<{
     invoices: PortalInvoice[];
 }>();
 
+const emit = defineEmits<{
+    (event: "adjustments", invoice: PortalInvoice): void;
+}>();
+
 function peso(amount: number) {
     return formatCurrency(amount, { treatMissingAsZero: true });
+}
+
+// However many an invoice has collected, the row carries the most recent one
+// and the rest are read in the history dialog.
+function latestAdjustment(invoice: PortalInvoice) {
+    return [...(invoice.adjustments ?? [])].sort(
+        (a, b) =>
+            new Date(b.created_at ?? 0).getTime() -
+            new Date(a.created_at ?? 0).getTime(),
+    )[0];
 }
 </script>
 
@@ -59,14 +73,25 @@ function peso(amount: number) {
                     Voided: {{ invoice.void_reason }}
                 </p>
 
-                <p
+                <button
                     v-else-if="invoice.adjustments.length"
-                    class="mt-0.5 truncate text-[10px] text-amber-600 dark:text-amber-300"
+                    type="button"
+                    class="mt-0.5 inline-flex max-w-full items-center gap-1 text-[10px] font-medium text-amber-600 underline underline-offset-2 transition hover:no-underline dark:text-amber-300"
+                    @click="emit('adjustments', invoice)"
                 >
-                    {{
-                        invoice.adjustments.map((adj) => adj.reason).join(" · ")
-                    }}
-                </p>
+                    <span class="truncate">
+                        {{ latestAdjustment(invoice)?.reason }}
+                    </span>
+
+                    <span
+                        v-if="invoice.adjustments.length > 1"
+                        class="shrink-0 text-amber-500/80"
+                    >
+                        +{{ invoice.adjustments.length - 1 }} more
+                    </span>
+
+                    <AppIcon name="chevron-right" class="h-3 w-3 shrink-0" />
+                </button>
 
                 <p class="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500">
                     {{ formatBillingDateTime(invoice.created_at)

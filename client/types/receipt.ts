@@ -12,7 +12,7 @@ export interface ReceiptLine {
 export type ReceiptChannel = "portal" | "counter";
 
 export interface PaymentReceipt {
-    receipt_no: string;
+    payment_code: string;
     channel: ReceiptChannel;
     issued_at: string | null;
 

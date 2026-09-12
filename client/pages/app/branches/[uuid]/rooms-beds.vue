@@ -224,7 +224,7 @@ const bedAction = async (
     action: "create" | "update",
     room: Room,
     bed: BedForm,
-    done: () => void,
+    done: (ok?: boolean) => void,
 ) => {
     const payload = {
         branch_uuid: uuid,
@@ -233,6 +233,8 @@ const bedAction = async (
         status: bed.status,
         bed_id: bed.bed_id ?? null,
     };
+
+    let ok = true;
 
     try {
         let res;
@@ -263,8 +265,10 @@ const bedAction = async (
             success(res.message ?? "Bed updated successfully.");
         }
     } catch (err: any) {
+        ok = false;
+
         const validationErrors = err?.data?.errors;
-        console.error(err);
+
         if (validationErrors && Object.keys(validationErrors).length > 0) {
             errors.value = Object.fromEntries(
                 Object.entries(validationErrors).map(([key, value]: any) => [
@@ -276,7 +280,7 @@ const bedAction = async (
             error(err?.data?.message ?? "Something went wrong.");
         }
     } finally {
-        done();
+        done(ok);
     }
 };
 

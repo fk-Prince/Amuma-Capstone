@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+    <div class="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
         <div class="relative min-w-0 flex-1 sm:min-w-[240px]">
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -18,7 +18,7 @@
                 :value="search"
                 placeholder="Search by agency or branch name"
                 aria-label="Search by agency or branch name"
-                class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-secondary py-2.5 pl-9 pr-9 text-sm text-slate-700 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-500 transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-500/20"
+                class="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-9 text-sm text-slate-700 transition placeholder:text-slate-400 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-white/10 dark:bg-secondary dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-primary-500/20"
                 @input="
                     emit(
                         'update:search',
@@ -49,7 +49,7 @@
         </div>
         <div
             v-if="views.length > 1"
-            class="inline-flex shrink-0 gap-1 rounded-full bg-slate-100 dark:bg-white/5 p-1"
+            class="inline-flex h-10 shrink-0 items-center rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-white/10 dark:bg-white/5"
             role="tablist"
             aria-label="Subscription view"
         >
@@ -59,10 +59,10 @@
                 type="button"
                 role="tab"
                 :aria-selected="view === option"
-                class="w-[104px] rounded-full py-1.5 text-xs font-semibold capitalize transition-colors"
+                class="h-full min-w-[92px] rounded-lg px-4 text-xs font-semibold capitalize transition"
                 :class="
                     view === option
-                        ? 'bg-white text-primary-600 shadow-sm dark:bg-white/10 dark:text-primary-300'
+                        ? 'bg-white text-primary shadow-sm dark:bg-white/10 dark:text-primary-300'
                         : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white'
                 "
                 @click="setView(option)"
@@ -70,20 +70,42 @@
                 {{ option }}
             </button>
         </div>
-        <div
+
+        <Combobox
             v-if="view === 'approved'"
-            class="flex shrink-0 items-center gap-2"
+            class="shrink-0 sm:w-40"
+            :model-value="approvedStatus"
+            :items="statusOptions"
+            placeholder="Status"
+            input-class="h-10 px-3.5 rounded-xl"
+            @update:model-value="
+                emit('update:approvedStatus', $event as ApprovedStatus)
+            "
+        />
+
+        <button
+            type="button"
+            :disabled="loading"
+            class="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 transition hover:border-primary-200 hover:bg-primary-50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-secondary dark:text-gray-300 dark:hover:bg-white/10"
+            @click="emit('refresh')"
         >
-            <Combobox
-                :model-value="approvedStatus"
-                :items="statusOptions"
-                placeholder="Status"
-                input-class=" px-3 py-1.5"
-                @update:model-value="
-                    emit('update:approvedStatus', $event as ApprovedStatus)
-                "
-            />
-        </div>
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                class="h-3.5 w-3.5"
+                :class="{ 'animate-spin': loading }"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+            </svg>
+            Refresh
+        </button>
     </div>
 </template>
 
@@ -104,9 +126,11 @@ const props = withDefaults(
         view: SubscriptionView;
         approvedStatus: ApprovedStatus;
         views?: SubscriptionView[];
+        loading?: boolean;
     }>(),
     {
         views: () => ["requests", "approved", "rejected"],
+        loading: false,
     },
 );
 
@@ -114,6 +138,7 @@ const emit = defineEmits<{
     (e: "update:search", value: string): void;
     (e: "update:view", value: SubscriptionView): void;
     (e: "update:approvedStatus", value: ApprovedStatus): void;
+    (e: "refresh"): void;
 }>();
 
 const statusOptions: ComboboxItem[] = [

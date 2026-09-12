@@ -3,32 +3,32 @@ import type { User } from "./auth";
 import { type Location } from "./location";
 import type { Permissions } from "./permission";
 import type { Review } from "./review";
-import { z } from 'zod';
+import { z } from "zod";
 import type { Service } from "./service";
-
 
 export interface Branch {
     uuid?: string;
     name: string;
     contact_number: string;
     description: string;
+    tin?: string;
     image: File | string | null;
-    location: Location
-    settings?: BranchSettings | null
+    location: Location;
+    settings?: BranchSettings | null;
     plan?: BranchPlan[] | null;
     role_name?: string;
     permissions?: Permissions[];
-    agency: Agency
+    agency?: Agency;
     images?: BranchImage[];
     email: string;
     is_verified: boolean;
     document?: File | string;
-};
+}
 
 export interface BranchImage {
     branch_image_id: number;
     image_url: string;
-    type: "branch" | "vip_room" | 'common_room' | "other";
+    type: "branch" | "vip_room" | "common_room" | "other";
     description: string | null;
 }
 
@@ -42,18 +42,15 @@ export interface BranchSettings {
     enable_booking_complete_admission: boolean;
     requires_full_payment_on_admit: boolean;
     minimum_adl_hours: number | null;
-    // billing_due_date: number | null;
     is_open: boolean;
-    status?: 'OPEN' | 'CLOSED';
+    status?: "OPEN" | "CLOSED";
+    tin?: string | null;
 }
 
 export const getBranchImage = (image: File | string | null | undefined) => {
     if (!image) return "";
 
-
-    return typeof image === "string"
-        ? image
-        : URL.createObjectURL(image);
+    return typeof image === "string" ? image : URL.createObjectURL(image);
 };
 
 export interface BranchRetrieve {
@@ -68,19 +65,19 @@ export interface BranchRetrieve {
     reviews: Review[];
     subscriptions: BranchSubscription[];
     location: Location;
-    homecare: BranchHomecare,
-    facility: BranchFacility[]
+    homecare: BranchHomecare;
+    facility: BranchFacility[];
     services: Service[];
     images?: BranchImage[];
 }
 
 export interface BranchHomecare {
     adl_hourly_rate?: number;
-    adl_min_hour?: number
-    description?: string
+    adl_min_hour?: number;
+    description?: string;
 }
 export interface BranchFacility {
-    available_slot: number
+    available_slot: number;
     accommodation_type: "VIP" | "COMMON";
     billing_cycle: "HOURLY" | "MONTHLY" | "YEARLY";
     price: number;
@@ -109,38 +106,18 @@ interface BranchPlan {
 
 export interface UserBranch {
     user: User;
-    branches?: Branch[]
+    branches?: Branch[];
 }
 
-
-
-
 export const locationSchema = z.object({
-    street: z
-        .string()
-        .trim()
-        .min(1, "Street is required"),
+    street: z.string().trim().min(1, "Street is required"),
 
-    city: z
-        .string()
-        .trim()
-        .min(1, "City is required"),
+    city: z.string().trim().min(1, "City is required"),
 
-    province: z
-        .string()
-        .trim()
-        .min(1, "Province is required"),
+    province: z.string().trim().min(1, "Province is required"),
 
-    country: z
-        .string()
-        .trim()
-        .min(1, "Country is required"),
+    country: z.string().trim().min(1, "Country is required"),
 
     latitude: z.coerce.number().optional(),
     longitude: z.coerce.number().optional(),
 });
-
-
-
-
-

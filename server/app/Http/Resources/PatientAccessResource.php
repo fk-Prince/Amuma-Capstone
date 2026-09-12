@@ -45,6 +45,8 @@ class PatientAccessResource extends JsonResource
     {
         $data = [
             'patient_id' => $this->patient_id,
+            'patient_code' => $this->patient_code,
+            'uuid' => $this->uuid,
             'first_name' => $this->first_name,
             'middle_name' => $this->middle_name,
             'last_name' => $this->last_name,
@@ -210,7 +212,7 @@ class PatientAccessResource extends JsonResource
             'invoice_id' => $invoice->invoice_id,
             'invoice_code' => $invoice->invoice_code,
             'status' => $invoice->status,
-            'total' => (float) $invoice->adjusted_total,
+            'total' => (float) $invoice->total_amount,
             'adjusted_total' => (float) $invoice->adjusted_total,
             'amount_paid' => (float) $invoice->amount_paid,
             'balance_due' => (float) $invoice->balance_due,
@@ -282,23 +284,21 @@ class PatientAccessResource extends JsonResource
         return null;
     }
 
-    // Read through the allocations, not the payments. One payment can settle
-    // several invoices, so its own total and its refunds across all of them
-    // would both overstate what belongs to this one.
-    private function formatPayments(object $invoice): array
+
+    private function formatPayments(object $invoice)
     {
-        $invoice->loadMissing('allocations.payment', 'allocations.refundAllocations.refund');
+        $invoice->loadMissing('allocations.payment.transaction', 'allocations.refundAllocations.refund.transaction');
 
         return $invoice->allocations
             ->map(fn($allocation) => [
                 'payment_id' => $allocation->payment_id,
                 'allocation_id' => $allocation->allocation_id,
                 'reference_id' => $allocation->payment?->reference_id,
-                'receipt_no' => $allocation->payment?->receipt_no,
+                'payment_code' => $allocation->payment?->payment_code,
                 'amount' => (float) $allocation->amount,
                 'description' => $allocation->description,
                 'payment_method' => $allocation->payment?->payment_method,
-                'masked_card_number' => $allocation->payment?->masked_card_number,
+                'masked_account_detail' => $allocation->payment?->masked_account_detail,
                 'created_at' => $allocation->payment?->created_at?->format('Y-m-d H:i:s'),
 
                 'refunds' => $this->formatRefunds($allocation),
@@ -307,8 +307,6 @@ class PatientAccessResource extends JsonResource
             ->toArray();
     }
 
-    // The slice of each refund that came off this allocation, since a refund
-    // can be drawn from several payments at once.
     private function formatRefunds(object $allocation): array
     {
         return $allocation->refundAllocations
@@ -316,10 +314,11 @@ class PatientAccessResource extends JsonResource
                 'refund_id' => $line->refund_id,
                 'amount' => (float) $line->amount,
                 'refund_total' => (float) ($line->refund?->amount ?? 0),
-                'refund_method' => $line->refund?->refund_method,
-                'refund_code' => $line->refund?->refund_code,
-                'status' => $line->refund?->status,
-                'declined_reason' => $line->refund?->declined_reason,
+                'reason' => $line->invoiceAdjustment?->reason,
+                'refund_method' => $line->refund?->transaction?->method,
+                'refund_code' => $line->refund?->transaction?->transaction_code,
+                'status' => $line->refund?->transaction?->status,
+                'declined_reason' => $line->refund?->transaction?->declined_reason,
                 'created_at' => $line->refund?->created_at?->format('Y-m-d H:i:s'),
             ])
             ->values()

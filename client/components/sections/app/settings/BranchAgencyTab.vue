@@ -4,7 +4,7 @@
             <AgencyForm
                 v-model:agency="localValue"
                 v-model:errors="errors"
-                hide-documents
+                lock-verification
             />
         </ClientOnly>
 
@@ -20,7 +20,10 @@
         </div>
     </div>
 
-    <div v-else class="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+    <div
+        v-else
+        class="py-12 text-center text-sm text-gray-400 dark:text-gray-500"
+    >
         Loading agency information...
     </div>
 </template>
@@ -76,7 +79,11 @@ const fieldKeyMap: Record<string, string> = {
 const handleSave = async (): Promise<boolean> => {
     if (!localValue.value) return false;
 
-    const result = agencySchema.safeParse(localValue.value);
+    // Verification files are read-only here and never sent, so requiring them
+    // would block every other edit.
+    const result = agencySchema
+        .omit({ id_front: true, id_back: true, document: true })
+        .safeParse(localValue.value);
 
     if (!result.success) {
         const validationErrors: Record<string, string> = {};

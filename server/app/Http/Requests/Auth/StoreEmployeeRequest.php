@@ -29,7 +29,7 @@ class StoreEmployeeRequest extends FormRequest
             'last_name' => ['required', 'string', 'max:255'],
             'avatar' => ['nullable', 'string'],
             'birth_date' => ['required', 'date'],
-            'phone_number' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{7,20}$/'],
+            'phone_number' => ['required', 'string', 'max:20', 'regex:/^9\d{2}[\s-]?\d{3}[\s-]?\d{4}$/'],
 
             'location' => ['required', 'array'],
             'location.street' => ['required', 'string', 'max:255'],
@@ -39,6 +39,7 @@ class StoreEmployeeRequest extends FormRequest
 
             'role_name' => ['required', 'string', 'max:255'],
             'assignment_type' => ['required', 'string', 'max:255'],
+            'status' => ['nullable', 'in:active,inactive,on_leave'],
 
             'branch_uuid' => ['required', 'string', 'exists:branches,uuid'],
 
@@ -59,7 +60,7 @@ class StoreEmployeeRequest extends FormRequest
     {
         return [
             'email.unique' => 'This email is already registered.',
-            'phone_number.regex' => 'Enter a valid phone number.',
+            'phone_number.regex' => 'Enter a valid PH mobile number (e.g. 912 345 6789).',
             'permissions.*.module_id.exists' => 'One or more selected modules are invalid.',
         ];
     }

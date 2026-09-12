@@ -5,12 +5,15 @@ import {
     type Employee,
     employeeSchema,
     type EmployeePayload,
+    type EmployeeStatus,
+    isActiveStatus,
 } from "~/types/employee";
 import { moduleService } from "~/api/module/ModuleService";
 import { Modules, type Module } from "~/types/module";
 import { employeeService } from "~/api/employee/EmployeeService";
 import { useToast } from "~/composables/useToast";
 import { fetchAuthUser } from "~/composables/useAuthUser";
+import type { EmployeeSlip } from "~/types/employee-slip";
 
 export type PermissionSet = {
     can_read: boolean;
@@ -32,10 +35,6 @@ const ALL_ACTIONS: ActionKey[] = [
 const ADD_UPDATE_READ: ActionKey[] = ["can_read", "can_create", "can_update"];
 const READ_ONLY: ActionKey[] = ["can_read"];
 
-// Default module access checked in when a position is picked for a new
-// employee — matches the org's standing role/permission policy. Only
-// applied while creating a new employee; an existing employee's saved
-// permissions are never overwritten by this.
 const ROLE_DEFAULT_PERMISSIONS: Record<
     string,
     Partial<Record<Modules, ActionKey[]>>
@@ -104,6 +103,26 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
 
     const permissions = ref<Record<number, PermissionSet>>({});
 
+    const employeeSlip = ref<EmployeeSlip | null>(null);
+
+    const loadedStatus = ref<EmployeeStatus>("active");
+
+    const isActive = computed({
+        get: () => isActiveStatus(employee.value.status),
+        set: (next: boolean) => {
+            employee.value.status = next
+                ? loadedStatus.value === "inactive"
+                    ? "active"
+                    : loadedStatus.value
+                : "inactive";
+        },
+    });
+
+    function dismissSlip() {
+        employeeSlip.value = null;
+        options.onSaved?.();
+    }
+
     const filteredModules = computed(() => {
         const query = moduleSearch.value.trim().toLowerCase();
         if (!query) return modules.value;
@@ -160,8 +179,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         const roleDefaults = ROLE_DEFAULT_PERMISSIONS[role] ?? {};
 
         modules.value.forEach((module) => {
-            const actions =
-                roleDefaults[module.module_name as Modules] ?? [];
+            const actions = roleDefaults[module.module_name as Modules] ?? [];
 
             permissions.value[module.module_id] = {
                 can_read: actions.includes("can_read") && !!module.has_read,
@@ -229,9 +247,14 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         const current = options.employee();
         if (!current) return;
 
+        const status = (current.status as EmployeeStatus) || "active";
+
+        loadedStatus.value = status;
+
         employee.value = {
             ...createEmployee(),
             ...current,
+            status,
             phone_number: current.phone_number ?? "",
             documents: (current.documents ?? []).map((doc) => ({
                 label: doc.label,
@@ -287,9 +310,10 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
 
     function onDocumentFileSelected(index: number, e: Event) {
         const file = (e.target as HTMLInputElement).files?.[0];
+        const document = employee.value.documents[index];
 
-        if (file) {
-            employee.value.documents[index].file = file;
+        if (file && document) {
+            document.file = file;
         }
     }
 
@@ -371,14 +395,24 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             }
 
             success(res.message);
-            options.onSaved?.();
 
             if (user.value?.uuid === current?.uuid) {
                 await fetchAuthUser();
             }
+
+            const slip = res?.data?.access ? (res.data as EmployeeSlip) : null;
+
+            if (slip) {
+                employeeSlip.value = slip;
+            } else {
+                options.onSaved?.();
+            }
+
             return true;
         } catch (err: any) {
-            error(err?.data?.message || err?.message || "Internal Server Error");
+            error(
+                err?.data?.message || err?.message || "Internal Server Error",
+            );
             console.error(err);
             return false;
         } finally {
@@ -441,6 +475,10 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         initials,
         validate,
         saveEmployee,
+        employeeSlip,
+        dismissSlip,
+        isActive,
+        loadedStatus,
         init,
         pageTitle,
         pageSubtitle,

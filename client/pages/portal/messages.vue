@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { MessageCircle } from "lucide-vue-next";
 
@@ -16,6 +16,7 @@ useHead({ title: "Messages" });
 
 definePageMeta({
     layout: "portal",
+    middleware: "portal",
 });
 
 interface BranchRow {
@@ -54,7 +55,7 @@ const threadSubtitle = computed(() => {
 
     if (!row) return null;
 
-    const staff = [row.staff_name, row.staff_role].filter(Boolean).join(" · ");
+    const staff = [row.staff_name, row.staff_role].filter(Boolean).join(" Â· ");
 
     const names = row.patient_names;
 
@@ -65,7 +66,7 @@ const threadSubtitle = computed(() => {
               : names.join(", "))
         : null;
 
-    return [staff, caring].filter(Boolean).join(" — ") || null;
+    return [staff, caring].filter(Boolean).join(" â€” ") || null;
 });
 
 async function load() {
@@ -408,7 +409,7 @@ onBeforeUnmount(() => {
                                 >
                                     {{ row.staff_name
                                     }}<template v-if="row.staff_role">
-                                        · {{ row.staff_role }}</template
+                                        Â· {{ row.staff_role }}</template
                                     >
                                 </p>
 

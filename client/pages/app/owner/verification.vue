@@ -1,59 +1,26 @@
 <template>
     <div class="min-h-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <div class="mb-6">
-            <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
-                Verification
-            </h1>
-            <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
-                Review agency and branch documents before a subscription goes
-                live.
-            </p>
-        </div>
-
         <SubscriptionOverview
             :overview="overview"
             :loading="overviewLoading"
-            :active-view="view === 'requests' || view === 'rejected' ? view : undefined"
+            :active-view="
+                view === 'requests' || view === 'rejected' ? view : undefined
+            "
             :show-approved="false"
             :show-rejected="true"
             class="mb-6"
             @select="(payload) => (view = payload.view)"
         />
 
-        <div
-            class="mb-6 flex flex-col gap-4 border-b border-slate-100 dark:border-white/10 pb-6 lg:flex-row lg:items-center lg:justify-between"
-        >
+        <div class="mb-6 border-b border-slate-100 pb-6 dark:border-white/10">
             <SubscriptionFilterBar
                 v-model:search="search"
                 v-model:view="view"
                 v-model:approvedStatus="approvedStatus"
+                :loading="loading"
+                @refresh="fetchSubscriptions()"
                 :views="['requests', 'rejected']"
-                class="lg:flex-1"
             />
-
-            <button
-                type="button"
-                :disabled="loading"
-                class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-secondary px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-gray-300 transition hover:bg-slate-50 dark:hover:bg-white/10 disabled:opacity-50 lg:shrink-0"
-                @click="fetchSubscriptions()"
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    class="h-3.5 w-3.5"
-                    :class="{ 'animate-spin': loading }"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                </svg>
-                Refresh
-            </button>
         </div>
 
         <div
@@ -65,41 +32,63 @@
                 :key="n"
                 class="overflow-hidden rounded-2xl border border-slate-100 dark:border-white/10 bg-white dark:bg-secondary shadow-sm"
             >
-                <div class="animate-pulse space-y-0 divide-y divide-slate-100 dark:divide-white/10">
+                <div
+                    class="animate-pulse space-y-0 divide-y divide-slate-100 dark:divide-white/10"
+                >
                     <div class="space-y-2 bg-slate-50/70 dark:bg-white/5 p-4">
-                        <div class="h-4 w-2/3 rounded bg-slate-200 dark:bg-white/10" />
-                        <div class="h-3 w-1/3 rounded bg-slate-100 dark:bg-white/5" />
+                        <div
+                            class="h-4 w-2/3 rounded bg-slate-200 dark:bg-white/10"
+                        />
+                        <div
+                            class="h-3 w-1/3 rounded bg-slate-100 dark:bg-white/5"
+                        />
                     </div>
 
                     <div class="space-y-3 p-4">
-                        <div class="h-3 w-1/4 rounded bg-slate-100 dark:bg-white/5" />
+                        <div
+                            class="h-3 w-1/4 rounded bg-slate-100 dark:bg-white/5"
+                        />
                         <div class="flex gap-3">
                             <div
                                 class="h-9 w-9 shrink-0 rounded-full bg-slate-200 dark:bg-white/10"
                             />
                             <div class="flex-1 space-y-2">
-                                <div class="h-3 w-3/4 rounded bg-slate-200 dark:bg-white/10" />
-                                <div class="h-3 w-1/2 rounded bg-slate-100 dark:bg-white/5" />
+                                <div
+                                    class="h-3 w-3/4 rounded bg-slate-200 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-3 w-1/2 rounded bg-slate-100 dark:bg-white/5"
+                                />
                             </div>
                         </div>
                     </div>
 
                     <div class="space-y-3 p-4">
-                        <div class="h-3 w-1/4 rounded bg-slate-100 dark:bg-white/5" />
+                        <div
+                            class="h-3 w-1/4 rounded bg-slate-100 dark:bg-white/5"
+                        />
                         <div class="flex gap-3">
                             <div
                                 class="h-9 w-9 shrink-0 rounded-full bg-slate-200 dark:bg-white/10"
                             />
                             <div class="flex-1 space-y-2">
-                                <div class="h-3 w-3/4 rounded bg-slate-200 dark:bg-white/10" />
-                                <div class="h-3 w-1/2 rounded bg-slate-100 dark:bg-white/5" />
+                                <div
+                                    class="h-3 w-3/4 rounded bg-slate-200 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-3 w-1/2 rounded bg-slate-100 dark:bg-white/5"
+                                />
                             </div>
                         </div>
                     </div>
 
                     <div class="flex gap-2 bg-slate-50/70 dark:bg-white/5 p-3">
-                        <div class="h-8 flex-1 rounded-xl bg-slate-200 dark:bg-white/10" />
-                        <div class="h-8 flex-1 rounded-xl bg-slate-100 dark:bg-white/5" />
+                        <div
+                            class="h-8 flex-1 rounded-xl bg-slate-200 dark:bg-white/10"
+                        />
+                        <div
+                            class="h-8 flex-1 rounded-xl bg-slate-100 dark:bg-white/5"
+                        />
                     </div>
                 </div>
             </div>
@@ -186,9 +175,20 @@
                         processingAction[subscription.uuid] ?? null
                     "
                     @approve="approveSubscription"
-                    @reject="rejectSubscription"
+                    @reject="askRejectReason"
                 />
             </div>
+
+            <RejectSubscriptionModal
+                :open="!!rejecting"
+                :branch-name="rejecting?.branch?.name"
+                :refunds="rejecting?.is_first_branch !== false"
+                :submitting="
+                    !!rejecting && processingAction[rejecting.uuid] === 'reject'
+                "
+                @close="rejecting = null"
+                @confirm="confirmReject"
+            />
 
             <div class="mt-8 flex flex-col items-center gap-3">
                 <button
@@ -222,6 +222,7 @@
 
 <script setup lang="ts">
 import SubscriptionCard from "~/components/sections/owner/SubscriptionCard.vue";
+import RejectSubscriptionModal from "~/components/sections/owner/RejectSubscriptionModal.vue";
 import SubscriptionFilterBar from "~/components/sections/owner/SubscriptionFilter.vue";
 import SubscriptionOverview from "~/components/sections/owner/SubscriptionOverview.vue";
 import { useSubscriptionBrowser } from "~/composables/useSubscriptionBrowser";
@@ -254,6 +255,22 @@ const {
     rejectSubscription,
 } = useSubscriptionBrowser("requests");
 
+const rejecting = ref<any | null>(null);
+
+const askRejectReason = (subscription: any) => {
+    rejecting.value = subscription;
+};
+
+const confirmReject = async (reason: string) => {
+    const subscription = rejecting.value;
+
+    if (!subscription) return;
+
+    await rejectSubscription(subscription, reason);
+
+    rejecting.value = null;
+};
+
 const emptyStateTitle = computed(() => {
     if (isSearching.value) return "No matches found";
 
@@ -267,7 +284,9 @@ const emptyStateDescription = computed(() => {
 
     if (isSearching.value) {
         const scope =
-            view.value === "requests" ? "pending requests" : "rejected subscriptions";
+            view.value === "requests"
+                ? "pending requests"
+                : "rejected subscriptions";
 
         return `No ${scope} match "${query}". Try a different agency or branch name.`;
     }

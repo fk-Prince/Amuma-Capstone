@@ -6,7 +6,7 @@ use App\Http\Resources\PaymentReceiptResource;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\PatientAccess;
-use App\Models\Payment;
+use App\Repository\PaymentRepository;
 use App\Utils\AccommodationHelper;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +15,11 @@ use Illuminate\Support\Str;
 
 class PaymentService
 {
+    public function __construct(
+        private PaymentRepository $paymentRepository,
+        private TransactionService $transactions
+    ) {}
+
     private function chargeCard(Client $client, float $amount, array $payload): array
     {
         if (empty($payload['token_id']) || empty($payload['authentication_id'])) {
@@ -106,19 +111,26 @@ class PaymentService
                 );
             }
 
-            $receipt = Payment::create([
-                'branch_id'          => $invoices->first()->branch_id,
-                'patient_id'         => $access->patient_id,
-                'client_id'          => $client->client_id,
-                'payor_name'         => trim(
+            $transaction = $this->transactions->forPayment(
+                $amount,
+                $invoices->first()->branch_id,
+                $access->patient_id,
+                'Payment received through the family portal.',
+                [
+                    'client_id' => $client->client_id,
+                    'method' => $method,
+                    'masked_account_number' => $maskedAccountDetails,
+                    'transaction_reference_id' => $reference ?: null,
+                ]
+            );
+
+            $receipt = $this->paymentRepository->create([
+                'transaction_id'        => $transaction->transaction_id,
+                'payor_name'            => trim(
                     ($client->first_name ?? '') . ' ' . ($client->last_name ?? '')
                 ) ?: null,
-                'amount'             => $amount,
-                'prior_balance'      => $totalBalance,
-                'payment_method'     => $method,
-                'reference_id'       => $reference,
-                'masked_card_number' => $maskedAccountDetails,
-                'created_at'         => now(),
+                'prior_balance'         => $totalBalance,
+                'created_at'            => now(),
             ]);
 
             $remaining = $amount;
@@ -171,9 +183,9 @@ class PaymentService
                         'allocations.invoice.invoiceServices.scheduleService.service',
                         'allocations.invoice.invoiceAdmissionLines.admissionPeriod.branchContract',
                         'allocations.invoice.invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
-                        'branch.location',
-                        'patient',
-                        'client',
+                        'transaction.branch.location',
+                        'transaction.patient',
+                        'transaction.client',
                     ])
                 ),
             ];
@@ -182,17 +194,10 @@ class PaymentService
 
     public function receipt(Client $client, array $payload): PaymentReceiptResource
     {
-        $receipt = Payment::where('receipt_no', $payload['receipt_no'])
-            ->with([
-                'allocations.invoice.invoiceServices.scheduleService.service',
-                'allocations.invoice.invoiceAdmissionLines.admissionPeriod.branchContract',
-                'allocations.invoice.invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
-                'branch.location',
-                'patient',
-                'client',
-                'issuedBy',
-            ])
-            ->first();
+        $receipt = $this->paymentRepository->findByCode(
+            $payload['payment_code'],
+            PaymentRepository::RECEIPT_RELATIONS
+        );
 
         if (!$receipt) {
             throw new Exception('Receipt not found.', 404);

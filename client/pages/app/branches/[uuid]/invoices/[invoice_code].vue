@@ -413,7 +413,7 @@
                                             >
                                                 {{
                                                     refund.refund_code ??
-                                                    "Refund"
+                                                    "Credit issued"
                                                 }}
                                             </span>
 
@@ -421,11 +421,14 @@
                                                 class="rounded-full px-2 py-0.5 text-[10px] font-medium capitalize"
                                                 :class="
                                                     refundStatusClasses(
-                                                        refund.status,
+                                                        refund.status ??
+                                                            'credited',
                                                     )
                                                 "
                                             >
-                                                {{ refund.status }}
+                                                {{
+                                                    refund.status ?? "credited"
+                                                }}
                                             </span>
                                         </div>
 
@@ -437,6 +440,7 @@
                                             >
                                                 {{
                                                     refund.declined_reason ??
+                                                    refund.reason ??
                                                     "No reason provided."
                                                 }}
                                             </p>
@@ -744,10 +748,21 @@ function refundStatusClasses(status: string) {
     if (normalized === "completed") {
         return "bg-[#E4F4EE] text-[#1F7A4D] dark:text-emerald-300 dark:bg-emerald-500/15";
     }
-    if (normalized === "processing" || normalized === "pending") {
+    if (normalized === "credited") {
+        return "bg-[#E7F0FB] text-[#1F5C9E] dark:text-blue-300 dark:bg-blue-500/15";
+    }
+    if (
+        normalized === "processing" ||
+        normalized === "pending" ||
+        normalized === "requested"
+    ) {
         return "bg-[#FDF3DE] text-[#966B1F] dark:text-amber-300 dark:bg-amber-500/15";
     }
-    if (normalized === "failed" || normalized === "cancelled") {
+    if (
+        normalized === "failed" ||
+        normalized === "cancelled" ||
+        normalized === "rejected"
+    ) {
         return "bg-[#FBE8E6] text-[#B3402F] dark:text-rose-300 dark:bg-rose-500/15";
     }
     return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";

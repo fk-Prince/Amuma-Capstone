@@ -1,17 +1,37 @@
 ﻿﻿<template>
     <div
-        class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden print:h-auto print:overflow-visible"
+        class="relative h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden print:h-auto print:overflow-visible"
     >
-        <div class="print:hidden">
+        <div
+            class="pointer-events-none absolute inset-0 overflow-hidden print:hidden"
+            aria-hidden="true"
+        >
+            <div
+                class="lg:flex hidden absolute -bottom-20 left-1/3 h-[520px] w-[520px] rounded-full bg-sky-300/25 dark:bg-primary-500/15 blur-[140px]"
+            ></div>
+
+            <div
+                class="lg:flex hidden absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full bg-sky-200/25 dark:bg-primary-500/10 blur-[140px]"
+            ></div>
+
+            <div
+                class="lg:flex hidden absolute -top-60 left-1/2 -translate-x-1/2 h-[560px] w-[560px] rounded-full bg-sky-200/25 dark:bg-primary-500/10 blur-[150px]"
+            ></div>
+
+            <div
+                class="lg:flex hidden absolute -top-72 -right-32 h-[520px] w-[520px] rounded-full bg-sky-200/25 dark:bg-accent-500/10 blur-[150px]"
+            ></div>
+        </div>
+
+        <div class="relative z-20 print:hidden">
             <DashboardSidebar
                 :open="isOpen"
                 :menus="menus"
-                :home-link="homeLink"
                 @close="isOpen = false"
             />
         </div>
 
-        <div class="flex-1 flex flex-col min-w-0 h-full">
+        <div class="relative z-10 flex-1 flex flex-col min-w-0 h-full">
             <div class="print:hidden">
                 <DashboardHeader @open="isOpen = true" />
             </div>
@@ -19,25 +39,6 @@
             <main
                 class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative"
             >
-                <div
-                    class="pointer-events-none absolute inset-0 overflow-hidden print:hidden"
-                    aria-hidden="true"
-                >
-                    <div
-                        class="lg:flex hidden absolute -bottom-0 left-42 h-[520px] w-[520px] rounded-full bg-sky-300/25 dark:bg-primary-500/15 blur-[140px]"
-                    ></div>
-
-                    <div
-                        class="lg:flex hidden absolute -top-40 -left-42 h-[520px] w-[520px] rounded-full bg-sky-200/25 dark:bg-primary-500/10 blur-[140px]"
-                    ></div>
-                    <div
-                        class="lg:flex hidden absolute -top-40 left-1/2 -translate-x-1/2 h-[520px] w-[520px] rounded-full bg-sky-200/25 dark:bg-primary-500/10 blur-[140px]"
-                    ></div>
-                    <div
-                        class="lg:flex hidden absolute -top-90 -right-32 h-[520px] w-[520px] rounded-full bg-sky-200/25 dark:bg-primary-500/10 blur-[150px]"
-                    ></div>
-                </div>
-
                 <div class="relative min-h-full flex flex-col">
                     <slot />
                 </div>
@@ -78,7 +79,11 @@ onMounted(async () => {
         uuid = branch?.uuid;
     }
 
-    if (uuid && !route.path.startsWith("/app/branches/")) {
+    if (
+        uuid &&
+        !route.path.startsWith("/app/branches/") &&
+        route.path !== "/profile"
+    ) {
         await navigateTo(`/app/branches/${uuid}/dashboard`);
     }
 });
@@ -104,6 +109,7 @@ const menus = computed(() => {
                 label: item.label,
                 to: uuid ? item.to.replace("[uuid]", uuid) : item.to,
                 icon: item.icon,
+                group: item.group,
             }));
     }
 
@@ -134,6 +140,7 @@ const menus = computed(() => {
             label: item.label,
             to: uuid ? item.to.replace("[uuid]", uuid) : item.to,
             icon: item.icon,
+            group: item.group,
         }));
 });
 </script>

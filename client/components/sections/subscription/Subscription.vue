@@ -624,6 +624,7 @@ const validateBranch = async (): Promise<boolean> => {
             image: "branch_image",
             email: "branch_email",
             document: "branch_document",
+            tin: "branch_tin",
         };
 
         result.error.issues.forEach((issue) => {
@@ -637,13 +638,26 @@ const validateBranch = async (): Promise<boolean> => {
     return true;
 };
 
+const SERVER_FIELD_ALIASES: Record<string, string> = {
+    "branch_settings.tin": "branch_tin",
+};
+
+function stepForField(field: string) {
+    if (field.startsWith("branch_settings")) return 4;
+
+    if (field.startsWith("agency_") || field.startsWith("agency.")) return 2;
+
+    if (field.startsWith("branch_") || field.startsWith("branch.")) return 3;
+
+    return currentStep.value;
+}
+
 const isLoading = ref(false);
 
 const send = async () => {
     if (isLoading.value) return;
 
     isLoading.value = true;
-
     try {
         const payload: SubscriptionRequest = {
             plan_code: checkout.selectedPlan.plan_code,
@@ -655,7 +669,7 @@ const send = async () => {
             branch_contact_number: checkout.branch.contact_number,
             branch_image: checkout.branch.image,
             branch_description: checkout.branch.description,
-            branch_settings: checkout.settings,
+            branch_settings: checkout.branchSettingsPayload,
             branch_street: checkout.branch.location.street,
             branch_city: checkout.branch.location.city,
             branch_province: checkout.branch.location.province,
@@ -683,6 +697,7 @@ const send = async () => {
         };
         await subscriptionService.validateSubscription(payload);
         checkout.subscriptionPayload = payload;
+
         await navigateTo({
             path: "/product/subscription-details/checkout",
             query: {
@@ -695,7 +710,7 @@ const send = async () => {
         if (errors) {
             const formattedErrors = Object.fromEntries(
                 Object.entries(errors).map(([key, value]: any) => [
-                    key,
+                    SERVER_FIELD_ALIASES[key] ?? key,
                     Array.isArray(value) ? value[0] : value,
                 ]),
             );
@@ -706,23 +721,7 @@ const send = async () => {
 
             if (!firstError) return;
 
-            if (firstError === "agency_email") {
-                currentStep.value = 2;
-            } else if (firstError === "branch_email") {
-                currentStep.value = 3;
-            } else if (
-                firstError.startsWith("agency_") ||
-                firstError.startsWith("agency.")
-            ) {
-                currentStep.value = 2;
-            } else if (
-                firstError.startsWith("branch_") ||
-                firstError.startsWith("branch.")
-            ) {
-                currentStep.value = 3;
-            } else if (firstError.startsWith("branch_settings")) {
-                currentStep.value = 4;
-            }
+            currentStep.value = stepForField(firstError);
         }
     } finally {
         isLoading.value = false;

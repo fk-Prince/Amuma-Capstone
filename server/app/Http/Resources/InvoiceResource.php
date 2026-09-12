@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Invoice;
+use App\Utils\InvoiceMoney;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -22,7 +23,7 @@ class InvoiceResource extends JsonResource
             'total'        => (float) $this->total_amount,
             'amount_paid'  => $this->amount_paid,
             'refunded_amount'          => $this->refunded_amount,
-            'refund_requested_amount' => $this->refunded_requested_amount,
+            'refund_requested_amount' => InvoiceMoney::pendingWithdrawal($this->resource),
             'refund_status'            => $this->refund_status,
             'balance_due'  => $this->balance_due,
             'status'       => $this->resolveStatus(),
@@ -74,7 +75,7 @@ class InvoiceResource extends JsonResource
                 $this->allocations->map(fn($allocation) => [
                     'payment_id'     => $allocation->payment_id,
                     'allocation_id'  => $allocation->allocation_id,
-                    'receipt_no'     => $allocation->payment?->receipt_no,
+                    'payment_code'   => $allocation->payment?->payment_code,
                     'reference_id'   => $allocation->payment?->reference_id,
                     'amount'         => (float) $allocation->amount,
                     'description'    => $allocation->description,
@@ -83,15 +84,14 @@ class InvoiceResource extends JsonResource
 
                     'refunds' => $allocation->refundAllocations->map(fn($line) => [
                         'refund_id'           => $line->refund_id,
-                        'refund_code'         => $line->refund?->refund_code,
-                        // This allocation's share; refund_total is the whole
-                        // refund, which may span other payments.
+                        'refund_code'         => $line->refund?->transaction?->transaction_code,
                         'amount'              => (float) $line->amount,
                         'refund_total'        => (float) ($line->refund?->amount ?? 0),
-                        'status'              => $line->refund?->status,
-                        'refund_method'       => $line->refund?->refund_method,
-                        'declined_reason'     => $line->refund?->declined_reason,
-                        'masked_card_number'  => $line->refund?->masked_card_number,
+                        'reason'              => $line->invoiceAdjustment?->reason,
+                        'status'              => $line->refund?->transaction?->status,
+                        'refund_method'       => $line->refund?->transaction?->method,
+                        'declined_reason'     => $line->refund?->transaction?->declined_reason,
+                        'masked_account_detail' => $line->refund?->transaction?->masked_account_number,
                         'created_at'          => $line->refund?->created_at?->toIso8601String(),
                     ])->values(),
                 ])->values()

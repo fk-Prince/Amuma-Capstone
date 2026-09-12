@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, onMounted } from "vue";
 import {
     ChevronDown,
@@ -28,6 +28,7 @@ useHead({ title: "Bookings" });
 
 definePageMeta({
     layout: "portal",
+    middleware: "portal",
 });
 
 type PortalBooking = BookingRetrieve & {
@@ -135,7 +136,7 @@ function typeLabel(booking: PortalBooking) {
     if (type === "Complete") return "Complete Admission";
     if (type === "Pre-Admission") return "Pre-Admission";
 
-    return type || "—";
+    return type || "â€”";
 }
 
 function serviceDateLabel(booking: PortalBooking) {
@@ -143,7 +144,7 @@ function serviceDateLabel(booking: PortalBooking) {
 }
 
 function formatDate(value: string | null | undefined) {
-    if (!value) return "—";
+    if (!value) return "â€”";
 
     const date = new Date(value);
 
@@ -420,7 +421,7 @@ onMounted(() => {
                                                 v-if="booking.branch_name"
                                                 class="hidden text-gray-300 sm:inline dark:text-gray-500"
                                             >
-                                                •
+                                                â€¢
                                             </span>
 
                                             <span
@@ -673,7 +674,7 @@ onMounted(() => {
                                             >
                                                 {{
                                                     (booking.payment as any)
-                                                        .payment_method || "—"
+                                                        .payment_method || "â€”"
                                                 }}
                                             </p>
                                         </div>
@@ -693,7 +694,7 @@ onMounted(() => {
                                                 {{
                                                     (booking.payment as any)
                                                         .masked_card_number ||
-                                                    "—"
+                                                    "â€”"
                                                 }}
                                             </p>
                                         </div>

@@ -70,6 +70,7 @@ class UserService
                     'role_name' => $employeeBranch?->role_name,
                     'assignment_type' => $employeeBranch?->assignment_type,
                     'image' => $branch?->image,
+                    'document' => $branch?->document,
                     'location' => $location ? [
                         'street' => $location->street,
                         'city' => $location->city,
@@ -87,6 +88,9 @@ class UserService
                         'location' => $branch?->agencies->locations,
                         'image' => $branch->agencies->image,
                         'is_verified' => $branch->agencies->is_verified,
+                        'id_front' => $branch->agencies->id_front,
+                        'id_back' => $branch->agencies->id_back,
+                        'document' => $branch->agencies->document,
                     ],
 
                     'settings' => $settings,

@@ -16,9 +16,16 @@ export const useBranchStore = defineStore("branch", () => {
         const v = router.currentRoute.value.params.uuid;
         const uuid = Array.isArray(v) ? v[0] : v;
 
-        if (!uuid || uuid === "[uuid]") return null;
+        if (uuid && uuid !== "[uuid]") return uuid;
 
-        return uuid;
+        // Pages with no [uuid] segment of their own (e.g. /profile opened
+        // from a branch's dashboard) carry it as ?branch= instead, so the
+        // dashboard layout wrapped around them still knows which branch it
+        // is showing.
+        const q = router.currentRoute.value.query.branch;
+        const queryUuid = Array.isArray(q) ? q[0] : q;
+
+        return queryUuid || null;
     });
 
     const activeBranch = computed<Branch | null>(() => {

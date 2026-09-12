@@ -8,6 +8,7 @@ use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Http\Resources\EmployeeResource;
 use App\Http\Resources\EmployeeScheduleResource;
+use App\Models\Employee;
 use App\Models\User;
 use App\Repository\BranchRepository;
 use App\Repository\EmployeeRepository;
@@ -60,6 +61,39 @@ class EmployeeService
         return $documents;
     }
 
+    private function employeeSlip(
+        object $employee,
+        User $user,
+        object $branch,
+        array $payload,
+        string $password
+    ): array {
+        $granted = collect($payload['permissions'] ?? [])
+            ->filter(fn($permission) => !empty($permission['can_read']))
+            ->count();
+
+        return [
+            'employee' => [
+                'employee_id' => $employee->employee_id,
+                'employee_code' => $employee->employee_code,
+                'uuid' => $user->uuid,
+                'full_name' => trim($employee->first_name . ' ' . $employee->last_name),
+                'birth_date' => Carbon::parse($employee->birth_date)->toDateString(),
+                'phone_number' => $employee->phone_number,
+                'role_name' => $payload['role_name'],
+                'assignment_type' => $payload['assignment_type'],
+            ],
+            'branch' => [
+                'name' => $branch->name,
+            ],
+            'access' => [
+                'email' => $user->email,
+                'default_password' => $password,
+                'module_count' => $granted,
+            ],
+        ];
+    }
+
     public function createEmployee(array $payload, User $user)
     {
 
@@ -68,12 +102,15 @@ class EmployeeService
             $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
             AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Create);
 
+            $password = UserRepository::defaultPassword(
+                $payload['last_name'],
+                $payload['birth_date']
+            );
+
             //INSERT USER
             $user = $this->userRepository->create([
                 'email' => $payload['email'],
-                'password' => Hash::make(
-                    $payload['last_name'] . Carbon::parse($payload['birth_date'])->year
-                ),
+                'password' => Hash::make($password),
                 'provider' => 'local',
             ]);
 
@@ -109,6 +146,7 @@ class EmployeeService
                 'phone_number' => $payload['phone_number'],
                 'birth_date' => $payload['birth_date'],
                 'avatar' => $image,
+                'status' => $payload['status'] ?? Employee::STATUS_ACTIVE,
                 'documents' => $this->resolveDocuments($payload),
             ]);
 
@@ -136,7 +174,8 @@ class EmployeeService
             }
 
             return response()->json([
-                'message' => 'Successfully Created Employee.'
+                'message' => 'Successfully Created Employee.',
+                'data' => $this->employeeSlip($employee, $user, $branch, $payload, $password),
             ], 200);
         });
     }
@@ -201,6 +240,7 @@ class EmployeeService
                 'birth_date' => $payload['birth_date'],
                 'avatar' => $image,
                 'location_id' => $employee->location_id,
+                'status' => $payload['status'] ?? $employee->status,
                 'documents' => $this->resolveDocuments($payload),
             ]);
 

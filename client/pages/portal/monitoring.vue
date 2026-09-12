@@ -1,9 +1,10 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed } from "vue";
 import Icon from "./Icon.vue";
 useHead({ title: "Settings" });
 definePageMeta({
     layout: "portal",
+    middleware: "portal",
 });
 interface ActivityEntry {
     id: number;
@@ -59,9 +60,9 @@ interface Snapshot {
 }
 
 const snapshots = ref<Snapshot[]>([
-    { id: 1, url: ROOM_FEED.value, time: "Yesterday · 6:40 PM" },
-    { id: 2, url: ROOM_FEED.value, time: "Yesterday · 1:15 PM" },
-    { id: 3, url: ROOM_FEED.value, time: "Mon · 9:02 AM" },
+    { id: 1, url: ROOM_FEED.value, time: "Yesterday Â· 6:40 PM" },
+    { id: 2, url: ROOM_FEED.value, time: "Yesterday Â· 1:15 PM" },
+    { id: 3, url: ROOM_FEED.value, time: "Mon Â· 9:02 AM" },
 ]);
 
 function takeSnapshot() {
@@ -209,7 +210,7 @@ const todaysActivity: ActivityEntry[] = [
                                     </span>
                                 </div>
                                 <p class="text-xs text-gray-400 mt-0.5 dark:text-gray-500">
-                                    {{ roomLabel }} · Last updated just now
+                                    {{ roomLabel }} Â· Last updated just now
                                 </p>
                             </div>
                         </div>
@@ -251,7 +252,7 @@ const todaysActivity: ActivityEntry[] = [
                             v-if="isSpeaking"
                             class="absolute top-11 right-3 bg-rose-600/90 text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1"
                         >
-                            <Icon name="mic" class="w-3 h-3" /> Speaking…
+                            <Icon name="mic" class="w-3 h-3" /> Speakingâ€¦
                         </div>
                         <div
                             v-if="snapshotMessage"
@@ -443,7 +444,7 @@ const todaysActivity: ActivityEntry[] = [
                                 class="w-6 h-6 text-gray-300 mx-auto mb-1.5 dark:text-gray-500"
                             />
                             <p class="text-xs text-gray-400 dark:text-gray-500">
-                                No snapshots yet — use the Snapshot button on
+                                No snapshots yet â€” use the Snapshot button on
                                 the feed.
                             </p>
                         </div>

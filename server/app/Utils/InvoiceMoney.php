@@ -4,7 +4,8 @@ namespace App\Utils;
 
 use App\Models\Invoice;
 use App\Models\Refund;
-
+use App\Models\RefundAllocation;
+use App\Models\Transaction;
 
 class InvoiceMoney
 {
@@ -13,24 +14,9 @@ class InvoiceMoney
         return round((float) $invoice->allocations->sum('amount'), 2);
     }
 
-    // Summed from the refund allocations, not the refunds: a refund's own
-    // amount is its total across every allocation it drew from, so adding
-    // those up would count the parts that came off other invoices.
     public static function refunded(Invoice $invoice)
     {
-        return round(
-            (float) $invoice->allocations
-                ->flatMap(fn($allocation) => $allocation->refundAllocations)
-                ->filter(
-                    fn($line) => in_array(
-                        $line->refund?->status,
-                        Refund::SETTLED_STATUSES,
-                        true
-                    )
-                )
-                ->sum('amount'),
-            2
-        );
+        return round((float) self::lines($invoice)->sum('amount'), 2);
     }
 
     public static function netPaid(Invoice $invoice)
@@ -40,16 +26,45 @@ class InvoiceMoney
 
     public static function refundable(Invoice $invoice)
     {
-        $invoice->loadMissing('allocations.refundAllocations.refund', 'invoiceAdjustments');
-
         return round(
-            max(0, self::netPaid($invoice) - (float) $invoice->adjusted_total),
+            (float) self::lines($invoice)
+                ->map(fn(RefundAllocation $line) => $line->refund)
+                ->filter(fn(?Refund $credit) => $credit?->is_available)
+                ->unique('refund_id')
+                ->sum('amount'),
             2
         );
+    }
+
+    public static function pendingWithdrawal(Invoice $invoice)
+    {
+        return round(
+            (float) self::lines($invoice)
+                ->filter(
+                    fn(RefundAllocation $line) => $line->refund?->transaction?->status
+                        === Transaction::STATUS_REQUESTED
+                )
+                ->sum('amount'),
+            2
+        );
+    }
+
+    public static function hasPendingWithdrawal(Invoice $invoice): bool
+    {
+        return self::pendingWithdrawal($invoice) > 0;
     }
 
     public static function adjustments(Invoice $invoice)
     {
         return round((float) $invoice->invoiceAdjustments->sum('amount'), 2);
+    }
+
+    private static function lines(Invoice $invoice)
+    {
+        $invoice->loadMissing('allocations.refundAllocations.refund.transaction');
+
+        return $invoice->allocations->flatMap(
+            fn($allocation) => $allocation->refundAllocations
+        );
     }
 }

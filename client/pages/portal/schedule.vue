@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import {
     ref,
     computed,
@@ -29,6 +29,7 @@ useHead({ title: "Schedule" });
 
 definePageMeta({
     layout: "portal",
+    middleware: "portal",
 });
 
 interface LovedOne {
@@ -641,7 +642,7 @@ onBeforeUnmount(() => {
                             >
                                 <span>{{ lovedOne?.name }}</span>
 
-                                <span class="text-gray-300 dark:text-gray-500">•</span>
+                                <span class="text-gray-300 dark:text-gray-500">â€¢</span>
 
                                 <span>{{ scheduleSummary }}</span>
                             </div>

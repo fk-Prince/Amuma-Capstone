@@ -17,10 +17,6 @@ class PaymentController extends Controller
     {
         $user = AuthGuard::requireUser($request->user());
 
-        if (!$user->client) {
-            throw new Exception('Only family/client accounts can submit a payment here.', 403);
-        }
-
         $validated = $request->validate([
             'patient_id' => ['required', 'integer'],
             'amount' => ['required', 'numeric', 'min:0.01'],
@@ -37,12 +33,8 @@ class PaymentController extends Controller
     {
         $user = AuthGuard::requireUser($request->user());
 
-        if (!$user->client) {
-            throw new Exception('Only family/client accounts can view a receipt here.', 403);
-        }
-
         $validated = $request->validate([
-            'receipt_no' => ['required', 'string', 'max:50'],
+            'payment_code' => ['required', 'string', 'max:50'],
         ]);
 
         return $this->paymentService->receipt($user->client, $validated);

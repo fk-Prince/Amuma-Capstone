@@ -34,16 +34,14 @@ function movedAmount(transaction: PortalTransaction) {
     );
 }
 
-// On a refund the reason is whatever the branch wrote when refusing it, so it
-// is only worth showing once it has been declined.
 function reasonFor(transaction: PortalTransaction) {
     if (!transaction.reason) return null;
 
     if (transaction.type !== "refund") return transaction.reason;
 
-    return (transaction.status || "").toLowerCase() === "declined"
+    return (transaction.status || "").toLowerCase() === "rejected"
         ? `Reason for refusal: ${transaction.reason}`
-        : null;
+        : transaction.reason;
 }
 </script>
 

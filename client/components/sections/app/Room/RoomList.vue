@@ -432,7 +432,11 @@ const cancelAddBed = () => {
                                                     action,
                                                     room,
                                                     updatedBed,
-                                                    done,
+                                                    (ok) => {
+                                                        done(ok);
+                                                        if (ok !== false)
+                                                            editingBedId = null;
+                                                    },
                                                 )
                                         "
                                     />
@@ -515,7 +519,11 @@ const cancelAddBed = () => {
                                                     action,
                                                     room,
                                                     bed,
-                                                    done,
+                                                    (ok) => {
+                                                        done(ok);
+                                                        if (ok !== false)
+                                                            cancelAddBed();
+                                                    },
                                                 )
                                         "
                                     />

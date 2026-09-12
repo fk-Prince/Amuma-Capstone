@@ -37,6 +37,7 @@ class PaymentInvoiceAllocation extends Model
         return $this->belongsTo(Invoice::class, 'invoice_id', 'invoice_id');
     }
 
+
     public function refundAllocations(): HasMany
     {
         return $this->hasMany(
@@ -46,28 +47,14 @@ class PaymentInvoiceAllocation extends Model
         );
     }
 
-    // The refunds drawing on this allocation. Their `amount` is the refund's
-    // full total, so anything measuring what came off THIS allocation must sum
-    // the refund allocations instead.
-    public function refunds()
+    public function refundedAmount(): float
     {
-        return $this->hasManyThrough(
-            Refund::class,
-            RefundAllocation::class,
-            'allocation_id',
-            'refund_id',
-            'allocation_id',
-            'refund_id'
-        );
+        return round((float) $this->refundAllocations->sum('amount'), 2);
     }
 
-    public function refundedAmount(array $statuses = [Refund::STATUS_COMPLETED]): float
+
+    public function creditableAmount(): float
     {
-        return round(
-            (float) $this->refundAllocations
-                ->filter(fn($line) => in_array($line->refund?->status, $statuses, true))
-                ->sum('amount'),
-            2
-        );
+        return round(max(0, (float) $this->amount - $this->refundedAmount()), 2);
     }
 }

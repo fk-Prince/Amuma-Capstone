@@ -16,7 +16,11 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-    bedAction: [action: "create" | "update", bed: BedForm, done: () => void];
+    bedAction: [
+        action: "create" | "update",
+        bed: BedForm,
+        done: (ok?: boolean) => void,
+    ];
     cancel: [];
 }>();
 

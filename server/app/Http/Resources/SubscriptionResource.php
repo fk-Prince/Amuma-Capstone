@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Models\BranchSubscription;
 use App\Models\Subscription;
+use App\Utils\MaskUtil;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,10 +15,21 @@ class SubscriptionResource extends JsonResource
     {
         $subscription = $this->subscription;
 
+        // The subscription is paid for once, by the branch it was bought with.
+        // Every branch added afterwards rides on that payment, so there is
+        // nothing of its own to show or refund.
+        $firstLinkId = $subscription
+            ? $subscription->branchLinks()->min('branch_subscription_id')
+            : null;
+
+        $isFirstBranch = $firstLinkId !== null
+            && (int) $this->branch_subscription_id === (int) $firstLinkId;
+
         return [
             'uuid' => $this->uuid,
             'status' => $this->status,
             'created_at' => $this->created_at,
+            'is_first_branch' => $isFirstBranch,
 
             'billing_interval' => $subscription?->billing_interval,
             'start_date' => $subscription?->start_date,
@@ -34,10 +46,15 @@ class SubscriptionResource extends JsonResource
                     ? $subscription->branchLinks()
                     ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
                     ->with('branch')
+                    ->orderBy('branch_subscription_id')
                     ->get()
                     ->map(fn($link) => [
                         'uuid' => $link->branch?->uuid,
                         'name' => $link->branch?->name,
+                        'email' => $link->branch?->email,
+                        'address' => $link->branch?->location?->full_address,
+                        'document' => $link->branch?->document,
+                        'tin' => data_get($link->branch?->settings, 'tin'),
                         'is_verified' => $link->branch?->is_verified,
                         'status' => $link->status,
                     ])
@@ -54,6 +71,7 @@ class SubscriptionResource extends JsonResource
                 'is_verified' => $this->branch?->is_verified,
                 'address' => $this->branch?->location?->full_address,
                 'document' => $this->branch?->document,
+                'tin' => data_get($this->branch?->settings, 'tin'),
 
                 'agency' => [
                     'agency_id' => $this->branch?->agencies?->agency_id,
@@ -65,6 +83,9 @@ class SubscriptionResource extends JsonResource
                     'id_front' => $this->branch?->agencies?->id_front,
                     'id_back' => $this->branch?->agencies?->id_back,
                     'document' => $this->branch?->agencies?->document,
+                    'registered_by' => MaskUtil::email(
+                        $this->branch?->agencies?->registrant?->email
+                    ),
                 ],
             ],
 

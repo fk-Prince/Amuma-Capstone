@@ -91,7 +91,7 @@ onBeforeUnmount(() => {
                     class="receipt-actions mb-3 flex items-center justify-between gap-3"
                 >
                     <p class="text-xs font-semibold text-white/90">
-                        Receipt {{ receipt.receipt_no }} · {{ channelLabel }}
+                        Receipt {{ receipt.payment_code }} · {{ channelLabel }}
                     </p>
 
                     <div class="flex items-center gap-2">
@@ -209,7 +209,7 @@ onBeforeUnmount(() => {
                                     <span
                                         class="min-w-0 flex-1 border-b border-black text-right font-mono font-bold"
                                     >
-                                        {{ receipt.receipt_no }}
+                                        {{ receipt.payment_code }}
                                     </span>
                                 </div>
                             </div>
@@ -473,12 +473,11 @@ onBeforeUnmount(() => {
                                 <p
                                     class="mt-1 font-mono text-[13px] font-extrabold tracking-wider text-rose-600"
                                 >
-                                    No. {{ receipt.receipt_no }}
+                                    No. {{ receipt.payment_code }}
                                 </p>
                             </div>
                         </div>
                     </div>
-
                 </article>
             </div>
         </div>

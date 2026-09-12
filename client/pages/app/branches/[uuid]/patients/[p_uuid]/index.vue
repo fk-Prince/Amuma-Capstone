@@ -98,7 +98,6 @@ function goBack() {
 
 const tabs = [
     "Overview",
-    "Family",
     "Diagnosis & Assessment",
     "Admission",
     "Schedule",
@@ -111,7 +110,6 @@ type Tab = (typeof tabs)[number];
 
 const tabSlugMap: Record<Tab, string> = {
     Overview: "overview",
-    Family: "family",
     "Diagnosis & Assessment": "assessment",
     Schedule: "schedule",
     Service: "service",
@@ -791,16 +789,21 @@ onMounted(async () => {
                             </template>
                         </template>
 
-                        <Overview
+                        <template
                             v-if="activeTab === 'Overview' && patientData"
-                            :patient="patientData"
-                        />
-                        <div
-                            v-if="activeTab === 'Family' && patientData"
-                            class="py-2"
                         >
-                            <PatientFamily :family="patientData.family ?? []" />
-                        </div>
+                            <Overview :patient="patientData" />
+
+                            <section class="mt-6 w-full">
+                                <div
+                                    class="mb-3 flex items-center justify-between gap-3 w-full"
+                                >
+                                    <PatientFamily
+                                        :family="patientData.family ?? []"
+                                    />
+                                </div>
+                            </section>
+                        </template>
 
                         <PatientAssessment
                             v-if="
@@ -828,9 +831,6 @@ onMounted(async () => {
                                 <div
                                     class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between"
                                 >
-                                    <!-- Two whole words wide, so the label is never
-                                     clipped to "Activities of Daily Living (A…"
-                                     the way a fixed-width pill did. -->
                                     <div
                                         role="tablist"
                                         aria-label="Schedule type"

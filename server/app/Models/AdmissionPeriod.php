@@ -47,6 +47,13 @@ class AdmissionPeriod extends Model
         return $this->belongsTo(PatientAdmission::class,   'patient_admission_id',   'patient_admission_id');
     }
 
+    public static function codeFor(mixed $periodId): ?string
+    {
+        return $periodId
+            ? str_pad((string) $periodId, 2, '0', STR_PAD_LEFT)
+            : null;
+    }
+
     public function branchContract()
     {
         return $this->belongsTo(BranchContract::class, 'branch_contract_id', 'branch_contract_id');

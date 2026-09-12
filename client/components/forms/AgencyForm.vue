@@ -110,7 +110,7 @@
                 </div>
             </div>
         </div>
-        <div v-if="!hideDocuments" class="space-y-5">
+        <div class="space-y-5">
             <div>
                 <h2
                     class="text-lg font-semibold text-slate-900 dark:text-white"
@@ -119,12 +119,47 @@
                 </h2>
 
                 <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
-                    Upload a valid ID and a supporting document for
-                    verification.
+                    {{
+                        lockVerification
+                            ? "The documents this agency was verified with, these cannot be changed here."
+                            : "Upload a valid ID and a supporting document for verification."
+                    }}
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div v-if="lockVerification" class="space-y-2">
+                <p
+                    class="text-sm font-semibold text-slate-700 dark:text-gray-300"
+                >
+                    Documents
+                </p>
+
+                <div v-if="hasVerificationFiles" class="flex flex-wrap gap-1.5">
+                    <DocumentLink
+                        v-if="fileUrls.id_front"
+                        :url="fileUrls.id_front"
+                        label="ID Front"
+                    />
+
+                    <DocumentLink
+                        v-if="fileUrls.id_back"
+                        :url="fileUrls.id_back"
+                        label="ID Back"
+                    />
+
+                    <DocumentLink
+                        v-if="fileUrls.document"
+                        :url="fileUrls.document"
+                        label="Agency Document"
+                    />
+                </div>
+
+                <p v-else class="text-xs text-muted dark:text-gray-500">
+                    No documents on file
+                </p>
+            </div>
+
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div
                     class="space-y-2 p-4"
                     data-field="agency_id_front agency_id_back"
@@ -599,14 +634,28 @@ import { Check } from "lucide-vue-next";
 import { ref, computed, watch } from "vue";
 import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
+import DocumentLink from "../ui/DocumentLink.vue";
 import type { Agency } from "~/types/agency";
 
 const props = defineProps<{
     agency: Agency | any;
     errors?: Record<string, string> | null;
     mode?: "new" | "edit";
-    hideDocuments?: boolean;
+    lockVerification?: boolean;
 }>();
+
+const fileUrls = computed(() => ({
+    id_front:
+        typeof props.agency.id_front === "string" ? props.agency.id_front : "",
+    id_back:
+        typeof props.agency.id_back === "string" ? props.agency.id_back : "",
+    document:
+        typeof props.agency.document === "string" ? props.agency.document : "",
+}));
+
+const hasVerificationFiles = computed(() =>
+    Object.values(fileUrls.value).some(Boolean),
+);
 
 const emit = defineEmits<{
     (e: "update:agency", value: Agency | any): void;
@@ -647,18 +696,14 @@ const applicableIds = [
     "Philippine Passport",
     "Driver's License",
     "UMID (Unified Multi-Purpose ID)",
-    "SSS ID",
-    "PhilHealth ID",
-    "PRC ID",
-    "Voter's ID",
-    "Postal ID",
+    "SSS ID (Social Security System)",
+    "PRC ID (Professional Regulation Commission)",
     "PhilSys National ID (ePhilID)",
 ];
 
 const applicableDocuments = [
     "DTI Business Name Registration",
     "SEC Certificate of Registration",
-    // "Mayor's / Business Permit",
     "BIR Certificate of Registration (Form 2303)",
     "DOH / Home Health Agency Accreditation",
 ];

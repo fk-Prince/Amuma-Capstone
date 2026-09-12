@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Models\Branch;
 use App\Models\BranchImage;
+use App\Models\BranchSubscription;
 
 class BranchRepository
 {
@@ -47,10 +48,23 @@ class BranchRepository
             ->paginate($perPage);
     }
 
+    // A rejected branch has no dashboard to open, so it is left out of the
+    // branches a user can switch to entirely.
     public function getUserBranches(array $branchIds)
     {
         return  Branch::with(['location', 'subscriptions.plans', 'agencies.locations'])
             ->whereIn('branch_id', $branchIds)
+            ->where(function ($query) {
+                $query->whereDoesntHave('subscriptions')
+                    ->orWhereHas(
+                        'subscriptions',
+                        fn($subscription) => $subscription->where(
+                            'branch_subscription.status',
+                            '!=',
+                            BranchSubscription::STATUS_REJECTED
+                        )
+                    );
+            })
             ->get()
             ->keyBy('branch_id');
     }

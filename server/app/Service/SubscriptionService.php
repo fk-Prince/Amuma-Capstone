@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Enums\BillingIntervalEnum;
 use App\Events\NotificationEvent;
+use App\Mail\BranchRejectedMailer;
 use App\Mail\SubscriptionPurchasedMailer;
 use App\Repository\BranchRepository;
 use App\Repository\NotificationRepository;
@@ -14,6 +15,7 @@ use App\Factories\PaymentFactory;
 use App\Guard\AuthGuard;
 use App\Http\Resources\SubscriptionResource;
 use App\Models\Agency;
+use App\Models\Branch;
 use App\Models\BranchSubscription;
 use App\Models\EmployeePermission;
 use App\Models\PlatformAdmin;
@@ -28,6 +30,7 @@ use App\Service\External\SupabaseService;
 use App\Service\External\XenditService;
 use App\Service\Geo\NominatimService;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -953,8 +956,11 @@ class SubscriptionService
             $link->load(['branch.agencies', 'subscription.payments']);
 
             $subscription = $link->subscription;
+            $reason = trim((string) ($payload['rejection_reason'] ?? ''));
 
             $link->update(['status' => BranchSubscription::STATUS_REJECTED]);
+
+            $link->branch?->update(['rejection_reason' => $reason ?: null]);
 
             $remaining = BranchSubscription::where('subscription_id', $link->subscription_id)
                 ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
@@ -969,7 +975,8 @@ class SubscriptionService
                 if ($payment) {
                     $refunded = XenditService::refundXenditPayment(
                         $payment->xendit_invoice_id,
-                        (float) $payment->price
+                        (float) $payment->price,
+                        (bool) $payment->masked_card_number
                     );
 
                     if (!$refunded) {
@@ -986,10 +993,64 @@ class SubscriptionService
                 ]);
             }
 
+            $this->announceRejection($link->branch, $reason);
+
             return response()->json([
-                'message' => '',
+                'message' => 'Branch request rejected.',
                 'data' => $link->fresh(['branch.agencies', 'subscription.plans']),
             ]);
         });
+    }
+
+    private function announceRejection(?Branch $branch, string $reason): void
+    {
+        if (!$branch) {
+            return;
+        }
+
+        $agency = $branch->agencies;
+        $owner = $agency?->registered_by
+            ? User::find($agency->registered_by)
+            : null;
+
+        $recipientName = trim(
+            ($owner?->client?->first_name ?? '')
+                . ' ' . ($owner?->client?->last_name ?? '')
+        ) ?: ($agency?->name ?? 'there');
+
+        $email = $branch->email ?: ($agency?->email ?: $owner?->email);
+
+        if ($email) {
+            Mail::to($email)->send(new BranchRejectedMailer(
+                recipientName: $recipientName,
+                branchName: $branch->name,
+                agencyName: $agency?->name ?? 'your agency',
+                reason: $reason ?: 'No reason was provided.',
+            ));
+        }
+
+        if (!$owner) {
+            return;
+        }
+
+        $message = "{$branch->name} was not approved."
+            . ($reason ? " Reason: {$reason}" : '');
+
+        $this->notificationRepository->create([
+            'branch_id' => $branch->branch_id,
+            'to_user_id' => $owner->user_id,
+            'from_user_id' => Auth::id(),
+            'message_type' => 'Subscription',
+            'message' => $message,
+        ]);
+
+        event(new NotificationEvent(
+            (string) $owner->uuid,
+            (string) $branch->uuid,
+            $message,
+            (string) $branch->branch_id,
+            'Subscription',
+            null
+        ));
     }
 }

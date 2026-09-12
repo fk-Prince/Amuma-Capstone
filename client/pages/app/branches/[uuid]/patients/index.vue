@@ -9,6 +9,10 @@ import {
     List,
     Activity,
     MoreVertical,
+    Stethoscope,
+    BedDouble,
+    HandHeart,
+    HeartPulse,
 } from "lucide-vue-next";
 import { calculateAge } from "~/utils/user";
 import { patientService } from "~/api/patient/PatientService";
@@ -44,47 +48,38 @@ const pagination = usePagination({ pageSize: 10 });
 
 const b_uuid = computed(() => route.params.uuid as string);
 
+const MENU_CLASS =
+    "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-400";
+
+// Every tab the patient page has, so the menu is a way into any of them
+// rather than a shortlist.
 const actionMenuItems = [
-    {
-        label: "View Information",
-        icon: Eye,
-        class: "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-400",
-        route: (patient: PatientRetrieve) => ({
-            path: `/app/branches/${b_uuid.value}/patients/${patient.uuid}`,
-            query: { tab: "overview" },
-        }),
-    },
-    {
-        label: "View Medication",
-        icon: Pill,
-        class: "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-400",
-        route: (patient: PatientRetrieve) => ({
-            path: `/app/branches/${b_uuid.value}/patients/${patient.uuid}`,
-            query: { tab: "medication" },
-        }),
-    },
-    {
-        label: "Schedules",
-        icon: CalendarDays,
-        class: "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-400",
-        route: (patient: PatientRetrieve) => ({
-            path: `/app/branches/${b_uuid.value}/patients/${patient.uuid}`,
-            query: { tab: "schedule" },
-        }),
-    },
-    {
-        label: "Vitals",
-        icon: Activity,
-        class: "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-400",
-        route: (patient: PatientRetrieve) => ({
-            path: `/app/branches/${b_uuid.value}/patients/${patient.uuid}`,
-            query: { tab: "vitals" },
-        }),
-    },
-];
+    { label: "Overview", icon: Eye, tab: "overview" },
+    { label: "Diagnosis & Assessment", icon: Stethoscope, tab: "assessment" },
+    { label: "Admission", icon: BedDouble, tab: "admissions" },
+    { label: "Schedule", icon: CalendarDays, tab: "schedule" },
+    { label: "Service", icon: HandHeart, tab: "service" },
+    { label: "Medication", icon: Pill, tab: "medication" },
+    { label: "Vital Signs", icon: HeartPulse, tab: "vitals" },
+    { label: "Activity", icon: Activity, tab: "activity" },
+].map((item) => ({
+    ...item,
+    class: MENU_CLASS,
+    route: (patient: PatientRetrieve) => ({
+        path: `/app/branches/${b_uuid.value}/patients/${patient.uuid}`,
+        query: { tab: item.tab },
+    }),
+}));
 
 function goTo(destination: { path: string; query: Record<string, string> }) {
     router.push(destination);
+}
+
+function openPatient(patient: PatientRetrieve) {
+    goTo({
+        path: `/app/branches/${b_uuid.value}/patients/${patient.uuid}`,
+        query: { tab: "overview" },
+    });
 }
 
 async function fetchPatients(page = 1) {
@@ -267,6 +262,11 @@ const emptyStateSubtitle = computed(() =>
                                     <th
                                         class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide dark:text-gray-400"
                                     >
+                                        Address
+                                    </th>
+                                    <th
+                                        class="py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide dark:text-gray-400"
+                                    >
                                         Gender
                                     </th>
                                     <th
@@ -298,7 +298,7 @@ const emptyStateSubtitle = computed(() =>
                                         v-for="n in pagination.pageSize.value"
                                         :key="n"
                                     >
-                                        <td colspan="6" class="py-4 px-6">
+                                        <td colspan="7" class="py-4 px-6">
                                             <div
                                                 class="h-6 rounded-md bg-slate-100 animate-pulse dark:bg-white/10"
                                             />
@@ -311,7 +311,7 @@ const emptyStateSubtitle = computed(() =>
                                         !patients || patients.length === 0
                                     "
                                 >
-                                    <td colspan="6" class="py-16 text-center">
+                                    <td colspan="7" class="py-16 text-center">
                                         <div
                                             class="flex flex-col items-center justify-center"
                                         >
@@ -347,7 +347,8 @@ const emptyStateSubtitle = computed(() =>
                                     v-else
                                     v-for="patient in patients"
                                     :key="patient.patient_id"
-                                    class="hover:bg-[#F7FAF9] transition dark:hover:bg-white/5"
+                                    class="cursor-pointer hover:bg-[#F7FAF9] transition dark:hover:bg-white/5"
+                                    @click="openPatient(patient)"
                                 >
                                     <td class="py-4 pl-6 pr-3">
                                         <div class="flex items-center gap-3">
@@ -367,16 +368,27 @@ const emptyStateSubtitle = computed(() =>
                                                     {{ patient.full_name }}
                                                 </p>
                                                 <p
-                                                    class="text-xs text-gray-400 dark:text-gray-500"
+                                                    class="font-mono text-xs text-gray-400 dark:text-gray-500"
                                                 >
                                                     {{
-                                                        patient.location
-                                                            ?.full_address ??
+                                                        patient.patient_code ??
                                                         "—"
                                                     }}
                                                 </p>
                                             </div>
                                         </div>
+                                    </td>
+
+                                    <td
+                                        class="max-w-[16rem] truncate py-4 px-3 text-sm text-[#16302E] dark:text-white"
+                                        :title="
+                                            patient.location?.full_address ?? ''
+                                        "
+                                    >
+                                        {{
+                                            patient.location?.full_address ??
+                                            "—"
+                                        }}
                                     </td>
 
                                     <td
@@ -407,37 +419,14 @@ const emptyStateSubtitle = computed(() =>
 
                                     <td class="py-4 pl-3 pr-6">
                                         <div
-                                            class="hidden items-center justify-end gap-1 xl:flex"
-                                        >
-                                            <button
-                                                v-for="item in actionMenuItems"
-                                                :key="item.label"
-                                                type="button"
-                                                :title="item.label"
-                                                class="flex h-8 w-8 items-center justify-center rounded-md transition"
-                                                :class="item.class"
-                                                @click.stop="
-                                                    goTo(item.route(patient))
-                                                "
-                                            >
-                                                <component
-                                                    :is="item.icon"
-                                                    class="h-4 w-4"
-                                                />
-                                            </button>
-                                        </div>
-
-                                        <div
-                                            class="flex justify-end xl:hidden"
+                                            class="flex justify-end"
                                             @click.stop
                                         >
                                             <BaseDropdownMenu
                                                 align="right"
                                                 width="w-56"
                                             >
-                                                <template
-                                                    #trigger="{ toggle }"
-                                                >
+                                                <template #trigger="{ toggle }">
                                                     <button
                                                         type="button"
                                                         title="Actions"
@@ -563,8 +552,12 @@ const emptyStateSubtitle = computed(() =>
                                         />
                                     </div>
                                 </div>
-                                <div class="h-3 w-full rounded bg-slate-100 dark:bg-white/10" />
-                                <div class="h-3 w-3/4 rounded bg-slate-100 dark:bg-white/10" />
+                                <div
+                                    class="h-3 w-full rounded bg-slate-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-3 w-3/4 rounded bg-slate-100 dark:bg-white/10"
+                                />
                             </div>
                         </div>
 
@@ -572,10 +565,14 @@ const emptyStateSubtitle = computed(() =>
                             v-else-if="patients.length === 0"
                             class="flex flex-col items-center justify-center rounded-2xl border border-slate-100 bg-white py-20 shadow-sm dark:border-white/10 dark:bg-secondary"
                         >
-                            <p class="text-sm font-medium text-slate-500 dark:text-gray-400">
+                            <p
+                                class="text-sm font-medium text-slate-500 dark:text-gray-400"
+                            >
                                 {{ emptyStateTitle }}
                             </p>
-                            <p class="mt-1 text-xs text-slate-400 dark:text-gray-500">
+                            <p
+                                class="mt-1 text-xs text-slate-400 dark:text-gray-500"
+                            >
                                 {{ emptyStateSubtitle }}
                             </p>
                         </div>

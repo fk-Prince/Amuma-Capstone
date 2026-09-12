@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import {
     ref,
     computed,
@@ -31,6 +31,7 @@ useHead({ title: "Medications" });
 
 definePageMeta({
     layout: "portal",
+    middleware: "portal",
 });
 
 interface LovedOne {

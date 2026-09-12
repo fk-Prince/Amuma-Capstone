@@ -94,11 +94,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/patient-access/action', [PatientAccessController::class, 'retrieveAction']);
     Route::post('/patient-access/action', [PatientAccessController::class, 'executeAction']);
 
-    // PORTAL BILLING (family/client-facing)
-    Route::post('/refunds/action', [RefundController::class, 'store']);
-    Route::post('/refunds/issue', [RefundController::class, 'issue']);
-    Route::post('/payments/action', [PaymentController::class, 'store']);
-    Route::post('/payments/receipt', [PaymentController::class, 'receipt']);
+    // Raised by accounting at the branch, not by the family.
+    Route::post('/withdrawals/issue', [RefundController::class, 'issue']);
+
+    // PORTAL (family/client-facing)
+    Route::middleware('portal')->group(function () {
+        Route::post('/withdrawals/action', [RefundController::class, 'store']);
+        Route::post('/withdrawals/requests', [RefundController::class, 'index']);
+        Route::post('/payments/action', [PaymentController::class, 'store']);
+        Route::post('/payments/receipt', [PaymentController::class, 'receipt']);
+        Route::get('/messages/conversations', [MessageController::class, 'clientIndex']);
+    });
 
     // OVERVIEW / STATS
     Route::post('/bookings/overview', [BookingController::class, 'overview']);
@@ -106,6 +112,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/invoices/receipts', [InvoiceController::class, 'receipts']);
     Route::post('/contracts/overview', [BranchContractController::class, 'overview']);
     Route::get('/rooms/overview', [RoomController::class, 'overview']);
+    Route::get('/branches/dashboard', [BranchController::class, 'dashboard']);
 
     // SUBSCRIPTION
     Route::post('/subscriptions', [SubscriptionController::class, 'newSubscription']);
@@ -119,7 +126,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);
 
     // MESSAGING (family portal <-> branch staff)
-    Route::get('/messages/conversations', [MessageController::class, 'clientIndex']);
     Route::get('/messages/branch-conversations', [MessageController::class, 'branchIndex']);
     Route::get('/messages/staff-conversations', [MessageController::class, 'staffIndex']);
     Route::get('/messages/colleagues', [MessageController::class, 'colleagues']);

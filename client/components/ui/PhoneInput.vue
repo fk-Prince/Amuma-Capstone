@@ -9,7 +9,9 @@
         <template #prefix>
             <span v-if="country" class="flex items-center gap-1.5 text-sm">
                 <span class="text-base leading-none">{{ country.flag }}</span>
-                <span class="text-slate-500 dark:text-gray-400">{{ country.dial }}</span>
+                <span class="text-slate-500 dark:text-gray-400">{{
+                    country.dial
+                }}</span>
             </span>
         </template>
     </BaseInput>
@@ -37,8 +39,20 @@ const emit = defineEmits<{
     (e: "update:modelValue", value: string): void;
 }>();
 
+// The dial code is shown beside the field, so anything the user pastes that
+// repeats it — +63, 63, or the local trunk 0 — is stripped back out.
+function national(input: string) {
+    const cleaned = input.replace(/[^\d+\s-]/g, "");
+
+    return cleaned
+        .replace(/^\+?63[\s-]?/, "")
+        .replace(/^0(?=9)/, "")
+        .trimStart();
+}
+
 const value = computed({
     get: () => props.modelValue,
-    set: (val: string | number) => emit("update:modelValue", String(val)),
+    set: (val: string | number) =>
+        emit("update:modelValue", national(String(val))),
 });
 </script>

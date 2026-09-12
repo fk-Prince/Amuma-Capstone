@@ -307,7 +307,7 @@ class PatientAdmissionService
 
             if ($invoiceIds->isNotEmpty()) {
                 $invoices = Invoice::with([
-                    'allocations.refundAllocations.refund',
+                    'allocations.refundAllocations.refund.transaction',
                     'invoiceAdmissionLines.admissionPeriod.branchContract',
                 ])
                     ->whereIn('invoice_id', $invoiceIds)
@@ -324,10 +324,7 @@ class PatientAdmissionService
                         continue;
                     }
 
-                    $this->refundService->createRefundFutureInvoice(
-                        $invoice,
-                        $payload
-                    );
+                    $this->refundService->createRefundFutureInvoice($invoice);
 
                     $invoice->refresh();
 
@@ -389,21 +386,16 @@ class PatientAdmissionService
             }
 
             $invoices = Invoice::with([
-                'allocations.refundAllocations.refund',
+                'allocations.refundAllocations.refund.transaction',
             ])
                 ->whereIn('invoice_id', $invoiceIds)
                 ->get();
 
             foreach ($invoices as $invoice) {
-                $refundableAmount = $this->refundService->getRefundableAmount($invoice);
-
-                if ($refundableAmount > 0) {
-                    $this->refundService->createRefundsForInvoice(
-                        $invoice,
-                        $refundableAmount,
-                        'Invoice refunded due to admission cancellation.'
-                    );
-                }
+                $this->refundService->createRefundFull(
+                    $invoice,
+                    'Admission cancelled. Invoice cancelled.'
+                );
 
                 $invoice->refresh();
 
@@ -882,13 +874,17 @@ class PatientAdmissionService
 
     private function admissionSlip(object $admission, object $invoice, array $credentials): array
     {
-        $admission->load('patient', 'bed.room', 'currentPeriod.branchContract');
+        $admission->load('patient.branch', 'bed.room', 'currentPeriod.branchContract');
 
         $patient = $admission->patient;
         $bed = $admission->bed;
         $contract = $admission->currentPeriod?->branchContract;
 
         return [
+            'branch' => [
+                'name' => $patient?->branch?->name,
+            ],
+
             'patient' => [
                 'patient_uuid' => $patient?->uuid,
                 'full_name' => trim(

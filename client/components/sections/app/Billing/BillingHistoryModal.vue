@@ -51,21 +51,23 @@
                         :key="receipt.key"
                         class="flex items-start justify-between gap-4 px-6 py-4 transition-colors"
                         :class="
-                            receipt.receipt_no
+                            receipt.payment_code
                                 ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5'
                                 : ''
                         "
-                        @click="emit('open-receipt', receipt.receipt_no)"
+                        @click="emit('open-receipt', receipt.payment_code)"
                     >
                         <div class="min-w-0">
                             <p
                                 class="flex items-center gap-1.5 font-mono text-sm font-semibold text-secondary dark:text-white"
                             >
                                 <Loader2
-                                    v-if="loadingReceipt === receipt.receipt_no"
+                                    v-if="
+                                        loadingReceipt === receipt.payment_code
+                                    "
                                     class="h-3.5 w-3.5 animate-spin"
                                 />
-                                {{ receipt.receipt_no ?? "No receipt" }}
+                                {{ receipt.payment_code ?? "No receipt" }}
                             </p>
 
                             <p class="text-xs text-muted dark:text-gray-400">
@@ -83,7 +85,7 @@
                             <p
                                 class="text-[11px] text-gray-400 dark:text-gray-500"
                             >
-                                {{ receipt.payment_method }} ·
+                                {{ methodLabel(receipt.payment_method) }} ·
                                 {{ formatDateTime(receipt.created_at) }}
                             </p>
                         </div>
@@ -114,8 +116,10 @@
 
                             <p class="text-xs text-muted dark:text-gray-400">
                                 {{
-                                    refund.refund_method ||
-                                    refund.payment_method
+                                    methodLabel(
+                                        refund.refund_method ||
+                                            refund.payment_method,
+                                    )
                                 }}
                                 <template v-if="refund.declined_reason">
                                     · {{ refund.declined_reason }}
@@ -159,7 +163,7 @@ import { stringToDateTime } from "~/utils/time";
 
 export interface ReceiptGroup {
     key: string;
-    receipt_no: string | null;
+    payment_code: string | null;
     amount: number;
     invoice_codes: string[];
     payment_method: string;

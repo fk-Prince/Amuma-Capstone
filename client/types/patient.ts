@@ -4,7 +4,6 @@ import type { Room, RoomTransfer } from "./room";
 import type { Contract } from "./contract";
 import type { DischargeCalculation } from "./invoice";
 
-
 export interface Patient {
     patient_id?: number;
     uuid?: string;
@@ -20,25 +19,22 @@ export interface Patient {
     height?: string;
     weight?: string;
     blood_type?: string;
-    location?: Location
-    address?: string
+    location?: Location;
+    address?: string;
     reference_id?: string;
     allergies?: string;
 }
 
-
-
 export interface Guardian {
-    first_name: string,
-    middle_name: string,
-    last_name: string,
-    phone_number?: string,
-    email: string,
-    relationship: string,
-    occupation?: string,
-    address?: string,
+    first_name: string;
+    middle_name: string;
+    last_name: string;
+    phone_number?: string;
+    email: string;
+    relationship: string;
+    occupation?: string;
+    address?: string;
 }
-
 
 export interface Diagnosis {
     diagnosis?: string;
@@ -53,16 +49,16 @@ export interface Assessment {
 
     condition?: "ambulatory" | "wheelchair" | "stretcher";
 
-    communication?: "Coherent & Logical" | "Impaired" | ""
-    speech?: "clear" | "slurred" | "aphasic" | ""
+    communication?: "Coherent & Logical" | "Impaired" | "";
+    speech?: "clear" | "slurred" | "aphasic" | "";
 
     mental_state?: "alert" | "drowsy" | "lethargic" | "forgetfulness";
     affect?: "cheerful" | "flat" | "tearful" | "depressed" | "angry";
     behavior?:
-    | "cooperative"
-    | "uncooperative"
-    | "lack_of_interaction"
-    | "communication_barrier";
+        | "cooperative"
+        | "uncooperative"
+        | "lack_of_interaction"
+        | "communication_barrier";
 
     life_system_profile?: LifeSystemProfile;
 }
@@ -112,11 +108,10 @@ export interface PortalAssessment {
     life_system_profile: LifeSystemProfile | null;
 }
 
-
-
 export interface PatientRetrieve {
     patient_id: number;
     uuid: string;
+    patient_code?: string | null;
     full_name: string;
     first_name: string;
     middle_name?: string;
@@ -184,6 +179,14 @@ export interface Admission {
     future_periods?: {
         count: number;
         charged_amount: number;
+        // Grouped by each period's own billing cycle, which is not always the
+        // one the current period is on (a yearly extension booked ahead of a
+        // monthly stay, say).
+        groups: {
+            billing_cycle: string | null;
+            count: number;
+            charged_amount: number;
+        }[];
         invoices: InvoiceAccommodation[];
     } | null;
     current_invoice?: InvoiceAccommodation | null;
@@ -214,6 +217,7 @@ export interface InvoiceAccommodation {
     refund_status: string;
 
     admission_period_id?: number | null;
+    period_code?: string | null;
     parent_admission_period_id?: number | null;
     accommodation_status?: string | null;
     accommodation_reason?: string | null;
@@ -223,4 +227,3 @@ export interface InvoiceAccommodation {
     contract?: Contract | null;
     status: string;
 }
-

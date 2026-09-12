@@ -862,7 +862,9 @@
                                 >
                                     Revenue by Month
                                 </h2>
-                                <p class="text-[11px] text-muted dark:text-gray-400">
+                                <p
+                                    class="text-[11px] text-muted dark:text-gray-400"
+                                >
                                     {{
                                         revenueYear
                                             ? `Jan–Dec ${revenueYear}, paid subscriptions`
@@ -881,7 +883,9 @@
                                 <button
                                     type="button"
                                     role="tab"
-                                    :aria-selected="!revenueYear && revenueRangeMonths === 6"
+                                    :aria-selected="
+                                        !revenueYear && revenueRangeMonths === 6
+                                    "
                                     class="rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors"
                                     :class="
                                         !revenueYear && revenueRangeMonths === 6
@@ -896,10 +900,14 @@
                                 <button
                                     type="button"
                                     role="tab"
-                                    :aria-selected="!revenueYear && revenueRangeMonths === 12"
+                                    :aria-selected="
+                                        !revenueYear &&
+                                        revenueRangeMonths === 12
+                                    "
                                     class="rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors"
                                     :class="
-                                        !revenueYear && revenueRangeMonths === 12
+                                        !revenueYear &&
+                                        revenueRangeMonths === 12
                                             ? 'bg-white dark:bg-white/10 text-accent-600 dark:text-accent-300 shadow-sm'
                                             : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-white'
                                     "
@@ -915,7 +923,9 @@
                                 placeholder="Year"
                                 input-class="px-2.5 py-1.5 text-[11px] font-semibold rounded-full"
                                 class="w-[92px] shrink-0"
-                                @update:model-value="setRevenueYear($event as number | null)"
+                                @update:model-value="
+                                    setRevenueYear($event as number | null)
+                                "
                             />
                         </div>
                     </div>
@@ -941,7 +951,9 @@
                         v-else
                         class="mt-2 flex h-[220px] items-center justify-center rounded-lg bg-accent-50/40 dark:bg-accent-500/10"
                     >
-                        <p class="text-xs font-semibold text-secondary dark:text-white">
+                        <p
+                            class="text-xs font-semibold text-secondary dark:text-white"
+                        >
                             {{
                                 revenueYear
                                     ? `No revenue recorded in ${revenueYear}`
@@ -980,12 +992,12 @@
                                 <h2
                                     class="text-sm font-bold tracking-tight text-secondary dark:text-white"
                                 >
-                                    Recent Subscriptions
+                                    Recent Subscriptions and Branching
                                 </h2>
                                 <p
                                     class="text-[11px] text-muted dark:text-gray-400"
                                 >
-                                    Latest subscription activity
+                                    Latest subscription and branching activity
                                 </p>
                             </div>
                         </div>
@@ -1038,15 +1050,19 @@
                         >
                             No recent activity
                         </p>
-                        <p class="mt-0.5 text-[11px] text-muted dark:text-gray-400">
+                        <p
+                            class="mt-0.5 text-[11px] text-muted dark:text-gray-400"
+                        >
                             New subscription requests will appear here.
                         </p>
                     </div>
 
                     <div v-else class="overflow-x-auto">
-                        <table class="w-full min-w-[700px]">
+                        <table class="w-full min-w-[820px]">
                             <thead>
-                                <tr class="bg-primary-50/40 dark:bg-primary-500/10">
+                                <tr
+                                    class="bg-primary-50/40 dark:bg-primary-500/10"
+                                >
                                     <th
                                         class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-[0.12em] text-muted dark:text-gray-400"
                                     >
@@ -1056,6 +1072,11 @@
                                         class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-[0.12em] text-muted dark:text-gray-400"
                                     >
                                         Plan
+                                    </th>
+                                    <th
+                                        class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-[0.12em] text-muted dark:text-gray-400"
+                                    >
+                                        Branches
                                     </th>
                                     <th
                                         class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-[0.12em] text-muted dark:text-gray-400"
@@ -1070,7 +1091,9 @@
                                 </tr>
                             </thead>
 
-                            <tbody class="divide-y divide-slate-100 dark:divide-white/10">
+                            <tbody
+                                class="divide-y divide-slate-100 dark:divide-white/10"
+                            >
                                 <tr
                                     v-for="sub in recent"
                                     :key="sub.uuid"
@@ -1121,11 +1144,37 @@
 
                                     <td class="whitespace-nowrap px-3 py-2">
                                         <p
+                                            class="text-[11px] font-medium tabular-nums text-secondary/80 dark:text-white/80"
+                                        >
+                                            {{ branchesUsed(sub) }} of
+                                            {{ branchLimit(sub) }}
+                                        </p>
+
+                                        <p
+                                            class="text-[10px]"
+                                            :class="
+                                                slotsLeft(sub)
+                                                    ? 'text-muted dark:text-gray-400'
+                                                    : 'text-amber-600 dark:text-amber-300'
+                                            "
+                                        >
+                                            {{
+                                                slotsLeft(sub)
+                                                    ? `${slotsLeft(sub)} slot${slotsLeft(sub) === 1 ? "" : "s"} left`
+                                                    : "No slots left"
+                                            }}
+                                        </p>
+                                    </td>
+
+                                    <td class="whitespace-nowrap px-3 py-2">
+                                        <p
                                             class="text-[11px] font-medium text-secondary/80 dark:text-white/80"
                                         >
                                             {{ formatDate(sub.start_date) }}
                                         </p>
-                                        <p class="text-[10px] text-muted dark:text-gray-400">
+                                        <p
+                                            class="text-[10px] text-muted dark:text-gray-400"
+                                        >
                                             to {{ formatDate(sub.end_date) }}
                                         </p>
                                     </td>
@@ -1341,7 +1390,9 @@ const fetchAll = async () => {
                 : [],
         };
 
-        availableRevenueYears.value = Array.isArray(data.available_revenue_years)
+        availableRevenueYears.value = Array.isArray(
+            data.available_revenue_years,
+        )
             ? data.available_revenue_years
             : [];
     } catch (err) {
@@ -1879,6 +1930,16 @@ const initials = (name: string): string => {
         .map((part) => part[0]?.toUpperCase())
         .join("");
 };
+
+// Rows are per branch link, but the capacity belongs to the subscription they
+// share, so two branches of one subscription both read the same figure.
+const branchLimit = (sub: any): number => sub?.subscription?.branch_limit ?? 5;
+
+const branchesUsed = (sub: any): number =>
+    sub?.subscription?.covered_branches?.length ?? 0;
+
+const slotsLeft = (sub: any): number =>
+    Math.max(0, branchLimit(sub) - branchesUsed(sub));
 
 onMounted(() => {
     fetchAll();

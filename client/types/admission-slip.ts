@@ -30,7 +30,12 @@ export interface AdmissionSlipPortal {
     default_password: string | null;
 }
 
+export interface AdmissionSlipBranch {
+    name: string | null;
+}
+
 export interface AdmissionSlip {
+    branch: AdmissionSlipBranch;
     patient: AdmissionSlipPatient;
     admission: AdmissionSlipAdmission;
     invoice: AdmissionSlipInvoice;

@@ -55,7 +55,7 @@ class AdmissionPeriodService
         return $admission->periods()
             ->whereNotIn('status', AdmissionPeriod::CLOSED_STATUSES)
             ->where('admission_period_id', '>', $current->admission_period_id)
-            ->with('invoiceAdmissionLines.invoice')
+            ->with('invoiceAdmissionLines.invoice', 'branchContract')
             ->orderBy('admission_period_id')
             ->get();
     }
@@ -85,11 +85,32 @@ class AdmissionPeriodService
 
     public function carryForward(mixed $futurePeriods, BranchContract $newContract)
     {
-        $newPrice = (float) $newContract->price;
-
         foreach ($futurePeriods as $future) {
+            // A future period can carry a different billing cycle than the one
+            // being changed now — an extended stay booked ahead on a yearly
+            // plan, say, sitting past a monthly period. Reprice it on its own
+            // cycle's equivalent contract, not the one just chosen for today.
+            $futureCycle = $future->branchContract?->billing_cycle;
+
+            $contract = $futureCycle === $newContract->billing_cycle
+                ? $newContract
+                : BranchContract::where('branch_id', $newContract->branch_id)
+                    ->where('category', $newContract->category)
+                    ->where('accommodation_type', $newContract->accommodation_type)
+                    ->where('billing_cycle', $futureCycle)
+                    ->first();
+
+            if (!$contract) {
+                // No equivalent plan exists on this period's own cycle. Leave
+                // it exactly as booked rather than reprice it under the wrong
+                // one.
+                continue;
+            }
+
+            $newPrice = (float) $contract->price;
+
             $future->update([
-                'branch_contract_id' => $newContract->branch_contract_id,
+                'branch_contract_id' => $contract->branch_contract_id,
             ]);
 
             $deltaByInvoice = $future->invoiceAdmissionLines
@@ -108,13 +129,15 @@ class AdmissionPeriodService
                     continue;
                 }
 
+                $reason = $delta > 0
+                    ? 'Accommodation upgraded. Prepaid period re-priced to the new plan.'
+                    : 'Accommodation downgraded. Prepaid period re-priced to the new plan.';
+
                 InvoiceAdjustment::create([
                     'invoice_id' => $invoiceId,
                     'type'       => 'correction',
                     'amount'     => $delta,
-                    'reason'     => $delta > 0
-                        ? 'Accommodation upgraded. Prepaid period re-priced to the new plan.'
-                        : 'Accommodation downgraded. Prepaid period re-priced to the new plan.',
+                    'reason'     => $reason,
                 ]);
 
                 Invoice::find($invoiceId)?->syncStatus();

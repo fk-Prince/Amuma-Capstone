@@ -11,17 +11,11 @@
                         {{ report.branch?.name ?? "Amuma Care" }}
                     </p>
 
-                    <p
-                        v-if="report.branch?.agency_name"
-                        class="print-branch"
-                    >
+                    <p v-if="report.branch?.agency_name" class="print-branch">
                         {{ report.branch.agency_name }}
                     </p>
 
-                    <p
-                        v-if="report.branch?.address"
-                        class="print-branch-line"
-                    >
+                    <p v-if="report.branch?.address" class="print-branch-line">
                         {{ report.branch.address }}
                     </p>
 
@@ -29,10 +23,7 @@
                         {{ branchContactLine }}
                     </p>
 
-                    <p
-                        v-if="report.branch?.tin"
-                        class="print-branch-line"
-                    >
+                    <p v-if="report.branch?.tin" class="print-branch-line">
                         TIN {{ report.branch.tin }}
                     </p>
                 </div>
@@ -62,7 +53,11 @@
                         <th>Gender</th>
                         <td>{{ report.patient.gender ?? "—" }}</td>
                         <th>Contact</th>
-                        <td>{{ formatPhone(report.patient.phone_number) || "—" }}</td>
+                        <td>
+                            {{
+                                formatPhone(report.patient.phone_number) || "—"
+                            }}
+                        </td>
                     </tr>
                     <tr>
                         <th>Address</th>
@@ -108,13 +103,13 @@
                         class="print-table print-assessment"
                     >
                         <caption v-if="assessments.length > 1">
-                            Assessment {{ index + 1 }}
+                            Assessment
+                            {{
+                                index + 1
+                            }}
                         </caption>
                         <tbody>
-                            <tr
-                                v-for="field in assessment"
-                                :key="field.label"
-                            >
+                            <tr v-for="field in assessment" :key="field.label">
                                 <th>{{ field.label }}</th>
                                 <td>{{ field.value }}</td>
                             </tr>
@@ -225,11 +220,8 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr
-                                v-for="(row, i) in billingPayments"
-                                :key="i"
-                            >
-                                <td>{{ row.receipt_no ?? "—" }}</td>
+                            <tr v-for="(row, i) in billingPayments" :key="i">
+                                <td>{{ row.payment_code ?? "—" }}</td>
                                 <td>{{ row.invoice_code }}</td>
                                 <td>{{ row.paid_at ?? "—" }}</td>
                                 <td>{{ row.payment_method ?? "—" }}</td>
@@ -502,7 +494,12 @@ const assessments = computed(() => {
 });
 
 const shortRef = computed(() => {
+    const code = props.report?.patient?.patient_code;
+
+    if (code) return code;
+
     const uuid = props.report?.patient?.patient_uuid ?? "";
+
     return uuid ? uuid.split("-")[0]!.toUpperCase() : "—";
 });
 
@@ -515,9 +512,7 @@ function pageNumber(key: string) {
 }
 
 function isLastSection(key: string) {
-    return (
-        orderedSections.value[orderedSections.value.length - 1] === key
-    );
+    return orderedSections.value[orderedSections.value.length - 1] === key;
 }
 
 const branchContactLine = computed(() =>

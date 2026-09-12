@@ -7,10 +7,12 @@ import {
     employeeAssignmentTypes,
     employeePositions,
     employeeSchema,
+    formatEmployeeStatus,
     type Employee,
 } from "~/types/employee";
 import Combobox from "~/components/ui/Combobox.vue";
 import { useEmployeeForm } from "~/composables/useEmployeeForm";
+import EmployeeSlipModal from "~/components/sections/app/Employee/EmployeeSlipModal.vue";
 import {
     MoveLeft,
     Camera,
@@ -63,6 +65,9 @@ const {
     initials,
     validate,
     saveEmployee,
+    employeeSlip,
+    dismissSlip,
+    isActive,
     init,
     pageTitle,
     pageSubtitle,
@@ -125,7 +130,9 @@ init();
                 </div>
 
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <h1
+                        class="text-2xl font-bold text-gray-900 dark:text-white"
+                    >
                         {{ pageTitle }}
                     </h1>
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -176,7 +183,9 @@ init();
         </div>
 
         <template v-else>
-            <div class="border-b bg-white px-8 dark:border-white/10 dark:bg-secondary">
+            <div
+                class="border-b bg-white px-8 dark:border-white/10 dark:bg-secondary"
+            >
                 <div class="flex gap-10">
                     <button
                         v-for="(tab, index) in tabs"
@@ -294,7 +303,9 @@ init();
                             PNG or JPG, at least 400×400px
                         </p>
 
-                        <div class="w-full space-y-2 border-t pt-4 dark:border-white/10">
+                        <div
+                            class="w-full space-y-2 border-t pt-4 dark:border-white/10"
+                        >
                             <div class="flex items-center justify-between">
                                 <p
                                     class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
@@ -446,7 +457,9 @@ init();
                             </div>
                         </section>
 
-                        <section class="space-y-4 border-t pt-8 dark:border-white/10">
+                        <section
+                            class="space-y-4 border-t pt-8 dark:border-white/10"
+                        >
                             <h2
                                 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                             >
@@ -504,7 +517,9 @@ init();
                             </div>
                         </section>
 
-                        <section class="space-y-4 border-t pt-8 dark:border-white/10">
+                        <section
+                            class="space-y-4 border-t pt-8 dark:border-white/10"
+                        >
                             <h2
                                 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                             >
@@ -558,6 +573,68 @@ init();
                                     </p>
                                 </div>
                             </div>
+
+                            <div
+                                class="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-white/10 dark:bg-white/5"
+                            >
+                                <div class="min-w-0">
+                                    <p
+                                        class="text-sm font-medium text-slate-700 dark:text-gray-200"
+                                    >
+                                        Employment status
+                                    </p>
+
+                                    <p
+                                        class="mt-0.5 text-xs text-slate-400 dark:text-gray-500"
+                                    >
+                                        {{
+                                            isActive
+                                                ? "This employee can sign in and be assigned work."
+                                                : "This employee keeps their record but loses access."
+                                        }}
+                                    </p>
+                                </div>
+
+                                <div class="flex shrink-0 items-center gap-3">
+                                    <span
+                                        class="rounded-full border px-2.5 py-1 text-[11px] font-semibold"
+                                        :class="
+                                            isActive
+                                                ? 'border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                                : 'border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400'
+                                        "
+                                    >
+                                        {{
+                                            formatEmployeeStatus(
+                                                employee.status,
+                                            )
+                                        }}
+                                    </span>
+
+                                    <button
+                                        type="button"
+                                        role="switch"
+                                        :aria-checked="isActive"
+                                        :disabled="isViewMode"
+                                        class="relative h-6 w-11 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50"
+                                        :class="
+                                            isActive
+                                                ? 'bg-emerald-500'
+                                                : 'bg-slate-300 dark:bg-white/20'
+                                        "
+                                        @click="isActive = !isActive"
+                                    >
+                                        <span
+                                            class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all"
+                                            :class="
+                                                isActive
+                                                    ? 'left-[22px]'
+                                                    : 'left-0.5'
+                                            "
+                                        />
+                                    </button>
+                                </div>
+                            </div>
                         </section>
                     </div>
                 </div>
@@ -566,7 +643,9 @@ init();
                     <div
                         class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <div
+                            class="flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                        >
                             <ShieldCheck class="h-4 w-4 text-primary" />
                             <p class="text-sm">
                                 Choose what this employee can access in the
@@ -681,7 +760,9 @@ init();
                                     >
                                         {{ module.module_name }}
                                     </h3>
-                                    <p class="text-xs text-slate-400 dark:text-gray-500">
+                                    <p
+                                        class="text-xs text-slate-400 dark:text-gray-500"
+                                    >
                                         {{
                                             module.description ??
                                             "Manage access to this module."
@@ -856,6 +937,8 @@ init();
                 </div>
             </div>
         </template>
+
+        <EmployeeSlipModal :slip="employeeSlip" @close="dismissSlip" />
     </div>
 </template>
 

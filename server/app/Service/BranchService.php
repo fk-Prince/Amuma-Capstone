@@ -6,12 +6,19 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
+use App\Models\Booking;
+use App\Models\EmployeeBranch;
+use App\Models\PatientAdmission;
+use App\Repository\BookingRepository;
+use App\Repository\BranchContractRepository;
 use App\Repository\BranchRepository;
+use App\Repository\RoomRepository;
 use App\Http\Resources\BranchResource;
 use App\Models\BranchImage;
 use App\Models\User;
 use App\Service\External\SupabaseService;
 use App\Service\Geo\NominatimService;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +26,13 @@ use Illuminate\Support\Facades\DB;
 class BranchService
 {
 
-    public function __construct(private BranchRepository $branchRepository, private NominatimService $nomaticeService) {}
+    public function __construct(
+        private BranchRepository $branchRepository,
+        private NominatimService $nomaticeService,
+        private RoomRepository $roomRepository,
+        private BookingRepository $bookingRepository,
+        private BranchContractRepository $branchContractRepository,
+    ) {}
 
     public function getBranch(string $uuid)
     {
@@ -188,6 +201,67 @@ class BranchService
 
         return [
             'message' => 'Branch settings updated successfully.',
+        ];
+    }
+
+    public function dashboard(array $payload): array
+    {
+        $branchId = $payload['branch_id'];
+        $now = Carbon::now();
+
+        $admissionsForBranch = fn() => PatientAdmission::whereHas(
+            'bed.room',
+            fn($q) => $q->where('branch_id', $branchId)
+        );
+
+        $admitted = $admissionsForBranch()
+            ->where('status', PatientAdmission::STATUS_ADMITTED)
+            ->count();
+
+        $waiting = $admissionsForBranch()
+            ->where('status', PatientAdmission::STATUS_WAITING)
+            ->count();
+
+        $newAdmissionsThisMonth = $admissionsForBranch()
+            ->whereBetween('admitted_at', [
+                $now->copy()->startOfMonth(),
+                $now->copy()->endOfMonth(),
+            ])
+            ->count();
+
+        $staffTotal = EmployeeBranch::where('branch_id', $branchId)
+            ->distinct('employee_id')
+            ->count('employee_id');
+
+        $roomStats = $this->roomRepository->getRoomStats($branchId);
+        $bookingOverview = $this->bookingRepository->overview($branchId);
+        $contractStats = $this->branchContractRepository->dashboardStats($branchId);
+
+        $recentActivity = Booking::where('branch_id', $branchId)
+            ->latest()
+            ->take(6)
+            ->get()
+            ->map(fn($booking) => [
+                'type' => 'booking',
+                'title' => "Booking {$booking->reference_id}",
+                'subtitle' => ucfirst($booking->category) . ' booking',
+                'status' => $booking->status,
+                'date' => $booking->created_at,
+            ]);
+
+        return [
+            'patients' => [
+                'admitted' => $admitted,
+                'waiting' => $waiting,
+                'new_this_month' => $newAdmissionsThisMonth,
+            ],
+            'staff' => [
+                'total' => $staffTotal,
+            ],
+            'occupancy' => $roomStats,
+            'bookings' => $bookingOverview['bookings'],
+            'contracts' => $contractStats,
+            'recent_activity' => $recentActivity,
         ];
     }
 }

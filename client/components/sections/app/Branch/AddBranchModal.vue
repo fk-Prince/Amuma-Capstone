@@ -864,6 +864,7 @@ const emptyBranch = (): Branch =>
         name: "",
         contact_number: "",
         description: "",
+        tin: "",
         image: null,
         email: "",
         document: "",
@@ -930,7 +931,7 @@ const buildPayload = () => ({
     branch_email: form.branch.email,
     branch_image: form.branch.image,
     branch_document: (form.branch as any).document,
-    branch_settings: form.settings,
+    branch_settings: { ...form.settings, tin: form.branch.tin || null },
     branch_street: form.branch.location.street,
     branch_city: form.branch.location.city,
     branch_province: form.branch.location.province,
@@ -954,6 +955,7 @@ const validateBranch = (): boolean => {
         image: "branch_image",
         email: "branch_email",
         document: "branch_document",
+        tin: "branch_tin",
     };
 
     const mapped: Record<string, string> = {};

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import {
     ChevronLeft,
@@ -22,6 +22,7 @@ useHead({ title: "Updates" });
 
 definePageMeta({
     layout: "portal",
+    middleware: "portal",
 });
 
 interface LovedOne {
@@ -266,11 +267,11 @@ function dateGroupLabel(date: Date) {
     });
 
     if (isSameDay(date, today)) {
-        return `Today · ${formatted}`;
+        return `Today Â· ${formatted}`;
     }
 
     if (isSameDay(date, tomorrow)) {
-        return `Tomorrow · ${formatted}`;
+        return `Tomorrow Â· ${formatted}`;
     }
 
     return formatted;
@@ -576,7 +577,7 @@ onMounted(() => {
                                         "
                                         class="hidden text-gray-300 sm:inline dark:text-gray-500"
                                     >
-                                        •
+                                        â€¢
                                     </span>
 
                                     <span

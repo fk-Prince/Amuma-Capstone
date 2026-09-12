@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Payment;
-use App\Models\Refund;
+use App\Models\Transaction;
 use App\Utils\MaskUtil;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,18 +21,22 @@ class RemaskAccountDetails extends Command
         $payments = $this->remask(
             Payment::query(),
             'payment_method',
+            'masked_account_detail',
+            'payment_id',
             $dryRun,
             'payment'
         );
 
-        $refunds = $this->remask(
-            Refund::query(),
-            'refund_method',
+        $withdrawals = $this->remask(
+            Transaction::query()->where('type', Transaction::TYPE_WITHDRAW),
+            'method',
+            'masked_account_number',
+            'transaction_id',
             $dryRun,
-            'refund'
+            'withdrawal'
         );
 
-        $total = $payments + $refunds;
+        $total = $payments + $withdrawals;
 
         if ($total === 0) {
             $this->info('Nothing to re-mask.');
@@ -43,22 +47,28 @@ class RemaskAccountDetails extends Command
         $this->info(
             $dryRun
                 ? "{$total} row(s) would be re-masked. Re-run without --dry-run to apply."
-                : "Re-masked {$total} row(s): {$payments} payment(s), {$refunds} refund(s)."
+                : "Re-masked {$total} row(s): {$payments} payment(s), {$withdrawals} withdrawal(s)."
         );
 
         return self::SUCCESS;
     }
 
-    private function remask(Builder $query, string $methodColumn, bool $dryRun, string $label): int
-    {
+    private function remask(
+        Builder $query,
+        string $methodColumn,
+        string $maskedColumn,
+        string $key,
+        bool $dryRun,
+        string $label
+    ): int {
         $changed = 0;
 
-        $query->whereNotNull('masked_card_number')
-            ->orderBy($this->keyFor($label))
-            ->chunkById(200, function ($rows) use ($methodColumn, $dryRun, $label, &$changed) {
+        $query->whereNotNull($maskedColumn)
+            ->orderBy($key)
+            ->chunkById(200, function ($rows) use ($methodColumn, $maskedColumn, $dryRun, $label, &$changed) {
                 foreach ($rows as $row) {
                     $method = (string) ($row->{$methodColumn} ?? '');
-                    $current = (string) $row->masked_card_number;
+                    $current = (string) $row->{$maskedColumn};
 
                     if (preg_match('/[*x]{4,}/i', $current)) {
                         continue;
@@ -73,18 +83,13 @@ class RemaskAccountDetails extends Command
                     $this->line("  {$label} #{$row->getKey()}  {$method}: {$current} -> {$masked}");
 
                     if (!$dryRun) {
-                        $row->forceFill(['masked_card_number' => $masked])->save();
+                        $row->forceFill([$maskedColumn => $masked])->save();
                     }
 
                     $changed++;
                 }
-            }, $this->keyFor($label));
+            }, $key);
 
         return $changed;
-    }
-
-    private function keyFor(string $label): string
-    {
-        return $label === 'payment' ? 'payment_id' : 'refund_id';
     }
 }

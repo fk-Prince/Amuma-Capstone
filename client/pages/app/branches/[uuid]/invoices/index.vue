@@ -86,6 +86,12 @@
                             <span
                                 class="text-xs text-slate-400 dark:text-gray-500"
                             >
+                                <span
+                                    v-if="row.patient?.patient_code"
+                                    class="font-mono"
+                                >
+                                    {{ row.patient.patient_code }} ·
+                                </span>
                                 Latest
                                 {{
                                     row.latest_invoice?.invoice_code ??
@@ -120,15 +126,25 @@
                     </template>
 
                     <template #cell-total_refundable="{ row }">
-                        <span
-                            class="font-medium"
-                            :class="
-                                totalRefundable(row) > 0
-                                    ? 'text-emerald-600 dark:text-emerald-300'
-                                    : 'text-slate-400 dark:text-gray-500'
-                            "
-                            >₱{{ formatMoney(totalRefundable(row)) }}</span
-                        >
+                        <div class="leading-tight">
+                            <span
+                                class="font-medium"
+                                :class="
+                                    creditOnAccount(row) > 0
+                                        ? 'text-emerald-600 dark:text-emerald-300'
+                                        : 'text-slate-400 dark:text-gray-500'
+                                "
+                                >₱{{ formatMoney(creditOnAccount(row)) }}</span
+                            >
+
+                            <p
+                                v-if="refundProcessing(row) > 0"
+                                class="text-[11px] text-amber-600 dark:text-amber-300"
+                            >
+                                ₱{{ formatMoney(refundProcessing(row)) }} being
+                                withdrawn
+                            </p>
+                        </div>
                     </template>
 
                     <template #cell-total_balance="{ value }">
@@ -146,7 +162,7 @@
                     :pagination="invoicePagination"
                     :loading="invoiceRowsLoading"
                     :searchable="false"
-                    row-key="invoice_code"
+                    :row-key="(row: { invoice_code: string }) => row.invoice_code"
                     empty-title="No invoices found"
                     empty-description="Try a different search term."
                     :on-row-click="viewInvoice"
@@ -219,11 +235,11 @@
                     :on-row-click="openReceipt"
                     @page-change="fetchReceipts"
                 >
-                    <template #cell-receipt_no="{ row }">
+                    <template #cell-payment_code="{ row }">
                         <span
                             class="font-mono font-semibold text-slate-800 dark:text-white"
                         >
-                            {{ row.receipt_no }}
+                            {{ row.payment_code }}
                         </span>
                     </template>
 
@@ -294,8 +310,8 @@
                     </h3>
 
                     <p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
-                        This refunds any amount already paid on this invoice
-                        and marks it void. This cannot be undone.
+                        This refunds any amount already paid on this invoice and
+                        marks it void. This cannot be undone.
                     </p>
 
                     <label
@@ -345,7 +361,11 @@ import InvoiceOverview from "~/components/sections/app/Billing/InvoiceOverview.v
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
 import { usePagination } from "~/composables/usePagination";
 import { invoiceService } from "~/api/invoice/InvoiceService";
-import { INVOICE_STATUS, type InvoiceRow, type PatientSummaryRow } from "~/types/invoice";
+import {
+    INVOICE_STATUS,
+    type InvoiceRow,
+    type PatientSummaryRow,
+} from "~/types/invoice";
 import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
 import { useToast } from "~/composables/useToast";
 
@@ -377,7 +397,7 @@ const patientColumns: DataTableColumn[] = [
     { key: "total_paid", label: "Paid", align: "right", sortable: false },
     {
         key: "total_refunded",
-        label: "Refunded",
+        label: "Refunds",
         align: "right",
         sortable: false,
     },
@@ -402,7 +422,7 @@ const invoiceColumns: DataTableColumn[] = [
 ];
 
 const receiptColumns: DataTableColumn[] = [
-    { key: "receipt_no", label: "Receipt No.", sortable: false },
+    { key: "payment_code", label: "Receipt No.", sortable: false },
     { key: "issued_at", label: "Issued", sortable: false },
     { key: "patient", label: "Patient", sortable: false },
     { key: "channel", label: "Channel", sortable: false },
@@ -437,10 +457,10 @@ const voidReason = ref("");
 const voidingInvoice = ref(false);
 
 const searchPlaceholder = computed(() => {
-    if (activeTab.value === "patients") return "Enter patient name...";
+    if (activeTab.value === "patients") return "Patient code or name...";
     if (activeTab.value === "invoices") return "Search by invoice code...";
 
-    return "Receipt no., patient, payor or invoice code...";
+    return "Receipt no., patient code, name, payor or invoice code...";
 });
 
 function switchTab(tab: TabKey) {
@@ -531,7 +551,9 @@ async function fetchInvoiceRows(page = invoicePagination.currentPage.value) {
 }
 
 function invoiceStatusClass(status: string) {
-    return INVOICE_STATUS[status] ?? "bg-slate-50 text-slate-600 border-slate-200";
+    return (
+        INVOICE_STATUS[status] ?? "bg-slate-50 text-slate-600 border-slate-200"
+    );
 }
 
 function viewInvoice(row: InvoiceRow) {
@@ -631,17 +653,23 @@ function viewPatient(row: PatientSummaryRow) {
     });
 }
 
-// Money paid that no invoice claims any more. It sits on the account until
-// someone refunds it, so it is shown apart from what has already gone back.
 function totalRefundable(row: PatientSummaryRow) {
     return Number(row.total_refundable ?? 0);
 }
 
+// Credit claimed by a withdrawal awaiting a decision is still the family's
+// money, so it belongs in the figure even though it cannot be spent yet.
+function creditOnAccount(row: PatientSummaryRow) {
+    return totalRefundable(row) + refundProcessing(row);
+}
+
+// Only money that has actually gone back.
 function totalRefunded(row: PatientSummaryRow) {
-    return (
-        Number(row.total_refunded ?? 0) +
-        Number(row.total_refund_requested ?? 0)
-    );
+    return Number(row.total_refunded ?? 0);
+}
+
+function refundProcessing(row: PatientSummaryRow) {
+    return Number(row.total_refund_requested ?? 0);
 }
 
 function formatMoney(amount: number | string | null | undefined) {

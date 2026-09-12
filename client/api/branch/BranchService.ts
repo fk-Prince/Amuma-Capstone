@@ -38,6 +38,10 @@ class BranchService extends BaseService {
         return await this.request(this.resource, 'GET', params);
     }
 
+    async dashboard(params: object = {}): Promise<any> {
+        return await this.request(this.resource + '/dashboard', 'GET', params);
+    }
+
 
     private get resource(): string {
         return `${this.getBackendApi}/api/branches`;

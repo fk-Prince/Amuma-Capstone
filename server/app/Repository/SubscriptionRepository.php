@@ -27,10 +27,7 @@ class SubscriptionRepository
         return Subscription::where($payload)->first();
     }
 
-    /**
-     * A branch can accumulate several subscription rows over time, so renewal
-     * has to act on the newest one rather than whatever the table returns first.
-     */
+
     public function findLatestForBranch(string $branchId)
     {
         return Subscription::with('plans')
@@ -39,16 +36,11 @@ class SubscriptionRepository
             ->first();
     }
 
-    /**
-     * Returns the agency's oldest subscription that still has a free slot, so
-     * a new branch joins an already-paid period instead of starting its own.
-     */
+
     public function findSubscriptionWithRoom(string $agencyId, ?string $subscriptionUuid = null)
     {
         return Subscription::query()
             ->where('agency_id', $agencyId)
-            // Scoped when the owner picked which of their subscriptions the
-            // branch should join; still bound to their own agency either way.
             ->when($subscriptionUuid, fn($q) => $q->where('uuid', $subscriptionUuid))
             ->where('status', '!=', Subscription::STATUS_REJECTED)
             ->whereHas('payments', fn($q) => $q->where('status', SubscriptionPayment::STATUS_PAID))
@@ -63,10 +55,7 @@ class SubscriptionRepository
             ->first();
     }
 
-    /**
-     * The approval queue is per branch, not per subscription — one paid
-     * subscription can carry up to five branches, each reviewed on its own.
-     */
+
     public function paginate(array $payload)
     {
         $query = BranchSubscription::query()
@@ -83,8 +72,6 @@ class SubscriptionRepository
         if (!empty($payload['status'])) {
             $status = $payload['status'];
 
-            // The requests tab filters on the branch's own review state; the
-            // approved tab filters on the paid period's lifecycle instead.
             if (in_array($status, [
                 BranchSubscription::STATUS_PENDING,
                 BranchSubscription::STATUS_APPROVED,
@@ -128,9 +115,16 @@ class SubscriptionRepository
             'active' => (int) ($counts['active'] ?? 0),
             'inactive' => (int) ($counts['inactive'] ?? 0),
             'expired' => (int) ($counts['expired'] ?? 0),
-            // The requests/branches pages reject per branch link, not per
-            // subscription, so this counts BranchSubscription rows instead.
             'rejected' => BranchSubscription::where('status', BranchSubscription::STATUS_REJECTED)->count(),
+            'active_branches' => BranchSubscription::where(
+                'status',
+                BranchSubscription::STATUS_APPROVED
+            )
+                ->whereHas(
+                    'subscription',
+                    fn($query) => $query->where('status', Subscription::STATUS_ACTIVE)
+                )
+                ->count(),
         ];
     }
 
@@ -244,9 +238,6 @@ class SubscriptionRepository
 
         $availableYears = collect(range(Carbon::now()->year, $earliestYear))->values();
 
-        // Listed per branch link, like the approval queue above: the resource
-        // reads a branch off each row, which a subscription itself does not
-        // have — it can cover several branches.
         $recent = BranchSubscription::query()
             ->with([
                 'branch.agencies',

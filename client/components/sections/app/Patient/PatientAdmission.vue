@@ -1,12 +1,16 @@
 <template>
     <div class="min-h-screen bg-slate-50 dark:bg-white/5">
-        <div class="w-full mx-auto px-4 lg:px-8 py-8">
+        <div class="w-full mx-auto px-4 lg:px-8 pt-8 pb-12">
             <div v-if="loading" class="space-y-6">
                 <div
                     class="rounded-2xl border border-primary-100 bg-white p-6 animate-pulse dark:border-primary-500/20 dark:bg-secondary"
                 >
-                    <div class="h-6 w-64 bg-slate-200 rounded dark:bg-white/15"></div>
-                    <div class="h-3 w-80 bg-slate-100 rounded mt-3 dark:bg-white/10"></div>
+                    <div
+                        class="h-6 w-64 bg-slate-200 rounded dark:bg-white/15"
+                    ></div>
+                    <div
+                        class="h-3 w-80 bg-slate-100 rounded mt-3 dark:bg-white/10"
+                    ></div>
                 </div>
                 <div class="grid lg:grid-cols-3 gap-6">
                     <div
@@ -19,7 +23,7 @@
             </div>
 
             <div
-                v-else-if="!patient"    
+                v-else-if="!patient"
                 class="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-slate-400 dark:border-white/10 dark:text-gray-500"
             >
                 We couldn't find this patient's admission record.
@@ -29,11 +33,26 @@
                 <div class="grid lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 space-y-6">
                         <section>
-                            <h2
-                                class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2.5 dark:text-gray-400"
+                            <div
+                                class="mb-2.5 flex items-center justify-between gap-3"
                             >
-                                Current admission
-                            </h2>
+                                <h2
+                                    class="text-[11px] uppercase tracking-wide text-muted font-semibold dark:text-gray-400"
+                                >
+                                    Current admission
+                                </h2>
+
+                                <button
+                                    v-if="canViewAdmissions && latestAdmission"
+                                    type="button"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-primary-100 px-2.5 py-1.5 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-500/20 dark:text-primary-300 dark:hover:bg-primary-500/10"
+                                    @click="viewAdmission"
+                                >
+                                    View admission
+
+                                    <ChevronRight class="h-3.5 w-3.5" />
+                                </button>
+                            </div>
 
                             <button
                                 v-if="
@@ -67,7 +86,9 @@
                                                 {{ latestAdmission.bed.bed_no }}
                                             </span>
                                         </p>
-                                        <p class="text-xs text-muted mt-1 dark:text-gray-400">
+                                        <p
+                                            class="text-xs text-muted mt-1 dark:text-gray-400"
+                                        >
                                             <span
                                                 v-if="
                                                     latestAdmission.status ===
@@ -115,7 +136,9 @@
                                         >
                                             {{ latestAdmission.status }}
                                         </p>
-                                        <p class="text-xs text-muted mt-0.5 dark:text-gray-400">
+                                        <p
+                                            class="text-xs text-muted mt-0.5 dark:text-gray-400"
+                                        >
                                             {{
                                                 latestAdmission.current_contract
                                                     .accommodation_type
@@ -134,7 +157,9 @@
                                             }"
                                         ></div>
                                     </div>
-                                    <p class="text-[11px] text-muted mt-1.5 dark:text-gray-400">
+                                    <p
+                                        class="text-[11px] text-muted mt-1.5 dark:text-gray-400"
+                                    >
                                         Day {{ dayOfStay ?? 0 }} of
                                         {{ totalStayDays }}
                                     </p>
@@ -177,7 +202,9 @@
                                         </span>
                                     </p>
 
-                                    <p class="text-[10px] text-muted mt-1 dark:text-gray-400">
+                                    <p
+                                        class="text-[10px] text-muted mt-1 dark:text-gray-400"
+                                    >
                                         {{
                                             latestAdmission?.status ===
                                             "admitted"
@@ -202,7 +229,9 @@
                                         {{ patient.admissions?.length ?? 0 }}
                                     </p>
 
-                                    <p class="text-[10px] text-muted mt-1 dark:text-gray-400">
+                                    <p
+                                        class="text-[10px] text-muted mt-1 dark:text-gray-400"
+                                    >
                                         Lifetime admissions
                                     </p>
                                 </div>
@@ -254,7 +283,9 @@
                                                 </span>
                                             </p>
 
-                                            <p class="text-xs text-muted mt-1 dark:text-gray-400">
+                                            <p
+                                                class="text-xs text-muted mt-1 dark:text-gray-400"
+                                            >
                                                 Admitted
                                                 {{
                                                     formatDate(
@@ -317,7 +348,8 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import { ChevronRight } from "lucide-vue-next";
 import type { PatientRetrieve, Admission } from "~/types/patient";
 
 import AdmissionTimeline from "~/components/sections/app/Admission/AdmissionTimeline.vue";
@@ -344,6 +376,20 @@ const props = withDefaults(
 );
 
 const router = useRouter();
+const route = useRoute();
+
+const { hasModule } = usePermissions();
+
+const canViewAdmissions = computed(() => hasModule("Admissions"));
+
+// The admissions page is keyed by the patient's uuid, not the admission id.
+function viewAdmission() {
+    const patientUuid = patient.value?.uuid ?? route.params.p_uuid;
+
+    if (!patientUuid) return;
+
+    router.push(`/app/branches/${route.params.uuid}/admissions/${patientUuid}`);
+}
 
 const patient = computed(() => props.patient);
 const loading = computed(() => props.loading);

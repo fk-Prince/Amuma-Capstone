@@ -6,16 +6,18 @@ use App\Models\AdmissionPeriod;
 use App\Models\Schedule;
 use App\Models\ScheduleService;
 use App\Utils\DischargeCalculator;
+use App\Utils\OutstandingBalance;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class PatientResource extends JsonResource
 {
-    public function toArray(Request $request): array
+    public function toArray(Request $request)
     {
         return [
             'patient_id' => $this->patient_id,
             'uuid' => $this->uuid,
+            'patient_code' => $this->patient_code,
             'full_name' => trim("{$this->first_name} {$this->middle_name} {$this->last_name}"),
             'first_name' => $this->first_name,
             'middle_name' => $this->middle_name,
@@ -148,10 +150,7 @@ class PatientResource extends JsonResource
         ];
     }
 
-    // The current and latest stays are already in the admissions collection
-    // with their periods and invoices loaded, so the same rows are reused
-    // rather than that whole tree being fetched again for each of them.
-    private function loadedAdmission(mixed $admission): mixed
+    private function loadedAdmission(mixed $admission)
     {
         if (!$admission || !$this->resource->relationLoaded('admissions')) {
             return $admission;
@@ -163,7 +162,7 @@ class PatientResource extends JsonResource
         ) ?? $admission;
     }
 
-    private function formatAdmission(mixed $admission, bool $includeDischargeCalculation = false): array
+    private function formatAdmission(mixed $admission, bool $includeDischargeCalculation = false)
     {
         $currentInvoice = $admission->currentInvoiceAdmission;
 
@@ -209,7 +208,12 @@ class PatientResource extends JsonResource
                     $invoice->invoice,
                     $admission,
                     $period
-                )
+                ) + [
+                    'outstanding' => OutstandingBalance::forInvoices(
+                        $this->patient_invoices,
+                        $invoice->invoice
+                    ),
+                ]
                 : null,
 
             'invoices' => $admission->relationLoaded('invoiceAdmission')
@@ -220,11 +224,9 @@ class PatientResource extends JsonResource
         ];
     }
 
-    private function formatFuturePeriods(mixed $admission, mixed $current): array
+    private function formatFuturePeriods(mixed $admission, mixed $current)
     {
-        // Every period still standing except the one in effect. Keyed off the
-        // period rather than its payment status, since "pending" means awaiting
-        // payment and not "starts later" — the period in effect is often pending.
+
         $future = $admission->periods
             ->whereNotIn('status', AdmissionPeriod::CLOSED_STATUSES)
             ->when(
@@ -241,6 +243,19 @@ class PatientResource extends JsonResource
         return [
             'count' => $future->count(),
             'charged_amount' => round((float) $lines->sum('price'), 2),
+            'groups' => $future
+                ->groupBy(fn($period) => $period->branchContract?->billing_cycle ?? '')
+                ->map(fn($periods, $cycle) => [
+                    'billing_cycle' => $cycle ?: null,
+                    'count' => $periods->count(),
+                    'charged_amount' => round(
+                        (float) $periods
+                            ->flatMap(fn($period) => $period->invoiceAdmissionLines)
+                            ->sum('price'),
+                        2
+                    ),
+                ])
+                ->values(),
             'invoices' => $lines
                 ->map(fn($line) => $this->formatInvoiceAdmission($line))
                 ->filter()
@@ -289,14 +304,13 @@ class PatientResource extends JsonResource
             'refund_status' => $invoice?->refund_status ?? 'none',
 
             'admission_period_id' => $invoiceAdmissionLines->admission_period_id,
+            'period_code' => AdmissionPeriod::codeFor($invoiceAdmissionLines->admission_period_id),
             'parent_admission_period_id' => $invoiceAdmissionLines->admissionPeriod?->parent_admission_period_id,
             'accommodation_status' => $invoiceAdmissionLines->status,
             'accommodation_reason' => $invoiceAdmissionLines->admissionPeriod?->reason,
             'period_start' => $invoiceAdmissionLines->admissionPeriod?->start_date,
             'period_end' => $invoiceAdmissionLines->admissionPeriod?->end_date,
-            // When the move was made, as opposed to when its billing starts.
             'moved_at' => $invoiceAdmissionLines->admissionPeriod?->created_at,
-
             'contract' => $this->formatContract($invoiceAdmissionLines->branchContract),
         ];
     }

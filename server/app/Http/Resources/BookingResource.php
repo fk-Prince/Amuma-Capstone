@@ -19,8 +19,10 @@ class BookingResource extends JsonResource
 
         $existingPatientId = $data['patient']['patient_id'] ?? null;
 
-        $patientUuid = $this->patientsBooking->first()?->uuid
-            ?? ($existingPatientId ? Patient::find($existingPatientId)?->uuid : null);
+        $patientModel = $this->patientsBooking->first()
+            ?? ($existingPatientId ? Patient::find($existingPatientId) : null);
+
+        $patientUuid = $patientModel?->uuid;
 
         return [
             'booking_id' => $this->booking_id,
@@ -36,6 +38,7 @@ class BookingResource extends JsonResource
 
             'patient' => [
                 'uuid' => $patientUuid,
+                'patient_code' => $patientModel?->patient_code,
                 'patient_id' => $existingPatientId,
                 'first_name' => $data['patient']['first_name'] ?? null,
                 'middle_name' => $data['patient']['middle_name'] ?? null,

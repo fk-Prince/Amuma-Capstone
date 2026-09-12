@@ -1,5 +1,4 @@
 import { useBranchStore } from "~/stores/branch";
-import { useRoute } from "vue-router";
 
 
 export const handleMenuClick = async (item: any) => {
@@ -29,7 +28,17 @@ export const handleMenuClick = async (item: any) => {
     }
 };
 
-export const profileMenuDropDownList = [
+interface ProfileMenuItem {
+    icon: string;
+    label: string;
+    to?: string;
+    action?: string;
+    types?: string[];
+    requires?: string[];
+    requiresAny?: string[];
+}
+
+export const profileMenuDropDownList: ProfileMenuItem[] = [
     { icon: "user", label: "My profile", to: "/profile" },
     {
         icon: "user",

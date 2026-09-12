@@ -7,7 +7,7 @@ export default defineNuxtRouteMiddleware((to) => {
     if (user.value?.isEmployee || user.value?.isSystemOwner) {
         const { warning } = useToast();
         const role = user.value.isEmployee ? "Employee" : "Platform admin";
-        warning("Booking Access Restricted", `${role} accounts cannot create bookings, Please use your personal email instead.`);
+        warning("Booking Access Restricted", `${role} accounts cannot make a bookings, Please use your personal email instead.`);
 
         if (to.path.endsWith("/details")) {
             return navigateTo("/");

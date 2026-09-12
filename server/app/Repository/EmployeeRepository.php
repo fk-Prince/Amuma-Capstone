@@ -364,7 +364,7 @@ class EmployeeRepository
             $employee = $employeeBranch->employees;
 
             $employee->formatted_assignment_type = match (strtolower($employeeBranch->assignment_type)) {
-                'both' => 'Homecare + Inhouse Facility',
+                'both' => 'Homecare & Inhouse Facility',
                 'homecare', 'online' => 'Homecare',
                 'facility', 'inhouse facility' => 'Inhouse Facility',
                 default => 'Not yet Assigned',
