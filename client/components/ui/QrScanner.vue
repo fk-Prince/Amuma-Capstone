@@ -123,7 +123,7 @@ function onError(err: Error) {
                 class="absolute inset-0 flex items-center justify-center bg-black/50"
             >
                 <div
-                    class="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-medium text-gray-800"
+                    class="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-medium text-gray-800 dark:text-gray-100"
                 >
                     <svg
                         class="h-4 w-4 animate-spin"

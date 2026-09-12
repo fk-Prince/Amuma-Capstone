@@ -7,14 +7,23 @@
     />
 
     <aside
-        class="group fixed inset-y-0 left-0 z-40 flex h-full w-64 shrink-0 flex-col overflow-hidden border-r border-gray-100 dark:border-white/10 bg-white dark:bg-secondary transition-transform duration-200 ease-in-out lg:static lg:z-20 lg:w-[76px] lg:translate-x-0 lg:transition-[width] lg:hover:w-64"
-        :class="open ? 'translate-x-0' : '-translate-x-full'"
+        class="group fixed inset-y-3 z-40 flex w-64 shrink-0 flex-col overflow-hidden rounded-3xl bg-white dark:bg-secondary-900 shadow-[0_20px_45px_-18px_rgba(15,23,42,0.18)] ring-1 ring-black/[0.04] dark:ring-white/[0.06] transition-[transform,width] duration-200 ease-in-out lg:static lg:inset-y-0 lg:my-4 lg:h-[calc(100dvh-2rem)] lg:w-[84px] lg:translate-x-0 lg:hover:w-64"
+        :class="[
+            sidebarPosition === 'right'
+                ? 'right-3 lg:right-auto lg:order-last'
+                : 'left-3 lg:left-auto',
+            open
+                ? 'translate-x-0'
+                : sidebarPosition === 'right'
+                  ? 'translate-x-[120%] lg:translate-x-0'
+                  : '-translate-x-[120%] lg:translate-x-0',
+        ]"
     >
         <div
             class="flex shrink-0 items-center justify-between px-[19px] pt-4 pb-3"
         >
             <NuxtLink
-                to="/"
+                to="/portal/overview"
                 class="flex items-center gap-2.5"
                 @click="emit('close')"
             >
@@ -23,20 +32,16 @@
                     alt="AMUMA"
                     class="w-9 h-9 rounded-lg object-contain shrink-0"
                 />
-                <div
-                    class="whitespace-nowrap leading-tight transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
+                <p
+                    class="font-extrabold text-primary-500 text-2xl tracking-wide leading-tight whitespace-nowrap [text-shadow:0_4px_8px_rgb(49_130_237_/_35%)] transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
                 >
-                    <p
-                        class="font-extrabold text-primary-500 text-2xl tracking-wide [text-shadow:0_4px_8px_rgb(49_130_237_/_35%)]"
-                    >
-                        AMUMA
-                    </p>
-                </div>
+                    AMUMA
+                </p>
             </NuxtLink>
 
             <button
                 type="button"
-                class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-white/40 dark:hover:bg-white/10 dark:hover:text-white/80 lg:hidden"
+                class="rounded-lg p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-gray-300 lg:hidden"
                 aria-label="Close navigation"
                 @click="emit('close')"
             >
@@ -47,31 +52,40 @@
         <nav
             class="sidebar-scroll flex-1 px-3.5 space-y-1.5 mt-5 overflow-y-auto overflow-x-hidden"
         >
-            <NuxtLink
-                v-for="item in navItems"
-                :key="item.to"
-                :to="item.to"
-                class="w-full flex items-center gap-3 lg:justify-center lg:gap-0 lg:px-0 lg:group-hover:justify-start lg:group-hover:gap-3 lg:group-hover:px-[13px] px-[13px] py-3 rounded-xl text-sm font-medium transition-colors"
-                :class="
-                    isActive(item.to)
-                        ? 'bg-primary-500 text-white shadow-sm'
-                        : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-white/40 dark:hover:bg-white/5 dark:hover:text-white/80'
-                "
-                @click="emit('close')"
-            >
-                <component :is="item.icon" class="w-[18px] h-[18px] shrink-0" />
-                <span
-                    class="flex-1 lg:flex-none lg:w-0 lg:group-hover:flex-1 lg:group-hover:w-auto text-left whitespace-nowrap overflow-hidden transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
-                    >{{ item.label }}</span
+            <template v-for="(section, i) in groupedMenus" :key="i">
+                <p
+                    v-if="section.label"
+                    class="px-[13px] text-[10px] font-semibold uppercase tracking-wider text-gray-300 dark:text-gray-500 whitespace-nowrap transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
+                    :class="i === 0 ? 'pb-1' : 'pt-3 pb-1'"
                 >
-            </NuxtLink>
+                    {{ section.label }}
+                </p>
+
+                <NuxtLink
+                    v-for="item in section.items"
+                    :key="item.to"
+                    :to="item.to"
+                    class="w-full flex items-center gap-3 lg:justify-center lg:gap-0 lg:px-0 lg:group-hover:justify-start lg:group-hover:gap-3 lg:group-hover:px-[13px] px-[13px] py-3 rounded-xl text-sm font-medium transition-colors"
+                    :class="
+                        isActive(item.to)
+                            ? 'bg-primary-500 text-white shadow-sm'
+                            : 'text-gray-400 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-gray-200'
+                    "
+                    @click="emit('close')"
+                >
+                    <component :is="item.icon" class="w-[18px] h-[18px] shrink-0" />
+                    <span
+                        class="flex-1 lg:flex-none lg:w-0 lg:group-hover:flex-1 lg:group-hover:w-auto text-left whitespace-nowrap overflow-hidden transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
+                        >{{ item.label }}</span
+                    >
+                </NuxtLink>
+            </template>
         </nav>
 
-        <div
-            class="px-3.5 pb-6 pt-3 shrink-0 border-t border-gray-50 dark:border-white/10"
-        >
+        <div class="px-3.5 pb-4 pt-3 shrink-0 border-t border-gray-50 dark:border-white/10">
             <button
-                class="w-full flex items-center gap-3 px-[13px] py-3 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-white/40 dark:hover:bg-white/5 dark:hover:text-white/80"
+                type="button"
+                class="w-full flex items-center gap-3 lg:justify-center lg:gap-0 lg:px-0 lg:group-hover:justify-start lg:group-hover:gap-3 lg:group-hover:px-[13px] px-[13px] py-3 rounded-xl text-sm font-medium text-gray-400 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-gray-200"
             >
                 <LogOut class="w-[18px] h-[18px] shrink-0" />
                 <span
@@ -85,7 +99,7 @@
 
 <script setup lang="ts">
 import logo from "assets/logo/logo.png";
-import { watch } from "vue";
+import { computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import {
     ClipboardList,
@@ -100,6 +114,7 @@ import {
     LogOut,
     X,
 } from "lucide-vue-next";
+import { useSidebarPosition } from "~/composables/useSidebarPosition";
 
 defineProps<{
     open?: boolean;
@@ -110,18 +125,45 @@ const emit = defineEmits<{
 }>();
 
 const route = useRoute();
+const sidebarPosition = useSidebarPosition();
 
-const navItems = [
-    { label: "Bookings", to: "/portal/bookings", icon: ClipboardList },
-    { label: "Overview", to: "/portal/overview", icon: LayoutGrid },
-    { label: "My Loved Ones", to: "/portal/loved-ones", icon: Users },
-    { label: "Monitoring", to: "/portal/monitoring", icon: Camera },
-    { label: "Messages", to: "/portal/messages", icon: MessageSquare },
-    { label: "Balance", to: "/portal/balance", icon: CreditCard },
-    { label: "Schedule", to: "/portal/schedule", icon: Calendar },
-    { label: "Medications", to: "/portal/medications", icon: Pill },
-    { label: "Updates", to: "/portal/updates", icon: Bell },
+interface MenuItem {
+    label: string;
+    to: string;
+    icon?: any;
+    group?: string;
+}
+
+const navItems: MenuItem[] = [
+    { label: "Overview", to: "/portal/overview", icon: LayoutGrid, group: "Overview" },
+    { label: "Bookings", to: "/portal/bookings", icon: ClipboardList, group: "Overview" },
+    { label: "My Loved Ones", to: "/portal/loved-ones", icon: Users, group: "Overview" },
+
+    { label: "Monitoring", to: "/portal/monitoring", icon: Camera, group: "Care" },
+    { label: "Medications", to: "/portal/medications", icon: Pill, group: "Care" },
+    { label: "Schedule", to: "/portal/schedule", icon: Calendar, group: "Care" },
+    { label: "Messages", to: "/portal/messages", icon: MessageSquare, group: "Care" },
+
+    { label: "Balance", to: "/portal/balance", icon: CreditCard, group: "Account" },
+    { label: "Updates", to: "/portal/updates", icon: Bell, group: "Account" },
 ];
+
+const groupedMenus = computed(() => {
+    const groups: { label: string | null; items: MenuItem[] }[] = [];
+
+    for (const item of navItems) {
+        const label = item.group ?? null;
+        const last = groups[groups.length - 1];
+
+        if (last && last.label === label) {
+            last.items.push(item);
+        } else {
+            groups.push({ label, items: [item] });
+        }
+    }
+
+    return groups;
+});
 
 watch(
     () => route.path,

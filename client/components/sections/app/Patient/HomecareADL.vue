@@ -1,15 +1,15 @@
 <template>
-    <div class="rounded-2xl bg-white font-sans">
+    <div class="rounded-2xl bg-white font-sans dark:bg-secondary">
         <div
             v-if="variant !== 3"
             class="flex flex-col gap-3 p-4 sm:p-5 sm:flex-row sm:items-center sm:justify-between"
         >
             <div>
-                <h3 class="text-base font-semibold text-secondary">
+                <h3 class="text-base font-semibold text-secondary dark:text-white">
                     Online Schedule Audit Log
                 </h3>
 
-                <p class="mt-0.5 text-sm text-muted">
+                <p class="mt-0.5 text-sm text-muted dark:text-gray-400">
                     QR check-in / check-out history for scheduled visits.
                 </p>
             </div>
@@ -28,7 +28,7 @@
                         v-model="search"
                         type="text"
                         placeholder="Search employee or schedule code..."
-                        class="w-full rounded-lg border border-muted-light py-2 pl-3 pr-3 text-sm text-secondary focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary"
+                        class="w-full rounded-lg border border-muted-light py-2 pl-3 pr-3 text-sm text-secondary focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary dark:text-white"
                     />
                 </div>
             </div>
@@ -44,7 +44,7 @@
 
         <div
             v-else-if="!filteredLogs.length"
-            class="p-12 text-center text-sm text-muted"
+            class="p-12 text-center text-sm text-muted dark:text-gray-400"
         >
             {{
                 variant === 3
@@ -61,11 +61,11 @@
                 >
                     <div class="flex items-center gap-2">
                         <CalendarClock class="h-4 w-4 text-primary" />
-                        <p class="text-sm font-semibold text-secondary">
+                        <p class="text-sm font-semibold text-secondary dark:text-white">
                             {{ group.title }}
                         </p>
                     </div>
-                    <span class="text-xs text-muted">
+                    <span class="text-xs text-muted dark:text-gray-400">
                         {{ group.logs.length }} upcoming
                     </span>
                 </div>
@@ -73,7 +73,7 @@
                 <div
                     v-for="log in group.logs"
                     :key="rowKey(log)"
-                    class="rounded-xl border border-muted-light bg-white overflow-hidden"
+                    class="rounded-xl border border-muted-light bg-white overflow-hidden dark:bg-secondary"
                 >
                     <button
                         type="button"
@@ -87,7 +87,7 @@
                     >
                         <div class="flex items-start gap-3 min-w-0">
                             <span
-                                class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted transition-transform"
+                                class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted transition-transform dark:text-gray-400"
                                 :class="isExpanded(log) ? 'rotate-180' : ''"
                             >
                                 <ChevronDown class="h-4 w-4" />
@@ -95,19 +95,19 @@
 
                             <div class="min-w-0">
                                 <h4
-                                    class="text-xl font-semibold text-secondary"
+                                    class="text-xl font-semibold text-secondary dark:text-white"
                                 >
                                     {{ log.schedule_code }}
                                 </h4>
 
-                                <p class="text-[14px] text-muted">
+                                <p class="text-[14px] text-muted dark:text-gray-400">
                                     {{ formatDateTime(log.scheduled_at) }}
                                 </p>
                                 <p
-                                    class="flex min-w-0 items-center gap-1.5 text-[13px] text-muted"
+                                    class="flex min-w-0 items-center gap-1.5 text-[13px] text-muted dark:text-gray-400"
                                 >
                                     <MapPinned
-                                        class="w-3.5 h-3.5 text-muted shrink-0"
+                                        class="w-3.5 h-3.5 text-muted shrink-0 dark:text-gray-400"
                                     />
                                     <span class="min-w-0 truncate">{{
                                         log.address
@@ -228,7 +228,7 @@
                                         log.status === 'missed',
                                 }"
                             >
-                                <p class="text-[10px] uppercase text-muted">
+                                <p class="text-[10px] uppercase text-muted dark:text-gray-400">
                                     Status
                                 </p>
 
@@ -266,7 +266,7 @@
                                 >
                                     <p
                                         v-if="log.assignees.length"
-                                        class="text-xs font-semibold uppercase text-muted"
+                                        class="text-xs font-semibold uppercase text-muted dark:text-gray-400"
                                     >
                                         Assigned Medical Staff
                                     </p>
@@ -285,7 +285,7 @@
                                                 />
                                                 <div
                                                     v-else
-                                                    class="flex h-10 w-10 items-center justify-center rounded-full bg-muted-light text-sm font-semibold text-muted"
+                                                    class="flex h-10 w-10 items-center justify-center rounded-full bg-muted-light text-sm font-semibold text-muted dark:text-gray-400"
                                                 >
                                                     {{
                                                         initials(assignee.full_name)
@@ -294,7 +294,7 @@
 
                                                 <div class="min-w-0">
                                                     <p
-                                                        class="truncate text-sm font-semibold text-secondary"
+                                                        class="truncate text-sm font-semibold text-secondary dark:text-white"
                                                     >
                                                         {{ assignee.full_name }}
                                                     </p>
@@ -303,7 +303,7 @@
                                                         v-if="
                                                             assignee.employee_role
                                                         "
-                                                        class="text-xs text-muted capitalize"
+                                                        class="text-xs text-muted capitalize dark:text-gray-400"
                                                     >
                                                         {{
                                                             assignee.employee_role ??
@@ -315,7 +315,7 @@
                                                         v-if="
                                                             assignee.phone_number
                                                         "
-                                                        class="flex items-center gap-1 text-[11px] text-muted"
+                                                        class="flex items-center gap-1 text-[11px] text-muted dark:text-gray-400"
                                                     >
                                                         <Phone
                                                             class="h-3 w-3 shrink-0"
@@ -327,7 +327,7 @@
 
                                                     <p
                                                         v-if="assignee.email"
-                                                        class="flex min-w-0 items-center gap-1 text-[11px] text-muted"
+                                                        class="flex min-w-0 items-center gap-1 text-[11px] text-muted dark:text-gray-400"
                                                     >
                                                         <Mail
                                                             class="h-3 w-3 shrink-0"
@@ -381,7 +381,7 @@
                                                 Service is unassigned
                                             </p>
 
-                                            <p class="text-xs text-muted">
+                                            <p class="text-xs text-muted dark:text-gray-400">
                                                 No employee has been assigned
                                                 yet
                                             </p>
@@ -394,7 +394,7 @@
                                 >
                                     <div>
                                         <p
-                                            class="text-[11px] uppercase text-muted"
+                                            class="text-[11px] uppercase text-muted dark:text-gray-400"
                                         >
                                             Currently Total Hours Worked
                                         </p>
@@ -414,13 +414,13 @@
 
                                 <div class="mt-5 space-y-3 pb-5">
                                     <p
-                                        class="text-xs font-semibold uppercase text-muted"
+                                        class="text-xs font-semibold uppercase text-muted dark:text-gray-400"
                                     >
                                         QR Scan History
                                     </p>
                                     <div
                                         v-if="!log.online_logs.length"
-                                        class="rounded-lg border border-muted-light bg-muted-light/40 p-4 text-sm text-muted"
+                                        class="rounded-lg border border-muted-light bg-muted-light/40 p-4 text-sm text-muted dark:text-gray-400"
                                     >
                                         No scan history available
                                     </div>
@@ -442,7 +442,7 @@
                                             />
                                             <div
                                                 v-else
-                                                class="flex h-6 w-6 items-center justify-center rounded-full bg-muted-light text-[10px] font-semibold text-muted"
+                                                class="flex h-6 w-6 items-center justify-center rounded-full bg-muted-light text-[10px] font-semibold text-muted dark:text-gray-400"
                                             >
                                                 {{
                                                     initials(scan.employee_name)
@@ -450,7 +450,7 @@
                                             </div>
 
                                             <p
-                                                class="text-xs font-medium text-secondary"
+                                                class="text-xs font-medium text-secondary dark:text-white"
                                             >
                                                 {{ scan.employee_name }}
                                             </p>
@@ -461,13 +461,13 @@
                                         >
                                             <div>
                                                 <p
-                                                    class="text-[11px] uppercase text-muted"
+                                                    class="text-[11px] uppercase text-muted dark:text-gray-400"
                                                 >
                                                     Check-in
                                                 </p>
 
                                                 <p
-                                                    class="text-sm text-secondary"
+                                                    class="text-sm text-secondary dark:text-white"
                                                 >
                                                     {{
                                                         scan.in_timestamp
@@ -488,13 +488,13 @@
 
                                             <div>
                                                 <p
-                                                    class="text-[11px] uppercase text-muted"
+                                                    class="text-[11px] uppercase text-muted dark:text-gray-400"
                                                 >
                                                     Check-out
                                                 </p>
 
                                                 <p
-                                                    class="text-sm text-secondary"
+                                                    class="text-sm text-secondary dark:text-white"
                                                 >
                                                     {{
                                                         scan.out_timestamp
@@ -515,13 +515,13 @@
 
                                             <div>
                                                 <p
-                                                    class="text-[11px] uppercase text-muted"
+                                                    class="text-[11px] uppercase text-muted dark:text-gray-400"
                                                 >
                                                     Worked Hours
                                                 </p>
 
                                                 <p
-                                                    class="text-sm font-semibold text-secondary"
+                                                    class="text-sm font-semibold text-secondary dark:text-white"
                                                 >
                                                     {{ duration(scan) }}
                                                 </p>
@@ -529,7 +529,7 @@
 
                                             <!-- <div>
                                                 <p
-                                                    class="text-[11px] uppercase text-muted"
+                                                    class="text-[11px] uppercase text-muted dark:text-gray-400"
                                                 >
                                                     Status
                                                 </p>
@@ -553,7 +553,7 @@
 
                                         <div
                                             v-if="scan.notes"
-                                            class="mt-3 border-t border-muted-light pt-3 text-xs text-muted"
+                                            class="mt-3 border-t border-muted-light pt-3 text-xs text-muted dark:text-gray-400"
                                         >
                                             {{ scan.notes }}
                                         </div>

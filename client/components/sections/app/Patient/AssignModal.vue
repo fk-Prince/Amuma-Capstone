@@ -9,14 +9,14 @@
                 <Transition name="assign-modal-panel" appear>
                     <div
                         v-if="modelValue"
-                        class="flex max-h-[85vh] w-full max-w-lg flex-col rounded-2xl border border-slate-100 bg-white shadow-xl"
+                        class="flex max-h-[85vh] w-full max-w-lg flex-col rounded-2xl border border-slate-100 bg-white shadow-xl dark:bg-secondary dark:border-white/10"
                     >
                         <div
-                            class="flex items-start justify-between border-b border-slate-100 px-5 py-4"
+                            class="flex items-start justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10"
                         >
                             <div>
                                 <h2
-                                    class="text-sm font-semibold text-slate-800"
+                                    class="text-sm font-semibold text-slate-800 dark:text-gray-100"
                                 >
                                     Assign Now
                                 </h2>
@@ -27,7 +27,7 @@
 
                             <button
                                 type="button"
-                                class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+                                class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 dark:hover:bg-white/5"
                                 @click="handleCancel"
                             >
                                 <X class="h-4 w-4" />
@@ -38,14 +38,14 @@
                             <div
                                 v-for="row in serviceRows"
                                 :key="row.block.scheduleServiceId"
-                                class="rounded-xl border border-slate-100 p-3"
+                                class="rounded-xl border border-slate-100 p-3 dark:border-white/10"
                             >
                                 <div
                                     class="mb-2.5 flex items-start justify-between gap-3"
                                 >
                                     <div class="min-w-0">
                                         <p
-                                            class="truncate text-xs font-semibold text-slate-800"
+                                            class="truncate text-xs font-semibold text-slate-800 dark:text-gray-100"
                                         >
                                             {{ row.block.serviceName }}
                                         </p>
@@ -68,7 +68,7 @@
                                 <div class="relative">
                                     <select
                                         v-model="row.employeeId"
-                                        class="w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-100"
+                                        class="w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-100 dark:bg-secondary dark:text-gray-200 dark:border-white/10"
                                     >
                                         <option :value="null" disabled>
                                             Select employee
@@ -96,7 +96,7 @@
                         </div>
 
                         <div
-                            class="flex items-center justify-between gap-3 border-t border-slate-100 px-5 py-4"
+                            class="flex items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 dark:border-white/10"
                         >
                             <p class="text-[11px] text-slate-400">
                                 {{ assignedCount }} of
@@ -106,7 +106,7 @@
                             <div class="flex items-center gap-2">
                                 <button
                                     type="button"
-                                    class="rounded-lg px-3.5 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50"
+                                    class="rounded-lg px-3.5 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 dark:text-gray-400 dark:hover:bg-white/5"
                                     @click="handleCancel"
                                 >
                                     Cancel

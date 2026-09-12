@@ -1,6 +1,6 @@
 <template>
     <div class="w-full shrink-0">
-        <div class="bg-white border border-slate-200 p-5 flex flex-col">
+        <div class="bg-white border border-slate-200 p-5 flex flex-col dark:bg-secondary dark:border-white/10">
             <div
                 class="flex items-center justify-between"
                 :class="{ 'mb-5': open }"
@@ -17,7 +17,7 @@
                     </div>
 
                     <div class="text-left">
-                        <h3 class="font-semibold text-slate-800">
+                        <h3 class="font-semibold text-slate-800 dark:text-gray-100">
                             Billing Overview
                         </h3>
                         <p class="text-xs text-slate-400 mt-0.5">
@@ -28,7 +28,7 @@
 
                 <div class="flex items-center gap-3">
                     <div
-                        class="flex items-center rounded-xl border border-slate-200 bg-slate-50 px-1 py-1 shrink-0"
+                        class="flex items-center rounded-xl border border-slate-200 bg-slate-50 px-1 py-1 shrink-0 dark:bg-secondary dark:border-white/10"
                     >
                         <button
                             type="button"
@@ -39,7 +39,7 @@
                         </button>
 
                         <span
-                            class="min-w-[120px] text-center text-sm font-medium text-slate-700"
+                            class="min-w-[120px] text-center text-sm font-medium text-slate-700 dark:text-gray-200"
                         >
                             {{ currentMonthLabel }}
                         </span>
@@ -55,7 +55,7 @@
 
                     <button
                         type="button"
-                        class="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors shrink-0"
+                        class="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors shrink-0 dark:hover:bg-white/5"
                         @click="open = !open"
                     >
                         <svg
@@ -92,7 +92,7 @@
                             <div
                                 v-for="metric in metrics"
                                 :key="metric.key"
-                                class="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 hover:border-primary-200 hover:shadow-sm transition-all duration-200"
+                                class="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 hover:border-primary-200 hover:shadow-sm transition-all duration-200 dark:bg-white/5 dark:border-white/10"
                             >
                                 <template v-if="props.loading">
                                     <div class="animate-pulse">
@@ -140,7 +140,7 @@
                                     </div>
 
                                     <p
-                                        class="mt-2.5 text-2xl font-semibold text-slate-800 tabular-nums"
+                                        class="mt-2.5 text-2xl font-semibold text-slate-800 tabular-nums dark:text-gray-100"
                                     >
                                         {{ metric.display }}
                                     </p>
@@ -155,7 +155,7 @@
                             </div>
                         </div>
 
-                        <div class="mt-5 border-t border-slate-100 pt-4">
+                        <div class="mt-5 border-t border-slate-100 pt-4 dark:border-white/10">
                             <p
                                 class="text-xs font-medium uppercase tracking-wide text-slate-400 mb-3"
                             >
@@ -163,7 +163,7 @@
                             </p>
 
                             <div
-                                class="rounded-xl border border-slate-100 bg-gradient-to-br from-slate-50 to-primary-50/40 p-4 flex items-center justify-between"
+                                class="rounded-xl border border-slate-100 bg-gradient-to-br from-slate-50 to-primary-50/40 p-4 flex items-center justify-between dark:border-white/10"
                             >
                                 <template v-if="props.loading">
                                     <div class="animate-pulse w-full">

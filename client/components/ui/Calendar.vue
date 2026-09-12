@@ -56,7 +56,7 @@ function isToday(day: number | null) {
 </script>
 <template>
     <div
-        class="relative overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-sm p-4 w-full"
+        class="relative overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-sm p-4 w-full dark:bg-secondary dark:border-white/10"
     >
         <!-- Decorative background -->
         <div
@@ -68,7 +68,7 @@ function isToday(day: number | null) {
             <button
                 type="button"
                 @click="changeMonth(-1)"
-                class="h-9 w-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-primary-50 hover:text-primary transition"
+                class="h-9 w-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-primary-50 hover:text-primary transition dark:bg-secondary"
             >
                 <ChevronLeft class="h-5 w-5" />
             </button>
@@ -80,7 +80,7 @@ function isToday(day: number | null) {
                     {{ monthName }}
                 </div>
 
-                <span class="mt-1 text-sm font-semibold text-slate-700">
+                <span class="mt-1 text-sm font-semibold text-slate-700 dark:text-gray-200">
                     {{ year }}
                 </span>
             </div>
@@ -88,14 +88,14 @@ function isToday(day: number | null) {
             <button
                 type="button"
                 @click="changeMonth(1)"
-                class="h-9 w-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-primary-50 hover:text-primary transition"
+                class="h-9 w-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-primary-50 hover:text-primary transition dark:bg-secondary"
             >
                 <ChevronRight class="h-5 w-5" />
             </button>
         </div>
 
         <!-- Week header -->
-        <div class="grid grid-cols-7 mb-2 bg-slate-50 rounded-xl py-2">
+        <div class="grid grid-cols-7 mb-2 bg-slate-50 rounded-xl py-2 dark:bg-secondary">
             <div
                 v-for="day in weekDays"
                 :key="day"
@@ -126,24 +126,24 @@ function isToday(day: number | null) {
                 <!-- today dot -->
                 <span
                     v-if="isToday(day)"
-                    class="absolute bottom-1 h-1 w-1 rounded-full bg-white"
+                    class="absolute bottom-1 h-1 w-1 rounded-full bg-white dark:bg-secondary"
                 />
             </button>
         </div>
 
         <!-- Footer -->
         <div
-            class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between"
+            class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between dark:border-white/10"
         >
             <div class="flex items-center gap-2">
                 <span class="h-2 w-2 rounded-full bg-primary animate-pulse" />
 
-                <span class="text-xs text-slate-500"> Current day </span>
+                <span class="text-xs text-slate-500 dark:text-gray-400"> Current day </span>
             </div>
 
             <button
                 type="button"
-                class="px-3 py-1.5 rounded-lg bg-slate-50 text-xs font-medium text-slate-600 hover:bg-primary-50 hover:text-primary transition"
+                class="px-3 py-1.5 rounded-lg bg-slate-50 text-xs font-medium text-slate-600 hover:bg-primary-50 hover:text-primary transition dark:bg-secondary dark:text-gray-300"
                 @click="
                     currentDate = new Date(
                         today.getFullYear(),

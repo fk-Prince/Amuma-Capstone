@@ -95,7 +95,7 @@ function cardClasses(status?: string) {
 
 <template>
     <div class="space-y-6">
-        <section class="rounded-2xl bg-white p-6 shadow-sm">
+        <section class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary">
             <div class="flex items-start gap-4">
                 <div
                     class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary text-xl font-semibold text-white"
@@ -110,7 +110,7 @@ function cardClasses(status?: string) {
                         Patient Overview
                     </p>
 
-                    <h2 class="mt-1 text-xl font-semibold text-secondary">
+                    <h2 class="mt-1 text-xl font-semibold text-secondary dark:text-white">
                         {{ patient.full_name }}
                     </h2>
 
@@ -133,7 +133,7 @@ function cardClasses(status?: string) {
                             }}
                         </span>
                         <!-- <span
-                            class="rounded-full bg-muted-light px-3 py-1 text-xs font-medium text-secondary"
+                            class="rounded-full bg-muted-light px-3 py-1 text-xs font-medium text-secondary dark:text-white"
                         >
                             {{ patient.blood_type || "No blood type on file" }}
                         </span> -->
@@ -147,8 +147,8 @@ function cardClasses(status?: string) {
                 <div class="flex items-center gap-3">
                     <Calendar class="h-4 w-4 shrink-0 text-primary" />
                     <div>
-                        <p class="text-xs text-muted">Birthday</p>
-                        <p class="mt-0.5 text-sm font-medium text-secondary">
+                        <p class="text-xs text-muted dark:text-gray-400">Birthday</p>
+                        <p class="mt-0.5 text-sm font-medium text-secondary dark:text-white">
                             {{ formatDate(patient.date_of_birth) }}
                         </p>
                     </div>
@@ -157,8 +157,8 @@ function cardClasses(status?: string) {
                 <div class="flex items-center gap-3">
                     <Phone class="h-4 w-4 shrink-0 text-primary" />
                     <div>
-                        <p class="text-xs text-muted">Contact</p>
-                        <p class="mt-0.5 text-sm font-medium text-secondary">
+                        <p class="text-xs text-muted dark:text-gray-400">Contact</p>
+                        <p class="mt-0.5 text-sm font-medium text-secondary dark:text-white">
                             {{ patient.phone_number || "—" }}
                         </p>
                     </div>
@@ -167,8 +167,8 @@ function cardClasses(status?: string) {
                 <div class="flex items-center gap-3">
                     <Globe2 class="h-4 w-4 shrink-0 text-primary" />
                     <div>
-                        <p class="text-xs text-muted">Citizenship</p>
-                        <p class="mt-0.5 text-sm font-medium text-secondary">
+                        <p class="text-xs text-muted dark:text-gray-400">Citizenship</p>
+                        <p class="mt-0.5 text-sm font-medium text-secondary dark:text-white">
                             {{ patient.citizenship || "—" }}
                         </p>
                     </div>
@@ -181,8 +181,8 @@ function cardClasses(status?: string) {
                 <div class="flex items-center gap-3">
                     <Ruler class="h-4 w-4 shrink-0 text-primary" />
                     <div>
-                        <p class="text-xs text-muted">Height</p>
-                        <p class="mt-0.5 text-sm font-medium text-secondary">
+                        <p class="text-xs text-muted dark:text-gray-400">Height</p>
+                        <p class="mt-0.5 text-sm font-medium text-secondary dark:text-white">
                             {{ patient.height + " cm" || "—" }}
                         </p>
                     </div>
@@ -191,8 +191,8 @@ function cardClasses(status?: string) {
                 <div class="flex items-center gap-3">
                     <Weight class="h-4 w-4 shrink-0 text-primary" />
                     <div>
-                        <p class="text-xs text-muted">Weight</p>
-                        <p class="mt-0.5 text-sm font-medium text-secondary">
+                        <p class="text-xs text-muted dark:text-gray-400">Weight</p>
+                        <p class="mt-0.5 text-sm font-medium text-secondary dark:text-white">
                             {{ patient.weight + " kg" || "—" }}
                         </p>
                     </div>
@@ -201,8 +201,8 @@ function cardClasses(status?: string) {
                 <div class="flex items-center gap-3">
                     <Pill class="h-4 w-4 shrink-0 text-primary" />
                     <div>
-                        <p class="text-xs text-muted">Recorded Medications</p>
-                        <p class="mt-0.5 text-sm font-medium text-secondary">
+                        <p class="text-xs text-muted dark:text-gray-400">Recorded Medications</p>
+                        <p class="mt-0.5 text-sm font-medium text-secondary dark:text-white">
                             {{ patient.medications_count ?? 0 }}
                         </p>
                     </div>
@@ -211,8 +211,8 @@ function cardClasses(status?: string) {
                 <div class="flex items-center gap-3">
                     <HeartPulse class="h-4 w-4 shrink-0 text-primary" />
                     <div>
-                        <p class="text-xs text-muted">Recorded Vital Signs</p>
-                        <p class="mt-0.5 text-sm font-medium text-secondary">
+                        <p class="text-xs text-muted dark:text-gray-400">Recorded Vital Signs</p>
+                        <p class="mt-0.5 text-sm font-medium text-secondary dark:text-white">
                             {{ patient.vitals_count ?? 0 }}
                         </p>
                     </div>
@@ -224,8 +224,8 @@ function cardClasses(status?: string) {
                 <div class="flex items-center gap-3">
                     <MapPin class="h-4 w-4 shrink-0 text-primary" />
                     <div>
-                        <p class="text-xs text-muted">Location</p>
-                        <p class="mt-0.5 text-sm font-medium text-secondary">
+                        <p class="text-xs text-muted dark:text-gray-400">Location</p>
+                        <p class="mt-0.5 text-sm font-medium text-secondary dark:text-white">
                             {{
                                 patient.location?.full_address ||
                                 "No address recorded."
@@ -237,8 +237,8 @@ function cardClasses(status?: string) {
                 <div class="flex items-center gap-3">
                     <Droplet class="h-4 w-4 shrink-0 text-primary" />
                     <div>
-                        <p class="text-xs text-muted">Blood Type</p>
-                        <p class="mt-0.5 text-sm font-medium text-secondary">
+                        <p class="text-xs text-muted dark:text-gray-400">Blood Type</p>
+                        <p class="mt-0.5 text-sm font-medium text-secondary dark:text-white">
                             {{ patient.blood_type || "No blood type on file" }}
                         </p>
                     </div>
@@ -246,7 +246,7 @@ function cardClasses(status?: string) {
             </div>
 
             <div class="mt-6 border-t border-muted-light pt-6">
-                <p class="mb-2 text-xs text-muted">Allergies</p>
+                <p class="mb-2 text-xs text-muted dark:text-gray-400">Allergies</p>
                 <div class="flex flex-wrap gap-2">
                     <span
                         v-for="allergy in patient.allergies"
@@ -258,7 +258,7 @@ function cardClasses(status?: string) {
 
                     <span
                         v-if="!patient.allergies?.length"
-                        class="text-sm text-muted"
+                        class="text-sm text-muted dark:text-gray-400"
                     >
                         No known allergies
                     </span>
@@ -268,19 +268,19 @@ function cardClasses(status?: string) {
 
         <section
             v-if="latestAdmission"
-            class="rounded-2xl bg-white p-6 shadow-sm"
+            class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary"
         >
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-2">
                     <Building2 class="h-4 w-4 text-primary" />
-                    <h3 class="font-semibold text-secondary">
+                    <h3 class="font-semibold text-secondary dark:text-white">
                         Latest Admission
                     </h3>
                 </div>
 
                 <button
                     type="button"
-                    class="flex items-center gap-1.5 rounded-lg border border-muted-light px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-primary/40 hover:text-primary-600"
+                    class="flex items-center gap-1.5 rounded-lg border border-muted-light px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-primary/40 hover:text-primary-600 dark:text-white"
                     @click="goToAdmissionHistory"
                 >
                     <History class="h-3.5 w-3.5" />
@@ -297,7 +297,7 @@ function cardClasses(status?: string) {
                         <div>
                             <div class="flex items-center gap-1.5">
                                 <p
-                                    class="text-sm font-semibold capitalize text-secondary"
+                                    class="text-sm font-semibold capitalize text-secondary dark:text-white"
                                 >
                                     {{ latestAdmission.status }}
                                 </p>
@@ -309,7 +309,7 @@ function cardClasses(status?: string) {
                                             .includes('discharge') &&
                                         latestAdmission.end_date
                                     "
-                                    class="mt-0.5 text-xs text-muted"
+                                    class="mt-0.5 text-xs text-muted dark:text-gray-400"
                                 >
                                     at
                                     {{ formatDate(latestAdmission.end_date) }}
@@ -317,7 +317,7 @@ function cardClasses(status?: string) {
                             </div>
 
                             <div class="flex items-center gap-1">
-                                <p class="mt-0.5 text-xs text-muted">
+                                <p class="mt-0.5 text-xs text-muted dark:text-gray-400">
                                     {{
                                         isWaiting(latestAdmission.status)
                                             ? `Waiting for admission at ${formatDate(latestAdmission.admitted_at)}`
@@ -330,7 +330,7 @@ function cardClasses(status?: string) {
                                         isAdmitted(latestAdmission.status) &&
                                         latestAdmission.end_date
                                     "
-                                    class="mt-0.5 text-xs text-muted"
+                                    class="mt-0.5 text-xs text-muted dark:text-gray-400"
                                 >
                                     till
                                     {{ formatDate(latestAdmission.end_date) }}
@@ -353,8 +353,8 @@ function cardClasses(status?: string) {
                         <div class="flex items-center gap-2">
                             <Building2 class="h-3.5 w-3.5 text-primary" />
                             <div>
-                                <p class="text-[11px] text-muted">Floor</p>
-                                <p class="text-sm font-medium text-secondary">
+                                <p class="text-[11px] text-muted dark:text-gray-400">Floor</p>
+                                <p class="text-sm font-medium text-secondary dark:text-white">
                                     {{ latestAdmission.room?.floor || "—" }}
                                 </p>
                             </div>
@@ -363,8 +363,8 @@ function cardClasses(status?: string) {
                         <div class="flex items-center gap-2">
                             <DoorOpen class="h-3.5 w-3.5 text-primary" />
                             <div>
-                                <p class="text-[11px] text-muted">Room</p>
-                                <p class="text-sm font-medium text-secondary">
+                                <p class="text-[11px] text-muted dark:text-gray-400">Room</p>
+                                <p class="text-sm font-medium text-secondary dark:text-white">
                                     {{ latestAdmission.room?.room_no || "—" }}
                                 </p>
                             </div>
@@ -373,8 +373,8 @@ function cardClasses(status?: string) {
                         <div class="flex items-center gap-2">
                             <BedDouble class="h-3.5 w-3.5 text-primary" />
                             <div>
-                                <p class="text-[11px] text-muted">Bed</p>
-                                <p class="text-sm font-medium text-secondary">
+                                <p class="text-[11px] text-muted dark:text-gray-400">Bed</p>
+                                <p class="text-sm font-medium text-secondary dark:text-white">
                                     {{ latestAdmission.bed?.bed_no || "—" }}
                                 </p>
                             </div>
@@ -385,16 +385,16 @@ function cardClasses(status?: string) {
                         v-if="latestAdmission.current_contract"
                         class="mt-4 border-t border-muted-light pt-4"
                     >
-                        <p class="mb-2 text-xs font-semibold text-secondary">
+                        <p class="mb-2 text-xs font-semibold text-secondary dark:text-white">
                             Current Contract
                         </p>
 
                         <div class="space-y-2">
                             <div
-                                class="rounded-lg bg-white px-3 py-2 border border-muted-light"
+                                class="rounded-lg bg-white px-3 py-2 border border-muted-light dark:bg-secondary"
                             >
                                 <div class="flex justify-between">
-                                    <span class="text-xs text-muted">
+                                    <span class="text-xs text-muted dark:text-gray-400">
                                         {{
                                             latestAdmission.current_contract
                                                 ?.category || "—"
@@ -413,7 +413,7 @@ function cardClasses(status?: string) {
                                     </span>
                                 </div>
 
-                                <div class="mt-1 text-xs text-secondary">
+                                <div class="mt-1 text-xs text-secondary dark:text-white">
                                     {{
                                         latestAdmission.current_contract
                                             ?.accommodation_type || "—"

@@ -1,156 +1,139 @@
 <script setup lang="ts">
+import heroImage from "~/assets/logo/signinLogo.png";
 import SignupForm from "~/components/forms/SignupForm.vue";
-import signinLogo from "~/assets/logo/signinLogo.png";
+
+// navVariant/navTheme are already set by pages/auth/signup.vue's
+// definePageMeta — DefaultNavbar renders the pill nav for us, so this
+// section only handles the hero + form.
 </script>
 
 <template>
     <div
-        class="grid grid-cols-1 md:grid-cols-[55%_40%] bg-slate-100 dark:bg-secondary font-primary min-h-screen"
+        class="no-scrollbar relative h-screen w-full overflow-y-auto overflow-x-hidden bg-[#eaf2fd] dark:bg-secondary-950"
     >
-        <img
-            :src="signinLogo"
-            alt="Background"
-            class="absolute inset-0 w-full h-full object-cover md:hidden"
-        />
+        <div class="absolute inset-0 hidden md:block">
+            <img :src="heroImage" alt="" class="h-full w-full object-cover" />
+            <div class="absolute inset-0 bg-blue-950/45 mix-blend-multiply"></div>
+            <div
+                class="absolute inset-0 bg-gradient-to-r from-blue-950/55 via-blue-900/25 to-[#eaf2fd] dark:to-secondary-950"
+            ></div>
+            <div
+                class="absolute inset-y-0 right-0 w-2/5 bg-gradient-to-r from-transparent to-[#eaf2fd] dark:to-secondary-950"
+            ></div>
+            <div
+                class="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#eaf2fd]/80 dark:from-secondary-950/80 to-transparent"
+            ></div>
+        </div>
+
+        <!-- Content -->
         <div
-            class="absolute inset-0 md:hidden bg-gradient-to-br from-slate-900/75 via-blue-950/60 to-blue-900/50"
-        />
-
-        <!-- rounded-r-[280px] -->
-        <section class="relative hidden overflow-hidden md:flex">
-            <img
-                :src="signinLogo"
-                alt="Background"
-                class="absolute inset-0 w-full h-full object-cover"
-            />
-
+            class="relative z-10 flex min-h-screen w-full items-center justify-center px-6 pt-32 pb-12 sm:px-15 lg:justify-start lg:pl-[7%] lg:pr-[4%]"
+        >
             <div
-                class="absolute inset-0 bg-gradient-to-br from-slate-900/75 via-blue-950/60 to-blue-900/50"
-            />
-
-            <div
-                class="relative z-10 flex w-full flex-col justify-center gap-24 px-10 py-10 text-white md:px-20"
+                class="grid w-full max-w-[1400px] grid-cols-2 items-center gap-15 lg:grid-cols-[1fr_auto]"
             >
-                <div class="space-y-4">
-                    <p
-                        class="inline-block border-b-2 border-blue-500 pb-1.5 text-[0.65rem] uppercase tracking-[0.22em] text-blue-300"
-                    >
-                        Create Account
-                    </p>
+                <!-- Welcome column -->
+                <div
+                    class="hidden max-w-[440px] flex-col gap-8 text-white lg:flex"
+                >
+                    <div>
+                        <span
+                            class="inline-block border-b-2 border-primary pb-1 text-xs font-semibold tracking-wide text-blue-200"
+                        >
+                            Create account
+                        </span>
+                        <h1
+                            class="mt-4 text-4xl font-black leading-[1.1] xl:text-[2.5rem]"
+                        >
+                            Join <span class="text-blue-300">AMUMA</span>
+                            today.
+                        </h1>
+                        <p
+                            class="mt-4 max-w-[400px] text-sm leading-7 text-blue-100/90"
+                        >
+                            Create your account and start accessing all
+                            features designed to help you manage and monitor
+                            your services with ease.
+                        </p>
+                    </div>
 
-                    <h1
-                        class="text-4xl font-extrabold leading-[1.12] tracking-tight xl:text-5xl"
+                    <div
+                        class="flex flex-col gap-5 border-t border-white/20 pt-6"
                     >
-                        Join
-                        <span class="text-blue-400">AMUMA</span>
-                        <br />
-                        today.
-                    </h1>
+                        <div class="flex items-center gap-4">
+                            <span
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 backdrop-blur-md"
+                            >
+                                <svg
+                                    class="h-4.5 w-4.5 text-white"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path
+                                        d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
+                                    />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path
+                                        d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
+                                    />
+                                </svg>
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold leading-tight">
+                                    Quick & Easy Registration
+                                </p>
+                                <p class="mt-0.5 text-xs text-blue-100/70">
+                                    Set up your account in just a few simple
+                                    steps.
+                                </p>
+                            </div>
+                        </div>
 
-                    <p
-                        class="max-w-[38ch] text-sm leading-relaxed text-white/70"
-                    >
-                        Create your account and start accessing all features
-                        designed to help you manage and monitor your services
-                        with ease.
-                    </p>
+                        <div class="flex items-center gap-4">
+                            <span
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 backdrop-blur-md"
+                            >
+                                <svg
+                                    class="h-4.5 w-4.5 text-white"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path
+                                        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"
+                                    />
+                                </svg>
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold leading-tight">
+                                    Dedicated Support
+                                </p>
+                                <p class="mt-0.5 text-xs text-blue-100/70">
+                                    Get assistance whenever you need help.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <ul class="space-y-4 pt-7">
-                    <li class="flex items-start gap-3.5">
-                        <div
-                            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10"
-                        >
-                            <svg
-                                class="h-4 w-4 text-blue-300"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                            >
-                                <path
-                                    d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
-                                />
-                                <circle cx="9" cy="7" r="4" />
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                            </svg>
-                        </div>
-
-                        <div>
-                            <p class="text-sm font-bold">
-                                Quick & Easy Registration
-                            </p>
-                            <p
-                                class="mt-0.5 text-xs leading-snug text-white/60"
-                            >
-                                Set up your account in just a few simple steps.
-                            </p>
-                        </div>
-                    </li>
-
-                    <li class="flex items-start gap-3.5">
-                        <div
-                            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10"
-                        >
-                            <svg
-                                class="h-4 w-4 text-blue-300"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                            >
-                                <path
-                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.87a16 16 0 0 0 5.36 5.36l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"
-                                />
-                            </svg>
-                        </div>
-
-                        <div>
-                            <p class="text-sm font-bold">Dedicated Support</p>
-                            <p
-                                class="mt-0.5 text-xs leading-snug text-white/60"
-                            >
-                                Get assistance whenever you need help.
-                            </p>
-                        </div>
-                    </li>
-
-                    <li class="flex items-start gap-3.5">
-                        <div
-                            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10"
-                        >
-                            <svg
-                                class="h-4 w-4 text-blue-300"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                            >
-                                <path
-                                    d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-                                />
-                            </svg>
-                        </div>
-
-                        <div>
-                            <p class="text-sm font-bold">Trusted & Secure</p>
-                            <p
-                                class="mt-0.5 text-xs leading-snug text-white/60"
-                            >
-                                Your personal information is protected with
-                                enterprise-grade security.
-                            </p>
-                        </div>
-                    </li>
-                </ul>
+                <!-- Sign-up card -->
+                <div class="flex w-full max-w-[500px] justify-center lg:justify-end">
+                    <SignupForm />
+                </div>
             </div>
-        </section>
-
-        <section
-            class="relative z-10 flex min-h-screen items-center justify-center px-4 sm:px-6 pt-[106px] pb-12"
-        >
-            <SignupForm />
-        </section>
+        </div>
     </div>
 </template>
+
+<style scoped>
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+</style>

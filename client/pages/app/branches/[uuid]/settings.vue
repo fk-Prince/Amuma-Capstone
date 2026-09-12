@@ -83,11 +83,17 @@
                         v-model:setting="branchStore.activeBranch.settings"
                     />
 
+                    <BranchColorTab
+                        v-else-if="
+                            activeTab === 'color' && branchStore.activeBranch
+                        "
+                    />
+
                     <BranchRenewalTab
                         v-else-if="
                             activeTab === 'renewal' && branchStore.activeBranch
                         "
-                        :uuid="branchStore.activeBranch.uuid"
+                        :uuid="branchStore.activeBranch.uuid ?? ''"
                     />
                 </Transition>
             </div>
@@ -97,7 +103,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { Building2, Landmark, Image, Settings, RefreshCw } from "lucide-vue-next";
+import { Building2, Landmark, Image, Settings, RefreshCw, Palette } from "lucide-vue-next";
 
 import { useBranchStore } from "~/stores/branch";
 
@@ -105,6 +111,7 @@ import BranchGeneralTab from "~/components/sections/app/settings/BranchInfoTab.v
 import BranchAgencyTab from "~/components/sections/app/settings/BranchAgencyTab.vue";
 import BranchImagesTab from "~/components/sections/app/settings/BranchImagesTab.vue";
 import BranchOperationTab from "~/components/sections/app/settings/BranchOperationTab.vue";
+import BranchColorTab from "~/components/sections/app/settings/BranchColorTab.vue";
 import BranchRenewalTab from "~/components/sections/app/settings/BranchRenewalTab.vue";
 
 definePageMeta({
@@ -138,6 +145,11 @@ const tabs = [
         label: "Operation Settings",
         value: "operation",
         icon: Settings,
+    },
+    {
+        label: "Color Preferences",
+        value: "color",
+        icon: Palette,
     },
     {
         label: "Branch Renewal",

@@ -1,5 +1,6 @@
 <template>
-    <div class="min-h-screen bg-white pt-[100px]">
+    <NuxtLayout :name="accountLayout">
+    <div class="w-full bg-white">
         <div class="mx-auto w-full md:px-[5%] lg:px-[8%] px-5 pb-16 sm:px-8">
             <!-- Header -->
             <div
@@ -167,6 +168,7 @@
             </div>
         </div>
     </div>
+    </NuxtLayout>
 </template>
 
 <script setup lang="ts">
@@ -183,15 +185,16 @@ import {
 
 import { notificationService } from "~/api/notification/NotificationService";
 import { useAuthUser } from "~/composables/useAuthUser";
+import { useAccountLayout } from "~/composables/useAccountLayout";
 import { useToast } from "~/composables/useToast";
 import { notifcationFormatDate } from "~/utils/notification-time";
 import type { Notification } from "~/types/notification";
 
-// No layout: this page is reached from both the dashboard and the portal, so
-// it stands on its own the same way /profile does.
+const accountLayout = useAccountLayout();
+
 definePageMeta({
     middleware: "auth-client",
-    navVariant: 1,
+    layout: false,
 });
 
 useHead({ title: "Notifications" });

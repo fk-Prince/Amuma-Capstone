@@ -86,7 +86,6 @@ useHead({ title: "Product" });
 
 definePageMeta({
     layout: "default",
-    navVariant: 1,
     navTheme: "light",
 });
 

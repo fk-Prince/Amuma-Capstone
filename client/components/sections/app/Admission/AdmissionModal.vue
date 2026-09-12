@@ -24,7 +24,7 @@
                 >
                     <div
                         v-if="open"
-                        class="bg-white rounded-2xl shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+                        class="bg-white rounded-2xl shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden dark:bg-secondary"
                         role="dialog"
                         aria-modal="true"
                         aria-label="Patient details"
@@ -59,7 +59,7 @@
                                     >
                                         {{ patient?.full_name || "Patient" }}
                                     </h2>
-                                    <p class="text-xs text-muted mt-0.5">
+                                    <p class="text-xs text-muted mt-0.5 dark:text-gray-400">
                                         Patient details &amp; current admission
                                     </p>
                                 </div>
@@ -107,7 +107,7 @@
                                     d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                                 />
                             </svg>
-                            <p class="text-xs text-muted">
+                            <p class="text-xs text-muted dark:text-gray-400">
                                 Loading patient details…
                             </p>
                         </div>
@@ -122,7 +122,7 @@
                             >
                                 <div>
                                     <p
-                                        class="text-[11px] uppercase tracking-wide text-muted font-semibold"
+                                        class="text-[11px] uppercase tracking-wide text-muted font-semibold dark:text-gray-400"
                                     >
                                         Admission status
                                     </p>
@@ -136,13 +136,13 @@
                                         }}
                                         <span
                                             v-if="admission.bed?.bed_no"
-                                            class="text-muted font-normal"
+                                            class="text-muted font-normal dark:text-gray-400"
                                         >
                                             · Bed
                                             {{ admission.bed.bed_no }}
                                         </span>
                                     </p>
-                                    <p class="text-xs text-muted mt-0.5">
+                                    <p class="text-xs text-muted mt-0.5 dark:text-gray-400">
                                         Admitted
                                         {{ formatDate(admission.admitted_at) }}
                                         <span v-if="admission.end_date">
@@ -163,7 +163,7 @@
                             <!-- Personal information -->
                             <section>
                                 <h3
-                                    class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2"
+                                    class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2 dark:text-gray-400"
                                 >
                                     Personal information
                                 </h3>
@@ -215,7 +215,7 @@
                             <!-- Vitals -->
                             <section v-if="vitalEntries.length">
                                 <h3
-                                    class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2"
+                                    class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2 dark:text-gray-400"
                                 >
                                     Vitals
                                 </h3>
@@ -233,7 +233,7 @@
 
                             <section v-if="medicationEntries.length">
                                 <h3
-                                    class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2"
+                                    class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2 dark:text-gray-400"
                                 >
                                     Assessment
                                 </h3>
@@ -261,7 +261,7 @@
                             <p class="text-sm font-medium text-primary-900">
                                 No patient data
                             </p>
-                            <p class="text-xs text-muted max-w-[220px]">
+                            <p class="text-xs text-muted max-w-[220px] dark:text-gray-400">
                                 We couldn't load details for this patient.
                             </p>
                         </div>
@@ -271,7 +271,7 @@
                         >
                             <button
                                 type="button"
-                                class="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors duration-200"
+                                class="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors duration-200 dark:text-gray-400"
                                 @click="$emit('close')"
                             >
                                 Close

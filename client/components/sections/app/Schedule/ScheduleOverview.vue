@@ -1,7 +1,7 @@
 <template>
     <div class="w-full lg:h-full flex flex-col min-h-0">
         <div
-            class="lg:h-full rounded-2xl bg-white border border-[#E4EFED] p-5 flex flex-col overflow-hidden"
+            class="lg:h-full rounded-2xl bg-white border border-[#E4EFED] p-5 flex flex-col overflow-hidden dark:bg-secondary"
         >
             <button
                 type="button"
@@ -46,7 +46,7 @@
                 </div>
 
                 <div
-                    class="h-10 w-10 rounded-xl bg-[#EAF4F2] flex items-center justify-center text-[#0E7C7B]"
+                    class="h-10 w-10 rounded-xl bg-[#EAF4F2] flex items-center justify-center text-[#0E7C7B] dark:text-teal-300"
                 >
                     <CalendarDays class="h-5 w-5" />
                 </div>
@@ -187,7 +187,7 @@
                                 >
                                     Today
                                 </p>
-                                <CalendarDays class="h-4 w-4 text-[#0E7C7B]" />
+                                <CalendarDays class="h-4 w-4 text-[#0E7C7B] dark:text-teal-300" />
                             </div>
 
                             <p

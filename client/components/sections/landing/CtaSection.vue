@@ -27,7 +27,7 @@
                 </div>
 
                 <button
-                    class="group flex items-center gap-2 rounded-xl bg-white px-[5rem] py-4 font-bold text-primary transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-secondary"
+                    class="group flex items-center gap-2 rounded-xl bg-white px-[5rem] py-4 font-bold text-primary transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
                     Get Started
 

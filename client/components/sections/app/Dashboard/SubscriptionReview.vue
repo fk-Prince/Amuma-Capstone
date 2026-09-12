@@ -32,45 +32,45 @@
                 Review in progress
             </span>
 
-            <h2 class="text-xl font-bold text-secondary">
+            <h2 class="text-xl font-bold text-secondary dark:text-white">
                 Your Subscription Is Under Review
             </h2>
 
-            <p class="mt-2 text-sm leading-6 text-muted-DEFAULT">
+            <p class="mt-2 text-sm leading-6 text-muted-DEFAULT dark:text-gray-400">
                 We're verifying your account and branch details. This usually
                 takes
-                <span class="font-medium text-secondary">1–2 business days</span
+                <span class="font-medium text-secondary dark:text-white">1–2 business days</span
                 >.
             </p>
 
             <div
                 v-if="agencyName || branchName"
-                class="mt-5 divide-y divide-muted-light rounded-xl border border-muted-light bg-muted-light/60 text-left"
+                class="mt-5 divide-y divide-muted-light rounded-xl border border-muted-light bg-muted-light/60 text-left dark:divide-white/10 dark:border-white/10 dark:bg-white/5"
             >
                 <div v-if="agencyName" class="px-4 py-3">
                     <p
-                        class="text-xs font-medium uppercase tracking-wide text-muted-DEFAULT"
+                        class="text-xs font-medium uppercase tracking-wide text-muted-DEFAULT dark:text-gray-500"
                     >
                         Agency
                     </p>
-                    <p class="mt-0.5 text-sm font-semibold text-secondary">
+                    <p class="mt-0.5 text-sm font-semibold text-secondary dark:text-white">
                         {{ agencyName }}
                     </p>
                 </div>
                 <div v-if="branchName" class="px-4 py-3">
                     <p
-                        class="text-xs font-medium uppercase tracking-wide text-muted-DEFAULT"
+                        class="text-xs font-medium uppercase tracking-wide text-muted-DEFAULT dark:text-gray-500"
                     >
                         Branch
                     </p>
-                    <p class="mt-0.5 text-sm font-semibold text-secondary">
+                    <p class="mt-0.5 text-sm font-semibold text-secondary dark:text-white">
                         {{ branchName }}
                     </p>
                 </div>
             </div>
 
             <div
-                class="mt-4 flex items-center justify-center gap-2 rounded-xl border border-accent-100 bg-accent-50 px-4 py-3 text-sm text-accent-700"
+                class="mt-4 flex items-center justify-center gap-2 rounded-xl border border-accent-100 bg-accent-50 px-4 py-3 text-sm text-accent-700 dark:border-accent-500/20 dark:bg-accent-500/10 dark:text-accent-400"
             >
                 <svg
                     class="h-4 w-4 shrink-0"

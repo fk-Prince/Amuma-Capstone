@@ -1,4 +1,3 @@
-
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 import { authMenuList } from "~/config/authMenu";

@@ -57,7 +57,7 @@ const admission = computed(() => props.bed.current_admission);
             </div>
 
             <div class="min-w-0 flex-1">
-                <p class="text-xs font-semibold text-gray-800 truncate">
+                <p class="text-xs font-semibold text-gray-800 truncate dark:text-gray-100">
                     {{ patient.first_name }} {{ patient.last_name }}
                 </p>
 
@@ -85,7 +85,7 @@ const admission = computed(() => props.bed.current_admission);
 
         <div
             v-if="expanded"
-            class="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[11px] text-gray-500 rounded-lg border border-dashed border-gray-200 p-2"
+            class="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[11px] text-gray-500 rounded-lg border border-dashed border-gray-200 p-2 dark:text-gray-400 dark:border-white/10"
         >
             <div
                 v-if="patient.phone_number"
@@ -122,12 +122,12 @@ const admission = computed(() => props.bed.current_admission);
         </div>
 
         <div
-            class="flex items-center justify-between text-[11px] pt-1.5 border-t border-gray-100"
+            class="flex items-center justify-between text-[11px] pt-1.5 border-t border-gray-100 dark:border-white/10"
         >
             <span class="flex items-center gap-1 text-gray-400">
                 <CalendarClock class="h-3 w-3" />
 
-                <span class="font-medium text-gray-500">
+                <span class="font-medium text-gray-500 dark:text-gray-400">
                     Admission Period:
                 </span>
 
@@ -144,7 +144,7 @@ const admission = computed(() => props.bed.current_admission);
         <button
             type="button"
             @click="emit('editBed', bed.bed_id)"
-            class="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-blue-600 bg-white border border-blue-200 rounded-lg py-2 hover:bg-blue-50 transition-colors"
+            class="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-blue-600 bg-white border border-blue-200 rounded-lg py-2 hover:bg-blue-50 transition-colors dark:bg-secondary"
         >
             <Pencil class="h-3.5 w-3.5" />
             Update Bed

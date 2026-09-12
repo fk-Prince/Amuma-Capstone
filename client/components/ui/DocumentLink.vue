@@ -3,7 +3,7 @@
         :href="url"
         target="_blank"
         rel="noopener noreferrer"
-        class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600 transition hover:border-primary hover:bg-primary-50 hover:text-primary"
+        class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600 transition hover:border-primary hover:bg-primary-50 hover:text-primary dark:bg-secondary dark:text-gray-300 dark:border-white/10"
     >
         <svg
             v-if="isPdf"

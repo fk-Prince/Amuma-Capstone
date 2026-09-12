@@ -1,3 +1,4 @@
+<!-- SigninForm.vue -->
 <script setup lang="ts">
 import { ref } from "vue";
 import BaseInput from "../ui/BaseInput.vue";
@@ -6,6 +7,8 @@ import AlertMessage from "../ui/AlertMessage.vue";
 
 import { useAuthUser, fetchAuthUser } from "~/composables/useAuthUser";
 import { authService } from "~/api/auth/AuthService";
+import { useSplashScreen } from "~/composables/useSplashScreen";
+import { getPostLoginRoute } from "~/composables/usePostLoginRoute";
 import type { Alert } from "~/types/alert.js";
 import type { SigninRequest } from "~/types/auth.js";
 import { useBranchStore } from "#imports";
@@ -13,6 +16,7 @@ import { useBranchStore } from "#imports";
 const route = useRoute();
 const branch = useBranchStore();
 const user = useAuthUser();
+const splash = useSplashScreen();
 const redirecting = ref(false);
 
 const signinData = ref<SigninRequest>({
@@ -53,12 +57,22 @@ async function handleSignIn() {
         const res = await authService.login(signinData.value);
         showAlert(alert, "success", res.message);
         redirecting.value = true;
+        user.value = res.user;
+
+        splash.show({
+            title: `Welcome back, ${res.user?.first_name ?? "there"}!`,
+            subtitle: "Taking you to your dashboard…",
+        });
+
+        const destination = await getPostLoginRoute(res.user);
+
         setTimeout(async () => {
             loading.value = true;
-            user.value = res.user;
-            await navigateTo("/");
-            await branch.refreshBranch();
-        }, 1500);
+            await navigateTo(destination);
+
+          
+            setTimeout(() => splash.hide(), 500);
+        }, 700);
     } catch (err: any) {
         showAlert(
             alert,
@@ -85,155 +99,183 @@ async function googleUrl() {
 }
 </script>
 <template>
-    <div>
-        <AlertMessage
-            v-if="alert.show"
-            :type="alert.type"
-            :message="alert.message"
-            class="mb-3"
-        />
+    <div class="relative w-full max-w-[400px]">
+        <div
+            class="w-full rounded-[24px] border border-white/60 bg-white/90 px-6 sm:px-8 py-6 sm:py-8 shadow-[0_25px_60px_-15px_rgba(15,23,42,0.3)] backdrop-blur-xl dark:bg-secondary/90"
+        >
+            <div class="mb-6 text-center">
+                <h2
+                    class="text-2xl font-extrabold text-slate-900 dark:text-white"
+                >
+                    Welcome Back
+                </h2>
+                <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
+                    Sign in to your
+                    <span
+                        class="font-semibold text-primary dark:text-primary-400"
+                        >AMUMA</span
+                    >
+                    account
+                </p>
+            </div>
 
-        <form class="flex flex-col gap-3 sm:gap-4">
-            <BaseInput
-                v-model="signinData.email"
-                label="Email"
-                placeholder="Enter your email address"
-                mode="text"
-                :error="errors.email"
-            >
-                <template #prefix>
-                    <svg
-                        class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-                        <rect x="2" y="4" width="20" height="16" rx="2" />
-                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                    </svg>
-                </template>
-            </BaseInput>
+            <AlertMessage
+                v-if="alert.show"
+                :type="alert.type"
+                :message="alert.message"
+                class="mb-4"
+            />
 
-            <BaseInput
-                v-model="signinData.password"
-                label="Password"
-                placeholder="Enter your password"
-                :mode="showPassword ? 'text' : 'password'"
-                :error="errors.password"
-            >
-                <template #prefix>
-                    <svg
-                        class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-                        <rect
-                            x="3"
-                            y="11"
-                            width="18"
-                            height="11"
-                            rx="2"
-                            ry="2"
-                        />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                </template>
-                <template #suffix>
-                    <button
-                        type="button"
-                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary-500/40"
-                        @click="showPassword = !showPassword"
-                    >
+            <form class="flex flex-col gap-4">
+                <BaseInput
+                    v-model="signinData.email"
+                    label="Email"
+                    placeholder="Enter your email address"
+                    mode="text"
+                    size="lg"
+                    :error="errors.email"
+                >
+                    <template #prefix>
                         <svg
-                            v-if="showPassword"
-                            class="w-[1.05rem] h-[1.05rem]"
+                            class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
                             stroke-width="1.8"
                         >
+                            <rect x="2" y="4" width="20" height="16" rx="2" />
                             <path
-                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+                                d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"
                             />
-                            <path
-                                d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
-                            />
-                            <line x1="1" y1="1" x2="23" y2="23" />
                         </svg>
+                    </template>
+                </BaseInput>
+
+                <BaseInput
+                    v-model="signinData.password"
+                    label="Password"
+                    placeholder="Enter your password"
+                    :mode="showPassword ? 'text' : 'password'"
+                    size="lg"
+                    :error="errors.password"
+                >
+                    <template #prefix>
                         <svg
-                            v-else
-                            class="w-[1.05rem] h-[1.05rem]"
+                            class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
                             stroke-width="1.8"
                         >
-                            <path
-                                d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                            <rect
+                                x="3"
+                                y="11"
+                                width="18"
+                                height="11"
+                                rx="2"
+                                ry="2"
                             />
-                            <circle cx="12" cy="12" r="3" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                         </svg>
-                    </button>
-                </template>
-            </BaseInput>
+                    </template>
+                    <template #suffix>
+                        <button
+                            type="button"
+                            class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-primary transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                            @click="showPassword = !showPassword"
+                        >
+                            <svg
+                                v-if="showPassword"
+                                class="w-[1.05rem] h-[1.05rem]"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                            >
+                                <path
+                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+                                />
+                                <path
+                                    d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
+                                />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                            <svg
+                                v-else
+                                class="w-[1.05rem] h-[1.05rem]"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                            >
+                                <path
+                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </button>
+                    </template>
+                </BaseInput>
 
-            <div class="flex justify-end -mt-1">
-                <NuxtLink
-                    to="/forgot-password"
-                    class="text-xs font-medium text-blue-600 hover:underline outline-none rounded focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                <div class="flex justify-end -mt-2">
+                    <NuxtLink
+                        to="/forgot-password"
+                        class="text-xs font-medium text-primary dark:text-primary-400 hover:underline outline-none rounded focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                    >
+                        Forgot Password?
+                    </NuxtLink>
+                </div>
+
+                <BaseButton
+                    type="submit"
+                    variant="primary"
+                    size="lg"
+                    :full="true"
+                    :loading="loading"
+                    :disabled="loading || redirecting"
+                    class="mt-1 !rounded-full"
+                    @click="handleSignIn"
                 >
-                    Forgot Password?
-                </NuxtLink>
-            </div>
+                    <span>{{ loading ? "Signing in…" : "Sign in" }}</span>
+                </BaseButton>
 
-            <BaseButton
-                type="submit"
-                variant="primary"
-                size="lg"
-                :full="true"
-                :loading="loading"
-                :disabled="loading || redirecting"
-                @click="handleSignIn"
-            >
-                <span>{{ loading ? "Signing in…" : "Sign in" }}</span>
-            </BaseButton>
+                <div class="flex items-center gap-3">
+                    <span class="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                    <span
+                        class="text-xs text-slate-400 dark:text-gray-500 font-medium uppercase tracking-widest"
+                        >or</span
+                    >
+                    <span class="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                </div>
 
-            <div class="flex items-center gap-3">
-                <span class="flex-1 h-px bg-slate-200 dark:bg-white/10" />
-                <span
-                    class="text-xs text-slate-400 dark:text-gray-500 font-medium uppercase tracking-widest"
-                    >or</span
+                <BaseButton
+                    @click="googleUrl()"
+                    variant="secondary"
+                    size="lg"
+                    :disabled="loading || redirecting"
+                    :full="true"
+                    class="!rounded-full"
                 >
-                <span class="flex-1 h-px bg-slate-200 dark:bg-white/10" />
-            </div>
+                    <img
+                        src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                        alt="Google"
+                        class="w-5 h-5"
+                    />
+                    Sign in with Google
+                </BaseButton>
 
-            <BaseButton
-                @click="googleUrl()"
-                variant="secondary"
-                size="lg"
-                :disabled="loading || redirecting"
-                :full="true"
-            >
-                <img
-                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                    alt="Google"
-                    class="w-5 h-5"
-                />
-                Continue with Google
-            </BaseButton>
-
-            <p class="text-center text-sm text-slate-500 dark:text-gray-400">
-                Dont have an account?
-                <NuxtLink
-                    to="/auth/signup"
-                    class="text-blue-600 dark:text-blue-400 font-semibold hover:underline outline-none rounded focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                <p
+                    class="mt-2 text-center text-sm text-slate-500 dark:text-gray-400"
                 >
-                    Sign up
-                </NuxtLink>
-            </p>
-        </form>
+                    Don't have an account?
+                    <NuxtLink
+                        to="/auth/signup"
+                        class="font-semibold text-primary dark:text-primary-400 hover:underline outline-none rounded focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                    >
+                        Sign up
+                    </NuxtLink>
+                </p>
+            </form>
+        </div>
     </div>
 </template>

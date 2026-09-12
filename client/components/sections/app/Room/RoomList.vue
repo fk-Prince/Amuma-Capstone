@@ -97,7 +97,7 @@ const cancelAddBed = () => {
                 <div
                     v-for="n in 3"
                     :key="n"
-                    class="rounded-2xl border border-gray-100 border-l-4 border-l-gray-200 bg-white p-4 animate-pulse"
+                    class="rounded-2xl border border-gray-100 border-l-4 border-l-gray-200 bg-white p-4 animate-pulse dark:bg-secondary dark:border-white/10"
                 >
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
@@ -122,7 +122,7 @@ const cancelAddBed = () => {
                     class="flex flex-col items-center justify-center py-14 text-center"
                 >
                     <div
-                        class="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-3"
+                        class="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-3 dark:bg-white/5"
                     >
                         <svg
                             viewBox="0 0 24 24"
@@ -137,7 +137,7 @@ const cancelAddBed = () => {
                             <path d="M9 21v-6h6v6" />
                         </svg>
                     </div>
-                    <p class="text-sm font-semibold text-gray-600">
+                    <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">
                         No rooms found
                     </p>
                     <p class="text-xs text-gray-400 mt-1 max-w-[240px]">
@@ -149,7 +149,7 @@ const cancelAddBed = () => {
                     <div
                         v-for="room in rooms"
                         :key="room.room_id"
-                        class="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg"
+                        class="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg dark:bg-secondary dark:border-white/10"
                     >
                         <button
                             type="button"
@@ -175,7 +175,7 @@ const cancelAddBed = () => {
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-2">
                                         <h3
-                                            class="truncate text-lg font-semibold tracking-tight text-slate-900"
+                                            class="truncate text-lg font-semibold tracking-tight text-slate-900 dark:text-white"
                                         >
                                             {{ room.room_no }}
                                         </h3>
@@ -318,7 +318,7 @@ const cancelAddBed = () => {
 
                         <div
                             v-if="isExpanded(room.room_id)"
-                            class="px-4 pb-4 border-t border-gray-100 pt-4 bg-gray-50/40"
+                            class="px-4 pb-4 border-t border-gray-100 pt-4 bg-gray-50/40 dark:border-white/10"
                         >
                             <div class="flex items-center justify-between mb-4">
                                 <p class="text-xs text-gray-400 mb-3">
@@ -357,7 +357,7 @@ const cancelAddBed = () => {
                                     <button
                                         type="button"
                                         @click.stop="openEditRoom(room)"
-                                        class="flex items-center gap-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 bg-white hover:border-blue-300 hover:text-blue-600 transition-colors"
+                                        class="flex items-center gap-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 bg-white hover:border-blue-300 hover:text-blue-600 transition-colors dark:bg-secondary dark:text-gray-300 dark:border-white/10"
                                     >
                                         <Pencil class="h-3.5 w-3.5" />
                                         Edit Room
@@ -369,7 +369,7 @@ const cancelAddBed = () => {
                                 <div
                                     v-for="bed in room.beds"
                                     :key="bed.bed_id"
-                                    class="rounded-xl p-3.5 bg-white transition-shadow hover:shadow-sm"
+                                    class="rounded-xl p-3.5 bg-white transition-shadow hover:shadow-sm dark:bg-secondary"
                                     :class="{
                                         'border border-gray-100':
                                             isOccupied(bed),
@@ -385,7 +385,7 @@ const cancelAddBed = () => {
                                         class="flex items-center justify-between mb-2.5"
                                     >
                                         <span
-                                            class="flex items-center gap-1.5 text-sm font-semibold text-gray-700"
+                                            class="flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-gray-200"
                                         >
                                             <BedSingle
                                                 class="h-3.5 w-3.5 text-gray-400"
@@ -458,7 +458,7 @@ const cancelAddBed = () => {
                                                 @click="
                                                     editingBedId = bed.bed_id
                                                 "
-                                                class="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-blue-600 bg-white border border-blue-200 rounded-lg py-2 mt-1 hover:bg-blue-100 transition-colors"
+                                                class="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-blue-600 bg-white border border-blue-200 rounded-lg py-2 mt-1 hover:bg-blue-100 transition-colors dark:bg-secondary"
                                             >
                                                 <Pencil class="h-3.5 w-3.5" />
                                                 Update Bed
@@ -481,7 +481,7 @@ const cancelAddBed = () => {
                                         v-show="canUpdate(Modules.RoomsAndBeds)"
                                         type="button"
                                         @click.stop="openAddBed(room, i)"
-                                        class="group flex min-h-[140px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:shadow-lg"
+                                        class="group flex min-h-[140px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:shadow-lg dark:border-white/10"
                                     >
                                         <div
                                             class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-white"
@@ -490,13 +490,13 @@ const cancelAddBed = () => {
                                         </div>
 
                                         <h4
-                                            class="text-sm font-semibold text-slate-700"
+                                            class="text-sm font-semibold text-slate-700 dark:text-gray-200"
                                         >
                                             Add New Bed
                                         </h4>
 
                                         <p
-                                            class="mt-1 text-center text-xs text-slate-500"
+                                            class="mt-1 text-center text-xs text-slate-500 dark:text-gray-400"
                                         >
                                             Create another bed for this room.
                                         </p>

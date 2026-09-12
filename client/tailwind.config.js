@@ -2,6 +2,12 @@
 
 import { colors, fontFamily } from "./tailwind.theme";
 export default {
+    // Kept as "class" (not the Tailwind default "media") so dark: utilities
+    // only ever activate if something explicitly adds a "dark" class to
+    // <html> — which nothing in this app does anymore. Without this line,
+    // Tailwind falls back to "media" and silently re-activates every
+    // leftover dark: class on any visitor whose OS is set to dark mode,
+    // which is exactly what was happening here.
     darkMode: "class",
     content: [
         "./components/**/*.{vue,js,ts}",

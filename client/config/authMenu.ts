@@ -22,6 +22,7 @@ export interface MenuItems {
     route?: string[];
     icon?: any;
     plan?: string[];
+    group?: string;
 }
 
 export const authMenuList: MenuItems[] = [
@@ -29,59 +30,69 @@ export const authMenuList: MenuItems[] = [
         label: "Dashboard",
         icon: LayoutDashboard,
         to: "/app/branches/[uuid]/dashboard",
+        group: "Overview",
     },
     {
         label: "Bookings",
         icon: BookOpen,
         to: "/app/branches/[uuid]/bookings",
         modules: ["Bookings"],
+        group: "Care Operations",
     },
     {
         label: "Schedules",
         icon: CalendarCheck2,
         to: "/app/branches/[uuid]/schedules",
         modules: ["Schedules"],
+        group: "Care Operations",
     },
     {
         label: "Admissions",
         icon: ClipboardList,
         to: "/app/branches/[uuid]/admissions",
         modules: ["Admissions"],
+        group: "Care Operations",
     },
     {
         label: "Patients",
         icon: Users,
         to: "/app/branches/[uuid]/patients",
         modules: ["Patients"],
-    },
-    {
-        label: "Messages",
-        icon: MessageSquare,
-        to: "/app/branches/[uuid]/messages",
-    },
-    {
-        label: "Contracts",
-        icon: Building2,
-        to: "/app/branches/[uuid]/contracts",
-        modules: ["Contracts"],
+        group: "Care Operations",
     },
     {
         label: "Rooms & Beds",
         icon: BedDouble,
         to: "/app/branches/[uuid]/rooms-beds",
         modules: ["Rooms & Beds"],
+        group: "Care Operations",
     },
     {
         label: "Services",
         icon: Wrench,
         to: "/app/branches/[uuid]/services",
         modules: ["Services"],
+        group: "Care Operations",
+    },
+    {
+        label: "Messages",
+        icon: MessageSquare,
+        to: "/app/branches/[uuid]/messages",
+        group: "Communication",
+    },
+    {
+        label: "Contracts",
+        icon: Building2,
+        to: "/app/branches/[uuid]/contracts",
+        modules: ["Contracts"],
+        group: "Business",
     },
     {
         label: "Employee Management",
         icon: UserCog,
         to: "/app/branches/[uuid]/employees",
         modules: ["Employee Management"],
+        group: "Business",
     },
     {
         label: "Billing & Invoices",
@@ -89,27 +100,29 @@ export const authMenuList: MenuItems[] = [
         to: "/app/branches/[uuid]/invoices",
         modules: ["Billing & Invoices"],
         plan: ["A", "B", "C"],
+        group: "Business",
     },
     // {
     //     label: "Reports",
     //     icon: ClipboardMinus,
     //     to: "/app/branches/[uuid]/reports",
     //     modules: ["Reports"],
+    //     group: "Business",
     // },
     {
         label: "Manage Branches",
         icon: Building2,
         to: "/app/branches/[uuid]/manage-branches",
         modules: ["Manage Branches"],
+        group: "Business",
     },
     {
         label: "Branch Settings",
         icon: Settings,
         to: "/app/branches/[uuid]/settings",
         modules: ["Branch Settings"],
+        group: "Settings",
     },
-
-
 ];
 
 export const ownerMenuList: MenuItems[] = [

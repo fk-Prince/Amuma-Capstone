@@ -1,10 +1,10 @@
 <template>
     <div
-        class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 px-6"
+        class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-secondary-950 dark:via-secondary-950 dark:to-secondary-900 px-6"
     >
         <div class="text-center max-w-lg">
             <div
-                class="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary"
+                class="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 dark:bg-primary-500/15 text-primary"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -22,15 +22,15 @@
                 </svg>
             </div>
 
-            <h1 class="text-8xl font-black tracking-tight text-gray-900">
+            <h1 class="text-8xl font-black tracking-tight text-gray-900 dark:text-white">
                 404
             </h1>
 
-            <h2 class="mt-4 text-2xl font-semibold text-gray-800">
+            <h2 class="mt-4 text-2xl font-semibold text-gray-800 dark:text-gray-100">
                 Page not found
             </h2>
 
-            <p class="mt-3 text-gray-500 leading-relaxed">
+            <p class="mt-3 text-gray-500 dark:text-gray-400 leading-relaxed">
                 Sorry, the page you are looking for doesn't exist or has been
                 moved somewhere else.
             </p>

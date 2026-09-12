@@ -29,18 +29,18 @@
                     :key="i"
                     class="rounded-3xl border border-gray-200 p-8 animate-pulse dark:border-white/10"
                 >
-                    <div class="h-4 w-20 bg-gray-200 rounded mb-6"></div>
+                    <div class="h-4 w-20 bg-gray-200 dark:bg-white/10 rounded mb-6"></div>
 
-                    <div class="h-8 w-40 bg-gray-200 rounded mb-4"></div>
+                    <div class="h-8 w-40 bg-gray-200 dark:bg-white/10 rounded mb-4"></div>
 
                     <div class="space-y-2 mb-8">
-                        <div class="h-4 bg-gray-200 rounded"></div>
-                        <div class="h-4 w-5/6 bg-gray-200 rounded"></div>
+                        <div class="h-4 bg-gray-200 dark:bg-white/10 rounded"></div>
+                        <div class="h-4 w-5/6 bg-gray-200 dark:bg-white/10 rounded"></div>
                     </div>
 
-                    <div class="h-10 w-28 bg-gray-200 rounded mb-8"></div>
+                    <div class="h-10 w-28 bg-gray-200 dark:bg-white/10 rounded mb-8"></div>
 
-                    <div class="h-12 bg-gray-200 rounded-xl mb-8"></div>
+                    <div class="h-12 bg-gray-200 dark:bg-white/10 rounded-xl mb-8"></div>
 
                     <div class="space-y-4">
                         <div
@@ -49,9 +49,9 @@
                             class="flex items-center gap-3"
                         >
                             <div
-                                class="w-5 h-5 rounded-full bg-gray-200 flex-shrink-0"
+                                class="w-5 h-5 rounded-full bg-gray-200 dark:bg-white/10 flex-shrink-0"
                             ></div>
-                            <div class="h-4 flex-1 bg-gray-200 rounded"></div>
+                            <div class="h-4 flex-1 bg-gray-200 dark:bg-white/10 rounded"></div>
                         </div>
                     </div>
                 </div>

@@ -80,16 +80,16 @@ const stats = computed(() => [
 
 <template>
     <div
-        class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
+        class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
     >
         <div
-            class="flex flex-col gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between"
+            class="flex flex-col gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"
         >
             <div>
-                <h2 class="text-lg font-semibold text-slate-900">
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                     Service Overview
                 </h2>
-                <p class="mt-1 text-sm text-slate-500">
+                <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
                     A quick snapshot of your medical services.
                 </p>
             </div>
@@ -114,9 +114,9 @@ const stats = computed(() => [
                     :key="n"
                     class="p-5 animate-pulse space-y-3"
                 >
-                    <div class="h-9 w-9 rounded-xl bg-slate-100" />
-                    <div class="h-6 w-16 rounded bg-slate-100" />
-                    <div class="h-3 w-20 rounded bg-slate-100" />
+                    <div class="h-9 w-9 rounded-xl bg-slate-100 dark:bg-white/5" />
+                    <div class="h-6 w-16 rounded bg-slate-100 dark:bg-white/5" />
+                    <div class="h-3 w-20 rounded bg-slate-100 dark:bg-white/5" />
                 </div>
             </template>
 
@@ -129,12 +129,12 @@ const stats = computed(() => [
                         <component :is="stat.icon" class="h-5 w-5" />
                     </div>
 
-                    <p class="mt-3 text-2xl font-bold text-slate-900">
+                    <p class="mt-3 text-2xl font-bold text-slate-900 dark:text-white">
                         {{ stat.value }}
                     </p>
 
                     <div
-                        class="mt-1 flex items-center justify-between text-xs text-slate-500"
+                        class="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-gray-400"
                     >
                         <span>{{ stat.label }}</span>
                         <span

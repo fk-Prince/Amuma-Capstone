@@ -1,3 +1,4 @@
+<!-- SignupForm.vue -->
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import BaseInput from "../ui/BaseInput.vue";
@@ -196,225 +197,231 @@ async function resendOtp() {
 </script>
 
 <template>
-    <div
-        class="w-full max-w-[460px] rounded-2xl bg-white dark:bg-secondary px-6 sm:px-10 py-8 sm:py-11 shadow-xl"
-    >
-        <OtpDialog
-            v-if="showOtpDialog"
-            :loading="otpLoading"
-            :error="otpErrorMessage"
-            :expires-in-seconds="otpExpiresIn"
-            @verify="verifyOtp"
-            @resend="resendOtp"
-            @close="showOtpDialog = false"
-        />
+    <div class="relative w-full max-w-[420px]">
+      
+        <div
+            class="w-full rounded-[24px] border border-white/60 bg-white/90 px-6 sm:px-8 py-6 sm:py-8 shadow-[0_25px_60px_-15px_rgba(15,23,42,0.3)] backdrop-blur-xl dark:bg-secondary/90"
+        >
+            <OtpDialog
+                v-if="showOtpDialog"
+                :loading="otpLoading"
+                :error="otpErrorMessage"
+                :expires-in-seconds="otpExpiresIn"
+                @verify="verifyOtp"
+                @resend="resendOtp"
+                @close="showOtpDialog = false"
+            />
 
-        <div class="mb-10 text-center">
-            <h2
-                class="text-[1.85rem] font-extrabold text-slate-900 dark:text-white"
-            >
-                Create an Account
-            </h2>
-            <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
-                Join
-                <span class="font-semibold text-blue-600 dark:text-blue-400"
-                    >AMUMA</span
+            <div class="mb-6 text-center">
+                <h2
+                    class="text-2xl font-extrabold text-slate-900 dark:text-white"
                 >
-                today
-            </p>
-        </div>
-
-        <div class="flex flex-col gap-5">
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <BaseInput
-                    v-model="signupData.firstName"
-                    label="First Name"
-                    placeholder="Enter your first name"
-                    :error="errors.firstName"
-                />
-
-                <BaseInput
-                    v-model="signupData.lastName"
-                    label="Last Name"
-                    placeholder="Enter your last name"
-                    :error="errors.lastName"
-                />
+                    Create an Account
+                </h2>
+                <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
+                    Join
+                    <span
+                        class="font-semibold text-primary dark:text-primary-400"
+                        >AMUMA</span
+                    >
+                    today
+                </p>
             </div>
 
-            <BaseInput
-                v-model="signupData.email"
-                label="Email"
-                placeholder="Enter your email address"
-                mode="email"
-                :error="errors.email"
-            >
-                <template #prefix>
-                    <svg
-                        class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-                        <rect x="2" y="4" width="20" height="16" rx="2" />
-                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                    </svg>
-                </template>
-            </BaseInput>
+            <div class="flex flex-col gap-4">
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <BaseInput
+                        v-model="signupData.firstName"
+                        label="First Name"
+                        placeholder="Enter your first name"
+                        :error="errors.firstName"
+                    />
 
-            <BaseInput
-                v-model="signupData.password"
-                label="Password"
-                placeholder="Create a password"
-                :mode="showPassword ? 'text' : 'password'"
-                :error="errors.password"
-            >
-                <template #prefix>
-                    <svg
-                        class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-                        <rect
-                            x="3"
-                            y="11"
-                            width="18"
-                            height="11"
-                            rx="2"
-                            ry="2"
-                        />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                </template>
-                <template #suffix>
-                    <button
-                        type="button"
-                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary-500/40"
-                        @click="showPassword = !showPassword"
-                    >
-                        <svg
-                            v-if="showPassword"
-                            class="w-[1.05rem] h-[1.05rem]"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        >
-                            <path
-                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
-                            />
-                            <path
-                                d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
-                            />
-                            <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
-                        <svg
-                            v-else
-                            class="w-[1.05rem] h-[1.05rem]"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        >
-                            <path
-                                d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                            />
-                            <circle cx="12" cy="12" r="3" />
-                        </svg>
-                    </button>
-                </template>
-            </BaseInput>
+                    <BaseInput
+                        v-model="signupData.lastName"
+                        label="Last Name"
+                        placeholder="Enter your last name"
+                        :error="errors.lastName"
+                    />
+                </div>
 
-            <BaseInput
-                v-model="signupData.confirmPassword"
-                label="Confirm Password"
-                placeholder="Confirm your password"
-                :mode="showPassword ? 'text' : 'password'"
-                :error="errors.confirmPassword"
-            >
-                <template #prefix>
-                    <svg
-                        class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-                        <rect
-                            x="3"
-                            y="11"
-                            width="18"
-                            height="11"
-                            rx="2"
-                            ry="2"
-                        />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                </template>
-                <template #suffix>
-                    <button
-                        type="button"
-                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary-500/40"
-                        @click="showPassword = !showPassword"
-                    >
-                        <svg
-                            v-if="showPassword"
-                            class="w-[1.05rem] h-[1.05rem]"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        >
-                            <path
-                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
-                            />
-                            <path
-                                d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
-                            />
-                            <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
-                        <svg
-                            v-else
-                            class="w-[1.05rem] h-[1.05rem]"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        >
-                            <path
-                                d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                            />
-                            <circle cx="12" cy="12" r="3" />
-                        </svg>
-                    </button>
-                </template>
-            </BaseInput>
-
-            <BaseButton
-                type="submit"
-                variant="primary"
-                size="lg"
-                :full="true"
-                :loading="loading"
-                class="mt-3"
-                @click="handleSignUp"
-            >
-                {{ loading ? "Sign up..." : "Sign up" }}
-            </BaseButton>
-
-            <p
-                class="mt-2 text-center text-sm text-slate-500 dark:text-gray-400"
-            >
-                Already have an account?
-                <NuxtLink
-                    to="/auth/signin"
-                    class="font-semibold text-blue-600 dark:text-blue-400 hover:underline outline-none rounded focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                <BaseInput
+                    v-model="signupData.email"
+                    label="Email"
+                    placeholder="Enter your email address"
+                    mode="email"
+                    :error="errors.email"
                 >
-                    Sign in
-                </NuxtLink>
-            </p>
+                    <template #prefix>
+                        <svg
+                            class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <rect x="2" y="4" width="20" height="16" rx="2" />
+                            <path
+                                d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"
+                            />
+                        </svg>
+                    </template>
+                </BaseInput>
+
+                <BaseInput
+                    v-model="signupData.password"
+                    label="Password"
+                    placeholder="Create a password"
+                    :mode="showPassword ? 'text' : 'password'"
+                    :error="errors.password"
+                >
+                    <template #prefix>
+                        <svg
+                            class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <rect
+                                x="3"
+                                y="11"
+                                width="18"
+                                height="11"
+                                rx="2"
+                                ry="2"
+                            />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                    </template>
+                    <template #suffix>
+                        <button
+                            type="button"
+                            class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-primary transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                            @click="showPassword = !showPassword"
+                        >
+                            <svg
+                                v-if="showPassword"
+                                class="w-[1.05rem] h-[1.05rem]"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                            >
+                                <path
+                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+                                />
+                                <path
+                                    d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
+                                />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                            <svg
+                                v-else
+                                class="w-[1.05rem] h-[1.05rem]"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                            >
+                                <path
+                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </button>
+                    </template>
+                </BaseInput>
+
+                <BaseInput
+                    v-model="signupData.confirmPassword"
+                    label="Confirm Password"
+                    placeholder="Confirm your password"
+                    :mode="showPassword ? 'text' : 'password'"
+                    :error="errors.confirmPassword"
+                >
+                    <template #prefix>
+                        <svg
+                            class="w-[1.05rem] h-[1.05rem] text-slate-400 dark:text-gray-500"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <rect
+                                x="3"
+                                y="11"
+                                width="18"
+                                height="11"
+                                rx="2"
+                                ry="2"
+                            />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                    </template>
+                    <template #suffix>
+                        <button
+                            type="button"
+                            class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-primary transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                            @click="showPassword = !showPassword"
+                        >
+                            <svg
+                                v-if="showPassword"
+                                class="w-[1.05rem] h-[1.05rem]"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                            >
+                                <path
+                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+                                />
+                                <path
+                                    d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
+                                />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                            <svg
+                                v-else
+                                class="w-[1.05rem] h-[1.05rem]"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                            >
+                                <path
+                                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </button>
+                    </template>
+                </BaseInput>
+
+                <BaseButton
+                    type="submit"
+                    variant="primary"
+                    size="lg"
+                    :full="true"
+                    :loading="loading"
+                    class="mt-1 !rounded-full"
+                    @click="handleSignUp"
+                >
+                    {{ loading ? "Sign up..." : "Sign up" }}
+                </BaseButton>
+
+                <p
+                    class="mt-2 text-center text-sm text-slate-500 dark:text-gray-400"
+                >
+                    Already have an account?
+                    <NuxtLink
+                        to="/auth/signin"
+                        class="font-semibold text-primary dark:text-primary-400 hover:underline outline-none rounded focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                    >
+                        Sign in
+                    </NuxtLink>
+                </p>
+            </div>
         </div>
     </div>
 </template>

@@ -1,14 +1,23 @@
 <script setup lang="ts">
 import { authService } from "~/api/auth/AuthService";
+import { useSplashScreen } from "~/composables/useSplashScreen";
+import { getPostLoginRoute } from "~/composables/usePostLoginRoute";
 
 const route = useRoute();
 const user = useAuthUser();
 const ready = useAuthReady();
+const splash = useSplashScreen();
+
+splash.show({
+    title: "Signing you in",
+    subtitle: "Just a moment while we verify your account…",
+});
 
 onMounted(async () => {
     const token = route.query.token as string;
 
     if (!token) {
+        splash.hide();
         navigateTo("/auth/signin");
         return;
     }
@@ -18,26 +27,27 @@ onMounted(async () => {
     try {
         const res = await authService.me();
         user.value = res;
-        navigateTo("/");
+
+        splash.show({
+            title: `Welcome back, ${res?.first_name ?? "there"}!`,
+            subtitle: "Taking you to your dashboard…",
+        });
+
+        const destination = await getPostLoginRoute(res);
+
+        setTimeout(async () => {
+            await navigateTo(destination);
+            setTimeout(() => splash.hide(), 500);
+        }, 500);
     } catch (err: any) {
         console.log(err);
         localStorage.removeItem("auth");
+        splash.hide();
         navigateTo("/auth/signin");
     }
 });
 </script>
 
 <template>
-    <div class="min-h-screen flex flex-col items-center justify-center gap-4">
-        <svg
-            class="w-10 h-10 animate-spin text-primary"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-        >
-            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-        </svg>
-        <p class="text-slate-500 text-sm font-medium">Signing you in…</p>
-    </div>
+    <div class="min-h-screen bg-[#EEF3FB]" />
 </template>

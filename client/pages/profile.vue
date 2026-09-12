@@ -1,5 +1,6 @@
 <template>
-    <div class="min-h-screen bg-white pt-[100px] dark:bg-secondary">
+    <NuxtLayout :name="accountLayout">
+    <div class="w-full bg-white dark:bg-secondary">
         <div class="mx-auto max-w-5xl px-5 pb-16 sm:px-8">
             <div
                 class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between"
@@ -540,14 +541,119 @@
                         </div>
                     </section>
                 </div>
+
+                <!-- APPEARANCE -->
+                <div v-show="activeTab === 'appearance'">
+                    <section
+                        class="grid gap-6 border-b border-slate-200 py-8 lg:grid-cols-[260px_1fr] dark:border-white/10"
+                    >
+                        <div>
+                            <h2
+                                class="text-sm font-semibold text-slate-900 dark:text-white"
+                            >
+                                Appearance
+                            </h2>
+                            <p
+                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                            >
+                                Choose how AMUMA looks on this device.
+                            </p>
+                        </div>
+
+                        <div>
+                            <div
+                                class="inline-flex items-center gap-1 rounded-full bg-slate-100 p-1 dark:bg-white/10"
+                            >
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition"
+                                    :class="
+                                        !isDark
+                                            ? 'bg-white text-slate-900 shadow-sm dark:bg-secondary dark:text-white'
+                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                    "
+                                    @click="setTheme(false)"
+                                >
+                                    <Sun class="h-4 w-4" />
+                                    Light
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition"
+                                    :class="
+                                        isDark
+                                            ? 'bg-white text-slate-900 shadow-sm dark:bg-secondary dark:text-white'
+                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                    "
+                                    @click="setTheme(true)"
+                                >
+                                    <Moon class="h-4 w-4" />
+                                    Dark
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="grid gap-6 py-8 lg:grid-cols-[260px_1fr]">
+                        <div>
+                            <h2
+                                class="text-sm font-semibold text-slate-900 dark:text-white"
+                            >
+                                Sidebar preferences
+                            </h2>
+                            <p
+                                class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                            >
+                                Pick which side the navigation sidebar sits
+                                on.
+                            </p>
+                        </div>
+
+                        <div>
+                            <div
+                                class="inline-flex items-center gap-1 rounded-full bg-slate-100 p-1 dark:bg-white/10"
+                            >
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition"
+                                    :class="
+                                        sidebarPosition === 'left'
+                                            ? 'bg-white text-slate-900 shadow-sm dark:bg-secondary dark:text-white'
+                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                    "
+                                    @click="setSidebarPosition('left')"
+                                >
+                                    <PanelLeft class="h-4 w-4" />
+                                    Left
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition"
+                                    :class="
+                                        sidebarPosition === 'right'
+                                            ? 'bg-white text-slate-900 shadow-sm dark:bg-secondary dark:text-white'
+                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                    "
+                                    @click="setSidebarPosition('right')"
+                                >
+                                    <PanelRight class="h-4 w-4" />
+                                    Right
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
             </template>
         </div>
     </div>
+    </NuxtLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
-import { LoaderCircle, MapPin } from "lucide-vue-next";
+import { LoaderCircle, MapPin, Sun, Moon, PanelLeft, PanelRight } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
 import PhoneInput from "~/components/ui/PhoneInput.vue";
@@ -555,11 +661,13 @@ import LocationSelector from "~/components/ui/LocationSelector.vue";
 import { userService } from "~/api/user/UserService";
 import { useToast } from "~/composables/useToast";
 import { fetchAuthUser } from "~/composables/useAuthUser";
+import { useAccountLayout } from "~/composables/useAccountLayout";
+
+const accountLayout = useAccountLayout();
 
 definePageMeta({
     middleware: "auth-client",
-    navVariant: 1,
-    theme: "light",
+    layout: false,
 });
 
 useHead({ title: "My Profile" });
@@ -574,7 +682,11 @@ const activeTab = ref("profile");
 const tabs = [
     { label: "General", value: "profile" },
     { label: "Notifications", value: "notifications" },
+    { label: "Appearance", value: "appearance" },
 ];
+
+const isDark = useIsDark();
+const sidebarPosition = useSidebarPosition();
 
 const preferences = reactive([
     {

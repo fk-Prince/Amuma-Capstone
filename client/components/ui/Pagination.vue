@@ -1,54 +1,34 @@
 <template>
-    <div class="flex justify-between items-center">
-        <div class="text-sm text-gray-600">
-            Showing {{ startItem }} to {{ endItem }} of {{ totalItems }} items
-        </div>
+    <div class="flex items-end justify-between border-b border-[#DCEBE9] pb-4 dark:border-white/10">
+        <div>
+            <h1 class="text-4xl font-bold text-[#16302E] dark:text-white">
+                {{ title }}
+            </h1>
 
-        <div class="flex gap-1">
-            <button
-                v-for="page in totalPages"
-                :key="page"
-                @click="selectPage(page)"
-                :class="[
-                    'px-3 py-2 border rounded-lg font-medium',
-                    currentPage === page
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white hover:bg-gray-50',
-                ]"
-            >
-                {{ page }}
-            </button>
+            <h2 class="mt-1 text-sm font-medium text-[#0E7C7B] dark:text-accent-400">
+                {{ subtitle }}
+            </h2>
+
+            <p class="mt-1 text-sm text-[#6B8A87] dark:text-gray-400">
+                {{ description }}
+            </p>
         </div>
     </div>
 </template>
 
-<script setup lang="ts">
-import { computed } from "vue";
-
-interface Props {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-}
-
-const props = defineProps<Props>();
-
-const emit = defineEmits<{
-    "change-page": [page: number];
-}>();
-
-const startItem = computed(() => {
-    if (props.totalItems === 0) return 0;
-    return (props.currentPage - 1) * props.itemsPerPage + 1;
+<script setup>
+defineProps({
+    title: {
+        type: String,
+        required: true,
+    },
+    subtitle: {
+        type: String,
+        default: "",
+    },
+    description: {
+        type: String,
+        default: "",
+    },
 });
-
-const endItem = computed(() => {
-    const end = props.currentPage * props.itemsPerPage;
-    return end > props.totalItems ? props.totalItems : end;
-});
-
-const selectPage = (page: number) => {
-    emit("change-page", page);
-};
 </script>

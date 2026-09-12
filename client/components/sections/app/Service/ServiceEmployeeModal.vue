@@ -30,10 +30,10 @@
                     role="dialog"
                     aria-modal="true"
                     aria-label="Assign Nurse"
-                    class="relative flex h-[85vh] max-h-[90vh] w-full max-w-6xl flex-col rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+                    class="relative flex h-[85vh] max-h-[90vh] w-full max-w-6xl flex-col rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
                 >
                     <div
-                        class="flex items-center justify-between gap-4 border-b border-gray-100 px-6 py-5"
+                        class="flex items-center justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
                     >
                         <div class="flex items-center gap-3 min-w-0">
                             <div
@@ -44,7 +44,7 @@
 
                             <div class="min-w-0">
                                 <h2
-                                    class="text-lg font-semibold leading-tight text-gray-900"
+                                    class="text-lg font-semibold leading-tight text-gray-900 dark:text-white"
                                 >
                                     Assign Nurse
                                 </h2>
@@ -63,7 +63,7 @@
                             type="button"
                             @click="close"
                             aria-label="Close dialog"
-                            class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                            class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-white/10"
                         >
                             <X class="h-5 w-5" />
                         </button>
@@ -81,7 +81,7 @@
                                 </p>
 
                                 <h3
-                                    class="mt-1 truncate text-base font-semibold text-gray-900"
+                                    class="mt-1 truncate text-base font-semibold text-gray-900 dark:text-white"
                                 >
                                     {{ service?.service_name }}
                                 </h3>
@@ -113,7 +113,7 @@
 
                     <div
                         v-if="!loading && employeeData.length"
-                        class="flex flex-wrap items-center justify-between gap-2 border-y border-gray-100 bg-gray-50/60 px-6 py-2.5"
+                        class="flex flex-wrap items-center justify-between gap-2 border-y border-gray-100 bg-gray-50/60 px-6 py-2.5 dark:border-white/10"
                     >
                         <button
                             type="button"
@@ -126,13 +126,13 @@
 
                         <div class="flex items-center gap-2">
                             <span
-                                class="hidden sm:inline rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-500 ring-1 ring-gray-200"
+                                class="hidden sm:inline rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-500 ring-1 ring-gray-200 dark:bg-secondary dark:text-gray-400 dark:ring-white/10"
                             >
                                 {{ employeeGroupLabel }}
                             </span>
 
                             <div
-                                class="inline-flex shrink-0 rounded-lg border border-slate-200 bg-white p-0.5"
+                                class="inline-flex shrink-0 rounded-lg border border-slate-200 bg-white p-0.5 dark:bg-secondary dark:border-white/10"
                             >
                                 <button
                                     type="button"
@@ -189,7 +189,7 @@
                                 <div
                                     v-for="n in 6"
                                     :key="n"
-                                    class="rounded-xl border border-gray-100 p-3.5 animate-pulse"
+                                    class="rounded-xl border border-gray-100 p-3.5 animate-pulse dark:border-white/10"
                                 >
                                     <div class="flex items-center gap-3">
                                         <div
@@ -264,7 +264,7 @@
 
                                         <div class="min-w-0 text-left">
                                             <p
-                                                class="truncate text-sm font-medium leading-tight text-gray-900"
+                                                class="truncate text-sm font-medium leading-tight text-gray-900 dark:text-white"
                                             >
                                                 {{ employee.first_name }}
                                                 {{ employee.last_name }}
@@ -296,14 +296,14 @@
                                 class="flex flex-col items-center justify-center py-14 text-center"
                             >
                                 <div
-                                    class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50"
+                                    class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 dark:bg-white/5"
                                 >
                                     <UserRoundSearch
                                         class="h-7 w-7 text-gray-300"
                                     />
                                 </div>
 
-                                <p class="text-sm font-semibold text-gray-600">
+                                <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">
                                     {{ emptyStateTitle }}
                                 </p>
 
@@ -317,11 +317,11 @@
                     </div>
 
                     <div
-                        class="flex items-center justify-end gap-3 rounded-b-2xl border-t border-gray-100 bg-gray-50/60 px-6 py-4"
+                        class="flex items-center justify-end gap-3 rounded-b-2xl border-t border-gray-100 bg-gray-50/60 px-6 py-4 dark:border-white/10"
                     >
                         <button
                             type="button"
-                            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+                            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 dark:text-gray-300 dark:border-white/10 dark:hover:bg-white/10"
                             @click="close"
                         >
                             Cancel

@@ -25,7 +25,9 @@ export const fetchAuthUser = async () => {
         user.value = res.user;
         return res.user;
     } catch (err) {
-        resetAuth();
+        user.value = null;
+        ready.value = false;
+        localStorage.removeItem("auth");
         throw err;
     } finally {
         ready.value = true;

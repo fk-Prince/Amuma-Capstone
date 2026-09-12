@@ -7,8 +7,8 @@
     />
 
     <aside
-        class="group fixed inset-y-0 left-0 z-40 flex h-full w-64 shrink-0 flex-col overflow-hidden border-r border-gray-100 dark:border-white/10 bg-white dark:bg-secondary transition-transform duration-200 ease-in-out lg:static lg:z-20 lg:w-[76px] lg:translate-x-0 lg:transition-[width] lg:hover:w-64"
-        :class="open ? 'translate-x-0' : '-translate-x-full'"
+        class="fixed inset-y-3 left-3 z-40 flex w-64 shrink-0 flex-col overflow-hidden rounded-3xl bg-white dark:bg-secondary-900 shadow-[0_20px_45px_-18px_rgba(15,23,42,0.18)] ring-1 ring-black/[0.04] dark:ring-white/[0.06] transition-transform duration-200 ease-in-out lg:static lg:inset-y-0 lg:left-0 lg:my-4 lg:ml-4 lg:h-[calc(100dvh-2rem)] lg:translate-x-0"
+        :class="open ? 'translate-x-0' : '-translate-x-[120%] lg:translate-x-0'"
     >
         <div
             class="flex shrink-0 items-center justify-between px-[19px] pt-4 pb-3"
@@ -23,20 +23,16 @@
                     alt="AMUMA"
                     class="w-9 h-9 rounded-lg object-contain shrink-0"
                 />
-                <div
-                    class="whitespace-nowrap leading-tight transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
+                <p
+                    class="font-extrabold text-primary-500 text-2xl tracking-wide leading-tight whitespace-nowrap [text-shadow:0_4px_8px_rgb(49_130_237_/_35%)]"
                 >
-                    <p
-                        class="font-extrabold text-primary-500 text-2xl tracking-wide [text-shadow:0_4px_8px_rgb(49_130_237_/_35%)]"
-                    >
-                        AMUMA
-                    </p>
-                </div>
+                    AMUMA
+                </p>
             </NuxtLink>
 
             <button
                 type="button"
-                class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-white/40 dark:hover:bg-white/10 dark:hover:text-white/80 lg:hidden"
+                class="rounded-lg p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-gray-300 lg:hidden"
                 aria-label="Close navigation"
                 @click="emit('close')"
             >
@@ -51,11 +47,11 @@
                 v-for="item in privateMenu"
                 :key="item.to"
                 :to="item.to"
-                class="w-full flex items-center gap-3 lg:justify-center lg:gap-0 lg:px-0 lg:group-hover:justify-start lg:group-hover:gap-3 lg:group-hover:px-[13px] px-[13px] py-3 rounded-xl text-sm font-medium transition-colors"
+                class="w-full flex items-center gap-3 px-[13px] py-3 rounded-xl text-sm font-medium transition-colors"
                 :class="
                     isActive(item.to)
                         ? 'bg-primary-500 text-white shadow-sm'
-                        : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-white/40 dark:hover:bg-white/5 dark:hover:text-white/80'
+                        : 'text-gray-400 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-gray-200'
                 "
                 @click="emit('close')"
             >
@@ -63,10 +59,9 @@
                     :is="item.icon"
                     class="w-[18px] h-[18px] shrink-0"
                 />
-                <span
-                    class="flex-1 lg:flex-none lg:w-0 lg:group-hover:flex-1 lg:group-hover:w-auto text-left whitespace-nowrap overflow-hidden transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
-                    >{{ item.label }}</span
-                >
+                <span class="flex-1 text-left whitespace-nowrap overflow-hidden">{{
+                    item.label
+                }}</span>
             </NuxtLink>
         </nav>
     </aside>

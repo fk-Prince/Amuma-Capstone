@@ -1,5 +1,6 @@
 import { ref } from "vue";
 import type { Toast, ToastType } from "@/components/ui/AppToast.vue";
+import { useSound } from "~/composables/useSound";
 
 type ToastPayload = Omit<Toast, "id">;
 
@@ -18,6 +19,8 @@ export function registerToast(instance: ToastInstance) {
 
 
 export function useToast() {
+    const sound = useSound();
+
     function show(payload: ToastPayload) {
         const toast = _toastRef.value;
         if (!toast) return;
@@ -33,18 +36,22 @@ export function useToast() {
     }
 
     function success(title: string, description?: string) {
+        sound.playSuccess();
         show({ type: "success", title, description });
     }
 
     function error(title: string, description?: string) {
+        sound.playError();
         show({ type: "error", title, description });
     }
 
     function warning(title: string, description?: string) {
+        sound.playNotification();
         show({ type: "warning", title, description });
     }
 
     function info(title: string, description?: string) {
+        sound.playNotification();
         show({ type: "info", title, description });
     }
 

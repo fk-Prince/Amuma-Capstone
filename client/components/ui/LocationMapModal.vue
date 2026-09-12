@@ -34,7 +34,7 @@ const googleMapsUrl = computed(
                 @click.self="emit('close')"
             >
                 <div
-                    class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl"
+                    class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
                 >
                     <div
                         class="flex items-start justify-between gap-4 border-b border-[#E4EFED] px-5 py-4"
@@ -46,7 +46,7 @@ const googleMapsUrl = computed(
 
                             <p
                                 v-if="address"
-                                class="mt-0.5 text-xs text-slate-500 break-words"
+                                class="mt-0.5 text-xs text-slate-500 break-words dark:text-gray-400"
                             >
                                 {{ address }}
                             </p>
@@ -54,7 +54,7 @@ const googleMapsUrl = computed(
 
                         <button
                             type="button"
-                            class="shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                            class="shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10"
                             aria-label="Close"
                             @click="emit('close')"
                         >
@@ -82,7 +82,7 @@ const googleMapsUrl = computed(
 
                             <template #fallback>
                                 <div
-                                    class="h-[340px] w-full animate-pulse rounded-xl border border-[#E4EFED] bg-slate-50"
+                                    class="h-[340px] w-full animate-pulse rounded-xl border border-[#E4EFED] bg-slate-50 dark:bg-secondary"
                                 />
                             </template>
                         </ClientOnly>

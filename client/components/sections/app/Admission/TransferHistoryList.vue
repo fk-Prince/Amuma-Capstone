@@ -18,13 +18,13 @@
             class="relative pb-5 last:pb-0"
         >
             <span
-                class="absolute -left-6 top-1.5 h-3.5 w-3.5 rounded-full bg-white border-2 border-primary-300"
+                class="absolute -left-6 top-1.5 h-3.5 w-3.5 rounded-full bg-white border-2 border-primary-300 dark:bg-secondary"
             />
 
             <div class="rounded-xl border border-primary-100 p-4">
                 <div class="flex items-center justify-between gap-3">
                     <div class="flex items-center gap-2 text-sm min-w-0">
-                        <span class="text-slate-500 truncate">
+                        <span class="text-slate-500 truncate dark:text-gray-400">
                             Room {{ transfer.from_room?.room_no ?? "—" }}
                             <span
                                 v-if="transfer.from_bed?.bed_no"
@@ -55,12 +55,12 @@
                         </span>
                     </div>
 
-                    <span class="shrink-0 text-xs text-muted">
+                    <span class="shrink-0 text-xs text-muted dark:text-gray-400">
                         {{ formatDate(transfer.created_at) }}
                     </span>
                 </div>
 
-                <p v-if="transfer.reason" class="mt-2 text-xs text-slate-500">
+                <p v-if="transfer.reason" class="mt-2 text-xs text-slate-500 dark:text-gray-400">
                     {{ transfer.reason }}
                 </p>
             </div>

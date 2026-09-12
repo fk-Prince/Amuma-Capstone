@@ -1,27 +1,31 @@
 <template>
-    <div class="flex flex-col gap-1.5 font-primary" :class="[className]">
+    <div class="flex w-full flex-col gap-1.5 font-primary" :class="[className]">
         <label v-if="label" class="text-sm font-semibold text-slate-700 dark:text-gray-300">
             {{ label }}
             <span v-if="required" class="text-danger ml-0.5">*</span>
         </label>
 
         <div
-            class="flex items-center rounded-lg bg-white overflow-hidden transition"
+            class="group flex items-center rounded-xl bg-white overflow-hidden transition-all duration-150 dark:bg-white/5"
             :class="[
                 currentError
-                    ? 'border-red-400 focus-within:ring-red-500/15'
-                    : 'border-slate-200 dark:border-white/10 focus-within:border-blue-500 focus-within:ring-blue-500/15',
+                    ? 'border-red-400 focus-within:ring-4 focus-within:ring-red-500/10'
+                    : 'border-slate-200 focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-500/10 dark:border-white/10',
                 disabled
-                    ? 'bg-slate-100 dark:bg-white/5'
+                    ? 'bg-slate-100 dark:bg-white/[0.03]'
                     : readonly
-                      ? 'bg-slate-50 dark:bg-white/5'
-                      : 'bg-white dark:bg-secondary',
+                      ? 'bg-slate-50 dark:bg-white/[0.03]'
+                      : 'bg-white dark:bg-white/5',
+                size === 'lg' ? 'rounded-2xl' : 'rounded-xl',
                 boxClass,
             ]"
         >
             <span
                 v-if="hasPrefix"
-                class="flex items-center pl-3.5 text-slate-400 dark:text-gray-500 flex-shrink-0"
+                :class="[
+                    'flex items-center text-slate-400 transition-colors duration-150 group-focus-within:text-primary-500 flex-shrink-0 dark:text-gray-500',
+                    size === 'lg' ? 'pl-4' : 'pl-3.5',
+                ]"
             >
                 <slot name="prefix" />
             </span>
@@ -35,7 +39,10 @@
                 :disabled="disabled"
                 :readonly="readonly"
                 :class="[
-                    'flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 dark:text-white bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-gray-500',
+                    'flex-1 min-w-0 bg-transparent outline-none placeholder:text-slate-400 text-slate-800 dark:text-gray-100 dark:placeholder:text-gray-500',
+                    size === 'lg'
+                        ? 'px-4 py-3.5 text-base'
+                        : 'px-3.5 py-2.5 text-sm',
                     allowResize ? 'resize-y' : 'resize-none',
                     readonly ? 'cursor-default' : '',
                     inputClass,
@@ -50,9 +57,12 @@
                 :min="min || undefined"
                 :max="max || undefined"
                 :placeholder="placeholder"
-                class="flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 dark:text-white bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-gray-500"
                 :class="[
-                    hasPrefix ? 'pl-2' : '',
+                    'flex-1 min-w-0 bg-transparent outline-none placeholder:text-slate-400 text-slate-800 dark:text-gray-100 dark:placeholder:text-gray-500',
+                    size === 'lg'
+                        ? 'px-4 py-3.5 text-base'
+                        : 'px-3.5 py-2.5 text-sm',
+                    hasPrefix ? (size === 'lg' ? 'pl-2.5' : 'pl-2') : '',
                     readonly ? 'cursor-default' : '',
                     inputClass,
                 ]"
@@ -61,18 +71,11 @@
                 :readonly="readonly"
             />
 
-            <!-- <span
-                v-if="hasSuffix || isSearch"
-                class="flex items-center flex-shrink-0 pr-3"
-            >
-                <slot v-if="hasSuffix" name="suffix" />
-                <Search v-else-if="isSearch" />
-            </span> -->
             <span
                 v-if="hasSuffix || isSearch"
                 :class="[
                     'flex flex-shrink-0 items-center',
-                    isSearch ? 'pr-3 text-slate-400 dark:text-gray-500' : '',
+                    isSearch ? (size === 'lg' ? 'pr-4' : 'pr-3') + ' text-slate-400 dark:text-gray-500' : '',
                 ]"
             >
                 <slot v-if="hasSuffix" name="suffix" />
@@ -80,7 +83,7 @@
             </span>
         </div>
 
-        <p v-if="currentError" class="text-xs text-red-500 mt-0.5">
+        <p v-if="currentError" class="flex items-center gap-1 text-xs text-red-500 mt-0.5">
             {{ currentError }}
         </p>
     </div>
@@ -139,7 +142,7 @@ const props = defineProps({
     },
     boxClass: {
         type: String,
-        default: "border-[1.5px] focus-within:ring-2",
+        default: "border-[1.5px]",
     },
     disabled: {
         type: Boolean,
@@ -160,6 +163,10 @@ const props = defineProps({
     rows: {
         type: Number,
         default: 0,
+    },
+    size: {
+        type: String,
+        default: "md",
     },
 });
 

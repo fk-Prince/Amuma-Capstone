@@ -1,7 +1,7 @@
 <template>
     <div class="rounded-2xl bg-light/40 p-4 flex flex-col gap-3 font-sans">
         <div class="flex items-center justify-between">
-            <p class="text-xs font-medium text-muted">
+            <p class="text-xs font-medium text-muted dark:text-gray-400">
                 {{ title }}
             </p>
 
@@ -23,11 +23,11 @@
                 v-if="loading"
                 class="h-7 w-16 rounded-md bg-muted-light animate-pulse"
             />
-            <p v-else class="text-2xl font-bold text-secondary leading-none">
+            <p v-else class="text-2xl font-bold text-secondary leading-none dark:text-white">
                 {{ value }}
             </p>
 
-            <p class="text-xs text-muted mt-1.5">
+            <p class="text-xs text-muted mt-1.5 dark:text-gray-400">
                 {{ subtitle }}
             </p>
         </div>

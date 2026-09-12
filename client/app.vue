@@ -5,12 +5,14 @@
         </NuxtLayout>
         <ClientOnly>
             <AppToast ref="toastRef" />
+            <AppSplashScreen />
         </ClientOnly>
     </div>
 </template>
 
 <script setup lang="ts">
 import AppToast from "./components/ui/AppToast.vue";
+import AppSplashScreen from "./components/ui/AppSplashScreen.vue";
 import { onMounted, ref, watch } from "vue";
 import { registerToast } from "@/composables/useToast";
 import { useRoute, navigateTo } from "#imports";

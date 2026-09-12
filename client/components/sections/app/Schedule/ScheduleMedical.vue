@@ -2,14 +2,14 @@
     <div
         v-for="(day, index) in dayGroups"
         :key="day.date"
-        class="overflow-hidden bg-white"
+        class="overflow-hidden bg-white dark:bg-secondary"
     >
         <div
-            class="flex cursor-pointer select-none items-center justify-between border-b border-slate-100 px-5 py-4 transition-colors hover:bg-slate-50/60"
+            class="flex cursor-pointer select-none items-center justify-between border-b border-slate-100 px-5 py-4 transition-colors hover:bg-slate-50/60 dark:border-white/10"
             @click="toggleDay(day.date)"
         >
             <div class="flex flex-wrap items-center gap-2">
-                <h3 class="font-semibold text-slate-800">
+                <h3 class="font-semibold text-slate-800 dark:text-gray-100">
                     {{ day.dateLabel }}
                 </h3>
 
@@ -22,7 +22,7 @@
                 </span>
 
                 <!-- <span
-                    class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500"
+                    class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-white/5 dark:text-gray-400"
                 >
                     {{ day.count }} {{ day.count === 1 ? "visit" : "visits" }}
                 </span> -->
@@ -47,7 +47,7 @@
 
             <button
                 type="button"
-                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10"
                 :aria-label="
                     isCollapsed(day.date) ? 'Expand day' : 'Collapse day'
                 "
@@ -92,7 +92,7 @@
                     class="flex flex-col items-center justify-center gap-2 px-5 py-10 text-center"
                 >
                     <div
-                        class="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-400"
+                        class="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-white/5"
                     >
                         <svg
                             width="20"
@@ -107,7 +107,7 @@
                         </svg>
                     </div>
 
-                    <p class="text-sm font-medium text-slate-500">
+                    <p class="text-sm font-medium text-slate-500 dark:text-gray-400">
                         No visits scheduled for this day
                     </p>
                 </div>
@@ -137,7 +137,7 @@
                     </div>
 
                     <div
-                        class="sticky top-0 z-20 flex h-10 bg-white shadow-[0_1px_0_0_rgba(0,0,0,0.04)]"
+                        class="sticky top-0 z-20 flex h-10 bg-white shadow-[0_1px_0_0_rgba(0,0,0,0.04)] dark:bg-secondary"
                     >
                         <!-- The pill lives in the hour ruler rather than above
                              the line: anchored to the line's top it rendered
@@ -153,11 +153,11 @@
                         </div>
 
                         <div
-                            class="sticky left-0 z-30 shrink-0 border-b border-r border-slate-100 bg-white"
+                            class="sticky left-0 z-30 shrink-0 border-b border-r border-slate-100 bg-white dark:bg-secondary dark:border-white/10"
                             :style="{ width: `${labelWidth}px` }"
                         />
 
-                        <div class="flex border-b border-slate-100">
+                        <div class="flex border-b border-slate-100 dark:border-white/10">
                             <div
                                 v-for="hour in day.hours"
                                 :key="hour.value"
@@ -193,7 +193,7 @@
                                         class="flex items-center gap-1.5 min-w-0"
                                     >
                                         <p
-                                            class="truncate text-[13.5px] font-semibold text-slate-800"
+                                            class="truncate text-[13.5px] font-semibold text-slate-800 dark:text-gray-100"
                                         >
                                             {{ schedule.schedule_code }}
                                         </p>
@@ -217,7 +217,7 @@
                                     <!-- The day header above already states the
                                          date, so the row only needs the time. -->
                                     <p
-                                        class="mt-1 flex items-center gap-1 text-[12px] font-medium text-slate-600"
+                                        class="mt-1 flex items-center gap-1 text-[12px] font-medium text-slate-600 dark:text-gray-300"
                                     >
                                         <svg
                                             width="11"
@@ -358,7 +358,7 @@
                                                         (service.assignees
                                                             ?.length ?? 0) > 3
                                                     "
-                                                    class="flex items-center justify-center rounded-full border-2 border-white bg-slate-200 px-1.5 py-0.5 text-[9px] font-semibold text-slate-600"
+                                                    class="flex items-center justify-center rounded-full border-2 border-white bg-slate-200 px-1.5 py-0.5 text-[9px] font-semibold text-slate-600 dark:text-gray-300"
                                                     :title="
                                                         service.assignees
                                                             .slice(3)
@@ -394,7 +394,7 @@
                                                         (service.assignees
                                                             ?.length ?? 0) > 1
                                                     "
-                                                    class="text-slate-500"
+                                                    class="text-slate-500 dark:text-gray-400"
                                                 >
                                                     +{{
                                                         (service.assignees
@@ -431,7 +431,7 @@
                                     </div>
 
                                     <div
-                                        class="flex items-center gap-1.5 text-[11px] text-slate-500"
+                                        class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-gray-400"
                                     >
                                         <svg
                                             width="11"
@@ -471,7 +471,7 @@
                                     class="flex items-center justify-between gap-2"
                                 >
                                     <span
-                                        class="truncate text-[13px] font-semibold text-slate-800"
+                                        class="truncate text-[13px] font-semibold text-slate-800 dark:text-gray-100"
                                     >
                                         {{
                                             schedule.category ||
@@ -494,7 +494,7 @@
                                 </div>
 
                                 <div
-                                    class="flex items-center gap-1.5 text-[11px] text-slate-500"
+                                    class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-gray-400"
                                 >
                                     <svg
                                         width="11"
@@ -516,7 +516,7 @@
 
                                 <div
                                     v-if="schedule.patient?.full_name"
-                                    class="truncate text-[11px] font-medium text-slate-600"
+                                    class="truncate text-[11px] font-medium text-slate-600 dark:text-gray-300"
                                 >
                                     {{ schedule.patient.full_name }}
                                 </div>

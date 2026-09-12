@@ -72,7 +72,7 @@ const saveBed = () => {
 
 <template>
     <div
-        class="rounded-2xl bg-white p-4"
+        class="rounded-2xl bg-white p-4 dark:bg-secondary"
         :class="{
             border: action !== 'update',
         }"
@@ -119,7 +119,7 @@ const saveBed = () => {
                 <button
                     type="button"
                     @click="cancelEdit"
-                    class="rounded-lg border px-4 py-2 text-sm text-slate-600"
+                    class="rounded-lg border px-4 py-2 text-sm text-slate-600 dark:text-gray-300"
                 >
                     Cancel
                 </button>

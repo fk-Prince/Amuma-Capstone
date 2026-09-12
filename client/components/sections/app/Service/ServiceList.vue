@@ -103,22 +103,22 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                 <div
                     v-for="n in 5"
                     :key="n"
-                    class="rounded-2xl border border-[#E4EFED] bg-white p-4 animate-pulse"
+                    class="rounded-2xl border border-[#E4EFED] bg-white p-4 animate-pulse dark:bg-secondary"
                 >
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
-                            <div class="h-5 w-32 bg-slate-100 rounded-md" />
+                            <div class="h-5 w-32 bg-slate-100 rounded-md dark:bg-white/5" />
 
                             <div class="flex gap-2 mt-3">
-                                <div class="h-3 w-20 bg-slate-100 rounded" />
-                                <div class="h-3 w-16 bg-slate-100 rounded" />
-                                <div class="h-3 w-24 bg-slate-100 rounded" />
+                                <div class="h-3 w-20 bg-slate-100 rounded dark:bg-white/5" />
+                                <div class="h-3 w-16 bg-slate-100 rounded dark:bg-white/5" />
+                                <div class="h-3 w-24 bg-slate-100 rounded dark:bg-white/5" />
                             </div>
                         </div>
 
                         <div class="flex items-center gap-4">
-                            <div class="w-14 h-5 rounded-full bg-slate-100" />
-                            <div class="w-4 h-4 rounded bg-slate-100" />
+                            <div class="w-14 h-5 rounded-full bg-slate-100 dark:bg-white/5" />
+                            <div class="w-4 h-4 rounded bg-slate-100 dark:bg-white/5" />
                         </div>
                     </div>
                 </div>
@@ -159,7 +159,7 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                     <div
                         v-for="service in services"
                         :key="service.service_id"
-                        class="group rounded-2xl border border-[#E4EFED] bg-white overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-lg"
+                        class="group rounded-2xl border border-[#E4EFED] bg-white overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-lg dark:bg-secondary"
                     >
                         <button
                             type="button"
@@ -263,7 +263,7 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                                 </span>
 
                                 <ChevronDown
-                                    class="w-4 h-4 text-muted transition-transform"
+                                    class="w-4 h-4 text-muted transition-transform dark:text-gray-400"
                                     :class="{
                                         'rotate-180': isExpanded(
                                             service.service_id,
@@ -300,7 +300,7 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                                             @click.stop="
                                                 openEditService(service)
                                             "
-                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition"
+                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition dark:bg-secondary"
                                         >
                                             <Pencil class="w-4 h-4" />
                                             Edit
@@ -311,7 +311,7 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                                             @click.stop="
                                                 openAssignService(service)
                                             "
-                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition"
+                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition dark:bg-secondary"
                                         >
                                             <UserPlus class="w-4 h-4" />
                                             Assign Nurse
@@ -320,7 +320,7 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
                                 </div>
 
                                 <div
-                                    class="rounded-2xl border border-[#E4EFED] bg-white overflow-hidden shadow-sm"
+                                    class="rounded-2xl border border-[#E4EFED] bg-white overflow-hidden shadow-sm dark:bg-secondary"
                                 >
                                     <div
                                         class="px-5 py-4 border-b border-[#E4EFED] bg-gradient-to-r from-[#F7FAF9] to-white"
@@ -471,7 +471,7 @@ const categoryStyle = (name: string | undefined | null): CategoryStyle => {
 
                                 <div class="flex flex-wrap gap-3">
                                     <div
-                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4EFED] text-xs text-[#6B8A87]"
+                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4EFED] text-xs text-[#6B8A87] dark:bg-secondary"
                                     >
                                         <span
                                             class="w-2 h-2 rounded-full bg-accent"

@@ -1,10 +1,10 @@
 <template>
-    <header
-        class="min-h-[88px] sm:min-h-[104px] lg:h-[120px] px-3 sm:px-6 lg:px-8 py-4 sm:py-5 flex items-center justify-between gap-2 sm:gap-4 shrink-0 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-secondary"
+       <header
+        class="h-14 sm:h-[60px] lg:h-16 mx-3 mt-3 sm:mx-4 sm:mt-4 lg:mx-0 lg:mt-4 lg:mr-4 px-3 sm:px-4 lg:px-5 py-2 flex items-center justify-between gap-2 sm:gap-4 shrink-0 rounded-2xl bg-white dark:bg-secondary-900 shadow-[0_10px_28px_-16px_rgba(15,23,42,0.15)] ring-1 ring-black/[0.04] dark:ring-white/[0.06]"
     >
         <button
             type="button"
-            class="-ml-1 shrink-0 rounded-lg p-2 text-gray-600 hover:bg-gray-50 hover:text-primary-500 dark:text-white/70 dark:hover:bg-white/10 lg:hidden"
+            class="-ml-1 shrink-0 rounded-lg p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-primary-500 lg:hidden"
             aria-label="Open navigation"
             @click="$emit('open')"
         >
@@ -23,7 +23,7 @@
             @click="branchStore.openModal"
         >
             <div
-                class="hidden h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-50 ring-2 ring-primary-100 dark:bg-white/10 dark:ring-white/10 sm:flex"
+                class="hidden h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary-50 dark:bg-primary-500/10 ring-2 ring-primary-100 dark:ring-primary-500/20 sm:flex"
             >
                 <img
                     v-if="branchStore.activeBranch?.image"
@@ -31,47 +31,27 @@
                     :alt="branchStore.activeBranch.name"
                     class="h-full w-full object-cover"
                 />
-                <Building2 v-else class="h-5 w-5 text-primary-400" />
+                <Building2 v-else class="h-4 w-4 text-primary-400" />
             </div>
 
             <div class="min-w-0 flex-1">
                 <h1
-                    class="flex items-center gap-1.5 truncate text-lg sm:text-2xl lg:text-[26px] font-bold text-gray-900 dark:text-white leading-tight"
+                    class="flex items-center gap-1.5 truncate text-sm sm:text-base lg:text-lg font-bold text-gray-900 dark:text-white leading-tight"
                 >
                     {{ branchStore.activeBranch?.name || "Select a branch" }}
 
                     <ChevronDown
                         v-if="branchStore.hasMultipleBranches"
-                        class="h-4 w-4 shrink-0 text-gray-400 dark:text-white/40"
+                        class="h-4 w-4 shrink-0 text-gray-400"
                     />
                 </h1>
 
-                <p class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate">
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
                     {{
                         branchStore.activeBranch?.location?.address ||
                         "No branch selected"
                     }}
                 </p>
-
-                <div
-                    class="hidden items-center gap-2 sm:gap-3 mt-2 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 sm:flex"
-                >
-                    <span class="flex items-center gap-1.5 whitespace-nowrap">
-                        <Calendar
-                            class="w-3.5 h-3.5 text-primary-500 shrink-0"
-                        />
-                        {{ formattedDate }}
-                    </span>
-
-                    <span
-                        class="w-px h-3 bg-gray-200 dark:bg-white/10 shrink-0"
-                    />
-
-                    <span class="flex items-center gap-1.5 whitespace-nowrap">
-                        <Clock class="w-3.5 h-3.5 text-primary-500 shrink-0" />
-                        {{ formattedTime }}
-                    </span>
-                </div>
             </div>
         </button>
 
@@ -81,12 +61,9 @@
             </div>
 
             <template v-else>
-                <ClientOnly>
-                    <ThemeToggle
-                        class="text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/10"
-                    />
-                </ClientOnly>
-
+                <ThemeToggle
+                    class="text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
+                />
                 <MessageBell />
                 <Notification />
                 <NavbarProfileDropdown
@@ -314,7 +291,7 @@
                                             </div>
 
                                             <span
-                                                class="max-w-[45%] shrink-0 truncate rounded-full border px-1.5 py-0.5 text-[10px] font-medium sm:max-w-[50%] sm:px-2 sm:text-[11px]"
+                                                class="max-w-[45%] shrink-0 truncate rounded-full border px-1.5 py-0.5 text-[10px] font-medium sm:max-w-[50%] sm:text-[11px]"
                                                 :class="
                                                     roleMeta[
                                                         branch?.role_name ?? ''
@@ -455,7 +432,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { onMounted, ref } from "vue";
 import Notification from "../ui/Notification.vue";
 import MessageBell from "../ui/MessageBell.vue";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
@@ -464,9 +441,7 @@ import Location from "../icons/location.vue";
 import {
     BadgeCheck,
     Building2,
-    Calendar,
     ChevronDown,
-    Clock,
     Mail,
     Menu,
     Phone,
@@ -487,38 +462,6 @@ const isMounted = ref(false);
 
 onMounted(() => {
     isMounted.value = true;
-});
-
-const now = ref(new Date());
-
-let clockTimer: ReturnType<typeof setInterval> | undefined;
-
-const formattedDate = computed(() =>
-    now.value.toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "2-digit",
-        year: "numeric",
-    }),
-);
-
-const formattedTime = computed(() =>
-    now.value.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-    }),
-);
-
-onMounted(() => {
-    clockTimer = setInterval(() => {
-        now.value = new Date();
-    }, 1000 * 30);
-});
-
-onUnmounted(() => {
-    if (clockTimer) {
-        clearInterval(clockTimer);
-    }
 });
 </script>
 

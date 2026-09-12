@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import "./branch-theme.css";
 
 :root {
     --header-h: 150px;
@@ -18,6 +19,20 @@ body,
     height: 100%;
     margin: 0;
     padding: 0;
+    /* Belt-and-suspenders: even if some component ever references a font
+       utility that's misspelled or unregistered (as `font-primary` was
+       until it got added to the theme), the browser still has nowhere to
+       fall back to except a real sans-serif — never its own default serif. */
+    font-family:
+        "Outfit",
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        Roboto,
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
 }
 
 @layer utilities {

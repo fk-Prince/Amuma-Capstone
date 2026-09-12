@@ -1,6 +1,5 @@
 <template>
-    <section class="relative overflow-visible bg-slate-50 pt-36 pb-40 dark:bg-secondary">
-        <div
+        <section class="relative overflow-visible bg-slate-50 dark:bg-secondary-950 pt-44 pb-40">        <div
             class="pointer-events-none absolute -top-[120px] -right-[80px] h-[520px] w-[520px] rounded-full bg-blue-300 opacity-35 blur-[70px]"
         ></div>
 
@@ -9,7 +8,7 @@
         ></div>
 
         <div
-            class="absolute top-36 left-[7%] h-[10px] w-[10px] animate-pulse rounded-full bg-primary shadow-[0_0_25px_rgba(49,130,237,0.8)]"
+            class="absolute top-48 left-[7%] h-[10px] w-[10px] animate-pulse rounded-full bg-primary shadow-[0_0_25px_rgba(49,130,237,0.8)]"
         >
             <div
                 class="absolute -inset-3 rounded-full bg-primary/25 blur-[9px]"
@@ -158,19 +157,19 @@
                 <div class="flex items-center gap-4">
                     <div class="flex">
                         <div
-                            class="ml-0 h-9 w-9 rounded-full border-2 border-white bg-danger"
+                            class="ml-0 h-9 w-9 rounded-full border-2 border-white dark:border-secondary-900 bg-danger"
                         ></div>
 
                         <div
-                            class="-ml-3 h-9 w-9 rounded-full border-2 border-white bg-primary"
+                            class="-ml-3 h-9 w-9 rounded-full border-2 border-white dark:border-secondary-900 bg-primary"
                         ></div>
 
                         <div
-                            class="-ml-3 h-9 w-9 rounded-full border-2 border-white bg-accent"
+                            class="-ml-3 h-9 w-9 rounded-full border-2 border-white dark:border-secondary-900 bg-accent"
                         ></div>
 
                         <div
-                            class="-ml-3 h-9 w-9 rounded-full border-2 border-white bg-purple-400"
+                            class="-ml-3 h-9 w-9 rounded-full border-2 border-white dark:border-secondary-900 bg-purple-400"
                         ></div>
                     </div>
 
@@ -242,7 +241,7 @@
                                     class="relative h-11 w-11 rounded-full bg-gradient-to-br from-yellow-500 to-amber-700"
                                 >
                                     <span
-                                        class="absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 border-white bg-accent"
+                                        class="absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 border-white dark:border-secondary-900 bg-accent"
                                     ></span>
                                 </div>
 

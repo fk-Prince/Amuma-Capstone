@@ -12,7 +12,25 @@ export const colors = {
         800: "#0F397B",
         900: "#0A2857",
     },
-    secondary: '#0f1623',
+    // Was a single flat value. Expanded into a full scale so dark mode has
+    // distinct surface levels to build on (page bg vs. card vs. border vs.
+    // hover state) instead of one color reused everywhere. `900` keeps the
+    // original `#0f1623` value so any existing `text-secondary` /
+    // `bg-secondary` usages don't change.
+    secondary: {
+        DEFAULT: "#0f1623",
+        50: "#F4F5F7",
+        100: "#E7E9ED",
+        200: "#C9CDD6",
+        300: "#9CA3B2",
+        400: "#6B7280",
+        500: "#3B4354",
+        600: "#232B3A",
+        700: "#171E2B",
+        800: "#111726",
+        900: "#0f1623",
+        950: "#0A0F19",
+    },
     accent: {
         DEFAULT: "#0E7C7B",
         50: "#E7F5F5",
@@ -26,15 +44,40 @@ export const colors = {
         800: "#073837",
         900: "#042221",
     },
-    light: '#ebf2ff',
+    light: "#ebf2ff",
     muted: {
-        DEFAULT: '#6b7280',
-        light: '#f3f4f6',
-        dark: '#374151',
+        DEFAULT: "#6b7280",
+        light: "#f3f4f6",
+        dark: "#374151",
     },
-    danger: '#f87171'
-}
+    danger: "#f87171",
+};
 
 export const fontFamily = {
-    sans: ['Outfit'],
-}
+    sans: [
+        "Outfit",
+        "ui-sans-serif",
+        "system-ui",
+        "-apple-system",
+        "Segoe UI",
+        "Roboto",
+        "Helvetica Neue",
+        "Arial",
+        "sans-serif",
+    ],
+    // `font-primary` is used in a few components (BaseInput, DatePicker,
+    // the auth sections) as if it were a registered font family — it
+    // wasn't, so it silently compiled to nothing. Same stack as `sans`,
+    // just under the name those components already expect.
+    primary: [
+        "Outfit",
+        "ui-sans-serif",
+        "system-ui",
+        "-apple-system",
+        "Segoe UI",
+        "Roboto",
+        "Helvetica Neue",
+        "Arial",
+        "sans-serif",
+    ],
+};

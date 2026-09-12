@@ -1,7 +1,7 @@
 <template>
-    <div class="rounded-2xl bg-white border border-gray-100 shadow-sm">
-        <div class="p-5 border-b border-gray-100">
-            <h3 class="text-base font-semibold text-gray-800">
+    <div class="rounded-2xl bg-white border border-gray-100 shadow-sm dark:bg-secondary dark:border-white/10">
+        <div class="p-5 border-b border-gray-100 dark:border-white/10">
+            <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">
                 Medical Schedule
             </h3>
             <p class="mt-0.5 text-sm text-gray-400">
@@ -13,17 +13,17 @@
             <div
                 v-for="i in 3"
                 :key="i"
-                class="h-28 animate-pulse rounded-xl bg-gray-50"
+                class="h-28 animate-pulse rounded-xl bg-gray-50 dark:bg-white/5"
             />
         </div>
 
         <div v-else-if="!logs.length" class="p-12 text-center">
             <span
-                class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 text-gray-300"
+                class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 text-gray-300 dark:bg-white/5"
             >
                 <Stethoscope class="w-6 h-6" />
             </span>
-            <p class="text-sm font-medium text-gray-600">
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
                 No medical visits yet
             </p>
             <p class="mt-1 text-xs text-gray-400">
@@ -36,7 +36,7 @@
                 <div class="flex items-center justify-between gap-2 mb-3">
                     <div class="flex items-center gap-2">
                         <CalendarClock class="w-4 h-4 text-blue-500" />
-                        <p class="text-sm font-semibold text-gray-800">
+                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">
                             Scheduled Days
                         </p>
                     </div>
@@ -49,22 +49,22 @@
                     <div
                         v-for="schedule in upcomingSchedules"
                         :key="schedule.schedule_id"
-                        class="flex flex-col gap-3 rounded-xl border border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between"
+                        class="flex flex-col gap-3 rounded-xl border border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"
                     >
                         <div class="flex items-start gap-3 min-w-0">
                             <span
-                                class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-500"
+                                class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-500 dark:bg-primary-500/10"
                             >
                                 <CalendarClock class="w-4 h-4" />
                             </span>
 
                             <div class="min-w-0">
                                 <p
-                                    class="text-sm font-semibold text-gray-800"
+                                    class="text-sm font-semibold text-gray-800 dark:text-gray-100"
                                 >
                                     {{ schedule.schedule_code }}
                                 </p>
-                                <p class="text-xs text-gray-500 mt-0.5">
+                                <p class="text-xs text-gray-500 mt-0.5 dark:text-gray-400">
                                     {{ formatDate(getScheduleDate(schedule)) }}
                                     <span v-if="schedule.start_time">
                                         · {{ schedule.start_time }}
@@ -87,7 +87,7 @@
                             </span>
 
                             <span
-                                class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600"
+                                class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600 dark:bg-primary-500/10"
                             >
                                 {{ formatDuration(schedule.total_hours) || "0 hrs" }}
                             </span>
@@ -97,7 +97,7 @@
             </div>
 
             <div v-if="historySchedules.length">
-                <p class="text-sm font-semibold text-gray-800 mb-3">
+                <p class="text-sm font-semibold text-gray-800 mb-3 dark:text-gray-100">
                     History
                 </p>
 
@@ -105,16 +105,16 @@
             <div
                 v-for="schedule in historySchedules"
                 :key="schedule.schedule_id"
-                class="rounded-xl border border-gray-100 overflow-hidden"
+                class="rounded-xl border border-gray-100 overflow-hidden dark:border-white/10"
             >
                 <div
                     class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between bg-gray-50/60"
                 >
                     <div>
-                        <p class="text-sm font-semibold text-gray-800">
+                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">
                             {{ schedule.schedule_code }}
                         </p>
-                        <p class="text-xs text-gray-500 mt-0.5">
+                        <p class="text-xs text-gray-500 mt-0.5 dark:text-gray-400">
                             {{ formatDate(getScheduleDate(schedule)) }}
                             <span v-if="schedule.start_time">
                                 · {{ schedule.start_time }}
@@ -134,7 +134,7 @@
                         </span>
 
                         <span
-                            class="px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-600"
+                            class="px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-600 dark:bg-secondary dark:text-gray-300 dark:border-white/10"
                         >
                             {{ formatDuration(schedule.total_hours) }}
                         </span>
@@ -160,21 +160,21 @@
                                 />
                                 <span
                                     v-else
-                                    class="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-xs font-semibold shrink-0"
+                                    class="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-xs font-semibold shrink-0 dark:bg-primary-500/10"
                                 >
                                     {{ initials(service.assignees[0]?.full_name) }}
                                 </span>
                             </template>
                             <span
                                 v-else
-                                class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0"
+                                class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0 dark:bg-white/5"
                             >
                                 <UserRound class="w-4 h-4" />
                             </span>
 
                             <div class="min-w-0">
                                 <p
-                                    class="text-sm font-medium text-gray-800 truncate"
+                                    class="text-sm font-medium text-gray-800 truncate dark:text-gray-100"
                                 >
                                     {{ service.service_name || "Service" }}
                                 </p>
@@ -205,12 +205,12 @@
 
                         <div class="flex items-center gap-3 shrink-0 pl-12 sm:pl-0">
                             <div
-                                class="rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 text-right"
+                                class="rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 text-right dark:bg-white/5 dark:border-white/10"
                             >
                                 <p class="text-[10px] uppercase text-gray-400">
                                     Duration
                                 </p>
-                                <p class="text-xs font-semibold text-gray-700">
+                                <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">
                                     {{
                                         formatDuration(
                                             (service.duration_minutes ?? 0) /

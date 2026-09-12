@@ -6,10 +6,10 @@
                 class="fixed inset-0 z-50 flex items-center justify-center bg-primary-950/60 p-4 backdrop-blur-sm"
             >
                 <div
-                    class="w-full max-w-4xl max-h-[90dvh] overflow-y-auto rounded-2xl bg-white shadow-[0_20px_60px_-15px_rgba(10,40,87,0.35)] ring-1 ring-black/5"
+                    class="w-full max-w-4xl max-h-[90dvh] overflow-y-auto rounded-2xl bg-white shadow-[0_20px_60px_-15px_rgba(10,40,87,0.35)] ring-1 ring-black/5 dark:bg-secondary"
                 >
                     <div
-                        class="flex items-start gap-4 border-b border-slate-100 px-4 sm:px-8 py-5 sm:py-7"
+                        class="flex items-start gap-4 border-b border-slate-100 px-4 sm:px-8 py-5 sm:py-7 dark:border-white/10"
                     >
                         <div
                             class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600 ring-1 ring-rose-100"
@@ -37,7 +37,7 @@
                                 Discharge patient
                             </h3>
 
-                            <p class="mt-1 text-sm text-slate-500">
+                            <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
                                 This ends the patient's current admission and
                                 future periods. This action cannot be undone.
                             </p>
@@ -46,7 +46,7 @@
                         <button
                             type="button"
                             :disabled="loading"
-                            class="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:opacity-40"
+                            class="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:opacity-40 dark:hover:bg-white/10"
                             @click="handleClose"
                         >
                             <svg
@@ -79,7 +79,7 @@
 
                                 <div
                                     v-if="showCurrentPeriodBlock"
-                                    class="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white p-5"
+                                    class="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white p-5 dark:bg-secondary dark:border-white/10"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-3"
@@ -93,7 +93,7 @@
                                             </p>
 
                                             <p
-                                                class="mt-0.5 text-xs text-slate-500"
+                                                class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
                                             >
                                                 {{
                                                     formatDate(
@@ -122,9 +122,9 @@
 
                                     <!-- PAYMENT SUMMARY -->
                                     <div class="mt-5 grid grid-cols-2 gap-2.5">
-                                        <div class="rounded-lg bg-slate-50 p-3">
+                                        <div class="rounded-lg bg-slate-50 p-3 dark:bg-secondary">
                                             <p
-                                                class="text-[11px] text-slate-500"
+                                                class="text-[11px] text-slate-500 dark:text-gray-400"
                                             >
                                                 Paid
                                             </p>
@@ -234,7 +234,7 @@
                                     <!-- CALCULATION -->
                                     <div
                                         v-if="isEligibleForRefund"
-                                        class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4"
+                                        class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:bg-secondary dark:border-white/10"
                                     >
                                         <p
                                             class="text-xs font-semibold uppercase tracking-wide text-slate-400"
@@ -244,18 +244,18 @@
 
                                         <div class="mt-3 space-y-2 text-sm">
                                             <div class="flex justify-between">
-                                                <span class="text-slate-500">
+                                                <span class="text-slate-500 dark:text-gray-400">
                                                     Amount paid
                                                 </span>
 
                                                 <span
-                                                    class="font-medium text-slate-700"
+                                                    class="font-medium text-slate-700 dark:text-gray-200"
                                                 >
                                                     <div
                                                         class="flex justify-between"
                                                     >
                                                         <span
-                                                            class="font-medium text-slate-700"
+                                                            class="font-medium text-slate-700 dark:text-gray-200"
                                                         >
                                                             {{
                                                                 formatCurrency(
@@ -271,9 +271,9 @@
                                                 v-if="
                                                     isWithinTerminationFeeWindow
                                                 "
-                                                class="flex justify-between text-slate-600"
+                                                class="flex justify-between text-slate-600 dark:text-gray-300"
                                             >
-                                                <span class="text-slate-500">
+                                                <span class="text-slate-500 dark:text-gray-400">
                                                     Termination fee ({{
                                                         terminationFeePercent
                                                     }}% of
@@ -300,10 +300,10 @@
                                                 class="space-y-2"
                                             >
                                                 <div
-                                                    class="flex justify-between text-slate-600"
+                                                    class="flex justify-between text-slate-600 dark:text-gray-300"
                                                 >
                                                     <span
-                                                        class="text-slate-500"
+                                                        class="text-slate-500 dark:text-gray-400"
                                                     >
                                                         Half of price ({{
                                                             terminationFeePercent
@@ -329,10 +329,10 @@
                                                 </div>
 
                                                 <div
-                                                    class="flex justify-between text-slate-600"
+                                                    class="flex justify-between text-slate-600 dark:text-gray-300"
                                                 >
                                                     <span
-                                                        class="text-slate-500"
+                                                        class="text-slate-500 dark:text-gray-400"
                                                     >
                                                         Days stayed ({{
                                                             daysSinceAdmissionStart
@@ -359,10 +359,10 @@
                                             </div>
 
                                             <div
-                                                class="border-t border-slate-200 pt-2 flex justify-between"
+                                                class="border-t border-slate-200 pt-2 flex justify-between dark:border-white/10"
                                             >
                                                 <span
-                                                    class="font-semibold text-slate-700"
+                                                    class="font-semibold text-slate-700 dark:text-gray-200"
                                                 >
                                                     Refund
                                                 </span>
@@ -383,9 +383,9 @@
 
                                 <div
                                     v-else
-                                    class="flex flex-1 items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5"
+                                    class="flex flex-1 items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 dark:bg-secondary dark:border-white/10"
                                 >
-                                    <p class="text-sm text-slate-500">
+                                    <p class="text-sm text-slate-500 dark:text-gray-400">
                                         No active billing period.
                                     </p>
                                 </div>
@@ -401,7 +401,7 @@
 
                                 <div
                                     v-if="futureInvoiceCount > 0"
-                                    class="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white p-5"
+                                    class="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white p-5 dark:bg-secondary dark:border-white/10"
                                 >
                                     <div
                                         class="flex items-center justify-between"
@@ -432,7 +432,7 @@
                                         <div
                                             v-for="invoice in futureInvoices"
                                             :key="invoice.invoice_accommodation_id"
-                                            class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
+                                            class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:bg-secondary dark:border-white/10"
                                         >
                                             <div
                                                 class="flex items-center justify-between gap-3"
@@ -462,7 +462,7 @@
                                                     </div>
 
                                                     <p
-                                                        class="mt-0.5 text-xs text-slate-500"
+                                                        class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
                                                     >
                                                         {{
                                                             formatDate(
@@ -481,7 +481,7 @@
                                                         class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs"
                                                     >
                                                         <span
-                                                            class="text-slate-500"
+                                                            class="text-slate-500 dark:text-gray-400"
                                                         >
                                                             Paid
                                                             {{
@@ -530,23 +530,23 @@
 
                                     <label
                                         v-if="hasRefundableFutureInvoices"
-                                        class="mt-5 flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3.5 transition hover:border-primary/40 hover:bg-primary-50/40"
+                                        class="mt-5 flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3.5 transition hover:border-primary/40 hover:bg-primary-50/40 dark:border-white/10"
                                     >
                                         <input
                                             v-model="refund"
                                             type="checkbox"
-                                            class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                                            class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-white/15"
                                         />
 
                                         <div>
                                             <p
-                                                class="text-sm font-medium text-slate-700"
+                                                class="text-sm font-medium text-slate-700 dark:text-gray-200"
                                             >
                                                 Refund future periods
                                             </p>
 
                                             <p
-                                                class="mt-0.5 text-xs leading-5 text-slate-500"
+                                                class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                             >
                                                 Refund the upcoming periods that
                                                 still have a balance.
@@ -556,7 +556,7 @@
 
                                     <p
                                         v-else
-                                        class="mt-5 text-xs leading-5 text-slate-500"
+                                        class="mt-5 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                     >
                                         None of the upcoming periods have a
                                         refundable balance.
@@ -565,9 +565,9 @@
 
                                 <div
                                     v-else
-                                    class="flex flex-1 items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5"
+                                    class="flex flex-1 items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 dark:bg-secondary dark:border-white/10"
                                 >
-                                    <p class="text-sm text-slate-500">
+                                    <p class="text-sm text-slate-500 dark:text-gray-400">
                                         No future billing periods to refund.
                                     </p>
                                 </div>
@@ -579,15 +579,15 @@
                                 showCurrentPeriodBlock &&
                                 requiredPaymentAmount !== null
                             "
-                            class="mt-6 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-5 py-4"
+                            class="mt-6 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 dark:bg-secondary dark:border-white/10"
                         >
                             <div>
-                                <p class="text-sm font-semibold text-slate-700">
+                                <p class="text-sm font-semibold text-slate-700 dark:text-gray-200">
                                     Required payment
                                 </p>
 
                                 <p
-                                    class="mt-0.5 text-xs leading-5 text-slate-500"
+                                    class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                 >
                                     {{ requiredPaymentDescription }}
                                 </p>
@@ -627,7 +627,7 @@
                         <div class="mt-6">
                             <label
                                 for="discharge-note"
-                                class="block text-sm font-semibold text-slate-700 mb-2"
+                                class="block text-sm font-semibold text-slate-700 mb-2 dark:text-gray-200"
                             >
                                 Discharge note
                                 <span class="font-normal text-slate-400">
@@ -641,14 +641,14 @@
                                 rows="3"
                                 :disabled="loading"
                                 placeholder="Why is this patient being discharged?"
-                                class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:bg-slate-50 disabled:cursor-not-allowed dark:bg-secondary dark:text-gray-100 dark:border-white/10"
                             />
                         </div>
                     </div>
 
                     <!-- FOOTER -->
                     <div
-                        class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-4 sm:px-8 py-5"
+                        class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-4 sm:px-8 py-5 dark:bg-secondary dark:border-white/10"
                     >
                         <div
                             v-if="
@@ -677,7 +677,7 @@
                             <button
                                 type="button"
                                 :disabled="loading"
-                                class="rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200/60 disabled:cursor-not-allowed disabled:opacity-50"
+                                class="rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200/60 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
                                 @click="handleClose"
                             >
                                 Cancel

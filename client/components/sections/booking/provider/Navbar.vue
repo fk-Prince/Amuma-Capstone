@@ -21,7 +21,7 @@
                 </button>
 
                 <span
-                    class="absolute bottom-0 left-0 w-full h-[1px] bg-slate-200"
+                    class="absolute bottom-0 left-0 w-full h-[1px] bg-slate-200 dark:bg-white/10"
                 />
 
                 <span

@@ -1,10 +1,10 @@
 <template>
     <header
-        class="min-h-[88px] sm:min-h-[104px] lg:h-[120px] px-3 sm:px-6 lg:px-8 py-4 sm:py-5 flex items-center justify-between gap-2 sm:gap-4 shrink-0 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-secondary"
+        class="h-14 sm:h-[60px] lg:h-16 mx-3 mt-3 sm:mx-4 sm:mt-4 lg:mx-0 lg:mt-4 lg:mr-4 px-3 sm:px-4 lg:px-5 py-2 flex items-center justify-between gap-2 sm:gap-4 shrink-0 rounded-2xl bg-white dark:bg-secondary-900 shadow-[0_10px_28px_-16px_rgba(15,23,42,0.15)] ring-1 ring-black/[0.04] dark:ring-white/[0.06]"
     >
         <button
             type="button"
-            class="-ml-1 shrink-0 rounded-lg p-2 text-gray-600 hover:bg-gray-50 hover:text-primary-500 dark:text-white/70 dark:hover:bg-white/10 lg:hidden"
+            class="-ml-1 shrink-0 rounded-lg p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-primary-500 lg:hidden"
             aria-label="Open navigation"
             @click="emit('open')"
         >
@@ -13,48 +13,32 @@
 
         <div class="min-w-0 flex-1">
             <h1
-                class="text-lg sm:text-2xl lg:text-[26px] font-bold text-gray-900 dark:text-white leading-tight truncate"
+                class="text-sm sm:text-base lg:text-lg font-bold text-gray-900 dark:text-white leading-tight truncate"
             >
                 {{ pageTitle }}
             </h1>
 
-            <p class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate">
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
                 {{ pageSubtitle }}
             </p>
-
-            <div
-                class="flex items-center gap-2 sm:gap-3 mt-2 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400"
-            >
-                <span class="flex items-center gap-1.5 whitespace-nowrap">
-                    <Calendar class="w-3.5 h-3.5 text-primary-500 shrink-0" />
-                    <span class="hidden sm:inline">{{ formattedDate }}</span>
-                    <span class="sm:hidden">{{ formattedShortDate }}</span>
-                </span>
-
-                <span class="w-px h-3 bg-gray-200 dark:bg-white/10 shrink-0" />
-
-                <span class="flex items-center gap-1.5 whitespace-nowrap">
-                    <Clock class="w-3.5 h-3.5 text-primary-500 shrink-0" />
-                    {{ formattedTime }}
-                </span>
-            </div>
         </div>
 
         <div class="flex items-center gap-1 sm:gap-6 lg:gap-8 shrink-0">
             <button
                 type="button"
                 aria-label="Messages"
-                class="relative w-9 h-9 sm:w-auto sm:h-auto flex items-center justify-center text-gray-700 hover:text-primary-500 dark:text-gray-300 dark:hover:text-white transition-colors"
+                class="relative w-9 h-9 sm:w-auto sm:h-auto flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary-500 transition-colors"
                 @click="goToMessages"
             >
                 <MessagesSquare class="w-5 h-5" />
 
                 <span
                     v-if="unreadMessageCount"
-                    class="absolute top-1 right-1 sm:-top-1 sm:-right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-secondary"
+                    class="absolute top-1 right-1 sm:-top-1 sm:-right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-secondary-900"
                 />
             </button>
 
+            <ThemeToggle class="text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5" />
             <Notification />
             <NavbarProfileDropdown v-if="user" :user="user" :theme-aware="true" />
         </div>
@@ -64,15 +48,18 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Calendar, Clock, MessagesSquare, Menu } from "lucide-vue-next";
+import { Menu, MessagesSquare } from "lucide-vue-next";
 import NavbarProfileDropdown from "~/components/ui/NavbarProfileDropdown.vue";
 import Notification from "~/components/ui/Notification.vue";
+import ThemeToggle from "~/components/ui/ThemeToggle.vue";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { messageService } from "~/api/message/MessageService";
+import { useSound } from "~/composables/useSound";
 import type { ConversationSummary } from "~/types/message";
 
 const user = useAuthUser();
 const { $echo } = useNuxtApp();
+const { playNotification } = useSound();
 
 const emit = defineEmits<{
     open: [];
@@ -142,34 +129,6 @@ const pageSubtitle = computed(
         "Stay connected with your loved ones.",
 );
 
-const now = ref(new Date());
-
-let clockTimer: ReturnType<typeof setInterval> | undefined;
-
-const formattedDate = computed(() =>
-    now.value.toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "2-digit",
-        year: "numeric",
-    }),
-);
-
-const formattedShortDate = computed(() =>
-    now.value.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-    }),
-);
-
-const formattedTime = computed(() =>
-    now.value.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-    }),
-);
-
 function goToMessages() {
     router.push("/portal/messages");
 }
@@ -214,11 +173,13 @@ function bindMessages() {
 
         if (!row) {
             loadConversations();
+            if (payload.sender_type !== "client") playNotification();
             return;
         }
 
         if (payload.sender_type !== "client") {
             row.unread_count += 1;
+            playNotification();
         }
     };
 
@@ -228,20 +189,12 @@ function bindMessages() {
 watch(() => (user.value as any)?.uuid, bindMessages, { immediate: true });
 
 onMounted(async () => {
-    clockTimer = setInterval(() => {
-        now.value = new Date();
-    }, 1000 * 30);
-
     await loadConversations();
 });
 
 // stopListening, not leave: the messages page shares this channel and leave()
 // would tear it down for both.
 onUnmounted(() => {
-    if (clockTimer) {
-        clearInterval(clockTimer);
-    }
-
     if ($echo && messageChannel && messageHandler) {
         ($echo as any)
             .private(messageChannel)

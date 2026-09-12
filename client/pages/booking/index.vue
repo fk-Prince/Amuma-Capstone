@@ -17,7 +17,6 @@ useHead({
     title: "Bookings",
 });
 definePageMeta({
-    navVariant: 1,
     navTheme: "dark",
     middleware: ["prevent-staff-booking"],
 });

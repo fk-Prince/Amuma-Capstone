@@ -13,13 +13,56 @@
 </template>
 
 <script setup lang="ts">
+import { useIsDark } from "~/composables/useTheme";
+
 interface Props {
     status: string;
 }
 
 defineProps<Props>();
 
+const isDark = useIsDark();
+
 const getStatusStyle = (status: string): Record<string, string> => {
+    if (isDark.value) {
+        switch (status.toLowerCase()) {
+            case "pending":
+                return {
+                    backgroundColor: "rgba(245, 158, 11, 0.12)",
+                    color: "#fbbf24",
+                    boxShadow: "inset 0 0 0 1px rgba(245, 158, 11, 0.3)",
+                };
+
+            case "active":
+                return {
+                    backgroundColor: "rgba(16, 185, 129, 0.12)",
+                    color: "#34d399",
+                    boxShadow: "inset 0 0 0 1px rgba(16, 185, 129, 0.3)",
+                };
+
+            case "inactive":
+                return {
+                    backgroundColor: "rgba(255, 255, 255, 0.06)",
+                    color: "#cbd5e1",
+                    boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.12)",
+                };
+
+            case "expired":
+                return {
+                    backgroundColor: "rgba(249, 115, 22, 0.12)",
+                    color: "#fb923c",
+                    boxShadow: "inset 0 0 0 1px rgba(249, 115, 22, 0.3)",
+                };
+
+            default:
+                return {
+                    backgroundColor: "rgba(255, 255, 255, 0.06)",
+                    color: "#cbd5e1",
+                    boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.12)",
+                };
+        }
+    }
+
     switch (status.toLowerCase()) {
         case "pending":
             return {

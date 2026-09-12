@@ -1,6 +1,6 @@
 <template>
     <section
-        class="h-full overflow-hidden rounded-2xl bg-white p-4 sm:p-6 shadow-sm border border-slate-100 md:p-8"
+        class="h-full overflow-hidden rounded-2xl bg-white p-4 sm:p-6 shadow-sm border border-slate-100 md:p-8 dark:bg-secondary dark:border-white/10"
         :class="{ 'animate-pulse': loading }"
     >
         <div class="mb-8">
@@ -14,7 +14,7 @@
                     In-house Facility Services
                 </h2>
 
-                <p class="mt-1 text-sm text-muted">
+                <p class="mt-1 text-sm text-muted dark:text-gray-400">
                     Assist the patient by selecting and scheduling the
                     appropriate medical service.
                 </p>
@@ -60,7 +60,7 @@
 
                     <div>
                         <div class="mb-3 flex items-center justify-between">
-                            <label class="text-sm font-semibold text-slate-700">
+                            <label class="text-sm font-semibold text-slate-700 dark:text-gray-200">
                                 Select Service
                                 <span class="text-danger">*</span>
                             </label>
@@ -81,7 +81,7 @@
                                 v-model="searchQuery"
                                 type="text"
                                 placeholder="Search services or categories..."
-                                class="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                class="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:text-gray-200 dark:border-white/10"
                             />
                         </div>
 
@@ -94,10 +94,10 @@
 
                         <div
                             v-if="!groupedServices.length"
-                            class="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-200 py-12 text-center"
+                            class="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-200 py-12 text-center dark:border-white/10"
                         >
                             <PackageSearch class="h-6 w-6 text-slate-300" />
-                            <p class="text-sm font-medium text-slate-500">
+                            <p class="text-sm font-medium text-slate-500 dark:text-gray-400">
                                 No services found
                             </p>
                             <p class="text-xs text-slate-400">
@@ -109,21 +109,21 @@
                             <div
                                 v-for="group in groupedServices"
                                 :key="group.category"
-                                class="overflow-hidden rounded-xl border border-slate-100"
+                                class="overflow-hidden rounded-xl border border-slate-100 dark:border-white/10"
                             >
                                 <button
                                     type="button"
-                                    class="flex w-full items-center justify-between gap-3 bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100"
+                                    class="flex w-full items-center justify-between gap-3 bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100 dark:bg-secondary dark:hover:bg-white/10"
                                     @click="toggleCategory(group.category)"
                                 >
                                     <div class="flex items-center gap-2.5">
                                         <span
-                                            class="text-sm font-semibold text-slate-700"
+                                            class="text-sm font-semibold text-slate-700 dark:text-gray-200"
                                         >
                                             {{ group.category }}
                                         </span>
                                         <span
-                                            class="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-400 ring-1 ring-slate-200"
+                                            class="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-400 ring-1 ring-slate-200 dark:bg-secondary"
                                         >
                                             {{ group.items.length }}
                                         </span>
@@ -181,7 +181,7 @@
 
                                             <div class="min-w-0">
                                                 <p
-                                                    class="truncate text-sm font-medium text-slate-800"
+                                                    class="truncate text-sm font-medium text-slate-800 dark:text-gray-100"
                                                 >
                                                     {{ service.service_name }}
                                                 </p>
@@ -217,16 +217,16 @@
             </div>
 
             <aside
-                class="flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 md:h-full"
+                class="flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 md:h-full dark:bg-secondary dark:border-white/10"
             >
-                <div class="border-b border-slate-100 bg-white p-4 sm:p-6">
+                <div class="border-b border-slate-100 bg-white p-4 sm:p-6 dark:bg-secondary dark:border-white/10">
                     <div class="flex items-center gap-2">
                         <ClipboardList class="h-4 w-4 text-primary" />
-                        <h3 class="font-semibold text-slate-800">
+                        <h3 class="font-semibold text-slate-800 dark:text-gray-100">
                             Service Summary
                         </h3>
                     </div>
-                    <p class="mt-1 text-xs text-muted">
+                    <p class="mt-1 text-xs text-muted dark:text-gray-400">
                         Review the details before confirming.
                     </p>
                 </div>
@@ -234,15 +234,15 @@
                 <div class="flex-1 overflow-y-auto p-6">
                     <div class="space-y-2.5">
                         <div
-                            class="flex items-center gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-100"
+                            class="flex items-center gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-100 dark:bg-secondary"
                         >
                             <CalendarDays
                                 class="h-4 w-4 shrink-0 text-primary"
                             />
                             <div class="min-w-0 flex-1">
-                                <p class="text-[11px] text-muted">Date</p>
+                                <p class="text-[11px] text-muted dark:text-gray-400">Date</p>
                                 <p
-                                    class="truncate text-sm font-medium text-slate-800"
+                                    class="truncate text-sm font-medium text-slate-800 dark:text-gray-100"
                                 >
                                     {{
                                         form.date
@@ -258,13 +258,13 @@
                         </div>
 
                         <div
-                            class="flex items-center gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-100"
+                            class="flex items-center gap-3 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-100 dark:bg-secondary"
                         >
                             <Clock class="h-4 w-4 shrink-0 text-primary" />
                             <div class="min-w-0 flex-1">
-                                <p class="text-[11px] text-muted">Time</p>
+                                <p class="text-[11px] text-muted dark:text-gray-400">Time</p>
                                 <p
-                                    class="truncate text-sm font-medium text-slate-800"
+                                    class="truncate text-sm font-medium text-slate-800 dark:text-gray-100"
                                 >
                                     {{ form.preferred_time || "Not selected" }}
                                 </p>
@@ -279,13 +279,13 @@
                     <div class="mt-6">
                         <div class="mb-2.5 flex items-center justify-between">
                             <p
-                                class="text-xs font-semibold uppercase tracking-wide text-muted"
+                                class="text-xs font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
                             >
                                 Service
                             </p>
                             <span
                                 v-if="selectedServices.length"
-                                class="text-xs text-muted"
+                                class="text-xs text-muted dark:text-gray-400"
                             >
                                 {{ selectedServices.length }} item{{
                                     selectedServices.length === 1 ? "" : "s"
@@ -295,10 +295,10 @@
 
                         <div
                             v-if="!selectedServices.length"
-                            class="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-white py-8 text-center"
+                            class="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-white py-8 text-center dark:bg-secondary dark:border-white/10"
                         >
                             <ClipboardX class="h-5 w-5 text-slate-300" />
-                            <p class="text-xs text-muted">
+                            <p class="text-xs text-muted dark:text-gray-400">
                                 No service selected yet.
                             </p>
                         </div>
@@ -315,17 +315,17 @@
                             <div
                                 v-for="service in selectedServices"
                                 :key="service.service_id"
-                                class="group flex items-center justify-between gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-100 transition hover:ring-primary/30"
+                                class="group flex items-center justify-between gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-100 transition hover:ring-primary/30 dark:bg-secondary"
                             >
                                 <p
-                                    class="min-w-0 truncate text-sm font-medium text-slate-800"
+                                    class="min-w-0 truncate text-sm font-medium text-slate-800 dark:text-gray-100"
                                 >
                                     {{ service.service_name }}
                                 </p>
 
                                 <div class="flex shrink-0 items-center gap-3">
                                     <span
-                                        class="text-sm font-semibold tabular-nums text-slate-800"
+                                        class="text-sm font-semibold tabular-nums text-slate-800 dark:text-gray-100"
                                     >
                                         ₱{{
                                             Number(
@@ -349,20 +349,20 @@
                     </div>
                 </div>
 
-                <div class="border-t border-slate-100 bg-white p-6">
+                <div class="border-t border-slate-100 bg-white p-6 dark:bg-secondary dark:border-white/10">
                     <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted">
+                        <span class="text-muted dark:text-gray-400">
                             Subtotal ({{ selectedServices.length }} item{{
                                 selectedServices.length === 1 ? "" : "s"
                             }})
                         </span>
-                        <span class="font-medium tabular-nums text-slate-700">
+                        <span class="font-medium tabular-nums text-slate-700 dark:text-gray-200">
                             {{ formatCurrency(totalPrice) }}
                         </span>
                     </div>
 
                     <div class="mt-1.5 flex items-center justify-between">
-                        <span class="text-sm font-semibold text-slate-800"
+                        <span class="text-sm font-semibold text-slate-800 dark:text-gray-100"
                             >Total</span
                         >
                         <span
@@ -397,7 +397,7 @@
 
                     <p
                         v-if="!canSchedule"
-                        class="mt-2.5 text-center text-[11px] text-muted"
+                        class="mt-2.5 text-center text-[11px] text-muted dark:text-gray-400"
                     >
                         {{ missingRequirementLabel }}
                     </p>

@@ -158,6 +158,7 @@ class BranchService
             'opening',
             'closing',
             'currency',
+            'theme_color',
         ]);
 
         // The request delivers these as strings ("1", "8"). Stored raw they

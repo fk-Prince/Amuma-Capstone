@@ -21,7 +21,7 @@ const overview = computed<Overview>(() => {
     <div class="w-full">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div
-                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-200"
+                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-200 dark:bg-secondary dark:border-white/10"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-blue-100/50 blur-2xl"
@@ -30,7 +30,7 @@ const overview = computed<Overview>(() => {
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center"
+                            class="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center dark:bg-primary-500/10"
                         >
                             <svg
                                 class="h-5 w-5 text-blue-600"
@@ -47,7 +47,7 @@ const overview = computed<Overview>(() => {
                         </div>
 
                         <span
-                            class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold"
+                            class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold dark:bg-primary-500/10"
                         >
                             Rooms
                         </span>
@@ -60,7 +60,7 @@ const overview = computed<Overview>(() => {
                     </p>
 
                     <p
-                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums"
+                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-gray-100"
                     >
                         {{ overview.total_rooms.value }}
                     </p>
@@ -72,7 +72,7 @@ const overview = computed<Overview>(() => {
             </div>
 
             <div
-                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200"
+                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:bg-secondary dark:border-white/10"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-100/50 blur-2xl"
@@ -111,7 +111,7 @@ const overview = computed<Overview>(() => {
                     </p>
 
                     <p
-                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums"
+                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-gray-100"
                     >
                         {{ overview.available.value }}
                     </p>
@@ -124,7 +124,7 @@ const overview = computed<Overview>(() => {
 
             <!-- Occupied -->
             <div
-                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-violet-200"
+                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-violet-200 dark:bg-secondary dark:border-white/10"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-violet-100/50 blur-2xl"
@@ -163,7 +163,7 @@ const overview = computed<Overview>(() => {
                     </p>
 
                     <p
-                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums"
+                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-gray-100"
                     >
                         {{ overview.occupied.value }}
                     </p>
@@ -174,7 +174,7 @@ const overview = computed<Overview>(() => {
 
             <!-- Maintenance -->
             <div
-                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200"
+                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200 dark:bg-secondary dark:border-white/10"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-rose-100/50 blur-2xl"
@@ -214,7 +214,7 @@ const overview = computed<Overview>(() => {
                     </p>
 
                     <p
-                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums"
+                        class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-gray-100"
                     >
                         {{ overview.maintenance.value }}
                     </p>
