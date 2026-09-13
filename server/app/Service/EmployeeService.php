@@ -311,7 +311,12 @@ class EmployeeService
             ]);
             return EmployeeResource::collection($result['users'])->additional(['total_employee' => $result['total_employee'],   'status_counts' => $result['status_counts'],]);
         } else if ($type === 'schedule') {
-            $result = $this->employeeRepository->getEmployeesWithBusyLabel($payload['schedule_id'], $branchId);
+            $result = $this->employeeRepository->getEmployeesWithBusyLabel(
+                $payload['schedule_id'],
+                $branchId,
+                $payload['date'] ?? null,
+                $payload['preferred_time'] ?? null
+            );
             return EmployeeScheduleResource::collection($result);
         } else if ($type === 'service') {
             return $this->employeeRepository->getEmployeeServices($branchId, $payload);

@@ -137,6 +137,19 @@
                                             class="mt-1 text-[13px] text-muted dark:text-gray-400"
                                         >
                                             {{ invoice.description }}
+                                            <template
+                                                v-if="adlHoursBooked(invoice)"
+                                            >
+                                                ·
+                                                {{
+                                                    formatDuration(
+                                                        adlHoursBooked(
+                                                            invoice,
+                                                        ) as number,
+                                                    )
+                                                }}
+                                                booked
+                                            </template>
                                         </p>
 
                                         <p
@@ -350,7 +363,7 @@ import { Loader2, Search, X } from "lucide-vue-next";
 import SectionLoader from "./SectionLoader.vue";
 import { formatAmount } from "~/utils/currency";
 import { statusClasses } from "~/utils/invoiceStatus";
-import { formatDate } from "~/utils/time";
+import { formatDate, formatDuration } from "~/utils/time";
 import type { PatientInvoiceItem } from "~/types/invoice";
 
 const props = defineProps<{
@@ -371,6 +384,12 @@ const emit = defineEmits<{
     (event: "void-invoice", invoice: PatientInvoiceItem): void;
     (event: "close"): void;
 }>();
+
+function adlHoursBooked(invoice: PatientInvoiceItem) {
+    const line = invoice.services?.find((s) => s.type === "ADL");
+
+    return line?.hours_booked ?? null;
+}
 
 const query = ref("");
 

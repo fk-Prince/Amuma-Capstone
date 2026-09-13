@@ -267,11 +267,11 @@ function dateGroupLabel(date: Date) {
     });
 
     if (isSameDay(date, today)) {
-        return `Today Â· ${formatted}`;
+        return `Today · ${formatted}`;
     }
 
     if (isSameDay(date, tomorrow)) {
-        return `Tomorrow Â· ${formatted}`;
+        return `Tomorrow · ${formatted}`;
     }
 
     return formatted;
@@ -577,7 +577,7 @@ onMounted(() => {
                                         "
                                         class="hidden text-gray-300 sm:inline dark:text-gray-500"
                                     >
-                                        â€¢
+                                        •
                                     </span>
 
                                     <span

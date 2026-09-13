@@ -189,15 +189,15 @@
                                 class="flex h-full flex-col justify-between gap-2"
                             >
                                 <div class="min-w-0">
-                                    <div
-                                        class="flex items-center gap-1.5 min-w-0"
+                                    <p
+                                        class="truncate text-[13.5px] font-semibold text-slate-800 dark:text-white"
                                     >
-                                        <p
-                                            class="truncate text-[13.5px] font-semibold text-slate-800 dark:text-white"
-                                        >
-                                            {{ schedule.schedule_code }}
-                                        </p>
+                                        {{ schedule.schedule_code }}
+                                    </p>
 
+                                    <div
+                                        class="mt-1 flex items-center gap-1.5 min-w-0"
+                                    >
                                         <span
                                             class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium"
                                             :class="
@@ -210,6 +210,21 @@
                                                 schedule.category === "Facility"
                                                     ? "Facility"
                                                     : "Homecare"
+                                            }}
+                                        </span>
+
+                                        <span
+                                            class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium"
+                                            :class="
+                                                scheduleStatusTheme(
+                                                    schedule.status,
+                                                ).badge
+                                            "
+                                        >
+                                            {{
+                                                scheduleStatusLabel(
+                                                    schedule.status,
+                                                )
                                             }}
                                         </span>
                                     </div>
@@ -246,6 +261,14 @@
                                         :title="bedLabel(schedule)"
                                     >
                                         {{ bedLabel(schedule) }}
+                                    </p>
+
+                                    <p
+                                        v-if="schedule.note"
+                                        class="mt-0.5 truncate text-[11px] text-slate-400 dark:text-gray-500"
+                                        :title="schedule.note"
+                                    >
+                                        Note: {{ schedule.note }}
                                     </p>
                                 </div>
 

@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted } from "vue";
 
 import { formatAmount } from "~/utils/currency";
+import { formatDuration } from "~/utils/time";
 import type { PaymentReceipt } from "~/types/receipt";
 
 const props = defineProps<{
@@ -290,6 +291,10 @@ onBeforeUnmount(() => {
                                             line.description ||
                                             "Payment for balance"
                                         }}
+
+                                        <span v-if="line.hours_booked">
+                                            · {{ formatDuration(line.hours_booked) }} booked
+                                        </span>
 
                                         <span
                                             v-if="

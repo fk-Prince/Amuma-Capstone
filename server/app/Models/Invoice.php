@@ -98,6 +98,15 @@ class Invoice extends Model
         return 'Payment for balance';
     }
 
+    public function adlHoursBooked(): ?float
+    {
+        $hours = $this->invoiceServices
+            ->filter(fn($line) => $line->scheduleService?->service_id === null)
+            ->sum(fn($line) => (float) ($line->scheduleService?->hours_booked ?? 0));
+
+        return $hours > 0 ? $hours : null;
+    }
+
     public function allocations(): HasMany
     {
         return $this->hasMany(
@@ -247,8 +256,19 @@ class Invoice extends Model
             : 'partially refunded';
     }
 
+    // Resolved once per patient per request: the refund credit figures and the
+    // billing summary each ask for the same ids several times over, and on a
+    // list that repetition was costing two subqueries per call.
+    private static array $patientInvoiceIdCache = [];
+
     public static function patientInvoiceIds(mixed $patientId)
     {
+        $key = (string) $patientId;
+
+        if (array_key_exists($key, self::$patientInvoiceIdCache)) {
+            return self::$patientInvoiceIdCache[$key];
+        }
+
         $admission = InvoiceAdmission::whereHas(
             'admissionPeriod.patientAdmission',
             fn($query) => $query->where('patient_id', $patientId)
@@ -259,6 +279,14 @@ class Invoice extends Model
             fn($query) => $query->where('patient_id', $patientId)
         )->pluck('invoice_id');
 
-        return $admission->merge($scheduled)->unique()->values();
+        return self::$patientInvoiceIdCache[$key] = $admission
+            ->merge($scheduled)
+            ->unique()
+            ->values();
+    }
+
+    public static function forgetPatientInvoiceIds(): void
+    {
+        self::$patientInvoiceIdCache = [];
     }
 }

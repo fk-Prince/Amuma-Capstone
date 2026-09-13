@@ -63,6 +63,38 @@
                                     {{ row.value }}
                                 </span>
                             </div>
+
+                            <div
+                                v-if="showPayment && bookingPercent < 100"
+                                class="mt-3 flex items-center justify-between border-t border-slate-200 pt-3 dark:border-white/10"
+                            >
+                                <span
+                                    class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                                >
+                                    Reservation Fee ({{ bookingPercent }}%)
+                                </span>
+                                <span
+                                    class="text-lg font-bold text-primary tabular-nums"
+                                >
+                                    {{ formatCurrency(bookingAmount) }}
+                                </span>
+                            </div>
+                            <div
+                                v-if="showPayment && bookingPercent < 100"
+                                class="mt-1 flex items-center justify-between"
+                            >
+                                <span
+                                    class="text-xs text-slate-400 dark:text-gray-500"
+                                >
+                                    Balance (settled at the branch)
+                                </span>
+                                <span
+                                    class="text-sm font-medium text-slate-500 tabular-nums dark:text-gray-400"
+                                >
+                                    {{ formatCurrency(balanceAmount) }}
+                                </span>
+                            </div>
+
                             <p
                                 v-if="showPayment"
                                 class="mt-1.5 text-[11px] text-slate-400 dark:text-gray-500"
@@ -370,6 +402,7 @@ const props = defineProps<{
     branchHomecare?: BranchHomecare;
     branchFacility?: BranchFacility[];
     showPayment?: boolean;
+    bookingPercent?: number;
 }>();
 
 defineEmits<{
@@ -438,6 +471,16 @@ const facilityTotal = computed<number>(() => {
     return Number(facility?.price ?? 0);
 });
 
+const bookingPercent = computed(() => props.bookingPercent ?? 100);
+
+const bookingAmount = computed(() =>
+    Math.round(facilityTotal.value * (bookingPercent.value / 100) * 100) / 100,
+);
+
+const balanceAmount = computed(() =>
+    Math.max(facilityTotal.value - bookingAmount.value, 0),
+);
+
 const preferredTime = computed(() => {
     const time = props.homecare?.prefered_time;
 
@@ -489,7 +532,11 @@ const bookingRows = computed<Row[]>(() => {
 
             rows.push({
                 label: "Duration",
-                value: hours ? `${formatDuration(hours)} (${hours} hrs)` : "",
+                value: hours
+                    ? hours >= 24
+                        ? `${formatDuration(hours)} (${hours} hrs)`
+                        : formatDuration(hours)
+                    : "",
             });
         }
 

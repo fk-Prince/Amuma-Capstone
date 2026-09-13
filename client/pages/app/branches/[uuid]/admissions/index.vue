@@ -681,6 +681,7 @@ async function fetchAdmissions() {
         const response = await patientService.list({
             branch_uuid: uuid.value,
             type: "admission",
+            sections: "admissions",
             search: admissionSearchQuery.value,
             page: admissionPagination.currentPage.value,
             per_page: admissionPagination.pageSize.value,

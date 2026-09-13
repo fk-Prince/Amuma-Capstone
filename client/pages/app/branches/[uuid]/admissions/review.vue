@@ -78,17 +78,23 @@
                     <div
                         class="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-6 dark:border-white/10 dark:bg-secondary"
                     >
-                        <BaseButton
-                            variant="primary"
-                            class="w-full rounded-xl py-3"
-                            :disabled="
-                                submitting ||
-                                (requiresReservation && !hasReservation)
-                            "
-                            @click="handleSubmit"
-                        >
-                            {{ submitting ? "Submitting..." : actionLabel }}
-                        </BaseButton>
+                        <div class="relative group w-full">
+                            <BaseButton
+                                variant="primary"
+                                class="w-full rounded-xl py-3"
+                                :disabled="submitDisabled"
+                                @click="onAdmitClick"
+                            >
+                                {{ submitting ? "Submitting..." : actionLabel }}
+                            </BaseButton>
+
+                            <div
+                                v-if="submitDisabled && admitBlockedReason"
+                                class="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden w-max max-w-xs rounded-md bg-gray-900 px-3 py-2 text-[12px] text-white shadow-lg group-hover:block"
+                            >
+                                {{ admitBlockedReason }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -130,6 +136,18 @@
         </aside>
 
         <AdmissionSlipModal :slip="admissionSlip" @close="closeSlip" />
+
+        <ConfirmDialog
+            :open="showPaymentWarning"
+            title="Admission payment is incomplete"
+            :message="`This booking still has an outstanding balance of ₱${formatMoney(balanceDue)}.`"
+            description="You can proceed with the admission and collect the remaining balance later."
+            confirm-label="Proceed anyway"
+            cancel-label="Cancel"
+            variant="danger"
+            @confirm="confirmBypassPayment"
+            @cancel="showPaymentWarning = false"
+        />
     </div>
 </template>
 
@@ -143,7 +161,11 @@ import { useBookingStore } from "~/stores/booking";
 import type { CardDetails } from "~/types/payment";
 import AdmissionReview from "~/components/sections/app/Admission/AdmissionReview.vue";
 import AdmissionSlipModal from "~/components/sections/app/Admission/AdmissionSlipModal.vue";
+import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import { admissionService } from "~/api/admission/AdmissionService";
+import { invoiceService } from "~/api/invoice/InvoiceService";
+import { formatAmount } from "~/utils/currency";
+import { useBranchStore } from "~/stores/branch";
 import type { AdmissionSlip } from "~/types/admission-slip";
 useHead({ title: "Review Admission" });
 
@@ -197,6 +219,55 @@ const hasReservation = computed(
     () => !!bookingStore.reserved?.room && !!bookingStore.reserved?.bed,
 );
 
+const branchStore = useBranchStore();
+const referenceId = computed(() => (route.query.reference_id as string) ?? "");
+const balanceDue = ref<number | null>(null);
+const showPaymentWarning = ref(false);
+
+const requiresFullPaymentOnAdmit = computed(
+    () => branchStore.activeBranch?.settings?.requires_full_payment_on_admit ?? true,
+);
+
+const paymentIncomplete = computed(
+    () => showPayment.value && (balanceDue.value ?? 0) > 0,
+);
+
+const submitDisabled = computed(
+    () =>
+        submitting.value ||
+        (requiresReservation.value && !hasReservation.value) ||
+        (requiresFullPaymentOnAdmit.value && paymentIncomplete.value),
+);
+
+const admitBlockedReason = computed(() => {
+    if (requiresFullPaymentOnAdmit.value && paymentIncomplete.value) {
+        return `Full payment is required before this patient can be admitted. Outstanding balance: ₱${formatMoney(balanceDue.value)}.`;
+    }
+
+    return "";
+});
+
+function formatMoney(amount: number | string | null | undefined) {
+    return formatAmount(amount, { treatMissingAsZero: true });
+}
+
+async function fetchBalance() {
+    if (!referenceId.value) return;
+
+    try {
+        const res = await invoiceService.show(
+            { reference_id: referenceId.value, branch_uuid: uuid },
+            referenceId.value,
+        );
+        const data = res.data ?? res;
+        balanceDue.value = Number(data?.balance_due) || 0;
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+onMounted(fetchBalance);
+
 const completedSteps = computed(() => [
     "step1",
     "step2",
@@ -232,6 +303,22 @@ const admissionSlip = ref<AdmissionSlip | null>(null);
 function closeSlip() {
     admissionSlip.value = null;
     router.push(`/app/branches/${uuid}/admissions/`);
+}
+
+function onAdmitClick() {
+    if (submitDisabled.value) return;
+
+    if (paymentIncomplete.value) {
+        showPaymentWarning.value = true;
+        return;
+    }
+
+    handleSubmit();
+}
+
+function confirmBypassPayment() {
+    showPaymentWarning.value = false;
+    handleSubmit();
 }
 
 async function handleSubmit() {

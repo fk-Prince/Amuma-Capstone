@@ -9,16 +9,17 @@ export const handleMenuClick = async (item: any) => {
             await branchStore.fetchBranches();
         }
 
-        let uuid =
-            branchStore.activeBranch?.uuid ??
-            branchStore.branches[0]?.uuid;
+        const branches = branchStore.branches.filter((branch) => branch?.uuid);
 
-        if (!uuid) {
-            const branch = branchStore.branches.find(
-                (branch) => branch?.uuid
-            );
-            uuid = branch?.uuid;
-        }
+        // A verified branch actually has a dashboard to land on; an
+        // unverified/rejected one only shows a review/rejection screen, so
+        // it's picked last rather than first.
+        const preferred =
+            branchStore.activeBranch ??
+            branches.find((branch) => branch.is_verified) ??
+            branches[0];
+
+        const uuid = preferred?.uuid;
 
         if (!uuid) return;
 

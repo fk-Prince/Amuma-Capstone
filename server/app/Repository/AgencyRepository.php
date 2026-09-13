@@ -193,7 +193,7 @@ class AgencyRepository
                 'review_status' => $branch->subscriptionLink?->status === BranchSubscription::STATUS_REJECTED
                     ? 'rejected'
                     : ($branch->is_verified ? 'verified' : 'pending'),
-                'rejection_reason' => $branch->rejection_reason,
+                'rejection_reason' => $branch->subscriptionLink?->rejection_reason,
                 'contact_number' => $branch->contact_number,
                 'email' => $branch->email,
                 'location' => $branch->location ? [

@@ -623,6 +623,26 @@
                                             )
                                         }}
                                     </p>
+
+                                    <p
+                                        v-if="bookingPercent < 100"
+                                        class="mt-1 text-[11px] text-slate-500 dark:text-gray-400"
+                                    >
+                                        ₱{{
+                                            formatAmount(
+                                                getBookingAmount(
+                                                    getFacilityPrice(
+                                                        facilityList,
+                                                        model.billing_cycle as
+                                                            | "Monthly"
+                                                            | "Yearly",
+                                                        room.value,
+                                                    ),
+                                                ),
+                                            )
+                                        }}
+                                        reservation fee ({{ bookingPercent }}%)
+                                    </p>
                                 </div>
 
                                 <span
@@ -766,6 +786,14 @@ function clearError(field: string) {
 }
 
 const facilityList = computed(() => props.branch?.facility ?? []);
+
+const bookingPercent = computed(
+    () => props.branch?.settings?.complete_admission_booking_percent ?? 100,
+);
+
+function getBookingAmount(price: number) {
+    return Math.round(Number(price ?? 0) * (bookingPercent.value / 100) * 100) / 100;
+}
 
 const maxAvailableSlots = computed(() => {
     const slots = facilityList.value

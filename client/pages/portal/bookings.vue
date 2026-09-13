@@ -128,6 +128,10 @@ function isFacility(booking: PortalBooking) {
     return booking.category === "facility";
 }
 
+function isCompleteAdmission(booking: PortalBooking) {
+    return (booking.homecare?.type ?? booking.facility?.type) === "Complete";
+}
+
 function typeLabel(booking: PortalBooking) {
     const type = booking.homecare?.type ?? booking.facility?.type;
 
@@ -136,7 +140,7 @@ function typeLabel(booking: PortalBooking) {
     if (type === "Complete") return "Complete Admission";
     if (type === "Pre-Admission") return "Pre-Admission";
 
-    return type || "â€”";
+    return type || "—";
 }
 
 function serviceDateLabel(booking: PortalBooking) {
@@ -144,7 +148,7 @@ function serviceDateLabel(booking: PortalBooking) {
 }
 
 function formatDate(value: string | null | undefined) {
-    if (!value) return "â€”";
+    if (!value) return "—";
 
     const date = new Date(value);
 
@@ -154,6 +158,22 @@ function formatDate(value: string | null | undefined) {
         month: "short",
         day: "numeric",
         year: "numeric",
+    });
+}
+
+function formatDateTime(value: string | null | undefined) {
+    if (!value) return "—";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return value;
+
+    return date.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
     });
 }
 
@@ -421,7 +441,7 @@ onMounted(() => {
                                                 v-if="booking.branch_name"
                                                 class="hidden text-gray-300 sm:inline dark:text-gray-500"
                                             >
-                                                â€¢
+                                                •
                                             </span>
 
                                             <span
@@ -515,7 +535,7 @@ onMounted(() => {
                                     <p
                                         class="mt-1.5 text-sm font-semibold text-gray-800 dark:text-white"
                                     >
-                                        {{ formatDate(booking.valid_until) }}
+                                        {{ formatDateTime(booking.valid_until) }}
                                     </p>
                                 </div>
                             </div>
@@ -583,7 +603,7 @@ onMounted(() => {
                                 </div>
 
                                 <div
-                                    v-if="booking.payment"
+                                    v-if="booking.payment && isCompleteAdmission(booking)"
                                     class="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 dark:border-white/10 dark:bg-secondary"
                                 >
                                     <div class="mb-4 flex items-center gap-3">
@@ -606,7 +626,7 @@ onMounted(() => {
                                     </div>
 
                                     <div
-                                        class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
+                                        class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5"
                                     >
                                         <div
                                             class="rounded-xl border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/10 dark:bg-white/5"
@@ -645,7 +665,12 @@ onMounted(() => {
                                             <p
                                                 class="text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
                                             >
-                                                Amount
+                                                {{
+                                                    (booking.payment as any)
+                                                        .balance_amount > 0
+                                                        ? "Reservation Fee"
+                                                        : "Amount"
+                                                }}
                                             </p>
 
                                             <p
@@ -653,8 +678,35 @@ onMounted(() => {
                                             >
                                                 {{
                                                     formatMoney(
-                                                        booking.payment
-                                                            .total_amount,
+                                                        (booking.payment as any)
+                                                            .booking_amount ??
+                                                            booking.payment
+                                                                .total_amount,
+                                                    )
+                                                }}
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            v-if="
+                                                (booking.payment as any)
+                                                    .balance_amount > 0
+                                            "
+                                            class="rounded-xl border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/10 dark:bg-white/5"
+                                        >
+                                            <p
+                                                class="text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                            >
+                                                Balance Due
+                                            </p>
+
+                                            <p
+                                                class="mt-2 text-sm font-semibold text-gray-900 dark:text-white"
+                                            >
+                                                {{
+                                                    formatMoney(
+                                                        (booking.payment as any)
+                                                            .balance_amount,
                                                     )
                                                 }}
                                             </p>
@@ -674,7 +726,7 @@ onMounted(() => {
                                             >
                                                 {{
                                                     (booking.payment as any)
-                                                        .payment_method || "â€”"
+                                                        .payment_method || "—"
                                                 }}
                                             </p>
                                         </div>
@@ -694,7 +746,7 @@ onMounted(() => {
                                                 {{
                                                     (booking.payment as any)
                                                         .masked_card_number ||
-                                                    "â€”"
+                                                    "—"
                                                 }}
                                             </p>
                                         </div>

@@ -20,12 +20,7 @@ export interface HomecareBooking {
     prefered_time: string;
     time_span?: string;
     address: string;
-
-    /**
-     * Coordinates of the visit address, captured from the map picker. Stored
-     * on the schedule's own location so the branch can map the visit and open
-     * it in Google Maps.
-     */
+    price?: number;
     latitude?: number | null;
     longitude?: number | null;
 }
@@ -52,7 +47,10 @@ export interface BookingRetrieve {
         paid: boolean,
         xendit_invoice_id: string,
         payment_status: string,
-        masked_card_number: string
+        masked_card_number: string,
+        booking_percent?: number,
+        booking_amount?: number,
+        balance_amount?: number,
     };
     reserved: Reserved | null;
     valid_until?: string;
@@ -77,8 +75,7 @@ export const typeFilters = [
     { label: "Homecare", value: "homecare" },
 ];
 
-// Keyed by the category they belong to, so picking a category narrows the
-// booking types to the ones that category can actually have.
+
 export const bookingTypeFilters = [
     { label: "All Types", value: "all", category: "all" },
     { label: "Complete Admission", value: "Complete", category: "facility" },
@@ -183,7 +180,6 @@ export const statusFilters = [
     { label: "Pending", value: "pending" },
     { label: "Approved", value: "approved" },
     { label: "Rejected", value: "rejected" },
-    { label: "Missed", value: "missed" },
     { label: "Expired", value: "expired" },
     { label: "Cancelled", value: "cancelled" },
 ];

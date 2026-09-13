@@ -44,14 +44,28 @@
             <button
                 type="button"
                 aria-label="Messages"
-                class="relative w-9 h-9 sm:w-auto sm:h-auto flex items-center justify-center text-gray-700 hover:text-primary-500 dark:text-gray-300 dark:hover:text-white transition-colors"
+                class="relative w-[38px] h-[38px] flex items-center justify-center rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 text-gray-500 dark:text-white/70 transition-colors"
                 @click="goToMessages"
             >
-                <MessageSquare class="w-5 h-5" />
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path
+                        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                    />
+                </svg>
 
                 <span
                     v-if="unreadMessageCount"
-                    class="absolute top-1 right-1 sm:-top-1 sm:-right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-secondary"
+                    class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white dark:border-secondary"
                 />
             </button>
 
@@ -64,7 +78,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { Calendar, Clock, MessageSquare, Menu } from "lucide-vue-next";
+import { Calendar, Clock, Menu } from "lucide-vue-next";
 import NavbarProfileDropdown from "~/components/ui/NavbarProfileDropdown.vue";
 import Notification from "~/components/ui/Notification.vue";
 import { useAuthUser } from "~/composables/useAuthUser";

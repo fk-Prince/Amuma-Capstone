@@ -443,12 +443,11 @@ const getDefaultDateRange = () => {
     const from = new Date(today);
     from.setDate(from.getDate() - 1);
 
-    const to = new Date(today);
-    to.setDate(to.getDate() + 7);
-
+    // Left open-ended by default so everything from `from` onward is
+    // fetched, rather than being capped at an arbitrary week out.
     return {
         from: getLocalDateStr(from),
-        to: getLocalDateStr(to),
+        to: "",
     };
 };
 
@@ -479,9 +478,7 @@ const localStatus = ref(props.status);
 const localDateFrom = ref(props.dateFrom || defaultDates.from);
 const localDateTo = ref(props.dateTo || defaultDates.to);
 
-const activePreset = ref<string | null>(
-    props.dateFrom || props.dateTo ? null : "1w",
-);
+const activePreset = ref<string | null>(null);
 
 const periodPresets = [
     { label: "All", value: "all" },
@@ -576,7 +573,7 @@ function resetAll() {
 
     localDateFrom.value = defaults.from;
     localDateTo.value = defaults.to;
-    activePreset.value = "1w";
+    activePreset.value = null;
 }
 
 function applyAndClose() {

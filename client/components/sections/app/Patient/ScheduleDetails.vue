@@ -24,7 +24,9 @@
                         </p>
 
                         <div class="mt-1 flex flex-wrap items-center gap-2">
-                            <h2 class="text-lg font-semibold text-slate-800 dark:text-white">
+                            <h2
+                                class="text-lg font-semibold text-slate-800 dark:text-white"
+                            >
                                 {{ schedule.schedule_code }}
                             </h2>
 
@@ -45,11 +47,6 @@
                     </span>
                 </div>
 
-                <!-- The body splits on wide screens: patient, location and the
-                     schedule details/form stack on the left, and the services
-                     list — the tallest part — gets its own column on the
-                     right. Explicit grid placement keeps the markup in reading
-                     order. Below xl it falls back to a single stack. -->
                 <div
                     class="min-h-0 flex-1 space-y-4 overflow-y-auto p-6 xl:space-y-0"
                     :class="bodyGridClass"
@@ -76,7 +73,11 @@
                             </div>
 
                             <div class="min-w-0 flex-1">
-                                <p class="text-xs text-slate-400 dark:text-gray-500">Patient</p>
+                                <p
+                                    class="text-xs text-slate-400 dark:text-gray-500"
+                                >
+                                    Patient
+                                </p>
                                 <p
                                     class="truncate font-semibold text-slate-800 dark:text-white"
                                 >
@@ -136,7 +137,9 @@
                                     </span>
                                 </p>
 
-                                <p class="text-[11px] text-slate-400 dark:text-gray-500">
+                                <p
+                                    class="text-[11px] text-slate-400 dark:text-gray-500"
+                                >
                                     Guardian
                                 </p>
                             </div>
@@ -147,7 +150,11 @@
                                 class="flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline"
                             >
                                 <Phone class="h-3.5 w-3.5" />
-                                {{ formatPhone(schedule.patient.guardian.phone_number) }}
+                                {{
+                                    formatPhone(
+                                        schedule.patient.guardian.phone_number,
+                                    )
+                                }}
                             </a>
                         </div>
                     </div>
@@ -189,7 +196,9 @@
                                         Facility Admission
                                     </p>
 
-                                    <p class="text-xs text-slate-400 dark:text-gray-500">
+                                    <p
+                                        class="text-xs text-slate-400 dark:text-gray-500"
+                                    >
                                         Current room assignment
                                     </p>
                                 </div>
@@ -323,11 +332,15 @@
                             </div>
 
                             <div>
-                                <p class="text-sm font-semibold text-slate-800 dark:text-white">
+                                <p
+                                    class="text-sm font-semibold text-slate-800 dark:text-white"
+                                >
                                     Patient is not currently admitted
                                 </p>
 
-                                <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
+                                <p
+                                    class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
+                                >
                                     No active facility admission or room
                                     assignment was found.
                                 </p>
@@ -405,8 +418,6 @@
                             </div>
                         </div>
 
-                        <!-- Coordinates only exist for homecare visits booked
-                             through the map picker. -->
                         <ClientOnly v-if="hasCoordinates">
                             <LocationMap
                                 :lat="schedule.latitude!"
@@ -460,6 +471,26 @@
                                 :items="statusItems"
                             />
                         </div>
+
+                        <div>
+                            <BaseInput
+                                :model-value="form.note"
+                                label="Note"
+                                mode="textarea"
+                                :rows="3"
+                                :text-max="NOTE_MAX_LENGTH"
+                                placeholder="Add a note for this schedule"
+                                @update:model-value="update('note', $event)"
+                            />
+
+                            <div class="mt-1 flex justify-end">
+                                <span
+                                    class="text-[11px] text-slate-400 dark:text-gray-500"
+                                >
+                                    {{ form.note.length }}/{{ NOTE_MAX_LENGTH }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
                     <div
@@ -467,36 +498,62 @@
                         class="grid grid-cols-1 sm:grid-cols-3 gap-3"
                         :class="leftColClass"
                     >
-                        <div class="rounded-xl border border-slate-100 p-3 dark:border-white/10">
-                            <p class="text-xs text-slate-400 dark:text-gray-500">Date</p>
-                            <p class="mt-1 text-sm font-medium text-slate-700 dark:text-gray-400">
+                        <div
+                            class="rounded-xl border border-slate-100 p-3 dark:border-white/10"
+                        >
+                            <p
+                                class="text-xs text-slate-400 dark:text-gray-500"
+                            >
+                                Date
+                            </p>
+                            <p
+                                class="mt-1 text-sm font-medium text-slate-700 dark:text-gray-400"
+                            >
                                 {{ schedule.scheduled_date }}
                             </p>
                         </div>
 
-                        <div class="rounded-xl border border-slate-100 p-3 dark:border-white/10">
-                            <p class="text-xs text-slate-400 dark:text-gray-500">Time</p>
-                            <p class="mt-1 text-sm font-medium text-slate-700 dark:text-gray-400">
+                        <div
+                            class="rounded-xl border border-slate-100 p-3 dark:border-white/10"
+                        >
+                            <p
+                                class="text-xs text-slate-400 dark:text-gray-500"
+                            >
+                                Time
+                            </p>
+                            <p
+                                class="mt-1 text-sm font-medium text-slate-700 dark:text-gray-400"
+                            >
                                 {{ schedule.start_time }}
                             </p>
                         </div>
 
-                        <div class="rounded-xl border border-slate-100 p-3 dark:border-white/10">
-                            <p class="text-xs text-slate-400 dark:text-gray-500">
+                        <div
+                            class="rounded-xl border border-slate-100 p-3 dark:border-white/10"
+                        >
+                            <p
+                                class="text-xs text-slate-400 dark:text-gray-500"
+                            >
                                 {{
                                     scheduleHasAdlService
                                         ? "Duration"
                                         : "Estimated Duration"
                                 }}
                             </p>
-                            <p class="mt-1 text-sm font-medium text-slate-700 dark:text-gray-400">
+                            <p
+                                class="mt-1 text-sm font-medium text-slate-700 dark:text-gray-400"
+                            >
                                 <template v-if="scheduleHasAdlService">
                                     <template v-if="schedule.total_hours">
                                         {{
                                             formatDuration(schedule.total_hours)
                                         }}
-                                        <br />
-                                        ({{ schedule.total_hours }} hrs)
+                                        <template
+                                            v-if="schedule.total_hours >= 24"
+                                        >
+                                            <br />
+                                            ({{ schedule.total_hours }} hrs)
+                                        </template>
                                     </template>
                                     <template v-else> — </template>
                                 </template>
@@ -522,8 +579,25 @@
                         </div>
                     </div>
 
+                    <div
+                        v-if="!isEditing && schedule.note"
+                        class="rounded-xl border border-slate-100 p-3 dark:border-white/10"
+                        :class="leftColClass"
+                    >
+                        <p class="text-xs text-slate-400 dark:text-gray-500">
+                            Note
+                        </p>
+                        <p
+                            class="mt-1 whitespace-pre-wrap text-sm font-medium text-slate-700 dark:text-gray-400"
+                        >
+                            {{ schedule.note }}
+                        </p>
+                    </div>
+
                     <div :class="servicesColClass">
-                        <p class="mb-2 text-sm font-semibold text-slate-800 dark:text-white">
+                        <p
+                            class="mb-2 text-sm font-semibold text-slate-800 dark:text-white"
+                        >
                             Services
                         </p>
 
@@ -549,13 +623,13 @@
                                         v-if="!isEditing"
                                         class="rounded-full px-2 py-1 text-[11px] font-medium"
                                         :class="
-                                            service.assignees?.length
+                                            activeAssigneesFor(service).length
                                                 ? 'bg-primary/10 text-primary'
                                                 : 'bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300'
                                         "
                                     >
                                         {{
-                                            service.assignees?.length
+                                            activeAssigneesFor(service).length
                                                 ? "Assigned"
                                                 : "Needs Assignment"
                                         }}
@@ -583,7 +657,9 @@
                                             >
                                                 Assign
                                                 {{ requiredRoleLabel(service) }}
-                                                <span class="text-slate-300 dark:text-gray-500">
+                                                <span
+                                                    class="text-slate-300 dark:text-gray-500"
+                                                >
                                                     ·
                                                 </span>
                                                 {{
@@ -823,7 +899,7 @@
                                                         type="text"
                                                         maxlength="255"
                                                         placeholder="Note for this assignment"
-                                                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:text-gray-400"
+                                                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
                                                         @input="
                                                             setNote(
                                                                 service.schedule_services_id,
@@ -884,23 +960,23 @@
 
                                 <div v-else class="mt-3">
                                     <p
-                                        v-if="service.assignees"
+                                        v-if="activeAssigneesFor(service).length"
                                         class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                                     >
                                         Assigned Employee
                                         <span
-                                            v-if="service.assignees?.length > 1"
+                                            v-if="activeAssigneesFor(service).length > 1"
                                         >
                                             s
                                         </span>
                                     </p>
 
                                     <div
-                                        v-if="service.assignees?.length"
+                                        v-if="activeAssigneesFor(service).length"
                                         class="mt-3 space-y-2"
                                     >
                                         <div
-                                            v-for="employee in service.assignees"
+                                            v-for="employee in activeAssigneesFor(service)"
                                             :key="employee.employee_id"
                                             class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-white/10 dark:bg-white/5"
                                         >
@@ -1049,7 +1125,7 @@
                         </button>
 
                         <button
-                            v-if="schedule?.status !== 'cancelled'"
+                            v-if="!isScheduleLocked"
                             class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
                             @click="startEdit"
                         >
@@ -1073,6 +1149,33 @@
         @confirm="confirmCancelSchedule"
         @cancel="cancelConfirmOpen = false"
     />
+
+    <ConfirmDialog
+        :open="completeConfirmOpen"
+        title="Complete this schedule?"
+        message="This action cannot be undone."
+        description="This schedule will be marked as completed and can no longer be edited afterward."
+        confirm-label="Complete Schedule"
+        cancel-label="Keep Editing"
+        :loading="submitLoading"
+        @confirm="confirmCompleteSchedule"
+        @cancel="completeConfirmOpen = false"
+    />
+
+    <ConfirmDialog
+        :open="conflictDialogOpen"
+        title="Schedule conflict"
+        :message="conflictDialogMessage"
+        description="Unassign them, or pick a different date/time, before saving this change."
+        confirm-label="Unassign Conflicting Staff"
+        cancel-label="Review Manually"
+        variant="danger"
+        @confirm="unassignConflictingStaff"
+        @cancel="
+            conflictDialogOpen = false;
+            emit('clear-save-conflicts');
+        "
+    />
 </template>
 
 <script setup lang="ts">
@@ -1093,7 +1196,9 @@ function formatServiceDuration(minutes?: number | null): string {
     const hours = Math.round((minutes / 60) * 100) / 100;
     const formatted = formatDuration(hours);
 
-    return formatted ? `${formatted} (${hours} hrs)` : `${hours} hrs`;
+    if (!formatted) return `${hours} hrs`;
+
+    return hours >= 24 ? `${formatted} (${hours} hrs)` : formatted;
 }
 
 function durationLabelFor(service: ScheduleServiceItem): string {
@@ -1119,12 +1224,21 @@ import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
 import type { AnyCaaRecord } from "node:dns";
 
+interface SaveConflict {
+    employee_id: number;
+    employee_name: string;
+    schedule_services_id: number;
+    service_name: string;
+    conflict_schedule_codes: string[];
+}
+
 const props = defineProps<{
     open: boolean;
     schedule: ScheduleItem | null;
     submitLoading?: boolean;
     employees?: Employee[];
     isFetchingEmployees?: boolean;
+    saveConflicts?: SaveConflict[] | null;
 }>();
 
 const emit = defineEmits<{
@@ -1137,6 +1251,7 @@ const emit = defineEmits<{
             status: string;
             date: string;
             preferred_time: string;
+            note: string | null;
             assignments: {
                 employee_id: number | null;
                 schedule_services_id: number;
@@ -1145,6 +1260,13 @@ const emit = defineEmits<{
     ): void;
 
     (e: "start-edit", schedule: ScheduleItem): void;
+
+    (
+        e: "reschedule-preview",
+        payload: { schedule_id: number; date: string; preferred_time: string },
+    ): void;
+
+    (e: "clear-save-conflicts"): void;
 }>();
 
 const route = useRoute();
@@ -1191,10 +1313,13 @@ const isEditing = ref(false);
 
 const todayStr = getLocalDateStr(new Date());
 
+const NOTE_MAX_LENGTH = 500;
+
 const form = ref({
     date: "",
     preferred_time: "",
     status: "",
+    note: "",
 });
 
 interface AssignmentEntry {
@@ -1223,6 +1348,12 @@ const isFacilitySchedule = computed(
     () => props.schedule?.category?.toLowerCase() === "facility",
 );
 
+const isScheduleLocked = computed(() =>
+    ["cancelled", "completed"].includes(
+        (props.schedule?.status ?? "").toLowerCase(),
+    ),
+);
+
 const employeeSearch = ref("");
 
 const bodyGridClass =
@@ -1242,6 +1373,12 @@ function employeeLabel(employee: Employee) {
 function employeeById(employeeId: string | number) {
     return (props.employees ?? []).find(
         (e) => Number(e.employee_id) === Number(employeeId),
+    );
+}
+
+function activeAssigneesFor(service: ScheduleServiceItem) {
+    return (service.assignees ?? []).filter(
+        (assignee) => assignee.is_active !== false,
     );
 }
 
@@ -1295,6 +1432,44 @@ function isPickDisabled(service: ScheduleServiceItem, employee: Employee) {
     if (employee.is_busy) return true;
 
     return service.type !== "ADL" && !employee.is_assigned;
+}
+
+const conflictDialogOpen = ref(false);
+
+const conflictDialogMessage = computed(() => {
+    const conflicts = props.saveConflicts ?? [];
+
+    if (!conflicts.length) return "";
+
+    const lines = conflicts.map(
+        (c) =>
+            `${c.employee_name} (${c.service_name}) is already on ${c.conflict_schedule_codes.join(", ")} at this time.`,
+    );
+
+    return lines.join(" ");
+});
+
+watch(
+    () => props.saveConflicts,
+    (conflicts) => {
+        conflictDialogOpen.value = Boolean(conflicts && conflicts.length);
+    },
+);
+
+function unassignConflictingStaff() {
+    (props.saveConflicts ?? []).forEach(
+        ({ schedule_services_id, employee_id }) => {
+            assignments.value = {
+                ...assignments.value,
+                [schedule_services_id]: entriesFor(schedule_services_id).filter(
+                    (entry) => Number(entry.employee_id) !== employee_id,
+                ),
+            };
+        },
+    );
+
+    conflictDialogOpen.value = false;
+    emit("clear-save-conflicts");
 }
 
 function noteFor(serviceId: number, employeeId: number) {
@@ -1365,7 +1540,7 @@ function togglePreset(serviceId: number, employeeId: number, preset: string) {
 }
 
 const availableTimeSlots = computed(() =>
-    generateAvailableAmPmTimes(form.value.date),
+    generateAvailableAmPmTimes(form.value.date, 30),
 );
 
 const displayTime = computed(() =>
@@ -1383,6 +1558,7 @@ watch(
             date: schedule.scheduled_date ?? "",
             preferred_time: schedule.start_time ?? "",
             status: schedule.status ?? "Pending",
+            note: schedule.note ?? "",
         };
 
         hydrateAssignments(schedule);
@@ -1415,7 +1591,7 @@ function resetForm() {
 
 function startEdit() {
     if (!props.schedule) return;
-    if (props.schedule.status === "cancelled") return;
+    if (isScheduleLocked.value) return;
 
     isEditing.value = true;
 
@@ -1423,6 +1599,7 @@ function startEdit() {
         date: props.schedule.scheduled_date ?? "",
         preferred_time: props.schedule.start_time ?? "",
         status: props.schedule.status ?? "Pending",
+        note: props.schedule.note ?? "",
     };
 
     hydrateAssignments(props.schedule);
@@ -1437,6 +1614,19 @@ function cancelEdit() {
 function update(key: keyof typeof form.value, value: string) {
     form.value[key] = value;
     delete errors.value[key];
+
+    if (
+        (key === "date" || key === "preferred_time") &&
+        props.schedule &&
+        form.value.date &&
+        form.value.preferred_time
+    ) {
+        emit("reschedule-preview", {
+            schedule_id: props.schedule.schedule_id,
+            date: form.value.date,
+            preferred_time: form.value.preferred_time,
+        });
+    }
 }
 
 function validate() {
@@ -1454,6 +1644,7 @@ function validate() {
 }
 
 const cancelConfirmOpen = ref(false);
+const completeConfirmOpen = ref(false);
 
 function buildSchedulePayload() {
     if (!props.schedule) return null;
@@ -1463,6 +1654,7 @@ function buildSchedulePayload() {
         status: form.value.status,
         date: form.value.date,
         preferred_time: form.value.preferred_time,
+        note: form.value.note.trim() || null,
         assignments: (props.schedule.services ?? []).flatMap(
             (
                 service,
@@ -1503,6 +1695,11 @@ function handleSchedule() {
         return;
     }
 
+    if (form.value.status === "completed") {
+        completeConfirmOpen.value = true;
+        return;
+    }
+
     const payload = buildSchedulePayload();
 
     if (payload) {
@@ -1512,6 +1709,16 @@ function handleSchedule() {
 
 function confirmCancelSchedule() {
     cancelConfirmOpen.value = false;
+
+    const payload = buildSchedulePayload();
+
+    if (payload) {
+        emit("schedule", payload);
+    }
+}
+
+function confirmCompleteSchedule() {
+    completeConfirmOpen.value = false;
 
     const payload = buildSchedulePayload();
 

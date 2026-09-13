@@ -14,15 +14,33 @@ class ClientSeeder extends Seeder
         $clients = [
             [
                 'email' => 'princesestoso2@gmail.com',
-                'first_name' => 'Prince',
+                'first_name' => 'Prince2',
                 'last_name' => 'Sestoso',
                 'phone_number' => '9171234502',
             ],
             [
                 'email' => 'princesestoso3@gmail.com',
-                'first_name' => 'Prince',
+                'first_name' => 'Prince3',
                 'last_name' => 'Sestoso',
                 'phone_number' => '9171234503',
+            ],
+            [
+                'email' => 'princesestoso4@gmail.com',
+                'first_name' => 'Prince4',
+                'last_name' => 'Sestoso',
+                'phone_number' => '9171234504',
+            ],
+            [
+                'email' => 'princesestoso5@gmail.com',
+                'first_name' => 'Prince5',
+                'last_name' => 'Sestoso',
+                'phone_number' => '9171234505',
+            ],
+            [
+                'email' => 'princesestoso6@gmail.com',
+                'first_name' => 'Prince6',
+                'last_name' => 'Sestoso',
+                'phone_number' => '9171234506',
             ],
         ];
 

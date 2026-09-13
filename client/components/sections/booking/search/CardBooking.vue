@@ -6,10 +6,11 @@
     >
         <div class="relative h-40 overflow-hidden bg-muted-light dark:bg-white/10">
             <img
-                v-if="branch?.image"
+                v-if="branch?.image && !imageBroken"
                 :src="branch.image"
                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 alt="branch image"
+                @error="imageBroken = true"
             />
 
             <div
@@ -24,7 +25,7 @@
             </div>
 
             <div
-                v-if="branch?.image"
+                v-if="branch?.image && !imageBroken"
                 class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent"
             />
 
@@ -131,10 +132,11 @@
             class="relative h-48 w-full shrink-0 overflow-hidden bg-slate-100 sm:h-auto sm:w-64 dark:bg-white/10"
         >
             <img
-                v-if="branch?.image"
+                v-if="branch?.image && !imageBroken"
                 :src="branch.image"
                 class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                 alt="branch image"
+                @error="imageBroken = true"
             />
 
             <img
@@ -276,6 +278,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import type { BranchRetrieve } from "~/types/branch";
 import Location from "~/components/icons/location.vue";
 import Logo from "~/assets/logo/logo.png";
@@ -288,6 +291,8 @@ const props = defineProps<{
 }>();
 
 defineEmits(["select"]);
+
+const imageBroken = ref(false);
 
 const getTime = (settings: BranchRetrieve["settings"]) =>
     getBranchTimeDisplay(settings);

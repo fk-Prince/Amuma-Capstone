@@ -21,6 +21,7 @@ class BranchSubscription extends Pivot
         'subscription_id',
         'branch_id',
         'status',
+        'rejection_reason',
     ];
 
     public function uniqueIds()

@@ -78,6 +78,7 @@ export interface ScheduleItem {
     schedule_code: string;
     status: string;
     category: string | null;
+    note: string | null;
 
     scheduled_date: string | null;
     scheduled_at?: string | null;

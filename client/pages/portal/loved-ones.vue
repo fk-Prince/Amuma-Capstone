@@ -338,7 +338,8 @@
                             v-if="lovedOne.status === 'Admitted'"
                             class="text-sm text-primary-500 font-medium mt-1 dark:text-primary-300"
                         >
-                            {{ lovedOne.roomLabel }} / {{ lovedOne.bedLabel }}
+                            Room {{ lovedOne.roomLabel }} · Bed
+                            {{ lovedOne.bedLabel }}
                         </p>
 
                         <p
@@ -373,13 +374,13 @@
                         </div>
 
                         <div class="flex items-center gap-2.5 flex-wrap mt-4">
-                            <NuxtLink
+                            <!-- <NuxtLink
                                 to="/portal/messages"
                                 class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-primary-500 text-primary-600 text-sm font-medium hover:bg-primary-500 hover:text-white transition-colors dark:text-primary-300"
                             >
                                 <MessageSquare class="w-3.5 h-3.5" />
                                 Message Caregiver
-                            </NuxtLink>
+                            </NuxtLink> -->
 
                             <NuxtLink
                                 v-for="link in patientLinks"
@@ -399,6 +400,16 @@
                             >
                                 <CalendarPlus class="w-3.5 h-3.5" />
                                 Book Again
+                            </button>
+
+                            <button
+                                v-if="lovedOne.status === 'Admitted'"
+                                type="button"
+                                class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition-colors"
+                                @click="openAdmissionTimeline"
+                            >
+                                <History class="w-3.5 h-3.5" />
+                                View Admission Timeline
                             </button>
                         </div>
                     </div>
@@ -428,7 +439,7 @@
                                     {{ lovedOne.birthdate }}
                                 </p>
                                 <p class="text-xs text-gray-400 break-words dark:text-gray-500">
-                                    {{ lovedOne.age }} years old Â·
+                                    {{ lovedOne.age }} years old ·
                                     {{ lovedOne.gender }}
                                 </p>
                             </div>
@@ -602,7 +613,7 @@
                                 {{ lovedOne.client.name }}
                             </p>
                             <p class="text-xs text-gray-400 break-words dark:text-gray-500">
-                                Your relationship to this patient Â·
+                                Your relationship to this patient ·
                                 {{ lovedOne.relationship }}
                             </p>
                         </div>
@@ -779,7 +790,7 @@
                         </h3>
 
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Recently recorded medications for this client.
+                            Recently recorded medications for this patient.
                         </p>
                     </div>
 
@@ -816,7 +827,7 @@
                         </h3>
 
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Most recently recorded vital signs for this client.
+                            Most recently recorded vital signs for this patient.
                         </p>
                     </div>
 
@@ -868,6 +879,14 @@
         :assessments="lovedOne.assessments"
         @close="showAssessmentModal = false"
     />
+
+    <AdmissionTimelineModal
+        :open="showAdmissionTimelineModal"
+        :loading="admissionsLoading"
+        :patient-name="lovedOne.name"
+        :admissions="admissionTimeline"
+        @close="showAdmissionTimelineModal = false"
+    />
 </template>
 
 <script setup lang="ts">
@@ -877,6 +896,7 @@ import VitalSignsTable from "~/components/sections/app/Patient/VitalSignsTable.v
 import BookAgainModal from "~/components/sections/app/Patient/BookAgainModal.vue";
 import DiagnosisModal from "~/components/portal/DiagnosisModal.vue";
 import AssessmentModal from "~/components/portal/AssessmentModal.vue";
+import AdmissionTimelineModal from "~/components/portal/AdmissionTimelineModal.vue";
 import type { PortalAssessment, PortalDiagnosis } from "~/types/patient";
 import EmptyState from "~/components/ui/EmptyState.vue";
 import {
@@ -903,6 +923,7 @@ import {
     FileText,
     Activity,
     Pill,
+    History,
 } from "lucide-vue-next";
 import { patientAccessService } from "../../api/patient-access/PatientAccessService";
 import type { Medication } from "~/types/medication";
@@ -1093,6 +1114,44 @@ function patientRoute(path: string) {
 const showBookAgainModal = ref(false);
 const showDiagnosisModal = ref(false);
 const showAssessmentModal = ref(false);
+const showAdmissionTimelineModal = ref(false);
+const admissionsLoading = ref(false);
+const admissionTimeline = ref<any[]>([]);
+const admissionTimelineLoadedFor = ref<number | null>(null);
+
+async function loadAdmissionTimeline(patientId: number) {
+    admissionsLoading.value = true;
+
+    try {
+        const res = await patientAccessService.retrieveAction({
+            action: "overview",
+            section: "admissions",
+            patient_id: patientId,
+        });
+
+        admissionTimeline.value = Array.isArray(res?.data?.admissions)
+            ? res.data.admissions
+            : [];
+
+        admissionTimelineLoadedFor.value = patientId;
+    } catch (err) {
+        console.error("Error loading admission timeline:", err);
+        admissionTimeline.value = [];
+    } finally {
+        admissionsLoading.value = false;
+    }
+}
+
+async function openAdmissionTimeline() {
+    showAdmissionTimelineModal.value = true;
+
+    if (
+        lovedOne.value.patient_id &&
+        admissionTimelineLoadedFor.value !== lovedOne.value.patient_id
+    ) {
+        await loadAdmissionTimeline(lovedOne.value.patient_id);
+    }
+}
 
 const latestDiagnosis = computed(() => lovedOne.value.diagnoses[0] ?? null);
 

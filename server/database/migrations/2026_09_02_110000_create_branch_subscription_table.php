@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreignId('subscription_id')->constrained('subscriptions', 'subscription_id');
             $table->foreignId('branch_id')->constrained('branches', 'branch_id');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->text('rejection_reason')->nullable();
             $table->timestamps();
             $table->unique(['subscription_id', 'branch_id']);
             $table->index(['subscription_id', 'status']);

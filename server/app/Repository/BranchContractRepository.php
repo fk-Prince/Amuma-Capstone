@@ -79,6 +79,20 @@ class BranchContractRepository
             ->where('is_active', true)
             ->count();
 
+        $plans = BranchContract::where('branch_id', $branchId)
+            ->where('is_active', true)
+            ->orderBy('category')
+            ->orderBy('price')
+            ->get()
+            ->map(fn($contract) => [
+                'branch_contract_id' => $contract->branch_contract_id,
+                'category' => $contract->category,
+                'accommodation_type' => $contract->accommodation_type,
+                'billing_cycle' => $contract->billing_cycle,
+                'price' => (float) $contract->price,
+            ])
+            ->values();
+
 
         $patientsWithPlan = PatientAdmission::query()
             ->whereHas('patient', $branchPatients)
@@ -96,6 +110,7 @@ class BranchContractRepository
 
         return [
             'total_active_plans' => $activePlans,
+            'plans' => $plans,
             'patient_with_plan' => $patientsWithPlan,
             'new_monthy_patients' => $newPatientsThisMonth,
             'patient_retention' => $this->retentionRate(

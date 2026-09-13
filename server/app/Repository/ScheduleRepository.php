@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Schedule;
 use App\Models\ScheduleAssigned;
@@ -11,37 +12,89 @@ use Carbon\Carbon;
 class ScheduleRepository
 {
 
-    private const CONFLICT_WINDOW_SQL = 'schedules.scheduled_at + (
-        SELECT COALESCE(
-            SUM(
+    public static function branchTimezone(string $branchId): string
+    {
+        return Branch::find($branchId)?->settings['time_zone']
+            ?? config('app.timezone');
+    }
+
+    public static function conflictWindowSql(string $timezone): string
+    {
+        $durationMinutes = "
+            CASE
+                WHEN ss.service_id IS NOT NULL THEN EXTRACT(EPOCH FROM sv.maximum_duration) / 60
+                WHEN ss.hours_booked IS NOT NULL THEN ss.hours_booked * 60
+                ELSE 60
+            END
+        ";
+
+        $workedMinutes = "
+            COALESCE((
+                SELECT SUM(EXTRACT(EPOCH FROM (os.out_timestamp - os.in_timestamp)) / 60)
+                FROM schedule_assigned sa
+                JOIN online_schedules os ON os.schedule_assigned_id = sa.schedule_assigned_id
+                WHERE sa.schedule_services_id = ss.schedule_services_id
+                  AND os.out_timestamp IS NOT NULL
+            ), 0)
+        ";
+
+        $latestCheckIn = "
+            (
+                SELECT MAX(os.in_timestamp)
+                FROM schedule_assigned sa
+                JOIN online_schedules os ON os.schedule_assigned_id = sa.schedule_assigned_id
+                WHERE sa.schedule_services_id = ss.schedule_services_id
+            )
+        ";
+
+        $hasActiveSession = "
+            EXISTS (
+                SELECT 1
+                FROM schedule_assigned sa
+                JOIN online_schedules os ON os.schedule_assigned_id = sa.schedule_assigned_id
+                WHERE sa.schedule_services_id = ss.schedule_services_id
+                  AND os.in_timestamp IS NOT NULL
+                  AND os.out_timestamp IS NULL
+            )
+        ";
+
+        return "(
+            SELECT MAX(
                 CASE
-                    WHEN ss.service_id IS NOT NULL THEN EXTRACT(EPOCH FROM sv.maximum_duration) / 60
-                    WHEN ss.hours_booked IS NOT NULL THEN ss.hours_booked * 60
-                    ELSE 60
+                    WHEN {$hasActiveSession} THEN
+                        GREATEST({$latestCheckIn}, schedules.scheduled_at)
+                        + GREATEST({$durationMinutes} - {$workedMinutes}, 0) * INTERVAL '1 minute'
+                    WHEN {$latestCheckIn} IS NOT NULL THEN
+                        GREATEST(NOW(), schedules.scheduled_at)
+                        + GREATEST({$durationMinutes} - {$workedMinutes}, 0) * INTERVAL '1 minute'
+                    ELSE
+                        schedules.scheduled_at + ({$durationMinutes}) * INTERVAL '1 minute'
                 END
-            ),
-            60
-        )
-        FROM schedule_services ss
-        LEFT JOIN services sv ON sv.service_id = ss.service_id
-        WHERE ss.schedule_id = schedules.schedule_id
-    ) * INTERVAL \'1 minute\' > ?';
+            )
+            FROM schedule_services ss
+            LEFT JOIN services sv ON sv.service_id = ss.service_id
+            WHERE ss.schedule_id = schedules.schedule_id
+        ) >= ?";
+    }
 
 
     public function employeeHasActiveConflict(
         int $employeeId,
+        string $branchId,
         string $excludeScheduleId,
         Carbon $targetStart,
         Carbon $targetEnd
     ): bool {
+        $conflictWindowSql = self::conflictWindowSql(self::branchTimezone($branchId));
+
         return ScheduleAssigned::query()
             ->where('employee_id', $employeeId)
             ->where('is_active', true)
-            ->whereHas('scheduleService.schedule', function ($query) use ($targetStart, $targetEnd, $excludeScheduleId) {
+            ->whereHas('scheduleService.schedule', function ($query) use ($targetStart, $targetEnd, $excludeScheduleId, $conflictWindowSql) {
                 $query->where('schedules.schedule_id', '!=', $excludeScheduleId)
                     ->whereIn('schedules.status', [Schedule::STATUS_ONGOING, Schedule::STATUS_PENDING])
-                    ->where('schedules.scheduled_at', '<', $targetEnd)
-                    ->whereRaw(self::CONFLICT_WINDOW_SQL, [$targetStart]);
+                    ->where('schedules.scheduled_at', '<=', $targetEnd)
+                    ->whereRaw($conflictWindowSql, [$targetStart]);
             })
             ->exists();
     }
@@ -280,21 +333,16 @@ class ScheduleRepository
 
         $allowedRoles = ['nurse', 'caregiver'];
 
-        $activeScheduleAssignments = function ($query) use ($targetStart, $targetEnd, $scheduleId) {
+        $conflictWindowSql = self::conflictWindowSql(self::branchTimezone($branchId));
+
+        $activeScheduleAssignments = function ($query) use ($targetStart, $targetEnd, $scheduleId, $conflictWindowSql) {
             $query->where('schedule_assigned.is_active', true)
-                ->whereHas('scheduleService.schedule', function ($q) use ($targetStart, $targetEnd, $scheduleId) {
+                ->whereHas('scheduleService.schedule', function ($q) use ($targetStart, $targetEnd, $scheduleId, $conflictWindowSql) {
                     $q->where('schedules.schedule_id', '!=', $scheduleId)
                         ->whereIn('schedules.status', [Schedule::STATUS_ONGOING, Schedule::STATUS_PENDING])
-                        ->where('schedules.scheduled_at', '<', $targetEnd)
-                        ->whereRaw(
-                            'schedules.scheduled_at + (
-                        SELECT COALESCE(SUM(EXTRACT(EPOCH FROM sv.maximum_duration)), 3600) / 60
-                        FROM schedule_services ss
-                        INNER JOIN services sv ON sv.service_id = ss.service_id
-                        WHERE ss.schedule_id = schedules.schedule_id
-                    ) * INTERVAL \'1 minute\' > ?',
-                            [$targetStart]
-                        )->select([
+                        ->where('schedules.scheduled_at', '<=', $targetEnd)
+                        ->whereRaw($conflictWindowSql, [$targetStart])
+                        ->select([
                             'schedule_id',
                             'schedule_code',
                             'scheduled_at'
@@ -373,25 +421,11 @@ class ScheduleRepository
                 });
         }
         $targetEnd = $targetStart->copy()->addMinutes($targetDurationMinutes);
-        $conflict = 'schedules.scheduled_at + (
-            SELECT COALESCE(
-                SUM(
-                    CASE
-                        WHEN ss.service_id IS NOT NULL THEN EXTRACT(EPOCH FROM sv.maximum_duration) / 60
-                        WHEN ss.hours_booked IS NOT NULL THEN ss.hours_booked * 60
-                        ELSE 60
-                    END
-                ),
-                60
-            )
-            FROM schedule_services ss
-            LEFT JOIN services sv ON sv.service_id = ss.service_id
-            WHERE ss.schedule_id = schedules.schedule_id
-        ) * INTERVAL \'1 minute\' > ?';
+        $conflict = self::conflictWindowSql(self::branchTimezone($branchId));
 
         $scheduleConflict = function ($q) use ($targetStart, $targetEnd, $conflict) {
             $q->whereIn('schedules.status', [Schedule::STATUS_ONGOING, Schedule::STATUS_PENDING])
-                ->where('schedules.scheduled_at', '<', $targetEnd)
+                ->where('schedules.scheduled_at', '<=', $targetEnd)
                 ->whereRaw($conflict, [$targetStart]);
         };
 

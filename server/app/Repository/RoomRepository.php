@@ -26,7 +26,7 @@ class RoomRepository
     {
         $query = Room::with([
             'beds.currentAdmission.patient',
-            'beds.reservedAdmission.bookings',
+            'beds.reservedAdmission.patient',
         ])->where('branch_id', $branch_id);
 
         if (!empty($payload['room_type'])) {

@@ -27,23 +27,65 @@ class PatientRepository
         return Patient::where($conditions)->first();
     }
 
+
+    private function requestedSections(array $payload): array
+    {
+        $sections = $payload['sections'] ?? null;
+
+        if (is_string($sections)) {
+            $sections = array_filter(explode(',', $sections));
+        }
+
+        return $sections ? array_map('trim', (array) $sections) : ['all'];
+    }
+
+    private function wants(array $sections, string $section): bool
+    {
+        return in_array('all', $sections, true)
+            || in_array($section, $sections, true);
+    }
+
+    private function listRelations(array $sections, string $admissionRelation): array
+    {
+        $relations = ['location'];
+
+        if ($this->wants($sections, 'care')) {
+            $relations[] = 'currentAdmission';
+            $relations[] = 'latestAdmission';
+            $relations[] = 'schedules';
+        }
+
+        if ($this->wants($sections, 'assessment')) {
+            $relations[] = 'assessments';
+            $relations[] = 'diagnoses';
+        }
+
+        if ($this->wants($sections, 'schedules')) {
+            $relations[] = 'schedules.location';
+            $relations[] = 'schedules.scheduleServices.service';
+        }
+
+        if ($this->wants($sections, 'family')) {
+            $relations[] = 'patientAccess.client.user';
+        }
+
+        if ($this->wants($sections, 'admissions')) {
+            $relations[] = 'currentAdmission';
+            $relations[] = 'latestAdmission';
+            $relations[] = "{$admissionRelation}.bed.room";
+            $relations[] = "{$admissionRelation}.currentPeriod.branchContract";
+            $relations[] = "{$admissionRelation}.currentInvoiceAdmission.invoice";
+        }
+
+        return array_values(array_unique($relations));
+    }
+
     public function getPatient(array $payload)
     {
+        $sections = $this->requestedSections($payload);
+
         if (!empty($payload['type']) && $payload['type'] === 'admission') {
-            return Patient::with([
-                'location',
-                'assessments',
-                'diagnoses',
-                'currentAdmission.bed.room',
-                // 'currentAdmission.admissionContract',
-                'currentAdmission.invoiceAdmission.admissionPeriod.branchContract',
-                'currentAdmission.currentPeriod.branchContract',
-                'currentAdmission.currentInvoiceAdmission.invoice',
-                'latestAdmission.bed.room',
-                // 'latestAdmission.admissionContract',
-                'latestAdmission.invoiceAdmission.admissionPeriod.branchContract',
-                'schedules.location',
-            ])
+            return Patient::with($this->listRelations($sections, 'latestAdmission'))
                 ->where('branch_id', $payload['branch_id'])
                 ->whereHas('latestAdmission')
                 ->when(!empty($payload['assigned_employee_id']), function ($query) use ($payload) {
@@ -66,26 +108,15 @@ class PatientRepository
         }
 
 
-        return Patient::with([
-            'location',
-            'assessments',
-            'diagnoses',
-            'admissions' => function ($query) {
+        $relations = $this->listRelations($sections, 'admissions');
+
+        if ($this->wants($sections, 'admissions')) {
+            $relations['admissions'] = function ($query) {
                 $query->where('status', 'admitted');
-            },
-            'admissions.bed.room',
-            // 'admissions.admissionContract',
-            'admissions.currentPeriod.branchContract',
-            'admissions.currentInvoiceAdmission.invoice',
-            'currentAdmission.bed.room',
-            // 'currentAdmission.admissionContract',
-            'currentAdmission.currentPeriod.branchContract',
-            'currentAdmission.currentInvoiceAdmission.invoice',
-            'latestAdmission.bed.room',
-            // 'latestAdmission.admissionContract',
-            'schedules.location',
-            'schedules.scheduleServices.service',
-        ])
+            };
+        }
+
+        return Patient::with($relations)
             ->where('branch_id', $payload['branch_id'])
             ->when(!empty($payload['assigned_employee_id']), function ($query) use ($payload) {
                 $query->whereHas('schedules.scheduleServices.assigned', function ($q) use ($payload) {
@@ -141,6 +172,12 @@ class PatientRepository
             'admissions.currentPeriod.invoiceAdmissionLines.invoice.allocations.refundAllocations',
             'admissions.currentPeriod.invoiceAdmissionLines.invoice.invoiceAdjustments',
             'admissions.latestPeriod.branchContract',
+
+            // formatFuturePeriods() reads periods, not futurePeriods.
+            'admissions.periods.branchContract',
+            'admissions.periods.invoiceAdmissionLines.invoice',
+            'admissions.periods.invoiceAdmissionLines.admissionPeriod.branchContract',
+
             'admissions.futurePeriods.invoiceAdmissionLines.invoice.allocations.refundAllocations',
             'admissions.futurePeriods.invoiceAdmissionLines.invoice.invoiceAdjustments',
             'admissions.currentInvoiceAdmission.invoice',

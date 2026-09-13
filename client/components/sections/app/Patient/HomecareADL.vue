@@ -8,7 +8,7 @@
                 <h3
                     class="text-base font-semibold text-secondary dark:text-white"
                 >
-                    Online Schedule Audit Log
+                    Homecare Activity of Daily Living (ADL) Schedule Audit Log
                 </h3>
 
                 <p class="mt-0.5 text-sm text-muted dark:text-gray-400">
@@ -104,7 +104,7 @@
                 >
                     <button
                         type="button"
-                        class="flex w-full flex-col gap-3 p-4 sm:p-5 text-left sm:flex-row sm:items-center sm:justify-between"
+                        class="flex w-full flex-col gap-3 p-4 sm:p-5 text-left lg:flex-row lg:items-center lg:justify-between"
                         :class="
                             isExpanded(log)
                                 ? 'border-b border-muted-light dark:border-white/10'
@@ -166,26 +166,26 @@
                                             log.address
                                         }}</span>
                                     </p>
+                                    <p
+                                        v-if="log.note"
+                                        class="mt-0.5 truncate text-[12px] text-muted dark:text-gray-400"
+                                        :title="log.note"
+                                    >
+                                        Note: {{ log.note }}
+                                    </p>
                                 </template>
 
                                 <span
-                                    v-if="variant === 3 && latestCheckIn(log)"
+                                    v-if="
+                                        variant === 3 &&
+                                        isCurrentlyCheckedIn(log)
+                                    "
                                     class="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                                 >
                                     <span
-                                        class="h-1.5 w-1.5 rounded-full bg-emerald-500"
-                                        :class="
-                                            isCurrentlyCheckedIn(log)
-                                                ? 'animate-pulse'
-                                                : ''
-                                        "
+                                        class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"
                                     />
-                                    {{
-                                        isCurrentlyCheckedIn(log)
-                                            ? "On duty"
-                                            : "Checked in"
-                                    }}
-                                    ·
+                                    On duty ·
                                     {{
                                         formatCheckInTime(
                                             latestCheckIn(log)?.in_timestamp,
@@ -199,11 +199,14 @@
                             :class="
                                 variant === 3
                                     ? 'flex w-full flex-col items-stretch gap-2.5 sm:w-60 sm:shrink-0'
-                                    : 'flex flex-wrap items-center gap-2 sm:shrink-0'
+                                    : 'flex w-full flex-col gap-2 lg:w-auto lg:shrink-0'
                             "
                             @click="$event.stopPropagation()"
                         >
-                            <template v-if="variant === 1">
+                            <div
+                                v-if="variant === 1 || variant === 2"
+                                class="flex w-full flex-wrap items-center gap-2"
+                            >
                                 <ActionButton
                                     variant="outline"
                                     @click="viewDetails(log)"
@@ -212,21 +215,25 @@
                                 </ActionButton>
 
                                 <ActionButton
-                                    v-if="log.status !== 'cancelled'"
+                                    v-if="
+                                        !['cancelled', 'completed'].includes(
+                                            log.status,
+                                        )
+                                    "
                                     @click="openAssignModal(log)"
                                     variant="primary"
                                 >
                                     Assign
                                 </ActionButton>
-                            </template>
 
-                            <ActionButton
-                                v-if="variant === 2"
-                                variant="primary"
-                                @click="goToPatientSchedule(log)"
-                            >
-                                View Information
-                            </ActionButton>
+                                <ActionButton
+                                    v-if="variant === 2"
+                                    variant="outline"
+                                    @click="goToPatientSchedule(log)"
+                                >
+                                    View Patient
+                                </ActionButton>
+                            </div>
 
                             <ActionButton
                                 v-if="
@@ -319,7 +326,10 @@
                                 </div>
                             </template>
 
-                            <template v-else>
+                            <div
+                                v-else
+                                class="flex w-full flex-wrap items-center gap-2"
+                            >
                                 <div
                                     class="rounded-xl border border-primary/20 bg-primary/5 px-4 py-2"
                                 >
@@ -338,6 +348,12 @@
                                 </div>
 
                                 <div
+                                    v-if="
+                                        remainingMinutes(log) > 0 ||
+                                        !['completed', 'cancelled'].includes(
+                                            log.status,
+                                        )
+                                    "
                                     class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 dark:border-amber-500/20 dark:bg-amber-500/10"
                                 >
                                     <p
@@ -392,7 +408,7 @@
                                         {{ log.status }}
                                     </p>
                                 </div>
-                            </template>
+                            </div>
                         </div>
                     </button>
 
@@ -411,7 +427,7 @@
                                         v-if="log.assignees.length"
                                         class="text-xs font-semibold uppercase text-muted dark:text-gray-400"
                                     >
-                                        Assigned Medical Staff
+                                        Assigned Caregiver Staff
                                     </p>
 
                                     <template v-if="log.assignees.length">
@@ -568,13 +584,13 @@
                                     <p
                                         class="text-xs font-semibold uppercase text-muted dark:text-gray-400"
                                     >
-                                        QR Scan History
+                                        Attendance History
                                     </p>
                                     <div
                                         v-if="!log.online_logs.length"
                                         class="rounded-lg border border-muted-light dark:border-white/10 bg-muted-light/40 dark:bg-white/5 p-4 text-sm text-muted dark:text-gray-400"
                                     >
-                                        No scan history available
+                                        No attendance history available
                                     </div>
 
                                     <div
@@ -727,7 +743,7 @@
             @scanned="handleQrScanned"
         />
 
-        <template v-if="variant === 1">
+        <template v-if="variant === 1 || variant === 2">
             <AssignADLModal
                 :open="showAssignModal"
                 :schedule="selectedSchedule"
@@ -737,7 +753,7 @@
                 @confirm="handleAssignConfirm"
             />
 
-            <QrScanner v-if="showScanner" @close="showScanner = false" />
+            <QrScanner v-if="variant === 1 && showScanner" @close="showScanner = false" />
         </template>
     </div>
 </template>
@@ -782,7 +798,7 @@ const props = withDefaults(
     },
 );
 const emit = defineEmits<{
-    (e: "update", schedule: ScheduleItem[]): void;
+    (e: "update", schedule: ScheduleItem): void;
     (e: "refresh"): void;
     (e: "view-details", schedule: ScheduleItem): void;
 }>();
@@ -933,7 +949,7 @@ const filteredLogs = computed<AuditRow[]>(() => {
                 email: assignee.email ?? null,
             }));
 
-            const online_logs = activeAssignees.flatMap((assignee) =>
+            const online_logs = (service.assignees ?? []).flatMap((assignee) =>
                 (assignee.online ?? []).map((scan) => ({
                     qr_in: scan.qr_in ?? null,
                     qr_out: scan.qr_out ?? null,
@@ -971,7 +987,7 @@ const filteredLogs = computed<AuditRow[]>(() => {
                 employee_id: firstAssignee?.employee_id ?? null,
                 full_name: firstAssignee?.full_name ?? null,
                 avatar: firstAssignee?.avatar ?? null,
-                note: firstAssignee?.note ?? null,
+                note: schedule.note ?? null,
 
                 assignees,
 

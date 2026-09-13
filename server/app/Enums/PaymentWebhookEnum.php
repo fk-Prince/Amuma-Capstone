@@ -8,6 +8,7 @@ enum PaymentWebhookEnum: string
 {
     case SUBSCRIPTION = 'SUBSCRIPTION';
     case BOOKING_FACILITY = 'BOOKING_FACILITY';
+    case ADMISSION_EXTENSION = 'ADMISSION_EXTENSION';
 
     public static function fromPayload(array $payload): self
     {

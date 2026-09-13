@@ -143,6 +143,14 @@ export const settingSchema = z.object({
     enable_booking_complete_admission: z.boolean(),
     requires_full_payment_on_admit: z.boolean(),
 
+    complete_admission_booking_percent: z.preprocess(
+        (value) => (value === "" ? undefined : value),
+        z.coerce
+            .number({ message: "Booking percentage is required." })
+            .min(1, "Booking percentage must be between 1 and 100.")
+            .max(100, "Booking percentage must be between 1 and 100."),
+    ),
+
     minimum_adl_hours: z.preprocess(
         (value) => (value === "" ? undefined : value),
         z.coerce

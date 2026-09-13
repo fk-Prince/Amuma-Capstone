@@ -2,6 +2,7 @@
 
 namespace App\Utils;
 
+use App\Models\AdmissionPeriod;
 use App\Models\Booking;
 use App\Models\Invoice;
 use App\Models\PatientAccess;
@@ -81,6 +82,7 @@ class PortalHelper
         $wantsFinancials = $wantsAll || in_array('financials', $sections, true);
         $wantsSchedule = $wantsAll || in_array('schedule', $sections, true);
         $wantsActivity = $wantsAll || in_array('activity', $sections, true);
+        $wantsAdmissions = $wantsAll || in_array('admissions', $sections, true);
 
         $payload = [];
 
@@ -115,7 +117,69 @@ class PortalHelper
                 ->values();
         }
 
+        if ($wantsAdmissions) {
+            $payload['admissions'] = self::admissionTimeline($patient);
+        }
+
         return $payload;
+    }
+
+    // The portal timeline only ever shows the current admission, so this is a
+    // trimmed version of PatientResource::formatAdmission() without the
+    // dashboard-only discharge calculation.
+    private function admissionTimeline(object $patient): array
+    {
+        $admission = $patient->currentAdmission;
+
+        if (!$admission) {
+            return [];
+        }
+
+        $period = $admission->currentPeriod ?? $admission->latestPeriod;
+
+        return [[
+            'patient_admission_id' => $admission->patient_admission_id,
+            'status' => $admission->status,
+            'admitted_at' => $admission->admitted_at?->format('Y-m-d H:i:s'),
+            'end_date' => $admission->end_date?->format('Y-m-d H:i:s'),
+
+            'current_contract' => self::contract($period?->branchContract),
+
+            'current_period' => $period ? [
+                'admission_period_id' => $period->admission_period_id,
+            ] : null,
+
+            'invoices' => $admission->invoiceAdmission
+                ->map(fn($line) => [
+                    'invoice_admission_id' => $line->invoice_admission_id,
+                    'price' => round((float) $line->price, 2),
+                    'admission_period_id' => $line->admission_period_id,
+                    'period_code' => AdmissionPeriod::codeFor($line->admission_period_id),
+                    'parent_admission_period_id' => $line->admissionPeriod?->parent_admission_period_id,
+                    'accommodation_status' => $line->status,
+                    'accommodation_reason' => $line->admissionPeriod?->reason,
+                    'period_start' => $line->admissionPeriod?->start_date,
+                    'period_end' => $line->admissionPeriod?->end_date,
+                    'moved_at' => $line->admissionPeriod?->created_at,
+                    'contract' => self::contract($line->branchContract),
+                ])
+                ->values(),
+        ]];
+    }
+
+    private function contract(mixed $contract): ?array
+    {
+        if (!$contract) {
+            return null;
+        }
+
+        return [
+            'branch_contract_id' => $contract->branch_contract_id,
+            'category' => $contract->category,
+            'accommodation_type' => $contract->accommodation_type,
+            'billing_cycle' => $contract->billing_cycle,
+            'price' => $contract->price,
+        ];
     }
 
     private function scheduleContext(object $patient)

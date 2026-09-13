@@ -2,15 +2,6 @@
     <header
         class="min-h-[88px] sm:min-h-[104px] lg:h-[120px] px-3 sm:px-6 lg:px-8 py-4 sm:py-5 flex items-center justify-between gap-2 sm:gap-4 shrink-0 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-secondary"
     >
-        <button
-            type="button"
-            class="-ml-1 shrink-0 rounded-lg p-2 text-gray-600 hover:bg-gray-50 hover:text-primary-500 dark:text-white/70 dark:hover:bg-white/10 lg:hidden dark:hover:text-primary-300"
-            aria-label="Open navigation"
-            @click="$emit('open')"
-        >
-            <Menu class="h-5 w-5" />
-        </button>
-
         <div v-if="!isMounted" class="min-w-0 flex-1 space-y-2">
             <div class="h-6 w-40 rounded-md skeleton-shimmer sm:h-7" />
             <div class="h-3 w-56 rounded-md skeleton-shimmer" />
@@ -89,13 +80,15 @@
             </div>
 
             <template v-else>
-                <ClientOnly>
-                    <ThemeToggle
-                        class="text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/10"
-                    />
-                </ClientOnly>
+                <div class="hidden lg:block">
+                    <ClientOnly>
+                        <ThemeToggle
+                            class="text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/10"
+                        />
+                    </ClientOnly>
+                </div>
 
-                <MessageBell />
+                <MessageBell v-if="branchStore.activeBranch?.is_verified" />
                 <Notification />
                 <NavbarProfileDropdown
                     v-if="user"
@@ -104,6 +97,15 @@
                     :theme-aware="true"
                 />
             </template>
+
+            <button
+                type="button"
+                class="shrink-0 rounded-lg p-2 text-gray-600 hover:bg-gray-50 hover:text-primary-500 dark:text-white/70 dark:hover:bg-white/10 lg:hidden dark:hover:text-primary-300"
+                aria-label="Open navigation"
+                @click="$emit('open')"
+            >
+                <Menu class="h-5 w-5" />
+            </button>
         </div>
     </header>
 
@@ -196,11 +198,11 @@
                         </div>
 
                         <div
-                            v-if="branchStore.branches?.length"
+                            v-if="selectableBranches.length"
                             class="branch-scroll grid max-h-[calc(100vh-8rem)] gap-2.5 overflow-y-auto p-2.5 sm:max-h-[30rem] sm:grid-cols-2 sm:p-3"
                         >
                             <button
-                                v-for="branch in branchStore.branches"
+                                v-for="branch in selectableBranches"
                                 :key="branch.uuid"
                                 type="button"
                                 class="group w-full min-w-0 rounded-xl border p-3 text-left transition-all duration-200 sm:p-3.5"
@@ -505,6 +507,15 @@ const user = useAuthUser();
 defineEmits<{ open: [] }>();
 
 const branchStore = useBranchStore();
+
+// A rejected branch has no dashboard to open, so it's left out of the
+// switcher entirely — it's still fetched (branchStore.branches keeps it) so
+// its own dashboard can still show the rejection reason if visited directly.
+const selectableBranches = computed(() =>
+    (branchStore.branches ?? []).filter(
+        (branch) => branch.subscription_status !== "rejected",
+    ),
+);
 
 const brokenImages = reactive(new Set<string>());
 

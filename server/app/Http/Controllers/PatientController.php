@@ -8,8 +8,6 @@ use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Service\PatientService;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 
 class PatientController extends Controller
 {
@@ -22,6 +20,7 @@ class PatientController extends Controller
 
     public function index(Request $request)
     {
+        // return [];
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Patients, PermissionAction::Read);
         BranchGuard::mergeRequest($request, $branch);

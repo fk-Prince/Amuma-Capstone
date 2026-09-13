@@ -19,8 +19,7 @@
                 Back
             </button>
 
-            <!-- Mirrors the loaded layout: one card, header above a split grid,
-                 so nothing jumps when the data arrives. -->
+        
             <div
                 v-if="loading"
                 class="animate-pulse overflow-hidden rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] dark:bg-secondary dark:border-primary-500/20"
@@ -220,7 +219,7 @@
 
                                     <dd
                                         class="truncate text-[13px] font-medium text-slate-700 dark:text-gray-200"
-                                        :title="fact.value"
+                                        :title="fact.value ?? undefined"
                                     >
                                         {{ fact.value }}
                                     </dd>
@@ -228,9 +227,7 @@
                             </dl>
                         </div>
 
-                        <!-- Everything the patient owes, admission and
-                             schedules alike, so it is read before any action
-                             on this page rather than only at discharge. -->
+           
                         <div
                             v-if="patientOutstanding"
                             class="hidden shrink-0 text-right sm:block"
@@ -850,6 +847,18 @@
         />
 
         <ConfirmDialog
+            :open="paymentRequiredDialogOpen"
+            title="Payment Required"
+            :message="`${formatCurrency(unpaidAmount)} remains unpaid.`"
+            description="Full payment is required before this patient can be admitted."
+            confirm-label="Understood"
+            hide-cancel
+            variant="danger"
+            @confirm="paymentRequiredDialogOpen = false"
+            @cancel="paymentRequiredDialogOpen = false"
+        />
+
+        <ConfirmDialog
             :open="unpaidAdmitDialogOpen"
             title="Payment Incomplete"
             :message="`${formatCurrency(unpaidAmount)} remains unpaid.`"
@@ -918,6 +927,7 @@ import ActionButton from "~/components/ui/ActionButton.vue";
 import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
 import AdmissionDischarge from "~/components/sections/app/Admission/AdmissionDischarge.vue";
 import AdmissionCancel from "~/components/sections/app/Admission/AdmissionCancel.vue";
+import { useBranchStore } from "~/stores/branch";
 
 definePageMeta({
     layout: "dashboard",
@@ -1058,6 +1068,16 @@ const isInvoiceUnpaid = computed(() => {
     return (latestInvoice.value?.status ?? "").toLowerCase() !== "paid";
 });
 
+const branchStore = useBranchStore();
+
+const requiresFullPaymentOnAdmit = computed(
+    () => branchStore.activeBranch?.settings?.requires_full_payment_on_admit ?? true,
+);
+
+const admitBlockedByUnpaidInvoice = computed(
+    () => isWaiting.value && isInvoiceUnpaid.value && requiresFullPaymentOnAdmit.value,
+);
+
 const admitModalOpen = ref(false);
 const admitDate = ref("");
 const admitDeposit = ref("");
@@ -1065,6 +1085,7 @@ const dischargeDialogOpen = ref(false);
 const extendModalOpen = ref(false);
 const actionLoading = ref(false);
 const unpaidAdmitDialogOpen = ref(false);
+const paymentRequiredDialogOpen = ref(false);
 const unpaidExtendDialogOpen = ref(false);
 const cancelAdmissionDialogOpen = ref(false);
 const todayStr = toLocalDateString(new Date());
@@ -1109,6 +1130,11 @@ function openAdmitModal() {
 }
 
 function handleAdmitClick() {
+    if (admitBlockedByUnpaidInvoice.value) {
+        paymentRequiredDialogOpen.value = true;
+        return;
+    }
+
     if (isInvoiceUnpaid.value) {
         unpaidAdmitDialogOpen.value = true;
         return;

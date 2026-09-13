@@ -55,7 +55,7 @@ const threadSubtitle = computed(() => {
 
     if (!row) return null;
 
-    const staff = [row.staff_name, row.staff_role].filter(Boolean).join(" Â· ");
+    const staff = [row.staff_name, row.staff_role].filter(Boolean).join(" · ");
 
     const names = row.patient_names;
 
@@ -66,7 +66,7 @@ const threadSubtitle = computed(() => {
               : names.join(", "))
         : null;
 
-    return [staff, caring].filter(Boolean).join(" â€” ") || null;
+    return [staff, caring].filter(Boolean).join(" — ") || null;
 });
 
 async function load() {
@@ -409,7 +409,7 @@ onBeforeUnmount(() => {
                                 >
                                     {{ row.staff_name
                                     }}<template v-if="row.staff_role">
-                                        Â· {{ row.staff_role }}</template
+                                        · {{ row.staff_role }}</template
                                     >
                                 </p>
 

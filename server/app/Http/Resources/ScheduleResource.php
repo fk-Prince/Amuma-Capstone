@@ -193,6 +193,7 @@ class ScheduleResource extends JsonResource
             'schedule_code' => $this->schedule_code,
             'status' => $this->status,
             'category' => $this->category,
+            'note' => $this->note,
 
             'scheduled_at' => $this->scheduled_at?->toISOString(),
             'scheduled_date' => $this->scheduled_at?->format('Y-m-d'),

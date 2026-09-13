@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             BranchContractSeeder::class,
             ServiceSeeder::class,
             EmployeeSeeder::class,
+            NurseSeeder::class,
             ClientSeeder::class,
         ]);
     }

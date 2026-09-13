@@ -303,7 +303,6 @@ const expanded = ref(props.defaultExpanded);
 const panelRef = ref<HTMLElement | null>(null);
 
 const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
 
 const DEFAULT_TYPE = "medical";
 
@@ -333,7 +332,7 @@ function filtersFromQuery(): ScheduleFilters {
 
         date_from: toStr(route.query.date_from) || yesterday,
 
-        date_to: toStr(route.query.date_to) || nextWeek,
+        date_to: toStr(route.query.date_to),
 
         statuses: toArray(route.query.statuses),
 
@@ -350,8 +349,7 @@ function filtersFromQuery(): ScheduleFilters {
 const filters = reactive<ScheduleFilters>(filtersFromQuery());
 
 onMounted(() => {
-    const needsDefaultQuery =
-        !route.query.date_from || !route.query.date_to || !route.query.type;
+    const needsDefaultQuery = !route.query.date_from || !route.query.type;
 
     if (!route.query.type) {
         filters.type = [DEFAULT_TYPE];
@@ -398,7 +396,7 @@ const typeOptions = [
 ];
 
 const isDefaultDateRange = computed(
-    () => filters.date_from === yesterday && filters.date_to === nextWeek,
+    () => filters.date_from === yesterday && !filters.date_to,
 );
 
 const isDefaultType = computed(
@@ -445,7 +443,9 @@ const summaryChips = computed(() => {
     chips.push({
         key: "period",
         icon: CalendarDays,
-        label: `${shortDate(filters.date_from)} – ${shortDate(filters.date_to)}`,
+        label: filters.date_to
+            ? `${shortDate(filters.date_from)} – ${shortDate(filters.date_to)}`
+            : `From ${shortDate(filters.date_from)}`,
     });
 
     if (filters.statuses.length) {
@@ -517,7 +517,7 @@ const clearSearch = () => {
 const resetFilters = () => {
     filters.search = "";
     filters.date_from = yesterday;
-    filters.date_to = nextWeek;
+    filters.date_to = "";
     filters.statuses = [];
     filters.type = [DEFAULT_TYPE];
     filters.assignment = "all";

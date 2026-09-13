@@ -51,8 +51,6 @@ const b_uuid = computed(() => route.params.uuid as string);
 const MENU_CLASS =
     "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-400";
 
-// Every tab the patient page has, so the menu is a way into any of them
-// rather than a shortlist.
 const actionMenuItems = [
     { label: "Overview", icon: Eye, tab: "overview" },
     { label: "Diagnosis & Assessment", icon: Stethoscope, tab: "assessment" },
@@ -89,6 +87,7 @@ async function fetchPatients(page = 1) {
     try {
         const res: any = await patientService.list({
             branch_uuid: b_uuid.value,
+            sections: "care",
             page,
             per_page: pagination.pageSize.value,
             search: searchQuery.value.trim() || undefined,

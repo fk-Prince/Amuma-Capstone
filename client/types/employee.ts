@@ -39,6 +39,8 @@ export interface Employee {
         status: string;
         category: string;
         duration_minutes: number | null;
+        remaining_minutes: number | null;
+        estimated_end: string | null;
     }[];
 }
 

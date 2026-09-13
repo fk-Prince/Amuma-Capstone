@@ -11,7 +11,9 @@
         </div>
 
         <div class="border-b border-slate-200 pb-2 dark:border-white/10">
-            <h3 class="text-sm font-semibold text-slate-800 dark:text-white">Facility</h3>
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
+                Facility
+            </h3>
 
             <p class="text-xs text-slate-400 mt-0.5 dark:text-gray-500">
                 In-house admission, rooms and resident billing.
@@ -34,7 +36,6 @@
                 </p>
             </div>
 
-
             <div class="bg-white p-1 md:col-span-2 dark:bg-transparent">
                 <div class="flex gap-5 items-start">
                     <label class="flex items-start gap-3">
@@ -46,11 +47,15 @@
                         />
 
                         <div>
-                            <p class="text-sm font-medium text-slate-700 dark:text-gray-300">
+                            <p
+                                class="text-sm font-medium text-slate-700 dark:text-gray-300"
+                            >
                                 Enable Booking Pre-Admission
                             </p>
 
-                            <p class="text-xs text-slate-400 dark:text-gray-500">
+                            <p
+                                class="text-xs text-slate-400 dark:text-gray-500"
+                            >
                                 Allow client to fill up required details before
                                 admission online.
                             </p>
@@ -68,11 +73,15 @@
                         />
 
                         <div>
-                            <p class="text-sm font-medium text-slate-700 dark:text-gray-300">
+                            <p
+                                class="text-sm font-medium text-slate-700 dark:text-gray-300"
+                            >
                                 Enable Booking Complete Admission
                             </p>
 
-                            <p class="text-xs text-slate-400 dark:text-gray-500">
+                            <p
+                                class="text-xs text-slate-400 dark:text-gray-500"
+                            >
                                 Allow bookings with payment and room reservation
                                 before admission approval online.
                             </p>
@@ -100,11 +109,34 @@
                         <p class="text-xs text-slate-400 dark:text-gray-500">
                             A resident must settle the full contract amount
                             before their admission can be completed. Turn this
-                            off to admit residents with a partial payment and
+                            off to admit residents with a downpayment and
                             collect the balance afterwards.
                         </p>
                     </div>
                 </label>
+            </div>
+
+            <div
+                v-if="setting.enable_booking_complete_admission"
+                class="bg-white p-1 dark:bg-transparent"
+            >
+                <BaseInput
+                    v-model="setting.complete_admission_booking_percent"
+                    label="Reservation Percentage"
+                    mode="number"
+                    placeholder="Example: 50"
+                    :error="errors.complete_admission_booking_percent"
+                    @update:modelValue="
+                        clearError('complete_admission_booking_percent')
+                    "
+                />
+
+                <p class="text-xs text-slate-400 mt-2 dark:text-gray-500">
+                    Percentage of the contract price charged as a reservation
+                    fee when a guardian submits a Complete Admission booking
+                    online (1-100). The remaining balance is settled at the
+                    branch.
+                </p>
             </div>
 
             <!-- <div class="bg-white p-1 dark:bg-transparent">
@@ -124,7 +156,9 @@
         </div>
 
         <div class="border-b border-slate-200 pb-2 dark:border-white/10">
-            <h3 class="text-sm font-semibold text-slate-800 dark:text-white">Homecare</h3>
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
+                Homecare
+            </h3>
 
             <p class="text-xs text-slate-400 mt-0.5 dark:text-gray-500">
                 Visits delivered at the client's own address.
@@ -149,7 +183,9 @@
         </div>
 
         <div class="border-b border-slate-200 pb-2 dark:border-white/10">
-            <h3 class="text-sm font-semibold text-slate-800 dark:text-white">General</h3>
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
+                General
+            </h3>
 
             <p class="text-xs text-slate-400 mt-0.5 dark:text-gray-500">
                 Applies to the whole branch, both facility and homecare.
@@ -160,11 +196,15 @@
             <div class="bg-white p-1 dark:bg-transparent">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-semibold text-slate-700 dark:text-gray-300">
+                        <p
+                            class="text-sm font-semibold text-slate-700 dark:text-gray-300"
+                        >
                             Branch Status
                         </p>
 
-                        <p class="text-xs text-slate-400 mt-1 dark:text-gray-500">
+                        <p
+                            class="text-xs text-slate-400 mt-1 dark:text-gray-500"
+                        >
                             Open or close branch operation.
                         </p>
                     </div>
@@ -176,7 +216,11 @@
                             clearError('is_open');
                         "
                         class="relative inline-flex h-6 w-11 items-center rounded-full transition"
-                        :class="setting.is_open ? 'bg-primary' : 'bg-slate-300 dark:bg-white/10'"
+                        :class="
+                            setting.is_open
+                                ? 'bg-primary'
+                                : 'bg-slate-300 dark:bg-white/10'
+                        "
                     >
                         <span
                             class="h-4 w-4 rounded-full bg-white shadow transition-transform dark:bg-secondary"
@@ -228,13 +272,19 @@
             </div>
 
             <div class="flex flex-col mt-3">
-                <label class="text-sm font-semibold mb-1 text-slate-700 dark:text-gray-300">
+                <label
+                    class="text-sm font-semibold mb-1 text-slate-700 dark:text-gray-300"
+                >
                     Business Hours
                 </label>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <p class="text-sm mb-1 text-slate-700 dark:text-gray-300">Opening Hours</p>
+                        <p
+                            class="text-sm mb-1 text-slate-700 dark:text-gray-300"
+                        >
+                            Opening Hours
+                        </p>
                         <Combobox
                             v-model="setting.opening"
                             :items="timeItems"
@@ -247,7 +297,11 @@
                     </div>
 
                     <div>
-                        <p class="text-sm mb-1 text-slate-700 dark:text-gray-300">Closing Hours</p>
+                        <p
+                            class="text-sm mb-1 text-slate-700 dark:text-gray-300"
+                        >
+                            Closing Hours
+                        </p>
                         <Combobox
                             v-model="setting.closing"
                             :items="timeItems"
@@ -305,6 +359,8 @@ const setting = reactive<OperationSetting>({
         activeBranch.value?.settings?.enable_booking_complete_admission ?? true,
     requires_full_payment_on_admit:
         activeBranch.value?.settings?.requires_full_payment_on_admit ?? true,
+    complete_admission_booking_percent:
+        activeBranch.value?.settings?.complete_admission_booking_percent ?? 100,
     minimum_adl_hours: activeBranch.value?.settings?.minimum_adl_hours ?? 8,
     // billing_due_date: activeBranch.value?.settings?.billing_due_date ?? 31,
     is_open: activeBranch.value?.settings?.is_open ?? false,

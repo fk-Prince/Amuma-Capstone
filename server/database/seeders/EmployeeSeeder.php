@@ -22,6 +22,10 @@ class EmployeeSeeder extends Seeder
         'caregiver',
     ];
 
+    private const ROLE_COUNTS = [
+        'caregiver' => 5,
+    ];
+
 
     private const ROLE_DEFAULT_PERMISSIONS = [
         'administrator' => [
@@ -73,59 +77,77 @@ class EmployeeSeeder extends Seeder
         $modulesByName = Module::all()->keyBy('module_name');
 
         foreach (self::ROLES as $index => $role) {
-            $user = User::firstOrCreate(
-                ['email' => "{$role}@gmail.com"],
-                [
-                    'password' => Hash::make('password'),
-                    'provider' => 'local',
-                ]
-            );
+            $count = self::ROLE_COUNTS[$role] ?? 1;
 
-            $employee = Employee::updateOrCreate(
-                ['user_id' => $user->user_id],
-                [
-                    'first_name' => Str::title($role),
-                    'last_name' => 'Account',
-                    'status' => Employee::STATUS_ACTIVE,
-                    'avatar' => 'https://ui-avatars.com/api/?name=' . strtoupper(substr($role, 0, 2)),
-                    'birth_date' => now()->subYears(25 + $index)->subDays($index * 30)->toDateString(),
-                    'phone_number' => '917' . str_pad((string) (1000000 + $index), 7, '0', STR_PAD_LEFT),
-                ]
-            );
+            for ($n = 1; $n <= $count; $n++) {
+                $email = $n === 1 ? "{$role}@gmail.com" : "{$role}{$n}@gmail.com";
+                $suffix = $n === 1 ? '' : " {$n}";
 
-            foreach ($branches as $branch) {
-                EmployeeBranch::firstOrCreate(
+                $user = User::firstOrCreate(
+                    ['email' => $email],
                     [
-                        'employee_id' => $employee->employee_id,
-                        'branch_id' => $branch->branch_id,
-                    ],
-                    [
-                        'role_name' => $role,
-                        'assignment_type' => 'both',
+                        'password' => Hash::make('password'),
+                        'provider' => 'local',
                     ]
                 );
 
-                foreach (self::ROLE_DEFAULT_PERMISSIONS[$role] ?? [] as $moduleName => $actions) {
-                    $module = $modulesByName->get($moduleName);
+                $employee = Employee::updateOrCreate(
+                    ['user_id' => $user->user_id],
+                    [
+                        'first_name' => Str::title($role) . $suffix,
+                        'last_name' => 'Account',
+                        'status' => Employee::STATUS_ACTIVE,
+                        'avatar' => 'https://ui-avatars.com/api/?name=' . strtoupper(substr($role, 0, 2)),
+                        'birth_date' => now()->subYears(25 + $index)->subDays(($index * 10 + $n) * 30)->toDateString(),
+                        'phone_number' => '917' . str_pad((string) (1000000 + $index * 10 + $n), 7, '0', STR_PAD_LEFT),
+                    ]
+                );
 
-                    if (!$module) {
-                        continue;
-                    }
+                // Caregivers rotate through assignment types so the ADL
+                // assignment UI has homecare-only/facility-only/both cases
+                // to test against, instead of every seeded caregiver
+                // matching every schedule.
+                $assignmentType = 'both';
 
-                    EmployeePermission::updateOrCreate(
+                if ($role === 'caregiver') {
+                    $rotation = ['both', 'online', 'facility', 'both', 'online'];
+                    $assignmentType = $rotation[($n - 1) % count($rotation)];
+                }
+
+                foreach ($branches as $branch) {
+                    EmployeeBranch::firstOrCreate(
                         [
                             'employee_id' => $employee->employee_id,
                             'branch_id' => $branch->branch_id,
-                            'module_id' => $module->module_id,
                         ],
                         [
-                            'can_read' => in_array('can_read', $actions, true),
-                            'can_create' => in_array('can_create', $actions, true),
-                            'can_update' => in_array('can_update', $actions, true),
-                            'can_approve' => in_array('can_approve', $actions, true),
-                            'can_assign' => in_array('can_assign', $actions, true),
+                            'role_name' => $role,
+                            'assignment_type' => $assignmentType,
                         ]
                     );
+
+                    foreach (self::ROLE_DEFAULT_PERMISSIONS[$role] ?? [] as $moduleName => $actions) {
+                        $module = $modulesByName->get($moduleName);
+
+                        if (!$module) {
+                            continue;
+                        }
+
+                        EmployeePermission::updateOrCreate(
+                            [
+                                'employee_id' => $employee->employee_id,
+                                'branch_id' => $branch->branch_id,
+                                'module_id' => $module->module_id,
+                            ],
+                            [
+                                'can_read' => in_array('can_read', $actions, true),
+                                'can_create' => in_array('can_create', $actions, true),
+                                'can_update' => in_array('can_update', $actions, true),
+                                'can_approve' => in_array('can_approve', $actions, true),
+                                'can_assign' => in_array('can_assign', $actions, true),
+                            ]
+                        );
+                    }
                 }
             }
         }

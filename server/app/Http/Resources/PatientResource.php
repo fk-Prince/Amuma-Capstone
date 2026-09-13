@@ -12,6 +12,24 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class PatientResource extends JsonResource
 {
+    private function wantsSection(Request $request, string $section): bool
+    {
+        $sections = $request->query('sections');
+
+        if (!$sections) {
+            return true;
+        }
+
+        if (is_string($sections)) {
+            $sections = array_filter(explode(',', $sections));
+        }
+
+        $sections = array_map('trim', (array) $sections);
+
+        return in_array('all', $sections, true)
+            || in_array($section, $sections, true);
+    }
+
     public function toArray(Request $request)
     {
         return [
@@ -58,9 +76,15 @@ class PatientResource extends JsonResource
                     'status' => $schedule->status,
                     'category' => $schedule->category,
                     'scheduled_at' => $schedule->scheduled_at,
-                    'address' => $schedule->location?->full_address,
-                    'latitude' => $schedule->location?->latitude,
-                    'longitude' => $schedule->location?->longitude,
+                    'address' => $schedule->relationLoaded('location')
+                        ? $schedule->location?->full_address
+                        : null,
+                    'latitude' => $schedule->relationLoaded('location')
+                        ? $schedule->location?->latitude
+                        : null,
+                    'longitude' => $schedule->relationLoaded('location')
+                        ? $schedule->location?->longitude
+                        : null,
                     'type' => $schedule->relationLoaded('scheduleServices')
                         && $schedule->scheduleServices->contains(
                             fn($service) => $service->type === ScheduleService::TYPE_ADL
@@ -70,7 +94,7 @@ class PatientResource extends JsonResource
                 ])
                 ->values()),
 
-            'assessment' => $this->assessments
+            'assessment' => $this->whenLoaded('assessments', fn() => $this->assessments
                 ->map(fn($assessment) => [
                     'uuid' => $assessment->uuid,
                     'condition' => $assessment->condition,
@@ -81,9 +105,9 @@ class PatientResource extends JsonResource
                     'speech' => $assessment->speech,
                     'life_system_profile' => $assessment->life_system_profile,
                 ])
-                ->values(),
+                ->values()),
 
-            'diagnoses' => $this->diagnoses
+            'diagnoses' => $this->whenLoaded('diagnoses', fn() => $this->diagnoses
                 ->map(fn($diagnosis) => [
                     'uuid' => $diagnosis->uuid,
                     'diagnosis' => $diagnosis->diagnosis,
@@ -91,7 +115,7 @@ class PatientResource extends JsonResource
                     'diagnosis_notes' => $diagnosis->diagnosis_notes,
                     'diagnosis_file' => $diagnosis->diagnosis_file,
                 ])
-                ->values(),
+                ->values()),
 
 
             'family' => $this->whenLoaded('patientAccess', function () {
@@ -125,7 +149,10 @@ class PatientResource extends JsonResource
             'medications_count' => $this->medications_count ?? 0,
             'vitals_count' => $this->vitals_count ?? 0,
 
-            'billing' => $this->billing_summary,
+            'billing' => $this->when(
+                $this->wantsSection($request, 'billing'),
+                fn() => $this->billing_summary
+            ),
 
             'admissions' => $this->whenLoaded('admissions', function () {
                 return $this->admissions
@@ -164,16 +191,22 @@ class PatientResource extends JsonResource
 
     private function formatAdmission(mixed $admission, bool $includeDischargeCalculation = false)
     {
-        $currentInvoice = $admission->currentInvoiceAdmission;
+        $currentInvoice = $admission->relationLoaded('currentInvoiceAdmission')
+            ? $admission->currentInvoiceAdmission
+            : null;
 
         $invoice = $currentInvoice
-            ?? $admission->invoiceAdmission
-            ->sortByDesc('created_at')
-            ->first();
+            ?? ($admission->relationLoaded('invoiceAdmission')
+                ? $admission->invoiceAdmission->sortByDesc('created_at')->first()
+                : null);
 
-        $period = $admission->currentPeriod ?? $admission->latestPeriod;
+        $period = ($admission->relationLoaded('currentPeriod') ? $admission->currentPeriod : null)
+            ?? ($admission->relationLoaded('latestPeriod') ? $admission->latestPeriod : null);
 
         $contract = $period?->branchContract;
+
+        $bed = $admission->relationLoaded('bed') ? $admission->bed : null;
+        $room = $bed?->relationLoaded('room') ? $bed->room : null;
 
         return [
             'patient_admission_id' => $admission->patient_admission_id,
@@ -183,16 +216,16 @@ class PatientResource extends JsonResource
             'note' => $admission->note,
 
             'bed' => [
-                'bed_id' => $admission->bed?->bed_id,
-                'bed_no' => $admission->bed?->bed_no ?? 'N/A',
-                'status' => $admission->bed?->status,
+                'bed_id' => $bed?->bed_id,
+                'bed_no' => $bed?->bed_no ?? 'N/A',
+                'status' => $bed?->status,
             ],
 
             'room' => [
-                'room_id' => $admission->bed?->room?->room_id,
-                'room_no' => $admission->bed?->room?->room_no ?? 'N/A',
-                'room_type' => $admission->bed?->room?->room_type,
-                'floor' => $admission->bed?->room?->floor,
+                'room_id' => $room?->room_id,
+                'room_no' => $room?->room_no ?? 'N/A',
+                'room_type' => $room?->room_type,
+                'floor' => $room?->floor,
             ],
 
             'current_contract' => $this->formatContract($contract),
@@ -226,6 +259,9 @@ class PatientResource extends JsonResource
 
     private function formatFuturePeriods(mixed $admission, mixed $current)
     {
+        if (!$admission->relationLoaded('periods')) {
+            return null;
+        }
 
         $future = $admission->periods
             ->whereNotIn('status', AdmissionPeriod::CLOSED_STATUSES)

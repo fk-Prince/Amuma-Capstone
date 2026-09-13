@@ -28,6 +28,7 @@ class Schedule extends Model
         'status',
         'category',
         'schedule_code',
+        'note',
     ];
 
     protected $casts = [

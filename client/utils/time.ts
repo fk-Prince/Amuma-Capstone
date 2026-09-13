@@ -17,6 +17,22 @@ export function generate24HourTimes(stepMinutes = 60): string[] {
     return times;
 }
 
+// Converts an ISO/UTC datetime string into the "YYYY-MM-DDTHH:mm" shape a
+// <input type="datetime-local"> needs to actually show a value — feeding it
+// the raw ISO string (with seconds/microseconds and a trailing Z) leaves the
+// field blank since the browser can't parse that format.
+export function toDateTimeLocalValue(value?: string | null): string {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    const pad = (n: number) => String(n).padStart(2, "0");
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 // TIME ZONE
 export function getTimeZone() {
     return [

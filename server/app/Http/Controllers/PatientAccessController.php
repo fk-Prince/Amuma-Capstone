@@ -48,5 +48,9 @@ class PatientAccessController extends Controller
         if ($request->action === 'book_again') {
             return $this->patientAccessService->bookAgain($payload, $request->user());
         }
+
+        if ($request->action === 'extend_stay') {
+            return $this->patientAccessService->extendStay($payload, $request->user());
+        }
     }
 }

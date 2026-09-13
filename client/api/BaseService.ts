@@ -1,3 +1,5 @@
+import { useToast } from '~/composables/useToast';
+
 type HttpMethod =
     | 'GET'
     | 'POST'
@@ -200,23 +202,23 @@ export class BaseService {
                 rawMessage,
             );
 
+            const message = isSqlError ? 'Internal Server Error' : rawMessage;
+
+
+            // if (status === 500) {
+            //     const toast = useToast();
+            //     toast.error(
+            //         'Server down',
+            //         'Internal Server Error'
+            //     );
+            // }
 
             throw {
                 status,
-                message: isSqlError ? 'Internal Server Error' : rawMessage,
+                message,
                 errors: data?.errors || {},
                 data,
             };
-
-            // throw {
-            //     status,
-            //     message:
-            //         data?.message ||
-            //         error?.message ||
-            //         'Something went wrong',
-            //     errors: data?.errors || {},
-            //     data,
-            // };
         }
     }
 }

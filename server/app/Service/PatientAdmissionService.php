@@ -813,9 +813,9 @@ class PatientAdmissionService
                         'status' => Bed::STATUS_OCCUPIED,
                     ]);
 
-                    $booking->update([
-                        'status' => Booking::STATUS_COMPLETED,
-                    ]);
+                    // $booking->update([
+                    //     'status' => Booking::STATUS_COMPLETED,
+                    // ]);
 
                     return [
                         'message' => 'Patient admitted successfully.',

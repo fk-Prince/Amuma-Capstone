@@ -162,7 +162,9 @@
                     :pagination="invoicePagination"
                     :loading="invoiceRowsLoading"
                     :searchable="false"
-                    :row-key="(row: { invoice_code: string }) => row.invoice_code"
+                    :row-key="
+                        (row: { invoice_code: string }) => row.invoice_code
+                    "
                     empty-title="No invoices found"
                     empty-description="Try a different search term."
                     :on-row-click="viewInvoice"
@@ -213,6 +215,7 @@
 
                     <template #cell-actions="{ row }">
                         <button
+                            v-if="row.status?.toLowerCase() !== 'void'"
                             type="button"
                             class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-500/20 dark:text-red-300 dark:hover:bg-red-500/10"
                             @click.stop="openVoidModal(row)"

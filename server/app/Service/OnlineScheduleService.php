@@ -30,13 +30,7 @@ class OnlineScheduleService
 
     public function generateClockOutToken(array $payload)
     {
-        $assigned = $this->resolveAssignment($payload);
-
-        $session = OnlineSchedule::where('schedule_assigned_id', $assigned->schedule_assigned_id)
-            ->whereNotNull('in_timestamp')
-            ->whereNull('out_timestamp')
-            ->latest('online_schedule_id')
-            ->first();
+        $session = $this->activeSessionFor($payload['schedule_services_id']);
 
         if (!$session) {
             throw new Exception(
@@ -61,15 +55,15 @@ class OnlineScheduleService
 
     public function generateClockInToken(array $payload)
     {
-        $assigned = $this->resolveAssignment($payload);
+        $scheduleServicesId = $payload['schedule_services_id'];
 
-        $activeSession = $this->activeSessionFor($assigned->schedule_services_id);
+        $this->guardHasActiveAssignment($scheduleServicesId);
+
+        $activeSession = $this->activeSessionFor($scheduleServicesId);
 
         if ($activeSession) {
             throw new Exception(
-                $activeSession->schedule_assigned_id === $assigned->schedule_assigned_id
-                    ? 'There is already a caregiver clocked in for this visit. Use Generate QR Out to clock them out.'
-                    : 'Another caregiver is already clocked in for this visit.',
+                'There is already a caregiver clocked in for this visit. Use Generate QR Out to clock them out.',
                 409
             );
         }
@@ -78,7 +72,7 @@ class OnlineScheduleService
 
         Cache::put(
             $this->qrCacheKey('in', $token),
-            ['schedule_assigned_id' => $assigned->schedule_assigned_id],
+            ['schedule_services_id' => $scheduleServicesId],
             now()->addMinutes(self::QR_TTL_MINUTES)
         );
 
@@ -102,9 +96,14 @@ class OnlineScheduleService
             throw new Exception('This QR code is invalid or has expired.', 410);
         }
 
-        $assigned = ScheduleAssigned::find($data['schedule_assigned_id']);
+        $assigned = ScheduleAssigned::where('schedule_services_id', $data['schedule_services_id'])
+            ->where('employee_id', $payload['employee_id'])
+            ->where('is_active', true)
+            ->first();
 
-        $this->guardScanningEmployee($assigned, $payload['employee_id']);
+        if (!$assigned) {
+            throw new Exception('You are not assigned to this schedule.', 403);
+        }
 
         return DB::transaction(function () use ($payload, $assigned) {
             $activeSession = OnlineSchedule::whereHas(
@@ -186,21 +185,14 @@ class OnlineScheduleService
     }
 
 
-    private function resolveAssignment(array $payload): ScheduleAssigned
+    private function guardHasActiveAssignment(int $scheduleServicesId): void
     {
-        $query = ScheduleAssigned::where('schedule_services_id', $payload['schedule_services_id'])
-            ->where('is_active', true);
+        $exists = ScheduleAssigned::where('schedule_services_id', $scheduleServicesId)
+            ->where('is_active', true)
+            ->exists();
 
-        if (!empty($payload['employee_id'])) {
-            $query->where('employee_id', $payload['employee_id']);
-        }
-
-        $assigned = $query->first();
-
-        if (!$assigned) {
+        if (!$exists) {
             throw new Exception('No active caregiver is assigned to this schedule.', 404);
         }
-
-        return $assigned;
     }
 }

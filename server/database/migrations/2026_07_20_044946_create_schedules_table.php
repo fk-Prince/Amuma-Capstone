@@ -30,6 +30,7 @@ return new class extends Migration
                 'cancelled',
                 'missed'
             ])->default('pending')->index();
+            $table->string('note', 500)->nullable();
             $table->enum('category', ['Homecare', 'Facility'])->index();
             $table->timestamps();
         });

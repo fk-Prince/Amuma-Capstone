@@ -2,6 +2,7 @@
 
 namespace App\Factories;
 
+use App\Models\AdmissionPeriod;
 use App\Models\Booking;
 use App\Models\Invoice;
 use App\Models\Patient;
@@ -12,8 +13,6 @@ use App\Service\PatientAdmissionService;
 use App\Service\PatientService;
 use App\Service\TransactionService;
 use App\Utils\AccommodationHelper;
-use Exception;
-use Illuminate\Support\Facades\Log;
 
 class BookingFactory
 {
@@ -50,20 +49,25 @@ class BookingFactory
 
         $admission = $this->patientAdmissionService->registerPatientBed($payload);
 
+        $admissionPeriod = AdmissionPeriod::where('patient_admission_id', $admission['patient_admission_id'])
+            ->latest('admission_period_id')
+            ->first();
+
+        $totalAmount = (float) ($payload['payment']['total_amount'] ?? 0);
+
         $invoice = $this->invoiceRepository->create([
-            'total_amount' => $payload['payment']['total_amount'],
+            'total_amount' => $totalAmount,
             'branch_id' => $payload['branch_id'],
-            'status' => Invoice::STATUS_PAID,
+            'status' => Invoice::STATUS_PENDING,
         ]);
 
 
         $invoice->invoiceAdmissionLines()->create([
-            'price' => $payload['payment']['total_amount'],
-            'patient_admission_id' => $admission['patient_admission_id'],
-            'branch_contract_id' => $payload['reserved']['contract_id'],
+            'price' => $totalAmount,
+            'admission_period_id' => $admissionPeriod->admission_period_id,
         ]);
 
-        $amount = (float) ($payload['payment']['total_amount'] ?? 0);
+        $amount = (float) ($payload['payment']['booking_amount'] ?? $totalAmount);
 
         $transaction = $this->transactions->forPayment(
             $amount,
@@ -83,8 +87,7 @@ class BookingFactory
             'payor_name' => trim(
                 ($client->first_name ?? '') . ' ' . ($client->last_name ?? '')
             ) ?: null,
-            'prior_balance' => $amount,
-            'new_balance' => 0,
+            'prior_balance' => $totalAmount,
             'created_at' => now(),
         ]);
 
@@ -95,6 +98,7 @@ class BookingFactory
             'created_at' => now(),
         ]);
 
+        $invoice->syncStatus();
         AccommodationHelper::activate($invoice);
 
         return [

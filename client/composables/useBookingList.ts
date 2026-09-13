@@ -26,12 +26,11 @@ export function useBookingList(branchUuid: Ref<string>) {
         const from = new Date();
         from.setDate(from.getDate() - 1);
 
-        const to = new Date(from);
-        to.setDate(to.getDate() + 7);
-
+        // Left open-ended by default so everything from `from` onward is
+        // fetched, rather than being capped at an arbitrary week out.
         return {
             from: toDateInputValue(from),
-            to: toDateInputValue(to),
+            to: "",
         };
     }
     const today = toDateInputValue(new Date());

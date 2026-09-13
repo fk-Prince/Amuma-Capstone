@@ -958,9 +958,10 @@ class SubscriptionService
             $subscription = $link->subscription;
             $reason = trim((string) ($payload['rejection_reason'] ?? ''));
 
-            $link->update(['status' => BranchSubscription::STATUS_REJECTED]);
-
-            $link->branch?->update(['rejection_reason' => $reason ?: null]);
+            $link->update([
+                'status' => BranchSubscription::STATUS_REJECTED,
+                'rejection_reason' => $reason ?: null,
+            ]);
 
             $remaining = BranchSubscription::where('subscription_id', $link->subscription_id)
                 ->where('status', '!=', BranchSubscription::STATUS_REJECTED)

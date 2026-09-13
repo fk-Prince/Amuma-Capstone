@@ -16,7 +16,6 @@ class Branch extends Model
         'location_id',
         'description',
         'is_verified',
-        'rejection_reason',
         'contact_number',
         'document',
         'settings',

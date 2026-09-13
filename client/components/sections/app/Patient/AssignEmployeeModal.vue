@@ -42,7 +42,9 @@
                                 {{ schedule?.schedule_code }}
                             </h2>
 
-                            <p class="truncate text-sm text-slate-500 dark:text-gray-400">
+                            <p
+                                class="truncate text-sm text-slate-500 dark:text-gray-400"
+                            >
                                 {{ schedule?.patient?.full_name }}
                             </p>
                         </div>
@@ -58,9 +60,11 @@
                 </div>
 
                 <div
-                    class="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[65%_35%]"
+                    class="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[60%_40%]"
                 >
-                    <div class="min-h-0 space-y-3 overflow-y-auto bg-white p-6 dark:bg-secondary">
+                    <div
+                        class="min-h-0 space-y-3 overflow-y-auto bg-white p-6 dark:bg-secondary"
+                    >
                         <p
                             class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                         >
@@ -115,7 +119,10 @@
                                             </template>
                                         </span>
 
-                                        <span class="text-slate-300 dark:text-gray-500">•</span>
+                                        <span
+                                            class="text-slate-300 dark:text-gray-500"
+                                            >•</span
+                                        >
 
                                         <Clock class="h-3.5 w-3.5" />
                                         <span>
@@ -167,9 +174,6 @@
                                 </span>
                             </div>
 
-                            <!-- One note per assigned person, so a service
-                                 staffed by several people records what each of
-                                 them is there to do. -->
                             <div
                                 v-if="
                                     selectionFor(service.schedule_services_id)
@@ -318,7 +322,7 @@
                                             type="text"
                                             :maxlength="NOTE_MAX"
                                             placeholder="Note for this assignment"
-                                            class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:text-gray-400"
+                                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
                                         />
 
                                         <div
@@ -378,7 +382,9 @@
                                     {{ requiredRoleLabel || "Staff" }}
                                 </p>
 
-                                <span class="text-[11px] text-slate-400 dark:text-gray-500">
+                                <span
+                                    class="text-[11px] text-slate-400 dark:text-gray-500"
+                                >
                                     {{ filteredEmployees.length }} shown
                                 </span>
                             </div>
@@ -433,7 +439,9 @@
                                     v-if="!filteredEmployees.length"
                                     class="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center dark:border-white/10 dark:bg-secondary"
                                 >
-                                    <Users class="h-8 w-8 text-slate-300 dark:text-gray-500" />
+                                    <Users
+                                        class="h-8 w-8 text-slate-300 dark:text-gray-500"
+                                    />
 
                                     <p
                                         class="text-sm font-medium text-slate-500 dark:text-gray-400"
@@ -445,7 +453,9 @@
                                         }}
                                     </p>
 
-                                    <p class="text-xs text-slate-400 dark:text-gray-500">
+                                    <p
+                                        class="text-xs text-slate-400 dark:text-gray-500"
+                                    >
                                         {{
                                             employeeSearch
                                                 ? "Try a different name."
@@ -454,18 +464,26 @@
                                     </p>
                                 </div>
 
-                                <button
+                                <div
                                     v-for="employee in filteredEmployees"
                                     :key="employee.employee_id"
-                                    type="button"
-                                    :disabled="isPickDisabled(employee)"
-                                    class="flex w-full items-start gap-3 rounded-2xl border bg-white p-3 text-left transition dark:bg-secondary dark:border-white/10"
+                                    class="rounded-2xl border bg-white transition dark:bg-secondary dark:border-white/10"
                                     :class="[
                                         isSelected(employee.employee_id)
                                             ? 'border-primary/50 bg-primary/[0.04] ring-1 ring-primary/20'
-                                            : 'border-slate-200 hover:border-primary/30 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5',
+                                            : 'border-slate-200 dark:border-white/10',
+                                    ]"
+                                >
+                                <button
+                                    type="button"
+                                    :disabled="isPickDisabled(employee)"
+                                    class="flex w-full items-start gap-3 p-3 text-left"
+                                    :class="[
+                                        !isSelected(employee.employee_id)
+                                            ? 'hover:bg-slate-50 dark:hover:bg-white/5'
+                                            : '',
                                         isPickDisabled(employee)
-                                            ? 'cursor-not-allowed opacity-60 hover:border-slate-200 hover:bg-white dark:hover:border-white/10 dark:hover:bg-secondary'
+                                            ? 'cursor-not-allowed opacity-60 hover:bg-transparent dark:hover:bg-transparent'
                                             : '',
                                     ]"
                                     @click="
@@ -516,54 +534,71 @@
                                             class="truncate text-xs capitalize text-slate-500 dark:text-gray-400"
                                         >
                                             {{ employee.role_name ?? "Staff" }}
+                                        </p>
 
-                                            <span
-                                                v-if="
-                                                    employee.formatted_assignment_type
-                                                "
-                                                class="text-slate-400 dark:text-gray-500"
-                                            >
-                                                •
-                                                {{
-                                                    employee.formatted_assignment_type
-                                                }}
-                                            </span>
+                                        <p
+                                            v-if="
+                                                employee.formatted_assignment_type
+                                            "
+                                            class="truncate text-xs text-slate-400 dark:text-gray-500"
+                                        >
+                                            {{
+                                                employee.formatted_assignment_type
+                                            }}
                                         </p>
 
                                         <div
-                                            class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-400 dark:text-gray-500"
+                                            class="mt-1 flex flex-nowrap items-center gap-x-3 text-[11px] text-slate-400 dark:text-gray-500"
                                         >
                                             <span
                                                 v-if="employee.phone_number"
-                                                class="flex items-center gap-1"
+                                                class="flex shrink-0 items-center gap-1"
                                             >
-                                                <Phone class="h-3 w-3" />
-                                                {{ formatPhone(employee.phone_number) }}
+                                                <Phone
+                                                    class="h-3 w-3 shrink-0"
+                                                />
+                                                {{
+                                                    formatPhone(
+                                                        employee.phone_number,
+                                                    )
+                                                }}
                                             </span>
 
                                             <span
                                                 v-if="employee.email"
-                                                class="flex min-w-0 items-center gap-1"
+                                                class="flex min-w-0 flex-1 items-center gap-1"
                                             >
                                                 <Mail
                                                     class="h-3 w-3 shrink-0"
                                                 />
-                                                <span class="truncate">
+                                                <span class="min-w-0 truncate">
                                                     {{ employee.email }}
                                                 </span>
                                             </span>
                                         </div>
 
                                         <p
-                                            v-if="employee.conflict_count"
-                                            class="mt-1 text-[11px] text-amber-600 dark:text-amber-300"
+                                            v-if="employee.conflict_schedules?.length"
+                                            class="mt-1 flex items-center gap-1 text-[11px] font-medium text-amber-600 hover:underline dark:text-amber-300"
+                                            @click.stop="
+                                                toggleConflicts(
+                                                    employee.employee_id,
+                                                )
+                                            "
                                         >
-                                            {{ employee.conflict_count }}
-                                            overlapping schedule{{
-                                                employee.conflict_count === 1
-                                                    ? ""
-                                                    : "s"
-                                            }}
+                                            More information
+                                            <span
+                                                class="transition-transform"
+                                                :class="
+                                                    expandedConflicts.has(
+                                                        employee.employee_id,
+                                                    )
+                                                        ? 'rotate-180'
+                                                        : ''
+                                                "
+                                            >
+                                                ▾
+                                            </span>
                                         </p>
                                     </div>
 
@@ -612,6 +647,116 @@
                                         Available
                                     </span>
                                 </button>
+
+                                <div
+                                    v-if="
+                                        expandedConflicts.has(
+                                            employee.employee_id,
+                                        ) && employee.conflict_schedules?.length
+                                    "
+                                    class="space-y-2 border-t border-slate-100 bg-slate-50/50 p-3 dark:border-white/10 dark:bg-white/5"
+                                >
+                                    <div
+                                        v-for="(
+                                            conflict, idx
+                                        ) in employee.conflict_schedules"
+                                        :key="idx"
+                                        class="rounded-lg border border-amber-100 bg-white p-2.5 text-xs dark:border-amber-500/20 dark:bg-secondary"
+                                    >
+                                        <div
+                                            class="flex items-center justify-between"
+                                        >
+                                            <span
+                                                class="font-semibold text-slate-700 dark:text-gray-400"
+                                            >
+                                                {{ conflict.schedule_code }}
+                                            </span>
+                                            <span
+                                                class="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                                                :class="
+                                                    conflict.category ===
+                                                    'medical'
+                                                        ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300'
+                                                        : 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300'
+                                                "
+                                            >
+                                                {{
+                                                    conflict.category ===
+                                                    "medical"
+                                                        ? "Medical"
+                                                        : "ADL"
+                                                }}
+                                            </span>
+                                        </div>
+
+                                        <p
+                                            class="mt-1 text-slate-500 dark:text-gray-400"
+                                        >
+                                            {{
+                                                formatDate(
+                                                    conflict.scheduled_at,
+                                                )
+                                            }}
+                                            •
+                                            {{
+                                                formatTime(
+                                                    conflict.scheduled_at,
+                                                )
+                                            }}
+                                            <span
+                                                v-if="
+                                                    conflict.duration_minutes
+                                                "
+                                            >
+                                                ({{
+                                                    formatDuration(
+                                                        conflict.duration_minutes /
+                                                            60,
+                                                    )
+                                                }})
+                                            </span>
+                                        </p>
+
+                                        <p
+                                            class="mt-1 capitalize text-slate-400 dark:text-gray-500"
+                                        >
+                                            {{ conflict.status }}
+                                        </p>
+
+                                        <p
+                                            v-if="conflict.estimated_end"
+                                            class="mt-1 font-medium text-amber-700 dark:text-amber-300"
+                                        >
+                                            Est. free
+                                            {{
+                                                formatDate(
+                                                    conflict.estimated_end,
+                                                )
+                                            }}
+                                            at
+                                            {{
+                                                formatTime(
+                                                    conflict.estimated_end,
+                                                )
+                                            }}
+                                            <span
+                                                v-if="
+                                                    conflict.remaining_minutes
+                                                "
+                                            >
+                                                ·
+                                                {{
+                                                    formatDuration(
+                                                        conflict.remaining_minutes /
+                                                            60,
+                                                    )
+                                                }}
+                                                remaining
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                                </div>
                             </template>
                         </div>
                     </div>
@@ -730,6 +875,16 @@ const { error: toastError } = useToast();
 const assignments = ref<Record<number, AssignmentEntry[]>>({});
 const activeService = ref<number | null>(null);
 const employeeSearch = ref("");
+const expandedConflicts = ref<Set<string | number>>(new Set());
+
+function toggleConflicts(employeeId: string | number) {
+    if (expandedConflicts.value.has(employeeId)) {
+        expandedConflicts.value.delete(employeeId);
+    } else {
+        expandedConflicts.value.add(employeeId);
+    }
+    expandedConflicts.value = new Set(expandedConflicts.value);
+}
 
 function formatServiceDuration(minutes?: number | null): string {
     if (!minutes) return "0 hrs";
@@ -737,11 +892,14 @@ function formatServiceDuration(minutes?: number | null): string {
     const hours = Math.round((minutes / 60) * 100) / 100;
     const formatted = formatDuration(hours);
 
-    return formatted ? `${formatted} (${hours} hrs)` : `${hours} hrs`;
+    if (!formatted) return `${hours} hrs`;
+
+    return hours >= 24 ? `${formatted} (${hours} hrs)` : formatted;
 }
 
 function durationLabelFor(service: ScheduleServiceItem): string {
-    const minutes = service.duration_minutes ?? props.schedule?.total_duration_minutes;
+    const minutes =
+        service.duration_minutes ?? props.schedule?.total_duration_minutes;
 
     if (service.type === "ADL") return formatServiceDuration(minutes);
 

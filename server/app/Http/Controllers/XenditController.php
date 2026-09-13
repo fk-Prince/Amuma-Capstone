@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Factories\PaymentWebhook;
-use App\Service\Utils\XenditService;
+use App\Service\External\XenditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 

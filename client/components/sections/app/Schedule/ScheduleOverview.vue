@@ -118,29 +118,6 @@
                                 <p
                                     class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
-                                    Waiting
-                                </p>
-                                <Clock class="h-4 w-4 text-orange-500" />
-                            </div>
-
-                            <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
-                            >
-                                {{ overview?.schedule?.waiting ?? 0 }}
-                            </p>
-
-                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
-                                Checked in, waiting
-                            </p>
-                        </div>
-
-                        <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
-                        >
-                            <div class="flex items-center justify-between">
-                                <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
-                                >
                                     Completed
                                 </p>
                                 <UserCheck class="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
@@ -197,12 +174,12 @@
                             </p>
 
                             <p class="text-xs text-[#6B8A87] dark:text-gray-400">
-                                Total appointments
+                                Schedule today
                             </p>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                    <div class="grid grid-cols-1 gap-3 mt-3">
                         <div
                             class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
@@ -227,24 +204,6 @@
                                     "No upcoming slot"
                                 }}
                             </p>
-                        </div>
-
-                        <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
-                        >
-                            <p
-                                class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
-                            >
-                                Providers
-                            </p>
-
-                            <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
-                            >
-                                {{ overview?.providers?.active ?? 0 }}
-                            </p>
-
-                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">On duty today</p>
                         </div>
                     </div>
 

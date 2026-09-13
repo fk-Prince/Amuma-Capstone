@@ -118,7 +118,7 @@ function statusClasses(status?: string) {
                         <!-- <span
                             class="rounded-full bg-muted-light px-3 py-1 text-xs font-medium text-secondary dark:bg-white/10 dark:text-white"
                         >
-                            {{ patient.blood_type || "No blood type on file" }}
+                            {{ patient.blood_type || "N/A" }}
                         </span> -->
                     </div>
                 </div>
@@ -182,7 +182,7 @@ function statusClasses(status?: string) {
                         <p
                             class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
                         >
-                            {{ patient.height + " cm" || "—" }}
+                            {{ patient.height ? patient.height + " cm" : "N/A" }}
                         </p>
                     </div>
                 </div>
@@ -196,7 +196,7 @@ function statusClasses(status?: string) {
                         <p
                             class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
                         >
-                            {{ patient.weight + " kg" || "—" }}
+                            {{ patient.weight ? patient.weight + " kg" : "N/A" }}
                         </p>
                     </div>
                 </div>
@@ -258,7 +258,7 @@ function statusClasses(status?: string) {
                         <p
                             class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
                         >
-                            {{ patient.blood_type || "No blood type on file" }}
+                            {{ patient.blood_type || "N/A" }}
                         </p>
                     </div>
                 </div>

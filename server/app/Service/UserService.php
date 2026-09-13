@@ -60,11 +60,20 @@ class UserService
                     }
                 }
 
+                if (array_key_exists('complete_admission_booking_percent', $settings)) {
+                    $settings['complete_admission_booking_percent'] = min(
+                        100,
+                        max(1, (int) $settings['complete_admission_booking_percent'])
+                    );
+                }
+
                 return [
                     'uuid' => $branch?->uuid,
                     'name' => $branch?->name,
                     'email' => $branch?->email,
                     'is_verified' => $branch?->is_verified,
+                    'subscription_status' => $branch?->subscriptionLink?->status,
+                    'rejection_reason' => $branch?->subscriptionLink?->rejection_reason,
                     'description' => $branch?->description,
                     'contact_number' => $branch?->contact_number,
                     'role_name' => $employeeBranch?->role_name,
@@ -97,7 +106,6 @@ class UserService
                     'plan' => $branch?->subscriptions
                         ? $branch->subscriptions->map(function ($subscription) {
                             $plan = $subscription->effectivePlan();
-
                             return [
                                 'plan_code' => $plan?->plan_code,
                                 'name' => $plan?->name,
@@ -208,7 +216,7 @@ class UserService
                 $avatarUrl = $stored['url'] ?? null;
             }
 
-            $userChanges = ['email' => $payload['email']];
+            $userChanges = [];
 
             if (!empty($payload['password'])) {
                 $userChanges['password'] = $this->resolveNewPassword($user, $payload);

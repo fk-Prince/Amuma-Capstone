@@ -29,7 +29,6 @@ class ScheduleService
         private ScheduleRepository $scheduleRepository,
         private PatientRepository $patientRepository,
         private InvoiceRepository $invoiceRepository,
-        private RefundService $refundService,
         private NotificationRepository $notificationRepository
     ) {}
 
@@ -96,6 +95,19 @@ class ScheduleService
         $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Update);
 
+        $schedule = $this->scheduleRepository->findByFields([
+            ['schedule_id', '=', $payload['schedule_id']]
+        ]);
+
+        $newStatus = strtolower($payload['status'] ?? '');
+
+        // Completing or cancelling closes the schedule out rather than
+        // committing the employee to be free at that time going forward, so
+        // there is nothing to re-check for a conflict against.
+        if (in_array($newStatus, [Schedule::STATUS_COMPLETED, Schedule::STATUS_CANCELLED], true)) {
+            return $this->updateSchedule($user, $schedule, $payload);
+        }
+
         $result = $this->scheduleRepository->getEmployeesForReassignment(
             $payload['schedule_id'],
             $branch->branch_id,
@@ -122,10 +134,6 @@ class ScheduleService
 
                 return [(int) $employee->employee_id => $scheduleCodes];
             });
-
-        $schedule = $this->scheduleRepository->findByFields([
-            ['schedule_id', '=', $payload['schedule_id']]
-        ]);
 
         $serviceNames = $schedule->scheduleServices
             ->mapWithKeys(fn($ss) => [$ss->schedule_services_id => $ss->service->service_name ?? 'Unknown Service']);
@@ -169,6 +177,13 @@ class ScheduleService
                 );
             }
 
+            if (strtolower($schedule->status) === Schedule::STATUS_COMPLETED) {
+                throw new Exception(
+                    'This schedule has been completed and can no longer be updated.',
+                    422
+                );
+            }
+
             $targetStart = Carbon::parse("{$payload['date']} {$payload['preferred_time']}");
 
             $currentStart = $schedule->scheduled_at ? Carbon::parse($schedule->scheduled_at) : null;
@@ -186,9 +201,25 @@ class ScheduleService
 
             $newStatus = strtolower($payload['status']);
 
+            // Completing or cancelling closes the schedule out rather than
+            // committing the employee to be free at that time going forward,
+            // so a conflict against some other schedule is no longer relevant.
+            $isFinalizing = in_array(
+                $newStatus,
+                [Schedule::STATUS_COMPLETED, Schedule::STATUS_CANCELLED],
+                true
+            );
+
+            $note = $payload['note'] ?? null;
+
+            $note = is_string($note) && trim($note) !== ''
+                ? mb_substr(trim($note), 0, 500)
+                : null;
+
             $schedule->update([
                 'status' => $newStatus,
                 'scheduled_at' => $targetStart,
+                'note' => $note,
             ]);
 
             $schedule->load('scheduleServices.service');
@@ -207,11 +238,7 @@ class ScheduleService
                     ->firstOrFail();
 
                 foreach ($scheduleService->assigned()->get() as $existing) {
-                    if ($existing->onlineSchedules()->exists()) {
-                        $existing->update(['is_active' => false]);
-                    } else {
-                        $existing->delete();
-                    }
+                    $existing->update(['is_active' => false]);
                 }
 
                 $requiredRole = match ($scheduleService->type) {
@@ -235,8 +262,15 @@ class ScheduleService
 
                     $seen[] = $employeeId;
 
-                    if ($this->scheduleRepository->employeeHasActiveConflict(
+                    $isFinalizing = in_array(
+                        $newStatus,
+                        [Schedule::STATUS_COMPLETED, Schedule::STATUS_CANCELLED],
+                        true
+                    );
+
+                    if (!$isFinalizing && $this->scheduleRepository->employeeHasActiveConflict(
                         $employeeId,
+                        (string) $branch->branch_id,
                         $schedule->schedule_id,
                         $targetStart,
                         $targetEnd
@@ -274,7 +308,7 @@ class ScheduleService
             }
 
             if ($newStatus === Schedule::STATUS_CANCELLED) {
-                $this->refundCancelledSchedule($user, $schedule);
+                $this->cancelledSchedule($user, $schedule);
             } else {
                 $this->notifyAssignedStaff(
                     $user,
@@ -288,7 +322,7 @@ class ScheduleService
             return response()->json([
                 'message' => 'Schedule updated successfully.',
                 'data' => new ScheduleResource($schedule->fresh([
-                    'scheduleServices.assigned',
+                    'scheduleServices.assigned.onlineSchedules',
                     'scheduleServices.service',
                     'patient',
                     'location',
@@ -348,7 +382,7 @@ class ScheduleService
         }
     }
 
-    private function refundCancelledSchedule(User $user, Schedule $schedule)
+    private function cancelledSchedule(User $user, Schedule $schedule)
     {
         $schedule->load('scheduleServices.invoiceServices.invoice.allocations.refundAllocations');
 
@@ -473,9 +507,9 @@ class ScheduleService
                 );
             }
 
-            if ($schedule->scheduled_at && Carbon::parse($schedule->scheduled_at)->isPast()) {
+            if (strtolower($schedule->status) === Schedule::STATUS_COMPLETED) {
                 throw new Exception(
-                    'This schedule has already passed and can no longer be updated.',
+                    'This schedule has been completed and can no longer be updated.',
                     422
                 );
             }
@@ -542,6 +576,7 @@ class ScheduleService
 
                     if ($this->scheduleRepository->employeeHasActiveConflict(
                         $employeeId,
+                        (string) $branchId,
                         $schedule->schedule_id,
                         $targetStart,
                         $targetEnd
@@ -571,13 +606,7 @@ class ScheduleService
                         continue;
                     }
 
-                    $hasOnlineLog = $currentAssigned->onlineSchedules()->exists();
-
-                    if ($hasOnlineLog) {
-                        $currentAssigned->update(['is_active' => false]);
-                    } else {
-                        $currentAssigned->delete();
-                    }
+                    $currentAssigned->update(['is_active' => false]);
                 }
 
 
@@ -618,7 +647,7 @@ class ScheduleService
             return response()->json([
                 'message' => 'Schedule services have been updated successfully.',
                 'data' => new ScheduleResource($schedule->fresh([
-                    'scheduleServices.assigned',
+                    'scheduleServices.assigned.onlineSchedules',
                     'scheduleServices.service',
                     'patient',
                     'location',

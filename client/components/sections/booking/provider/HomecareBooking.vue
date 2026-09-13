@@ -652,11 +652,6 @@ const selectedServicesTotal = computed(() => {
     return selectedService.value ? Number(selectedService.value.price) : 0;
 });
 
-/**
- * The picker hands back a resolved label plus coordinates. All three land on
- * the model in one emit so a partial address/coordinate pair can never be
- * submitted.
- */
 const handleLocationSelected = (location: {
     lat: number;
     lng: number;
@@ -703,9 +698,6 @@ const adlTotal = computed(() => {
 
 const branchStatus = computed(() => getBranchTimeDisplay(props.settings));
 
-// Shown alongside a "Closed" badge so the user still knows when to expect
-// the branch to reopen, since getBranchTimeDisplay's label drops the hours
-// once the branch is marked closed.
 const scheduledHoursLabel = computed(() => {
     const opening = props.settings?.opening;
     const closing = props.settings?.closing;

@@ -20,15 +20,21 @@ export const createPatientSchema = (category: "homecare" | "facility" | "") =>
         date_of_birth: z.string().min(1, "Date of birth is required"),
         phone_number: optionalPhoneNumber(),
         marital_status: z.string().min(1, "Marital status is required"),
-        height: z.coerce
-            .number()
-            .positive("Height must be greater than 0")
-            .optional(),
+        height: z.preprocess(
+            (val) => (val === "" || val === null ? undefined : val),
+            z.coerce
+                .number()
+                .positive("Height must be greater than 0")
+                .optional(),
+        ),
 
-        weight: z.coerce
-            .number()
-            .positive("Weight must be greater than 0")
-            .optional(),
+        weight: z.preprocess(
+            (val) => (val === "" || val === null ? undefined : val),
+            z.coerce
+                .number()
+                .positive("Weight must be greater than 0")
+                .optional(),
+        ),
         blood_type: z.string().optional(),
         allergies: z.string().optional(),
         address: z.string().min(1, "Address is required"),
@@ -158,7 +164,7 @@ export const patientData = reactive<Patient>({
     height: "175",
     weight: "70",
     blood_type: "O+",
-    address: "",
+    address: "asdas",
     allergies: "",
 });
 

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class PatientAccessRepository
 {
-    private const SECTIONS = ['all', 'profile', 'financials', 'schedule', 'medication', 'activity'];
+    private const SECTIONS = ['all', 'profile', 'financials', 'schedule', 'medication', 'activity', 'admissions'];
 
     public function __construct(
         private readonly PortalHelper $helper
@@ -272,6 +272,14 @@ class PatientAccessRepository
 
             $relations['schedules'] = fn($query) =>
             $orderSchedules($query->with(['scheduleServices']));
+        }
+
+        if ($wantsAll || in_array('admissions', $sections, true)) {
+            $relations = array_merge($relations, [
+                'currentAdmission.currentPeriod.branchContract',
+                'currentAdmission.latestPeriod.branchContract',
+                'currentAdmission.invoiceAdmission.admissionPeriod.branchContract',
+            ]);
         }
 
         if ($wantsAll || in_array('schedule', $sections, true)) {

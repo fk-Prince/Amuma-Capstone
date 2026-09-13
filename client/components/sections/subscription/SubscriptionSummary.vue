@@ -26,7 +26,7 @@
                     <span class="text-slate-500 dark:text-gray-400"> Plan </span>
 
                     <span class="font-semibold text-slate-800 dark:text-white">
-                        {{ checkout.selectedPlan?.name || "â€”" }}
+                        {{ checkout.selectedPlan?.name || "—" }}
                     </span>
                 </div>
 
@@ -34,7 +34,7 @@
                     <span class="text-slate-500 dark:text-gray-400"> Billing </span>
 
                     <span class="font-semibold capitalize">
-                        {{ checkout.selectedInterval || "â€”" }}
+                        {{ checkout.selectedInterval || "—" }}
                     </span>
                 </div>
 
@@ -45,7 +45,7 @@
                         {{
                             checkout.selectedPrice != null
                                 ? `â‚±${checkout.selectedPrice}`
-                                : "â€”"
+                                : "—"
                         }}
                     </span>
                 </div>
@@ -86,7 +86,7 @@
                                     checkout.agency.location.country,
                                 ]
                                     .filter(Boolean)
-                                    .join(", ") || "â€”"
+                                    .join(", ") || "—"
                             }}
                         </template>
 
@@ -94,7 +94,7 @@
                             {{
                                 checkout.agency[
                                     field.key as keyof typeof checkout.agency
-                                ] || "â€”"
+                                ] || "—"
                             }}
                         </template>
                     </span>
@@ -144,7 +144,7 @@
                                     checkout.branch.location.country,
                                 ]
                                     .filter(Boolean)
-                                    .join(", ") || "â€”"
+                                    .join(", ") || "—"
                             }}
                         </template>
 
@@ -152,7 +152,7 @@
                             {{
                                 checkout.branch[
                                     field.key as keyof typeof checkout.branch
-                                ] || "â€”"
+                                ] || "—"
                             }}
                         </template>
                     </span>
@@ -168,7 +168,7 @@
                             checkout.settings?.opening &&
                             checkout.settings?.closing
                                 ? `${checkout.settings.opening} - ${checkout.settings.closing}`
-                                : "â€”"
+                                : "—"
                         }}
                     </span>
                 </div>
@@ -177,7 +177,7 @@
                     <span class="text-slate-500 dark:text-gray-400"> Currency </span>
 
                     <span class="font-semibold">
-                        {{ checkout.settings?.currency || "â€”" }}
+                        {{ checkout.settings?.currency || "—" }}
                     </span>
                 </div>
 
@@ -185,7 +185,7 @@
                     <span class="text-slate-500 dark:text-gray-400"> Time Zone </span>
 
                     <span class="font-semibold">
-                        {{ checkout.settings?.time_zone || "â€”" }}
+                        {{ checkout.settings?.time_zone || "—" }}
                     </span>
                 </div>
             </div>

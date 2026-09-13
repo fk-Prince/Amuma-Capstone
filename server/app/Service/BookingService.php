@@ -12,6 +12,7 @@ use App\Service\Booking\BookingHelper;
 use App\Service\External\XenditService;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class BookingService
@@ -32,7 +33,6 @@ class BookingService
                 Booking::STATUS_APPROVED,
                 Booking::STATUS_REJECTED,
                 Booking::STATUS_EXPIRED,
-                Booking::STATUS_COMPLETED,
                 Booking::STATUS_CANCELLED,
             ];
 
@@ -114,15 +114,26 @@ class BookingService
     public function completePayment(User $user, array $payload)
     {
         $branch = $payload['branch'];
+        $breakdown = $this->bookingHelper->resolveBookingPayment($payload);
+        $payload['total'] = $breakdown['booking_amount'];
+
         $paymentMethod = PaymentFactory::make($payload['payment_method']);
         $result = $paymentMethod->facilityBilling($payload);
+
+        if ($result instanceof JsonResponse) {
+            return $result;
+        }
+
         try {
-            return DB::transaction(function () use ($user, $branch, $payload, $result, $paymentMethod) {
+            return DB::transaction(function () use ($user, $branch, $payload, $result, $paymentMethod, $breakdown) {
 
                 $bookingData = $payload['booking_data'];
 
-                $bookingData['payment']['total_amount'] = $result['total'];
-                $bookingData['payment']['payment_status'] = 'paid';
+                $bookingData['payment']['total_amount'] = $breakdown['total_amount'];
+                $bookingData['payment']['booking_percent'] = $breakdown['booking_percent'];
+                $bookingData['payment']['booking_amount'] = $breakdown['booking_amount'];
+                $bookingData['payment']['balance_amount'] = $breakdown['balance_amount'];
+                $bookingData['payment']['payment_status'] = $breakdown['balance_amount'] > 0 ? 'partial' : 'paid';
                 $bookingData['payment']['payment_method'] = $payload['payment_method'];
                 $bookingData['payment']['xendit_invoice_id'] = $result['xendit_invoice_id'];
                 $bookingData['payment']['masked_card_number'] = $result['masked_card_number'];

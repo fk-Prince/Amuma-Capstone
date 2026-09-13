@@ -1,6 +1,8 @@
 <template>
     <div class="w-full shrink-0">
-        <div class="bg-white border border-slate-200 p-5 flex flex-col dark:bg-secondary dark:border-white/10">
+        <div
+            class="bg-white border border-slate-200 p-5 flex flex-col dark:bg-secondary dark:border-white/10"
+        >
             <div
                 class="flex items-center justify-between"
                 :class="{ 'mb-5': open }"
@@ -17,10 +19,14 @@
                     </div>
 
                     <div class="text-left">
-                        <h3 class="font-semibold text-slate-800 dark:text-white">
+                        <h3
+                            class="font-semibold text-slate-800 dark:text-white"
+                        >
                             Billing Overview
                         </h3>
-                        <p class="text-xs text-slate-400 mt-0.5 dark:text-gray-500">
+                        <p
+                            class="text-xs text-slate-400 mt-0.5 dark:text-gray-500"
+                        >
                             Financial summary
                         </p>
                     </div>
@@ -87,7 +93,7 @@
                 <div v-show="open" class="grid overflow-hidden">
                     <div class="min-h-0">
                         <div
-                            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"
+                            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3"
                         >
                             <div
                                 v-for="metric in metrics"
@@ -155,7 +161,9 @@
                             </div>
                         </div>
 
-                        <div class="mt-5 border-t border-slate-100 pt-4 dark:border-white/10">
+                        <div
+                            class="mt-5 border-t border-slate-100 pt-4 dark:border-white/10"
+                        >
                             <p
                                 class="text-xs font-medium uppercase tracking-wide text-slate-400 mb-3 dark:text-gray-500"
                             >
@@ -178,7 +186,9 @@
 
                                 <template v-else>
                                     <div>
-                                        <p class="text-sm text-slate-400 dark:text-gray-500">
+                                        <p
+                                            class="text-sm text-slate-400 dark:text-gray-500"
+                                        >
                                             Revenue Growth
                                         </p>
 
@@ -324,52 +334,52 @@ const metrics = computed(() => [
         iconBg: "bg-emerald-50 dark:bg-emerald-500/10",
         iconColor: "text-emerald-600 dark:text-emerald-300",
     },
-    {
-        key: "refunded",
-        label: "Refunded",
-        display: formatCurrency(props.overview?.refunds_issued?.value ?? 0),
-        secondary: props.overview?.refunds_issued?.secondary ?? "No changes",
-        secondaryColor: trendColor(props.overview?.refunds_issued?.trend),
-        icon: RotateCcw,
-        iconBg: "bg-amber-50 dark:bg-amber-500/10",
-        iconColor: "text-amber-600 dark:text-amber-300",
-    },
+    // {
+    //     key: "refunded",
+    //     label: "Refunded",
+    //     display: formatCurrency(props.overview?.refunds_issued?.value ?? 0),
+    //     secondary: props.overview?.refunds_issued?.secondary ?? "No changes",
+    //     secondaryColor: trendColor(props.overview?.refunds_issued?.trend),
+    //     icon: RotateCcw,
+    //     iconBg: "bg-amber-50 dark:bg-amber-500/10",
+    //     iconColor: "text-amber-600 dark:text-amber-300",
+    // },
     {
         key: "outstanding",
-        label: "Outstanding",
+        label: "Recievable",
         display: formatCurrency(
             props.overview?.outstanding_balance?.value ?? 0,
         ),
-        secondary:
-            props.overview?.outstanding_balance?.secondary ?? "No changes",
+        // secondary:
+        //     props.overview?.outstanding_balance?.secondary ?? "No changes",
         secondaryColor: "text-slate-400 dark:text-gray-500",
         icon: Receipt,
         iconBg: "bg-orange-50",
         iconColor: "text-orange-500",
     },
-    {
-        key: "overdue",
-        label: "Overdue",
-        display: props.overview?.overdue_invoices?.value ?? 0,
-        secondary:
-            props.overview?.overdue_invoices?.secondary ??
-            "No overdue invoices",
-        secondaryColor: "text-slate-400 dark:text-gray-500",
-        icon: AlertTriangle,
-        iconBg: "bg-red-50",
-        iconColor: "text-red-500",
-    },
-    {
-        key: "upcoming",
-        label: "Upcoming",
-        display: props.overview?.upcoming_payments?.value ?? 0,
-        secondary:
-            props.overview?.upcoming_payments?.secondary ??
-            "No upcoming payments",
-        secondaryColor: "text-slate-400 dark:text-gray-500",
-        icon: CalendarClock,
-        iconBg: "bg-primary-50 dark:bg-primary-500/10",
-        iconColor: "text-primary",
-    },
+    // {
+    //     key: "overdue",
+    //     label: "Overdue",
+    //     display: props.overview?.overdue_invoices?.value ?? 0,
+    //     secondary:
+    //         props.overview?.overdue_invoices?.secondary ??
+    //         "No overdue invoices",
+    //     secondaryColor: "text-slate-400 dark:text-gray-500",
+    //     icon: AlertTriangle,
+    //     iconBg: "bg-red-50",
+    //     iconColor: "text-red-500",
+    // },
+    // {
+    //     key: "upcoming",
+    //     label: "Upcoming",
+    //     display: props.overview?.upcoming_payments?.value ?? 0,
+    //     secondary:
+    //         props.overview?.upcoming_payments?.secondary ??
+    //         "No upcoming payments",
+    //     secondaryColor: "text-slate-400 dark:text-gray-500",
+    //     icon: CalendarClock,
+    //     iconBg: "bg-primary-50 dark:bg-primary-500/10",
+    //     iconColor: "text-primary",
+    // },
 ]);
 </script>

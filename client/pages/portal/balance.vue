@@ -191,10 +191,10 @@ const refundExplanation = computed(() => {
     const paid = peso(totalPaidAmount.value);
 
     if (totalAdjustedAmount.value < totalInvoiceAmount.value) {
-        return `Billed ${billed}, lowered to ${adjusted}, and ${paid} had been paid â€” the difference came back as credit.`;
+        return `Billed ${billed}, lowered to ${adjusted}, and ${paid} had been paid — the difference came back as credit.`;
     }
 
-    return `${paid} was paid against ${adjusted} billed â€” the difference came back as credit.`;
+    return `${paid} was paid against ${adjusted} billed — the difference came back as credit.`;
 });
 
 const refundBreakdown = computed(() =>
@@ -520,13 +520,13 @@ function mapTransactions(list: any[]): Transaction[] {
             type: isRefund ? "refund" : "payment",
             label: isRefund
                 ? entry.refund_code
-                    ? `Withdrawal Â· ${methodLabel(entry.refund_method)}`
+                    ? `Withdrawal · ${methodLabel(entry.refund_method)}`
                     : "Credit issued"
                 : isCredit
                   ? amount < 0
                       ? "Credit moved to another invoice"
                       : "Credit applied"
-                  : `Payment Â· ${methodLabel(entry.payment_method)}`,
+                  : `Payment · ${methodLabel(entry.payment_method)}`,
             reference: entry.reference_id ?? entry.refund_code ?? undefined,
             date: formatDateTime(entry.created_at),
             amount,
@@ -640,7 +640,7 @@ function updateBillingFromRecord(item: any) {
 
     invoices.value = mappedInvoices;
 
-    // Kept apart from the billing figures â€” a voided invoice asks for nothing â€”
+    // Kept apart from the billing figures — a voided invoice asks for nothing —
     // but still listed, so a family can see it was cancelled and why.
     voidedInvoices.value = mappedVoided;
 
@@ -1069,7 +1069,7 @@ function applyReceiptLocally(receipt: PaymentReceiptData) {
         invoiceCode: codes[0] ?? "",
         invoiceCodes: codes,
         type: "payment",
-        label: `Payment Â· ${methodLabel(receipt.payment.method)}`,
+        label: `Payment · ${methodLabel(receipt.payment.method)}`,
         reference: receipt.lines[0]?.payment_reference ?? receipt.payment_code,
         date: issuedAt,
         amount: round2(applied),
@@ -1523,7 +1523,7 @@ async function openReceipt(receiptNo?: string | null) {
                                                     }}<template
                                                         v-if="lo.room_type"
                                                     >
-                                                        Â·
+                                                        ·
                                                         {{
                                                             lo.room_type
                                                         }}</template
@@ -2198,7 +2198,7 @@ async function openReceipt(receiptNo?: string | null) {
                 :items="listedInvoices"
                 :page-size="PAGE_SIZE"
                 :loading="isLoadingLedger"
-                loading-label="Loading invoicesâ€¦"
+                loading-label="Loading invoices…"
                 empty-label="No invoices yet"
                 @close="showAllInvoices = false"
             >
@@ -2217,7 +2217,7 @@ async function openReceipt(receiptNo?: string | null) {
                 :items="refundTransactions"
                 :page-size="PAGE_SIZE"
                 :loading="isLoadingLedger"
-                loading-label="Loading refundsâ€¦"
+                loading-label="Loading refunds…"
                 empty-label="No refunds yet"
                 @close="showRefunds = false"
             >
@@ -2262,7 +2262,7 @@ async function openReceipt(receiptNo?: string | null) {
                 :items="filteredTransactions"
                 :page-size="PAGE_SIZE"
                 :loading="isLoadingLedger"
-                loading-label="Loading transactionsâ€¦"
+                loading-label="Loading transactions…"
                 empty-label="No transactions yet"
                 :filters="transactionFilters"
                 :filter="transactionFilter"

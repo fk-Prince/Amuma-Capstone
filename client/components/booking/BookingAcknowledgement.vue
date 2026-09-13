@@ -51,6 +51,12 @@ const serviceAddress = computed(() =>
 
 const payment = computed(() => props.booking.payment ?? null);
 
+const isCompleteAdmission = computed(
+    () =>
+        (props.booking.homecare?.type ?? props.booking.facility?.type) ===
+        "Complete",
+);
+
 const displayBranchName = computed(
     () => props.branchName ?? (props.booking as any)?.branch_name ?? "—",
 );
@@ -254,7 +260,7 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
 
-                    <div v-if="payment" class="mt-7">
+                    <div v-if="payment && isCompleteAdmission" class="mt-7">
                         <p
                             class="border-b border-slate-300 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 dark:border-white/10"
                         >
@@ -263,14 +269,47 @@ onBeforeUnmount(() => {
 
                         <table class="mt-3 w-full text-sm">
                             <tbody>
+                                <tr
+                                    v-if="payment.balance_amount > 0"
+                                    class="border-b border-slate-100 dark:border-white/10"
+                                >
+                                    <td class="py-1.5 text-slate-600 dark:text-gray-400">
+                                        Total Contract Amount
+                                    </td>
+                                    <td class="py-1.5 text-right tabular-nums">
+                                        ₱{{ peso(payment.total_amount) }}
+                                    </td>
+                                </tr>
+
                                 <tr class="border-b border-slate-100 dark:border-white/10">
                                     <td class="py-1.5 text-slate-600 dark:text-gray-400">
-                                        Amount paid
+                                        {{
+                                            payment.balance_amount > 0
+                                                ? "Reservation Fee Paid"
+                                                : "Amount paid"
+                                        }}
                                     </td>
                                     <td
                                         class="py-1.5 text-right font-semibold tabular-nums"
                                     >
-                                        ₱{{ peso(payment.total_amount) }}
+                                        ₱{{
+                                            peso(
+                                                payment.booking_amount ??
+                                                    payment.total_amount,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
+
+                                <tr
+                                    v-if="payment.balance_amount > 0"
+                                    class="border-b border-slate-100 dark:border-white/10"
+                                >
+                                    <td class="py-1.5 text-slate-600 dark:text-gray-400">
+                                        Balance Due
+                                    </td>
+                                    <td class="py-1.5 text-right tabular-nums">
+                                        ₱{{ peso(payment.balance_amount) }}
                                     </td>
                                 </tr>
 
@@ -343,6 +382,22 @@ onBeforeUnmount(() => {
     body.acknowledgement-printing #acknowledgement-print,
     body.acknowledgement-printing #acknowledgement-print * {
         visibility: visible !important;
+    }
+
+    /* The dark theme's utility classes (dark:bg-secondary, dark:text-white,
+       etc.) are still active during print since they key off the .dark
+       class on <html>, not a media query, so they have to be neutralized
+       explicitly here rather than relying on the light-mode classes alone. */
+    body.acknowledgement-printing #acknowledgement-print,
+    body.acknowledgement-printing #acknowledgement-print * {
+        background-color: transparent !important;
+        color: #000000 !important;
+        border-color: #e2e8f0 !important;
+        box-shadow: none !important;
+    }
+
+    body.acknowledgement-printing #acknowledgement-print {
+        background-color: #ffffff !important;
     }
 
     body.acknowledgement-printing .acknowledgement-overlay {

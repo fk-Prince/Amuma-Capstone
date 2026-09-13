@@ -20,11 +20,9 @@ class UpdateProfileRequest extends FormRequest
             'last_name'   => ['required', 'string', 'max:255'],
 
             'email' => [
-                'required',
+                'nullable',
                 'email',
                 'max:255',
-                // Ignore this user's own row so saving without changing the
-                // address doesn't trip the unique rule.
                 Rule::unique('users', 'email')
                     ->ignore($this->user()->user_id, 'user_id'),
             ],

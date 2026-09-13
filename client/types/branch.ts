@@ -22,6 +22,8 @@ export interface Branch {
     images?: BranchImage[];
     email: string;
     is_verified: boolean;
+    subscription_status?: "pending" | "approved" | "rejected" | null;
+    rejection_reason?: string | null;
     document?: File | string;
 }
 
@@ -41,6 +43,7 @@ export interface BranchSettings {
     enable_booking_pre_admission: boolean;
     enable_booking_complete_admission: boolean;
     requires_full_payment_on_admit: boolean;
+    complete_admission_booking_percent: number;
     minimum_adl_hours: number | null;
     is_open: boolean;
     status?: "OPEN" | "CLOSED";

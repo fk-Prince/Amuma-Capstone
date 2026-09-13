@@ -121,52 +121,6 @@
                                 <p
                                     class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
-                                    Completed
-                                </p>
-                                <UserCheck class="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
-                            </div>
-
-                            <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
-                            >
-                                {{ overview?.bookings?.completed ?? 0 }}
-                            </p>
-
-                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
-                                Finished bookings
-                            </p>
-                        </div>
-
-                        <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
-                        >
-                            <div class="flex items-center justify-between">
-                                <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
-                                >
-                                    Cancelled
-                                </p>
-                                <XCircle class="h-4 w-4 text-red-400" />
-                            </div>
-
-                            <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
-                            >
-                                {{ overview?.bookings?.cancelled ?? 0 }}
-                            </p>
-
-                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
-                                Cancelled bookings
-                            </p>
-                        </div>
-
-                        <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
-                        >
-                            <div class="flex items-center justify-between">
-                                <p
-                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
-                                >
                                     Rejected
                                 </p>
                                 <UserX class="h-4 w-4 text-rose-500 dark:text-rose-300" />
@@ -323,8 +277,6 @@ import {
     CalendarDays,
     Clock,
     CalendarClock,
-    UserCheck,
-    XCircle,
     UserX,
 } from "lucide-vue-next";
 import { useRoute } from "vue-router";

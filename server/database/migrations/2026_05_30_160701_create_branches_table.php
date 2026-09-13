@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->boolean('is_verified')->default(false);
-            $table->text('rejection_reason')->nullable();
             $table->string('description', 1000)->nullable();
             $table->json('settings')->nullable();
             $table->string('contact_number')->nullable();

@@ -165,6 +165,7 @@ class BranchService
             'enable_booking_pre_admission',
             'enable_booking_complete_admission',
             'requires_full_payment_on_admit',
+            'complete_admission_booking_percent',
             'minimum_adl_hours',
             'is_open',
             'time_zone',
@@ -191,6 +192,13 @@ class BranchService
             if (array_key_exists($key, $settingPayload)) {
                 $settingPayload[$key] = (int) $settingPayload[$key];
             }
+        }
+
+        if (array_key_exists('complete_admission_booking_percent', $settingPayload)) {
+            $settingPayload['complete_admission_booking_percent'] = min(
+                100,
+                max(1, (int) $settingPayload['complete_admission_booking_percent'])
+            );
         }
 
         // Merged rather than replaced: settings also holds keys this form does

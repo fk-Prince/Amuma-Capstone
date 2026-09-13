@@ -39,14 +39,26 @@ class InvoiceResource extends JsonResource
             'services' => $this->whenLoaded(
                 'invoiceServices',
                 fn() =>
-                $this->invoiceServices->map(fn($service) => [
-                    'schedule_services_id' => $service->schedule_services_id,
-                    'price'                => (float) $service->price,
-                    'note'                 => $service->note,
-                    'service_name'         => $service->scheduleService?->service_id === null
-                        ? 'Activity of Daily Living (ADL)'
-                        : ($service->scheduleService->service->service_name ?? null),
-                ])
+                $this->invoiceServices->map(function ($service) {
+                    $scheduleService = $service->scheduleService;
+                    $isAdl = $scheduleService?->service_id === null;
+
+                    $quantity = $isAdl
+                        ? (float) ($scheduleService?->hours_booked ?? 0)
+                        : 1;
+
+                    return [
+                        'schedule_services_id' => $service->schedule_services_id,
+                        'price'                => (float) $service->price,
+                        'amount'               => (float) $service->price * $quantity,
+                        'note'                 => $service->note,
+                        'service_name'         => $isAdl
+                            ? 'Activity of Daily Living (ADL)'
+                            : ($scheduleService?->service?->service_name ?? null),
+                        'type'                 => $isAdl ? 'ADL' : 'Medical',
+                        'quantity'             => $quantity,
+                    ];
+                })
             ),
 
             'facilities' => $this->whenLoaded(

@@ -218,26 +218,81 @@
                             Services
                         </SectionHeader>
 
-                        <div class="space-y-3">
-                            <div
-                                v-for="item in invoice.services"
-                                :key="item.schedule_services_id"
-                                class="rounded-xl border border-[#EDF4F3] px-5 py-4 dark:border-white/10"
-                            >
-                                <div
-                                    class="grid grid-cols-1 sm:grid-cols-[1.4fr_1.4fr_1fr] gap-x-6 gap-y-4 text-sm"
-                                >
-                                    <Field
-                                        label="Service"
-                                        :value="item.service_name ?? 'Service'"
-                                    />
-                                    <Field label="Note" :value="item.note" />
-                                    <Field
-                                        label="Price"
-                                        :value="`₱${formatMoney(item.price)}`"
-                                    />
-                                </div>
-                            </div>
+                        <div
+                            class="overflow-x-auto rounded-xl border border-[#EDF4F3] dark:border-white/10"
+                        >
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr
+                                        class="border-b border-[#EDF4F3] text-xs uppercase tracking-wide text-[#6B8A87] dark:border-white/10 dark:text-gray-400"
+                                    >
+                                        <th class="px-4 py-3 text-left font-medium">
+                                            Qty
+                                        </th>
+                                        <th class="px-4 py-3 text-left font-medium">
+                                            Description
+                                        </th>
+                                        <th class="px-4 py-3 text-right font-medium">
+                                            Price
+                                        </th>
+                                        <th class="px-4 py-3 text-right font-medium">
+                                            Amount
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <tr
+                                        v-for="item in invoice.services"
+                                        :key="item.schedule_services_id"
+                                        class="border-b border-[#EDF4F3] last:border-0 dark:border-white/10"
+                                    >
+                                        <td
+                                            class="whitespace-nowrap px-4 py-3 align-top text-[#16302E] dark:text-white"
+                                        >
+                                            {{
+                                                item.type === "ADL"
+                                                    ? formatDuration(
+                                                          item.quantity ?? 0,
+                                                      ) || "0 hrs"
+                                                    : (item.quantity ?? 1)
+                                            }}
+                                        </td>
+
+                                        <td class="px-4 py-3 align-top">
+                                            <p
+                                                class="font-medium text-[#16302E] dark:text-white"
+                                            >
+                                                {{
+                                                    item.service_name ??
+                                                    "Service"
+                                                }}
+                                            </p>
+                                            <p
+                                                v-if="item.note"
+                                                class="mt-0.5 text-xs text-[#6B8A87] dark:text-gray-400"
+                                            >
+                                                {{ item.note }}
+                                            </p>
+                                        </td>
+
+                                        <td
+                                            class="whitespace-nowrap px-4 py-3 align-top text-right text-[#16302E] dark:text-white"
+                                        >
+                                            ₱{{ formatMoney(item.price) }}<span
+                                                v-if="item.type === 'ADL'"
+                                                >/hr</span
+                                            >
+                                        </td>
+
+                                        <td
+                                            class="whitespace-nowrap px-4 py-3 align-top text-right font-semibold text-[#16302E] dark:text-white"
+                                        >
+                                            ₱{{ formatMoney(item.amount ?? item.price) }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </section>
 
@@ -611,6 +666,7 @@ import { ref, reactive, computed, onMounted, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Stethoscope } from "lucide-vue-next";
 import { formatAmount } from "~/utils/currency";
+import { formatDuration } from "~/utils/time";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
 import { invoiceService } from "~/api/invoice/InvoiceService";

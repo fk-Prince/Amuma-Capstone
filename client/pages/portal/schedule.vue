@@ -376,7 +376,7 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
 
-                    <div class="flex-1 px-5 py-5 sm:px-7 sm:py-6">
+                    <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
                         <div
                             class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between"
                         >
@@ -481,7 +481,7 @@ onBeforeUnmount(() => {
 
                         <div
                             v-if="lovedOne"
-                            class="flex items-center gap-3 rounded-2xl bg-white/80 px-3 py-2 ring-1 ring-gray-100 backdrop-blur dark:ring-white/10"
+                            class="flex items-center gap-3 rounded-2xl bg-white/80 px-3 py-2 ring-1 ring-gray-100 backdrop-blur dark:bg-secondary dark:ring-white/10"
                         >
                             <div
                                 class="flex h-9 w-9 items-center justify-center rounded-full bg-primary-500 text-[11px] font-bold text-white"
@@ -628,7 +628,7 @@ onBeforeUnmount(() => {
                     </button>
                 </div>
 
-                <div class="flex-1 px-5 py-5 sm:px-7 sm:py-6">
+                <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
                     <div
                         class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between"
                     >
@@ -642,7 +642,7 @@ onBeforeUnmount(() => {
                             >
                                 <span>{{ lovedOne?.name }}</span>
 
-                                <span class="text-gray-300 dark:text-gray-500">â€¢</span>
+                                <span class="text-gray-300 dark:text-gray-500">•</span>
 
                                 <span>{{ scheduleSummary }}</span>
                             </div>
@@ -729,10 +729,7 @@ onBeforeUnmount(() => {
                     </div>
 
                     <div class="mt-5">
-                        <div
-                            v-if="activeScheduleType === 'adl'"
-                            class="overflow-hidden"
-                        >
+                        <div v-if="activeScheduleType === 'adl'">
                             <HomecareADL
                                 :logs="scheduleLogs"
                                 :loading="logsLoading"

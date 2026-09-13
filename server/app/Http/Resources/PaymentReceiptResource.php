@@ -67,6 +67,7 @@ class PaymentReceiptResource extends JsonResource
                     ?: 'Payment for balance',
                 'invoice_date'      => $allocation->invoice?->created_at?->toIso8601String(),
                 'amount_applied'    => (float) $allocation->amount,
+                'hours_booked'      => $allocation->invoice?->adlHoursBooked(),
             ]),
         ];
     }

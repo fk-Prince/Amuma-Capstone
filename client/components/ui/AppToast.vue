@@ -33,10 +33,10 @@ const styles: Record<
     },
 
     error: {
-        wrapper: "border-red-200",
-        iconBg: "bg-red-100",
-        icon: "text-red-600",
-        title: "text-red-900",
+        wrapper: "border-red-200 dark:border-red-500/20",
+        iconBg: "bg-red-100 dark:bg-red-500/15",
+        icon: "text-red-600 dark:text-red-300",
+        title: "text-red-900 dark:text-red-300",
         progress: "bg-red-500",
     },
 

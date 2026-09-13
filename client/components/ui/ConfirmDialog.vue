@@ -11,6 +11,7 @@ const props = withDefaults(
         cancelLabel?: string;
         loading?: boolean;
         variant?: "default" | "danger";
+        hideCancel?: boolean;
     }>(),
     {
         description: "",
@@ -18,6 +19,7 @@ const props = withDefaults(
         cancelLabel: "Cancel",
         variant: "default",
         loading: false,
+        hideCancel: false,
     },
 );
 
@@ -62,6 +64,7 @@ const emit = defineEmits<{
 
                     <div class="mt-5 flex justify-end gap-2.5">
                         <button
+                            v-if="!hideCancel"
                             type="button"
                             :disabled="props.loading"
                             class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"

@@ -201,15 +201,28 @@ class InvoiceRepository
             })
             ->orderBy('first_name')
             ->orderBy('last_name')
-            ->get();
+            ->paginate($payload['per_page'] ?? 10);
 
         if ($patients->isEmpty()) {
-            return PatientInvoiceSummaryResource::collection(collect());
+            return PatientInvoiceSummaryResource::collection($patients);
         }
+
+        // Only the invoices belonging to the patients on this page: pulling the
+        // whole branch's invoice history here is what pushed this past 30s.
+        $patientIds = $patients->pluck('patient_id')->all();
 
         $invoices = Invoice::query()
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->where('status', '!=', Invoice::STATUS_VOID)
+            ->where(function ($q) use ($patientIds) {
+                $q->whereHas(
+                    'invoiceServices.scheduleService.schedule',
+                    fn($s) => $s->whereIn('patient_id', $patientIds)
+                )->orWhereHas(
+                    'invoiceAdmissionLines.admissionPeriod.patientAdmission',
+                    fn($a) => $a->whereIn('patient_id', $patientIds)
+                );
+            })
             ->with([
                 'branch',
                 'allocations.refundAllocations.refund.transaction',
@@ -239,18 +252,23 @@ class InvoiceRepository
             return $patient?->patient_id ?? 'unknown';
         });
 
+        // The list renders totals only, so none of the per-invoice panels are
+        // built here. Opening a patient loads those through their own section.
         $summaries = $patients
+            ->getCollection()
             ->map(fn($patient) => $this->patientInvoice(
                 $grouped->get($patient->patient_id, collect()),
                 null,
-                ['all'],
+                [],
                 null,
                 null,
                 $patient
             ))
             ->values();
 
-        return PatientInvoiceSummaryResource::collection($summaries);
+        return PatientInvoiceSummaryResource::collection(
+            $patients->setCollection($summaries)
+        );
     }
 
     // The admissions and services panels are the expensive parts of this
@@ -440,7 +458,9 @@ class InvoiceRepository
             $summary['payments'] = $this->formatPayments($settledInvoices);
         }
 
-        $summary['refunds'] = $this->formatRefunds($patientModel?->patient_id);
+        if ($this->wants($sections, 'refunds')) {
+            $summary['refunds'] = $this->formatRefunds($patientModel?->patient_id);
+        }
 
         if ($wantsAdmissions) {
             $summary['admissions'] = $this->formatAdmissions($patientInvoices);
@@ -1003,6 +1023,14 @@ class InvoiceRepository
                             ?->service
                             ?->service_name
                         ),
+
+                    'type' =>
+                    $invoiceService->scheduleService?->type,
+
+                    'hours_booked' =>
+                    $invoiceService->scheduleService?->hours_booked !== null
+                        ? (float) $invoiceService->scheduleService->hours_booked
+                        : null,
                 ])
                 ->values(),
 

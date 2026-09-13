@@ -109,13 +109,19 @@ class EmployeeRepository
     }
 
 
-    public function getEmployeesWithBusyLabel(string $scheduleId, string $branchId)
-    {
+    public function getEmployeesWithBusyLabel(
+        string $scheduleId,
+        string $branchId,
+        ?string $date = null,
+        ?string $preferredTime = null
+    ) {
         $targetSchedule = Schedule::with('scheduleServices.service')
             ->where('schedule_id', $scheduleId)
             ->firstOrFail();
 
-        $targetStart = Carbon::parse($targetSchedule->scheduled_at);
+        $targetStart = ($date && $preferredTime)
+            ? Carbon::parse("{$date} {$preferredTime}")
+            : Carbon::parse($targetSchedule->scheduled_at);
         $targetDurationMinutes = $targetSchedule->scheduleServices
             ->sum(function ($ss) {
                 $duration = $ss->service->maximum_duration ?? null;
@@ -135,21 +141,17 @@ class EmployeeRepository
 
         $allowedRoles = ['nurse', 'caregiver'];
 
-        $activeScheduleAssignments = function ($query) use ($targetStart, $targetEnd, $scheduleId) {
+        $conflictWindowSql = ScheduleRepository::conflictWindowSql(
+            ScheduleRepository::branchTimezone($branchId),
+        );
+
+        $activeScheduleAssignments = function ($query) use ($targetStart, $targetEnd, $scheduleId, $conflictWindowSql) {
             $query->where('schedule_assigned.is_active', true)
-                ->whereHas('scheduleService.schedule', function ($q) use ($targetStart, $targetEnd, $scheduleId) {
+                ->whereHas('scheduleService.schedule', function ($q) use ($targetStart, $targetEnd, $scheduleId, $conflictWindowSql) {
                     $q->whereIn('schedules.status', ['ongoing', 'pending'])
                         ->where('schedules.schedule_id', '!=', $scheduleId)
-                        ->where('schedules.scheduled_at', '<', $targetEnd)
-                        ->whereRaw(
-                            'schedules.scheduled_at + (
-                    SELECT COALESCE(SUM(EXTRACT(EPOCH FROM sv.maximum_duration)), 3600) / 60
-                    FROM schedule_services ss
-                    INNER JOIN services sv ON sv.service_id = ss.service_id
-                    WHERE ss.schedule_id = schedules.schedule_id
-                ) * INTERVAL \'1 minute\' > ?',
-                            [$targetStart]
-                        );
+                        ->where('schedules.scheduled_at', '<=', $targetEnd)
+                        ->whereRaw($conflictWindowSql, [$targetStart]);
                 });
         };
 
@@ -186,125 +188,7 @@ class EmployeeRepository
             }])
             ->get();
     }
-    // public function getEmployeesWithBusyLabel(string $scheduleId, string $branchId)
-    // {
-    //     $targetSchedule = Schedule::with('scheduleServices.service')
-    //         ->where('schedule_id', $scheduleId)
-    //         ->firstOrFail();
 
-    //     $targetStart = Carbon::parse($targetSchedule->scheduled_at);
-    //     $targetDurationMinutes = $targetSchedule->scheduleServices
-    //         ->sum(function ($ss) {
-    //             $duration = $ss->service->maximum_duration ?? null;
-    //             if (!$duration) {
-    //                 return 60;
-    //             }
-    //             [$hours, $minutes, $seconds] = explode(':', $duration);
-    //             return ((int) $hours * 60) + (int) $minutes + ((int) $seconds / 60);
-    //         });
-    //     $targetEnd = $targetStart->copy()->addMinutes($targetDurationMinutes);
-
-    //     $scheduleServiceIds = $targetSchedule->scheduleServices
-    //         ->pluck('service_id')
-    //         ->filter()
-    //         ->unique()
-    //         ->values();
-
-    //     $allowedRoles = ['nurse', 'caregiver'];
-
-    //     return Employee::with([
-    //         'locations',
-    //         'employeeBranch' => function ($query) use ($branchId, $allowedRoles) {
-    //             $query->where('branch_id', $branchId)
-    //                 ->whereIn('role_name', $allowedRoles)
-    //                 ->with([
-    //                     'branches',
-    //                     'employeeServices' => function ($q) {
-    //                         $q->where('is_active', true)->with('services');
-    //                     },
-    //                 ]);
-    //         },
-    //     ])
-    //         ->where('status', 'active')
-    //         ->whereHas('employeeBranch', function ($query) use ($branchId, $allowedRoles) {
-    //             $query->where('branch_id', $branchId)
-    //                 ->whereIn('role_name', $allowedRoles);
-    //         })
-    //         ->withExists(['employeeBranch as is_busy' => function ($query) use ($targetStart, $targetEnd, $scheduleId, $branchId, $allowedRoles) {
-    //             $query->where('branch_id', $branchId)
-    //                 ->whereIn('role_name', $allowedRoles)
-    //                 ->whereHas('scheduleAssignments.scheduleService.schedule', function ($q) use ($targetStart, $targetEnd, $scheduleId) {
-    //                     $q->whereIn('schedules.status', ['ongoing', 'pending'])
-    //                         ->where('schedules.schedule_id', '!=', $scheduleId)
-    //                         ->where('schedules.scheduled_at', '<', $targetEnd)
-    //                         ->whereRaw(
-    //                             'schedules.scheduled_at + (
-    //                     SELECT COALESCE(SUM(EXTRACT(EPOCH FROM sv.maximum_duration)), 3600) / 60
-    //                     FROM schedule_services ss
-    //                     INNER JOIN services sv ON sv.service_id = ss.service_id
-    //                     WHERE ss.schedule_id = schedules.schedule_id
-    //                 ) * INTERVAL \'1 minute\' > ?',
-    //                             [$targetStart]
-    //                         );
-    //                 });
-    //         }])
-    //         ->withExists(['employeeBranch as is_assigned' => function ($query) use ($branchId, $scheduleServiceIds, $allowedRoles) {
-    //             $query->where('branch_id', $branchId)
-    //                 ->whereIn('role_name', $allowedRoles)
-    //                 ->whereHas('employeeServices', function ($q) use ($scheduleServiceIds) {
-    //                     $q->where('is_active', true)
-    //                         ->whereIn('service_id', $scheduleServiceIds);
-    //                 });
-    //         }])
-    //         ->get();
-    // }
-
-
-    // public function getEmployeesWithBusyLabel(string $scheduleId, string $branchId)
-    // {
-    //     $targetSchedule = Schedule::with('scheduleServices.service')
-    //         ->where('schedule_id', $scheduleId)
-    //         ->firstOrFail();
-
-    //     $targetStart = Carbon::parse($targetSchedule->scheduled_at);
-    //     $targetDurationMinutes = $targetSchedule->scheduleServices
-    //         ->sum(function ($ss) {
-    //             $duration = $ss->service->maximum_duration ?? null;
-    //             if (!$duration) {
-    //                 return 60;
-    //             }
-    //             [$hours, $minutes, $seconds] = explode(':', $duration);
-    //             return ((int) $hours * 60) + (int) $minutes + ((int) $seconds / 60);
-    //         });
-    //     $targetEnd = $targetStart->copy()->addMinutes($targetDurationMinutes);
-
-    //     return Employee::with([
-    //         'locations',
-    //         'employeeBranch' => function ($query) use ($branchId) {
-    //             $query->where('branch_id', $branchId)->with('branches');
-    //         },
-    //     ])
-    //         ->whereHas('employeeBranch', function ($query) use ($branchId) {
-    //             $query->where('branch_id', $branchId);
-    //         })
-    //         ->withExists(['employeeBranch as is_busy' => function ($query) use ($targetStart, $targetEnd, $scheduleId, $branchId) {
-    //             $query->where('branch_id', $branchId)
-    //                 ->whereHas('scheduleAssignments.scheduleService.schedule', function ($q) use ($targetStart, $targetEnd, $scheduleId) {
-    //                     $q->where('schedules.schedule_id', '!=', $scheduleId)
-    //                         ->where('schedules.scheduled_at', '<', $targetEnd)
-    //                         ->whereRaw(
-    //                             'schedules.scheduled_at + (
-    //                             SELECT COALESCE(SUM(EXTRACT(EPOCH FROM sv.maximum_duration)), 3600) / 60
-    //                             FROM schedule_services ss
-    //                             INNER JOIN services sv ON sv.service_id = ss.service_id
-    //                             WHERE ss.schedule_id = schedules.schedule_id
-    //                         ) * INTERVAL \'1 minute\' > ?',
-    //                             [$targetStart]
-    //                         );
-    //                 });
-    //         }])
-    //         ->get();
-    // }
 
     private function eligibleAssignmentTypes(string $serviceType): array
     {

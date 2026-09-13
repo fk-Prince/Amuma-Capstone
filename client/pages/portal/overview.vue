@@ -363,7 +363,7 @@
                             year: "numeric",
                         })
                     }}
-                    Â· {{ formattedTime }}
+                    · {{ formattedTime }}
                 </div>
 
                 <div
@@ -1064,37 +1064,55 @@
                 >
                     <div class="flex min-w-0 items-center gap-3">
                         <span
-                            class="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
+                            class="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center"
+                            :class="
+                                t.type === 'refund'
+                                    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                    : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300'
+                            "
                         >
-                            <ArrowUpCircle class="w-4 h-4" />
+                            <ArrowDownCircle
+                                v-if="t.type === 'refund'"
+                                class="w-4 h-4"
+                            />
+                            <ArrowUpCircle v-else class="w-4 h-4" />
                         </span>
 
                         <div class="min-w-0">
                             <p
                                 class="truncate text-sm font-medium text-gray-800 dark:text-white"
                             >
-                                {{ t.payment_code ?? "Payment sent" }}
+                                {{
+                                    t.type === "refund"
+                                        ? "Withdrawal"
+                                        : "Payment"
+                                }}
+                                <span
+                                    v-if="t.method"
+                                    class="font-normal text-gray-400 dark:text-gray-500"
+                                >
+                                    · {{ methodLabel(t.method) }}
+                                </span>
                             </p>
 
                             <p
                                 class="truncate text-xs text-gray-400 dark:text-gray-500"
                             >
-                                <span v-if="t.invoice_codes.length > 1">
-                                    {{ t.invoice_codes.length }} bills Â·
-                                </span>
-
-                                <span v-else-if="t.invoice_code">
-                                    {{ t.invoice_code }} Â·
-                                </span>
                                 {{ stringToDateTime(t.created_at) }}
                             </p>
                         </div>
                     </div>
 
                     <span
-                        class="shrink-0 text-sm font-semibold text-rose-600 dark:text-rose-300"
+                        class="shrink-0 text-sm font-semibold"
+                        :class="
+                            t.type === 'refund'
+                                ? 'text-emerald-600 dark:text-emerald-300'
+                                : 'text-rose-600 dark:text-rose-300'
+                        "
                     >
-                        -{{ peso(t.amount) }}
+                        {{ t.type === "refund" ? "+" : "-"
+                        }}{{ peso(t.amount) }}
                     </span>
                 </li>
             </ul>
@@ -1133,6 +1151,7 @@ import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
 import { formatDuration, stringToDateTime } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
+import { methodLabel } from "~/utils/payment-method";
 import QrCodeModal from "~/components/ui/QrCodeModal.vue";
 import EmptyState from "~/components/ui/EmptyState.vue";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
@@ -1217,6 +1236,8 @@ interface TransactionData {
     payment_code: string | null;
     amount: number;
     created_at: string;
+    type: "payment" | "refund";
+    method: string | null;
 }
 
 interface UpdateItem {
@@ -1527,6 +1548,7 @@ function mapSchedule(item: any, type: "adl" | "medical"): ScheduleItem | null {
         schedule_code: item.schedule_code ?? "",
         status: item.status ?? "",
         category: item.category ?? null,
+        note: item.note ?? null,
         scheduled_date: item.scheduled_date ?? null,
         scheduled_at: item.scheduled_at ?? null,
         start_time: item.start_time ?? null,
@@ -1647,29 +1669,36 @@ function updateBillingFromRecord(item: any) {
         status: invoice?.status ?? "",
     };
 
-    // Every payment on the account, newest first, as the API groups them: one
-    // entry per receipt rather than per invoice it was split across.
     transactions.value = (
         Array.isArray(item?.transactions) ? item.transactions : []
     )
-        .filter(
-            (entry: any) =>
-                entry?.type === "payment" && Number(entry?.amount ?? 0) > 0,
-        )
+        .filter((entry: any) => {
+            if (!entry || Number(entry.amount ?? 0) <= 0) return false;
+
+            if (entry.type === "refund") return !!entry.refund_code;
+
+            return (
+                entry.type === "payment" && entry.payment_method !== "CREDIT"
+            );
+        })
         .map((entry: any) => ({
-            payment_id: Number(entry?.payment_id ?? 0),
+            payment_id: Number(entry?.payment_id ?? entry?.refund_id ?? 0),
 
             invoice_code: entry?.invoice_codes?.[0] ?? null,
 
             invoice_codes: entry?.invoice_codes ?? [],
 
-            reference_id: entry?.reference_id ?? null,
+            reference_id: entry?.reference_id ?? entry?.refund_code ?? null,
 
-            payment_code: entry?.payment_code ?? null,
+            payment_code: entry?.payment_code ?? entry?.refund_code ?? null,
 
             amount: Number(entry?.amount ?? 0),
 
             created_at: entry?.created_at ?? "",
+
+            type: entry?.type === "refund" ? "refund" : "payment",
+
+            method: entry?.payment_method ?? entry?.refund_method ?? null,
         }));
 }
 
@@ -1781,7 +1810,9 @@ async function loadPatientData() {
     }
 }
 function assigneesOf(service: ScheduleServiceItem) {
-    return service.assignees ?? [];
+    return (service.assignees ?? []).filter(
+        (assignee) => assignee.is_active !== false,
+    );
 }
 
 function primaryAssignee(service: ScheduleServiceItem) {

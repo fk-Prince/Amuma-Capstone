@@ -123,6 +123,8 @@ export interface InvoiceServiceLine {
     service_name: string | null;
     type?: string | null;
     hours_booked?: number | null;
+    quantity?: number | null;
+    amount?: number | null;
 }
 
 export interface InvoiceAccommodationLine {

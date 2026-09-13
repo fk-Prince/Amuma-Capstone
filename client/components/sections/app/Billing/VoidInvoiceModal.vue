@@ -2,7 +2,7 @@
     <Teleport to="body">
         <div
             v-if="invoice"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 p-4 backdrop-blur-sm no-print dark:bg-white/10"
+            class="fixed inset-0 z-[80] flex items-center justify-center bg-secondary/50 p-4 backdrop-blur-sm no-print dark:bg-white/10"
             @click.self="emit('close')"
         >
             <div

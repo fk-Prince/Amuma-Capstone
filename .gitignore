@@ -26,3 +26,8 @@ logs
 
 .claude
 .claude/
+
+    # "artisan:1": "cd server && php artisan serve --host=0.0.0.0 --port=8001",
+    #     "artisan:2": "cd server && php artisan serve --host=0.0.0.0 --port=8002",
+    #     "artisan:3": "cd server && php artisan serve --host=0.0.0.0 --port=8003",
+    #     "artisan:all": "concurrently -n api0,api1,api2,api3 \"npm run artisan\" \"npm run artisan:1\" \"npm run artisan:2\" \"npm run artisan:3\"",

@@ -84,6 +84,7 @@
                             :loading="pending"
                             @view-details="viewSchedule"
                             @assign="handleAssign"
+                            @update="onAdlScheduleUpdated"
                             :variant="2"
                         />
                     </template>
@@ -128,8 +129,14 @@
             :employees="employeeData"
             :is-fetching-employees="isFetchingEmployee"
             :submit-loading="updatingAssignment"
-            @close="showScheduleModal = false"
+            :save-conflicts="saveConflicts"
+            @close="
+                showScheduleModal = false;
+                saveConflicts = null;
+            "
             @schedule="onUpdateSchedule"
+            @reschedule-preview="onReschedulePreview"
+            @clear-save-conflicts="saveConflicts = null"
         />
     </div>
 </template>
@@ -201,6 +208,7 @@ const isFetchingEmployee = ref(false);
 const selectedSchedule = ref<ScheduleItem | null>(null);
 const assignModalOpen = ref(false);
 const assigneSchedule = ref<ScheduleItem>();
+const saveConflicts = ref<any[] | null>(null);
 
 function viewSchedule(s: ScheduleItem) {
     selectedSchedule.value = s;
@@ -224,13 +232,50 @@ async function handleAssign(s: ScheduleItem, isModal = true) {
     }
 }
 
+async function onReschedulePreview(payload: {
+    schedule_id: number;
+    date: string;
+    preferred_time: string;
+}) {
+    isFetchingEmployee.value = true;
+
+    try {
+        await fetchEmployee(
+            uuid.value,
+            payload.schedule_id,
+            payload.date,
+            payload.preferred_time,
+        );
+    } catch (err: any) {
+        error(err.error);
+    } finally {
+        isFetchingEmployee.value = false;
+    }
+}
+
+function onAdlScheduleUpdated(updated: ScheduleItem) {
+    const index = scheduleData.value.findIndex(
+        (s) => s.schedule_id === updated.schedule_id,
+    );
+
+    if (index !== -1) {
+        scheduleData.value[index] = updated;
+    }
+}
+
 async function onUpdateSchedule(payload: any) {
     updatingAssignment.value = true;
     try {
         const res = await updateSchedule(payload, uuid.value);
+
+        if (res?.has_conflicts) {
+            saveConflicts.value = res.conflicts ?? [];
+            return;
+        }
+
+        saveConflicts.value = null;
         success(res.message);
         showScheduleModal.value = false;
-        await loadSchedules({ append: false });
     } catch (err: any) {
         error(err.error ?? err.message);
     } finally {
@@ -245,7 +290,6 @@ async function onAssignSubmit(payload: any) {
         const res = await handleAssignment(payload, uuid.value);
         success(res.message);
         assignModalOpen.value = false;
-        await loadSchedules({ append: false });
     } catch (err: any) {
         error(err.error);
     } finally {

@@ -117,7 +117,7 @@ const actions = [
 
                             <dd
                                 class="truncate text-[13px] font-medium text-slate-700 dark:text-gray-200"
-                                :title="fact.value"
+                                :title="fact.value ?? undefined"
                             >
                                 {{ fact.value }}
                             </dd>

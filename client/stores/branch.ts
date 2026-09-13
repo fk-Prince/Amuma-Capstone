@@ -9,19 +9,12 @@ export const useBranchStore = defineStore("branch", () => {
     const showModal = ref(false);
     const lastSelectedBranch = ref<Branch | null>(null);
 
-    // Reads the router's own current-route ref rather than useRoute(): the
-    // latter warns (correctly) when called from within middleware, since at
-    // that point it can still reflect the page being navigated away from.
+
     const routeUuid = computed(() => {
         const v = router.currentRoute.value.params.uuid;
         const uuid = Array.isArray(v) ? v[0] : v;
 
         if (uuid && uuid !== "[uuid]") return uuid;
-
-        // Pages with no [uuid] segment of their own (e.g. /profile opened
-        // from a branch's dashboard) carry it as ?branch= instead, so the
-        // dashboard layout wrapped around them still knows which branch it
-        // is showing.
         const q = router.currentRoute.value.query.branch;
         const queryUuid = Array.isArray(q) ? q[0] : q;
 
@@ -38,6 +31,16 @@ export const useBranchStore = defineStore("branch", () => {
 
     const hasMultipleBranches = computed(() => branches.value.length > 1);
 
+
+    function pickDefaultBranch(list: Branch[]): Branch | undefined {
+        const score = (b: Branch) => {
+            if (b.is_verified && b.agency?.is_verified !== false) return 0;
+            if (b.subscription_status === "rejected") return 2;
+            return 1;
+        };
+
+        return [...list].sort((a, b) => score(a) - score(b))[0];
+    }
 
     async function refreshBranch() {
         try {
@@ -56,7 +59,8 @@ export const useBranchStore = defineStore("branch", () => {
 
 
             const uuid = targetUuid ?? routeUuid.value;
-            const first = branches.value[0];
+            //    const first = branches.value[0];
+            const first = pickDefaultBranch(branches.value);
 
             if (!uuid && first?.uuid) {
                 lastSelectedBranch.value = first;

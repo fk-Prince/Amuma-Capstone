@@ -7,6 +7,7 @@ export interface ReceiptLine {
     description?: string | null;
     invoice_date: string | null;
     amount_applied: number;
+    hours_booked?: number | null;
 }
 
 export type ReceiptChannel = "portal" | "counter";

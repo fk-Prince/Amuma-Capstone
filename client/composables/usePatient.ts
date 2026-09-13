@@ -132,12 +132,20 @@ export function usePatient() {
         }
     }
 
-    async function fetchEmployee(b_uuid: string, schedule_id: number) {
+    async function fetchEmployee(
+        b_uuid: string,
+        schedule_id: number,
+        date?: string,
+        preferred_time?: string,
+    ) {
         try {
             const employeeRes = await employeeService.list({
                 schedule_id: schedule_id,
                 branch_uuid: b_uuid,
-                type: "schedule"
+                type: "schedule",
+                ...(date && preferred_time
+                    ? { date, preferred_time }
+                    : {}),
             });
             employeeData.value = employeeRes.data;
         } catch (error) {
@@ -351,6 +359,16 @@ export function usePatient() {
                 ...payload
             });
 
+            if (!res?.has_conflicts && res?.data) {
+                const updated = res.data;
+                const index = scheduleData.value.findIndex(
+                    (s) => s.schedule_id === updated.schedule_id,
+                );
+
+                if (index !== -1) {
+                    scheduleData.value[index] = updated;
+                }
+            }
 
             return res;
         } catch (err) {

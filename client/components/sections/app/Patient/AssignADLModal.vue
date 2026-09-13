@@ -29,15 +29,21 @@
                             Assign Caregiver Staff
                         </p>
 
-                        <h2 class="mt-1 text-lg font-semibold text-slate-800 dark:text-white">
+                        <h2
+                            class="mt-1 text-lg font-semibold text-slate-800 dark:text-white"
+                        >
                             Activities of Daily Living (ADL) Booking
                         </h2>
 
-                        <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
+                        <p
+                            class="mt-1 text-sm text-slate-500 dark:text-gray-400"
+                        >
                             {{ patientName }}
                         </p>
 
-                        <p class="mt-1 text-xs text-slate-400 dark:text-gray-500">
+                        <p
+                            class="mt-1 text-xs text-slate-400 dark:text-gray-500"
+                        >
                             {{ formatDate(schedule?.scheduled_at) }}
                             •
                             {{ formatTime(schedule?.scheduled_at) }}
@@ -53,22 +59,20 @@
                     </button>
                 </div>
 
-                <div
-                    class="grid flex-1 overflow-hidden lg:grid-cols-[65%_35%]"
-                >
+                <div class="grid flex-1 overflow-hidden lg:grid-cols-[60%_40%]">
                     <div class="overflow-y-auto p-6 space-y-4">
                         <div
                             class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5"
                         >
-                            <p class="text-sm font-semibold text-slate-800 dark:text-white">
+                            <p
+                                class="text-sm font-semibold text-slate-800 dark:text-white"
+                            >
                                 Hours Booked
                             </p>
-                            <p class="mt-1 text-xs text-slate-500 dark:text-gray-400">
-                                {{
-                                    schedule?.total_hours
-                                        ? `${formatDuration(Number(schedule.total_hours))} (${schedule.total_hours} hrs)`
-                                        : "—"
-                                }}
+                            <p
+                                class="mt-1 text-xs text-slate-500 dark:text-gray-400"
+                            >
+                                {{ formatHoursBooked(schedule?.total_hours) }}
                             </p>
                         </div>
 
@@ -104,7 +108,9 @@
                                 <div
                                     class="flex items-center justify-between gap-3"
                                 >
-                                    <div class="flex min-w-0 items-center gap-2">
+                                    <div
+                                        class="flex min-w-0 items-center gap-2"
+                                    >
                                         <span
                                             class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary"
                                         >
@@ -146,22 +152,18 @@
                                     >
                                         <img
                                             v-if="
-                                                employeeById(
-                                                    entry.employee_id,
-                                                )?.avatar
+                                                employeeById(entry.employee_id)
+                                                    ?.avatar
                                             "
                                             :src="
-                                                employeeById(
-                                                    entry.employee_id,
-                                                )!.avatar
+                                                employeeById(entry.employee_id)!
+                                                    .avatar
                                             "
                                             class="h-full w-full object-cover"
                                         />
 
                                         <template v-else>
-                                            {{
-                                                initialsFor(entry.employee_id)
-                                            }}
+                                            {{ initialsFor(entry.employee_id) }}
                                         </template>
                                     </span>
 
@@ -225,7 +227,7 @@
                                         type="text"
                                         :maxlength="NOTE_MAX"
                                         placeholder="Note for this assignment"
-                                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:text-gray-400"
+                                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
                                     />
 
                                     <div
@@ -265,8 +267,8 @@
                             v-else
                             class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
                         >
-                            Pick staff from the list on the right to assign
-                            them to this booking.
+                            Pick staff from the list on the right to assign them
+                            to this booking.
                         </p>
                     </div>
 
@@ -281,7 +283,9 @@
                                     Available Caregivers
                                 </p>
 
-                                <span class="text-[11px] text-slate-400 dark:text-gray-500">
+                                <span
+                                    class="text-[11px] text-slate-400 dark:text-gray-500"
+                                >
                                     {{ filteredEmployees.length }} shown
                                 </span>
                             </div>
@@ -312,7 +316,9 @@
                                     v-if="!filteredEmployees.length"
                                     class="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center dark:border-white/10 dark:bg-secondary"
                                 >
-                                    <p class="text-sm text-slate-500 dark:text-gray-400">
+                                    <p
+                                        class="text-sm text-slate-500 dark:text-gray-400"
+                                    >
                                         {{
                                             employeeSearch
                                                 ? "No caregivers match that search"
@@ -329,7 +335,6 @@
                                         isSelected(employee.employee_id)
                                             ? 'border-primary bg-primary/5'
                                             : 'border-slate-200 hover:border-primary/40 dark:border-white/10',
-                                        employee.is_busy ||
                                         !isCaregiver(employee) ||
                                         isAssignmentTypeMismatch(employee)
                                             ? 'opacity-60'
@@ -397,26 +402,40 @@
 
                                             <p
                                                 v-if="
+                                                    employee.formatted_assignment_type
+                                                "
+                                                class="truncate text-xs text-slate-400 dark:text-gray-500"
+                                            >
+                                                {{
+                                                    employee.formatted_assignment_type
+                                                }}
+                                            </p>
+
+                                            <div
+                                                v-if="
                                                     employee.phone_number ||
                                                     employee.email
                                                 "
-                                                class="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-slate-400 dark:text-gray-500"
+                                                class="mt-0.5 flex flex-nowrap items-center gap-x-3 text-[11px] text-slate-400 dark:text-gray-500"
                                             >
                                                 <span
-                                                    v-if="
-                                                        employee.phone_number
-                                                    "
+                                                    v-if="employee.phone_number"
+                                                    class="shrink-0"
                                                 >
-                                                    {{ formatPhone(employee.phone_number) }}
+                                                    {{
+                                                        formatPhone(
+                                                            employee.phone_number,
+                                                        )
+                                                    }}
                                                 </span>
 
                                                 <span
                                                     v-if="employee.email"
-                                                    class="truncate"
+                                                    class="min-w-0 flex-1 truncate"
                                                 >
                                                     {{ employee.email }}
                                                 </span>
-                                            </p>
+                                            </div>
                                         </div>
 
                                         <div
@@ -440,16 +459,7 @@
                                                     )
                                                 "
                                             >
-                                                {{
-                                                    employee.conflict_count ??
-                                                    0
-                                                }}
-                                                {{
-                                                    employee.conflict_count ===
-                                                    1
-                                                        ? "schedule conflict"
-                                                        : "schedule conflicts"
-                                                }}
+                                                More information
                                                 <span
                                                     class="transition-transform"
                                                     :class="
@@ -478,15 +488,11 @@
                                             "
                                             class="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-600 dark:bg-rose-500/15 dark:text-rose-300"
                                         >
-                                            {{
-                                                assignmentTypeLabel(employee)
-                                            }}
+                                            {{ assignmentTypeLabel(employee) }}
                                         </span>
                                         <span
                                             v-else-if="
-                                                isSelected(
-                                                    employee.employee_id,
-                                                )
+                                                isSelected(employee.employee_id)
                                             "
                                             class="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                                         >
@@ -543,7 +549,9 @@
                                                 </span>
                                             </div>
 
-                                            <p class="mt-1 text-slate-500 dark:text-gray-400">
+                                            <p
+                                                class="mt-1 text-slate-500 dark:text-gray-400"
+                                            >
                                                 {{
                                                     formatDate(
                                                         conflict.scheduled_at,
@@ -573,6 +581,36 @@
                                                 class="mt-1 capitalize text-slate-400 dark:text-gray-500"
                                             >
                                                 {{ conflict.status }}
+                                            </p>
+
+                                            <p
+                                                v-if="conflict.estimated_end"
+                                                class="mt-1 font-medium text-amber-700 dark:text-amber-300"
+                                            >
+                                                Est. free
+                                                {{
+                                                    formatDate(
+                                                        conflict.estimated_end,
+                                                    )
+                                                }}
+                                                at
+                                                {{
+                                                    formatTime(
+                                                        conflict.estimated_end,
+                                                    )
+                                                }}
+                                                <span
+                                                    v-if="conflict.remaining_minutes"
+                                                >
+                                                    ·
+                                                    {{
+                                                        formatDuration(
+                                                            conflict.remaining_minutes /
+                                                                60,
+                                                        )
+                                                    }}
+                                                    remaining
+                                                </span>
                                             </p>
                                         </div>
                                     </div>
@@ -616,6 +654,16 @@ import { Check } from "lucide-vue-next";
 import { employeeService } from "~/api/employee/EmployeeService";
 import { useToast } from "~/composables/useToast";
 import type { AuditRow } from "~/types/schedule";
+
+function formatHoursBooked(hours?: number | null): string {
+    if (!hours) return "—";
+
+    const formatted = formatDuration(Number(hours));
+
+    if (!formatted) return `${hours} hrs`;
+
+    return Number(hours) >= 24 ? `${formatted} (${hours} hrs)` : formatted;
+}
 
 const NOTE_MAX = 255;
 
@@ -680,11 +728,15 @@ const assignments = ref<AssignmentEntry[]>([]);
 const patientName = computed(() => props.schedule?.patient_full_name ?? "");
 
 const filteredEmployees = computed(() => {
+    const caregivers = employeeData.value.filter((employee) =>
+        isCaregiver(employee),
+    );
+
     const term = employeeSearch.value.trim().toLowerCase();
 
-    if (!term) return employeeData.value;
+    if (!term) return caregivers;
 
-    return employeeData.value.filter((employee) =>
+    return caregivers.filter((employee) =>
         fullName(employee.first_name, "", employee.last_name)
             .toLowerCase()
             .includes(term),
@@ -741,9 +793,7 @@ async function fetchEmployees() {
 }
 
 function restoreSavedAssignments(schedule: AuditRow) {
-    const activeAssignments = (schedule.assigned ?? []).filter(
-        (a) => a.is_active,
-    );
+    const activeAssignments = schedule.assignees ?? [];
 
     const ids = activeAssignments.length
         ? activeAssignments.map((a) => String(a.employee_id))
@@ -818,7 +868,10 @@ function toggleEmployee(employeeId: string) {
     );
 
     if (index === -1) {
-        assignments.value = [...assignments.value, { employee_id: employeeId, note: "" }];
+        assignments.value = [
+            ...assignments.value,
+            { employee_id: employeeId, note: "" },
+        ];
         return;
     }
 
@@ -837,8 +890,6 @@ function handleEmployeeClick(employee: Employee) {
         toggleEmployee(String(employee.employee_id));
         return;
     }
-
-    if (employee.is_busy) return;
 
     if (!isCaregiver(employee)) {
         toastError(

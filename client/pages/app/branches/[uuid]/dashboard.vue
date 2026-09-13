@@ -468,75 +468,74 @@
                             class="relative my-3 h-px w-full bg-gradient-to-r from-transparent via-slate-200 dark:via-white/10 to-transparent"
                         />
 
-                        <div class="relative space-y-1">
+                        <div class="relative space-y-2">
                             <div
-                                class="flex items-center justify-between gap-3 rounded-md px-1.5 py-1 transition-colors hover:bg-light dark:hover:bg-white/5"
+                                v-for="group in groupedPlans"
+                                :key="`${group.category}-${group.accommodation_type}`"
+                                class="rounded-md px-1.5 py-1 transition-colors hover:bg-light dark:hover:bg-white/5"
                             >
-                                <div class="flex items-center gap-2">
+                                <div class="flex min-w-0 items-center gap-2">
                                     <div
-                                        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-accent-700 text-white"
+                                        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white"
+                                        :class="
+                                            group.category === 'Homecare'
+                                                ? 'bg-gradient-to-br from-amber-400 to-amber-600'
+                                                : 'bg-gradient-to-br from-accent to-accent-700'
+                                        "
                                     >
-                                        <UserCog class="h-3.5 w-3.5" />
+                                        <Home
+                                            v-if="group.category === 'Homecare'"
+                                            class="h-3.5 w-3.5"
+                                        />
+                                        <UserCog v-else class="h-3.5 w-3.5" />
                                     </div>
-                                    <p
-                                        class="text-[11px] font-semibold text-secondary dark:text-white"
-                                    >
-                                        Active staff
-                                    </p>
+                                    <div class="min-w-0">
+                                        <p
+                                            class="truncate text-[11px] font-semibold text-secondary dark:text-white"
+                                        >
+                                            {{
+                                                accommodationTypeLabel(
+                                                    group.accommodation_type,
+                                                )
+                                            }}
+                                        </p>
+                                        <p
+                                            class="truncate text-[10px] text-muted dark:text-gray-400"
+                                        >
+                                            {{ group.category }}
+                                        </p>
+                                    </div>
                                 </div>
 
-                                <p
-                                    class="text-sm font-bold tabular-nums text-secondary dark:text-white"
-                                >
-                                    {{ dashboard.contracts.caregivers }}
-                                </p>
-                            </div>
-
-                            <div
-                                class="flex items-center justify-between gap-3 rounded-md px-1.5 py-1 transition-colors hover:bg-light dark:hover:bg-white/5"
-                            >
-                                <div class="flex items-center gap-2">
+                                <div class="mt-1 space-y-0.5 pl-9">
                                     <div
-                                        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary-700 text-white"
+                                        v-for="cycle in group.cycles"
+                                        :key="cycle.branch_contract_id"
+                                        class="flex items-center justify-between gap-3"
                                     >
-                                        <Users class="h-3.5 w-3.5" />
-                                    </div>
-                                    <p
-                                        class="text-[11px] font-semibold text-secondary dark:text-white"
-                                    >
-                                        Patients on a plan
-                                    </p>
-                                </div>
+                                        <p
+                                            class="text-[10px] capitalize text-muted dark:text-gray-400"
+                                        >
+                                            {{
+                                                cycle.billing_cycle.toLowerCase()
+                                            }}
+                                        </p>
 
-                                <p
-                                    class="text-sm font-bold tabular-nums text-secondary dark:text-white"
-                                >
-                                    {{ dashboard.contracts.patient_with_plan }}
-                                </p>
+                                        <p
+                                            class="shrink-0 text-xs font-bold tabular-nums text-secondary dark:text-white"
+                                        >
+                                            {{ formatCurrency(cycle.price) }}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div
-                                class="flex items-center justify-between gap-3 rounded-md px-1.5 py-1 transition-colors hover:bg-light dark:hover:bg-white/5"
+                            <p
+                                v-if="!groupedPlans.length"
+                                class="px-1.5 py-2 text-[11px] text-muted dark:text-gray-400"
                             >
-                                <div class="flex items-center gap-2">
-                                    <div
-                                        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-white"
-                                    >
-                                        <Home class="h-3.5 w-3.5" />
-                                    </div>
-                                    <p
-                                        class="text-[11px] font-semibold text-secondary dark:text-white"
-                                    >
-                                        Active homecare
-                                    </p>
-                                </div>
-
-                                <p
-                                    class="text-sm font-bold tabular-nums text-secondary dark:text-white"
-                                >
-                                    {{ dashboard.contracts.active_patient }}
-                                </p>
-                            </div>
+                                No active plans yet.
+                            </p>
                         </div>
                     </div>
                 </section>
@@ -672,6 +671,7 @@ import SubscriptionReview from "~/components/sections/app/Dashboard/Subscription
 import StatusBadge from "~/components/ui/StatusBadge.vue";
 import { branchService } from "~/api/branch/BranchService";
 import { useBranchStore } from "~/stores/branch";
+import { formatCurrency } from "~/utils/currency";
 
 Chart.register(
     CategoryScale,
@@ -728,7 +728,7 @@ interface DashboardOverview {
     bookings: {
         pending_confirmation: number;
         approved: number;
-        completed: number;
+        expired: number;
         cancelled: number;
         rejected: number;
         expiring_soon: number;
@@ -737,6 +737,13 @@ interface DashboardOverview {
     };
     contracts: {
         total_active_plans: number;
+        plans: {
+            branch_contract_id: number;
+            category: string;
+            accommodation_type: string;
+            billing_cycle: string;
+            price: number;
+        }[];
         patient_with_plan: number;
         new_monthy_patients: number;
         patient_retention: string;
@@ -762,6 +769,7 @@ const emptyStatBucket = (): StatBucket => ({
 
 const emptyContracts = () => ({
     total_active_plans: 0,
+    plans: [] as DashboardOverview["contracts"]["plans"],
     patient_with_plan: 0,
     new_monthy_patients: 0,
     patient_retention: "—",
@@ -783,7 +791,7 @@ const dashboard = ref<DashboardOverview>({
     bookings: {
         pending_confirmation: 0,
         approved: 0,
-        completed: 0,
+        expired: 0,
         cancelled: 0,
         rejected: 0,
         expiring_soon: 0,
@@ -805,6 +813,40 @@ const hasBeds = computed(
             dashboard.value.occupancy.available.value >
         0,
 );
+
+function accommodationTypeLabel(type: string) {
+    return type === "ADL" ? "Activity of Daily Living (ADL)" : type;
+}
+
+const groupedPlans = computed(() => {
+    const groups = new Map<
+        string,
+        {
+            accommodation_type: string;
+            category: string;
+            cycles: { branch_contract_id: number; billing_cycle: string; price: number }[];
+        }
+    >();
+
+    for (const plan of dashboard.value.contracts.plans) {
+        const key = `${plan.category}-${plan.accommodation_type}`;
+        const group = groups.get(key) ?? {
+            accommodation_type: plan.accommodation_type,
+            category: plan.category,
+            cycles: [],
+        };
+
+        group.cycles.push({
+            branch_contract_id: plan.branch_contract_id,
+            billing_cycle: plan.billing_cycle,
+            price: plan.price,
+        });
+
+        groups.set(key, group);
+    }
+
+    return Array.from(groups.values());
+});
 
 const occupancyPct = computed(() => {
     const occupied = dashboard.value.occupancy.occupied.value;
@@ -841,8 +883,7 @@ const totalBookings = computed(() => {
     return (
         b.pending_confirmation +
         b.approved +
-        b.completed +
-        b.cancelled +
+        b.expired +
         b.rejected
     );
 });
@@ -861,16 +902,10 @@ const bookingSegments = computed(() => [
         color: "#3182ED",
     },
     {
-        key: "completed",
-        label: "Completed",
-        count: dashboard.value.bookings.completed,
+        key: "expired",
+        label: "Expired",
+        count: dashboard.value.bookings.expired,
         color: "#0E7C7B",
-    },
-    {
-        key: "cancelled",
-        label: "Cancelled",
-        count: dashboard.value.bookings.cancelled,
-        color: "#94a3b8",
     },
     {
         key: "rejected",
@@ -904,7 +939,7 @@ const fetchDashboard = async () => {
                 pending_confirmation:
                     Number(data.bookings?.pending_confirmation) || 0,
                 approved: Number(data.bookings?.approved) || 0,
-                completed: Number(data.bookings?.completed) || 0,
+                expired: Number(data.bookings?.expired) || 0,
                 cancelled: Number(data.bookings?.cancelled) || 0,
                 rejected: Number(data.bookings?.rejected) || 0,
                 expiring_soon: Number(data.bookings?.expiring_soon) || 0,
@@ -916,6 +951,9 @@ const fetchDashboard = async () => {
             contracts: {
                 total_active_plans:
                     Number(data.contracts?.total_active_plans) || 0,
+                plans: Array.isArray(data.contracts?.plans)
+                    ? data.contracts.plans
+                    : [],
                 patient_with_plan:
                     Number(data.contracts?.patient_with_plan) || 0,
                 new_monthy_patients:

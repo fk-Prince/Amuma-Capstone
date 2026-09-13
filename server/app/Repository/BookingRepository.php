@@ -207,8 +207,8 @@ class BookingRepository
                     ->where('status', Booking::STATUS_APPROVED)
                     ->count(),
 
-                'completed' => Booking::where('branch_id', $branchId)
-                    ->where('status', Booking::STATUS_COMPLETED)
+                'expired' => Booking::where('branch_id', $branchId)
+                    ->where('status', Booking::STATUS_EXPIRED)
                     ->count(),
 
                 'cancelled' => Booking::where('branch_id', $branchId)

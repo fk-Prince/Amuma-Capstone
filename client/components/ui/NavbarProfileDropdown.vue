@@ -4,7 +4,7 @@
             <template #trigger="{ toggle, open }">
                 <button
                     @click="toggle"
-                    class="flex items-center gap-2.5 px-2 py-1.5 rounded-xl transition-colors focus:outline-none"
+                    class="flex flex-row-reverse items-center gap-2.5 px-2 py-1.5 rounded-xl transition-colors focus:outline-none md:flex-row"
                     :class="[
                         scrolled || navTheme !== 'dark'
                             ? 'hover:bg-primary-50 dark:hover:bg-primary-500/10'
@@ -285,10 +285,11 @@ const visibleMenuItems = computed(() =>
         .map((item) => ({
             ...item,
             to:
-                item.to === "/profile" && profileFrom.value
+                item.to === "/profile"
                     ? {
                           path: "/profile",
                           query: {
+                              tab: "profile",
                               from: profileFrom.value,
                               branch:
                                   profileFrom.value === "dashboard"

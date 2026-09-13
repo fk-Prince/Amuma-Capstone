@@ -12,6 +12,7 @@ import {
     type PatientActivity,
 } from "~/types/patient-activity";
 import type { PatientRetrieve } from "~/types/patient";
+import { toDateTimeLocalValue } from "~/utils/time";
 
 const props = defineProps<{
     open: boolean;
@@ -31,7 +32,7 @@ const emit = defineEmits<{
 
 const form = reactive<PatientActivityForm>(emptyForm());
 
-const { errors, validate, clearError } = useSchemaValidation(
+const { errors, validate, clearError, reset } = useSchemaValidation(
     patientActivitySchema,
     form,
 );
@@ -49,6 +50,7 @@ async function onSubmit() {
 }
 
 function close() {
+    reset();
     emit("close");
 }
 
@@ -77,7 +79,7 @@ watch(
                 subtitle: activity.subtitle ?? "",
                 description: activity.description ?? "",
                 type: activity.type,
-                occurredAt: activity.occurredAt,
+                occurredAt: toDateTimeLocalValue(activity.occurredAt),
             });
         } else {
             Object.assign(form, emptyForm());

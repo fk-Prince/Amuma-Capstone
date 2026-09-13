@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import QrcodeVue from "qrcode.vue";
-import { computed, onUnmounted, watch } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import { LogIn, LogOut, ScanLine, X } from "lucide-vue-next";
 import ActionButton from "./ActionButton.vue";
+import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
+import { useToast } from "~/composables/useToast";
 
 type QrMode = "check-in" | "clock-in" | "clock-out" | "custom";
 
@@ -74,19 +76,19 @@ const accent = computed(() => modePresets[props.mode].accent);
 const accentClasses = computed(() => {
     const map: Record<string, { chip: string; ring: string; text: string }> = {
         accent: {
-            chip: "bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300",
-            ring: "border-accent-200 dark:border-accent-500/20",
-            text: "text-accent-600 dark:text-accent-300",
+            chip: "bg-accent-50 text-accent-600",
+            ring: "border-accent-200",
+            text: "text-accent-600",
         },
         amber: {
-            chip: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300",
-            ring: "border-amber-200 dark:border-amber-500/20",
-            text: "text-amber-600 dark:text-amber-300",
+            chip: "bg-amber-50 text-amber-600",
+            ring: "border-amber-200",
+            text: "text-amber-600",
         },
         primary: {
-            chip: "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300",
-            ring: "border-primary-200 dark:border-primary-500/20",
-            text: "text-primary-600 dark:text-primary-300",
+            chip: "bg-primary-50 text-primary-600",
+            ring: "border-primary-200",
+            text: "text-primary-600",
         },
     };
 
@@ -141,6 +143,43 @@ watch(
     { immediate: true },
 );
 
+const { success, error: toastError } = useToast();
+const demoing = ref(false);
+
+function toApiType(mode: QrMode): "in" | "out" {
+    return mode === "clock-out" ? "out" : "in";
+}
+
+async function demoVerify() {
+    if (!props.token || demoing.value) return;
+
+    demoing.value = true;
+
+    try {
+        await onlineScheduleService.verifyQr({
+            token: props.token,
+            type: toApiType(props.mode),
+        });
+
+        success(
+            toApiType(props.mode) === "in"
+                ? "Clocked in successfully."
+                : "Clocked out successfully.",
+        );
+
+        emit("scanned");
+        emit("close");
+    } catch (err: any) {
+        toastError(
+            err?.response?.data?.message ??
+                err?.message ??
+                "Unable to verify this QR code.",
+        );
+    } finally {
+        demoing.value = false;
+    }
+}
+
 onUnmounted(() => {
     unbindChannel();
 });
@@ -155,7 +194,7 @@ onUnmounted(() => {
                 @click.self="emit('close')"
             >
                 <div
-                    class="w-full max-w-md rounded-2xl border border-slate-100 dark:border-white/10 bg-white dark:bg-secondary p-6 shadow-2xl"
+                    class="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-6 shadow-2xl"
                 >
                     <div class="mb-6 flex items-start justify-between gap-3">
                         <div class="flex items-start gap-3">
@@ -168,13 +207,13 @@ onUnmounted(() => {
 
                             <div>
                                 <h2
-                                    class="text-lg font-semibold text-gray-900 dark:text-white"
+                                    class="text-lg font-semibold text-gray-900"
                                 >
                                     {{ resolvedTitle }}
                                 </h2>
 
                                 <p
-                                    class="mt-0.5 text-sm text-gray-500 dark:text-gray-400"
+                                    class="mt-0.5 text-sm text-gray-500"
                                 >
                                     {{ resolvedDescription }}
                                 </p>
@@ -183,7 +222,7 @@ onUnmounted(() => {
 
                         <button
                             type="button"
-                            class="shrink-0 rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-white"
+                            class="shrink-0 rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
                             @click="emit('close')"
                         >
                             <X class="h-4 w-4" />
@@ -194,17 +233,17 @@ onUnmounted(() => {
                         <div
                             v-if="qrValue"
                             :class="accentClasses.ring"
-                            class="rounded-xl border-2 bg-white p-5 dark:bg-secondary"
+                            class="rounded-xl border-2 bg-white p-5"
                         >
                             <QrcodeVue :value="qrValue" :size="240" level="H" />
                         </div>
 
                         <div
                             v-else
-                            class="flex h-[280px] w-[280px] flex-col items-center justify-center gap-3 rounded-xl bg-gray-50 dark:bg-white/5"
+                            class="flex h-[280px] w-[280px] flex-col items-center justify-center gap-3 rounded-xl bg-gray-50"
                         >
                             <svg
-                                class="h-6 w-6 animate-spin text-gray-400 dark:text-gray-500"
+                                class="h-6 w-6 animate-spin text-gray-400"
                                 viewBox="0 0 24 24"
                                 fill="none"
                             >
@@ -224,7 +263,7 @@ onUnmounted(() => {
                             </svg>
 
                             <span
-                                class="text-sm text-gray-500 dark:text-gray-400"
+                                class="text-sm text-gray-500"
                             >
                                 Generating QR...
                             </span>
@@ -232,13 +271,22 @@ onUnmounted(() => {
                     </div>
 
                     <p
-                        class="mt-5 text-center text-xs text-gray-400 dark:text-gray-500"
+                        class="mt-5 text-center text-xs text-gray-400"
                     >
                         This code expires once scanned or when you close this
                         window.
                     </p>
 
-                    <div class="mt-6 flex justify-end">
+                    <div class="mt-6 flex justify-end gap-2">
+                        <ActionButton
+                            v-if="qrValue"
+                            variant="outline"
+                            :loading="demoing"
+                            @click="demoVerify"
+                        >
+                            Demo
+                        </ActionButton>
+
                         <ActionButton variant="primary" @click="emit('close')"
                             >Close
                         </ActionButton>

@@ -142,7 +142,7 @@
                     class="px-4 py-2.5 border-t border-gray-100 dark:border-white/10 text-center"
                 >
                     <NuxtLink
-                        to="/notifications"
+                        :to="notificationsLink"
                         class="text-sm text-blue-500 hover:underline dark:text-blue-300"
                         @click="open = false"
                     >
@@ -180,6 +180,25 @@ const open = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
 const buttonRef = ref<HTMLElement | null>(null);
 const dropdownStyle = ref<Record<string, string>>({});
+
+const notificationsFrom = computed(() => {
+    if (route.path.startsWith("/app/branches/")) return "dashboard";
+    if (route.path.startsWith("/app/owner/")) return "owner";
+    if (route.path.startsWith("/portal/")) return "portal";
+    return undefined;
+});
+
+const notificationsLink = computed(() => ({
+    path: "/profile",
+    query: {
+        tab: "notifications",
+        from: notificationsFrom.value,
+        branch:
+            notificationsFrom.value === "dashboard"
+                ? (route.params.uuid as string)
+                : undefined,
+    },
+}));
 
 const notifications = ref<Notification[]>([]);
 

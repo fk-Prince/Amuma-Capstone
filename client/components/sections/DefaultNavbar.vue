@@ -45,7 +45,7 @@ const DARK_GLOW = "dark:shadow-[0_10px_40px_-12px_rgba(0,0,0,0.8)]";
 const INDICATOR_BLEED = 8;
 
 const navInner = computed(() => {
-    if (variant.value === 2 || variant.value === 3) return "px-10";
+    if (variant.value === 2 || variant.value === 3) return "px-4 sm:px-10";
     if (variant.value === 1 || variant.value === 4)
         return "mx-auto max-w-[100rem] px-6";
     if (variant.value === 5) return "px-8 md:px-10 lg:px-20";
@@ -274,12 +274,12 @@ watch(
                     variant === 4
                 "
             >
-                <div class="flex flex-1 items-center">
+                <div class="flex flex-1 items-center min-w-0">
                     <NuxtLink to="/" class="shrink-0">
                         <img
                             :src="logoAmuma"
                             alt="AMUMA logo"
-                            class="w-[180px] object-contain transition-all duration-300"
+                            class="w-[130px] sm:w-[180px] object-contain transition-all duration-300"
                         />
                     </NuxtLink>
                 </div>

@@ -6,7 +6,10 @@ use App\Repository\PatientAccessRepository;
 use App\Repository\BookingRepository;
 use App\Http\Resources\PatientAccessResource;
 use App\Models\Booking;
+use App\Models\PatientAdmission;
+use App\Models\ScheduleService;
 use App\Models\User;
+use App\Service\Payment\GCashPayment;
 use Carbon\Carbon;
 use Exception;
 
@@ -32,6 +35,38 @@ class PatientAccessService
     public function bookings(array $payload)
     {
         return $this->patientAccessRepository->bookings($payload);
+    }
+
+    public function extendStay(array $payload, User $user)
+    {
+        $access = $this->patientAccessRepository->verifyAccess($payload);
+
+        $patient = $access->patient()
+            ->with(['currentAdmission.currentPeriod.branchContract'])
+            ->firstOrFail();
+
+        $admission = $patient->currentAdmission;
+
+        if (!$admission || $admission->status !== PatientAdmission::STATUS_ADMITTED) {
+            throw new Exception('This patient is not currently admitted.', 422);
+        }
+
+        $contract = $admission->currentPeriod?->branchContract;
+
+        if (!$contract) {
+            throw new Exception('No active accommodation plan found for this admission.', 422);
+        }
+
+        $client = $access->client;
+
+        return app(GCashPayment::class)->admissionExtensionInvoice([
+            'admission_id' => $admission->patient_admission_id,
+            'contract_id' => $contract->branch_contract_id,
+            'branch_id' => $patient->branch_id,
+            'patient_uuid' => $patient->uuid,
+            'amount' => (float) $contract->price,
+            'payor_name' => trim(($client?->first_name ?? '') . ' ' . ($client?->last_name ?? '')) ?: null,
+        ]);
     }
 
     public function bookAgain(array $payload, User $user)
@@ -78,6 +113,9 @@ class PatientAccessService
                 'latitude'      => $payload['latitude'] ?? null,
                 'longitude'     => $payload['longitude'] ?? null,
                 'services'      => $payload['services'] ?? [],
+                'price'         => $payload['type'] === ScheduleService::TYPE_ADL
+                    ? ($payload['rate'] ?? null)
+                    : null,
             ],
             'payment' => [
                 'total_amount' => $payload['price'] ?? 0,

@@ -185,12 +185,9 @@ const SCHEDULE_TYPES = [
 ] as const;
 
 const yesterdayStr = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-const nextWeekStr = new Date(Date.now() + 7 * 86400000)
-    .toISOString()
-    .slice(0, 10);
 
 const scheduleFrom = ref(yesterdayStr);
-const scheduleTo = ref(nextWeekStr);
+const scheduleTo = ref("");
 
 function describeConflicts(conflicts: ConflictItem[]): string {
     const first = conflicts[0];
@@ -431,8 +428,8 @@ const tabItems = computed(() =>
     visibleTabs.value.map((tab) => ({ label: tab, value: tab })),
 );
 
-function resetSchedule(s: ScheduleItem[]) {
-    scheduleData.value = s;
+function resetSchedule(updated: ScheduleItem) {
+    updateScheduleInList(updated);
 }
 
 async function refreshSchedule() {

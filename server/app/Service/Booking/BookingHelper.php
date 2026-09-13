@@ -59,7 +59,10 @@ class BookingHelper
             throw new Exception('The ADL pricing contract has an invalid price.', 422);
         }
 
-        return $total;
+        return [
+            'total' => $total,
+            'price' => $contract['price']
+        ];
     }
 
     protected function getFacilityTotal(array $payload, string $branchId)
@@ -106,9 +109,43 @@ class BookingHelper
             return ['total_amount' => 0, 'paid' => false];
         }
 
+        $total = $this->getTotal($payload);
+
         return [
-            'total_amount' => $this->getTotal($payload) ?? 0,
+            'total_amount' => is_array($total) ? ($total['total'] ?? 0) : ($total ?? 0),
             'payment_status' => 'pending'
+        ];
+    }
+
+    public function isCompleteAdmission(array $payload): bool
+    {
+        return ($payload['category'] ?? null) === 'facility'
+            && ($payload['booking_data']['facility']['type'] ?? null) === 'Complete';
+    }
+
+    public function getBookingPercent(array $payload): int
+    {
+        if (!$this->isCompleteAdmission($payload)) {
+            return 100;
+        }
+
+        $branch = $payload['branch'] ?? null;
+        $settings = $branch?->settings ?? [];
+
+        return min(100, max(1, (int) ($settings['complete_admission_booking_percent'] ?? 100)));
+    }
+
+    public function resolveBookingPayment(array $payload): array
+    {
+        $totalAmount = (float) ($this->getTotal($payload) ?? 0);
+        $percent = $this->getBookingPercent($payload);
+        $bookingAmount = round($totalAmount * $percent / 100, 2);
+
+        return [
+            'total_amount' => $totalAmount,
+            'booking_percent' => $percent,
+            'booking_amount' => $bookingAmount,
+            'balance_amount' => round($totalAmount - $bookingAmount, 2),
         ];
     }
 

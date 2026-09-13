@@ -11,14 +11,18 @@
                     class="sticky top-0 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-white/5 dark:to-primary-500/10 px-6 py-5 border-b border-gray-200 flex items-start justify-between gap-4 dark:border-white/10"
                 >
                     <div class="flex-1">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+                        <h2
+                            class="text-xl font-bold text-gray-900 dark:text-white"
+                        >
                             {{
                                 isEditMode
                                     ? "Update Homecare Package"
                                     : "Create Homecare Package"
                             }}
                         </h2>
-                        <p class="text-sm text-gray-600 mt-1 dark:text-gray-400">
+                        <p
+                            class="text-sm text-gray-600 mt-1 dark:text-gray-400"
+                        >
                             {{
                                 isEditMode
                                     ? "Update this caregiving service package"
@@ -43,38 +47,33 @@
                     @submit.prevent="submit"
                 >
                     <div>
-                        <Combobox
-                            :model-value="form.accommodation_type"
-                            @update:model-value="
-                                update('accommodation_type', $event)
-                            "
-                            label="Service Type"
-                            placeholder="Select service type"
-                            :items="serviceTypes"
-                            :error="errors.accommodation_type"
-                            required
-                        />
-                        <p class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400">
-                            Choose the type of activities-of-daily-living
-                            service provided
-                        </p>
+                        <label
+                            class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-gray-300"
+                        >
+                            Service Type
+                        </label>
+                        <div
+                            class="w-full rounded-lg border border-slate-200 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-800 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                        >
+                            {{ serviceTypes[0]?.label }}
+                        </div>
                     </div>
 
                     <div>
-                        <Combobox
-                            :model-value="form.billing_cycle"
-                            @update:model-value="
-                                update('billing_cycle', $event)
-                            "
-                            label="Billing Cycle"
-                            placeholder="Select billing cycle"
-                            :items="billingIntervals"
-                            :error="errors.billing_cycle"
-                            required
-                        />
-                        <p class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400">
-                            Homecare packages are billed hourly based on visits
-                            logged by the assigned caregiver
+                        <label
+                            class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-gray-300"
+                        >
+                            Billing Cycle
+                        </label>
+                        <div
+                            class="w-full rounded-lg border border-slate-200 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-800 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                        >
+                            {{ billingIntervals[0]?.label }}
+                        </div>
+                        <p
+                            class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400"
+                        >
+                            Homecare packages are billed hourly.
                         </p>
                     </div>
 
@@ -89,7 +88,9 @@
                             :error="errors.price"
                             required
                         />
-                        <p class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400">
+                        <p
+                            class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400"
+                        >
                             Set the hourly rate charged for this service
                         </p>
                     </div>
@@ -289,7 +290,6 @@ import { useRoute } from "vue-router";
 import { X } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
-import Combobox from "~/components/ui/Combobox.vue";
 
 import { branchContractService } from "~/api/branch-contract/BranchContractService";
 import { homecarePlanForm, homecarePlanSchema } from "~/types/contract";

@@ -99,6 +99,8 @@
                                     paymentStatus === 'refunded',
                                 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300':
                                     paymentStatus === 'pending',
+                                'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300':
+                                    paymentStatus === 'partial',
                             }"
                         >
                             {{ paymentStatus }}
@@ -612,7 +614,10 @@ const paymentStatus = computed(() => {
     return props.booking?.payment?.payment_status ?? null;
 });
 
-const isPaid = computed(() => paymentStatus.value === "paid");
+const isPaid = computed(
+    () =>
+        paymentStatus.value === "paid" || paymentStatus.value === "partial",
+);
 
 const isRejected = computed(
     () => String(props.booking?.status ?? "").toLowerCase() === "rejected",
@@ -625,11 +630,23 @@ const paymentRows = computed(() => {
 
     if (!payment) return [];
 
+    const hasBalance = Number(payment.balance_amount) > 0;
+    const amountPaid = hasBalance
+        ? Number(payment.booking_amount) || 0
+        : Number(payment.total_amount) || 0;
+
     return [
-        { label: "Amount paid", value: formatCurrency(Number(payment.total_amount) || 0) },
+        {
+            label: hasBalance ? "Reservation Fee Paid" : "Amount paid",
+            value: formatCurrency(amountPaid),
+        },
+        hasBalance && {
+            label: "Balance Due",
+            value: formatCurrency(Number(payment.balance_amount) || 0),
+        },
         { label: "Method", value: payment.payment_method },
         { label: "Card", value: payment.masked_card_number },
         { label: "Reference", value: payment.xendit_invoice_id },
-    ].filter((row) => row.value);
+    ].filter((row): row is { label: string; value: string } => Boolean(row && row.value));
 });
 </script>

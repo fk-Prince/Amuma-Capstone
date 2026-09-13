@@ -103,8 +103,12 @@ async function handleSignUp() {
         errors.value.lastName = "Last name is required.";
     }
 
+    const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (!signupData.value.email) {
         errors.value.email = "Email is required.";
+    } else if (!EMAIL_PATTERN.test(signupData.value.email)) {
+        errors.value.email = "Please enter a valid email address.";
     }
 
     if (!signupData.value.password) {
@@ -155,7 +159,21 @@ async function handleSignUp() {
         otpErrorMessage.value = null;
         success("OTP sent to your email.");
     } catch (err: any) {
-        error(err?.message || "Failed to send OTP.");
+        const validationErrors = err?.data?.errors;
+
+        if (validationErrors && Object.keys(validationErrors).length > 0) {
+            errors.value = {
+                ...errors.value,
+                ...Object.fromEntries(
+                    Object.entries(validationErrors).map(([key, value]: any) => [
+                        key,
+                        Array.isArray(value) ? value[0] : value,
+                    ]),
+                ),
+            };
+        } else {
+            error(err?.message || "Failed to send OTP.");
+        }
     } finally {
         loading.value = false;
     }

@@ -162,7 +162,7 @@ class PatientService
 
             $invoiceServices[] = [
                 'schedule_services_id' => $scheduleService->schedule_services_id,
-                'price' =>  $adlPrice ?? 0,
+                'price' => $homecare['price'] ?? $adlPrice ?? 0,
             ];
         }
 
@@ -351,8 +351,6 @@ class PatientService
         return $client;
     }
 
-    // Only a freshly made account still has the default password. An existing
-    // family keeps whatever they set, so nothing is printed for them.
     public function portalCredentials(?object $client): array
     {
         $user = $client?->user;

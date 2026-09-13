@@ -243,6 +243,10 @@ async function submit() {
             longitude: model.longitude,
             services: model.services,
             price: priceFor(model),
+            rate:
+                model.type === "ADL"
+                    ? Number(branch.value?.homecare?.adl_hourly_rate ?? 0)
+                    : undefined,
         });
 
         success(

@@ -46,7 +46,7 @@ const highlights = [
             class="relative z-10 mx-auto flex min-h-screen w-[94%] max-w-[1400px] items-center justify-center px-6 pt-32 pb-12 sm:px-15 lg:justify-start"
         >
             <div
-                class="grid w-full grid-cols-2 items-center gap-17 md:grid-cols-[1fr_560px]"
+                class="grid w-full grid-cols-1 items-center gap-17 md:grid-cols-[1fr_560px]"
             >
                 <div
                     class="hidden w-full max-w-[520px] flex-col gap-10 text-white lg:flex"

@@ -234,6 +234,7 @@
                                         mode="email"
                                         class-name="sm:col-span-6"
                                         :error="errors.email"
+                                        readonly
                                         @update:modelValue="clearError('email')"
                                     />
 
@@ -521,6 +522,215 @@
                             v-show="activeTab === 'notifications'"
                             class="space-y-5"
                         >
+                            <div
+                                class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                                <div
+                                    class="flex w-fit items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 dark:border-white/10 dark:bg-secondary"
+                                >
+                                    <button
+                                        v-for="nTab in notificationFilters"
+                                        :key="nTab.value"
+                                        type="button"
+                                        class="inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium transition"
+                                        :class="
+                                            notificationFilter === nTab.value
+                                                ? 'bg-primary text-white shadow-sm'
+                                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200'
+                                        "
+                                        @click="setNotificationFilter(nTab.value)"
+                                    >
+                                        {{ nTab.label }}
+
+                                        <span
+                                            v-if="
+                                                nTab.value === 'unread' &&
+                                                unreadCount
+                                            "
+                                            class="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                                            :class="
+                                                notificationFilter ===
+                                                nTab.value
+                                                    ? 'bg-white/20 text-white'
+                                                    : 'bg-rose-500 text-white'
+                                            "
+                                        >
+                                            {{ unreadCount }}
+                                        </span>
+                                    </button>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    :disabled="!unreadCount || markingAllRead"
+                                    class="inline-flex w-fit shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-secondary dark:text-gray-300 dark:hover:bg-white/10"
+                                    @click="markAllNotificationsRead"
+                                >
+                                    <LoaderCircle
+                                        v-if="markingAllRead"
+                                        class="h-3.5 w-3.5 animate-spin"
+                                    />
+                                    <CheckCheck v-else class="h-4 w-4" />
+                                    Mark all as read
+                                </button>
+                            </div>
+
+                            <section
+                                class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
+                            >
+                                <!-- Loading -->
+                                <div
+                                    v-if="notificationsLoading"
+                                    class="space-y-3"
+                                >
+                                    <div
+                                        v-for="n in 4"
+                                        :key="n"
+                                        class="h-[86px] animate-pulse rounded-xl bg-slate-100 dark:bg-white/5"
+                                    />
+                                </div>
+
+                                <!-- Empty -->
+                                <div
+                                    v-else-if="!notifications.length"
+                                    class="flex flex-col items-center justify-center py-20 text-center"
+                                >
+                                    <div
+                                        class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500"
+                                    >
+                                        <Bell class="h-6 w-6" />
+                                    </div>
+
+                                    <p
+                                        class="mt-3 text-sm font-semibold text-slate-800 dark:text-white"
+                                    >
+                                        {{
+                                            notificationFilter === "unread"
+                                                ? "No unread notifications"
+                                                : "No notifications yet"
+                                        }}
+                                    </p>
+
+                                    <p
+                                        class="mt-1 max-w-sm text-sm text-slate-500 dark:text-gray-400"
+                                    >
+                                        {{
+                                            notificationFilter === "unread"
+                                                ? "Everything here has been read."
+                                                : "Updates about bookings, schedules and billing will show up here."
+                                        }}
+                                    </p>
+                                </div>
+
+                                <!-- List -->
+                                <ul v-else class="space-y-2.5">
+                                    <li
+                                        v-for="item in notifications"
+                                        :key="item.id"
+                                        class="group relative flex cursor-pointer items-start gap-4 overflow-hidden rounded-xl border p-4 transition hover:-translate-y-px hover:border-primary-200 hover:shadow-md dark:hover:border-primary-500/40"
+                                        :class="
+                                            item.unread
+                                                ? 'border-primary-100 bg-primary-50/40 dark:border-primary-500/25 dark:bg-primary-500/5'
+                                                : 'border-slate-200 dark:border-white/10'
+                                        "
+                                        @click="openNotification(item)"
+                                    >
+                                        <span
+                                            v-if="item.unread"
+                                            class="absolute inset-y-0 left-0 w-1 bg-primary"
+                                            aria-hidden="true"
+                                        />
+
+                                        <span
+                                            class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                                            :class="
+                                                notificationToneFor(
+                                                    item.message_type,
+                                                ).wrapper
+                                            "
+                                        >
+                                            <component
+                                                :is="
+                                                    notificationToneFor(
+                                                        item.message_type,
+                                                    ).icon
+                                                "
+                                                class="h-4 w-4"
+                                            />
+                                        </span>
+
+                                        <div class="min-w-0 flex-1">
+                                            <div
+                                                class="flex flex-wrap items-center gap-2"
+                                            >
+                                                <p
+                                                    class="text-sm font-semibold text-slate-800 dark:text-white"
+                                                >
+                                                    {{ item.message_type }}
+                                                </p>
+
+                                                <span
+                                                    v-if="item.branch?.name"
+                                                    class="truncate rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-white/5 dark:text-gray-400"
+                                                >
+                                                    {{ item.branch.name }}
+                                                </span>
+                                            </div>
+
+                                            <p
+                                                class="mt-1 text-sm leading-6 text-slate-600 dark:text-gray-300"
+                                            >
+                                                {{ item.message }}
+                                            </p>
+
+                                            <p
+                                                class="mt-1.5 text-xs text-slate-400 dark:text-gray-500"
+                                            >
+                                                {{
+                                                    notifcationFormatDate(
+                                                        item.created_at,
+                                                    )
+                                                }}
+                                            </p>
+                                        </div>
+
+                                        <span
+                                            v-if="item.unread"
+                                            class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary"
+                                            aria-label="Unread"
+                                        />
+                                    </li>
+                                </ul>
+
+                                <div
+                                    v-if="
+                                        !notificationsLoading &&
+                                        notificationsPage <
+                                            notificationsLastPage
+                                    "
+                                    class="flex justify-center pt-6"
+                                >
+                                    <button
+                                        type="button"
+                                        :disabled="notificationsLoadingMore"
+                                        class="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-secondary dark:text-gray-300 dark:hover:bg-white/10"
+                                        @click="
+                                            fetchNotifications(
+                                                notificationsPage + 1,
+                                            )
+                                        "
+                                    >
+                                        {{
+                                            notificationsLoadingMore
+                                                ? "Loading..."
+                                                : "Load more"
+                                        }}
+                                    </button>
+                                </div>
+                            </section>
+
+                            <!-- Email preferences: not wired up to anything
+                                 real yet, kept for later.
                             <section
                                 class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
                             >
@@ -580,13 +790,9 @@
                                             </p>
                                         </div>
                                     </div>
-
-                                    <!-- <p class="text-xs text-slate-400">
-                                Email preferences aren't saved yet — this
-                                section is a placeholder.
-                            </p> -->
                                 </div>
                             </section>
+                            -->
                         </div>
 
                         <!-- APPEARANCE -->
@@ -650,12 +856,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
-import { useRoute } from "vue-router";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import {
     Bell,
+    CalendarClock,
+    CheckCheck,
+    ClipboardList,
+    CreditCard,
     LoaderCircle,
     MapPin,
+    MessageSquare,
     Moon,
     Sun,
     UserRound,
@@ -665,8 +876,11 @@ import BaseInput from "~/components/ui/BaseInput.vue";
 import PhoneInput from "~/components/ui/PhoneInput.vue";
 import LocationSelector from "~/components/ui/LocationSelector.vue";
 import { userService } from "~/api/user/UserService";
+import { notificationService } from "~/api/notification/NotificationService";
 import { useToast } from "~/composables/useToast";
-import { fetchAuthUser } from "~/composables/useAuthUser";
+import { fetchAuthUser, useAuthUser } from "~/composables/useAuthUser";
+import { notifcationFormatDate } from "~/utils/notification-time";
+import type { Notification } from "~/types/notification";
 
 definePageMeta({
     middleware: "auth-client",
@@ -677,6 +891,7 @@ definePageMeta({
 useHead({ title: "My Profile" });
 
 const route = useRoute();
+const router = useRouter();
 
 const layoutName =
     route.query.from === "dashboard"
@@ -696,13 +911,29 @@ const { success, error } = useToast();
 const loading = ref(true);
 const saving = ref(false);
 const useMap = ref(false);
-const activeTab = ref("profile");
 
 const tabs = [
     { label: "General", value: "profile", icon: UserRound },
     { label: "Notifications", value: "notifications", icon: Bell },
     { label: "Appearance", value: "appearance", icon: Sun },
 ];
+
+const validTabValues = tabs.map((tab) => tab.value);
+
+const initialTab = validTabValues.includes(route.query.tab as string)
+    ? (route.query.tab as string)
+    : "profile";
+
+const activeTab = ref(initialTab);
+
+// Keeps the URL in sync with the active tab so the dropdown can deep-link
+// straight to it (My Profile -> General, the bell's "View all" -> Notifications)
+// and so the tab survives a refresh or a shared link.
+watch(activeTab, (value) => {
+    router.replace({
+        query: { ...route.query, tab: value },
+    });
+});
 
 const isDark = useIsDark();
 
@@ -969,7 +1200,6 @@ const save = async () => {
             first_name: form.first_name,
             middle_name: form.middle_name,
             last_name: form.last_name,
-            email: form.email,
         };
 
         if (canEditPhone.value && form.phone_number) {
@@ -1031,4 +1261,184 @@ const save = async () => {
 };
 
 onMounted(fetchProfile);
+
+// Notifications tab
+const authUser = useAuthUser();
+const { $echo } = useNuxtApp();
+
+const notificationFilters = [
+    { label: "All", value: "all" },
+    { label: "Unread", value: "unread" },
+] as const;
+
+const notificationFilter = ref<"all" | "unread">("all");
+
+const notifications = ref<Notification[]>([]);
+const unreadCount = ref(0);
+
+const notificationsLoading = ref(true);
+const notificationsLoadingMore = ref(false);
+const markingAllRead = ref(false);
+
+const notificationsPage = ref(1);
+const notificationsLastPage = ref(1);
+
+let notificationChannel: any = null;
+let notificationHandler: ((event: any) => void) | null = null;
+
+const NOTIFICATION_TONES: Record<string, { icon: any; wrapper: string }> = {
+    Booking: {
+        icon: ClipboardList,
+        wrapper:
+            "bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300",
+    },
+    Schedule: {
+        icon: CalendarClock,
+        wrapper:
+            "bg-accent-50 text-accent-700 dark:bg-accent-500/10 dark:text-accent-300",
+    },
+    Billing: {
+        icon: CreditCard,
+        wrapper:
+            "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+    },
+};
+
+const notificationToneFor = (type: string) =>
+    NOTIFICATION_TONES[type] ?? {
+        icon: MessageSquare,
+        wrapper:
+            "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-gray-400",
+    };
+
+// Guards against a slow earlier page landing after a filter switch.
+let notificationsRequestId = 0;
+
+const fetchNotifications = async (page = 1) => {
+    const thisRequest = ++notificationsRequestId;
+
+    if (page === 1) notificationsLoading.value = true;
+    else notificationsLoadingMore.value = true;
+
+    try {
+        const res: any = await notificationService.list({
+            page,
+            per_page: 15,
+            unread_only: notificationFilter.value === "unread" ? 1 : undefined,
+        });
+
+        if (thisRequest !== notificationsRequestId) return;
+
+        const rows: Notification[] = res?.data ?? [];
+
+        notifications.value =
+            page === 1 ? rows : [...notifications.value, ...rows];
+
+        unreadCount.value = res?.meta?.unread_count ?? unreadCount.value;
+        notificationsPage.value = res?.meta?.current_page ?? page;
+        notificationsLastPage.value = res?.meta?.last_page ?? page;
+    } catch (err: any) {
+        if (thisRequest !== notificationsRequestId) return;
+
+        console.error(err);
+        error(err?.message ?? "Failed to load notifications.");
+    } finally {
+        if (thisRequest === notificationsRequestId) {
+            notificationsLoading.value = false;
+            notificationsLoadingMore.value = false;
+        }
+    }
+};
+
+const setNotificationFilter = (value: "all" | "unread") => {
+    if (notificationFilter.value === value) return;
+
+    notificationFilter.value = value;
+    fetchNotifications(1);
+};
+
+const openNotification = async (item: Notification) => {
+    if (!item.unread) return;
+
+    // Patched locally rather than refetching the list.
+    item.unread = false;
+    unreadCount.value = Math.max(unreadCount.value - 1, 0);
+
+    try {
+        await notificationService.markRead(item.id);
+    } catch (err: any) {
+        item.unread = true;
+        unreadCount.value += 1;
+        error(err?.message ?? "Failed to mark as read.");
+    }
+};
+
+const markAllNotificationsRead = async () => {
+    if (!unreadCount.value || markingAllRead.value) return;
+
+    markingAllRead.value = true;
+
+    try {
+        await notificationService.markRead();
+
+        notifications.value.forEach((n) => (n.unread = false));
+        unreadCount.value = 0;
+
+        // The unread tab's contents no longer match its filter.
+        if (notificationFilter.value === "unread") {
+            await fetchNotifications(1);
+        }
+    } catch (err: any) {
+        error(err?.message ?? "Failed to mark all as read.");
+    } finally {
+        markingAllRead.value = false;
+    }
+};
+
+const bindNotificationChannel = () => {
+    const uuid = authUser.value?.uuid;
+
+    if (notificationChannel && notificationHandler) {
+        notificationChannel.stopListening(
+            ".NotificationEvent",
+            notificationHandler,
+        );
+        notificationChannel = null;
+    }
+
+    if (!uuid || !$echo) return;
+
+    notificationHandler = (event: any) => {
+        notifications.value.unshift({
+            id: Date.now(),
+            message: event.message,
+            message_type: event.message_type,
+            created_at: new Date().toISOString(),
+            unread: true,
+        } as Notification);
+
+        unreadCount.value += 1;
+    };
+
+    notificationChannel = $echo
+        .private(`Notification.${uuid}`)
+        .listen(".NotificationEvent", notificationHandler);
+};
+
+watch(() => authUser.value?.uuid, bindNotificationChannel, {
+    immediate: true,
+});
+
+onMounted(async () => {
+    await fetchNotifications(1);
+});
+
+onBeforeUnmount(() => {
+    if (!notificationChannel || !notificationHandler) return;
+
+    notificationChannel.stopListening(
+        ".NotificationEvent",
+        notificationHandler,
+    );
+});
 </script>

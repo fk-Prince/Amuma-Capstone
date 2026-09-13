@@ -56,6 +56,35 @@ class GCashPayment implements ISubscriptionPayment, IFacilityPayment
         return response()->json($response->json());
     }
 
+    public function admissionExtensionInvoice(array $payload)
+    {
+        $user = Auth::user();
+        $reference = (string) Str::uuid();
+
+        $response = Http::withOptions([
+            'verify' => false
+        ])->withBasicAuth($this->secretKey, '')
+            ->post('https://api.xendit.co/v2/invoices', [
+                'external_id' => $reference,
+                'amount' => $payload['amount'],
+                'payer_email' => $user->email,
+                'payment_methods' => ['GCASH'],
+                'success_redirect_url' => config('app.client_url') . '/portal/loved-ones?extend=success',
+                'failure_redirect_url' => config('app.client_url') . '/portal/loved-ones?extend=failed',
+                'metadata' => [
+                    'payment_type' => 'ADMISSION_EXTENSION',
+                    'admission_id' => $payload['admission_id'],
+                    'contract_id' => $payload['contract_id'],
+                    'branch_id' => $payload['branch_id'],
+                    'patient_uuid' => $payload['patient_uuid'],
+                    'payor_name' => $payload['payor_name'],
+                    'amount' => $payload['amount'],
+                ],
+            ]);
+
+        return response()->json($response->json());
+    }
+
     public function facilityBilling(array $payload)
     {
         $user = Auth::user();
