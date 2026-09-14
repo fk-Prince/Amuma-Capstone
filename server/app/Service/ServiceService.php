@@ -204,7 +204,6 @@ class ServiceService
                     $payload['branch_id']
                 );
 
-
                 $this->serviceRepository->assignEmployee([
                     'employee_branch_id' => $employeeBranch->employee_branch_id,
                     'service_id' => $item['service_id'],

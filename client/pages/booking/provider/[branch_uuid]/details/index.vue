@@ -550,23 +550,25 @@ function goToStepMobile(step: string) {
 
 const sidebarTop = ref(90);
 
-const stepRefs: Record<string, typeof step1> = {
+const stepRefs = {
     step1,
     step2,
     step3,
     step4,
     step5,
 };
-const stepOrder = ["step1", "step2", "step3", "step4", "step5"];
+
+const stepOrder = ["step1", "step2", "step3", "step4", "step5"] as const;
 
 const updateActiveStepFromScroll = () => {
     const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
     const offset = (isDesktop ? 32 : 112) + 24;
 
-    let current = stepOrder[0];
+    let current: (typeof stepOrder)[number] = "step1";
 
     for (const key of stepOrder) {
-        const el = stepRefs[key]?.value;
+        const el = stepRefs[key].value;
+
         if (!el) continue;
 
         if (el.getBoundingClientRect().top - offset <= 0) {

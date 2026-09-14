@@ -47,9 +47,7 @@ class BranchRepository
             ->paginate($perPage);
     }
 
-    // A rejected branch still needs to appear in the switcher — with its
-    // status and reason surfaced — so the user isn't left wondering why it
-    // silently disappeared.
+
     public function getUserBranches(array $branchIds)
     {
         return  Branch::with(['location', 'subscriptions.plans', 'agencies.locations', 'subscriptionLink'])
