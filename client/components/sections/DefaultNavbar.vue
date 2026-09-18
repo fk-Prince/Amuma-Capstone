@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import logoAmuma from "~/assets/logo/logoAmuma.png";
+import logoIcon from "~/assets/logo/logo.png";
+import BrandLogo from "../ui/BrandLogo.vue";
 import BaseButton from "../ui/BaseButton.vue";
 import { useAuthUser } from "~/composables/useAuthUser";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
@@ -245,12 +246,8 @@ watch(
                 v-if="variant === 5"
                 class="flex h-full w-full items-center justify-between"
             >
-                <NuxtLink to="/" class="shrink-0">
-                    <img
-                        :src="logoAmuma"
-                        alt="AMUMA logo"
-                        class="w-[150px] sm:w-[180px] object-contain transition-all duration-300"
-                    />
+                <NuxtLink to="/" class="shrink-0" aria-label="AMUMA home">
+                    <BrandLogo />
                 </NuxtLink>
 
                 <div class="flex shrink-0 items-center gap-1 sm:gap-3">
@@ -272,12 +269,8 @@ watch(
                 v-if="variant === 6"
                 class="flex w-full items-center justify-between"
             >
-                <NuxtLink to="/" class="shrink-0">
-                    <img
-                        :src="logoAmuma"
-                        alt="AMUMA logo"
-                        class="w-[180px] object-contain transition-all duration-300"
-                    />
+                <NuxtLink to="/" class="shrink-0" aria-label="AMUMA home">
+                    <BrandLogo />
                 </NuxtLink>
 
                 <NavbarProfileDropdown
@@ -298,11 +291,10 @@ watch(
                 "
             >
                 <div class="flex flex-1 items-center min-w-0">
-                    <NuxtLink to="/" class="shrink-0">
-                        <img
-                            :src="logoAmuma"
-                            alt="AMUMA logo"
-                            class="w-[130px] sm:w-[180px] object-contain transition-all duration-300"
+                    <NuxtLink to="/" class="shrink-0" aria-label="AMUMA home">
+                        <BrandLogo
+                            icon-class="h-8 w-8 sm:h-10 sm:w-10"
+                            text-class="text-lg sm:text-2xl"
                         />
                     </NuxtLink>
                 </div>
@@ -408,7 +400,7 @@ watch(
         <ClientOnly v-if="variant === 1 || variant === 2 || variant === 3">
             <DynamicSidebar
                 :open="mobileMenuOpen"
-                :logo="logoAmuma"
+                :logo="logoIcon"
                 :authMenu="navList"
                 :user="user"
                 :desktop-breakpoint="1280"
