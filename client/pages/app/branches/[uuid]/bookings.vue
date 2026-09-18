@@ -1,9 +1,10 @@
 <template>
     <div
-        class="min-h-screen-header bg-slate-100 p-2 overflow-visible flex flex-col dark:bg-surface"
+        class="min-h-screen-header bg-[#EEF3FB] p-2 overflow-visible flex flex-col dark:bg-surface"
     >
         <div
-            class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-4 items-stretch w-full flex-1 min-h-0"
+            class="grid grid-cols-1 gap-4 items-stretch w-full flex-1 min-h-0"
+            :class="asideVisible ? 'lg:grid-cols-[minmax(0,1fr)_400px]' : ''"
         >
             <div class="w-full min-w-0 min-h-0 flex flex-col order-1">
                 <template v-if="!selectedReferenceId">
@@ -28,6 +29,27 @@
                                     @update:dateFrom="dateFrom = $event"
                                     @update:dateTo="dateTo = $event"
                                 />
+
+                                <button
+                                    type="button"
+                                    class="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E4EFED] text-slate-500 transition hover:bg-slate-50 hover:text-primary dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
+                                    :aria-label="
+                                        showOverview
+                                            ? 'Hide booking overview'
+                                            : 'Show booking overview'
+                                    "
+                                    :aria-pressed="showOverview"
+                                    @click="showOverview = !showOverview"
+                                >
+                                    <component
+                                        :is="
+                                            showOverview
+                                                ? PanelRightClose
+                                                : PanelRightOpen
+                                        "
+                                        class="h-4 w-4"
+                                    />
+                                </button>
                             </div>
                         </div>
 
@@ -289,10 +311,12 @@
             </div>
 
             <aside
+                v-if="asideVisible"
                 class="w-full lg:self-start order-2"
                 :class="{
                     'lg:sticky lg:top-[6%]': selectedBooking,
                     'h-full': !selectedBooking,
+                    'hidden lg:block': !selectedReferenceId,
                 }"
             >
                 <template v-if="!selectedReferenceId">
@@ -589,6 +613,44 @@
             </aside>
         </div>
 
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition duration-200 ease-out"
+                enter-from-class="opacity-0"
+                leave-active-class="transition duration-150 ease-in"
+                leave-to-class="opacity-0"
+            >
+                <div
+                    v-if="showOverview && !selectedReferenceId"
+                    class="fixed inset-0 z-50 lg:hidden"
+                >
+                    <div
+                        class="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
+                        @click="showOverview = false"
+                    />
+
+                    <aside
+                        class="absolute inset-y-0 right-0 flex w-[min(400px,88vw)] flex-col overflow-y-auto bg-[#EEF3FB] p-3 shadow-2xl dark:bg-surface"
+                    >
+                        <button
+                            type="button"
+                            aria-label="Hide booking overview"
+                            class="mb-2 ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-black/5 dark:text-gray-400 dark:hover:bg-white/10"
+                            @click="showOverview = false"
+                        >
+                            <X class="h-4 w-4" />
+                        </button>
+
+                        <BookingSidebar
+                            class="w-full"
+                            :overview="overview"
+                            @newBooking="handleNewBooking"
+                        />
+                    </aside>
+                </div>
+            </Transition>
+        </Teleport>
+
         <AdmissionDetail
             v-if="showAccommodationModal && selectedBooking"
             variant="modal"
@@ -619,8 +681,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from "vue";
+import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { PanelRightClose, PanelRightOpen, X } from "lucide-vue-next";
 import { bookingService } from "~/api/booking/BookingService";
 import BookingSidebar from "~/components/sections/app/Booking/BookingSidebar.vue";
 import BookingFilter from "~/components/sections/app/Booking/BookingFilter.vue";
@@ -642,6 +705,24 @@ const { success, error } = useToast();
 
 const route = useRoute();
 const router = useRouter();
+
+const OVERVIEW_WIDTH = 1280;
+const OVERVIEW_INLINE_WIDTH = 1024;
+
+const showOverview = ref(true);
+
+function closeOverviewWhenNarrow() {
+    if (window.innerWidth < OVERVIEW_INLINE_WIDTH) showOverview.value = false;
+}
+
+onMounted(() => {
+    showOverview.value = window.innerWidth >= OVERVIEW_WIDTH;
+    window.addEventListener("resize", closeOverviewWhenNarrow);
+});
+
+onUnmounted(() => {
+    window.removeEventListener("resize", closeOverviewWhenNarrow);
+});
 
 definePageMeta({
     layout: "dashboard",
@@ -1021,6 +1102,10 @@ const selectedReferenceId = computed<string | null>(() => {
 
     return typeof value === "string" ? value : null;
 });
+
+const asideVisible = computed(() =>
+    selectedReferenceId.value ? !!selectedBooking.value : showOverview.value,
+);
 
 function selectBooking(referenceId: string | null) {
     if (!referenceId) return;

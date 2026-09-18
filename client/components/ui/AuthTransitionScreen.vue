@@ -59,7 +59,9 @@ const currentYear = new Date().getFullYear();
                     <p class="text-base font-semibold text-white">
                         {{ title }}
                     </p>
-                    <p class="text-sm text-gray-400">{{ subtitle }}</p>
+                    <p v-if="subtitle" class="text-sm text-gray-400">
+                        {{ subtitle }}
+                    </p>
                 </div>
 
                 <div class="mt-2 flex items-center gap-1.5">

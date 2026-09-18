@@ -3,38 +3,7 @@
         <div
             class="lg:h-full rounded-lg bg-white border border-[#E4EFED] p-5 flex flex-col overflow-hidden dark:bg-secondary dark:border-white/10"
         >
-            <button
-                type="button"
-                class="lg:hidden flex items-center justify-between w-full mb-5"
-                @click="open = !open"
-            >
-                <div>
-                    <h3 class="font-semibold text-[#16302E] dark:text-white">
-                        Booking Overview
-                    </h3>
-
-                    <p class="text-xs text-[#6B8A87] mt-1 dark:text-gray-400">
-                        Today's booking activity
-                    </p>
-                </div>
-
-                <svg
-                    class="h-5 w-5 text-primary transition-transform duration-300"
-                    :class="{ 'rotate-180': open }"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                >
-                    <path
-                        d="M5 7.5L10 12.5L15 7.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    />
-                </svg>
-            </button>
-
-            <div class="hidden lg:flex items-center justify-between mb-5">
+            <div class="flex items-center justify-between mb-5">
                 <div>
                     <h3 class="font-semibold text-[#16302E] dark:text-white">
                         Booking Overview
@@ -52,18 +21,7 @@
                 </div>
             </div>
 
-            <Transition
-                enter-active-class="transition-all duration-300 ease-out"
-                enter-from-class="max-h-0 opacity-0 -translate-y-2"
-                enter-to-class="max-h-[1200px] opacity-100 translate-y-0"
-                leave-active-class="transition-all duration-300 ease-in"
-                leave-from-class="max-h-[1200px] opacity-100 translate-y-0"
-                leave-to-class="max-h-0 opacity-0 -translate-y-2"
-            >
-                <div
-                    v-show="open"
-                    class="flex-1 overflow-hidden lg:overflow-auto"
-                >
+            <div class="flex-1 overflow-auto">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div
                             class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
@@ -245,13 +203,12 @@
                         </div>
                     </div>
                 </div>
-            </Transition>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
+import { onBeforeUnmount, computed, watch } from "vue";
 import {
     CalendarDays,
     Clock,
@@ -262,8 +219,6 @@ import { useRoute } from "vue-router";
 import { notifcationFormatDate } from "~/utils/notification-time";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { formatStatus } from "~/types/booking";
-
-const open = ref(false);
 
 const route = useRoute();
 const user = useAuthUser();
@@ -281,20 +236,6 @@ let channel: any = null;
 let handler: ((e: any) => void) | null = null;
 
 const branchUuid = computed(() => route.params.uuid as string);
-
-const isDesktop = ref(false);
-
-const checkScreen = () => {
-    if (typeof window === "undefined") return;
-
-    isDesktop.value = window.innerWidth >= 1024;
-
-    if (isDesktop.value) {
-        open.value = true;
-    } else {
-        open.value = false;
-    }
-};
 
 const bindNotification = () => {
     const uuid = user.value?.uuid;
@@ -328,16 +269,9 @@ const bindNotification = () => {
 
 watch(() => user.value?.uuid, bindNotification, { immediate: true });
 
-onMounted(() => {
-    checkScreen();
-    window.addEventListener("resize", checkScreen);
-});
-
 // stopListening with the stored handler, not leave(): the header bell and
 // other components share this channel and leave() would tear it down for all.
 onBeforeUnmount(() => {
-    window.removeEventListener("resize", checkScreen);
-
     if (channel && handler) {
         channel.stopListening(".NotificationEvent", handler);
         channel = null;

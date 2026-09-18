@@ -437,22 +437,6 @@ const getLocalDateStr = (date: Date) => {
     return `${year}-${month}-${day}`;
 };
 
-const getDefaultDateRange = () => {
-    const today = new Date();
-
-    const from = new Date(today);
-    from.setDate(from.getDate() - 1);
-
-    // Left open-ended by default so everything from `from` onward is
-    // fetched, rather than being capped at an arbitrary week out.
-    return {
-        from: getLocalDateStr(from),
-        to: "",
-    };
-};
-
-const defaultDates = getDefaultDateRange();
-
 const localType = ref(props.type);
 const localBookingType = ref(props.bookingType);
 
@@ -475,10 +459,12 @@ watch(localType, () => {
     if (!stillOffered) localBookingType.value = "all";
 });
 const localStatus = ref(props.status);
-const localDateFrom = ref(props.dateFrom || defaultDates.from);
-const localDateTo = ref(props.dateTo || defaultDates.to);
+const localDateFrom = ref(props.dateFrom);
+const localDateTo = ref(props.dateTo);
 
-const activePreset = ref<string | null>(null);
+const activePreset = ref<string | null>(
+    props.dateFrom || props.dateTo ? null : "all",
+);
 
 const periodPresets = [
     { label: "All", value: "all" },
@@ -508,6 +494,13 @@ watch(
 );
 
 watch(
+    () => props.bookingType,
+    (v) => {
+        localBookingType.value = v;
+    },
+);
+
+watch(
     () => props.status,
     (v) => {
         localStatus.value = v;
@@ -527,6 +520,10 @@ watch(
         localDateTo.value = v;
     },
 );
+
+watch([localDateFrom, localDateTo], ([from, to]) => {
+    if (!from && !to) activePreset.value = "all";
+});
 
 function applyPreset(value: string) {
     activePreset.value = value;
@@ -567,13 +564,11 @@ function applyPreset(value: string) {
 
 function resetAll() {
     localType.value = "all";
+    localBookingType.value = "all";
     localStatus.value = "all";
-
-    const defaults = getDefaultDateRange();
-
-    localDateFrom.value = defaults.from;
-    localDateTo.value = defaults.to;
-    activePreset.value = null;
+    localDateFrom.value = "";
+    localDateTo.value = "";
+    activePreset.value = "all";
 }
 
 function applyAndClose() {
@@ -634,14 +629,6 @@ const periodSummary = computed(() => {
 });
 
 onMounted(() => {
-    if (!props.dateFrom) {
-        emit("update:dateFrom", defaultDates.from);
-    }
-
-    if (!props.dateTo) {
-        emit("update:dateTo", defaultDates.to);
-    }
-
     window.addEventListener("resize", handleViewportChange);
     window.addEventListener("scroll", handleViewportChange, true);
 });

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-vue-next";
 import AlertMessage from "../ui/AlertMessage.vue";
+import AuthTransitionScreen from "../ui/AuthTransitionScreen.vue";
 import TermsModal from "../ui/TermsModal.vue";
 
 import { useAuthUser } from "~/composables/useAuthUser";
@@ -13,7 +14,14 @@ import { useBranchStore } from "#imports";
 const branch = useBranchStore();
 const user = useAuthUser();
 const redirecting = ref(false);
+const welcomeName = ref("");
 const showTerms = ref(false);
+
+const welcomeTitle = computed(() =>
+    welcomeName.value
+        ? `Welcome back, ${welcomeName.value}!`
+        : "Welcome back!",
+);
 
 const signinData = ref<SigninRequest>({
     email: "prince.sestoso@gmail.com",
@@ -66,6 +74,7 @@ async function handleSignIn() {
     try {
         const res = await authService.login(signinData.value);
         showAlert(alert, "success", res.message);
+        welcomeName.value = res.user?.first_name ?? "";
         redirecting.value = true;
         setTimeout(async () => {
             loading.value = true;
@@ -237,5 +246,11 @@ async function googleUrl() {
         </form>
 
         <TermsModal v-if="showTerms" @close="showTerms = false" />
+
+        <AuthTransitionScreen
+            v-if="redirecting"
+            :title="welcomeTitle"
+            subtitle=""
+        />
     </div>
 </template>

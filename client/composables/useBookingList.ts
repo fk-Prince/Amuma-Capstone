@@ -10,7 +10,7 @@ export function useBookingList(branchUuid: Ref<string>) {
     const isFetching = ref(false);
 
     const searchQuery = ref("");
-    const statusFilter = ref<string>("all");
+    const statusFilter = ref<string>("pending");
     const typeFilter = ref<string>("all");
     const bookingTypeFilter = ref<string>("all");
 
@@ -21,21 +21,15 @@ export function useBookingList(branchUuid: Ref<string>) {
         return `${year}-${month}-${day}`;
     }
 
-    const defaultDateRange = getDefaultDateRange();
-    function getDefaultDateRange() {
-        const from = new Date();
-        from.setDate(from.getDate() - 1);
+    function daysAgo(days: number): string {
+        const date = new Date();
+        date.setDate(date.getDate() - days);
 
-        // Left open-ended by default so everything from `from` onward is
-        // fetched, rather than being capped at an arbitrary week out.
-        return {
-            from: toDateInputValue(from),
-            to: "",
-        };
+        return toDateInputValue(date);
     }
-    const today = toDateInputValue(new Date());
-    const dateFrom = ref<string>(defaultDateRange.from);
-    const dateTo = ref<string>(defaultDateRange.to);
+
+    const dateFrom = ref<string>(daysAgo(2));
+    const dateTo = ref<string>("");
 
     const pagination = usePagination({ pageSize: 10 });
 
@@ -117,6 +111,7 @@ export function useBookingList(branchUuid: Ref<string>) {
         searchQuery,
         statusFilter,
         typeFilter,
+        bookingTypeFilter,
         dateFrom,
         dateTo,
         pagination,
