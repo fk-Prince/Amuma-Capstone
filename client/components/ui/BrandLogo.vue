@@ -38,12 +38,11 @@ withDefaults(
 .brand-shine {
     background-image: linear-gradient(
         100deg,
-        #1e68d1 0%,
-        #3182ed 30%,
-        #cfe6ff 48%,
-        #ffffff 52%,
-        #3182ed 70%,
-        #1e68d1 100%
+        #3182ed 0%,
+        #3182ed 38%,
+        #7fb1f8 50%,
+        #3182ed 62%,
+        #3182ed 100%
     );
     background-size: 250% 100%;
     background-clip: text;
@@ -65,7 +64,8 @@ withDefaults(
 @media (prefers-reduced-motion: reduce) {
     .brand-shine {
         animation: none;
-        background-position: 50% 0;
+        background-image: none;
+        color: #3182ed;
     }
 }
 </style>
