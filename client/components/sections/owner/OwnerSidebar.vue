@@ -45,7 +45,7 @@
         </div>
 
         <nav
-            class="sidebar-scroll flex-1 px-3.5 space-y-4 mt-5 overflow-y-auto overflow-x-hidden"
+            class="sidebar-scroll flex-1 px-3.5 mt-5 flex flex-col gap-4 lg:gap-1.5 lg:group-hover:gap-4 overflow-y-auto overflow-x-hidden"
         >
             <SidebarNavGroup
                 v-for="group in groupedMenu"

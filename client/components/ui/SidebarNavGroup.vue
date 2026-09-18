@@ -1,9 +1,9 @@
 <template>
-    <div class="space-y-1.5">
+    <div class="flex flex-col gap-1.5">
         <button
             v-if="showLabel"
             type="button"
-            class="flex w-full items-center justify-between gap-2 rounded-md px-[13px] py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400 whitespace-nowrap transition-opacity duration-150 delay-75 hover:text-gray-600 lg:pointer-events-none lg:opacity-0 lg:group-hover:pointer-events-auto lg:group-hover:opacity-100 dark:text-gray-500 dark:hover:text-gray-300"
+            class="flex w-full items-center justify-between gap-2 rounded-md px-[13px] py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400 whitespace-nowrap hover:text-gray-600 lg:hidden lg:group-hover:flex dark:text-gray-500 dark:hover:text-gray-300"
             :aria-expanded="!collapsed"
             @click="toggle"
         >
