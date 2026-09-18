@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
+use App\Enums\RoleEnum;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Http\Resources\EmployeeResource;
@@ -206,7 +207,7 @@ class EmployeeService
             }
 
             $employee->employeeBranch()->create([
-                'role_name' => $payload['role_name'],
+                'role_name' => RoleEnum::slug($payload['role_name']),
                 'assignment_type' => $payload['assignment_type'],
                 'branch_id' => $branch->branch_id,
                 'employee_id' => $employee->employee_id,
@@ -292,7 +293,7 @@ class EmployeeService
             $employee->employeeBranch()
                 ->where('branch_id', $branch->branch_id)
                 ->update([
-                    'role_name' => strtolower($payload['role_name']),
+                    'role_name' => RoleEnum::slug($payload['role_name']),
                     'assignment_type' => $payload['assignment_type'],
                 ]);
 

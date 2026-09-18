@@ -72,8 +72,21 @@ enum RoleEnum: string
         };
     }
 
+    public static function normalize(?string $role): ?self
+    {
+        return self::tryFrom(
+            str_replace([' ', '-'], '_', strtolower(trim((string) $role)))
+        );
+    }
+
+    public static function slug(?string $role): string
+    {
+        return self::normalize($role)?->value
+            ?? str_replace([' ', '-'], '_', strtolower(trim((string) $role)));
+    }
+
     public static function permissionsFor(?string $role): array
     {
-        return self::tryFrom(strtolower((string) $role))?->permissions() ?? [];
+        return self::normalize($role)?->permissions() ?? [];
     }
 }

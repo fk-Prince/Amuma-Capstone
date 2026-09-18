@@ -20,7 +20,6 @@ class Employee extends Model
         'employee_code',
         'first_name',
         'last_name',
-        'role_name',
         'birth_date',
         'location_id',
         'phone_number',
