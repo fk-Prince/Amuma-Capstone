@@ -157,12 +157,7 @@
                             :icon="item.icon"
                             :label="item.label"
                             :to="item.to"
-                            @click="
-                                async () => {
-                                    if (!item.to) await handleMenuClick(item);
-                                    close();
-                                }
-                            "
+                            @click="() => onMenuItem(item, close)"
                         />
                     </div>
 
@@ -193,6 +188,12 @@
         </BaseDropdownMenu>
 
         <AuthTransitionScreen v-if="loggingOut" />
+
+        <AuthTransitionScreen
+            v-else-if="navigating"
+            title="Taking you to your dashboard"
+            subtitle=""
+        />
     </ClientOnly>
 </template>
 
@@ -205,7 +206,6 @@ import DropdownItem from "../ui/DropdownItem.vue";
 import ChevronIcon from "../icons/dropdown.vue";
 import AuthTransitionScreen from "./AuthTransitionScreen.vue";
 import { authService } from "~/api/auth/AuthService.js";
-import { resetAuth } from "~/composables/useAuthUser";
 import {
     handleMenuClick,
     profileMenuDropDownList,
@@ -244,6 +244,23 @@ const roleClass = computed(
 );
 
 const loggingOut = ref(false);
+const navigating = ref(false);
+
+async function onMenuItem(item: any, close: () => void) {
+    if (item.to) {
+        close();
+        return;
+    }
+
+    navigating.value = true;
+    close();
+
+    try {
+        await handleMenuClick(item);
+    } finally {
+        navigating.value = false;
+    }
+}
 const isDark = useIsDark();
 const route = useRoute();
 
@@ -309,7 +326,9 @@ const logout = async () => {
     } catch (err: any) {
         console.error(err);
     } finally {
-        resetAuth();
+        // Clearing the user here unmounts this dropdown, and the transition
+        // screen with it, exposing the page until the reload paints.
+        localStorage.removeItem("auth");
         window.location.href = "/auth/signin";
     }
 };

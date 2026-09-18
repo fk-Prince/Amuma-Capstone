@@ -1,6 +1,6 @@
 <template>
     <section
-        class="pt-[50px] min-h-screen relative overflow-hidden bg-secondary"
+        class="pt-[74px] min-h-screen relative overflow-hidden bg-secondary"
     >
         <img
             :src="logo"
@@ -11,7 +11,9 @@
             class="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/90 to-secondary/70"
         ></div>
 
-        <div class="relative z-10 max-w-[100rem] mx-auto px-6 py-20 lg:py-28">
+        <div
+            class="relative z-10 w-[88%] max-w-[1600px] mx-auto px-4 sm:px-10 py-20 lg:py-28"
+        >
             <div
                 class="grid grid-cols-1 lg:grid-cols-2 gap-10 xl:gap-16 items-center"
             >

@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen pt-[50px] bg-white dark:bg-surface">
+    <div class="min-h-screen pt-[74px] bg-white dark:bg-surface">
         <main class="max-w-6xl mx-auto px-6 py-16">
             <div class="text-center mb-10">
                 <p
@@ -97,7 +97,7 @@ useHead({ title: "Product" });
 
 definePageMeta({
     layout: "default",
-    navVariant: 1,
+    navVariant: 3,
     navTheme: "light",
 });
 

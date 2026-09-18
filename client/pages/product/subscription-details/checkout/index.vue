@@ -1,6 +1,6 @@
 ﻿<template>
-    <div class="min-h-screen bg-slate-50 w-full pt-[100px] dark:bg-secondary">
-        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="min-h-screen bg-slate-50 w-full pt-[124px] dark:bg-secondary">
+        <div class="w-[88%] max-w-[1600px] mx-auto px-4 sm:px-10 py-10">
             <div class="mb-8">
                 <h1 class="text-2xl font-bold text-slate-800 dark:text-white">
                     Confirm your subscription
@@ -49,7 +49,7 @@ useHead({ title: "Subscription Checkout" });
 
 definePageMeta({
     middleware: ["auth-client", "subscription-guard"],
-    navVariant: 1,
+    navVariant: 3,
 });
 
 const card = ref<CardDetails>({

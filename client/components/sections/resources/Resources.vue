@@ -1,7 +1,7 @@
 <template>
     <div class="bg-white dark:bg-secondary relative">
         <section
-            class="relative z-10 w-full overflow-hidden bg-light/40 pb-12 pt-24 sm:pb-16 sm:pt-32 dark:bg-transparent"
+            class="relative z-10 w-full overflow-hidden bg-light/40 pb-12 pt-32 sm:pb-16 dark:bg-transparent"
         >
             <div
                 class="pointer-events-none absolute -top-24 right-[-100px] h-[380px] w-[380px] rounded-full bg-primary-200/40 blur-[100px]"

@@ -3,113 +3,113 @@
         class="w-[95%] sm:w-[92%] lg:w-[90%] xl:w-[88%] 2xl:w-[70%] mx-auto py-6"
     >
         <div v-if="loading" class="min-h-[500px]">
-            <div class="animate-pulse space-y-8">
-                <ol class="flex items-start w-full">
-                    <li
-                        v-for="index in 4"
-                        :key="index"
-                        class="flex items-start flex-1"
-                    >
-                        <div class="flex flex-col items-center shrink-0">
-                            <div
-                                class="h-9 w-9 rounded-full"
-                                :class="
-                                    index === 1
-                                        ? 'bg-primary-200'
-                                        : 'bg-muted-light'
-                                "
-                            ></div>
-                            <div
-                                class="h-3 w-16 rounded bg-muted-light mt-2"
-                            ></div>
-                        </div>
-
-                        <div
-                            v-if="index < 4"
-                            class="flex-1 h-px bg-muted-light mx-3 mt-[18px]"
-                        ></div>
-                    </li>
-                </ol>
-
-                <div class="rounded-2xl p-6 space-y-8">
-                    <div class="space-y-3">
-                        <div
-                            class="h-6 w-48 rounded-lg bg-primary-100 dark:bg-primary-500/15"
-                        ></div>
-                        <div
-                            class="h-4 w-80 max-w-full rounded bg-muted-light/60"
-                        ></div>
-                    </div>
-
-                    <div class="space-y-3">
-                        <div
-                            v-for="index in 3"
+            <div class="animate-pulse">
+                <div class="flex w-full justify-center px-2 sm:px-0">
+                    <ol class="flex w-full max-w-6xl items-start justify-center">
+                        <li
+                            v-for="index in 4"
                             :key="index"
-                            class="flex items-center justify-between rounded-xl border p-4"
-                            :class="
-                                index === 1
-                                    ? 'border-primary-100 bg-primary-50'
-                                    : 'border-muted-light'
-                            "
+                            :class="[
+                                'flex items-start',
+                                index < 4 ? 'flex-1' : 'shrink-0',
+                            ]"
                         >
-                            <div class="flex items-center gap-3">
+                            <div class="flex shrink-0 flex-col items-center">
                                 <div
-                                    class="h-4 w-4 rounded-full"
+                                    class="h-7 w-7 sm:h-9 sm:w-9 rounded-full"
                                     :class="
                                         index === 1
-                                            ? 'bg-primary-100'
-                                            : 'bg-muted-light'
+                                            ? 'bg-primary-200 dark:bg-primary-500/30'
+                                            : 'bg-muted-light dark:bg-white/10'
                                     "
                                 ></div>
 
-                                <div class="space-y-2">
-                                    <div
-                                        class="h-4 w-28 rounded bg-muted-light"
-                                    ></div>
-                                    <div
-                                        class="h-3 w-56 max-w-[40vw] rounded bg-muted-light/60"
-                                    ></div>
-                                </div>
+                                <div
+                                    class="mt-1.5 sm:mt-2 h-2.5 w-12 sm:w-16 rounded bg-muted-light dark:bg-white/10"
+                                ></div>
                             </div>
 
                             <div
-                                class="h-5 w-20 rounded"
-                                :class="
-                                    index === 1
-                                        ? 'bg-primary-200'
-                                        : 'bg-muted-light'
-                                "
+                                v-if="index < 4"
+                                class="mx-1.5 sm:mx-4 mt-[14px] sm:mt-[18px] h-px flex-1 bg-muted-light dark:bg-white/10"
                             ></div>
-                        </div>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="rounded-2xl p-6 space-y-8">
+                    <div class="flex flex-col items-center gap-2">
+                        <div
+                            class="h-11 w-60 max-w-full rounded-full bg-muted-light/60 dark:bg-white/10"
+                        ></div>
+                        <div
+                            class="h-3 w-64 max-w-full rounded bg-muted-light/60 dark:bg-white/5"
+                        ></div>
                     </div>
 
-                    <div class="space-y-3">
-                        <div class="h-4 w-28 rounded bg-muted-light"></div>
+                    <div
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch"
+                    >
                         <div
-                            class="h-3 w-72 max-w-full rounded bg-muted-light/60"
-                        ></div>
-
-                        <div class="grid grid-cols-2 gap-3">
+                            v-for="index in 3"
+                            :key="index"
+                            class="relative flex h-full flex-col gap-3 rounded-xl border p-5 sm:p-6"
+                            :class="
+                                index === 1
+                                    ? 'border-primary-200 bg-primary-50/60 dark:border-primary-500/20 dark:bg-primary-500/10'
+                                    : 'border-muted-light dark:border-white/10'
+                            "
+                        >
                             <div
-                                v-for="index in 2"
-                                :key="index"
-                                class="h-24 rounded-xl border"
+                                class="absolute top-4 right-4 h-5 w-5 rounded-full"
                                 :class="
                                     index === 1
-                                        ? 'border-primary-200 bg-primary-50'
-                                        : 'border-muted-light bg-muted-light/40'
+                                        ? 'bg-primary-200 dark:bg-primary-500/30'
+                                        : 'bg-muted-light dark:bg-white/10'
                                 "
                             ></div>
+
+                            <div
+                                class="h-10 w-10 rounded-lg bg-primary-100 dark:bg-primary-500/15"
+                            ></div>
+
+                            <div class="space-y-2">
+                                <div
+                                    class="h-4 w-32 max-w-full rounded bg-muted-light dark:bg-white/10"
+                                ></div>
+                                <div
+                                    class="h-3 w-full rounded bg-muted-light/60 dark:bg-white/5"
+                                ></div>
+                                <div
+                                    class="h-3 w-5/6 rounded bg-muted-light/60 dark:bg-white/5"
+                                ></div>
+                                <div
+                                    class="h-3 w-2/3 rounded bg-muted-light/60 dark:bg-white/5"
+                                ></div>
+                            </div>
+
+                            <div
+                                class="mt-auto flex items-center justify-between gap-2 border-t border-muted-light/70 pt-4 dark:border-white/10"
+                            >
+                                <div
+                                    class="h-3 w-14 rounded bg-muted-light/60 dark:bg-white/5"
+                                ></div>
+                                <div
+                                    class="h-5 w-24 rounded bg-primary-200 dark:bg-primary-500/25"
+                                ></div>
+                            </div>
                         </div>
                     </div>
 
                     <div
-                        class="flex justify-between border-t border-muted-light pt-6 dark:border-white/10"
+                        class="flex items-center justify-between border-t border-muted-light pt-6 dark:border-white/10"
                     >
                         <div
-                            class="h-10 w-24 rounded-xl bg-muted-light/60"
+                            class="h-10 w-[110px] rounded-xl bg-muted-light/60 dark:bg-white/10"
                         ></div>
-                        <div class="h-10 w-28 rounded-xl bg-accent-200"></div>
+                        <div
+                            class="h-10 w-32 rounded-xl bg-primary-200 dark:bg-primary-500/25"
+                        ></div>
                     </div>
                 </div>
             </div>
@@ -249,12 +249,12 @@
                     </div>
 
                     <div
-                        class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 items-stretch"
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 items-stretch"
                     >
                         <label
                             v-for="plan in checkout.plans"
                             :key="plan.plan_id"
-                            class="relative flex flex-col h-full gap-3 border border-primary/20 p-8 rounded-xl cursor-pointer transition-all"
+                            class="relative flex flex-col h-full gap-3 border border-primary/20 p-5 sm:p-6 rounded-xl cursor-pointer transition-all"
                             :class="
                                 checkout.selectedPlan?.plan_id === plan.plan_id
                                     ? 'border-primary bg-primary-50/60 dark:bg-primary-500/10 ring-1 ring-primary/20'
@@ -301,7 +301,7 @@
                             </div>
 
                             <!-- Plan information -->
-                            <div class="pr-6">
+                            <div>
                                 <p
                                     class="font-semibold text-base text-secondary leading-tight dark:text-white"
                                 >
@@ -317,10 +317,10 @@
 
                             <!-- Pricing -->
                             <div
-                                class="flex items-center justify-between pt-4 mt-auto border-t border-muted-light/70 dark:border-white/10"
+                                class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-4 mt-auto border-t border-muted-light/70 dark:border-white/10"
                             >
                                 <span
-                                    class="text-sm font-medium text-muted dark:text-gray-400"
+                                    class="text-sm font-medium text-muted whitespace-nowrap dark:text-gray-400"
                                 >
                                     {{
                                         checkout.selectedInterval === "yearly"

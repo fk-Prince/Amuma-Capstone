@@ -3,7 +3,7 @@
         :class="
             embedded
                 ? 'w-full'
-                : 'min-h-screen bg-slate-50/70 pt-[100px] dark:bg-surface'
+                : 'min-h-screen bg-slate-50/70 pt-[124px] dark:bg-surface'
         "
     >
         <div
@@ -884,7 +884,7 @@ import type { Notification } from "~/types/notification";
 
 definePageMeta({
     middleware: "auth-client",
-    navVariant: 1,
+    navVariant: 3,
     theme: "light",
 });
 
