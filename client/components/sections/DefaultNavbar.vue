@@ -36,6 +36,8 @@ const variant = computed(() => route.meta.navVariant ?? 1);
 
 const CONTENT_BOX = "inset-x-0 mx-auto w-[88%] max-w-[1600px]";
 
+const AUTH_BOX = "inset-x-0 mx-auto w-[94%] max-w-[1400px]";
+
 const DARK_CHROME_SOLID = "dark:border-white/10 dark:bg-secondary";
 
 const DARK_CHROME_RAISED = "dark:border-white/10 dark:bg-[#212A3E]";
@@ -48,7 +50,7 @@ const navInner = computed(() => {
     if (variant.value === 2 || variant.value === 3) return "px-4 sm:px-10";
     if (variant.value === 1 || variant.value === 4)
         return "mx-auto max-w-[100rem] px-6";
-    if (variant.value === 5) return "px-8 md:px-10 lg:px-20";
+    if (variant.value === 5) return "px-6";
     if (variant.value === 6) return "mx-auto max-w-[100rem] px-6 sm:px-10";
 
     return "px-6";
@@ -105,7 +107,13 @@ const header = computed(() => {
                 .filter(Boolean)
                 .join(" ");
         case 5:
-            return "relative z-50 w-full h-[90px] flex items-center bg-transparent";
+            return [
+                "fixed top-4 sm:top-6 z-50",
+                AUTH_BOX,
+                "h-[72px] sm:h-[90px] rounded-[20px] flex items-center",
+                "border border-light/20 bg-light/10 backdrop-blur-sm",
+                "shadow-[0_10px_40px_-12px_rgba(0,0,0,0.55)]",
+            ].join(" ");
         case 6:
             return (
                 ["relative w-full h-[90px] flex items-center bg-transparent"]
@@ -115,6 +123,12 @@ const header = computed(() => {
             );
     }
 });
+
+const authSwitch = computed(() =>
+    route.path === "/auth/signup"
+        ? { label: "Sign in", to: "/auth/signin" }
+        : { label: "Sign up", to: "/auth/signup" },
+);
 
 const isActive = (to: string) => {
     if (to === "/") return route.path === "/";
@@ -224,26 +238,35 @@ watch(
 <template>
     <header :class="header">
         <nav
-            class="relative flex justify-between items-center w-full h-[90px]"
-            :class="navInner"
+            class="relative flex justify-between items-center w-full"
+            :class="[navInner, variant === 5 ? 'h-full' : 'h-[90px]']"
         >
             <nav
                 v-if="variant === 5"
-                class="flex justify-between items-center w-full h-[90px]"
+                class="flex h-full w-full items-center justify-between"
             >
                 <NuxtLink to="/" class="shrink-0">
                     <img
                         :src="logoAmuma"
                         alt="AMUMA logo"
-                        class="w-[180px] md:w-[250px] object-contain transition-all duration-300"
+                        class="w-[150px] sm:w-[180px] object-contain transition-all duration-300"
                     />
                 </NuxtLink>
 
-                <ClientOnly>
-                    <ThemeToggle
-                        class="text-slate-500 hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-white/10"
-                    />
-                </ClientOnly>
+                <div class="flex shrink-0 items-center gap-1 sm:gap-3">
+                    <ClientOnly>
+                        <ThemeToggle
+                            class="text-light/70 hover:bg-light/10 hover:text-light"
+                        />
+                    </ClientOnly>
+
+                    <NuxtLink
+                        :to="authSwitch.to"
+                        class="whitespace-nowrap text-sm font-semibold text-primary-300 transition-colors duration-200 hover:text-light"
+                    >
+                        {{ authSwitch.label }}
+                    </NuxtLink>
+                </div>
             </nav>
             <nav
                 v-if="variant === 6"

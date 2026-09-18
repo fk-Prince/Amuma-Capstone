@@ -12,7 +12,7 @@ const highlights = [
 
 <template>
     <div
-        class="relative -mt-[90px] min-h-dvh w-full overflow-hidden bg-slate-950"
+        class="relative min-h-dvh w-full overflow-hidden bg-slate-950"
     >
         <div class="absolute inset-0 hidden md:block overflow-hidden">
             <img
@@ -43,7 +43,7 @@ const highlights = [
         </div>
 
         <div
-            class="relative z-10 mx-auto flex min-h-screen w-[94%] max-w-[1400px] items-center justify-center px-6 pt-32 pb-12 sm:px-15 lg:justify-start"
+            class="relative z-10 mx-auto flex min-h-screen w-[94%] max-w-[1400px] items-center justify-center px-6 pt-32 pb-12 lg:justify-start"
         >
             <div
                 class="grid w-full grid-cols-1 items-center gap-17 md:grid-cols-[1fr_560px]"
@@ -105,7 +105,7 @@ const highlights = [
                 </div>
 
                 <div
-                    class="w-full max-w-[480px] shrink-0 rounded-[20px] border border-white/10 bg-white/95 px-6 py-8 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:px-8 dark:bg-secondary/95"
+                    class="w-full max-w-[480px] shrink-0 rounded-[20px] border border-white/10 bg-white/95 px-6 py-8 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:px-8 md:ml-auto dark:bg-secondary/95"
                 >
                     <div class="mb-7 text-center">
                         <h2

@@ -44,7 +44,6 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import PageHeader from "~/components/ui/PageHeader.vue";
 import { useDebounceFn } from "@vueuse/core";
 import { useRoute } from "vue-router";
 import EmployeeForm from "~/components/sections/app/Employee/EmployeeForm.vue";
@@ -136,12 +135,17 @@ const statusCount = (status?: string) => {
 };
 
 const applyEmployee = (employee: Employee) => {
-    const index = employees.value.findIndex((row) => row.uuid === employee.uuid);
+    const index = employees.value.findIndex(
+        (row) => row.uuid === employee.uuid,
+    );
 
     if (index === -1) {
         employees.value = [employee, ...employees.value];
         totalEmployee.value += 1;
-        statusCount(employee.status)?.value++;
+
+        const added = statusCount(employee.status);
+
+        if (added) added.value += 1;
 
         return;
     }

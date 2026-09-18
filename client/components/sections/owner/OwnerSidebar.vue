@@ -7,7 +7,7 @@
     />
 
     <aside
-        class="group fixed inset-y-0 left-0 z-40 flex h-full w-64 shrink-0 flex-col overflow-hidden border-r border-gray-100 dark:border-white/10 bg-white dark:bg-secondary transition-transform duration-200 ease-in-out lg:static lg:z-20 lg:w-[76px] lg:translate-x-0 lg:transition-[width] lg:hover:w-64"
+        class="group fixed inset-y-0 left-0 z-40 flex h-full w-64 shrink-0 flex-col overflow-hidden border-r border-gray-100 dark:border-white/10 bg-white dark:bg-secondary transition-transform duration-200 ease-in-out lg:static lg:z-20 lg:w-[76px] lg:translate-x-0 lg:rounded-2xl lg:border lg:shadow-sm lg:transition-[width] lg:hover:w-64"
         :class="open ? 'translate-x-0' : '-translate-x-full'"
     >
         <div

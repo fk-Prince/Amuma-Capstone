@@ -1,8 +1,10 @@
 <template>
-    <div class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden">
+    <div
+        class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden lg:gap-3 lg:p-3"
+    >
         <PortalSidebar :open="isOpen" @close="isOpen = false" />
 
-        <div class="flex-1 flex flex-col min-w-0 h-full">
+        <div class="flex-1 flex flex-col min-w-0 h-full lg:gap-3">
             <PortalHeader @open="isOpen = true" />
 
             <main

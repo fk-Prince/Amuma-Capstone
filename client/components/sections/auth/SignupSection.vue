@@ -24,7 +24,7 @@ const features = [
 </script>
 
 <template>
-    <div class="relative -mt-[90px] min-h-dvh w-full bg-slate-900">
+    <div class="relative min-h-dvh w-full bg-slate-900">
         <div class="absolute inset-0 hidden md:block overflow-hidden">
             <img
                 :src="signinLogo"
@@ -54,10 +54,10 @@ const features = [
         </div>
 
         <div
-            class="relative z-10 flex min-h-dvh w-full items-start px-6 pt-[130px] pb-8 md:px-10 lg:items-center lg:px-16 lg:py-14"
+            class="relative z-10 flex min-h-dvh w-full items-start pt-[130px] pb-8 lg:items-center lg:py-14"
         >
             <div
-                class="mx-auto flex w-full max-w-[1360px] items-center justify-center lg:justify-between lg:gap-10"
+                class="mx-auto flex w-[94%] max-w-[1400px] items-center justify-center px-6 lg:justify-between lg:gap-10"
             >
                 <div
                     class="hidden w-full max-w-[520px] flex-col gap-8 text-white lg:flex"

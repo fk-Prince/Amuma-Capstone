@@ -1,6 +1,6 @@
 ﻿﻿<template>
     <div
-        class="relative h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden print:h-auto print:overflow-visible"
+        class="relative h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden lg:gap-3 lg:p-3 print:h-auto print:gap-0 print:overflow-visible print:p-0"
     >
         <div
             class="pointer-events-none absolute inset-0 overflow-hidden print:hidden"
@@ -31,7 +31,9 @@
             />
         </div>
 
-        <div class="relative flex-1 flex flex-col min-w-0 h-full">
+        <div
+            class="relative flex-1 flex flex-col min-w-0 h-full lg:gap-3 print:gap-0"
+        >
             <div class="print:hidden">
                 <DashboardHeader @open="isOpen = true" />
             </div>
