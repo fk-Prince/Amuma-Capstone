@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted } from "vue";
 import { Printer, X } from "lucide-vue-next";
 
 import { formatAmount } from "~/utils/currency";
+import { stringToDateTime } from "~/utils/time";
 import type { BookingRetrieve } from "~/types/booking";
 
 const props = defineProps<{
@@ -17,11 +18,16 @@ const emit = defineEmits<{
 
 const isFacility = computed(() => props.booking.category === "facility");
 
+const reviewLabel = computed(() =>
+    props.booking.status === "rejected" ? "Rejected by" : "Approved by",
+);
+
 const serviceType = computed(() => {
     const booking = props.booking;
 
     if (booking.homecare?.type === "Medical") return "Medical Services";
-    if (booking.homecare?.type === "ADL") return "Activity of Daily Living (ADL)";
+    if (booking.homecare?.type === "ADL")
+        return "Activity of Daily Living (ADL)";
     if (booking.facility?.type === "Complete") return "Complete Admission";
     if (booking.facility?.type) return booking.facility.type;
 
@@ -31,10 +37,12 @@ const serviceType = computed(() => {
 const patientName = computed(() => {
     const patient = props.booking.patient;
 
-    return [patient?.first_name, patient?.middle_name, patient?.last_name]
-        .filter(Boolean)
-        .join(" ")
-        .trim() || "—";
+    return (
+        [patient?.first_name, patient?.middle_name, patient?.last_name]
+            .filter(Boolean)
+            .join(" ")
+            .trim() || "—"
+    );
 });
 
 const scheduleDate = computed(() =>
@@ -46,15 +54,15 @@ const scheduleDate = computed(() =>
 const serviceAddress = computed(() =>
     isFacility.value
         ? "On-site — at the facility"
-        : props.booking.homecare?.address ?? "—",
+        : (props.booking.homecare?.address ?? "—"),
 );
 
 const payment = computed(() => props.booking.payment ?? null);
 
+const balanceDue = computed(() => Number(payment.value?.balance_amount ?? 0));
+
 const isCompleteAdmission = computed(
-    () =>
-        (props.booking.homecare?.type ?? props.booking.facility?.type) ===
-        "Complete",
+    () => props.booking.facility?.type === "Complete",
 );
 
 const displayBranchName = computed(
@@ -178,7 +186,9 @@ onBeforeUnmount(() => {
                             <p class="text-lg font-bold tabular-nums">
                                 {{ booking.reference_id ?? "—" }}
                             </p>
-                            <p class="mt-1 text-xs text-slate-500 dark:text-gray-400">
+                            <p
+                                class="mt-1 text-xs text-slate-500 dark:text-gray-400"
+                            >
                                 Issued {{ longDateTime(booking.created_at) }}
                             </p>
                         </div>
@@ -270,10 +280,12 @@ onBeforeUnmount(() => {
                         <table class="mt-3 w-full text-sm">
                             <tbody>
                                 <tr
-                                    v-if="payment.balance_amount > 0"
+                                    v-if="balanceDue > 0"
                                     class="border-b border-slate-100 dark:border-white/10"
                                 >
-                                    <td class="py-1.5 text-slate-600 dark:text-gray-400">
+                                    <td
+                                        class="py-1.5 text-slate-600 dark:text-gray-400"
+                                    >
                                         Total Contract Amount
                                     </td>
                                     <td class="py-1.5 text-right tabular-nums">
@@ -281,10 +293,14 @@ onBeforeUnmount(() => {
                                     </td>
                                 </tr>
 
-                                <tr class="border-b border-slate-100 dark:border-white/10">
-                                    <td class="py-1.5 text-slate-600 dark:text-gray-400">
+                                <tr
+                                    class="border-b border-slate-100 dark:border-white/10"
+                                >
+                                    <td
+                                        class="py-1.5 text-slate-600 dark:text-gray-400"
+                                    >
                                         {{
-                                            payment.balance_amount > 0
+                                            balanceDue > 0
                                                 ? "Reservation Fee Paid"
                                                 : "Amount paid"
                                         }}
@@ -302,14 +318,16 @@ onBeforeUnmount(() => {
                                 </tr>
 
                                 <tr
-                                    v-if="payment.balance_amount > 0"
+                                    v-if="balanceDue > 0"
                                     class="border-b border-slate-100 dark:border-white/10"
                                 >
-                                    <td class="py-1.5 text-slate-600 dark:text-gray-400">
+                                    <td
+                                        class="py-1.5 text-slate-600 dark:text-gray-400"
+                                    >
                                         Balance Due
                                     </td>
                                     <td class="py-1.5 text-right tabular-nums">
-                                        ₱{{ peso(payment.balance_amount) }}
+                                        ₱{{ peso(balanceDue) }}
                                     </td>
                                 </tr>
 
@@ -317,7 +335,9 @@ onBeforeUnmount(() => {
                                     v-if="payment.payment_method"
                                     class="border-b border-slate-100 dark:border-white/10"
                                 >
-                                    <td class="py-1.5 text-slate-600 dark:text-gray-400">
+                                    <td
+                                        class="py-1.5 text-slate-600 dark:text-gray-400"
+                                    >
                                         Method
                                     </td>
                                     <td class="py-1.5 text-right">
@@ -326,10 +346,12 @@ onBeforeUnmount(() => {
                                 </tr>
 
                                 <tr v-if="payment.masked_card_number">
-                                    <td class="py-1.5 text-slate-600 dark:text-gray-400">Card</td>
                                     <td
-                                        class="py-1.5 text-right tabular-nums"
+                                        class="py-1.5 text-slate-600 dark:text-gray-400"
                                     >
+                                        Card
+                                    </td>
+                                    <td class="py-1.5 text-right tabular-nums">
                                         {{ payment.masked_card_number }}
                                     </td>
                                 </tr>
@@ -349,19 +371,28 @@ onBeforeUnmount(() => {
                             above when following up with the branch.
                         </p>
 
-                        <div class="mt-8 flex justify-between gap-10">
-                            <div class="flex-1">
-                                <div class="border-t border-slate-400 pt-1">
-                                    <p class="text-[10px] uppercase">
-                                        Client / Guardian signature
-                                    </p>
-                                </div>
-                            </div>
+                        <div class="mt-8 flex justify-end">
+                            <div class="w-1/2">
+                                <p
+                                    class="pb-1 text-sm font-semibold text-slate-800 dark:text-white"
+                                >
+                                    {{ booking.reviewed_by || "—" }}
+                                </p>
 
-                            <div class="flex-1">
                                 <div class="border-t border-slate-400 pt-1">
                                     <p class="text-[10px] uppercase">
-                                        Received by (staff)
+                                        {{ reviewLabel }}
+                                    </p>
+
+                                    <p
+                                        v-if="booking.reviewed_at"
+                                        class="text-[10px]"
+                                    >
+                                        {{
+                                            stringToDateTime(
+                                                booking.reviewed_at,
+                                            )
+                                        }}
                                     </p>
                                 </div>
                             </div>
@@ -378,16 +409,11 @@ onBeforeUnmount(() => {
     body.acknowledgement-printing * {
         visibility: hidden !important;
     }
-
-    body.acknowledgement-printing #acknowledgement-print,
+    s body.acknowledgement-printing #acknowledgement-print,
     body.acknowledgement-printing #acknowledgement-print * {
         visibility: visible !important;
     }
 
-    /* The dark theme's utility classes (dark:bg-secondary, dark:text-white,
-       etc.) are still active during print since they key off the .dark
-       class on <html>, not a media query, so they have to be neutralized
-       explicitly here rather than relying on the light-mode classes alone. */
     body.acknowledgement-printing #acknowledgement-print,
     body.acknowledgement-printing #acknowledgement-print * {
         background-color: transparent !important;

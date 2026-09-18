@@ -171,6 +171,9 @@ class PaymentService
                 [
                     'client_id' => $client->client_id,
                     'method' => $method,
+                    'party_name' => trim(
+                        ($client->first_name ?? '') . ' ' . ($client->last_name ?? '')
+                    ) ?: null,
                     'masked_account_number' => $maskedAccountDetails,
                     'transaction_reference_id' => $reference ?: null,
                 ]
@@ -178,9 +181,6 @@ class PaymentService
 
             $receipt = $this->paymentRepository->create([
                 'transaction_id'        => $transaction->transaction_id,
-                'payor_name'            => trim(
-                    ($client->first_name ?? '') . ' ' . ($client->last_name ?? '')
-                ) ?: null,
                 'prior_balance'         => $totalBalance,
                 'created_at'            => now(),
             ]);

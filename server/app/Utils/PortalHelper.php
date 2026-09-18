@@ -28,6 +28,9 @@ class PortalHelper
             'booking_type' => $booking->booking_type,
             'valid_until' => $booking->valid_until,
             'status' => $booking->status,
+            'reason' => $booking->reason,
+            'reviewed_by' => $booking->reviewed_by_name,
+            'reviewed_at' => $booking->reviewed_by ? $booking->updated_at : null,
             'branch_name' => $booking->branch?->name,
             'branch_image' => $booking->branch?->image,
 
@@ -332,6 +335,7 @@ class PortalHelper
                         'status' => $withdrawal?->status ?? 'credited',
                         'declined_reason' => $withdrawal?->declined_reason,
                         'masked_account_detail' => $withdrawal?->masked_account_number,
+                        'account_name' => $withdrawal?->party_name,
                         'created_at' => $credit?->created_at?->format('Y-m-d H:i:s'),
                     ];
                 }
@@ -401,6 +405,7 @@ class PortalHelper
                             'refund_method' => $withdrawal?->method,
                             'refund_code' => $withdrawal?->transaction_code,
                             'masked_account_detail' => $withdrawal?->masked_account_number,
+                            'account_name' => $withdrawal?->party_name,
                             'declined_reason' => $withdrawal?->declined_reason,
                             'status' => $withdrawal?->status ?? 'credited',
                             'created_at' => $credit?->created_at?->format('Y-m-d H:i:s'),

@@ -396,12 +396,15 @@ class RefundService
             ? MaskUtil::accountDetails($method, trim((string) $payload['account_details']))
             : null;
 
+        $accountName = trim((string) ($payload['account_name'] ?? '')) ?: null;
+
         return DB::transaction(function () use (
             $patient,
             $amount,
             $status,
             $method,
             $accountDetails,
+            $accountName,
             $user
         ) {
             $credits = $this->refundRepository->availableFor($patient->patient_id);
@@ -421,6 +424,7 @@ class RefundService
                 [
                     'client_id' => $user?->client?->client_id,
                     'method' => $method ?: null,
+                    'party_name' => $accountName,
                     'masked_account_number' => $accountDetails,
                 ]
             );

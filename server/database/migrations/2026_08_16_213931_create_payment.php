@@ -15,7 +15,6 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('transactions', 'transaction_id')
                 ->cascadeOnUpdate();
-            $table->string('payor_name')->nullable();
             $table->decimal('cash_tendered', 10, 2)->nullable();
             $table->decimal('prior_balance', 10, 2)->nullable();
             $table->decimal('new_balance', 10, 2)->nullable();

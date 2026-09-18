@@ -39,6 +39,7 @@ class Booking extends Model
         'booking_data',
         'status',
         'reason',
+        'reviewed_by',
         'category',
         'valid_until',
         'booking_type'
@@ -89,6 +90,16 @@ class Booking extends Model
     public function branch()
     {
         return $this->hasOne(Branch::class, 'branch_id', 'branch_id');
+    }
+
+    public function reviewer()
+    {
+        return $this->belongsTo(Employee::class, 'reviewed_by', 'employee_id');
+    }
+
+    public function getReviewedByNameAttribute(): ?string
+    {
+        return $this->reviewer?->full_name ?: null;
     }
 
     public function patientAdmissionBookings()

@@ -28,7 +28,7 @@ export const patientFields = [
 
 
 export const Field = (
-    fieldProps: { label: string; value: any },
+    fieldProps: { label: string; value?: any },
     { slots, attrs }: any,
 ) =>
     h(

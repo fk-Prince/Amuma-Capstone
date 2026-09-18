@@ -847,6 +847,7 @@ const showModal = ref(false);
 const form = ref({
     method: "GCash" as RefundMethod,
     accountDetails: "",
+    accountName: "",
     amount: null as number | null,
 });
 
@@ -859,6 +860,7 @@ function openModal() {
     form.value = {
         method: "GCash",
         accountDetails: "",
+        accountName: "",
         amount: refundableAmount.value,
     };
 
@@ -894,6 +896,12 @@ async function submit() {
         return;
     }
 
+    if (!form.value.accountName.trim()) {
+        formError.value = "Enter the name on the account receiving the credit.";
+
+        return;
+    }
+
     const patientId = lovedOnes.value[selectedIndex.value]?.patient_id;
 
     if (!patientId) {
@@ -912,6 +920,7 @@ async function submit() {
             patient_id: patientId,
             method: form.value.method,
             account_details: form.value.accountDetails,
+            account_name: form.value.accountName,
             ...(requested > 0 ? { amount: requested } : {}),
         });
 
@@ -2403,6 +2412,7 @@ async function openReceipt(receiptNo?: string | null) {
                 v-model:amount="form.amount"
                 v-model:method="form.method"
                 v-model:account-details="form.accountDetails"
+                v-model:account-name="form.accountName"
                 :submitting="isRefunding"
                 :error-message="formError"
                 @close="closeModal"

@@ -77,6 +77,9 @@ class BookingFactory
             [
                 'client_id' => $client->client_id,
                 'method' => $payload['payment']['payment_method'] ?? 'cash',
+                'party_name' => trim(
+                    ($client->first_name ?? '') . ' ' . ($client->last_name ?? '')
+                ) ?: null,
                 'masked_account_number' => $payload['payment']['masked_card_number'] ?? null,
                 'transaction_reference_id' => $payload['payment']['xendit_invoice_id'] ?? null,
             ]
@@ -84,9 +87,6 @@ class BookingFactory
 
         $receipt = $this->paymentRepository->create([
             'transaction_id' => $transaction->transaction_id,
-            'payor_name' => trim(
-                ($client->first_name ?? '') . ' ' . ($client->last_name ?? '')
-            ) ?: null,
             'prior_balance' => $totalAmount,
             'created_at' => now(),
         ]);

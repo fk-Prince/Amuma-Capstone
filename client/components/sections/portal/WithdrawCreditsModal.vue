@@ -13,6 +13,7 @@ defineProps<{
     amount: number | null;
     method: WithdrawMethod;
     accountDetails: string;
+    accountName: string;
     submitting?: boolean;
     errorMessage?: string;
 }>();
@@ -23,6 +24,7 @@ const emit = defineEmits<{
     (event: "update:amount", value: number | null): void;
     (event: "update:method", value: WithdrawMethod): void;
     (event: "update:accountDetails", value: string): void;
+    (event: "update:accountName", value: string): void;
 }>();
 
 function peso(amount: number) {
@@ -192,6 +194,19 @@ function peso(amount: number) {
                         "
                         @update:model-value="
                             emit('update:accountDetails', String($event ?? ''))
+                        "
+                    />
+
+                    <BaseInput
+                        :model-value="accountName"
+                        label="Account Name"
+                        :placeholder="
+                            method === 'GCash'
+                                ? 'Name registered to the GCash number'
+                                : 'Name printed on the card'
+                        "
+                        @update:model-value="
+                            emit('update:accountName', String($event ?? ''))
                         "
                     />
 

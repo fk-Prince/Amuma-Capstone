@@ -26,6 +26,7 @@ class RefundController extends Controller
             'patient_id' => ['required', 'integer'],
             'method' => ['required', 'string', 'max:100'],
             'account_details' => ['required', 'string', 'max:255'],
+            'account_name' => ['required', 'string', 'max:255'],
             'amount' => ['nullable', 'numeric', 'gt:0'],
             'reason' => ['nullable', 'string', 'max:500'],
         ]);
@@ -54,6 +55,7 @@ class RefundController extends Controller
             'amount' => ['nullable', 'numeric', 'min:0.01'],
             'method' => ['nullable', 'string', 'max:100'],
             'account_details' => ['nullable', 'string', 'max:255'],
+            'account_name' => ['nullable', 'string', 'max:255'],
             'reason' => ['nullable', 'string', 'max:500'],
         ]);
 

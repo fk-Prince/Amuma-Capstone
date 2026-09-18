@@ -19,6 +19,7 @@ class RefundService extends BaseService {
         patient_id: number;
         method: string;
         account_details: string;
+        account_name: string;
         amount?: number;
         reason?: string;
     }): Promise<any> {
@@ -35,6 +36,7 @@ class RefundService extends BaseService {
         amount?: number;
         method?: string;
         account_details?: string;
+        account_name?: string;
         reason?: string;
     }): Promise<any> {
         return await this.request(this.resource + "/issue", "POST", payload);

@@ -32,6 +32,7 @@ class Transaction extends Model
         'direction',
         'status',
         'method',
+        'party_name',
         'masked_account_number',
         'declined_reason',
         'description',

@@ -66,7 +66,9 @@
                             </button>
                         </div>
 
-                        <p class="text-sm text-muted dark:text-gray-400 truncate capitalize">
+                        <p
+                            class="text-sm text-muted dark:text-gray-400 truncate capitalize"
+                        >
                             {{ booking.category }}
                         </p>
                     </div>
@@ -80,7 +82,9 @@
                             Created
                         </p>
 
-                        <p class="text-sm font-medium text-[#16302E] dark:text-white">
+                        <p
+                            class="text-sm font-medium text-[#16302E] dark:text-white"
+                        >
                             {{ stringToDateTime(booking.created_at) }}
                         </p>
                     </div>
@@ -113,7 +117,9 @@
                                 Total
                             </p>
 
-                            <p class="text-base font-semibold text-[#16302E] dark:text-white">
+                            <p
+                                class="text-base font-semibold text-[#16302E] dark:text-white"
+                            >
                                 {{ formatCurrency(totalPrice) }}
                             </p>
                         </div>
@@ -153,7 +159,11 @@
 
                         <p
                             class="mt-1 text-sm leading-relaxed text-[#16302E] dark:text-white"
-                            :class="booking.reason ? '' : 'italic text-[#6B8A87] dark:text-gray-400'"
+                            :class="
+                                booking.reason
+                                    ? ''
+                                    : 'italic text-[#6B8A87] dark:text-gray-400'
+                            "
                         >
                             {{ booking.reason || "No reason was recorded." }}
                         </p>
@@ -289,8 +299,6 @@
                                             }}
                                         </span>
 
-                                        <!-- Only bookings placed through the
-                                             map picker carry coordinates. -->
                                         <button
                                             v-if="hasHomecareCoordinates"
                                             type="button"
@@ -322,8 +330,6 @@
                             </Field>
                         </template>
 
-                        <!-- Facility care is delivered at the branch, so it has
-                             no visit address of its own. -->
                         <Field
                             v-if="isFacility"
                             label="Service Address"
@@ -440,20 +446,47 @@
 
                         <div class="flex gap-2 items-center">
                             <div>
-                                <p class="text-sm font-medium text-[#16302E] dark:text-white">
+                                <p
+                                    class="text-sm font-medium text-[#16302E] dark:text-white"
+                                >
                                     {{ booking.guardian?.first_name }}
                                     {{ booking.guardian?.last_name }}
                                 </p>
 
-                                <p class="text-sm text-[#6B8A87] dark:text-gray-400">
+                                <p
+                                    class="text-sm text-[#6B8A87] dark:text-gray-400"
+                                >
                                     {{ booking.guardian?.email }}
                                 </p>
 
-                                <p class="text-sm text-[#6B8A87] dark:text-gray-400">
+                                <p
+                                    class="text-sm text-[#6B8A87] dark:text-gray-400"
+                                >
                                     {{ stringToDateTime(booking.created_at) }}
                                 </p>
                             </div>
                         </div>
+                    </div>
+
+                    <div v-if="booking.reviewed_by" class="sm:text-right">
+                        <p
+                            class="text-xs font-mono uppercase tracking-widest text-[#6B8A87] mb-1 dark:text-gray-400"
+                        >
+                            {{ reviewLabel }}
+                        </p>
+
+                        <p
+                            class="text-sm font-medium text-[#16302E] dark:text-white"
+                        >
+                            {{ booking.reviewed_by }}
+                        </p>
+
+                        <p
+                            v-if="booking.reviewed_at"
+                            class="text-sm text-[#6B8A87] dark:text-gray-400"
+                        >
+                            {{ stringToDateTime(booking.reviewed_at) }}
+                        </p>
                     </div>
                 </section>
             </div>
@@ -498,6 +531,10 @@ const props = defineProps<{
 }>();
 
 const booking = computed(() => props.booking);
+
+const reviewLabel = computed(() =>
+    props.booking?.status === "rejected" ? "Rejected By" : "Approved By",
+);
 
 const isMapOpen = ref(false);
 
@@ -615,8 +652,7 @@ const paymentStatus = computed(() => {
 });
 
 const isPaid = computed(
-    () =>
-        paymentStatus.value === "paid" || paymentStatus.value === "partial",
+    () => paymentStatus.value === "paid" || paymentStatus.value === "partial",
 );
 
 const isRejected = computed(
@@ -647,6 +683,8 @@ const paymentRows = computed(() => {
         { label: "Method", value: payment.payment_method },
         { label: "Card", value: payment.masked_card_number },
         { label: "Reference", value: payment.xendit_invoice_id },
-    ].filter((row): row is { label: string; value: string } => Boolean(row && row.value));
+    ].filter((row): row is { label: string; value: string } =>
+        Boolean(row && row.value),
+    );
 });
 </script>

@@ -36,6 +36,7 @@ class RefundResource extends JsonResource
             'amount' => (float) $withdrawal->amount,
             'refund_method' => $withdrawal->method,
             'masked_account_detail' => $withdrawal->masked_account_number,
+            'account_name' => $withdrawal->party_name,
             'transaction_reference_id' => $withdrawal->transaction_reference_id,
             'status' => $withdrawal->status,
             'declined_reason' => $withdrawal->declined_reason,

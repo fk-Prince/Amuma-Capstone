@@ -45,7 +45,10 @@ return new class extends Migration
             $table->timestamp('last_message_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['branch_id', 'client_id'], 'conversations_family_unique');
+            $table->unique(
+                ['branch_id', 'client_id', 'employee_one_id'],
+                'conversations_family_staff_unique'
+            );
             $table->unique(
                 ['branch_id', 'employee_one_id', 'employee_two_id'],
                 'conversations_staff_pair_unique'

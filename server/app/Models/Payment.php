@@ -18,7 +18,6 @@ class Payment extends Model
 
     protected $fillable = [
         'transaction_id',
-        'payor_name',
         'prior_balance',
         'new_balance',
         'cash_tendered',
@@ -67,6 +66,11 @@ class Payment extends Model
     public function getMaskedAccountDetailAttribute()
     {
         return $this->transaction?->masked_account_number;
+    }
+
+    public function getPayorNameAttribute()
+    {
+        return $this->transaction?->party_name;
     }
 
     public function getClientIdAttribute()

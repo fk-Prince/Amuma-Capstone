@@ -73,7 +73,8 @@ class BookingService
 
             $booking->update([
                 'booking_data' =>  $bookingData,
-                'status' => Booking::STATUS_APPROVED
+                'status' => Booking::STATUS_APPROVED,
+                'reviewed_by' => ($payload['user'] ?? null)?->employee?->employee_id,
             ]);
 
 
@@ -322,6 +323,7 @@ class BookingService
                 'booking_data' => $bookingData,
                 'status' => Booking::STATUS_REJECTED,
                 'reason' => $reason,
+                'reviewed_by' => ($payload['user'] ?? null)?->employee?->employee_id,
             ]);
 
             $this->notificationService->notifyBookingDecision(

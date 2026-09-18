@@ -23,7 +23,9 @@ return new class extends Migration
 
             $table->enum('sender_type', ['client', 'staff']);
 
-            $table->text('body');
+            $table->text('body')->nullable();
+            $table->string('attachment_url')->nullable();
+            $table->string('attachment_name')->nullable();
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
 

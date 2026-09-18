@@ -40,6 +40,7 @@ return new class extends Migration
                 ->index();
 
             $table->string('method', 50)->nullable();
+            $table->string('party_name')->nullable();
             $table->string('masked_account_number', 25)->nullable();
             $table->text('declined_reason')->nullable();
 

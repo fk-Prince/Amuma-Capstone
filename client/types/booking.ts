@@ -37,6 +37,9 @@ export interface BookingRetrieve {
     category: "facility" | "homecare";
     booking_type: 'online' | 'walk-in';
     status: "pending" | "approved" | "cancelled" | "rejected" | "expired";
+    reason: string | null;
+    reviewed_by: string | null;
+    reviewed_at: string | null;
     homecare: HomecareBooking;
     facility: FacilityBooking;
     patient: Patient;
@@ -47,6 +50,7 @@ export interface BookingRetrieve {
         paid: boolean,
         xendit_invoice_id: string,
         payment_status: string,
+        payment_method?: string,
         masked_card_number: string,
         booking_percent?: number,
         booking_amount?: number,

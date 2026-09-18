@@ -222,13 +222,13 @@ class InvoiceService
             'Payment received at the branch.',
             [
                 'method' => $method,
+                'party_name' => trim((string) ($payload['payor_name'] ?? '')) ?: null,
                 'masked_account_number' => $maskedReference,
             ]
         );
 
         $receipt = $this->paymentRepository->create([
             'transaction_id'        => $transaction->transaction_id,
-            'payor_name'            => trim((string) ($payload['payor_name'] ?? '')) ?: null,
             'prior_balance'         => $balanceAfterCredit,
             'cash_tendered'         => $cash,
             'issued_by'             => $user?->user_id,
@@ -374,7 +374,12 @@ class InvoiceService
             $payable->first()->branch_id,
             $patient->patient_id,
             'Credit on the account applied to an outstanding invoice.',
-            ['method' => Payment::METHOD_CREDIT]
+            [
+                'method' => Payment::METHOD_CREDIT,
+                'party_name' => trim(
+                    ($patient->first_name ?? '') . ' ' . ($patient->last_name ?? '')
+                ) ?: null,
+            ]
         );
 
         $this->refunds->claimCredits(
@@ -385,9 +390,6 @@ class InvoiceService
 
         $payment = $this->paymentRepository->create([
             'transaction_id' => $transaction->transaction_id,
-            'payor_name'     => trim(
-                ($patient->first_name ?? '') . ' ' . ($patient->last_name ?? '')
-            ) ?: null,
             'prior_balance'  => $priorBalance,
             'new_balance'    => round($priorBalance - $applied, 2),
             'issued_by'      => $user?->user_id,
@@ -454,16 +456,9 @@ class InvoiceService
                     $q->whereHas(
                         'transaction',
                         fn($t) => $t->where('transaction_code', 'ilike', $term)
+                            ->orWhere('party_name', 'ilike', $term)
+                            ->orWhere('transaction_reference_id', 'ilike', $term)
                     )
-                        ->orWhere('payor_name', 'ilike', $term)
-                        ->orWhereHas(
-                            'transaction',
-                            fn($t) => $t->where(
-                                'transaction_reference_id',
-                                'ilike',
-                                $term
-                            )
-                        )
                         ->orWhereHas(
                             'transaction.patient',
                             fn($p) => $p

@@ -11,7 +11,7 @@ class BookingResource extends JsonResource
     public function toArray(Request $request): array
     {
 
-        $this->loadMissing('patientsBooking');
+        $this->loadMissing('patientsBooking', 'reviewer');
 
         $data = is_string($this->booking_data)
             ? json_decode($this->booking_data, true)
@@ -32,6 +32,8 @@ class BookingResource extends JsonResource
             'valid_until' => $this->valid_until,
             'status' => $this->status,
             'reason' => $this->reason,
+            'reviewed_by' => $this->reviewed_by_name,
+            'reviewed_at' => $this->reviewed_by ? $this->updated_at : null,
 
             'facility' => $data['facility'] ?? null,
             'homecare' => $data['homecare'] ?? null,

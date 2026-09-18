@@ -22,6 +22,7 @@ import { patientAccessService } from "../../api/patient-access/PatientAccessServ
 import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.vue";
 import { formatCurrency } from "~/utils/currency";
 import type { BookingRetrieve } from "~/types/booking";
+import { stringToDateTime } from "~/utils/time";
 import { fullName } from "~/utils/user";
 import { useToast } from "~/composables/useToast";
 
@@ -825,6 +826,39 @@ onMounted(() => {
                                             </p>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div
+                                    v-if="booking.reviewed_by"
+                                    class="mt-5 flex flex-wrap items-baseline justify-between gap-2 border-t border-gray-100 pt-4 dark:border-white/10"
+                                >
+                                    <p
+                                        class="text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                    >
+                                        {{
+                                            booking.status === "rejected"
+                                                ? "Rejected by"
+                                                : "Approved by"
+                                        }}
+                                    </p>
+
+                                    <p
+                                        class="text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
+                                        {{ booking.reviewed_by }}
+
+                                        <span
+                                            v-if="booking.reviewed_at"
+                                            class="font-normal text-gray-400 dark:text-gray-500"
+                                        >
+                                            ·
+                                            {{
+                                                stringToDateTime(
+                                                    booking.reviewed_at,
+                                                )
+                                            }}
+                                        </span>
+                                    </p>
                                 </div>
                             </div>
                         </div>
