@@ -9,6 +9,8 @@ use App\Guard\BranchGuard;
 use App\Http\Resources\EmployeeResource;
 use App\Http\Resources\EmployeeScheduleResource;
 use App\Models\Employee;
+use App\Models\EmployeePermission;
+use App\Models\Module;
 use App\Models\User;
 use App\Repository\BranchRepository;
 use App\Repository\EmployeeRepository;
@@ -61,6 +63,51 @@ class EmployeeService
         return $documents;
     }
 
+    private function employeeRow(User $user, int $branchId): EmployeeResource
+    {
+        request()->merge(['branch_id' => $branchId]);
+
+        return new EmployeeResource(
+            $user->fresh([
+                'employee.locations',
+                'employee.employeeBranch' => fn($q) => $q->where('branch_id', $branchId),
+                'employee.permissions' => fn($q) => $q->where('branch_id', $branchId),
+                'employee.permissions.modules',
+            ])
+        );
+    }
+
+    private function savePermissions(object $employee, int $branchId, array $permissions): void
+    {
+        $modules = Module::whereIn(
+            'module_id',
+            collect($permissions)->pluck('module_id')
+        )->get()->keyBy('module_id');
+
+        foreach ($permissions as $permission) {
+            $module = $modules->get($permission['module_id']);
+
+            if (!$module) {
+                continue;
+            }
+
+            $actions = array_values(array_intersect(
+                (array) ($permission['actions'] ?? []),
+                $module->actionColumns()
+            ));
+
+            if (!$actions) {
+                continue;
+            }
+
+            $employee->permissions()->create([
+                'module_id'   => $module->module_id,
+                'branch_id'   => $branchId,
+                'employee_id' => $employee->employee_id,
+            ] + EmployeePermission::grantColumns($actions));
+        }
+    }
+
     private function employeeSlip(
         object $employee,
         User $user,
@@ -69,7 +116,11 @@ class EmployeeService
         string $password
     ): array {
         $granted = collect($payload['permissions'] ?? [])
-            ->filter(fn($permission) => !empty($permission['can_read']))
+            ->filter(fn($permission) => in_array(
+                PermissionAction::Read->value,
+                (array) ($permission['actions'] ?? []),
+                true
+            ))
             ->count();
 
         return [
@@ -162,20 +213,12 @@ class EmployeeService
             ]);
 
             //INSERT PERMISSION
-            foreach ($payload['permissions'] as $permission) {
-                $employee->permissions()->create([
-                    'module_id'   => $permission['module_id'],
-                    'branch_id'   => $branch->branch_id,
-                    'employee_id' => $employee->employee_id,
-                    'can_read'    => $permission['can_read'],
-                    'can_create'  => $permission['can_create'],
-                    'can_update'  => $permission['can_update'],
-                ]);
-            }
+            $this->savePermissions($employee, $branch->branch_id, $payload['permissions'] ?? []);
 
             return response()->json([
                 'message' => 'Successfully Created Employee.',
                 'data' => $this->employeeSlip($employee, $user, $branch, $payload, $password),
+                'employee' => $this->employeeRow($user, $branch->branch_id),
             ], 200);
         });
     }
@@ -257,21 +300,12 @@ class EmployeeService
             // UPDATE PERMISSIONS
             if (isset($payload['permissions'])) {
                 $employee->permissions()->delete();
-                foreach ($payload['permissions'] as $permission) {
-                    $employee->permissions()->create([
-                        'module_id'   => $permission['module_id'],
-                        'branch_id'   => $branch->branch_id,
-                        'employee_id' => $employee->employee_id,
-                        'can_read'    => $permission['can_read'],
-                        'can_create'  => $permission['can_create'],
-                        'can_update'  => $permission['can_update'],
-                        'can_approve' => $permission['can_approve']
-                    ]);
-                }
+                $this->savePermissions($employee, $branch->branch_id, $payload['permissions']);
             }
 
             return response()->json([
-                'message' => 'Successfully Updated Employee Information.'
+                'message' => 'Successfully Updated Employee Information.',
+                'employee' => $this->employeeRow($employee->users, $branch->branch_id),
             ], 200);
         });
     }

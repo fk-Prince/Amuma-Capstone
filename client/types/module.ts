@@ -1,14 +1,6 @@
-
-
 export interface Module {
     module_id: number,
     module_name: string,
-    has_approve: string,
-    has_create: string,
-    has_update: string,
-    has_read: string,
-    has_assign: string
-    description: string,
 }
 
 export enum Modules {

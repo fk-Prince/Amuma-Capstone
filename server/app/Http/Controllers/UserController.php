@@ -10,14 +10,8 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    //
 
-    private UserService $userService;
-
-    public function __construct(UserService $userService)
-    {
-        $this->userService = $userService;
-    }
+    public function __construct(private UserService $userService) {}
 
     public function fetchMe(Request $request)
     {

@@ -10,14 +10,8 @@ use Illuminate\Support\Facades\Log;
 
 class NominatimController extends Controller
 {
-    private NominatimService $nominatimService;
-    private OverpassService $overpassService;
 
-    public function __construct(private GeoNamesService $geoNames, NominatimService $nominatimService, OverpassService $overpassService)
-    {
-        $this->nominatimService = $nominatimService;
-        $this->overpassService = $overpassService;
-    }
+    public function __construct(private GeoNamesService $geoNames, private NominatimService $nominatimService, private OverpassService $overpassService) {}
 
     public function searchLocation(Request $request)
     {

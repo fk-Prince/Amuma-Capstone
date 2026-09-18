@@ -9,17 +9,11 @@ use App\Guard\BranchGuard;
 use App\Http\Requests\SubscriptionRequest;
 use App\Service\SubscriptionService;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 
 class SubscriptionController extends Controller
 {
-    private SubscriptionService $subscriptionService;
 
-    public function __construct(SubscriptionService $subscriptionService)
-    {
-        $this->subscriptionService = $subscriptionService;
-    }
+    public function __construct(private SubscriptionService $subscriptionService) {}
 
     public function newSubscription(SubscriptionRequest $request)
     {
@@ -58,8 +52,6 @@ class SubscriptionController extends Controller
 
         $data = $request->validated();
 
-        // Taken from the resolved branch, never the request body, so a caller
-        // cannot add branches to an agency they don't belong to.
         $data['agency_id'] = $branch->agency_id;
 
         if ($request->hasFile('branch_image')) {
@@ -111,7 +103,7 @@ class SubscriptionController extends Controller
     public function renew(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Update);
+        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Renew);
         BranchGuard::mergeRequest($request, $branch);
         return $this->subscriptionService->makeRenewal($request->all(), $request->user());
     }
@@ -119,7 +111,7 @@ class SubscriptionController extends Controller
     public function applyUpgrade(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Update);
+        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Renew);
         BranchGuard::mergeRequest($request, $branch);
         return $this->subscriptionService->applyPendingPlan($request->all());
     }

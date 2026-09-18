@@ -2,39 +2,37 @@
 
 namespace App\Hooks;
 
+use App\Models\Branch;
 use App\Models\User;
 use App\Service\BookingService;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
 class FacilityWebhook
 {
-
     public function __construct(private BookingService $bookingService) {}
 
     public function handle(array $payload)
     {
         $reference = $payload['external_id'] ?? null;
+        $cached = $reference ? Cache::pull("xendit_payment_{$reference}") : null;
 
-        if (!$reference) {
+        if (!$cached) {
             return response()->json([
-                'message' => 'Missing reference'
-            ], 400);
+                'message' => 'Payment already processed or expired.',
+                'status' => 'ignored',
+            ], 200);
         }
 
-        $cachedPayload = Cache::get("xendit_payment_{$reference}");
+        $user = User::find($cached['user_id']);
+        $branch = Branch::find($cached['branch_id']);
+        $data = [...$cached['payload'], 'branch' => $branch];
 
-        if (!$cachedPayload) {
-            return response()->json([
-                'message' => 'Payment data expired'
-            ], 404);
-        }
+        $result = [
+            'xendit_invoice_id' => $payload['id'] ?? null,
+            'masked_card_number' => null,
+            'total' => $data['total'],
+        ];
 
-        $payload['metadata'] = $cachedPayload;
-        $payload['xendit_invoice_id'] = $payload['id'];
-        $user = $cachedPayload['user'] ?? null;
-
-        // return $this->bookingService->createPaymentBooking($user, $payload);
-        return null;
+        return $this->bookingService->storePaidBooking($user, $data, $result, $data['breakdown']);
     }
 }

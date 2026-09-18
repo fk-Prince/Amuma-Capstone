@@ -113,9 +113,9 @@ class BookingService
     //DONE
     public function completePayment(User $user, array $payload)
     {
-        $branch = $payload['branch'];
         $breakdown = $this->bookingHelper->resolveBookingPayment($payload);
         $payload['total'] = $breakdown['booking_amount'];
+        $payload['breakdown'] = $breakdown;
 
         $paymentMethod = PaymentFactory::make($payload['payment_method']);
         $result = $paymentMethod->facilityBilling($payload);
@@ -124,8 +124,15 @@ class BookingService
             return $result;
         }
 
+        return $this->storePaidBooking($user, $payload, $result, $breakdown);
+    }
+
+    public function storePaidBooking(User $user, array $payload, array $result, array $breakdown)
+    {
+        $branch = $payload['branch'];
+
         try {
-            return DB::transaction(function () use ($user, $branch, $payload, $result, $paymentMethod, $breakdown) {
+            return DB::transaction(function () use ($user, $branch, $payload, $result, $breakdown) {
 
                 $bookingData = $payload['booking_data'];
 
@@ -280,6 +287,7 @@ class BookingService
             return $refunded;
         });
     }
+
 
     public function reject(array $payload)
     {

@@ -63,7 +63,7 @@ class RefundController extends Controller
             $request->user(),
             $branch->branch_id,
             ModuleEnum::BillingAndInvoices,
-            PermissionAction::Update
+            PermissionAction::ApproveWithdrawal
         );
 
         $patient = Patient::where('uuid', $validated['p_uuid'])->first();

@@ -21,6 +21,25 @@ class MessageController extends Controller
         return $this->messageService->clientConversations($user->client);
     }
 
+    public function clientContacts(Request $request)
+    {
+        $user = AuthGuard::requireUser($request->user());
+
+        return $this->messageService->clientContacts($user->client);
+    }
+
+    public function openContact(Request $request)
+    {
+        $user = AuthGuard::requireUser($request->user());
+
+        $validated = $request->validate([
+            'patient_id' => ['required', 'integer'],
+            'employee_id' => ['required', 'integer'],
+        ]);
+
+        return $this->messageService->openContact($user, $validated);
+    }
+
     public function branchIndex(Request $request)
     {
         $user = AuthGuard::requireUser($request->user());
@@ -104,8 +123,12 @@ class MessageController extends Controller
         $validated = $request->validate([
             'conversation_id' => ['nullable', 'integer'],
             'patient_id' => ['nullable', 'integer'],
-            'body' => ['required', 'string', 'max:5000'],
+            'body' => ['nullable', 'required_without:attachment', 'string', 'max:5000'],
+            'attachment' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,pdf', 'max:10240'],
         ]);
+
+        $validated['attachment'] = $request->file('attachment');
+
         return $this->messageService->send($user, $validated, $request->boolean('as_staff'));
     }
 }

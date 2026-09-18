@@ -19,6 +19,17 @@ class MessageService extends BaseService {
         return await this.request(`${this.resource}/conversations`, 'GET');
     }
 
+    async contacts(): Promise<any> {
+        return await this.request(`${this.resource}/contacts`, 'GET');
+    }
+
+    async openContact(payload: {
+        patient_id: number;
+        employee_id: number;
+    }): Promise<any> {
+        return await this.request(`${this.resource}/open-contact`, 'POST', payload);
+    }
+
     async branchConversations(payload: object): Promise<any> {
         return await this.request(`${this.resource}/branch-conversations`, 'GET', payload);
     }
@@ -56,7 +67,8 @@ class MessageService extends BaseService {
     async send(payload: {
         conversation_id?: number | null;
         patient_id?: number | null;
-        body: string;
+        body?: string;
+        attachment?: File | null;
         as_staff?: boolean;
     }): Promise<any> {
         return await this.request(this.resource, 'POST', payload);

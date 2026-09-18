@@ -434,7 +434,7 @@ class RefundService
             return [
                 'success' => true,
                 'message' => $status === Transaction::STATUS_REQUESTED
-                    ? 'Your withdrawal request has been sent to accounting.'
+                    ? 'Your withdrawal request has been sent to the branch for review.'
                     : 'Withdrawal recorded.',
                 'amount' => $amount,
                 'request' => $this->formatWithdrawal($withdrawal->refresh()),
@@ -513,6 +513,7 @@ class RefundService
             ->whereHas(
                 'employeeBranch',
                 fn($q) => $q->where('branch_id', $withdrawal->branch_id)
+                    ->where('role_name', 'accounting')
             )
             ->whereHas(
                 'permissions',

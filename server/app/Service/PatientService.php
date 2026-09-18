@@ -17,6 +17,7 @@ use App\Repository\PatientRepository;
 use App\Repository\UserRepository;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class PatientService
 {
@@ -34,6 +35,7 @@ class PatientService
         private PatientRepository $patientRepository,
         private UserRepository $userRepository,
         private LocationRepository $locationRepository,
+        private NotificationService $notificationService,
     ) {}
 
 
@@ -277,6 +279,13 @@ class PatientService
                 ? $this->uploadDiagnosisFile($file)
                 : null,
         ]);
+
+        $this->notificationService->notifyPatientAccess(
+            $patient,
+            "A new diagnosis was added for {$patient->first_name} {$patient->last_name}.",
+            'Diagnosis',
+            Auth::user()
+        );
 
         return response()->json([
             'status' => true,

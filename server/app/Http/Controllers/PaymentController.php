@@ -19,9 +19,10 @@ class PaymentController extends Controller
 
         $validated = $request->validate([
             'patient_id' => ['required', 'integer'],
-            'amount' => ['required', 'numeric', 'min:0.01'],
-            'token_id' => ['required', 'string'],
-            'authentication_id' => ['required', 'string'],
+            'amount' => ['required', 'numeric', 'min:0'],
+            'credit_amount' => ['sometimes', 'numeric', 'min:0'],
+            'token_id' => ['nullable', 'string'],
+            'authentication_id' => ['nullable', 'string'],
             'invoice_codes' => ['sometimes', 'array'],
             'invoice_codes.*' => ['string'],
         ]);

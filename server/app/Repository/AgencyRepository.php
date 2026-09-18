@@ -10,6 +10,7 @@ use App\Models\SubscriptionPayment;
 
 class AgencyRepository
 {
+    public const BRANCHES_PER_SUBSCRIPTION = 5;
 
     public function createAgency(array $payload)
     {
@@ -69,7 +70,6 @@ class AgencyRepository
         ]);
     }
 
-    public const BRANCHES_PER_SUBSCRIPTION = 5;
 
     public function branchCapacity(?string $agencyId): array
     {
@@ -101,7 +101,7 @@ class AgencyRepository
             ->count();
 
         $available = Subscription::query()
-            ->with('plans')
+            ->with(['plans', 'latestPayment'])
             ->withCount([
                 'branchLinks as branches_used' => fn($q) => $q->where(
                     'status',

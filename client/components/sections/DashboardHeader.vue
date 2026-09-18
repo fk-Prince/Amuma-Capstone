@@ -19,12 +19,16 @@
                 <img
                     v-if="
                         branchStore.activeBranch?.image &&
-                        !brokenImages.has(branchStore.activeBranch.uuid)
+                        !brokenImages.has(
+                            branchStore.activeBranch?.uuid ?? '',
+                        )
                     "
                     :src="getBranchImage(branchStore.activeBranch.image)"
                     :alt="branchStore.activeBranch.name"
                     class="h-full w-full object-cover"
-                    @error="brokenImages.add(branchStore.activeBranch!.uuid)"
+                    @error="
+                        brokenImages.add(branchStore.activeBranch?.uuid ?? '')
+                    "
                 />
                 <Building2 v-else class="h-5 w-5 text-primary-400" />
             </div>
@@ -80,6 +84,9 @@
             </div>
 
             <template v-else>
+                <MessageBell v-if="branchStore.activeBranch?.is_verified" />
+                <Notification />
+
                 <div class="hidden lg:block">
                     <ClientOnly>
                         <ThemeToggle
@@ -88,14 +95,14 @@
                     </ClientOnly>
                 </div>
 
-                <MessageBell v-if="branchStore.activeBranch?.is_verified" />
-                <Notification />
-                <NavbarProfileDropdown
-                    v-if="user"
-                    :user="user"
-                    :role="branchStore.activeBranch?.role_name"
-                    :theme-aware="true"
-                />
+                <ClientOnly>
+                    <NavbarProfileDropdown
+                        v-if="user"
+                        :user="user"
+                        :role="branchStore.activeBranch?.role_name"
+                        :theme-aware="true"
+                    />
+                </ClientOnly>
             </template>
 
             <button
@@ -223,12 +230,18 @@
                                         <img
                                             v-if="
                                                 branch.image &&
-                                                !brokenImages.has(branch.uuid)
+                                                !brokenImages.has(
+                                                    branch.uuid ?? '',
+                                                )
                                             "
                                             :src="getBranchImage(branch.image)"
                                             :alt="branch.name"
                                             class="h-full w-full object-cover"
-                                            @error="brokenImages.add(branch.uuid)"
+                                            @error="
+                                                brokenImages.add(
+                                                    branch.uuid ?? '',
+                                                )
+                                            "
                                         />
 
                                         <div
@@ -463,11 +476,15 @@
                                 </svg>
                             </div>
 
-                            <p class="text-sm font-medium text-primary-900 dark:text-white">
+                            <p
+                                class="text-sm font-medium text-primary-900 dark:text-white"
+                            >
                                 No branches yet
                             </p>
 
-                            <p class="max-w-[220px] text-xs text-muted dark:text-gray-400">
+                            <p
+                                class="max-w-[220px] text-xs text-muted dark:text-gray-400"
+                            >
                                 You don't have access to any branches at the
                                 moment.
                             </p>
@@ -508,9 +525,6 @@ defineEmits<{ open: [] }>();
 
 const branchStore = useBranchStore();
 
-// A rejected branch has no dashboard to open, so it's left out of the
-// switcher entirely — it's still fetched (branchStore.branches keeps it) so
-// its own dashboard can still show the rejection reason if visited directly.
 const selectableBranches = computed(() =>
     (branchStore.branches ?? []).filter(
         (branch) => branch.subscription_status !== "rejected",

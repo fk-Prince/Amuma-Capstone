@@ -7,12 +7,8 @@ use Illuminate\Http\Request;
 
 class MedicationController extends Controller
 {
-    private MedicationService $medicationService;
 
-    public function __construct(MedicationService $medicationService)
-    {
-        $this->medicationService = $medicationService;
-    }
+    public function __construct(private MedicationService $medicationService) {}
 
     public function index(Request $request)
     {

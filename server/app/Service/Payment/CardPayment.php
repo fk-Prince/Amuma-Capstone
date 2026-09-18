@@ -46,6 +46,7 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                         'branch'           => $subscription['branch'],
                         'agency'           => $subscription['agency'],
                         'billing_interval' => $subscription['billing_interval'],
+                        'payment_method'   => $subscription['method'],
                         'total_amount'     => $subscription['total_amount'],
                         'endDate'          => $subscription['endDate'],
                         'subscription_uuid' => $subscription['subscription_uuid'] ?? null,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\ValidTin;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Log;
@@ -73,7 +74,7 @@ class SubscriptionRequest extends FormRequest
             'branch_settings.requires_full_payment_on_admit' => ['nullable', 'boolean'],
             'branch_settings.complete_admission_booking_percent' => ['nullable', 'integer', 'min:1', 'max:100'],
             'branch_settings.minimum_adl_hours' => ['required', 'integer'],
-            'branch_settings.tin' => ['required', 'string', 'regex:/^\d{3}-\d{3}-\d{3}-(\d{3}|\d{5})$/'],
+            'branch_settings.tin' => ['required', 'string', new ValidTin()],
             'branch_settings.is_open' => ['required', 'boolean'],
         ];
     }
@@ -96,10 +97,4 @@ class SubscriptionRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'branch_settings.tin.regex' => 'The TIN must look like 000-000-000-000.',
-        ];
-    }
 }

@@ -36,6 +36,7 @@
             :employee="selectedEmployee"
             :mode="employeeMode"
             @edit="employeeMode = 'edit'"
+            @saved="applyEmployee"
             @back="closeEmployeeForm"
         />
     </div>
@@ -125,11 +126,43 @@ const updateEmployee = (employee: Employee) => {
     addEmployeeTab.value = true;
 };
 
+const statusCount = (status?: string) => {
+    const value = (status ?? "").toLowerCase();
+
+    if (value === "active") return onDuty;
+    if (value === "on_leave") return onLeave;
+
+    return null;
+};
+
+const applyEmployee = (employee: Employee) => {
+    const index = employees.value.findIndex((row) => row.uuid === employee.uuid);
+
+    if (index === -1) {
+        employees.value = [employee, ...employees.value];
+        totalEmployee.value += 1;
+        statusCount(employee.status)?.value++;
+
+        return;
+    }
+
+    const previous = employees.value[index]!;
+
+    employees.value.splice(index, 1, employee);
+
+    if (previous.status !== employee.status) {
+        const before = statusCount(previous.status);
+        const after = statusCount(employee.status);
+
+        if (before) before.value = Math.max(0, before.value - 1);
+        if (after) after.value += 1;
+    }
+};
+
 const closeEmployeeForm = () => {
     addEmployeeTab.value = false;
     selectedEmployee.value = null;
     employeeMode.value = "view";
-    fetchEmployees();
 };
 
 onMounted(() => {

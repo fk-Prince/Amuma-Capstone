@@ -68,15 +68,27 @@
                     </div>
 
                     <template v-else>
-                        <ScheduleMedical
-                            v-if="scheduleType === 'medical'"
-                            :schedules="filteredScheduleData"
-                            :loading="pending"
-                            :date="route.query.date_from as string"
-                            :range-end="route.query.date_to as string"
-                            @view-details="viewSchedule"
-                            @assign="handleAssign"
-                        />
+                        <template v-if="scheduleType === 'medical'">
+                            <ScheduleMedicalCards
+                                v-if="medicalView === 'cards'"
+                                :schedules="filteredScheduleData"
+                                :loading="pending"
+                                :date="route.query.date_from as string"
+                                :range-end="route.query.date_to as string"
+                                @view-details="viewSchedule"
+                                @assign="handleAssign"
+                            />
+
+                            <ScheduleMedical
+                                v-else
+                                :schedules="filteredScheduleData"
+                                :loading="pending"
+                                :date="route.query.date_from as string"
+                                :range-end="route.query.date_to as string"
+                                @view-details="viewSchedule"
+                                @assign="handleAssign"
+                            />
+                        </template>
 
                         <HomecareADL
                             v-else
@@ -148,6 +160,7 @@ import { usePatient } from "~/composables/usePatient";
 import { useRoute } from "vue-router";
 import type { ScheduleItem } from "~/types/schedule";
 import ScheduleMedical from "~/components/sections/app/Schedule/ScheduleMedical.vue";
+import ScheduleMedicalCards from "~/components/sections/app/Schedule/ScheduleMedicalCards.vue";
 import HomecareADL from "~/components/sections/app/Patient/HomecareADL.vue";
 import ScheduleDetails from "~/components/sections/app/Patient/ScheduleDetails.vue";
 import { useToast } from "~/composables/useToast";
@@ -185,6 +198,10 @@ const scheduleType = computed<"medical" | "homecare">(() => {
         ? "homecare"
         : "medical";
 });
+
+const medicalView = computed(() =>
+    route.query.view === "cards" ? "cards" : "timeline",
+);
 
 function isHomecareSchedule(schedule: ScheduleItem) {
     const type = ((schedule as any).type ?? "").toLowerCase();
@@ -348,7 +365,7 @@ async function loadSchedules(opts: { append?: boolean } = {}) {
         page.value = 1;
     }
 
-    const { assignment, ...restQuery } = route.query;
+    const { assignment, view, ...restQuery } = route.query;
 
     const listParams = {
         ...restQuery,
@@ -387,7 +404,10 @@ async function loadMore() {
 }
 
 watch(
-    () => route.query,
+    () => {
+        const { view, ...rest } = route.query;
+        return JSON.stringify(rest);
+    },
     () => {
         loadSchedules({ append: false });
     },

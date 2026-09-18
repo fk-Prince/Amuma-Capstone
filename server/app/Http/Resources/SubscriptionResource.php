@@ -8,16 +8,12 @@ use App\Utils\MaskUtil;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-
 class SubscriptionResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
         $subscription = $this->subscription;
 
-        // The subscription is paid for once, by the branch it was bought with.
-        // Every branch added afterwards rides on that payment, so there is
-        // nothing of its own to show or refund.
         $firstLinkId = $subscription
             ? $subscription->branchLinks()->min('branch_subscription_id')
             : null;
@@ -95,8 +91,6 @@ class SubscriptionResource extends JsonResource
                 'plan_code' => $subscription?->plans?->plan_code,
             ],
 
-            // An upgrade already paid for that starts when the current period
-            // runs out; null once it has taken over.
             'pending_plan' => $subscription?->pending_plan_id ? [
                 'name' => $subscription->pendingPlan?->name,
                 'plan_code' => $subscription->pendingPlan?->plan_code,
@@ -107,13 +101,15 @@ class SubscriptionResource extends JsonResource
             'payments' => $subscription?->relationLoaded('payments')
                 ? $subscription->payments->map(fn($payment) => [
                     'subscription_payment_id' => $payment->subscription_payment_id,
-                    // Which plan this payment bought — the subscription's own
-                    // plan can have changed since, so it cannot be inferred.
                     'plan_name' => $payment->plan?->name,
+                    'xendit_invoice_id' => $payment->xendit_invoice_id,
                     'payment_reference_id' => $payment->payment_reference_id,
                     'masked_card_number' => $payment->masked_card_number,
                     'price' => (float) $payment->price,
                     'status' => $payment->status,
+                    'type' => $payment->type,
+                    'billing_interval' => $payment->billing_interval,
+                    'payment_method' => $payment->payment_method,
                     'created_at' => $payment->created_at?->toIso8601String(),
                 ])->values()
                 : [],

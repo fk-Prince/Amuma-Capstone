@@ -356,41 +356,35 @@ async function handleCardPay() {
     }
 }
 
-async function handleGCashPay() {}
-//     if (processingPayment.value) return;
-//     processingPayment.value = true;
-//     try {
-//         await gcashPayment({
-//             closeModal,
+async function handleGCashPay() {
+    if (processingPayment.value) return;
+    processingPayment.value = true;
 
-//             createPayment: () =>
-//                 bookingService.facilityBooking({
-//                     branch_uuid: uuid,
-//                     booking_data: bookingData.value,
-//                     payment_method: "GCASH",
-//                     category: bookingStore.category,
-//                     payment_type: "BOOKING_FACILITY",
-//                 }),
-
-//             onSuccess: async (result) => {
-//                 await navigateTo({
-//                     path: "/subscription/success",
-//                     query: {
-//                         status: result.status,
-//                     },
-//                 });
-//             },
-
-//             onClose: () => {
-//                 processingPayment.value = false;
-//             },
-//         });
-//     } catch (err: any) {
-//         console.error(err);
-//     } finally {
-//         processingPayment.value = false;
-//     }
-// }
+    try {
+        await gcashPayment({
+            closeModal,
+            createPayment: () =>
+                bookingService.create({
+                    action: "complete-admission",
+                    branch_uuid: uuid,
+                    booking_data: booking_data,
+                    payment_method: "GCASH",
+                    category: bookingStore.category,
+                    total: bookingAmount.value,
+                }),
+            onSuccess: async () => {
+                await navigateTo(`/booking/provider/${uuid}/success`);
+            },
+            onClose: () => {
+                processingPayment.value = false;
+            },
+        });
+    } catch (err: any) {
+        toast.error(err?.message ?? "GCash payment failed.");
+    } finally {
+        processingPayment.value = false;
+    }
+}
 
 async function handleSubmit() {
     if (submitting.value) return;

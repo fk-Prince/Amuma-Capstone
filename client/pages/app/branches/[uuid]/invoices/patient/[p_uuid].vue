@@ -2495,7 +2495,7 @@ async function approveRefundRequest(request: any) {
 // Opening the page fetches the summary cards and the admissions, and nothing
 // else. Services load with their tab; the invoice list loads only when the
 // payment panel or a history dialog actually needs it.
-const INITIAL_SECTIONS = ["admissions"];
+const INITIAL_SECTIONS = ["admissions", "refunds"];
 const BACKGROUND_SECTIONS = ["services"];
 
 // Sections the tabs pull in on demand.

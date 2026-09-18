@@ -8,12 +8,8 @@ use Illuminate\Http\JsonResponse;
 
 class PatientAccessController extends Controller
 {
-    private PatientAccessService $patientAccessService;
 
-    public function __construct(PatientAccessService $patientAccessService)
-    {
-        $this->patientAccessService = $patientAccessService;
-    }
+    public function __construct(private PatientAccessService $patientAccessService) {}
 
     public function retrieveAction(Request $request)
     {
@@ -49,8 +45,12 @@ class PatientAccessController extends Controller
             return $this->patientAccessService->bookAgain($payload, $request->user());
         }
 
-        if ($request->action === 'extend_stay') {
-            return $this->patientAccessService->extendStay($payload, $request->user());
+        if ($request->action === 'cancel_booking') {
+            return $this->patientAccessService->cancelBooking($payload, $request->user());
+        }
+
+        if ($request->action === 'cancel_admission') {
+            return $this->patientAccessService->cancelAdmission($payload, $request->user());
         }
     }
 }

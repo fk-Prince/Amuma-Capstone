@@ -322,7 +322,7 @@ class InvoiceService
     }
 
 
-    private function applyCredit(
+    public function applyCredit(
         Patient $patient,
         Collection $payable,
         float $priorBalance,

@@ -278,6 +278,7 @@ export interface DischargeCalculation {
 
 export interface DischargeOutstanding {
     total_balance: number;
+    balance_excluding_future: number;
     accommodation_balance: number;
     service_balance: number;
     adl_balance: number;

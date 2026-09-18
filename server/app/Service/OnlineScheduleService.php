@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Events\QrScanned;
+use App\Models\Employee;
 use App\Models\OnlineSchedule;
 use App\Models\ScheduleAssigned;
 use App\Repository\OnlineScheduleRepository;
@@ -159,6 +160,35 @@ class OnlineScheduleService
         });
     }
 
+
+    public function qrContext(int $scheduleServicesId): array
+    {
+        $assigned = ScheduleAssigned::where('schedule_services_id', $scheduleServicesId)
+            ->where('is_active', true)
+            ->pluck('employee_id');
+
+        $employees = Employee::whereIn('employee_id', $assigned)->get()->keyBy('employee_id');
+
+        $session = $this->activeSessionFor($scheduleServicesId);
+        $checkedInId = $session?->assigned?->employee_id;
+        $checkedIn = $checkedInId
+            ? ($employees->get($checkedInId) ?? Employee::find($checkedInId))
+            : null;
+
+        return [
+            'caregivers' => $employees
+                ->map(fn(Employee $employee) => [
+                    'employee_id' => $employee->employee_id,
+                    'name' => $employee->full_name,
+                ])
+                ->values(),
+            'checked_in' => $checkedIn ? [
+                'employee_id' => $checkedIn->employee_id,
+                'name' => $checkedIn->full_name,
+                'in_timestamp' => $session->in_timestamp,
+            ] : null,
+        ];
+    }
 
     private function activeSessionFor(int $scheduleServicesId): ?OnlineSchedule
     {

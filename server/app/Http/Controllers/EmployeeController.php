@@ -10,16 +10,11 @@ use App\Http\Requests\Auth\StoreEmployeeRequest;
 use App\Http\Requests\Auth\UpdateEmployeeRequest;
 use App\Service\EmployeeService;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 
 class EmployeeController extends Controller
 {
-    private EmployeeService $employeeService;
 
-    public function __construct(EmployeeService $employeeService)
-    {
-        $this->employeeService = $employeeService;
-    }
+    public function __construct(private EmployeeService $employeeService) {}
 
     public function store(StoreEmployeeRequest $request)
     {
@@ -48,7 +43,7 @@ class EmployeeController extends Controller
         if ($type === 'regular') {
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Read);
         } else if ($type === 'service') {
-            AuthGuard::requireModule($request->user(),  $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
+            AuthGuard::requireModule($request->user(),  $branch->branch_id, ModuleEnum::Services, PermissionAction::Assign);
         }
         return $this->employeeService->getEmployees($request->all(), $request->user(),   $type);
     }

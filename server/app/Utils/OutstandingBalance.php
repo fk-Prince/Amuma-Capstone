@@ -9,8 +9,11 @@ class OutstandingBalance
     // A discharge ends the patient's stay, so the screen has to account for
     // everything still owed on the account, not only the invoice the refund is
     // worked out on.
-    public static function forInvoices(mixed $invoices, ?Invoice $dischargeInvoice = null): array
-    {
+    public static function forInvoices(
+        mixed $invoices,
+        ?Invoice $dischargeInvoice = null,
+        array $futurePeriodIds = []
+    ): array {
         $invoices = collect($invoices)
             ->reject(fn($invoice) => $invoice->status === Invoice::STATUS_VOID)
             ->values();
@@ -41,8 +44,18 @@ class OutstandingBalance
 
         $balance = fn($list) => round((float) $list->sum('balance_due'), 2);
 
+        $withoutFuture = round((float) $invoices->sum(
+            fn($invoice) => max(
+                0,
+                $invoice->balance_due - $invoice->invoiceAdmissionLines
+                    ->whereIn('admission_period_id', $futurePeriodIds)
+                    ->sum('price')
+            )
+        ), 2);
+
         return [
             'total_balance' => $balance($invoices),
+            'balance_excluding_future' => $withoutFuture,
             'accommodation_balance' => $balance($accommodation),
             'service_balance' => $balance($scheduled),
             'adl_balance' => $balance($adl),

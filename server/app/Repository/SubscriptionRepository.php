@@ -30,7 +30,7 @@ class SubscriptionRepository
 
     public function findLatestForBranch(string $branchId)
     {
-        return Subscription::with('plans')
+        return Subscription::with(['plans', 'latestPayment'])
             ->whereHas('branchLinks', fn($q) => $q->where('branch_id', $branchId))
             ->latest('created_at')
             ->first();
@@ -56,14 +56,36 @@ class SubscriptionRepository
     }
 
 
+    // A subscription covering several branches has one branch_subscription row
+    // per branch, so filtering straight on that table would list the same
+    // subscription once per covered branch. Every card already shows every
+    // covered branch (with a switcher), so the list is one row per subscription:
+    // whichever of its matching links sorts first stands in for the group.
     public function paginate(array $payload)
     {
-        $query = BranchSubscription::query()
+        $filtered = $this->filteredBranchSubscriptionQuery($payload);
+
+        $representativeIds = (clone $filtered)
+            ->selectRaw('MIN(branch_subscription_id) as branch_subscription_id')
+            ->groupBy('subscription_id')
+            ->pluck('branch_subscription_id');
+
+        return BranchSubscription::query()
+            ->whereIn('branch_subscription_id', $representativeIds)
             ->with([
                 'branch.agencies',
                 'subscription.plans',
+                'subscription.pendingPlan',
                 'subscription.payments',
-            ]);
+                'subscription.latestPayment',
+            ])
+            ->latest('created_at')
+            ->paginate($payload['per_page'] ?? 15);
+    }
+
+    private function filteredBranchSubscriptionQuery(array $payload)
+    {
+        $query = BranchSubscription::query();
 
         if (!empty($payload['branch_id'])) {
             $query->where('branch_id', $payload['branch_id']);
@@ -98,9 +120,7 @@ class SubscriptionRepository
             });
         }
 
-        return $query
-            ->latest('created_at')
-            ->paginate($payload['per_page'] ?? 15);
+        return $query;
     }
 
     public function overviewSubscription()
@@ -242,6 +262,8 @@ class SubscriptionRepository
             ->with([
                 'branch.agencies',
                 'subscription.plans',
+                'subscription.payments',
+                'subscription.latestPayment',
             ])
             ->latest('created_at')
             ->limit(6)

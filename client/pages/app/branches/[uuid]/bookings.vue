@@ -826,6 +826,46 @@ const serviceAddress = (row: any) => {
 };
 
 
+const OVERVIEW_STATUS_KEYS: Record<string, string> = {
+    pending: "pending_confirmation",
+    approved: "approved",
+    rejected: "rejected",
+};
+
+function syncBookingStatus(
+    booking: any,
+    changes: { status: string; reason?: string },
+) {
+    const previous = String(booking.status ?? "").toLowerCase();
+    const next = String(changes.status).toLowerCase();
+
+    const row = bookingData.value?.find(
+        (item: any) => item.booking_id === booking.booking_id,
+    );
+
+    if (row) Object.assign(row, changes);
+
+    if (selectedBooking.value?.booking_id === booking.booking_id) {
+        selectedBooking.value = { ...selectedBooking.value, ...changes };
+    }
+
+    const counts = overview.value?.bookings;
+
+    if (!counts || previous === next) return;
+
+    const fromKey = OVERVIEW_STATUS_KEYS[previous];
+    const toKey = OVERVIEW_STATUS_KEYS[next];
+
+    if (fromKey) counts[fromKey] = Math.max(0, Number(counts[fromKey] ?? 0) - 1);
+    if (toKey) counts[toKey] = Number(counts[toKey] ?? 0) + 1;
+
+    const recent = counts.recent?.find(
+        (item: any) => item.booking_id === booking.booking_id,
+    );
+
+    if (recent) recent.status = changes.status;
+}
+
 const rejectTarget = ref<any>(null);
 
 const rejectWillRefund = computed(
@@ -861,25 +901,10 @@ const rejectBooking = async (reason: string) => {
 
         success(res.message ?? "Booking rejected successfully.");
 
-        const rejected = {
-            ...(res.data ?? {}),
+        syncBookingStatus(booking, {
             status: res.data?.status ?? "rejected",
             reason: res.data?.reason ?? reason,
-        };
-
-        if (!bookingData.value) return;
-        const row = bookingData.value.find(
-            (item: any) => item.booking_id === booking.booking_id,
-        );
-
-        if (row) Object.assign(row, rejected);
-
-        if (selectedBooking.value?.booking_id === booking.booking_id) {
-            selectedBooking.value = {
-                ...selectedBooking.value,
-                ...rejected,
-            };
-        }
+        });
 
         rejectTarget.value = null;
     } catch (err: any) {
@@ -905,11 +930,9 @@ const confirmBooking = async (booking: any) => {
 
         success(res.message ?? "Booking approved successfully.");
 
-        selectedBooking.value = {
-            ...selectedBooking.value,
-            ...(res.data ?? {}),
+        syncBookingStatus(booking, {
             status: res.data?.status ?? "approved",
-        };
+        });
     } catch (err: any) {
         error(err?.message ?? "Failed to approve booking.");
         console.error("Failed to approve booking:", err);

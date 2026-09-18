@@ -33,6 +33,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     back: [];
     edit: [];
+    saved: [employee: Employee];
 }>();
 
 const {
@@ -49,6 +50,7 @@ const {
     moduleSearch,
     filteredModules,
     permissions,
+    hasAction,
     allPermissionsEnabled,
     enabledPermissionCount,
     toggleAllPermissions,
@@ -74,7 +76,10 @@ const {
 } = useEmployeeForm({
     employee: () => props.employee,
     mode: () => props.mode,
-    onSaved: () => emit("back"),
+    onSaved: (saved) => {
+        if (saved) emit("saved", saved);
+        emit("back");
+    },
 });
 
 const activeTab = ref("information");
@@ -683,9 +688,43 @@ init();
 
                     <div
                         v-if="modulesLoading"
-                        class="py-10 text-center text-sm text-slate-400 dark:text-gray-500"
+                        class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-white/10 dark:bg-secondary"
                     >
-                        Loading modules...
+                        <div
+                            v-for="n in 6"
+                            :key="n"
+                            class="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                            :class="
+                                n !== 6
+                                    ? 'border-b border-slate-100 dark:border-white/10'
+                                    : ''
+                            "
+                        >
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="h-6 w-11 shrink-0 animate-pulse rounded-full bg-slate-200 dark:bg-white/10"
+                                />
+
+                                <div class="space-y-2">
+                                    <div
+                                        class="h-3.5 w-32 animate-pulse rounded bg-slate-200 dark:bg-white/10"
+                                    />
+                                    <div
+                                        class="h-3 w-56 animate-pulse rounded bg-slate-100 dark:bg-white/5"
+                                    />
+                                </div>
+                            </div>
+
+                            <div
+                                class="flex flex-wrap gap-x-5 gap-y-2 pl-14 sm:justify-end sm:pl-0"
+                            >
+                                <div
+                                    v-for="action in 3"
+                                    :key="action"
+                                    class="h-4 w-20 animate-pulse rounded bg-slate-100 dark:bg-white/5"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     <div
@@ -721,7 +760,7 @@ init();
                                 i !== filteredModules.length - 1
                                     ? 'border-b border-slate-100 dark:border-white/10'
                                     : '',
-                                permissions[module.module_id]?.can_read
+                                hasAction(module.module_id, 'can_read')
                                     ? 'bg-primary/5'
                                     : 'hover:bg-slate-50 dark:hover:bg-white/5',
                             ]"
@@ -737,8 +776,10 @@ init();
                                     <span
                                         class="h-6 w-11 rounded-full transition-colors"
                                         :class="
-                                            permissions[module.module_id]
-                                                ?.can_read
+                                            hasAction(
+                                                module.module_id,
+                                                'can_read',
+                                            )
                                                 ? 'bg-primary'
                                                 : 'bg-slate-200 dark:bg-white/10'
                                         "
@@ -746,8 +787,10 @@ init();
                                     <span
                                         class="absolute left-[3px] top-[3px] h-5 w-5 rounded-full bg-white shadow transition-transform dark:bg-secondary"
                                         :class="
-                                            permissions[module.module_id]
-                                                ?.can_read
+                                            hasAction(
+                                                module.module_id,
+                                                'can_read',
+                                            )
                                                 ? 'translate-x-5'
                                                 : ''
                                         "
@@ -763,122 +806,43 @@ init();
                                     <p
                                         class="text-xs text-slate-400 dark:text-gray-500"
                                     >
-                                        {{
-                                            module.description ??
-                                            "Manage access to this module."
-                                        }}
+                                        {{ moduleDescription(module.module_name) }}
                                     </p>
                                 </div>
                             </div>
 
                             <div
-                                v-if="permissions[module.module_id]?.can_read"
-                                class="flex flex-wrap gap-x-5 gap-y-2 pl-14 sm:pl-0"
+                                v-if="hasAction(module.module_id, 'can_read')"
+                                class="flex flex-wrap gap-x-5 gap-y-2 pl-14 sm:justify-end sm:pl-0"
                             >
                                 <label
-                                    v-if="module.has_read"
-                                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
+                                    v-for="action in moduleActions(
+                                        module.module_name,
+                                    )"
+                                    :key="action"
+                                    :title="
+                                        actionDescription(
+                                            module.module_name,
+                                            action,
+                                        )
+                                    "
+                                    class="flex items-center gap-2 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300"
                                 >
                                     <input
                                         :disabled="isViewMode"
                                         type="checkbox"
                                         :checked="
-                                            permissions[module.module_id]
-                                                ?.can_read
+                                            hasAction(module.module_id, action)
                                         "
                                         @change="
                                             toggleAction(
                                                 module.module_id,
-                                                'can_read',
+                                                action,
                                             )
                                         "
                                         class="rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
                                     />
-                                    Read
-                                </label>
-                                <label
-                                    v-if="module.has_create"
-                                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
-                                >
-                                    <input
-                                        :disabled="isViewMode"
-                                        type="checkbox"
-                                        :checked="
-                                            permissions[module.module_id]
-                                                ?.can_create
-                                        "
-                                        @change="
-                                            toggleAction(
-                                                module.module_id,
-                                                'can_create',
-                                            )
-                                        "
-                                        class="rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
-                                    />
-                                    Create
-                                </label>
-                                <label
-                                    v-if="module.has_update"
-                                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
-                                >
-                                    <input
-                                        :disabled="isViewMode"
-                                        type="checkbox"
-                                        :checked="
-                                            permissions[module.module_id]
-                                                ?.can_update
-                                        "
-                                        @change="
-                                            toggleAction(
-                                                module.module_id,
-                                                'can_update',
-                                            )
-                                        "
-                                        class="rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
-                                    />
-                                    Update
-                                </label>
-                                <label
-                                    v-if="module.has_approve"
-                                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
-                                >
-                                    <input
-                                        :disabled="isViewMode"
-                                        type="checkbox"
-                                        :checked="
-                                            permissions[module.module_id]
-                                                ?.can_approve
-                                        "
-                                        @change="
-                                            toggleAction(
-                                                module.module_id,
-                                                'can_approve',
-                                            )
-                                        "
-                                        class="rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
-                                    />
-                                    Approve
-                                </label>
-                                <label
-                                    v-if="module.has_assign"
-                                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
-                                >
-                                    <input
-                                        :disabled="isViewMode"
-                                        type="checkbox"
-                                        :checked="
-                                            permissions[module.module_id]
-                                                ?.can_assign
-                                        "
-                                        @change="
-                                            toggleAction(
-                                                module.module_id,
-                                                'can_assign',
-                                            )
-                                        "
-                                        class="rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
-                                    />
-                                    Assign
+                                    {{ actionLabel(action) }}
                                 </label>
                             </div>
                         </div>

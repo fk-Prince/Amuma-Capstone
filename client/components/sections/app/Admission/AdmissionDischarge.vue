@@ -68,10 +68,8 @@
                         </button>
                     </div>
 
-                    <!-- BODY -->
                     <div class="px-4 sm:px-8 py-5 sm:py-7">
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <!-- CURRENT -->
                             <section class="flex flex-col">
                                 <h4
                                     class="mb-2.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
@@ -852,78 +850,40 @@
                             </div>
                         </div>
 
-                        <!-- The refund above settles this stay; the patient is
-                             leaving the branch, so what is still owed on their
-                             schedules has to be collected too. -->
                         <div
                             v-if="outstanding"
-                            class="mt-6 overflow-hidden rounded-xl border"
+                            class="mt-6 flex items-center justify-between gap-3 rounded-xl border px-5 py-4"
                             :class="
-                                outstanding.total_balance > 0
-                                    ? 'border-rose-200 dark:border-rose-500/30'
-                                    : 'border-slate-200 dark:border-white/10'
+                                overallBalance > 0
+                                    ? 'border-rose-200 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10'
+                                    : 'border-slate-200 bg-emerald-50 dark:border-white/10 dark:bg-emerald-500/10'
                             "
                         >
-                            <div
-                                class="flex items-center justify-between gap-3 px-5 py-4"
-                                :class="
-                                    outstanding.total_balance > 0
-                                        ? 'bg-rose-50 dark:bg-rose-500/10'
-                                        : 'bg-emerald-50 dark:bg-emerald-500/10'
-                                "
-                            >
-                                <div>
-                                    <p
-                                        class="text-sm font-semibold text-slate-700 dark:text-gray-300"
-                                    >
-                                        Overall balance
-                                    </p>
-
-                                    <p
-                                        class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
-                                    >
-                                        Everything this patient owes, admission
-                                        and services alike.
-                                    </p>
-                                </div>
+                            <div>
+                                <p
+                                    class="text-sm font-semibold text-slate-700 dark:text-gray-300"
+                                >
+                                    Overall balance
+                                </p>
 
                                 <p
-                                    class="shrink-0 text-lg font-bold"
-                                    :class="
-                                        outstanding.total_balance > 0
-                                            ? 'text-rose-600 dark:text-rose-300'
-                                            : 'text-emerald-600 dark:text-emerald-300'
-                                    "
+                                    class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                 >
-                                    {{
-                                        formatCurrency(
-                                            outstanding.total_balance,
-                                        )
-                                    }}
+                                    Everything this patient owes, not counting
+                                    periods that have not started.
                                 </p>
                             </div>
 
-                            <dl
-                                class="grid grid-cols-2 divide-x divide-slate-200 border-t border-slate-200 dark:divide-white/10 dark:border-white/10"
+                            <p
+                                class="shrink-0 text-lg font-bold"
+                                :class="
+                                    overallBalance > 0
+                                        ? 'text-rose-600 dark:text-rose-300'
+                                        : 'text-emerald-600 dark:text-emerald-300'
+                                "
                             >
-                                <div
-                                    v-for="part in outstandingParts"
-                                    :key="part.label"
-                                    class="px-4 py-3 text-center"
-                                >
-                                    <dt
-                                        class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
-                                    >
-                                        {{ part.label }}
-                                    </dt>
-
-                                    <dd
-                                        class="mt-0.5 text-sm font-semibold text-slate-700 dark:text-gray-200"
-                                    >
-                                        {{ formatCurrency(part.value) }}
-                                    </dd>
-                                </div>
-                            </dl>
+                                {{ formatCurrency(overallBalance) }}
+                            </p>
                         </div>
 
                         <div class="mt-6">
@@ -1109,15 +1069,9 @@ const outstanding = computed(
     () => props.admission?.discharge_calculation?.outstanding ?? null,
 );
 
-// The stay on one side, everything scheduled on the other — ADL included,
-// since it is billed the same way as any other service visit.
-const outstandingParts = computed(() => [
-    {
-        label: "Admission",
-        value: outstanding.value?.accommodation_balance ?? 0,
-    },
-    { label: "Services", value: outstanding.value?.service_balance ?? 0 },
-]);
+const overallBalance = computed(() =>
+    getNumber(outstanding.value?.balance_excluding_future),
+);
 
 const futureInvoices = computed(() => {
     return props.futureInvoices ?? [];

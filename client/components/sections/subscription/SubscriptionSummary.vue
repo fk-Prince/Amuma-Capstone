@@ -44,7 +44,7 @@
                     <span class="font-bold text-primary">
                         {{
                             checkout.selectedPrice != null
-                                ? `â‚±${checkout.selectedPrice}`
+                                ? `₱${checkout.selectedPrice}`
                                 : "—"
                         }}
                     </span>

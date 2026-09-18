@@ -1,16 +1,20 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import AppIcon from "~/components/ui/AppIcon.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import type { CardDetails } from "~/types/payment";
 import { formatCurrency } from "~/utils/currency";
 
-defineProps<{
+const props = defineProps<{
     open: boolean;
     patientName?: string;
     currentBalance: number;
     unpaidInvoiceCount: number;
     amount: number;
     card: CardDetails;
+    availableCredit: number;
+    useCredit: boolean;
+    creditToApply: number;
     processing?: boolean;
     onCardPay: () => void | Promise<void>;
 }>();
@@ -19,7 +23,16 @@ const emit = defineEmits<{
     (event: "close"): void;
     (event: "update:amount", value: number): void;
     (event: "update:card", value: CardDetails): void;
+    (event: "update:useCredit", value: boolean): void;
 }>();
+
+const cardAmount = computed(
+    () => Math.round(Math.max(0, props.amount - props.creditToApply) * 100) / 100,
+);
+
+const creditCoversEverything = computed(
+    () => props.useCredit && props.amount > 0 && cardAmount.value <= 0,
+);
 
 function peso(value: number) {
     return formatCurrency(value, { treatMissingAsZero: true });
@@ -100,7 +113,7 @@ function peso(value: number) {
                             <p
                                 class="mt-1 text-4xl font-bold text-rose-600 dark:text-rose-300"
                             >
-                                {{ peso(amount) }}
+                                {{ peso(cardAmount) }}
                             </p>
 
                             <p
@@ -158,12 +171,110 @@ function peso(value: number) {
                                 </span>
                             </div>
                         </div>
+
+                        <div
+                            v-if="availableCredit > 0"
+                            class="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+                        >
+                            <label class="flex cursor-pointer items-start gap-3">
+                                <input
+                                    :checked="useCredit"
+                                    type="checkbox"
+                                    :disabled="processing"
+                                    class="mt-0.5 h-4 w-4 shrink-0 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500/30 dark:border-white/20 dark:bg-transparent"
+                                    @change="
+                                        emit(
+                                            'update:useCredit',
+                                            ($event.target as HTMLInputElement)
+                                                .checked,
+                                        )
+                                    "
+                                />
+
+                                <span class="min-w-0 flex-1">
+                                    <span
+                                        class="flex flex-wrap items-center justify-between gap-2"
+                                    >
+                                        <span
+                                            class="text-sm font-semibold text-emerald-900 dark:text-emerald-300"
+                                        >
+                                            Use credit on account
+                                        </span>
+
+                                        <span
+                                            class="text-sm font-bold text-emerald-700 dark:text-emerald-300"
+                                        >
+                                            {{ peso(availableCredit) }}
+                                        </span>
+                                    </span>
+
+                                    <span
+                                        class="mt-0.5 block text-xs text-emerald-800/80 dark:text-emerald-300/70"
+                                    >
+                                        Money you already paid that no bill
+                                        claims any more.
+                                    </span>
+                                </span>
+                            </label>
+
+                            <div
+                                v-if="useCredit && creditToApply > 0"
+                                class="mt-3 space-y-1 border-t border-emerald-200/70 pt-3 text-xs dark:border-emerald-500/20"
+                            >
+                                <div
+                                    class="flex justify-between gap-3 text-emerald-800/80 dark:text-emerald-300/70"
+                                >
+                                    <span>Credit applied</span>
+                                    <span class="font-semibold">
+                                        − {{ peso(creditToApply) }}
+                                    </span>
+                                </div>
+
+                                <div
+                                    class="flex justify-between gap-3 text-emerald-900 dark:text-emerald-300"
+                                >
+                                    <span class="font-semibold">
+                                        {{
+                                            creditCoversEverything
+                                                ? "Nothing left to charge"
+                                                : "Still to charge to your card"
+                                        }}
+                                    </span>
+                                    <span class="font-bold">
+                                        {{ peso(cardAmount) }}
+                                    </span>
+                                </div>
+
+                                <p
+                                    v-if="availableCredit > creditToApply"
+                                    class="pt-1 text-emerald-800/70 dark:text-emerald-300/60"
+                                >
+                                    {{ peso(availableCredit - creditToApply) }}
+                                    stays on the account.
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="space-y-5">
+                        <button
+                            v-if="creditCoversEverything"
+                            type="button"
+                            :disabled="processing"
+                            class="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            @click="onCardPay"
+                        >
+                            {{
+                                processing
+                                    ? "Applying credit…"
+                                    : `Settle ${peso(creditToApply)} with credit`
+                            }}
+                        </button>
+
                         <PaymentForm
+                            v-else
                             :card="card"
-                            :total-amount="amount"
+                            :total-amount="cardAmount"
                             :processing="processing"
                             :on-card-pay="onCardPay"
                             gcash-label="GCash is not available yet"

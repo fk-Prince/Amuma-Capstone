@@ -38,6 +38,10 @@ class XenditService
         $invoices = $response->json();
         $invoice = $invoices[0] ?? null;
 
+        if ($invoice && !in_array($invoice['status'] ?? null, ['PAID', 'SETTLED'], true)) {
+            return null;
+        }
+
         if (!$invoice || empty($invoice['metadata']['payment_type'] ?? $invoice['metadata']['type'] ?? null)) {
             Log::error('Xendit invoice found but missing metadata', [
                 'external_id' => $externalId,

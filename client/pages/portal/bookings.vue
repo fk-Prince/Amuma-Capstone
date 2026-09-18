@@ -23,6 +23,7 @@ import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.
 import { formatCurrency } from "~/utils/currency";
 import type { BookingRetrieve } from "~/types/booking";
 import { fullName } from "~/utils/user";
+import { useToast } from "~/composables/useToast";
 
 useHead({ title: "Bookings" });
 
@@ -49,6 +50,38 @@ const meta = ref<PageMeta | null>(null);
 const itemsPerPage = 10;
 const expandedId = ref<number | null>(null);
 const printing = ref<PortalBooking | null>(null);
+const cancellingId = ref<number | null>(null);
+const { error: showError, success: showSuccess } = useToast();
+
+function isCancellable(booking: PortalBooking) {
+    return booking.status === "pending" || booking.status === "approved";
+}
+
+async function cancelBooking(booking: PortalBooking) {
+    if (
+        !confirm(
+            `Cancel booking ${booking.reference_id}? This can't be undone.`,
+        )
+    ) {
+        return;
+    }
+
+    cancellingId.value = booking.booking_id;
+
+    try {
+        await patientAccessService.executeAction({
+            action: "cancel_booking",
+            reference_id: booking.reference_id,
+        });
+
+        booking.status = "cancelled";
+        showSuccess("Booking cancelled.");
+    } catch (err: any) {
+        showError(err?.message || "Failed to cancel booking.");
+    } finally {
+        cancellingId.value = null;
+    }
+}
 
 function toggleExpanded(bookingId: number) {
     expandedId.value = expandedId.value === bookingId ? null : bookingId;
@@ -129,7 +162,7 @@ function isFacility(booking: PortalBooking) {
 }
 
 function isCompleteAdmission(booking: PortalBooking) {
-    return (booking.homecare?.type ?? booking.facility?.type) === "Complete";
+    return booking.facility?.type === "Complete";
 }
 
 function typeLabel(booking: PortalBooking) {
@@ -259,7 +292,9 @@ onMounted(() => {
                     Total bookings
                 </span>
 
-                <span class="block text-lg font-semibold text-gray-900 dark:text-white">
+                <span
+                    class="block text-lg font-semibold text-gray-900 dark:text-white"
+                >
                     {{ meta.total }}
                 </span>
             </span>
@@ -274,33 +309,53 @@ onMounted(() => {
                 <div class="animate-pulse p-5 sm:p-6">
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex min-w-0 flex-1 items-center gap-3">
-                            <div class="h-11 w-11 rounded-xl bg-gray-100 dark:bg-white/10" />
+                            <div
+                                class="h-11 w-11 rounded-xl bg-gray-100 dark:bg-white/10"
+                            />
 
                             <div class="min-w-0 flex-1 space-y-2">
-                                <div class="h-4 w-32 rounded bg-gray-200 dark:bg-white/15" />
-                                <div class="h-3 w-48 rounded bg-gray-100 dark:bg-white/10" />
+                                <div
+                                    class="h-4 w-32 rounded bg-gray-200 dark:bg-white/15"
+                                />
+                                <div
+                                    class="h-3 w-48 rounded bg-gray-100 dark:bg-white/10"
+                                />
                             </div>
                         </div>
 
-                        <div class="h-7 w-24 rounded-full bg-gray-100 dark:bg-white/10" />
+                        <div
+                            class="h-7 w-24 rounded-full bg-gray-100 dark:bg-white/10"
+                        />
                     </div>
 
                     <div
                         class="mt-5 grid grid-cols-2 gap-4 border-t border-gray-100 pt-5 sm:grid-cols-3 dark:border-white/10"
                     >
                         <div class="space-y-2">
-                            <div class="h-2.5 w-16 rounded bg-gray-100 dark:bg-white/10" />
-                            <div class="h-4 w-28 rounded bg-gray-200 dark:bg-white/15" />
+                            <div
+                                class="h-2.5 w-16 rounded bg-gray-100 dark:bg-white/10"
+                            />
+                            <div
+                                class="h-4 w-28 rounded bg-gray-200 dark:bg-white/15"
+                            />
                         </div>
 
                         <div class="space-y-2">
-                            <div class="h-2.5 w-20 rounded bg-gray-100 dark:bg-white/10" />
-                            <div class="h-4 w-24 rounded bg-gray-200 dark:bg-white/15" />
+                            <div
+                                class="h-2.5 w-20 rounded bg-gray-100 dark:bg-white/10"
+                            />
+                            <div
+                                class="h-4 w-24 rounded bg-gray-200 dark:bg-white/15"
+                            />
                         </div>
 
                         <div class="hidden space-y-2 sm:block">
-                            <div class="h-2.5 w-20 rounded bg-gray-100 dark:bg-white/10" />
-                            <div class="h-4 w-28 rounded bg-gray-200 dark:bg-white/15" />
+                            <div
+                                class="h-2.5 w-20 rounded bg-gray-100 dark:bg-white/10"
+                            />
+                            <div
+                                class="h-4 w-28 rounded bg-gray-200 dark:bg-white/15"
+                            />
                         </div>
                     </div>
                 </div>
@@ -318,11 +373,15 @@ onMounted(() => {
                     <AlertCircle class="h-7 w-7" />
                 </div>
 
-                <h2 class="mt-4 text-sm font-semibold text-gray-900 dark:text-white">
+                <h2
+                    class="mt-4 text-sm font-semibold text-gray-900 dark:text-white"
+                >
                     Unable to load bookings
                 </h2>
 
-                <p class="mt-1 max-w-sm text-sm leading-6 text-gray-500 dark:text-gray-400">
+                <p
+                    class="mt-1 max-w-sm text-sm leading-6 text-gray-500 dark:text-gray-400"
+                >
                     {{ loadError }}
                 </p>
 
@@ -348,11 +407,15 @@ onMounted(() => {
                         <ClipboardList class="h-8 w-8" />
                     </div>
 
-                    <h2 class="mt-5 text-base font-semibold text-gray-900 dark:text-white">
+                    <h2
+                        class="mt-5 text-base font-semibold text-gray-900 dark:text-white"
+                    >
                         No booking requests yet
                     </h2>
 
-                    <p class="mt-1 max-w-sm text-sm leading-6 text-gray-500 dark:text-gray-400">
+                    <p
+                        class="mt-1 max-w-sm text-sm leading-6 text-gray-500 dark:text-gray-400"
+                    >
                         Your booking requests will appear here once you submit a
                         service request.
                     </p>
@@ -535,7 +598,9 @@ onMounted(() => {
                                     <p
                                         class="mt-1.5 text-sm font-semibold text-gray-800 dark:text-white"
                                     >
-                                        {{ formatDateTime(booking.valid_until) }}
+                                        {{
+                                            formatDateTime(booking.valid_until)
+                                        }}
                                     </p>
                                 </div>
                             </div>
@@ -571,21 +636,25 @@ onMounted(() => {
                                             >
                                                 Booking Details
                                             </h3>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            <p
+                                                class="text-xs text-gray-500 dark:text-gray-400"
+                                            >
                                                 Patient and assessment
                                                 information
                                             </p>
                                         </div>
                                     </div>
 
-                                    <button
-                                        type="button"
-                                        class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:hover:bg-white/5"
-                                        @click.stop="printing = booking"
-                                    >
-                                        <Printer class="h-3.5 w-3.5" />
-                                        Print booking form
-                                    </button>
+                                    <div class="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:hover:bg-white/5"
+                                            @click.stop="printing = booking"
+                                        >
+                                            <Printer class="h-3.5 w-3.5" />
+                                            Print booking form
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div
@@ -603,7 +672,10 @@ onMounted(() => {
                                 </div>
 
                                 <div
-                                    v-if="booking.payment && isCompleteAdmission(booking)"
+                                    v-if="
+                                        booking.payment &&
+                                        isCompleteAdmission(booking)
+                                    "
                                     class="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 dark:border-white/10 dark:bg-secondary"
                                 >
                                     <div class="mb-4 flex items-center gap-3">
@@ -619,7 +691,9 @@ onMounted(() => {
                                             >
                                                 Payment
                                             </h3>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            <p
+                                                class="text-xs text-gray-500 dark:text-gray-400"
+                                            >
                                                 Payment and transaction details
                                             </p>
                                         </div>

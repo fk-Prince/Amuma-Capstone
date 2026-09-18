@@ -1,43 +1,52 @@
 import { useBranchStore } from "~/stores/branch";
+import { PermissionAction, type PermissionActionKey } from "~/utils/permissions";
 
 export const usePermissions = () => {
     const branchStore = useBranchStore();
 
-    const hasModule = (...modules: string[]) => {
-        const permissions = branchStore.activeBranch?.permissions ?? [];
+    const actionsFor = (module_name: string): PermissionActionKey[] =>
+        (branchStore.activeBranch?.permissions ?? []).find(
+            (p) => p.module_name === module_name,
+        )?.actions ?? [];
 
-        return permissions.some(
-            (p) => modules.includes(p.module_name) && p.can_read,
-        );
-    };
+    const can = (module_name: string, action: PermissionActionKey) =>
+        actionsFor(module_name).includes(action);
 
-    const canCreate = (module_name: string) => {
-        const permissions = branchStore.activeBranch?.permissions ?? [];
-        return permissions.some(
-            (p) => p.module_name === module_name && p.can_create,
-        );
-    };
+    const hasModule = (...modules: string[]) =>
+        modules.some((module_name) => can(module_name, PermissionAction.Read));
 
-    const canUpdate = (module_name: string) => {
-        const permissions = branchStore.activeBranch?.permissions ?? [];
-        return permissions.some(
-            (p) => p.module_name === module_name && p.can_update,
-        );
-    };
+    const canCreate = (module_name: string) =>
+        can(module_name, PermissionAction.Create);
 
-    const canApprove = (module_name: string) => {
-        const permissions = branchStore.activeBranch?.permissions ?? [];
-        return permissions.some(
-            (p) => p.module_name === module_name && p.can_approve,
-        );
-    };
+    const canUpdate = (module_name: string) =>
+        can(module_name, PermissionAction.Update);
 
-    const canAssign = (module_name: string) => {
-        const permissions = branchStore.activeBranch?.permissions ?? [];
-        return permissions.some(
-            (p) => p.module_name === module_name && p.can_assign,
-        );
-    };
+    const canApprove = (module_name: string) =>
+        can(module_name, PermissionAction.Approve);
+
+    const canReject = (module_name: string) =>
+        can(module_name, PermissionAction.Reject);
+
+    const canAssign = (module_name: string) =>
+        can(module_name, PermissionAction.Assign);
+
+    const canExport = (module_name: string) =>
+        can(module_name, PermissionAction.Export);
+
+    const canAdmit = (module_name: string) =>
+        can(module_name, PermissionAction.Admit);
+
+    const canDischarge = (module_name: string) =>
+        can(module_name, PermissionAction.Discharge);
+
+    const canForceDischarge = (module_name: string) =>
+        can(module_name, PermissionAction.ForceDischarge);
+
+    const canApproveWithdrawal = (module_name: string) =>
+        can(module_name, PermissionAction.ApproveWithdrawal);
+
+    const canRenew = (module_name: string) =>
+        can(module_name, PermissionAction.Renew);
 
     const role = computed(() =>
         (branchStore.activeBranch?.role_name ?? "").toLowerCase(),
@@ -58,11 +67,20 @@ export const usePermissions = () => {
         "Only admission staff, a nurse or a caregiver can record this.";
 
     return {
+        actionsFor,
+        can,
         hasModule,
         canCreate,
         canUpdate,
         canApprove,
+        canReject,
         canAssign,
+        canExport,
+        canAdmit,
+        canDischarge,
+        canForceDischarge,
+        canApproveWithdrawal,
+        canRenew,
         role,
         hasRole,
         canChart,

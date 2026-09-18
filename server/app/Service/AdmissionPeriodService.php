@@ -15,8 +15,6 @@ class AdmissionPeriodService
 {
     public function open(PatientAdmission $admission,   int $contractId,   string $reason,  Carbon $startDate,  Carbon $endDate, ?AdmissionPeriod $parent = null, ?string $note = null)
     {
-        // The first period waits with the patient. Everything opened afterwards
-        // — an extension, a room change — belongs to a stay already under way.
         $isPending = $reason === AdmissionPeriod::REASON_ADMITTED
             && $admission->status !== PatientAdmission::STATUS_ADMITTED;
 
@@ -95,10 +93,10 @@ class AdmissionPeriodService
             $contract = $futureCycle === $newContract->billing_cycle
                 ? $newContract
                 : BranchContract::where('branch_id', $newContract->branch_id)
-                    ->where('category', $newContract->category)
-                    ->where('accommodation_type', $newContract->accommodation_type)
-                    ->where('billing_cycle', $futureCycle)
-                    ->first();
+                ->where('category', $newContract->category)
+                ->where('accommodation_type', $newContract->accommodation_type)
+                ->where('billing_cycle', $futureCycle)
+                ->first();
 
             if (!$contract) {
                 // No equivalent plan exists on this period's own cycle. Leave

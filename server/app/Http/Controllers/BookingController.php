@@ -17,9 +17,7 @@ class BookingController extends Controller
     public function __construct(
         private BookingService $bookingService,
         private BookingHelper $bookingHelper
-    ) {
-        $this->bookingService = $bookingService;
-    }
+    ) {}
 
     public function index(Request $request)
     {
@@ -57,7 +55,7 @@ class BookingController extends Controller
             ]);
             return $this->bookingService->bookingAction($request->all());
         } else if ($request->action === 'reject') {
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Approve);
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Reject);
             $request->merge([
                 'user' => $request->user(),
             ]);

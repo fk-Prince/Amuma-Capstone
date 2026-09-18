@@ -2,7 +2,7 @@
     <Transition name="fade">
         <div
             v-if="images.length && currentIndex !== null"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-6"
             @click="close"
             @keydown.esc="close"
             @keydown.left="prev"
@@ -12,7 +12,7 @@
         >
             <button
                 type="button"
-                class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors dark:hover:bg-white/10"
+                class="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors dark:hover:bg-white/10"
                 @click.stop="close"
                 aria-label="Close"
             >
@@ -30,7 +30,7 @@
             <button
                 v-if="images.length > 1"
                 type="button"
-                class="absolute left-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors dark:hover:bg-white/10"
+                class="absolute left-2 sm:left-4 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors dark:hover:bg-white/10"
                 @click.stop="prev"
                 aria-label="Previous image"
             >
@@ -49,7 +49,7 @@
             <button
                 v-if="images.length > 1"
                 type="button"
-                class="absolute right-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors dark:hover:bg-white/10"
+                class="absolute right-2 sm:right-4 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors dark:hover:bg-white/10"
                 @click.stop="next"
                 aria-label="Next image"
             >
@@ -65,15 +65,18 @@
                 </svg>
             </button>
 
-            <figure class="flex flex-col items-center gap-3" @click.stop>
+            <figure
+                class="flex w-full max-w-5xl flex-col items-center gap-2 px-10 sm:gap-3 sm:px-14"
+                @click.stop
+            >
                 <img
                     :src="currentImage?.image_url"
                     :alt="currentImage?.description ?? ''"
-                    class="max-w-5xl max-h-[80vh] rounded-lg shadow-lg object-contain"
+                    class="max-h-[70vh] max-w-full rounded-lg shadow-lg object-contain sm:max-h-[80vh]"
                 />
                 <figcaption
                     v-if="currentImage?.description"
-                    class="text-sm text-white/80 text-center max-w-2xl"
+                    class="max-w-full break-words text-center text-xs text-white/80 sm:max-w-2xl sm:text-sm"
                 >
                     {{ currentImage.description }}
                 </figcaption>

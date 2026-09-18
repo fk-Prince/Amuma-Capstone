@@ -12,12 +12,8 @@ use Illuminate\Support\Facades\Log;
 
 class OnlineScheduleController extends Controller
 {
-    private OnlineScheduleService $onlineScheduleService;
 
-    public function __construct(OnlineScheduleService $onlineScheduleService)
-    {
-        $this->onlineScheduleService = $onlineScheduleService;
-    }
+    public function __construct(private OnlineScheduleService $onlineScheduleService) {}
 
 
     public function generateQr(Request $request)
@@ -41,7 +37,21 @@ class OnlineScheduleController extends Controller
         return response()->json([
             'token' => $this->onlineScheduleService->generateQr($request->all()),
             'expires_in' => OnlineScheduleService::QR_TTL_MINUTES * 60,
+            ...$this->onlineScheduleService->qrContext((int) $request->input('schedule_services_id')),
         ]);
+    }
+
+    public function demoVerifyQr(Request $request)
+    {
+        AuthGuard::requireUser($request->user());
+
+        $validated = $request->validate([
+            'token' => ['required', 'string'],
+            'type' => ['required', 'string'],
+            'employee_id' => ['required', 'integer'],
+        ]);
+
+        return $this->onlineScheduleService->verifyQr($validated);
     }
 
     private function authorizeClientSchedule(Client $client, int $scheduleServicesId): void

@@ -8,6 +8,15 @@ import { useToast } from "~/composables/useToast";
 
 type QrMode = "check-in" | "clock-in" | "clock-out" | "custom";
 
+interface QrCaregiver {
+    employee_id: number;
+    name: string;
+}
+
+interface QrCheckedIn extends QrCaregiver {
+    in_timestamp: string | null;
+}
+
 const props = withDefaults(
     defineProps<{
         show: boolean;
@@ -16,12 +25,16 @@ const props = withDefaults(
         title?: string;
         description?: string;
         extraData?: Record<string, unknown>;
+        caregivers?: QrCaregiver[];
+        checkedIn?: QrCheckedIn | null;
     }>(),
     {
         mode: "check-in",
         title: undefined,
         description: undefined,
         extraData: () => ({}),
+        caregivers: () => [],
+        checkedIn: null,
     },
 );
 
@@ -145,21 +158,68 @@ watch(
 
 const { success, error: toastError } = useToast();
 const demoing = ref(false);
+const pickingCaregiver = ref(false);
+
+watch(
+    () => props.show,
+    (show) => {
+        if (!show) pickingCaregiver.value = false;
+    },
+);
 
 function toApiType(mode: QrMode): "in" | "out" {
     return mode === "clock-out" ? "out" : "in";
 }
 
-async function demoVerify() {
+const demoCaregivers = computed(() =>
+    toApiType(props.mode) === "out"
+        ? props.checkedIn
+            ? [props.checkedIn]
+            : []
+        : props.caregivers,
+);
+
+function startDemo() {
+    if (demoCaregivers.value.length) {
+        pickingCaregiver.value = true;
+        return;
+    }
+
+    demoVerify();
+}
+
+function formatCheckInTime(value: string | null) {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime())
+        ? ""
+        : date.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+          });
+}
+
+async function demoVerify(employeeId?: number) {
     if (!props.token || demoing.value) return;
 
     demoing.value = true;
 
     try {
-        await onlineScheduleService.verifyQr({
+        const payload = {
             token: props.token,
             type: toApiType(props.mode),
-        });
+        };
+
+        if (employeeId) {
+            await onlineScheduleService.demoVerifyQr({
+                ...payload,
+                employee_id: employeeId,
+            });
+        } else {
+            await onlineScheduleService.verifyQr(payload);
+        }
 
         success(
             toApiType(props.mode) === "in"
@@ -277,14 +337,91 @@ onUnmounted(() => {
                         window.
                     </p>
 
+                    <div
+                        v-if="checkedIn"
+                        class="mt-4 flex items-center justify-between gap-3 rounded-xl border border-accent-100 bg-accent-50/60 px-4 py-3"
+                    >
+                        <div class="min-w-0">
+                            <p
+                                class="text-[10px] font-semibold uppercase tracking-wider text-accent-600"
+                            >
+                                Currently checked in
+                            </p>
+
+                            <p
+                                class="truncate text-sm font-semibold text-gray-900"
+                            >
+                                {{ checkedIn.name }}
+                            </p>
+                        </div>
+
+                        <span
+                            v-if="formatCheckInTime(checkedIn.in_timestamp)"
+                            class="shrink-0 text-xs text-gray-500"
+                        >
+                            since {{ formatCheckInTime(checkedIn.in_timestamp) }}
+                        </span>
+                    </div>
+
+                    <div
+                        v-if="pickingCaregiver && qrValue"
+                        class="mt-4 rounded-xl border border-slate-200"
+                    >
+                        <p
+                            class="border-b border-slate-100 px-4 py-2.5 text-xs font-semibold text-gray-500"
+                        >
+                            {{
+                                toApiType(mode) === "out"
+                                    ? "Clock out as"
+                                    : "Clock in as"
+                            }}
+                        </p>
+
+                        <ul
+                            class="max-h-48 divide-y divide-slate-100 overflow-y-auto"
+                        >
+                            <li
+                                v-for="caregiver in demoCaregivers"
+                                :key="caregiver.employee_id"
+                            >
+                                <button
+                                    type="button"
+                                    :disabled="demoing"
+                                    class="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    @click="demoVerify(caregiver.employee_id)"
+                                >
+                                    <span class="truncate">
+                                        {{ caregiver.name }}
+                                    </span>
+
+                                    <span
+                                        class="shrink-0 text-xs font-medium"
+                                        :class="accentClasses.text"
+                                    >
+                                        Use
+                                    </span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+
                     <div class="mt-6 flex justify-end gap-2">
                         <ActionButton
-                            v-if="qrValue"
+                            v-if="qrValue && !pickingCaregiver"
                             variant="outline"
                             :loading="demoing"
-                            @click="demoVerify"
+                            @click="startDemo"
                         >
                             Demo
+                        </ActionButton>
+
+                        <ActionButton
+                            v-if="pickingCaregiver"
+                            variant="outline"
+                            :disabled="demoing"
+                            @click="pickingCaregiver = false"
+                        >
+                            Back
                         </ActionButton>
 
                         <ActionButton variant="primary" @click="emit('close')"

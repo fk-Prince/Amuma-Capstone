@@ -45,11 +45,16 @@ class ScheduleService
                 "{$payload['date']} {$payload['preferred_time']}"
             );
 
+            $note = $payload['note'] ?? null;
+
             $scheduleData = [
                 'patient_id'   => $patient->patient_id,
                 'scheduled_at' => $scheduledAt,
                 'status'       => Schedule::STATUS_PENDING,
                 'category'     => 'Facility',
+                'note'         => is_string($note) && trim($note) !== ''
+                    ? mb_substr(trim($note), 0, 500)
+                    : null,
             ];
 
             $schedule = $this->scheduleRepository->create($scheduleData);
@@ -70,7 +75,6 @@ class ScheduleService
                 $scheduleService->invoiceServices()->create([
                     'invoice_id' => $invoice->invoice_id,
                     'price' => $service['price'],
-                    'note' => $payload['note'],
                 ]);
             }
 

@@ -9,72 +9,24 @@ import {
     isActiveStatus,
 } from "~/types/employee";
 import { moduleService } from "~/api/module/ModuleService";
-import { Modules, type Module } from "~/types/module";
+import { type Module } from "~/types/module";
+import {
+    moduleActions,
+    PermissionAction,
+    ROLE_DEFAULT_PERMISSIONS,
+    type PermissionActionKey,
+} from "~/utils/permissions";
 import { employeeService } from "~/api/employee/EmployeeService";
 import { useToast } from "~/composables/useToast";
 import { fetchAuthUser } from "~/composables/useAuthUser";
 import type { EmployeeSlip } from "~/types/employee-slip";
 
-export type PermissionSet = {
-    can_read: boolean;
-    can_create: boolean;
-    can_update: boolean;
-    can_approve: boolean;
-    can_assign: boolean;
-};
-
-type ActionKey = keyof PermissionSet;
-
-const ALL_ACTIONS: ActionKey[] = [
-    "can_read",
-    "can_create",
-    "can_update",
-    "can_approve",
-    "can_assign",
-];
-const ADD_UPDATE_READ: ActionKey[] = ["can_read", "can_create", "can_update"];
-const READ_ONLY: ActionKey[] = ["can_read"];
-
-const ROLE_DEFAULT_PERMISSIONS: Record<
-    string,
-    Partial<Record<Modules, ActionKey[]>>
-> = {
-    administrator: {
-        [Modules.RoomsAndBeds]: ADD_UPDATE_READ,
-        [Modules.Contracts]: ADD_UPDATE_READ,
-        [Modules.Services]: ADD_UPDATE_READ,
-        [Modules.ManageBranches]: READ_ONLY,
-        [Modules.BranchSettings]: READ_ONLY,
-        [Modules.EmployeeManagement]: READ_ONLY,
-    },
-    admission: {
-        [Modules.Patients]: ALL_ACTIONS,
-        [Modules.Admissions]: ALL_ACTIONS,
-        [Modules.Bookings]: ALL_ACTIONS,
-        [Modules.Schedules]: ALL_ACTIONS,
-        [Modules.Services]: READ_ONLY,
-        [Modules.Contracts]: READ_ONLY,
-        [Modules.RoomsAndBeds]: READ_ONLY,
-        [Modules.EmployeeManagement]: READ_ONLY,
-    },
-    accounting: {
-        [Modules.BillingAndInvoices]: ALL_ACTIONS,
-        [Modules.Patients]: READ_ONLY,
-    },
-    nurse: {
-        [Modules.Patients]: ADD_UPDATE_READ,
-        [Modules.Schedules]: READ_ONLY,
-    },
-    caregiver: {
-        [Modules.Patients]: ADD_UPDATE_READ,
-        [Modules.Schedules]: READ_ONLY,
-    },
-};
+export type PermissionSet = PermissionActionKey[];
 
 export interface UseEmployeeFormOptions {
     employee: () => Employee | null | undefined;
     mode: () => "view" | "edit" | undefined;
-    onSaved?: () => void;
+    onSaved?: (employee?: Employee) => void;
 }
 
 export function useEmployeeForm(options: UseEmployeeFormOptions) {
@@ -104,6 +56,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
     const permissions = ref<Record<number, PermissionSet>>({});
 
     const employeeSlip = ref<EmployeeSlip | null>(null);
+    const savedEmployee = ref<Employee | null>(null);
 
     const loadedStatus = ref<EmployeeStatus>("active");
 
@@ -120,7 +73,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
 
     function dismissSlip() {
         employeeSlip.value = null;
-        options.onSaved?.();
+        options.onSaved?.(savedEmployee.value ?? undefined);
     }
 
     const filteredModules = computed(() => {
@@ -131,18 +84,26 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         );
     });
 
+    function grantedActions(moduleId: number): PermissionActionKey[] {
+        return permissions.value[moduleId] ?? [];
+    }
+
+    function hasAction(moduleId: number, action: PermissionActionKey) {
+        return grantedActions(moduleId).includes(action);
+    }
+
     const allPermissionsEnabled = computed(
         () =>
             modules.value.length > 0 &&
-            modules.value.every(
-                (m) => permissions.value[m.module_id]?.can_read,
+            modules.value.every((m) =>
+                hasAction(m.module_id, PermissionAction.Read),
             ),
     );
 
     const enabledPermissionCount = computed(
         () =>
-            modules.value.filter(
-                (m) => permissions.value[m.module_id]?.can_read,
+            modules.value.filter((m) =>
+                hasAction(m.module_id, PermissionAction.Read),
             ).length,
     );
 
@@ -150,27 +111,18 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         const next = !allPermissionsEnabled.value;
 
         modules.value.forEach((m) => {
-            permissions.value[m.module_id] = {
-                can_read: next && !!m.has_read,
-                can_create: next && !!m.has_create,
-                can_update: next && !!m.has_update,
-                can_approve: next && !!m.has_approve,
-                can_assign: next && !!m.has_assign,
-            };
+            permissions.value[m.module_id] = next
+                ? [...moduleActions(m.module_name)]
+                : [];
         });
     }
 
     function toggleModule(moduleId: number) {
         const module = modules.value.find((m) => m.module_id === moduleId);
-        const next = !(permissions.value[moduleId]?.can_read ?? false);
 
-        permissions.value[moduleId] = {
-            can_read: next,
-            can_create: next && !!module?.has_create,
-            can_update: next && !!module?.has_update,
-            can_approve: next && !!module?.has_approve,
-            can_assign: next && !!module?.has_assign,
-        };
+        permissions.value[moduleId] = hasAction(moduleId, PermissionAction.Read)
+            ? []
+            : [...moduleActions(module?.module_name ?? "")];
     }
 
     function applyRoleDefaults(role: string) {
@@ -179,19 +131,13 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         const roleDefaults = ROLE_DEFAULT_PERMISSIONS[role] ?? {};
 
         modules.value.forEach((module) => {
-            const actions = roleDefaults[module.module_name as Modules] ?? [];
+            const actions = (roleDefaults as Record<string, PermissionActionKey[]>)[
+                module.module_name
+            ] ?? [];
 
-            permissions.value[module.module_id] = {
-                can_read: actions.includes("can_read") && !!module.has_read,
-                can_create:
-                    actions.includes("can_create") && !!module.has_create,
-                can_update:
-                    actions.includes("can_update") && !!module.has_update,
-                can_approve:
-                    actions.includes("can_approve") && !!module.has_approve,
-                can_assign:
-                    actions.includes("can_assign") && !!module.has_assign,
-            };
+            permissions.value[module.module_id] = actions.filter((action) =>
+                moduleActions(module.module_name).includes(action),
+            );
         });
     }
 
@@ -203,19 +149,23 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         },
     );
 
-    function toggleAction(moduleId: number, action: keyof PermissionSet) {
-        if (!permissions.value[moduleId]) {
-            permissions.value[moduleId] = {
-                can_read: false,
-                can_create: false,
-                can_update: false,
-                can_approve: false,
-                can_assign: false,
-            };
+    function toggleAction(moduleId: number, action: PermissionActionKey) {
+        const current = grantedActions(moduleId);
+
+        if (current.includes(action)) {
+            permissions.value[moduleId] = current.filter(
+                (granted) => granted !== action,
+            );
+
+            // Read is the switch for the whole module: without it nothing else applies.
+            if (action === PermissionAction.Read) {
+                permissions.value[moduleId] = [];
+            }
+
+            return;
         }
 
-        permissions.value[moduleId][action] =
-            !permissions.value[moduleId][action];
+        permissions.value[moduleId] = [...current, action];
     }
 
     async function loadModules() {
@@ -227,13 +177,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             modules.value = res.data ?? res;
 
             modules.value.forEach((m) => {
-                permissions.value[m.module_id] = {
-                    can_read: false,
-                    can_create: false,
-                    can_update: false,
-                    can_approve: false,
-                    can_assign: false,
-                };
+                permissions.value[m.module_id] = [];
             });
         } catch (err) {
             modulesError.value = "Failed to load modules. Please try again.";
@@ -274,13 +218,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
 
             if (!module) return;
 
-            permissions.value[module.module_id] = {
-                can_read: p.can_read,
-                can_create: p.can_create,
-                can_update: p.can_update,
-                can_approve: p.can_approve ?? false,
-                can_assign: p.can_assign ?? false,
-            };
+            permissions.value[module.module_id] = [...(p.actions ?? [])];
         });
     }
 
@@ -361,16 +299,12 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             return false;
         }
 
-        const permissionPayload = Object.entries(permissions.value).map(
-            ([moduleId, set]) => ({
+        const permissionPayload = Object.entries(permissions.value)
+            .filter(([, actions]) => actions.length)
+            .map(([moduleId, actions]) => ({
                 module_id: Number(moduleId),
-                can_read: set.can_read,
-                can_create: set.can_create,
-                can_update: set.can_update,
-                can_approve: set.can_approve,
-                can_assign: set.can_assign,
-            }),
-        );
+                actions,
+            }));
 
         const payload = {
             ...employee.value,
@@ -400,12 +334,16 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 await fetchAuthUser();
             }
 
+            savedEmployee.value = (res?.employee?.data ??
+                res?.employee ??
+                null) as Employee | null;
+
             const slip = res?.data?.access ? (res.data as EmployeeSlip) : null;
 
             if (slip) {
                 employeeSlip.value = slip;
             } else {
-                options.onSaved?.();
+                options.onSaved?.(savedEmployee.value ?? undefined);
             }
 
             return true;
@@ -459,6 +397,8 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         moduleSearch,
         filteredModules,
         permissions,
+        hasAction,
+        grantedActions,
         allPermissionsEnabled,
         enabledPermissionCount,
         toggleAllPermissions,

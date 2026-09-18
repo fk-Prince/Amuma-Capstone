@@ -9,12 +9,8 @@ use Illuminate\Http\JsonResponse;
 
 class ReviewController extends Controller
 {
-    private ReviewService $reviewService;
 
-    public function __construct(ReviewService $reviewService)
-    {
-        $this->reviewService = $reviewService;
-    }
+    public function __construct(private ReviewService $reviewService) {}
 
     public function store(ReviewRequest $request)
     {

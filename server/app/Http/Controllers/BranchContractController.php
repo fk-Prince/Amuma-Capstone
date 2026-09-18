@@ -12,12 +12,8 @@ use Illuminate\Http\Request;
 
 class BranchContractController extends Controller
 {
-    private BranchContractService $branchContractService;
 
-    public function __construct(BranchContractService $branchContractService)
-    {
-        $this->branchContractService = $branchContractService;
-    }
+    public function __construct(private BranchContractService $branchContractService) {}
 
     public function store(StoreBranchContractRequest $request)
     {

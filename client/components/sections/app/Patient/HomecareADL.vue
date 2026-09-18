@@ -739,6 +739,8 @@
             :show="showQrModal"
             :token="qrToken"
             :mode="qrMode"
+            :caregivers="qrCaregivers"
+            :checked-in="qrCheckedIn"
             @close="closeQrModal"
             @scanned="handleQrScanned"
         />
@@ -882,6 +884,12 @@ const generatingQr = ref(false);
 const qrToken = ref<string | null>(null);
 const showQrModal = ref(false);
 const qrMode = ref<"clock-in" | "clock-out">("clock-in");
+const qrCaregivers = ref<{ employee_id: number; name: string }[]>([]);
+const qrCheckedIn = ref<{
+    employee_id: number;
+    name: string;
+    in_timestamp: string | null;
+} | null>(null);
 
 async function generateQr(type: "in" | "out", schedule: AuditRow) {
     generatingQr.value = true;
@@ -897,6 +905,8 @@ async function generateQr(type: "in" | "out", schedule: AuditRow) {
             as_family: props.variant === 3,
         });
         qrToken.value = res.data?.token ?? res.token ?? res;
+        qrCaregivers.value = res.caregivers ?? res.data?.caregivers ?? [];
+        qrCheckedIn.value = res.checked_in ?? res.data?.checked_in ?? null;
     } catch (err: any) {
         error(
             err?.response?.data?.message ??

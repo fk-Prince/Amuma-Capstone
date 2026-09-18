@@ -7,10 +7,14 @@ use App\Models\User;
 use App\Repository\PatientRepository;
 use App\Utils\PatientActivityPresenter;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class PatientActivityService
 {
-    public function __construct(private PatientRepository $patientRepository) {}
+    public function __construct(
+        private PatientRepository $patientRepository,
+        private NotificationService $notificationService,
+    ) {}
 
     public function listPatientActivities(array $payload)
     {
@@ -59,6 +63,15 @@ class PatientActivityService
             'type' => $data['type'] ?? null,
             'occurred_at' => $data['occurredAt'] ?? null,
         ]);
+
+        $this->notificationService->notifyPatientAccess(
+            $patient,
+            $activity->title
+                ? "New update for {$patient->first_name} {$patient->last_name}: {$activity->title}"
+                : "There's a new update for {$patient->first_name} {$patient->last_name}.",
+            'Update',
+            Auth::user()
+        );
 
         return response()->json([
             'message' => 'Successfully added activity.',

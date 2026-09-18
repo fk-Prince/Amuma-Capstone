@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
+use App\Enums\RoleEnum;
 use App\Models\EmployeePermission;
 use App\Models\EmployeeService;
 use App\Models\Module;
@@ -17,10 +18,6 @@ class NurseSeeder extends Seeder
 {
     private const NURSE_COUNT = 5;
 
-    private const NURSE_PERMISSIONS = [
-        'Patients' => ['can_read', 'can_create', 'can_update'],
-        'Schedules' => ['can_read'],
-    ];
 
     // Cycled across the nurses so test data covers a homecare-only nurse, a
     // facility-only nurse, and one that can be assigned to both, instead of
@@ -73,7 +70,7 @@ class NurseSeeder extends Seeder
                     ]
                 );
 
-                foreach (self::NURSE_PERMISSIONS as $moduleName => $actions) {
+                foreach (RoleEnum::Nurse->permissions() as $moduleName => $actions) {
                     $module = $modulesByName->get($moduleName);
 
                     if (!$module) {
@@ -86,13 +83,7 @@ class NurseSeeder extends Seeder
                             'branch_id' => $branch->branch_id,
                             'module_id' => $module->module_id,
                         ],
-                        [
-                            'can_read' => in_array('can_read', $actions, true),
-                            'can_create' => in_array('can_create', $actions, true),
-                            'can_update' => in_array('can_update', $actions, true),
-                            'can_approve' => in_array('can_approve', $actions, true),
-                            'can_assign' => in_array('can_assign', $actions, true),
-                        ]
+                        EmployeePermission::grantColumns($actions)
                     );
                 }
 

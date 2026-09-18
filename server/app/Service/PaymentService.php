@@ -6,7 +6,9 @@ use App\Http\Resources\PaymentReceiptResource;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\PatientAccess;
+use App\Models\Payment;
 use App\Repository\PaymentRepository;
+use App\Repository\RefundRepository;
 use App\Utils\AccommodationHelper;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +19,9 @@ class PaymentService
 {
     public function __construct(
         private PaymentRepository $paymentRepository,
-        private TransactionService $transactions
+        private RefundRepository $refundRepository,
+        private TransactionService $transactions,
+        private InvoiceService $invoiceService
     ) {}
 
     private function chargeCard(Client $client, float $amount, array $payload): array
@@ -66,13 +70,25 @@ class PaymentService
             throw new Exception('You do not have access to this patient.', 403);
         }
 
-        $amount = round((float) $payload['amount'], 2);
+        $amount = round((float) ($payload['amount'] ?? 0), 2);
+        $creditAmount = round((float) ($payload['credit_amount'] ?? 0), 2);
 
-        if ($amount <= 0) {
+        if ($amount <= 0 && $creditAmount <= 0) {
             throw new Exception('Enter an amount greater than 0.', 422);
         }
 
-        $charge = $this->chargeCard($client, $amount, $payload);
+        if ($creditAmount > 0) {
+            $available = $this->refundRepository->creditFor($access->patient_id);
+
+            if ($creditAmount > $available + 0.01) {
+                throw new Exception(
+                    'Only ' . number_format($available, 2) . ' in credit is available on this account.',
+                    422
+                );
+            }
+        }
+
+        $charge = $amount > 0 ? $this->chargeCard($client, $amount, $payload) : [];
 
         $method = 'CREDIT-CARD';
         $maskedAccountDetails = $charge['masked_card_number'] ?? null;
@@ -80,7 +96,7 @@ class PaymentService
 
         $codes = array_filter((array) ($payload['invoice_codes'] ?? []));
 
-        return DB::transaction(function () use ($access, $client, $amount, $method, $maskedAccountDetails, $reference, $codes) {
+        return DB::transaction(function () use ($access, $client, $amount, $creditAmount, $method, $maskedAccountDetails, $reference, $codes) {
             $invoiceIds = $access->patient->patient_invoices
                 ->pluck('invoice_id');
 
@@ -104,12 +120,48 @@ class PaymentService
                 throw new Exception('There is no outstanding balance to pay.', 422);
             }
 
-            if ($amount > $totalBalance + 0.01) {
+            if ($amount + $creditAmount > $totalBalance + 0.01) {
                 throw new Exception(
                     "Amount can't exceed the outstanding balance of {$totalBalance}.",
                     422
                 );
             }
+
+            $credit = $creditAmount > 0
+                ? $this->invoiceService->applyCredit(
+                    $access->patient,
+                    $invoices,
+                    $totalBalance,
+                    null,
+                    $creditAmount
+                )
+                : ['applied' => 0.0, 'payment' => null];
+
+            if ($credit['applied'] + 0.01 < $creditAmount) {
+                throw new Exception('The credit on this account has changed. Please try again.', 422);
+            }
+
+            $creditInvoiceIds = $credit['payment']
+                ? $credit['payment']->allocations->pluck('invoice_id')->all()
+                : [];
+
+            $totalBalance = round($totalBalance - $credit['applied'], 2);
+
+            if ($amount <= 0) {
+                return [
+                    'success' => true,
+                    'message' => 'Credit applied to the outstanding balance.',
+                    'credit_applied' => $credit['applied'],
+                    'invoice_ids' => $creditInvoiceIds,
+                    'remaining_balance' => max($totalBalance, 0),
+                    'receipt' => $this->receiptResource($credit['payment']),
+                    'credit_receipt' => null,
+                ];
+            }
+
+            $invoices = $invoices
+                ->filter(fn($invoice) => $invoice->refresh()->balance_due > 0)
+                ->values();
 
             $transaction = $this->transactions->forPayment(
                 $amount,
@@ -176,20 +228,31 @@ class PaymentService
             return [
                 'success' => true,
                 'message' => 'Payment recorded successfully.',
-                'invoice_ids' => $paidInvoiceIds,
+                'credit_applied' => $credit['applied'],
+                'invoice_ids' => array_values(array_unique([...$creditInvoiceIds, ...$paidInvoiceIds])),
                 'remaining_balance' => round(max($totalBalance - $applied, 0), 2),
-                'receipt' => new PaymentReceiptResource(
-                    $receipt->load([
-                        'allocations.invoice.invoiceServices.scheduleService.service',
-                        'allocations.invoice.invoiceAdmissionLines.admissionPeriod.branchContract',
-                        'allocations.invoice.invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
-                        'transaction.branch.location',
-                        'transaction.patient',
-                        'transaction.client',
-                    ])
-                ),
+                'receipt' => $this->receiptResource($receipt),
+                'credit_receipt' => $this->receiptResource($credit['payment']),
             ];
         });
+    }
+
+    private function receiptResource(?Payment $payment): ?PaymentReceiptResource
+    {
+        if (!$payment) {
+            return null;
+        }
+
+        return new PaymentReceiptResource(
+            $payment->load([
+                'allocations.invoice.invoiceServices.scheduleService.service',
+                'allocations.invoice.invoiceAdmissionLines.admissionPeriod.branchContract',
+                'allocations.invoice.invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
+                'transaction.branch.location',
+                'transaction.patient',
+                'transaction.client',
+            ])
+        );
     }
 
     public function receipt(Client $client, array $payload): PaymentReceiptResource

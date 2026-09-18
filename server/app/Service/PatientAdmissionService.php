@@ -20,6 +20,7 @@ use App\Utils\AccommodationHelper;
 use App\Utils\AdmissionHelper;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -36,6 +37,7 @@ class PatientAdmissionService
         private AdmissionPeriodService $periods,
         private RoomTransferService $transfers,
         private InvoiceService $invoiceService,
+        private NotificationService $notificationService,
     ) {}
 
     public function registerPatientBed(array $payload)
@@ -407,6 +409,24 @@ class PatientAdmissionService
             }
         });
 
+        $patient = $admission->patient;
+        // $cancelledByClient = ($payload['cancelled_by'] ?? 'staff') === 'client';
+        // if ($patient && $cancelledByClient && $patient->branch) {
+        //     $this->notificationService->notifyBranchStaff(
+        //         $patient->branch,
+        //         "{$patient->first_name} {$patient->last_name}'s admission was cancelled by the family through the portal.",
+        //         'Admission Cancelled'
+        //     );
+        // } else
+        if ($patient) {
+            $this->notificationService->notifyPatientAccess(
+                $patient,
+                "{$patient->first_name} {$patient->last_name}'s admission has been cancelled by the branch.",
+                'Admission Cancelled',
+                Auth::user()
+            );
+        }
+
         return response()->json([
             'message' => 'Admission cancelled successfully.',
             'data' => $this->patientService->showPatient($payload['uuid']),
@@ -502,9 +522,7 @@ class PatientAdmissionService
                 'price'               => $contract['price'],
             ]);
 
-            // Extending at the counter is a sale: the money is taken in the
-            // same transaction that opens the period, so the stay can never be
-            // extended without being paid for.
+
             $receipt = null;
 
             if (!empty($payload['require_payment'])) {
@@ -527,6 +545,18 @@ class PatientAdmissionService
                     ],
                     $payload['user'] ?? null,
                     'Stay extended and paid.'
+                );
+            }
+
+            $patient = $admission->patient;
+
+            if ($patient) {
+                $this->notificationService->notifyPatientAccess(
+                    $patient,
+                    "{$patient->first_name} {$patient->last_name}'s stay has been extended until "
+                        . $endDate->toFormattedDateString() . '.',
+                    'Admission Extended',
+                    Auth::user()
                 );
             }
 
@@ -619,6 +649,17 @@ class PatientAdmissionService
                     RoomTransfer::TYPE_ROOM_CHANGE,
                     $payload['reason'] ?? null
                 );
+
+                $patient = $admission->patient;
+
+                if ($patient) {
+                    $this->notificationService->notifyPatientAccess(
+                        $patient,
+                        "{$patient->first_name} {$patient->last_name} was moved to room { $newBed->bed_no}.",
+                        'Bed Changed',
+                        Auth::user()
+                    );
+                }
 
                 return [
                     'message' => 'Room and bed updated successfully.',
@@ -720,6 +761,17 @@ class PatientAdmissionService
                     (int) $newBed->bed_id,
                     RoomTransfer::TYPE_ACCOMMODATION_CHANGE,
                     $payload['reason'] ?? null
+                );
+            }
+
+            $patient = $admission->patient;
+
+            if ($patient) {
+                $this->notificationService->notifyPatientAccess(
+                    $patient,
+                    "{$patient->first_name} {$patient->last_name}'s accommodation was changed to room {$newRoom->room_no}.",
+                    'Accommodation Changed',
+                    Auth::user()
                 );
             }
 

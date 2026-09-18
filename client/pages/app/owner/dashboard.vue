@@ -1140,6 +1140,18 @@
                                         >
                                             {{ sub.plan?.name || "—" }}
                                         </span>
+
+                                        <p
+                                            v-if="sub.pending_plan"
+                                            class="mt-1 whitespace-nowrap text-[10px] text-accent-600 dark:text-accent-300"
+                                        >
+                                            → {{ sub.pending_plan.name }} on
+                                            {{
+                                                formatDate(
+                                                    sub.pending_plan.starts_at,
+                                                )
+                                            }}
+                                        </p>
                                     </td>
 
                                     <td class="whitespace-nowrap px-3 py-2">
@@ -1240,6 +1252,12 @@ interface Subscription {
         name: string;
         plan_code: string;
     };
+    pending_plan?: {
+        name: string;
+        plan_code: string;
+        starts_at: string;
+        is_due: boolean;
+    } | null;
     branch?: {
         uuid: string;
         name: string;
@@ -1249,6 +1267,10 @@ interface Subscription {
             name: string;
             is_verified: boolean;
         };
+    };
+    subscription?: {
+        branch_limit: number;
+        covered_branches: { uuid: string }[];
     };
 }
 
@@ -1931,12 +1953,19 @@ const initials = (name: string): string => {
         .join("");
 };
 
-// Rows are per branch link, but the capacity belongs to the subscription they
-// share, so two branches of one subscription both read the same figure.
 const branchLimit = (sub: any): number => sub?.subscription?.branch_limit ?? 5;
 
-const branchesUsed = (sub: any): number =>
-    sub?.subscription?.covered_branches?.length ?? 0;
+// Each row is one branch joining the subscription, so its count is how many
+// branches had joined by that point — not the subscription's current total,
+// which every row would otherwise repeat.
+const branchesUsed = (sub: any): number => {
+    const covered = sub?.subscription?.covered_branches ?? [];
+    const index = covered.findIndex(
+        (branch: { uuid: string }) => branch.uuid === sub?.branch?.uuid,
+    );
+
+    return index === -1 ? covered.length : index + 1;
+};
 
 const slotsLeft = (sub: any): number =>
     Math.max(0, branchLimit(sub) - branchesUsed(sub));

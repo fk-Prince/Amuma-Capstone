@@ -1,14 +1,14 @@
 <template>
     <div
         class="min-h-screen-header bg-light flex items-center justify-center p-4 sm:p-6 lg:p-8 dark:bg-surface"
-        v-if="isSubscriptionPending"
+        v-if="activeBranch && isSubscriptionPending"
     >
         <SubscriptionReview />
     </div>
 
     <div v-else class="min-h-screen-header">
         <div class="px-4 py-3 sm:px-5 lg:px-6 lg:py-4">
-            <div v-if="loading" class="space-y-3">
+            <div v-if="!activeBranch || loading" class="space-y-3">
                 <div
                     class="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4"
                 >
@@ -32,7 +32,7 @@
                 </div>
 
                 <div
-                    class="h-[260px] animate-pulse rounded-xl bg-white/50 dark:bg-white/5"
+                    class="h-[300px] animate-pulse rounded-xl bg-white/50 dark:bg-white/5"
                 />
             </div>
 
@@ -580,7 +580,7 @@
 
                     <div
                         v-if="dashboard.recent_activity.length === 0"
-                        class="flex flex-col items-center justify-center px-9 py-8 text-center"
+                        class="flex min-h-[240px] flex-col items-center justify-center px-9 py-8 text-center"
                     >
                         <div
                             class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 dark:bg-primary-500/10 text-primary-400 dark:text-primary-300"
@@ -602,7 +602,7 @@
 
                     <div
                         v-else
-                        class="divide-y divide-slate-100 dark:divide-white/10"
+                        class="min-h-[240px] divide-y divide-slate-100 dark:divide-white/10"
                     >
                         <div
                             v-for="(item, index) in dashboard.recent_activity"
@@ -645,7 +645,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import {
     BedDouble,
@@ -1090,11 +1090,16 @@ const formatDate = (date: string) => {
     }
 };
 
-onMounted(() => {
-    if (!isSubscriptionPending.value) {
-        fetchDashboard();
-    }
-});
+watch(
+    () =>
+        activeBranch.value && !isSubscriptionPending.value
+            ? activeBranch.value.uuid
+            : null,
+    (branchUuid) => {
+        if (branchUuid) fetchDashboard();
+    },
+    { immediate: true },
+);
 
 onBeforeUnmount(() => {
     destroyCharts();

@@ -9,7 +9,6 @@ use App\Models\Booking;
 use App\Models\PatientAdmission;
 use App\Models\ScheduleService;
 use App\Models\User;
-use App\Service\Payment\GCashPayment;
 use Carbon\Carbon;
 use Exception;
 
@@ -19,6 +18,8 @@ class PatientAccessService
         private PatientAccessRepository $patientAccessRepository,
         private BookingRepository $bookingRepository,
         private NotificationService $notificationService,
+        private BookingService $bookingService,
+        private PatientAdmissionService $patientAdmissionService,
     ) {}
 
 
@@ -37,13 +38,11 @@ class PatientAccessService
         return $this->patientAccessRepository->bookings($payload);
     }
 
-    public function extendStay(array $payload, User $user)
+
+    public function cancelAdmission(array $payload, User $user)
     {
         $access = $this->patientAccessRepository->verifyAccess($payload);
-
-        $patient = $access->patient()
-            ->with(['currentAdmission.currentPeriod.branchContract'])
-            ->firstOrFail();
+        $patient = $access->patient()->with('currentAdmission')->firstOrFail();
 
         $admission = $patient->currentAdmission;
 
@@ -51,21 +50,11 @@ class PatientAccessService
             throw new Exception('This patient is not currently admitted.', 422);
         }
 
-        $contract = $admission->currentPeriod?->branchContract;
-
-        if (!$contract) {
-            throw new Exception('No active accommodation plan found for this admission.', 422);
-        }
-
-        $client = $access->client;
-
-        return app(GCashPayment::class)->admissionExtensionInvoice([
+        return $this->patientAdmissionService->cancelAdmission([
             'admission_id' => $admission->patient_admission_id,
-            'contract_id' => $contract->branch_contract_id,
-            'branch_id' => $patient->branch_id,
-            'patient_uuid' => $patient->uuid,
-            'amount' => (float) $contract->price,
-            'payor_name' => trim(($client?->first_name ?? '') . ' ' . ($client?->last_name ?? '')) ?: null,
+            'uuid' => $patient->uuid,
+            'note' => $payload['reason'] ?? null,
+            'cancelled_by' => 'client',
         ]);
     }
 

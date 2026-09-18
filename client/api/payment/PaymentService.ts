@@ -18,8 +18,9 @@ class PaymentService extends BaseService {
     async pay(payload: {
         patient_id: number;
         amount: number;
-        token_id: string;
-        authentication_id: string;
+        credit_amount?: number;
+        token_id?: string;
+        authentication_id?: string;
         invoice_codes?: string[];
     }): Promise<any> {
         return await this.request(this.resource + "/action", "POST", payload);

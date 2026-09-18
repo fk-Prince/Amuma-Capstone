@@ -13,12 +13,7 @@ use Illuminate\Http\Request;
 
 class ServiceController extends Controller
 {
-    private ServiceService $serviceService;
-
-    public function __construct(ServiceService $serviceService)
-    {
-        $this->serviceService = $serviceService;
-    }
+    public function __construct(private ServiceService $serviceService) {}
 
     public function store(StoreServiceRequest $request)
     {

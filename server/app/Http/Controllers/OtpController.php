@@ -9,12 +9,8 @@ use Illuminate\Support\Facades\Log;
 
 class OtpController extends Controller
 {
-    private OtpService $otpService;
 
-    public function __construct(OtpService $otpService)
-    {
-        $this->otpService = $otpService;
-    }
+    public function __construct(private OtpService $otpService) {}
 
     public function send(Request $request)
     {

@@ -3,9 +3,9 @@
         class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-secondary"
     >
         <div
-            class="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 dark:border-white/10"
+            class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-white/10"
         >
-            <div class="flex min-w-0 items-start gap-3">
+            <div class="flex min-w-0 flex-1 items-start gap-3">
                 <div
                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent dark:bg-accent-500/10"
                 >
@@ -103,9 +103,9 @@
         </div>
 
         <div
-            class="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-3 dark:border-white/10"
+            class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-3 dark:border-white/10"
         >
-            <div class="flex min-w-0 items-center gap-3">
+            <div class="flex min-w-0 flex-1 items-center gap-3">
                 <div
                     class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary dark:bg-primary-500/10"
                 >
@@ -125,7 +125,7 @@
                 </div>
 
                 <div class="min-w-0">
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
                         <p
                             class="truncate text-sm font-semibold text-secondary dark:text-white"
                         >
@@ -140,14 +140,17 @@
                     </div>
 
                     <p class="mt-0.5 text-[11px] text-muted dark:text-gray-400">
-                        {{ subscription.billing_interval }} ·
-                        {{ formatDate(subscription.start_date) }} →
-                        {{ formatDate(subscription.end_date) }}
+                        {{
+                            isFirstBranch
+                                ? billingCycleLabel
+                                : `Runs through ${formatDate(subscription.end_date)}`
+                        }}
                     </p>
                 </div>
             </div>
 
             <span
+                v-if="isFirstBranch"
                 class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold capitalize"
                 :class="statusClass(subscription.status)"
             >
@@ -346,10 +349,10 @@
 
         <div
             v-if="latestPayment && isFirstBranch"
-            class="flex items-center justify-between gap-4 border-t border-slate-100 px-5 py-3 dark:border-white/10"
+            class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-slate-100 px-5 py-3 dark:border-white/10"
         >
             <div
-                class="flex items-center gap-2 text-[11px] text-muted dark:text-gray-400"
+                class="flex min-w-0 flex-wrap items-center gap-2 text-[11px] text-muted dark:text-gray-400"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -368,6 +371,15 @@
                 </span>
 
                 <span v-else>No card on file</span>
+
+                <button
+                    v-if="latestPayment"
+                    type="button"
+                    class="font-medium text-primary underline-offset-2 hover:underline dark:text-primary-300"
+                    @click="showPaymentsModal = true"
+                >
+                    {{ hasMultiplePayments ? "View payments" : "View payment" }}
+                </button>
             </div>
 
             <div class="flex items-center gap-2 text-[11px]">
@@ -387,6 +399,13 @@
                 </span>
             </div>
         </div>
+
+        <SubscriptionPaymentsModal
+            :open="showPaymentsModal"
+            :agency-name="agency.name"
+            :payments="props.subscription.payments ?? []"
+            @close="showPaymentsModal = false"
+        />
 
         <div
             v-if="agency.registered_by"
@@ -477,6 +496,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import DocumentLink from "~/components/ui/DocumentLink.vue";
+import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionPaymentsModal.vue";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
 import type { SubscriptionPaymentRecord } from "~/types/subscription";
@@ -568,6 +588,18 @@ const latestPayment = computed(() => {
         (b.created_at ?? "").localeCompare(a.created_at ?? ""),
     )[0];
 });
+
+const billingCycleLabel = computed(() =>
+    props.subscription.billing_interval === "YEARLY"
+        ? "Billed yearly"
+        : "Billed monthly",
+);
+
+const hasMultiplePayments = computed(
+    () => (props.subscription.payments?.length ?? 0) > 1,
+);
+
+const showPaymentsModal = ref(false);
 
 const hasAgencyDocuments = computed(
     () =>

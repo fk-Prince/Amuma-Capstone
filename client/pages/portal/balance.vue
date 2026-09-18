@@ -874,7 +874,7 @@ async function submit() {
     const requestedAmount = Number(form.value.amount ?? 0);
 
     if (requestedAmount < 1) {
-        formError.value = "Enter an amount of at least â‚±1.";
+        formError.value = "Enter an amount of at least ₱1.";
 
         return;
     }
@@ -952,10 +952,19 @@ const card = ref<CardDetails>({
     email: "prince.sestoso@gmail.com",
 });
 
+const useCredit = ref(false);
+
+const creditToApply = computed(() =>
+    useCredit.value
+        ? round2(Math.min(refundableAmount.value, Number(payAmount.value) || 0))
+        : 0,
+);
+
 function openPaymentModal() {
     if (!hasBalanceDue.value) return;
     checkout.payment_method = "CREDIT-CARD";
     payAmount.value = currentBalance.value;
+    useCredit.value = refundableAmount.value > 0;
     showPaymentModal.value = true;
 }
 
@@ -974,7 +983,7 @@ async function payBalance() {
     const amount = round2(Number(payAmount.value) || 0);
 
     if (amount <= 0) {
-        error("Enter an amount greater than â‚±0.");
+        error("Enter an amount greater than ₱0.");
         return;
     }
 
@@ -987,12 +996,60 @@ async function payBalance() {
 
     payAmount.value = amount;
 
+    const credit = creditToApply.value;
+    const charge = round2(amount - credit);
+    const creditPayload = credit > 0 ? { credit_amount: credit } : {};
+
+    const onSuccess = async (res: any) => {
+        const receipt: PaymentReceiptData | null = res?.receipt ?? null;
+        const creditReceipt: PaymentReceiptData | null =
+            res?.credit_receipt ?? null;
+
+        showPaymentModal.value = false;
+
+        if (!receipt) {
+            success(res?.message || "Payment recorded successfully.");
+
+            await loadPatientData();
+
+            return;
+        }
+
+        if (creditReceipt) {
+            applyReceiptLocally(creditReceipt);
+        }
+
+        applyReceiptLocally(receipt);
+
+        const applied = round2(Number(res?.credit_applied ?? 0));
+
+        if (applied > 0) {
+            spendCreditLocally(applied);
+        }
+
+        activeReceipt.value = receipt;
+
+        success(`Payment recorded. Receipt ${receipt.payment_code}.`);
+    };
+
     isPaying.value = true;
 
     try {
+        if (charge <= 0) {
+            await onSuccess(
+                await paymentService.pay({
+                    patient_id: patientId,
+                    amount: 0,
+                    ...creditPayload,
+                }),
+            );
+
+            return;
+        }
+
         await cardPayment({
             card: card.value,
-            amount,
+            amount: charge,
 
             onClose: () => {
                 isPaying.value = false;
@@ -1001,36 +1058,31 @@ async function payBalance() {
             createPayment: ({ token_id, authentication_id }) =>
                 paymentService.pay({
                     patient_id: patientId,
-                    amount,
+                    amount: charge,
+                    ...creditPayload,
                     token_id,
                     authentication_id,
                 }),
 
-            onSuccess: async (res: any) => {
-                const receipt: PaymentReceiptData | null = res?.receipt ?? null;
-
-                showPaymentModal.value = false;
-
-                if (!receipt) {
-                    success(res?.message || "Payment recorded successfully.");
-
-                    await loadPatientData();
-
-                    return;
-                }
-
-                applyReceiptLocally(receipt);
-
-                activeReceipt.value = receipt;
-
-                success(`Payment recorded. Receipt ${receipt.payment_code}.`);
-            },
+            onSuccess,
         });
     } catch (err: any) {
         error(err?.message || "Failed to process payment.");
     } finally {
         isPaying.value = false;
     }
+}
+
+function spendCreditLocally(applied: number) {
+    const lovedOne = lovedOnes.value[selectedIndex.value];
+
+    if (lovedOne) {
+        lovedOne.refundable_amount = round2(
+            Math.max(0, lovedOne.refundable_amount - applied),
+        );
+    }
+
+    advanceBalance.value = round2(Math.max(0, advanceBalance.value - applied));
 }
 
 function applyReceiptLocally(receipt: PaymentReceiptData) {
@@ -1069,7 +1121,10 @@ function applyReceiptLocally(receipt: PaymentReceiptData) {
         invoiceCode: codes[0] ?? "",
         invoiceCodes: codes,
         type: "payment",
-        label: `Payment · ${methodLabel(receipt.payment.method)}`,
+        label:
+            receipt.payment.method === "CREDIT"
+                ? "Credit applied"
+                : `Payment · ${methodLabel(receipt.payment.method)}`,
         reference: receipt.lines[0]?.payment_reference ?? receipt.payment_code,
         date: issuedAt,
         amount: round2(applied),
@@ -1115,96 +1170,158 @@ async function openReceipt(receiptNo?: string | null) {
                     class="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.6fr)]"
                 >
                     <section
-                        class="overflow-hidden rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
+                        class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
                     >
-                        <div class="flex items-center gap-3">
+                        <div
+                            class="border-b border-gray-100 px-5 py-5 dark:border-white/10 sm:px-6"
+                        >
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="h-8 w-8 animate-pulse rounded-xl bg-gray-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-4 w-32 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                />
+                            </div>
+
                             <div
-                                class="h-8 w-8 animate-pulse rounded-xl bg-gray-100 dark:bg-white/10"
-                            />
-                            <div
-                                class="h-4 w-32 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                class="mt-2 ml-10 h-3 w-24 animate-pulse rounded bg-gray-100 dark:bg-white/10"
                             />
                         </div>
 
-                        <div
-                            class="mt-5 rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-5 dark:border-white/10 dark:from-transparent dark:to-transparent"
-                        >
-                            <div class="flex items-center gap-4">
+                        <div class="p-5 sm:p-6">
+                            <div
+                                class="flex flex-col items-center rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-6 dark:border-white/10 dark:from-white/5 dark:to-white/5"
+                            >
                                 <div
-                                    class="h-14 w-14 shrink-0 animate-pulse rounded-2xl bg-gray-100 dark:bg-white/10"
+                                    class="h-20 w-20 animate-pulse rounded-full bg-gray-100 dark:bg-white/10"
                                 />
-                                <div class="flex-1 space-y-2">
+                                <div
+                                    class="mt-3 h-5 w-40 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="mt-2 h-5 w-24 animate-pulse rounded-full bg-gray-100 dark:bg-white/10"
+                                />
+
+                                <div class="mt-5 w-full space-y-2.5">
                                     <div
-                                        class="h-4 w-2/3 animate-pulse rounded bg-gray-100 dark:bg-white/10"
-                                    />
-                                    <div
-                                        class="h-3 w-1/3 animate-pulse rounded bg-gray-100 dark:bg-white/10"
-                                    />
+                                        v-for="n in 3"
+                                        :key="n"
+                                        class="flex items-center justify-between gap-3"
+                                    >
+                                        <div
+                                            class="h-3 w-20 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                        />
+                                        <div
+                                            class="h-3 w-24 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                        />
+                                    </div>
                                 </div>
                             </div>
+
+                            <div
+                                class="mt-4 h-28 animate-pulse rounded-2xl bg-gray-50 dark:bg-white/5"
+                            />
                         </div>
                     </section>
 
                     <section
                         class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
                     >
-                        <div class="flex items-center justify-center p-14">
+                        <div
+                            class="border-b border-gray-100 px-5 py-5 dark:border-white/10 sm:px-6"
+                        >
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="h-8 w-8 animate-pulse rounded-xl bg-gray-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-4 w-36 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                />
+                            </div>
+
                             <div
-                                class="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-primary-500 dark:border-white/10"
+                                class="mt-2 ml-10 h-3 w-48 animate-pulse rounded bg-gray-100 dark:bg-white/10"
                             />
+                        </div>
+
+                        <div
+                            class="grid grid-cols-1 gap-px bg-gray-100 dark:bg-white/10 sm:grid-cols-2 xl:grid-cols-4"
+                        >
+                            <div
+                                v-for="n in 4"
+                                :key="n"
+                                class="bg-white p-5 dark:bg-secondary sm:p-6"
+                            >
+                                <div
+                                    class="h-10 w-10 animate-pulse rounded-xl bg-gray-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="mt-5 h-3 w-20 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="mt-2 h-6 w-24 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                />
+                            </div>
+                        </div>
+
+                        <div
+                            class="grid grid-cols-1 gap-5 border-t border-gray-100 p-5 dark:border-white/10 sm:p-6 md:grid-cols-3"
+                        >
+                            <div v-for="n in 3" :key="n" class="space-y-2">
+                                <div
+                                    class="h-3 w-24 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-5 w-28 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                />
+                            </div>
                         </div>
                     </section>
                 </div>
 
-                <div
-                    class="grid grid-cols-1 gap-px overflow-hidden rounded-3xl border border-gray-100 bg-gray-100 shadow-sm dark:border-white/10 dark:bg-white/10 sm:grid-cols-2 xl:grid-cols-4"
-                >
-                    <div
-                        v-for="n in 4"
+                <div class="grid gap-5 xl:grid-cols-2">
+                    <section
+                        v-for="n in 2"
                         :key="n"
-                        class="space-y-3 bg-white p-5 dark:bg-secondary sm:p-6"
+                        class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
                     >
                         <div
-                            class="h-10 w-10 animate-pulse rounded-xl bg-gray-100 dark:bg-white/10"
-                        />
+                            class="flex items-start justify-between gap-3 border-b border-gray-100 pb-4 dark:border-white/10"
+                        >
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <div
+                                        class="h-8 w-8 animate-pulse rounded-xl bg-gray-100 dark:bg-white/10"
+                                    />
+                                    <div
+                                        class="h-4 w-28 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                    />
+                                </div>
+
+                                <div
+                                    class="mt-2 ml-10 h-3 w-40 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                                />
+                            </div>
+
+                            <div
+                                class="h-6 w-20 shrink-0 animate-pulse rounded-full bg-gray-100 dark:bg-white/10"
+                            />
+                        </div>
+
+                        <div class="mt-4 space-y-2">
+                            <div
+                                v-for="row in 3"
+                                :key="row"
+                                class="h-16 animate-pulse rounded-2xl bg-gray-50 dark:bg-white/5"
+                            />
+                        </div>
+
                         <div
-                            class="h-3 w-16 animate-pulse rounded bg-gray-100 dark:bg-white/10"
+                            class="mt-4 h-10 w-full animate-pulse rounded-xl bg-gray-50 dark:bg-white/5"
                         />
-                        <div
-                            class="h-6 w-20 animate-pulse rounded bg-gray-100 dark:bg-white/10"
-                        />
-                    </div>
+                    </section>
                 </div>
-
-                <section
-                    class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
-                >
-                    <div
-                        class="h-4 w-24 animate-pulse rounded bg-gray-100 dark:bg-white/10"
-                    />
-                    <div class="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                        <div
-                            v-for="n in 2"
-                            :key="n"
-                            class="h-40 animate-pulse rounded-2xl border border-gray-100 bg-gray-50 dark:border-white/10 dark:bg-white/5"
-                        />
-                    </div>
-                </section>
-
-                <section
-                    class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
-                >
-                    <div
-                        class="h-4 w-32 animate-pulse rounded bg-gray-100 dark:bg-white/10"
-                    />
-                    <div class="mt-5 space-y-2">
-                        <div
-                            v-for="n in 3"
-                            :key="n"
-                            class="h-14 animate-pulse rounded-2xl bg-gray-50 dark:bg-white/5"
-                        />
-                    </div>
-                </section>
             </div>
 
             <EmptyState
@@ -2299,6 +2416,9 @@ async function openReceipt(receiptNo?: string | null) {
                 :unpaid-invoice-count="unpaidInvoiceCount"
                 v-model:amount="payAmount"
                 v-model:card="card"
+                v-model:use-credit="useCredit"
+                :available-credit="refundableAmount"
+                :credit-to-apply="creditToApply"
                 :processing="isPaying"
                 :on-card-pay="payBalance"
                 @close="closePaymentModal"

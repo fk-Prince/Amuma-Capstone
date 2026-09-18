@@ -8,9 +8,8 @@ use Illuminate\Http\JsonResponse;
 
 class ModuleController extends Controller
 {
-    private ModuleService $moduleService;
 
-    public function __construct(ModuleService $moduleService)
+    public function __construct(private ModuleService $moduleService)
     {
         $this->moduleService = $moduleService;
     }

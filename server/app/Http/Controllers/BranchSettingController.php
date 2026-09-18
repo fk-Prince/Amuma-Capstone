@@ -12,12 +12,8 @@ use Illuminate\Support\Facades\Log;
 
 class BranchSettingController extends Controller
 {
-    private BranchService $branchService;
 
-    public function __construct(BranchService $branchService)
-    {
-        $this->branchService = $branchService;
-    }
+    public function __construct(private BranchService $branchService) {}
 
     public function store(Request $request)
     {

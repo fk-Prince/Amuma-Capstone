@@ -21,6 +21,9 @@ class OnlineScheduleService extends BaseService {
     async verifyQr(payload: { token: string; type: string }) {
         await this.request('/api/qr/verify', 'POST', payload);
     }
+    async demoVerifyQr(payload: { token: string; type: string; employee_id: number }) {
+        return await this.request(this.getBackendApi + '/api/qr/demo-verify', 'POST', payload);
+    }
 
     private get resource(): string {
         const backend = this.getBackendApi;

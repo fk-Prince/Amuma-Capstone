@@ -2,6 +2,7 @@
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 import { authMenuList } from "~/config/authMenu";
+import { PermissionAction } from "~/utils/permissions";
 
 const AUTH_ROUTES = ["/auth/signin", "/auth/signup"];
 
@@ -39,7 +40,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         }
 
         const readableModules = branch.permissions
-            ?.filter((p) => p.can_read)
+            ?.filter((p) => p.actions?.includes(PermissionAction.Read))
             .map((p) => p.module_name) ?? [];
 
         const selectedMenu = authMenuList.find((item) => {

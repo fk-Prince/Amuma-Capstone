@@ -31,7 +31,7 @@
             />
         </div>
 
-        <div class="relative z-10 flex-1 flex flex-col min-w-0 h-full">
+        <div class="relative flex-1 flex flex-col min-w-0 h-full">
             <div class="print:hidden">
                 <DashboardHeader @open="isOpen = true" />
             </div>
@@ -55,6 +55,7 @@ import { useRoute } from "vue-router";
 import { useBranchStore } from "~/stores/branch";
 
 import { authMenuList } from "~/config/authMenu";
+import { PermissionAction } from "~/utils/permissions";
 
 const route = useRoute();
 const isOpen = ref(false);
@@ -93,7 +94,7 @@ const activeModules = computed(() => {
 
     return (
         branch?.permissions
-            ?.filter((p) => p.can_read)
+            ?.filter((p) => p.actions?.includes(PermissionAction.Read))
             .map((p) => p.module_name) ?? []
     );
 });

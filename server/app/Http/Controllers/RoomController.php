@@ -14,12 +14,8 @@ use Illuminate\Http\Request;
 
 class RoomController extends Controller
 {
-    private RoomService $roomService;
 
-    public function __construct(RoomService $roomService)
-    {
-        $this->roomService = $roomService;
-    }
+    public function __construct(private RoomService $roomService) {}
 
     public function index(Request $request)
     {

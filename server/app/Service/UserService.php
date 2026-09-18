@@ -113,15 +113,12 @@ class UserService
                         })->values()
                         : [],
 
-                    'permissions' => $perms->map(function ($permission) {
-                        return [
-                            'module_name'     => $permission->modules?->module_name,
-                            'can_read'   => $permission->can_read,
-                            'can_update' => $permission->can_update,
-                            'can_create' => $permission->can_create,
-                            'can_approve' => $permission->can_approve
-                        ];
-                    })->values(),
+                    'permissions' => $perms->map(fn($permission) => [
+                        'module_name' => $permission->modules?->module_name,
+                        'actions' => $permission->grantedActions(),
+                    ])
+                        ->filter(fn($permission) => $permission['actions'])
+                        ->values(),
                 ];
             })
             ->filter()

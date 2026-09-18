@@ -4,7 +4,7 @@
     >
         <button
             type="button"
-            class="-ml-1 shrink-0 rounded-lg p-2 text-gray-600 hover:bg-gray-50 hover:text-primary-500 dark:text-white/70 dark:hover:bg-white/10 lg:hidden"
+            class="-ml-1 shrink-0 rounded-lg p-2 text-gray-600 hover:bg-gray-50 hover:text-primary-500 dark:text-white/70 dark:hover:bg-white/10 lg:hidden dark:hover:text-primary-300"
             aria-label="Open navigation"
             @click="emit('open')"
         >
@@ -18,7 +18,7 @@
                 {{ pageTitle }}
             </h1>
 
-            <p class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate">
+            <p class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate dark:text-gray-500">
                 {{ pageSubtitle }}
             </p>
 
@@ -26,7 +26,9 @@
                 class="flex items-center gap-2 sm:gap-3 mt-2 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400"
             >
                 <span class="flex items-center gap-1.5 whitespace-nowrap">
-                    <Calendar class="w-3.5 h-3.5 text-primary-500 shrink-0" />
+                    <Calendar
+                        class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300"
+                    />
                     <span class="hidden sm:inline">{{ formattedDate }}</span>
                     <span class="sm:hidden">{{ formattedShortDate }}</span>
                 </span>
@@ -34,21 +36,32 @@
                 <span class="w-px h-3 bg-gray-200 dark:bg-white/10 shrink-0" />
 
                 <span class="flex items-center gap-1.5 whitespace-nowrap">
-                    <Clock class="w-3.5 h-3.5 text-primary-500 shrink-0" />
+                    <Clock
+                        class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300"
+                    />
                     {{ formattedTime }}
                 </span>
             </div>
         </div>
 
         <div class="flex items-center gap-1 sm:gap-6 lg:gap-8 shrink-0">
+            <Notification />
+
+            <div class="hidden lg:block">
+                <ClientOnly>
+                    <ThemeToggle
+                        class="text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/10"
+                    />
+                </ClientOnly>
+            </div>
+
             <ClientOnly>
-                <ThemeToggle
-                    class="text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/10"
+                <NavbarProfileDropdown
+                    v-if="user"
+                    :user="user"
+                    :theme-aware="true"
                 />
             </ClientOnly>
-
-            <Notification />
-            <NavbarProfileDropdown v-if="user" :user="user" :theme-aware="true" />
         </div>
     </header>
 </template>

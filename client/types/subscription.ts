@@ -3,10 +3,15 @@ import type { Branch, BranchSettings } from "./branch";
 
 export interface SubscriptionPaymentRecord {
     subscription_payment_id: number;
+    xendit_invoice_id?: string | null;
     payment_reference_id: string;
+    plan_name?: string | null;
     masked_card_number: string | null;
     price: number;
     status: "paid" | "refunded";
+    type: "subscription" | "renewal";
+    billing_interval: "MONTHLY" | "YEARLY" | null;
+    payment_method: "GCASH" | "CREDIT-CARD" | null;
     created_at: string | null;
 }
 

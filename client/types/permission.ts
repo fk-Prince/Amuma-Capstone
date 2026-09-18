@@ -1,8 +1,6 @@
+import type { PermissionActionKey } from "~/utils/permissions";
+
 export interface Permissions {
     module_name: string,
-    can_read: boolean,
-    can_create: boolean,
-    can_update: boolean,
-    can_approve: boolean
-    can_assign: boolean
+    actions: PermissionActionKey[],
 }

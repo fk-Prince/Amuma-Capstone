@@ -415,10 +415,15 @@ onBeforeUnmount(() => {
             <div
                 v-if="isOpen"
                 data-combobox-panel
-                class="fixed z-[10000] bg-white dark:bg-secondary dark:border-white/10 border overflow-hidden rounded-lg shadow-lg"
+                class="fixed z-[10000] flex bg-white dark:bg-secondary dark:border-white/10 border overflow-hidden rounded-lg shadow-lg"
+                :class="openUpward ? 'flex-col-reverse' : 'flex-col'"
                 :style="dropdownStyle"
             >
-                <div class="p-2 border-b dark:border-white/10" v-if="searchBar">
+                <div
+                    v-if="searchBar"
+                    class="p-2 dark:border-white/10"
+                    :class="openUpward ? 'border-t' : 'border-b'"
+                >
                     <div class="relative">
                         <input
                             ref="searchInput"
@@ -427,7 +432,8 @@ onBeforeUnmount(() => {
                             :placeholder="
                                 searchBarPlaceHolder || searchPlaceholder
                             "
-                            class="w-full pl-9 pr-3 py-2 text-sm border dark:border-white/10 dark:bg-secondary dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            :style="{ height: `${triggerHeight}px` }"
+                            class="w-full pl-9 pr-3 text-sm border dark:border-white/10 dark:bg-secondary dark:text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
 
                         <SearchIcon
@@ -553,17 +559,36 @@ function syncItems() {
     localItems.value = [...props.items];
 }
 
+const openUpward = ref(false);
+const triggerHeight = ref(0);
+
+const SEARCH_INSET = 9;
+
 function updatePosition() {
     if (!triggerRef.value) return;
 
     const rect = triggerRef.value.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom;
-    const openUpward = props.position === "top" || spaceBelow < 260;
+
+    openUpward.value = props.position === "top" || spaceBelow < 260;
+    triggerHeight.value = rect.height;
+
+    if (props.searchBar) {
+        dropdownStyle.value = {
+            left: `${rect.left - SEARCH_INSET}px`,
+            width: `${rect.width + SEARCH_INSET * 2}px`,
+            ...(openUpward.value
+                ? { bottom: `${window.innerHeight - rect.bottom}px` }
+                : { top: `${rect.top}px` }),
+        };
+
+        return;
+    }
 
     dropdownStyle.value = {
         left: `${rect.left}px`,
         width: `${rect.width}px`,
-        ...(openUpward
+        ...(openUpward.value
             ? { bottom: `${window.innerHeight - rect.top + 4}px` }
             : { top: `${rect.bottom + 4}px` }),
     };

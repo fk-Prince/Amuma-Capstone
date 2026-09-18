@@ -70,7 +70,22 @@
             </button>
 
             <Notification />
-            <NavbarProfileDropdown v-if="user" :user="user" :theme-aware="true" />
+
+            <div class="hidden lg:block">
+                <ClientOnly>
+                    <ThemeToggle
+                        class="text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/10"
+                    />
+                </ClientOnly>
+            </div>
+
+            <ClientOnly>
+                <NavbarProfileDropdown
+                    v-if="user"
+                    :user="user"
+                    :theme-aware="true"
+                />
+            </ClientOnly>
         </div>
     </header>
 </template>
@@ -81,6 +96,7 @@ import { useRoute, useRouter } from "vue-router";
 import { Calendar, Clock, Menu } from "lucide-vue-next";
 import NavbarProfileDropdown from "~/components/ui/NavbarProfileDropdown.vue";
 import Notification from "~/components/ui/Notification.vue";
+import ThemeToggle from "~/components/ui/ThemeToggle.vue";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { messageService } from "~/api/message/MessageService";
 import type { ConversationSummary } from "~/types/message";

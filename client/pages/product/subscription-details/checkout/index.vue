@@ -15,7 +15,7 @@
                 class="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-10 items-start"
             >
                 <div class="w-full">
-                    <CheckoutSummary />
+                    <CheckoutSummary :total-amount="total" />
                 </div>
                 <div class="lg:sticky lg:top-6">
                     <PaymentForm
@@ -23,6 +23,7 @@
                         :total-amount="total"
                         :processing="processing || loadingTotal"
                         :onCardPay="payCard"
+                        :onGCashPay="payGCash"
                         :enableGCash="true"
                     />
                 </div>
@@ -36,7 +37,7 @@ import { onMounted, ref } from "vue";
 import CheckoutSummary from "~/components/sections/subscription/CheckoutSummary.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
-import { cardPayment } from "~/composables/usePayment";
+import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import { type SubscriptionRequest } from "~/types/subscription";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { useToast } from "~/composables/useToast";
@@ -154,6 +155,40 @@ const payCard = async () => {
     } catch (err: any) {
         xenditProcessing.value = false;
         error(err.message);
+    } finally {
+        processing.value = false;
+    }
+};
+
+const payGCash = async () => {
+    if (processing.value || loadingTotal.value) return;
+
+    processing.value = true;
+
+    try {
+        const payload = buildSubscriptionPayload();
+
+        await gcashPayment({
+            createPayment: () =>
+                subscriptionService.createSubscription({
+                    ...payload,
+                    payment_method: "GCASH",
+                    payment_type: "SUBSCRIPTION",
+                }),
+
+            onClose: () => {
+                processing.value = false;
+            },
+
+            onSuccess: async () => {
+                await navigateTo({
+                    path: "/product/subscription-summary",
+                    query: { status: "true" },
+                });
+            },
+        });
+    } catch (err: any) {
+        error(err?.message ?? "GCash payment failed.");
     } finally {
         processing.value = false;
     }

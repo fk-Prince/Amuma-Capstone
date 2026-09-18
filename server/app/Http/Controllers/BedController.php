@@ -9,8 +9,6 @@ use App\Guard\BranchGuard;
 use App\Http\Requests\Bed\StoreBedRequest;
 use App\Http\Requests\Bed\UpdateBedRequest;
 use App\Service\BedService;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 
 class BedController extends Controller
 {

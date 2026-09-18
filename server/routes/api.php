@@ -71,6 +71,7 @@ Route::prefix('branches')->group(function () {
 
 
 Route::middleware('auth:sanctum')->post('/qr/verify', [OnlineScheduleController::class, 'verifyQr']);
+Route::middleware('auth:sanctum')->post('/qr/demo-verify', [OnlineScheduleController::class, 'demoVerifyQr']);
 
 // PRIVATE - CUSTOM
 Route::middleware('auth:sanctum')->group(function () {
@@ -104,6 +105,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/payments/action', [PaymentController::class, 'store']);
         Route::post('/payments/receipt', [PaymentController::class, 'receipt']);
         Route::get('/messages/conversations', [MessageController::class, 'clientIndex']);
+        Route::get('/messages/contacts', [MessageController::class, 'clientContacts']);
+        Route::post('/messages/open-contact', [MessageController::class, 'openContact']);
     });
 
     // OVERVIEW / STATS

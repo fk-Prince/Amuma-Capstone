@@ -1,16 +1,22 @@
 ﻿<script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { MessageCircle } from "lucide-vue-next";
+import { MessageCircle, PenSquare } from "lucide-vue-next";
 
 import MessageThread from "~/components/messaging/MessageThread.vue";
 import MessageAvatar from "~/components/messaging/MessageAvatar.vue";
+import NewMessageModal from "~/components/sections/portal/NewMessageModal.vue";
 import EmptyState from "~/components/ui/EmptyState.vue";
 import { messageService } from "~/api/message/MessageService";
-import { patientAccessService } from "~/api/patient-access/PatientAccessService.js";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useToast } from "~/composables/useToast";
 
-import type { ChatMessage, ConversationSummary } from "~/types/message";
+import type {
+    CareTeamMember,
+    ChatMessage,
+    ConversationSummary,
+    OutgoingMessage,
+    PortalContact,
+} from "~/types/message";
 
 useHead({ title: "Messages" });
 
@@ -19,45 +25,36 @@ definePageMeta({
     middleware: "portal",
 });
 
-interface BranchRow {
-    branch_id: number;
-    branch_name: string;
-    seed_patient_id: number | null;
-    patient_names: string[];
-    staff_name: string | null;
-    staff_role: string | null;
-    staff_avatar: string | null;
-    conversation_id: number | null;
-    last_message: string | null;
-    unread_count: number;
-}
-
 const { error } = useToast();
 const user = useAuthUser();
 
 const { $echo } = useNuxtApp();
 
-const rows = ref<BranchRow[]>([]);
+const rows = ref<ConversationSummary[]>([]);
 const messages = ref<ChatMessage[]>([]);
-const activeBranchId = ref<number | null>(null);
+const activeId = ref<number | null>(null);
 const mobileThreadOpen = ref(false);
 
 const loadingList = ref(true);
 const loadingThread = ref(false);
 const sending = ref(false);
 
+const composerOpen = ref(false);
+const contacts = ref<PortalContact[]>([]);
+const loadingContacts = ref(true);
+
 const activeRow = computed(() =>
-    rows.value.find((r) => r.branch_id === activeBranchId.value),
+    rows.value.find((r) => r.conversation_id === activeId.value),
 );
+
+const hasLovedOnes = computed(() => contacts.value.length > 0);
 
 const threadSubtitle = computed(() => {
     const row = activeRow.value;
 
     if (!row) return null;
 
-    const staff = [row.staff_name, row.staff_role].filter(Boolean).join(" · ");
-
-    const names = row.patient_names;
+    const names = row.patient_names ?? [];
 
     const caring = names.length
         ? "Caring for " +
@@ -66,108 +63,55 @@ const threadSubtitle = computed(() => {
               : names.join(", "))
         : null;
 
-    return [staff, caring].filter(Boolean).join(" — ") || null;
+    return [row.staff_role, row.branch?.name, caring]
+        .filter(Boolean)
+        .join(" · ");
 });
 
 async function load() {
     loadingList.value = true;
+    loadingContacts.value = true;
 
     try {
-        const [accessRes, conversationRes] = await Promise.all([
-            patientAccessService.retrieveAction({
-                action: "overview",
-                section: "profile",
-            }),
+        const [conversationRes, contactRes] = await Promise.all([
             messageService.conversations(),
+            messageService.contacts(),
         ]);
 
-        const conversations: ConversationSummary[] = conversationRes ?? [];
-
-        const records: any[] = Array.isArray(accessRes?.data)
-            ? accessRes.data
-            : [];
-
-        const byBranch = new Map<number, BranchRow>();
-
-        for (const record of records) {
-            const branchId = record.organization?.branch_id;
-
-            if (!branchId) continue;
-
-            if (!byBranch.has(branchId)) {
-                byBranch.set(branchId, {
-                    branch_id: branchId,
-                    branch_name: record.organization?.name ?? "Branch",
-                    seed_patient_id: record.patient?.patient_id ?? null,
-                    patient_names: [],
-                    staff_name: null,
-                    staff_role: null,
-                    staff_avatar: null,
-                    conversation_id: null,
-                    last_message: null,
-                    unread_count: 0,
-                });
-            }
-
-            const row = byBranch.get(branchId)!;
-
-            if (record.patient?.full_name) {
-                row.patient_names.push(record.patient.full_name);
-            }
-        }
-
-        for (const conversation of conversations) {
-            const row = [...byBranch.values()].find(
-                (r) => r.branch_id === conversation.branch?.branch_id,
-            );
-
-            if (!row) continue;
-
-            row.conversation_id = conversation.conversation_id;
-            row.staff_name = conversation.staff_name;
-            row.staff_role = conversation.staff_role;
-            row.staff_avatar = conversation.staff_avatar ?? null;
-            row.last_message = conversation.last_message;
-            row.unread_count = conversation.unread_count;
-
-            if (conversation.patient_names?.length) {
-                row.patient_names = conversation.patient_names;
-            }
-        }
-
-        rows.value = [...byBranch.values()];
+        rows.value = conversationRes ?? [];
+        contacts.value = Array.isArray(contactRes)
+            ? contactRes
+            : (contactRes?.data ?? []);
 
         if (rows.value.length) {
-            await openThread(rows.value[0]!.branch_id);
+            await openThread(rows.value[0]!.conversation_id);
         }
     } catch (err: any) {
         error(err?.message ?? "Unable to load your messages.");
         rows.value = [];
     } finally {
         loadingList.value = false;
+        loadingContacts.value = false;
     }
 }
 
-async function openThread(branchId: number) {
-    activeBranchId.value = branchId;
+async function openThread(conversationId: number) {
+    activeId.value = conversationId;
     mobileThreadOpen.value = true;
-
-    const row = rows.value.find((r) => r.branch_id === branchId);
-
-    if (!row?.conversation_id) {
-        messages.value = [];
-        return;
-    }
-
     loadingThread.value = true;
 
     try {
         const res = await messageService.thread({
-            conversation_id: row.conversation_id,
+            conversation_id: conversationId,
         });
 
         messages.value = res?.messages ?? [];
-        row.unread_count = 0;
+
+        const row = rows.value.find(
+            (r) => r.conversation_id === conversationId,
+        );
+
+        if (row) row.unread_count = 0;
     } catch (err: any) {
         error(err?.message ?? "Unable to open this conversation.");
         messages.value = [];
@@ -176,7 +120,7 @@ async function openThread(branchId: number) {
     }
 }
 
-async function sendMessage(body: string) {
+async function sendMessage({ body, attachment }: OutgoingMessage) {
     const row = activeRow.value;
 
     if (!row) return;
@@ -186,19 +130,58 @@ async function sendMessage(body: string) {
     try {
         const res = await messageService.send({
             conversation_id: row.conversation_id,
-            patient_id: row.seed_patient_id,
             body,
+            attachment,
         });
 
         if (res?.message) {
             messages.value.push(res.message);
-            row.conversation_id = res.conversation_id;
-            row.last_message = body;
+            row.last_message = res.message.preview ?? body;
+            row.last_message_at = new Date().toISOString();
         }
     } catch (err: any) {
         error(err?.message ?? "Message failed to send.");
     } finally {
         sending.value = false;
+    }
+}
+
+function openComposer() {
+    composerOpen.value = true;
+}
+
+async function startConversation(
+    contact: PortalContact,
+    member: CareTeamMember,
+) {
+    composerOpen.value = false;
+
+    try {
+        const res = await messageService.openContact({
+            patient_id: contact.patient_id,
+            employee_id: member.employee_id,
+        });
+
+        const summary: ConversationSummary | undefined = res?.conversation;
+
+        if (!summary) return;
+
+        const existing = rows.value.find(
+            (r) => r.conversation_id === summary.conversation_id,
+        );
+
+        if (existing) {
+            Object.assign(existing, summary);
+        } else {
+            rows.value.unshift(summary);
+        }
+
+        member.conversation_id = summary.conversation_id;
+        activeId.value = summary.conversation_id;
+        messages.value = res?.messages ?? [];
+        mobileThreadOpen.value = true;
+    } catch (err: any) {
+        error(err?.message ?? "Unable to open this conversation.");
     }
 }
 
@@ -209,7 +192,7 @@ const clientChannel = computed(() => {
 });
 
 const threadChannel = computed(() =>
-    activeRow.value?.conversation_id ? clientChannel.value : null,
+    activeId.value ? clientChannel.value : null,
 );
 
 function onIncoming(message: ChatMessage) {
@@ -237,12 +220,17 @@ function bindChannel(channel: string | null) {
             (r) => r.conversation_id === payload.conversation_id,
         );
 
-        if (!row) return;
+        if (!row) {
+            load();
 
-        row.last_message = payload.body;
+            return;
+        }
+
+        row.last_message = payload.preview ?? payload.body;
+        row.last_message_at = new Date().toISOString();
 
         const isBeingViewed =
-            row.branch_id === activeBranchId.value && mobileThreadOpen.value;
+            row.conversation_id === activeId.value && mobileThreadOpen.value;
 
         if (payload.sender_type !== "client" && !isBeingViewed) {
             row.unread_count += 1;
@@ -340,7 +328,7 @@ onBeforeUnmount(() => {
         </div>
 
         <EmptyState
-            v-else-if="!rows.length"
+            v-else-if="!hasLovedOnes"
             class="p-4 sm:p-6"
             title="You currently have no patients"
             cta-label="Book a Service"
@@ -357,32 +345,58 @@ onBeforeUnmount(() => {
                 <div
                     class="shrink-0 border-b border-gray-100 px-5 py-5 dark:border-white/10"
                 >
-                    <p class="text-sm font-bold text-gray-900 dark:text-white">
-                        Messages
-                    </p>
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p
+                                class="text-sm font-bold text-gray-900 dark:text-white"
+                            >
+                                Messages
+                            </p>
 
-                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                        Talk with the staff looking after your loved one.
-                    </p>
+                            <p
+                                class="mt-1 text-xs text-gray-400 dark:text-gray-500"
+                            >
+                                Talk with the staff looking after your loved
+                                one.
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-600 active:scale-95"
+                            @click="openComposer"
+                        >
+                            <PenSquare class="h-3.5 w-3.5" />
+                            New Message
+                        </button>
+                    </div>
                 </div>
 
                 <div class="min-h-0 flex-1 overflow-y-auto p-2.5">
+                    <p
+                        v-if="!rows.length"
+                        class="px-3 py-10 text-center text-sm text-gray-400 dark:text-gray-500"
+                    >
+                        No conversations yet. Tap New Message to reach your
+                        loved one's care team.
+                    </p>
+
                     <button
                         v-for="row in rows"
-                        :key="row.branch_id"
+                        :key="row.conversation_id"
                         type="button"
                         class="mb-1.5 w-full rounded-2xl border px-3.5 py-3 text-left transition"
                         :class="
-                            row.branch_id === activeBranchId
+                            row.conversation_id === activeId
                                 ? 'border-primary-200 bg-primary-50 dark:border-primary-500/20 dark:bg-primary-500/10'
                                 : 'border-transparent hover:bg-gray-50 dark:hover:bg-white/5'
                         "
-                        @click="openThread(row.branch_id)"
+                        @click="openThread(row.conversation_id)"
                     >
                         <div class="flex items-start gap-2.5">
                             <MessageAvatar
                                 :src="row.staff_avatar"
-                                :name="row.staff_name ?? row.branch_name"
+                                :name="row.staff_name ?? row.branch?.name"
                             />
 
                             <div class="min-w-0 flex-1">
@@ -392,7 +406,7 @@ onBeforeUnmount(() => {
                                     <p
                                         class="truncate text-sm font-semibold text-gray-900 dark:text-white"
                                     >
-                                        {{ row.branch_name }}
+                                        {{ row.staff_name ?? row.branch?.name }}
                                     </p>
 
                                     <span
@@ -404,13 +418,12 @@ onBeforeUnmount(() => {
                                 </div>
 
                                 <p
-                                    v-if="row.staff_name"
                                     class="mt-0.5 truncate text-[11px] text-gray-500 dark:text-gray-400"
                                 >
-                                    {{ row.staff_name
-                                    }}<template v-if="row.staff_role">
-                                        · {{ row.staff_role }}</template
-                                    >
+                                    <template v-if="row.staff_role">
+                                        {{ row.staff_role }} ·
+                                    </template>
+                                    {{ row.branch?.name }}
                                 </p>
 
                                 <p
@@ -440,7 +453,11 @@ onBeforeUnmount(() => {
                     :messages="messages"
                     viewer="client"
                     :avatar="activeRow?.staff_avatar"
-                    :title="activeRow?.branch_name ?? 'Select a branch'"
+                    :title="
+                        activeRow?.staff_name ??
+                        activeRow?.branch?.name ??
+                        'Select a conversation'
+                    "
                     :subtitle="threadSubtitle"
                     :patients="activeRow?.patient_names ?? []"
                     :channel="threadChannel"
@@ -473,5 +490,13 @@ onBeforeUnmount(() => {
                 {{ activeRow.unread_count }}
             </span>
         </button>
+
+        <NewMessageModal
+            :open="composerOpen"
+            :contacts="contacts"
+            :loading="loadingContacts"
+            @close="composerOpen = false"
+            @select="startConversation"
+        />
     </div>
 </template>

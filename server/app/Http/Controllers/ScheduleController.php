@@ -13,12 +13,8 @@ use Illuminate\Support\Facades\Log;
 
 class ScheduleController extends Controller
 {
-    private ScheduleService $scheduleService;
 
-    public function __construct(ScheduleService $scheduleService)
-    {
-        $this->scheduleService = $scheduleService;
-    }
+    public function __construct(private ScheduleService $scheduleService) {}
 
     public function store(Request $request)
     {
@@ -40,6 +36,7 @@ class ScheduleController extends Controller
     {
         if ($request->type === 'assign') { // USED
             $branch = BranchGuard::resolveBranch($request->branch_uuid);
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Assign);
             BranchGuard::mergeRequest($request, $branch);
             return $this->scheduleService->assignEmployee($request->all());
         } else  if ($request->type === 'available_employee') {

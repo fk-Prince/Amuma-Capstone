@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Enums\PermissionAction;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreEmployeeRequest extends FormRequest
 {
@@ -45,9 +47,8 @@ class StoreEmployeeRequest extends FormRequest
 
             'permissions' => ['nullable', 'array'],
             'permissions.*.module_id' => ['required', 'integer', 'exists:modules,module_id'],
-            'permissions.*.can_read' => ['required', 'boolean'],
-            'permissions.*.can_create' => ['required', 'boolean'],
-            'permissions.*.can_update' => ['required', 'boolean'],
+            'permissions.*.actions' => ['required', 'array'],
+            'permissions.*.actions.*' => ['string', Rule::in(PermissionAction::columns())],
 
             'documents' => ['nullable', 'array'],
             'documents.*.label' => ['required', 'string', 'max:255'],

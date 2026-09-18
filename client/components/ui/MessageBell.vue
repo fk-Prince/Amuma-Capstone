@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { messageService } from "~/api/message/MessageService";
+import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 
 import type { ConversationSummary } from "~/types/message";
@@ -10,6 +11,7 @@ import type { ConversationSummary } from "~/types/message";
 const route = useRoute();
 const router = useRouter();
 const branchStore = useBranchStore();
+const user = useAuthUser();
 
 const { $echo } = useNuxtApp();
 
@@ -46,21 +48,29 @@ function goToMessages() {
     router.push(`/app/branches/${branchUuid.value}/messages`);
 }
 
-let channelName = "";
+let joined: string[] = [];
 let handler: ((payload: any) => void) | null = null;
 
 function bindChannel() {
-    if ($echo && channelName && handler) {
-        ($echo as any)
-            .private(channelName)
-            .stopListening(".MessageSent", handler);
-        channelName = "";
+    if ($echo && handler) {
+        for (const channel of joined) {
+            ($echo as any)
+                .private(channel)
+                .stopListening(".MessageSent", handler);
+        }
+
+        joined = [];
         handler = null;
     }
 
     if (!$echo || !branchUuid.value) return;
 
-    channelName = `Branch.Messages.${branchUuid.value}`;
+    const userUuid = (user.value as any)?.uuid;
+
+    joined = [
+        `Branch.Messages.${branchUuid.value}`,
+        ...(userUuid ? [`User.Messages.${userUuid}`] : []),
+    ];
 
     handler = (payload: any) => {
         if (payload.sender_type === "staff") return;
@@ -71,14 +81,16 @@ function bindChannel() {
 
         if (row) {
             row.unread_count += 1;
-            row.last_message = payload.body;
+            row.last_message = payload.preview ?? payload.body;
             return;
         }
 
         load();
     };
 
-    ($echo as any).private(channelName).listen(".MessageSent", handler);
+    for (const channel of joined) {
+        ($echo as any).private(channel).listen(".MessageSent", handler);
+    }
 }
 
 watch(branchUuid, () => {
@@ -93,10 +105,12 @@ onMounted(() => {
 // stopListening, not leave: the messages page shares this channel and leave()
 // would tear it down for both.
 onBeforeUnmount(() => {
-    if ($echo && channelName && handler) {
-        ($echo as any)
-            .private(channelName)
-            .stopListening(".MessageSent", handler);
+    if ($echo && handler) {
+        for (const channel of joined) {
+            ($echo as any)
+                .private(channel)
+                .stopListening(".MessageSent", handler);
+        }
     }
 });
 </script>

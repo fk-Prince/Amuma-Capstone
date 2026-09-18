@@ -111,7 +111,7 @@
                             <p
                                 class="font-mono text-sm font-semibold text-secondary dark:text-white"
                             >
-                                {{ refund.invoice_code }}
+                                {{ refund.refund_code ?? refund.invoice_code }}
                             </p>
 
                             <p class="text-xs text-muted dark:text-gray-400">
@@ -172,6 +172,7 @@ export interface ReceiptGroup {
 
 export interface RefundEntry {
     refund_id: number;
+    refund_code?: string | null;
     invoice_code: string;
     refund_method?: string | null;
     payment_method?: string | null;

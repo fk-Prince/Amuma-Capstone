@@ -33,7 +33,6 @@ class Subscription extends Model
         'pending_plan_id',
         'pending_plan_starts_at',
         'agency_id',
-        'billing_interval',
         'status',
         'start_date',
         'end_date',
@@ -90,5 +89,16 @@ class Subscription extends Model
     public function payments()
     {
         return $this->hasMany(SubscriptionPayment::class, 'subscription_id', 'subscription_id');
+    }
+
+    public function latestPayment()
+    {
+        return $this->hasOne(SubscriptionPayment::class, 'subscription_id', 'subscription_id')
+            ->latestOfMany('subscription_payment_id');
+    }
+
+    public function getBillingIntervalAttribute(): ?string
+    {
+        return $this->latestPayment?->billing_interval;
     }
 }

@@ -34,10 +34,9 @@ class EmployeeResource extends JsonResource
             'permissions' => $this->employee?->permissions
                 ->map(fn($permission) => [
                     'module_name' => $permission->modules?->module_name,
-                    'can_read' => $permission->can_read,
-                    'can_create' => $permission->can_create,
-                    'can_update' => $permission->can_update,
+                    'actions' => $permission->grantedActions(),
                 ])
+                ->filter(fn($permission) => $permission['actions'])
                 ->values(),
         ];
     }

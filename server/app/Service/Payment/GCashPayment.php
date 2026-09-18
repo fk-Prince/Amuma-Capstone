@@ -2,14 +2,14 @@
 
 namespace App\Service\Payment;
 
-use App\Http\Resources\UserResource;
 use App\Interfaces\IFacilityPayment;
 use App\Interfaces\ISubscriptionPayment;
-use Exception;
+use Illuminate\Http\Client\Response;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class GCashPayment implements ISubscriptionPayment, IFacilityPayment
@@ -25,96 +25,87 @@ class GCashPayment implements ISubscriptionPayment, IFacilityPayment
     {
         $user = Auth::user();
         $reference = (string) Str::uuid();
-        $response = Http::withOptions([
-            'verify' => false
-        ])->withBasicAuth($this->secretKey, '')
-            ->post('https://api.xendit.co/v2/invoices', [
-                'external_id' =>  $reference,
-                'amount' => $subscription['total_amount'],
-                'payer_email' => $user->email,
-                'payment_methods' => ['GCASH'],
-                'success_redirect_url' => config('app.client_url') . '/product/subscription-summary?status=success',
-                'failure_redirect_url' => config('app.client_url') . '/product/subscription-summary?status=failed',
-                'metadata' => [
-                    'type' => $subscription['type'],
-                    'plan' => $subscription['plan'],
-                    'user' => $subscription['user'],
-                    'branch' => $subscription['branch'],
-                    'agency' => $subscription['agency'],
-                    'billing_interval' => $subscription['billing_interval'],
-                    'total_amount' => $subscription['total_amount'],
-                    'endDate' => $subscription['endDate'],
-                    'payment_type' => $subscription['payment_type'],
-                    // renewSubscriber() looks the subscription up by this, and
-                    // needs the upgrade keys to know when to apply the plan.
-                    'subscription_uuid' => $subscription['subscription_uuid'] ?? null,
-                    'is_upgrade' => $subscription['is_upgrade'] ?? false,
-                    'upgrade_starts_now' => $subscription['upgrade_starts_now'] ?? false,
-                    'upgrade_starts_at' => $subscription['upgrade_starts_at'] ?? null,
-                ]
-            ]);
-        return response()->json($response->json());
-    }
+        $isRenewal = ($subscription['type'] ?? null) === 'renewal';
 
-    public function admissionExtensionInvoice(array $payload)
-    {
-        $user = Auth::user();
-        $reference = (string) Str::uuid();
+        Cache::put(
+            "xendit_payment_{$reference}",
+            json_decode(json_encode([
+                ...$subscription,
+                'payment_method' => $subscription['method'],
+            ]), true),
+            now()->addDay()
+        );
 
         $response = Http::withOptions([
             'verify' => false
         ])->withBasicAuth($this->secretKey, '')
             ->post('https://api.xendit.co/v2/invoices', [
                 'external_id' => $reference,
-                'amount' => $payload['amount'],
+                'amount' => $subscription['total_amount'],
                 'payer_email' => $user->email,
                 'payment_methods' => ['GCASH'],
-                'success_redirect_url' => config('app.client_url') . '/portal/loved-ones?extend=success',
-                'failure_redirect_url' => config('app.client_url') . '/portal/loved-ones?extend=failed',
+                'success_redirect_url' => $this->redirectUrl('success'),
+                'failure_redirect_url' => $this->redirectUrl('failed'),
                 'metadata' => [
-                    'payment_type' => 'ADMISSION_EXTENSION',
-                    'admission_id' => $payload['admission_id'],
-                    'contract_id' => $payload['contract_id'],
-                    'branch_id' => $payload['branch_id'],
-                    'patient_uuid' => $payload['patient_uuid'],
-                    'payor_name' => $payload['payor_name'],
-                    'amount' => $payload['amount'],
+                    'payment_type' => $isRenewal ? 'RENEWAL' : 'SUBSCRIPTION',
+                    'reference_id' => $reference,
                 ],
             ]);
 
-        return response()->json($response->json());
+        return $this->invoiceResponse($response, $reference);
     }
 
     public function facilityBilling(array $payload)
     {
         $user = Auth::user();
         $reference = (string) Str::uuid();
+
         Cache::put(
             "xendit_payment_{$reference}",
             [
-                ...$payload,
-                'user' => $user,
+                'user_id' => $user->user_id,
+                'branch_id' => $payload['branch']->branch_id,
+                'payload' => json_decode(json_encode(
+                    Arr::except($payload, ['branch', 'user', 'token_id', 'authentication_id'])
+                ), true),
             ],
-            now()->addHours(24)
+            now()->addDay()
         );
-
-        $payload['total_amount'] = 5000; // TODO: TO BE CHANGE
 
         $response = Http::withOptions([
             'verify' => false
         ])->withBasicAuth($this->secretKey, '')
             ->post('https://api.xendit.co/v2/invoices', [
-                'external_id' =>  $reference,
-                'amount' =>  $payload['total_amount'],
+                'external_id' => $reference,
+                'amount' => $payload['total'],
                 'payer_email' => $user->email,
                 'payment_methods' => ['GCASH'],
-                'success_redirect_url' => config('app.client_url') . '/booking/provider/' . $payload['branch_uuid'] . '/success',
-                // 'failure_redirect_url' => config('app.client_url') . '/product/subscription-summary?status=failed', // TODO: TO BE CHANGE
+                'success_redirect_url' => $this->redirectUrl('success'),
+                'failure_redirect_url' => $this->redirectUrl('failed'),
                 'metadata' => [
-                    'payment_type' => $payload['payment_type'],
+                    'payment_type' => 'BOOKING_FACILITY',
                     'reference_id' => $reference,
                 ],
             ]);
+
+        return $this->invoiceResponse($response, $reference);
+    }
+
+    private function redirectUrl(string $status): string
+    {
+        return config('app.client_url') . '/payment/complete?status=' . $status;
+    }
+
+    private function invoiceResponse(Response $response, string $reference): JsonResponse
+    {
+        if ($response->failed()) {
+            Cache::forget("xendit_payment_{$reference}");
+
+            return response()->json([
+                'success' => false,
+                'message' => $response->json('message') ?? 'Unable to start the GCash payment.',
+            ], $response->status());
+        }
 
         return response()->json($response->json());
     }

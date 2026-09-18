@@ -64,7 +64,7 @@
                     v-show="open"
                     class="flex-1 overflow-hidden lg:overflow-auto"
                 >
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div
                             class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
@@ -159,9 +159,7 @@
                                 Within 24 hours
                             </p>
                         </div>
-                    </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
                         <div
                             class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
@@ -199,27 +197,6 @@
 
                             <p class="text-xs text-[#6B8A87] dark:text-gray-400">Appointments</p>
                         </div>
-
-                        <div
-                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
-                        >
-                            <p
-                                class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
-                            >
-                                Patients
-                            </p>
-
-                            <p
-                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
-                            >
-                                {{ overview?.patients?.total ?? 0 }}
-                            </p>
-
-                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
-                                {{ overview?.patients?.new_today ?? 0 }} new
-                                today
-                            </p>
-                        </div>
                     </div>
 
                     <div class="mt-5 border-t border-[#EDF4F3] pt-4 dark:border-white/10">
@@ -229,7 +206,9 @@
                             Recent Bookings
                         </p>
 
-                        <div class="space-y-3">
+                        <div
+                            class="min-h-[280px] max-h-[440px] space-y-3 overflow-y-auto pr-1"
+                        >
                             <div
                                 v-for="item in overview?.bookings?.recent ?? []"
                                 :key="item.booking_id"

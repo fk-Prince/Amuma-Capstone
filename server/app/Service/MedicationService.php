@@ -11,7 +11,10 @@ use Exception;
 
 class MedicationService
 {
-    public function __construct(private PatientRepository $patientRepository) {}
+    public function __construct(
+        private PatientRepository $patientRepository,
+        private NotificationService $notificationService,
+    ) {}
 
     public function listMedications(array $payload)
     {
@@ -69,6 +72,13 @@ class MedicationService
             'start_date' => $data['startDate'],
             'recorded_at' => now(),
         ]);
+
+        $this->notificationService->notifyPatientAccess(
+            $patient,
+            "A new medication, {$medication->name}, was added for {$patient->first_name} {$patient->last_name}.",
+            'Medication',
+            $user
+        );
 
         return response()->json([
             'message' => 'Successfully saved Medication.',

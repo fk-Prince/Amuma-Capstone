@@ -8,6 +8,7 @@ use App\Http\Resources\NotificationResource;
 use App\Mail\BookingDecisionMailer;
 use App\Models\Booking;
 use App\Models\Branch;
+use App\Models\Patient;
 use App\Models\User;
 use App\Repository\EmployeeRepository;
 use App\Repository\NotificationRepository;
@@ -188,5 +189,77 @@ class NotificationService
             'reference_id' => $booking->booking_id,
             'message'      => "You have a new booking request. Booking #{$booking->reference_id} is waiting for your review.",
         ], $booking);
+    }
+
+    public function notifyPatientAccess(
+        Patient $patient,
+        string $message,
+        string $messageType,
+        ?User $actor = null,
+        mixed $reference = null,
+        ?string $referenceId = null
+    ): void {
+        $branch = $patient->branch;
+
+        $guardians = $patient->patientAccess()
+            ->where('have_access', true)
+            ->with('client.user')
+            ->get()
+            ->map(fn($access) => $access->client?->user)
+            ->filter();
+
+        foreach ($guardians as $guardian) {
+            $this->notificationRepository->create([
+                'branch_id' => $branch?->branch_id,
+                'to_user_id' => $guardian->user_id,
+                'from_user_id' => $actor?->user_id ?? $guardian->user_id,
+                'message_type' => $messageType,
+                'message' => $message,
+            ]);
+
+            if ($guardian->uuid) {
+                event(new NotificationEvent(
+                    $guardian->uuid,
+                    $branch?->uuid ?? '',
+                    $message,
+                    $referenceId ?? (string) $patient->uuid,
+                    $messageType,
+                    $reference
+                ));
+            }
+        }
+    }
+
+    public function notifyBranchStaff(
+        Branch $branch,
+        string $message,
+        string $messageType,
+        ?User $actor = null,
+        mixed $reference = null,
+        ?string $referenceId = null
+    ): void {
+        $employees = $this->employeeRepository->getBranchStaffByRoles(
+            self::BOOKING_ROLES,
+            $branch->branch_id
+        );
+
+        foreach ($employees as $employee) {
+            $this->notificationRepository->create([
+                'branch_id' => $branch->branch_id,
+                'to_user_id' => $employee['user_id'],
+                'from_user_id' => $actor?->user_id ?? $employee['user_id'],
+                'message_type' => $messageType,
+                'message' => $message,
+            ]);
+
+            event(new NotificationEvent(
+                $employee['uuid'],
+                $branch->uuid,
+                $message,
+                $referenceId ?? '',
+                $messageType,
+                $reference
+            ));
+        }
     }
 }

@@ -484,6 +484,7 @@ import type {
     Colleague,
     ConversationSummary,
     MessageRecipient,
+    OutgoingMessage,
 } from "~/types/message";
 
 definePageMeta({
@@ -704,7 +705,7 @@ async function openThread(conversationId: number) {
     }
 }
 
-async function sendMessage(body: string) {
+async function sendMessage({ body, attachment }: OutgoingMessage) {
     if (!activeId.value) return;
 
     sending.value = true;
@@ -713,12 +714,13 @@ async function sendMessage(body: string) {
         const res = await messageService.send({
             conversation_id: activeId.value,
             body,
+            attachment,
             as_staff: true,
         });
 
         if (res?.message) {
             messages.value.push(res.message);
-            patchPreview(activeId.value, body);
+            patchPreview(activeId.value, res.message.preview ?? body);
         }
     } catch (err: any) {
         error(err?.message ?? "Message failed to send.");
@@ -738,33 +740,48 @@ function patchPreview(conversationId: number, body: string) {
     row.last_message_at = new Date().toISOString();
 }
 
-const listChannel = computed(() =>
-    tab.value === "colleagues"
-        ? `User.Messages.${(user.value as any)?.uuid}`
-        : `Branch.Messages.${uuid.value}`,
-);
+const listChannels = computed(() => {
+    const userUuid = (user.value as any)?.uuid;
+
+    const channels = userUuid ? [`User.Messages.${userUuid}`] : [];
+
+    if (tab.value !== "colleagues" && uuid.value) {
+        channels.push(`Branch.Messages.${uuid.value}`);
+    }
+
+    return channels;
+});
 
 const threadChannel = computed(() =>
-    activeId.value ? listChannel.value : null,
+    activeId.value ? listChannels.value : [],
 );
 
 function onIncoming(message: ChatMessage) {
     messages.value.push(message);
 }
 
-let joined = "";
+let joined: string[] = [];
 let listHandler: ((payload: any) => void) | null = null;
 
-function bindList(channel: string | null) {
-    if ($echo && joined && listHandler) {
-        ($echo as any).private(joined).stopListening(".MessageSent", listHandler);
-        joined = "";
+function bindList(channels: string[]) {
+    if ($echo && listHandler) {
+        for (const channel of joined) {
+            ($echo as any)
+                .private(channel)
+                .stopListening(".MessageSent", listHandler);
+        }
+
+        joined = [];
         listHandler = null;
     }
 
-    if (!$echo || !channel || channel.endsWith("undefined")) return;
+    if (!$echo) return;
 
-    joined = channel;
+    joined = channels.filter(
+        (channel) => channel && !channel.endsWith("undefined"),
+    );
+
+    if (!joined.length) return;
 
     listHandler = (payload: any) => {
         const row = conversations.value.find(
@@ -776,7 +793,7 @@ function bindList(channel: string | null) {
             return;
         }
 
-        row.last_message = payload.body;
+        row.last_message = payload.preview ?? payload.body;
         row.last_message_at = new Date().toISOString();
 
         const mine =
@@ -792,20 +809,24 @@ function bindList(channel: string | null) {
         }
     };
 
-    ($echo as any).private(joined).listen(".MessageSent", listHandler);
+    for (const channel of joined) {
+        ($echo as any).private(channel).listen(".MessageSent", listHandler);
+    }
 }
 
-watch(listChannel, bindList, { immediate: true });
+watch(listChannels, bindList, { immediate: true });
 
 onMounted(async () => {
     await fetchConversations();
 });
 
 onBeforeUnmount(() => {
-    if ($echo && joined && listHandler) {
-        ($echo as any)
-            .private(joined)
-            .stopListening(".MessageSent", listHandler);
+    if ($echo && listHandler) {
+        for (const channel of joined) {
+            ($echo as any)
+                .private(channel)
+                .stopListening(".MessageSent", listHandler);
+        }
     }
 });
 </script>

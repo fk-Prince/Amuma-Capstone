@@ -40,6 +40,7 @@
 
                 <div class="flex shrink-0 items-center gap-2 pl-2">
                     <div
+                        v-if="!filters.type.includes('adl')"
                         class="flex items-center gap-1 rounded-xl bg-muted-light p-1 dark:bg-white/10"
                     >
                         <button
@@ -47,6 +48,7 @@
                             :key="option.value"
                             type="button"
                             :aria-label="option.label"
+                            :title="option.label"
                             :aria-pressed="filters.view === option.value"
                             class="flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
                             :class="
@@ -266,11 +268,11 @@ import {
     Layers,
     X,
     LayoutGrid,
-    Table,
+    GanttChart,
     SlidersHorizontal,
 } from "lucide-vue-next";
 
-export type ScheduleView = "card" | "table";
+export type ScheduleView = "timeline" | "cards";
 export type ScheduleTypeFilter = "medical" | "homecare";
 
 export interface ScheduleFilters {
@@ -342,7 +344,7 @@ function filtersFromQuery(): ScheduleFilters {
 
         assignment: toStr(route.query.assignment) || "all",
 
-        view: (toStr(route.query.view) as ScheduleView) || "card",
+        view: toStr(route.query.view) === "cards" ? "cards" : "timeline",
     };
 }
 
@@ -372,8 +374,8 @@ const viewOptions: {
     value: ScheduleView;
     icon: unknown;
 }[] = [
-    { label: "Card view", value: "card", icon: LayoutGrid },
-    { label: "Table view", value: "table", icon: Table },
+    { label: "Timeline view", value: "timeline", icon: GanttChart },
+    { label: "Card view", value: "cards", icon: LayoutGrid },
 ];
 
 const statusOptions = [
@@ -548,7 +550,7 @@ function syncQuery() {
         "assignment",
         filters.assignment === "all" ? "" : filters.assignment,
     );
-    setOrDelete("view", filters.view === "card" ? "" : filters.view);
+    setOrDelete("view", filters.view === "timeline" ? "" : filters.view);
 
     router.replace({ query });
 

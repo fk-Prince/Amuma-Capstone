@@ -14,12 +14,8 @@ use Illuminate\Support\Facades\Log;
 
 class BranchController extends Controller
 {
-    private BranchService $branchService;
 
-    public function __construct(BranchService $branchService)
-    {
-        $this->branchService = $branchService;
-    }
+    public function __construct(private BranchService $branchService) {}
 
 
     public function fetchBranch(string $uuid)

@@ -3,7 +3,6 @@
 namespace App\Factories;
 
 use App\Enums\PaymentWebhookEnum;
-use App\Hooks\AdmissionExtensionWebhook;
 use App\Hooks\FacilityWebhook;
 use App\Hooks\SubscriptionWebhook;
 
@@ -14,14 +13,12 @@ class PaymentWebhook
 
         return match (PaymentWebhookEnum::fromPayload($payload)) {
 
-            PaymentWebhookEnum::SUBSCRIPTION =>
+            PaymentWebhookEnum::SUBSCRIPTION,
+            PaymentWebhookEnum::RENEWAL =>
             app(SubscriptionWebhook::class),
 
             PaymentWebhookEnum::BOOKING_FACILITY =>
             app(FacilityWebhook::class),
-
-            PaymentWebhookEnum::ADMISSION_EXTENSION =>
-            app(AdmissionExtensionWebhook::class),
         };
     }
 }

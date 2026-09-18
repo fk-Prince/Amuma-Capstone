@@ -273,15 +273,6 @@ class BookingRepository
                     ->where('status', 'pending')
                     ->count(),
             ],
-
-            'patients' => [
-                'total' => Patient::where('branch_id', $branchId)
-                    ->count(),
-
-                'new_today' => Patient::where('branch_id', $branchId)
-                    ->whereDate('created_at', today())
-                    ->count(),
-            ],
         ];
     }
 }

@@ -91,6 +91,15 @@
                     label="Payment Method"
                     :value="checkout.payment_method || '—'"
                 />
+
+                <SummaryRow
+                    label="Amount"
+                    :value="
+                        props.totalAmount != null
+                            ? formatCurrency(props.totalAmount)
+                            : '—'
+                    "
+                />
             </div>
         </section>
 
@@ -186,6 +195,11 @@
                     />
 
                     <SummaryRow
+                        label="TIN"
+                        :value="checkout.branch.tin || '—'"
+                    />
+
+                    <SummaryRow
                         label="Description"
                         :value="checkout.branch.description || '—'"
                     />
@@ -257,6 +271,11 @@ import { computed } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import SummaryRow from "~/components/ui/SummaryRow.vue";
 import { useRouter } from "vue-router";
+import { formatCurrency } from "~/utils/currency";
+
+const props = defineProps<{
+    totalAmount?: number | null;
+}>();
 
 const router = useRouter();
 const checkout = useSubscriptionCheckout();

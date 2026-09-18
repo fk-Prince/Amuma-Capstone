@@ -10,7 +10,10 @@ use Exception;
 
 class VitalService
 {
-    public function __construct(private PatientRepository $patientRepository) {}
+    public function __construct(
+        private PatientRepository $patientRepository,
+        private NotificationService $notificationService,
+    ) {}
 
 
     public function listVitals(array $payload)
@@ -67,6 +70,13 @@ class VitalService
             'recorded_time' => $data['recordedTime'],
             'notes' => $data['notes'] ?? null,
         ]);
+
+        $this->notificationService->notifyPatientAccess(
+            $patient,
+            "New vital signs were recorded for {$patient->first_name} {$patient->last_name}.",
+            'Vitals',
+            $user
+        );
 
         return response()->json([
             'message' => 'Successfully saved Vital Signs.',

@@ -47,37 +47,15 @@
         <nav
             class="sidebar-scroll flex-1 px-3.5 space-y-4 mt-5 overflow-y-auto overflow-x-hidden"
         >
-            <div v-for="group in groupedMenus" :key="group.label" class="space-y-1.5">
-                <p
-                    v-if="groupedMenus.length > 1"
-                    class="px-[13px] text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400 whitespace-nowrap transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100 dark:text-gray-500"
-                >
-                    {{ group.label }}
-                </p>
-
-                <NuxtLink
-                    v-for="item in group.items"
-                    :key="item.to"
-                    :to="item.to"
-                    class="w-full flex items-center gap-3 lg:justify-center lg:gap-0 lg:px-0 lg:group-hover:justify-start lg:group-hover:gap-3 lg:group-hover:px-[13px] px-[13px] py-3 rounded-xl text-sm font-medium transition-colors"
-                    :class="
-                        isActive(item.to)
-                            ? 'bg-primary-500 text-white shadow-sm'
-                            : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-white/40 dark:hover:bg-white/5 dark:hover:text-white/80'
-                    "
-                    @click="emit('close')"
-                >
-                    <component
-                        :is="item.icon"
-                        v-if="item.icon"
-                        class="w-[18px] h-[18px] shrink-0"
-                    />
-                    <span
-                        class="flex-1 lg:flex-none lg:w-0 lg:group-hover:flex-1 lg:group-hover:w-auto text-left whitespace-nowrap overflow-hidden transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
-                        >{{ item.label }}</span
-                    >
-                </NuxtLink>
-            </div>
+            <SidebarNavGroup
+                v-for="group in groupedMenus"
+                :key="group.label"
+                :label="group.label"
+                :items="group.items"
+                :show-label="groupedMenus.length > 1"
+                storage-key="dashboard"
+                @navigate="emit('close')"
+            />
         </nav>
 
         <div
@@ -131,6 +109,7 @@ import { LogOut, UserRound, X } from "lucide-vue-next";
 import { authService } from "~/api/auth/AuthService";
 import { resetAuth } from "~/composables/useAuthUser";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
+import SidebarNavGroup from "~/components/ui/SidebarNavGroup.vue";
 
 interface MenuItem {
     label: string;

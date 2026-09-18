@@ -11,12 +11,8 @@ use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
-    private InvoiceService $invoiceService;
 
-    public function __construct(InvoiceService $invoiceService)
-    {
-        $this->invoiceService = $invoiceService;
-    }
+    public function __construct(private InvoiceService $invoiceService) {}
 
     public function overview(Request $request)
     {
@@ -63,9 +59,10 @@ class InvoiceController extends Controller
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         BranchGuard::mergeRequest($request, $branch);
         if ($request->type === 'refund') {
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::ApproveWithdrawal);
             return $this->invoiceService->completeRefund($request->all());
         } else if ($request->type === 'decline-refund') {
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Update);
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::ApproveWithdrawal);
             return $this->invoiceService->declineRefund($request->all());
         } else if ($request->type === 'void') {
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Update);

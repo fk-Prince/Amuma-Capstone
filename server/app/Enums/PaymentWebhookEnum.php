@@ -7,9 +7,8 @@ use Illuminate\Support\Facades\Log;
 enum PaymentWebhookEnum: string
 {
     case SUBSCRIPTION = 'SUBSCRIPTION';
+    case RENEWAL = 'RENEWAL';
     case BOOKING_FACILITY = 'BOOKING_FACILITY';
-    case ADMISSION_EXTENSION = 'ADMISSION_EXTENSION';
-
     public static function fromPayload(array $payload): self
     {
         return self::tryFrom(

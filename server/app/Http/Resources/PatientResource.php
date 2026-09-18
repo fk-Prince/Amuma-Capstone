@@ -244,7 +244,10 @@ class PatientResource extends JsonResource
                 ) + [
                     'outstanding' => OutstandingBalance::forInvoices(
                         $this->patient_invoices,
-                        $invoice->invoice
+                        $invoice->invoice,
+                        ($this->futurePeriods($admission, $period) ?? collect())
+                            ->pluck('admission_period_id')
+                            ->all()
                     ),
                 ]
                 : null,
@@ -257,13 +260,13 @@ class PatientResource extends JsonResource
         ];
     }
 
-    private function formatFuturePeriods(mixed $admission, mixed $current)
+    private function futurePeriods(mixed $admission, mixed $current)
     {
         if (!$admission->relationLoaded('periods')) {
             return null;
         }
 
-        $future = $admission->periods
+        return $admission->periods
             ->whereNotIn('status', AdmissionPeriod::CLOSED_STATUSES)
             ->when(
                 $current,
@@ -273,6 +276,15 @@ class PatientResource extends JsonResource
                     $current->admission_period_id
                 )
             );
+    }
+
+    private function formatFuturePeriods(mixed $admission, mixed $current)
+    {
+        $future = $this->futurePeriods($admission, $current);
+
+        if ($future === null) {
+            return null;
+        }
 
         $lines = $future->flatMap(fn($period) => $period->invoiceAdmissionLines);
 

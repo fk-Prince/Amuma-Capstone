@@ -188,7 +188,9 @@
                 </div>
             </div>
 
-            <div class="mt-[-120px] flex flex-1 justify-end max-lg:mt-0">
+            <div
+                class="mt-[-120px] flex flex-1 justify-end max-lg:mt-0 max-md:hidden"
+            >
                 <div class="relative w-full max-w-[1050px]">
                     <img
                         :src="dashboardImg"

@@ -791,6 +791,8 @@
                     :show="showQrModal"
                     :token="qrToken"
                     :mode="qrDirection === 'in' ? 'clock-in' : 'clock-out'"
+                    :caregivers="qrCaregivers"
+                    :checked-in="qrCheckedIn"
                     description="Show this code to the caregiver to scan on arrival."
                     @close="closeQrModal"
                 />
@@ -1449,6 +1451,14 @@ const qrDirection = ref<"in" | "out" | null>(null);
 
 const qrToken = ref<string | null>(null);
 
+const qrCaregivers = ref<{ employee_id: number; name: string }[]>([]);
+
+const qrCheckedIn = ref<{
+    employee_id: number;
+    name: string;
+    in_timestamp: string | null;
+} | null>(null);
+
 const showQrModal = ref(false);
 
 onMounted(() => {
@@ -1737,6 +1747,8 @@ async function generateAttendanceQr(direction: "in" | "out") {
         });
 
         qrToken.value = res?.token ?? res?.data?.token ?? null;
+        qrCaregivers.value = res?.caregivers ?? [];
+        qrCheckedIn.value = res?.checked_in ?? null;
 
         showQrModal.value = Boolean(qrToken.value);
     } catch (err: any) {

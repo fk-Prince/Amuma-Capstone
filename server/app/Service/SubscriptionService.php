@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Enums\BillingIntervalEnum;
+use App\Enums\RoleEnum;
 use App\Events\NotificationEvent;
 use App\Mail\BranchRejectedMailer;
 use App\Mail\SubscriptionPurchasedMailer;
@@ -55,6 +56,21 @@ class SubscriptionService
         private NotificationRepository $notificationRepository
     ) {
         $this->secretKey = config('services.xendit.secret_key');
+    }
+
+    private function grantOwnerPermissions(int $employeeId, int $branchId): void
+    {
+        $owner = RoleEnum::BranchOwner->permissions();
+        foreach ($this->moduleRepository->getAllModules() as $module) {
+            EmployeePermission::updateOrCreate(
+                [
+                    'employee_id' => $employeeId,
+                    'branch_id'   => $branchId,
+                    'module_id'   => $module->module_id,
+                ],
+                EmployeePermission::grantColumns($owner[$module->module_name] ?? [])
+            );
+        }
     }
 
 
@@ -172,7 +188,6 @@ class SubscriptionService
             $startsAt = $meta['upgrade_starts_at'] ?? null;
 
             $changes = [
-                'billing_interval' => $meta['billing_interval'],
                 'end_date' => $meta['endDate'],
                 'status' => Subscription::STATUS_ACTIVE,
             ];
@@ -200,6 +215,9 @@ class SubscriptionService
                 'masked_card_number' => $payload['masked_card_number'] ?? null,
                 'price' => $meta['total_amount'],
                 'status' => SubscriptionPayment::STATUS_PAID,
+                'type' => SubscriptionPayment::TYPE_RENEWAL,
+                'billing_interval' => $meta['billing_interval'],
+                'payment_method' => $meta['payment_method'] ?? null,
             ]);
 
             return response()->json([
@@ -489,7 +507,6 @@ class SubscriptionService
                 $subscription = $this->subscriptionRepository->create([
                     'plan_id' => $plan['plan_id'],
                     'agency_id' => $agencyData->agency_id ?? null,
-                    'billing_interval' => $billing_interval->value,
                     'start_date' => Carbon::now(),
                     'end_date' => $endDate,
                 ]);
@@ -509,6 +526,9 @@ class SubscriptionService
                     'masked_card_number' => $masked_card_number,
                     'price' => $totalAmount,
                     'status' => SubscriptionPayment::STATUS_PAID,
+                    'type' => SubscriptionPayment::TYPE_SUBSCRIPTION,
+                    'billing_interval' => $billing_interval->value,
+                    'payment_method' => $meta['payment_method'] ?? null,
                 ]);
 
                 $employee = $this->employeeRepository->findEmployeeByFields([
@@ -529,24 +549,7 @@ class SubscriptionService
                     'employee_id' => $employee->employee_id,
                 ]);
 
-                $modules = $this->moduleRepository->getAllModules();
-
-                foreach ($modules as $module) {
-                    EmployeePermission::updateOrCreate(
-                        [
-                            'employee_id' => $employee->employee_id,
-                            'branch_id'   => $branchData->branch_id,
-                            'module_id'   => $module->module_id,
-                        ],
-                        [
-                            'can_read'    => true,
-                            'can_create'  => true,
-                            'can_update'  => true,
-                            'can_approve' => true,
-                            'can_assign'  => true,
-                        ]
-                    );
-                }
+                $this->grantOwnerPermissions($employee->employee_id, $branchData->branch_id);
 
                 if (!empty($user['email'])) {
                     Mail::to($user['email'])->send(new SubscriptionPurchasedMailer(
@@ -729,22 +732,7 @@ class SubscriptionService
                 'employee_id' => $employee->employee_id,
             ]);
 
-            foreach ($this->moduleRepository->getAllModules() as $module) {
-                EmployeePermission::updateOrCreate(
-                    [
-                        'employee_id' => $employee->employee_id,
-                        'branch_id'   => $branchData->branch_id,
-                        'module_id'   => $module->module_id,
-                    ],
-                    [
-                        'can_read'    => true,
-                        'can_create'  => true,
-                        'can_update'  => true,
-                        'can_approve' => true,
-                        'can_assign'  => true,
-                    ]
-                );
-            }
+            $this->grantOwnerPermissions($employee->employee_id, $branchData->branch_id);
 
             $adminMessage = "New branch request from {$branchData->name} (included in an existing subscription) is awaiting your review.";
 

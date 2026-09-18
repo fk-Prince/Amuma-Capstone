@@ -560,13 +560,16 @@
                 </div>
 
                 <div class="overflow-x-auto">
-                    <table class="w-full min-w-[520px]">
+                    <table class="w-full min-w-[720px]">
                         <thead>
                             <tr class="bg-slate-50/60 dark:bg-white/5">
                                 <th
                                     v-for="head in [
                                         'Reference',
                                         'Plan',
+                                        'Type',
+                                        'Cycle',
+                                        'Method',
                                         'Card',
                                         'Amount',
                                         'Date',
@@ -591,12 +594,38 @@
                                 <td
                                     class="px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-gray-300"
                                 >
-                                    {{ payment.payment_reference_id ?? "—" }}
+                                    {{ payment.xendit_invoice_id ?? "—" }}
                                 </td>
                                 <td
                                     class="whitespace-nowrap px-4 py-2.5 text-xs text-slate-500 dark:text-gray-400"
                                 >
                                     {{ payment.plan_name ?? "—" }}
+                                </td>
+                                <td class="whitespace-nowrap px-4 py-2.5">
+                                    <span
+                                        class="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase"
+                                        :class="
+                                            payment.type === 'renewal'
+                                                ? 'bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300'
+                                                : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300'
+                                        "
+                                    >
+                                        {{ payment.type ?? "—" }}
+                                    </span>
+                                </td>
+                                <td
+                                    class="whitespace-nowrap px-4 py-2.5 text-xs capitalize text-slate-500 dark:text-gray-400"
+                                >
+                                    {{
+                                        payment.billing_interval
+                                            ? payment.billing_interval.toLowerCase()
+                                            : "—"
+                                    }}
+                                </td>
+                                <td
+                                    class="whitespace-nowrap px-4 py-2.5 text-xs text-slate-500 dark:text-gray-400"
+                                >
+                                    {{ payment.payment_method ?? "—" }}
                                 </td>
                                 <td
                                     class="px-4 py-2.5 text-xs text-slate-500 dark:text-gray-400"
@@ -686,9 +715,9 @@
                             :total-amount="renewTotal"
                             :processing="processing"
                             :onCardPay="payCard"
-                            :enableGCash="false"
+                            :onGCashPay="payGCash"
                             title="Renewal payment"
-                            description="Confirm your card to extend this branch's subscription."
+                            description="Choose how to pay for this branch's renewal."
                             submit-label="Confirm renewal"
                         />
                     </div>
@@ -713,7 +742,7 @@ import PaymentForm from "~/components/forms/PaymentForm.vue";
 import { formatAmount } from "~/utils/currency";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { planService } from "~/api/plan/PlanService";
-import { cardPayment } from "~/composables/usePayment";
+import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import { useToast } from "~/composables/useToast";
 import type { CardDetails } from "~/types/payment";
 
@@ -1002,6 +1031,43 @@ const payCard = async () => {
                 }
 
                 showRenew.value = false;
+            },
+        });
+    } catch (err: any) {
+        error(err?.message ?? "Renewal payment failed.");
+    } finally {
+        processing.value = false;
+    }
+};
+
+const payGCash = async () => {
+    if (processing.value) return;
+
+    processing.value = true;
+
+    try {
+        await gcashPayment({
+            createPayment: () =>
+                subscriptionService.renew({
+                    branch_uuid: props.uuid,
+                    billing_interval: renewInterval.value,
+                    payment_method: "GCASH",
+                    plan_code: chargedPlan.value?.plan_code,
+                    upgrade_timing: isUpgrading.value
+                        ? upgradeTiming.value
+                        : undefined,
+                }),
+
+            onClose: () => {
+                processing.value = false;
+            },
+
+            onSuccess: async () => {
+                showRenew.value = false;
+                success(
+                    "GCash payment received. The renewal appears here once GCash confirms it.",
+                );
+                await fetchSubscription();
             },
         });
     } catch (err: any) {
