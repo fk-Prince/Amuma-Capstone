@@ -2,6 +2,12 @@
     <div
         class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden lg:gap-3 lg:p-3"
     >
+        <AuthTransitionScreen
+            v-if="!authReady"
+            title="Setting things up"
+            subtitle=""
+        />
+
         <OwnerSidebar :open="isOpen" @close="isOpen = false" />
 
         <div class="flex-1 flex flex-col min-w-0 h-full lg:gap-3">
@@ -40,6 +46,9 @@
 import { ref } from "vue";
 import OwnerHeader from "~/components/sections/owner/OwnerHeader.vue";
 import OwnerSidebar from "~/components/sections/owner/OwnerSidebar.vue";
+import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
+import { useAuthReady } from "~/composables/useAuthUser";
 
 const isOpen = ref(false);
+const authReady = useAuthReady();
 </script>

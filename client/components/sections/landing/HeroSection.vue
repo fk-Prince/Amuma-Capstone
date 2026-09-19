@@ -44,7 +44,8 @@
                 ></span>
 
                 <div class="mb-6 flex flex-wrap gap-3">
-                    <button
+                    <NuxtLink
+                        to="/booking/search"
                         class="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-700"
                     >
                         <svg
@@ -60,13 +61,14 @@
                         </svg>
 
                         Search Provider
-                    </button>
+                    </NuxtLink>
 
-                    <button
+                    <NuxtLink
+                        to="/product"
                         class="rounded-xl border border-primary px-6 py-3 text-sm font-bold text-primary transition hover:bg-primary hover:text-white"
                     >
                         Scale Your Agency Today
-                    </button>
+                    </NuxtLink>
                 </div>
 
                 <div class="mb-8 flex flex-wrap items-center gap-4">

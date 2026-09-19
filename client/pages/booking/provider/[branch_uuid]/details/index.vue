@@ -406,7 +406,7 @@ import { useBranch } from "~/composables/useBranchProvider";
 useHead({ title: "Patient Details" });
 definePageMeta({
     navVariant: 4,
-    navTheme: "dark",
+    navTheme: "light",
     middleware: ["auth-client", "prevent-staff-booking", "provider-guard"],
 });
 

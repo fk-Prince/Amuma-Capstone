@@ -51,6 +51,20 @@ const scheduleDate = computed(() =>
         : props.booking.homecare?.date,
 );
 
+const isMedical = computed(() => props.booking.homecare?.type === "Medical");
+
+const preferredTime = computed(() => {
+    const time = props.booking.homecare?.prefered_time;
+
+    if (!time) return "";
+
+    return new Date(`1970-01-01T${time}`).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+    });
+});
+
 const serviceAddress = computed(() =>
     isFacility.value
         ? "On-site — at the facility"
@@ -241,6 +255,9 @@ onBeforeUnmount(() => {
                             </p>
                             <p class="mt-0.5 text-sm">
                                 {{ longDate(scheduleDate) }}
+                                <span v-if="isMedical && preferredTime">
+                                    · {{ preferredTime }}
+                                </span>
                             </p>
                         </div>
 
@@ -371,8 +388,8 @@ onBeforeUnmount(() => {
                             above when following up with the branch.
                         </p>
 
-                        <div class="mt-8 flex justify-end">
-                            <div class="w-1/2">
+                        <div class="mt-8 flex justify-center">
+                            <div class="w-1/2 text-center">
                                 <p
                                     class="pb-1 text-sm font-semibold text-slate-800 dark:text-white"
                                 >

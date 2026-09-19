@@ -271,6 +271,9 @@ export interface DischargeCalculation {
     is_within_refund_window: boolean;
     is_under_required_payment: boolean;
     payment_shortfall: number;
+    // True once the invoice itself is void or written off: it is closed, so no
+    // payment is required and no refund is worked out against it.
+    is_closed_invoice?: boolean;
     // Everything the patient still owes across admissions and schedules, not
     // only the stay being discharged.
     outstanding?: DischargeOutstanding | null;
@@ -321,8 +324,6 @@ export interface PatientInvoiceItem {
     invoice_code: string;
     description?: string | null;
     schedule_code?: string | null;
-    // `total` is what the invoice asks for now; `original_total` is what it
-    // asked for before any credit note.
     total: number;
     original_total?: number;
     adjusted_total?: number;
@@ -338,6 +339,9 @@ export interface PatientInvoiceItem {
     void_reason?: string | null;
     voided_at?: string | null;
     voided_by?: string | null;
+    write_off_reason?: string | null;
+    written_off_at?: string | null;
+    written_off_by?: string | null;
     branch?: InvoiceBranch;
     services?: InvoiceServiceLine[];
     facilities?: InvoiceAccommodationLine[];

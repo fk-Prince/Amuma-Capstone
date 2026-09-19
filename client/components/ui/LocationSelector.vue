@@ -50,7 +50,18 @@ watch(
 
             return;
         }
-        nextTick(() => map?.invalidateSize());
+
+        // The map container is hidden (v-show) while in "type" mode with no
+        // selection, so a setView called on it then (e.g. from Clear) can't
+        // reliably take effect. Reapply it here once the container is
+        // visible again and sized.
+        nextTick(() => {
+            map?.invalidateSize();
+
+            if (!selectedLocation.value) {
+                map?.setView(defaultView(), 13);
+            }
+        });
     },
 );
 
@@ -59,6 +70,15 @@ async function applyTypedAddress() {
 
     if (!query) {
         typeError.value = "Enter an address.";
+        return;
+    }
+
+    // Switching to "type" mode preloads the box with the map pick's own
+    // label. Re-geocoding that unedited text can resolve to a different
+    // point than the one already picked, so an unchanged query just
+    // confirms the existing selection instead.
+    if (selectedLocation.value && query === selectedLocation.value.label) {
+        confirmLocation();
         return;
     }
 
@@ -104,6 +124,14 @@ async function applyTypedAddress() {
     } finally {
         isLocating.value = false;
     }
+}
+
+const DEFAULT_CENTER: [number, number] = [7.0736, 125.611];
+
+function defaultView(): [number, number] {
+    return props.initialLat && props.initialLng
+        ? [props.initialLat, props.initialLng]
+        : DEFAULT_CENTER;
 }
 
 let map: L_module.Map | null = null;
@@ -310,6 +338,8 @@ const clearSelection = (): void => {
     typedAddress.value = "";
     typeError.value = "";
 
+    map?.setView(defaultView(), 13);
+
     emit("location-cleared");
 };
 
@@ -334,13 +364,8 @@ onMounted(async () => {
             "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
     });
 
-    const initialView =
-        props.initialLat && props.initialLng
-            ? [props.initialLat, props.initialLng]
-            : [7.0736, 125.611];
-
     map = L.map(mapContainerEl.value, { attributionControl: false }).setView(
-        initialView as [number, number],
+        defaultView(),
         13,
     );
 

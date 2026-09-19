@@ -105,6 +105,10 @@ export function useDischargeRefund(admission: Ref<Admission | undefined>) {
         () => !!calculation.value?.is_within_refund_window,
     );
 
+    const isClosedInvoice = computed(
+        () => !!calculation.value?.is_closed_invoice,
+    );
+
     const isEligibleForRefund = computed(
         () => !!calculation.value?.eligible_for_refund,
     );
@@ -145,6 +149,10 @@ export function useDischargeRefund(admission: Ref<Admission | undefined>) {
     // an accommodation change re-prices the period, so the contract's own figure
     // no longer matches what is being charged.
     const requiredPaymentDescription = computed(() => {
+        if (isClosedInvoice.value) {
+            return refundPolicyDescription.value;
+        }
+
         if (!isWithinRefundWindow.value) {
             return currentBillingCycle.value === "MONTHLY"
                 ? "A monthly plan is charged in full for the month, so the days stayed are not worked out and nothing is refunded."
@@ -184,6 +192,7 @@ export function useDischargeRefund(admission: Ref<Admission | undefined>) {
 
         daysSinceAdmissionStart,
         isWithinRefundWindow,
+        isClosedInvoice,
 
         isEligibleForRefund,
         currentRefundAmount,

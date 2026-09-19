@@ -10,18 +10,16 @@ return new class extends Migration
     {
         Schema::create('invoice_services', function (Blueprint $table) {
             $table->id();
-
             $table->foreignId('schedule_services_id')
                 ->constrained('schedule_services', 'schedule_services_id')
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
-
             $table->decimal('price', 10, 2);
-
             $table->foreignId('invoice_id')
                 ->constrained('invoices', 'invoice_id')
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
+            $table->string('description')->nullable();
             $table->string('note')->nullable();
             $table->timestamps();
         });

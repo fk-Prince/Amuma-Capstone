@@ -13,7 +13,7 @@
             >
                 <div
                     v-if="open"
-                    class="absolute z-50 mt-2 rounded-2xl shadow-xl overflow-hidden"
+                    class="absolute z-[80] mt-2 max-w-[calc(100vw-1.5rem)] rounded-2xl shadow-xl overflow-hidden"
                     :class="[alignClass, widthClass]"
                 >
                     <slot :close="close" />

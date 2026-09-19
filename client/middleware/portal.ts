@@ -18,4 +18,11 @@ export default defineNuxtRouteMiddleware((to) => {
             query: { redirect: to.fullPath },
         });
     }
+
+    if (!user.value.hasBooking) {
+        return navigateTo({
+            path: "/unauthenticated",
+            query: { redirect: to.fullPath, reason: "no-booking" },
+        });
+    }
 });

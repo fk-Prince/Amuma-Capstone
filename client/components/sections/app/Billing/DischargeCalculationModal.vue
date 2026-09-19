@@ -145,7 +145,7 @@
                         v-if="calculation.outstanding"
                         class="overflow-hidden rounded-xl border"
                         :class="
-                            calculation.outstanding.total_balance > 0
+                            calculation.outstanding.balance_excluding_future > 0
                                 ? 'border-danger/30'
                                 : 'border-primary-100 dark:border-primary-500/20'
                         "
@@ -153,7 +153,7 @@
                         <div
                             class="flex items-center justify-between gap-3 px-5 py-3"
                             :class="
-                                calculation.outstanding.total_balance > 0
+                                calculation.outstanding.balance_excluding_future > 0
                                     ? 'bg-danger/5'
                                     : 'bg-emerald-50/60 dark:bg-emerald-500/10'
                             "
@@ -168,21 +168,21 @@
                                 <p
                                     class="mt-0.5 text-[11px] text-muted dark:text-gray-400"
                                 >
-                                    Admission and schedules combined
+                                    Admission and schedules combined, excluding periods not yet reached
                                 </p>
                             </div>
 
                             <p
                                 class="shrink-0 text-lg font-bold"
                                 :class="
-                                    calculation.outstanding.total_balance > 0
+                                    calculation.outstanding.balance_excluding_future > 0
                                         ? 'text-danger'
                                         : 'text-emerald-600 dark:text-emerald-300'
                                 "
                             >
                                 ₱{{
                                     formatMoney(
-                                        calculation.outstanding.total_balance,
+                                        calculation.outstanding.balance_excluding_future,
                                     )
                                 }}
                             </p>

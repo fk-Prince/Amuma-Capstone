@@ -9,8 +9,39 @@
             See what's included in each plan
         </p>
 
+        <!-- Mobile: one card per feature, since a 4-column table doesn't fit
+             a phone width without forcing a horizontal scroll. -->
+        <div class="sm:hidden space-y-3">
+            <div
+                v-for="row in features"
+                :key="row.name"
+                class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-secondary"
+            >
+                <p class="font-medium text-gray-700 dark:text-gray-300">
+                    {{ row.name }}
+                </p>
+
+                <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                    <div class="flex flex-col items-center gap-1">
+                        <FeatureIcon :active="row.homecare" />
+                        <span class="text-gray-500 dark:text-gray-400">Homecare</span>
+                    </div>
+
+                    <div class="flex flex-col items-center gap-1">
+                        <FeatureIcon :active="row.facility" />
+                        <span class="text-gray-500 dark:text-gray-400">Facility</span>
+                    </div>
+
+                    <div class="flex flex-col items-center gap-1 rounded-lg bg-primary/[0.04] py-1">
+                        <FeatureIcon :active="row.hybrid" variant="hybrid" />
+                        <span class="font-semibold text-primary">Hybrid</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div
-            class="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm dark:border-white/10"
+            class="hidden sm:block overflow-x-auto rounded-2xl border border-gray-100 shadow-sm dark:border-white/10"
         >
             <table class="w-full text-sm min-w-[560px]">
                 <thead>
@@ -60,98 +91,27 @@
                         </td>
 
                         <td class="text-center px-4 py-4">
-                            <svg
-                                v-if="row.homecare"
-                                class="w-5 h-5 mx-auto transition-transform duration-200 group-hover:scale-110"
-                                viewBox="0 0 20 20"
-                                fill="none"
-                            >
-                                <circle cx="10" cy="10" r="9" fill="#16a34a" />
-                                <path
-                                    d="M6.5 10.2l2.2 2.2 4.8-4.8"
-                                    stroke="white"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                />
-                            </svg>
-                            <svg
-                                v-else
-                                class="w-4 h-4 mx-auto text-gray-300 dark:text-gray-600"
-                                viewBox="0 0 16 16"
-                                fill="none"
-                            >
-                                <path
-                                    d="M4 8h8"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
-                                    stroke-linecap="round"
-                                />
-                            </svg>
+                            <FeatureIcon
+                                :active="row.homecare"
+                                class="mx-auto transition-transform duration-200 group-hover:scale-110"
+                            />
                         </td>
 
                         <td class="text-center px-4 py-4">
-                            <svg
-                                v-if="row.facility"
-                                class="w-5 h-5 mx-auto transition-transform duration-200 group-hover:scale-110"
-                                viewBox="0 0 20 20"
-                                fill="none"
-                            >
-                                <circle cx="10" cy="10" r="9" fill="#16a34a" />
-                                <path
-                                    d="M6.5 10.2l2.2 2.2 4.8-4.8"
-                                    stroke="white"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                />
-                            </svg>
-                            <svg
-                                v-else
-                                class="w-4 h-4 mx-auto text-gray-300 dark:text-gray-600"
-                                viewBox="0 0 16 16"
-                                fill="none"
-                            >
-                                <path
-                                    d="M4 8h8"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
-                                    stroke-linecap="round"
-                                />
-                            </svg>
+                            <FeatureIcon
+                                :active="row.facility"
+                                class="mx-auto transition-transform duration-200 group-hover:scale-110"
+                            />
                         </td>
 
                         <td
                             class="text-center px-4 py-4 bg-primary/[0.04] group-hover:bg-primary/[0.07] transition-colors"
                         >
-                            <svg
-                                v-if="row.hybrid"
-                                class="w-5 h-5 mx-auto transition-transform duration-200 group-hover:scale-110"
-                                viewBox="0 0 20 20"
-                                fill="none"
-                            >
-                                <circle cx="10" cy="10" r="9" fill="#2563eb" />
-                                <path
-                                    d="M6.5 10.2l2.2 2.2 4.8-4.8"
-                                    stroke="white"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                />
-                            </svg>
-                            <svg
-                                v-else
-                                class="w-4 h-4 mx-auto text-gray-300 dark:text-gray-600"
-                                viewBox="0 0 16 16"
-                                fill="none"
-                            >
-                                <path
-                                    d="M4 8h8"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
-                                    stroke-linecap="round"
-                                />
-                            </svg>
+                            <FeatureIcon
+                                :active="row.hybrid"
+                                variant="hybrid"
+                                class="mx-auto transition-transform duration-200 group-hover:scale-110"
+                            />
                         </td>
                     </tr>
                 </tbody>
@@ -161,6 +121,53 @@
 </template>
 
 <script setup>
+import { h } from "vue";
+
+const FeatureIcon = (props) =>
+    props.active
+        ? h(
+              "svg",
+              {
+                  class: ["w-5 h-5", props.class],
+                  viewBox: "0 0 20 20",
+                  fill: "none",
+              },
+              [
+                  h("circle", {
+                      cx: "10",
+                      cy: "10",
+                      r: "9",
+                      fill: props.variant === "hybrid" ? "#2563eb" : "#16a34a",
+                  }),
+                  h("path", {
+                      d: "M6.5 10.2l2.2 2.2 4.8-4.8",
+                      stroke: "white",
+                      "stroke-width": "2",
+                      "stroke-linecap": "round",
+                      "stroke-linejoin": "round",
+                  }),
+              ],
+          )
+        : h(
+              "svg",
+              {
+                  class: [
+                      "w-4 h-4 text-gray-300 dark:text-gray-600",
+                      props.class,
+                  ],
+                  viewBox: "0 0 16 16",
+                  fill: "none",
+              },
+              [
+                  h("path", {
+                      d: "M4 8h8",
+                      stroke: "currentColor",
+                      "stroke-width": "1.8",
+                      "stroke-linecap": "round",
+                  }),
+              ],
+          );
+
 const features = [
     {
         name: "Homecare visits scheduling",

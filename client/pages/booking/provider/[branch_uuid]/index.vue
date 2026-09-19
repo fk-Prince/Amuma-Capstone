@@ -215,7 +215,7 @@ import { useToast } from "~/composables/useToast";
 useHead({ title: "Search Homecare" });
 definePageMeta({
     navVariant: 4,
-    navTheme: "dark",
+    navTheme: "light",
     middleware: ["prevent-staff-booking"],
 });
 

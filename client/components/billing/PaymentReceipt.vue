@@ -43,10 +43,6 @@ const tenderedLabel = computed(() => {
     return isOnline.value ? "Amount paid" : "Tendered";
 });
 
-const vatExemptSales = computed(() =>
-    Number(props.receipt.payment.amount_applied),
-);
-
 function peso(amount: number | string | null | undefined) {
     return formatAmount(amount, { treatMissingAsZero: true });
 }
@@ -219,18 +215,6 @@ onBeforeUnmount(() => {
                         <!-- Parties -->
                         <div class="flex border-b border-black text-[10px]">
                             <div class="flex-1">
-                                <div class="flex border-b border-black">
-                                    <span
-                                        class="w-[104px] shrink-0 border-r border-black px-2 py-1 uppercase"
-                                    >
-                                        {{ payorLabel }}
-                                    </span>
-
-                                    <span class="px-2 py-1 font-bold">
-                                        {{ receipt.payor.name }}
-                                    </span>
-                                </div>
-
                                 <div class="flex">
                                     <span
                                         class="w-[104px] shrink-0 border-r border-black px-2 py-1 uppercase"
@@ -242,21 +226,6 @@ onBeforeUnmount(() => {
                                         {{ receipt.patient.full_name || "—" }}
                                     </span>
                                 </div>
-                            </div>
-
-                            <div
-                                v-if="!isOnline"
-                                class="flex w-[300px] shrink-0 border-l border-black"
-                            >
-                                <span
-                                    class="w-[92px] shrink-0 border-r border-black px-2 py-1 uppercase"
-                                >
-                                    Issued by
-                                </span>
-
-                                <span class="truncate px-2 py-1 font-bold">
-                                    {{ receipt.issued_by }}
-                                </span>
                             </div>
                         </div>
 
@@ -404,29 +373,8 @@ onBeforeUnmount(() => {
                             </div>
 
                             <div
-                                class="w-[280px] shrink-0 border-l border-black"
+                                class="flex w-[280px] shrink-0 flex-col justify-end border-l border-black"
                             >
-                                <div
-                                    v-for="row in [
-                                        {
-                                            label: 'VAT Exempt Sales',
-                                            value: vatExemptSales,
-                                        },
-                                        { label: 'VATable Sales', value: 0 },
-                                        { label: 'VAT', value: 0 },
-                                    ]"
-                                    :key="row.label"
-                                    class="flex justify-between border-b border-black px-2 py-[3px]"
-                                >
-                                    <span class="uppercase">
-                                        {{ row.label }}
-                                    </span>
-
-                                    <span class="font-mono">
-                                        {{ peso(row.value) }}
-                                    </span>
-                                </div>
-
                                 <div
                                     class="flex justify-between bg-black/[0.04] px-2 py-1.5"
                                 >
@@ -451,21 +399,34 @@ onBeforeUnmount(() => {
                         <div
                             class="flex items-end justify-between gap-6 border-t border-black px-2 py-2 text-[8px]"
                         >
-                            <div v-if="!isOnline" class="flex gap-8">
-                                <span
-                                    class="inline-block w-[150px] border-t border-black pt-1 text-center"
+                            <div class="flex items-end gap-8">
+                                <div
+                                    v-if="!isOnline"
+                                    class="w-[150px] self-end text-center"
                                 >
-                                    {{ receipt.issued_by || "Received by" }}
-                                </span>
+                                    <p class="font-bold">
+                                        {{ receipt.issued_by }}
+                                    </p>
 
-                                <span
-                                    class="inline-block w-[150px] border-t border-black pt-1 text-center"
-                                >
-                                    Payor signature
-                                </span>
+                                    <p
+                                        class="mt-[6px] border-t border-black pt-1 uppercase"
+                                    >
+                                        Issued by
+                                    </p>
+                                </div>
+
+                                <div class="w-[150px] self-end text-center">
+                                    <p class="font-bold">
+                                        {{ receipt.payor.name || "—" }}
+                                    </p>
+
+                                    <p
+                                        class="mt-[6px] border-t border-black pt-1 uppercase"
+                                    >
+                                        {{ payorLabel }}
+                                    </p>
+                                </div>
                             </div>
-
-                            <div v-else />
 
                             <div class="text-right">
                                 <p

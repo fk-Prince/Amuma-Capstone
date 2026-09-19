@@ -1,11 +1,14 @@
 <template>
     <div
-        class="w-[95%] sm:w-[92%] lg:w-[90%] xl:w-[88%] 2xl:w-[70%] mx-auto py-6"
+        ref="rootEl"
+        class="w-[95%] sm:w-[92%] lg:w-[90%] xl:w-[88%] 2xl:w-[85%] mx-auto py-6"
     >
         <div v-if="loading" class="min-h-[500px]">
             <div class="animate-pulse">
                 <div class="flex w-full justify-center px-2 sm:px-0">
-                    <ol class="flex w-full max-w-6xl items-start justify-center">
+                    <ol
+                        class="flex w-full max-w-6xl items-start justify-center"
+                    >
                         <li
                             v-for="index in 4"
                             :key="index"
@@ -127,32 +130,47 @@
                         ]"
                     >
                         <div class="flex shrink-0 flex-col items-center">
-                            <div
-                                class="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-full border-2 text-xs sm:text-sm font-semibold transition-all duration-200"
-                                :class="
-                                    currentStep > index + 1
-                                        ? 'border-primary bg-primary text-white'
-                                        : currentStep === index + 1
-                                          ? 'border-primary bg-white dark:bg-secondary text-primary shadow-sm ring-4 ring-primary/10'
-                                          : 'border-slate-200 dark:border-white/10 bg-white dark:bg-secondary text-slate-400 dark:text-gray-500'
-                                "
-                            >
-                                <Check
-                                    v-if="currentStep > index + 1"
-                                    class="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2.5]"
-                                />
+                            <div class="relative">
+                                <div
+                                    class="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-full border-2 text-xs sm:text-sm font-semibold transition-all duration-200"
+                                    :class="
+                                        stepsWithErrors.has(index + 1)
+                                            ? 'border-danger bg-white dark:bg-secondary text-danger'
+                                            : currentStep > index + 1
+                                              ? 'border-primary bg-primary text-white'
+                                              : currentStep === index + 1
+                                                ? 'border-primary bg-white dark:bg-secondary text-primary shadow-sm ring-4 ring-primary/10'
+                                                : 'border-slate-200 dark:border-white/10 bg-white dark:bg-secondary text-slate-400 dark:text-gray-500'
+                                    "
+                                >
+                                    <Check
+                                        v-if="
+                                            currentStep > index + 1 &&
+                                            !stepsWithErrors.has(index + 1)
+                                        "
+                                        class="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2.5]"
+                                    />
 
-                                <span v-else>
-                                    {{ index + 1 }}
-                                </span>
+                                    <span v-else>
+                                        {{ index + 1 }}
+                                    </span>
+                                </div>
+
+                                <span
+                                    v-if="stepsWithErrors.has(index + 1)"
+                                    class="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-danger dark:border-secondary"
+                                    aria-hidden="true"
+                                />
                             </div>
 
                             <span
                                 class="mt-1.5 sm:mt-2 max-w-[4.25rem] sm:max-w-[7rem] text-center text-[10px] sm:text-xs font-medium leading-tight transition-colors"
                                 :class="
-                                    currentStep >= index + 1
-                                        ? 'text-slate-800 dark:text-white'
-                                        : 'text-slate-400 dark:text-gray-500'
+                                    stepsWithErrors.has(index + 1)
+                                        ? 'text-danger'
+                                        : currentStep >= index + 1
+                                          ? 'text-slate-800 dark:text-white'
+                                          : 'text-slate-400 dark:text-gray-500'
                                 "
                             >
                                 {{ step }}
@@ -172,6 +190,7 @@
                     </li>
                 </ol>
             </div>
+
             <div class="rounded-2xl p-6 space-y-3">
                 <div v-if="currentStep === 1">
                     <!-- <div class="mb-6">
@@ -533,6 +552,12 @@ const checkout = useSubscriptionCheckout();
 const loading = ref(true);
 const currentStep = ref(1);
 const stepError = ref<string | null>(null);
+const rootEl = ref<HTMLElement | null>(null);
+
+const scrollToTop = async () => {
+    await nextTick();
+    rootEl.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
 
 const STEPS = [
     "Subscription",
@@ -558,7 +583,6 @@ const scrollToFirstError = async () => {
 
 const nextStep = async () => {
     stepError.value = null;
-    checkout.clearAllErrors();
 
     if (currentStep.value === 1) {
         if (!checkout.selectedPlan || !checkout.selectedInterval) {
@@ -606,9 +630,10 @@ const validateAgency = async (): Promise<boolean> => {
             const path = issue.path.join(".");
             errors[keyMap[path] ?? path] = issue.message;
         });
-        checkout.errors = errors;
+        mergeStepErrors(isAgencyField, errors);
         return false;
     }
+    mergeStepErrors(isAgencyField, {});
     return true;
 };
 
@@ -632,9 +657,25 @@ const validateBranch = async (): Promise<boolean> => {
 
             errors[keyMap[path] ?? path] = issue.message;
         });
-        checkout.setErrors(errors);
+        mergeStepErrors(isBranchField, errors);
         return false;
     }
+    mergeStepErrors(isBranchField, {});
+    return true;
+};
+
+const validateConfiguration = (): boolean => {
+    const opening = checkout.settings?.opening;
+    const closing = checkout.settings?.closing;
+
+    if (opening && closing && closing < opening) {
+        mergeStepErrors(isConfigField, {
+            closing: "Closing time must be later than opening time.",
+        });
+        return false;
+    }
+
+    mergeStepErrors(isConfigField, {});
     return true;
 };
 
@@ -652,10 +693,52 @@ function stepForField(field: string) {
     return currentStep.value;
 }
 
+// Every step that currently has at least one error in checkout.errors, so
+// the stepper can flag steps the user hasn't revisited yet instead of only
+// showing whichever step they happen to be looking at.
+const stepsWithErrors = computed(() => {
+    const steps = new Set<number>();
+
+    Object.keys(checkout.errors ?? {}).forEach((key) => {
+        steps.add(stepForField(key));
+    });
+
+    return steps;
+});
+
+const isAgencyField = (key: string) =>
+    key.startsWith("agency_") || key.startsWith("agency.");
+
+const isBranchField = (key: string) =>
+    (key.startsWith("branch_") && !key.startsWith("branch_settings")) ||
+    key.startsWith("branch.");
+
+const isConfigField = (key: string) => key.startsWith("branch_settings");
+
+// Re-validating one step must only touch that step's own errors — replacing
+// the whole checkout.errors object here was wiping out server-reported
+// errors on OTHER steps the user hadn't revisited yet, which made it look
+// like only one step ever had a problem.
+function mergeStepErrors(
+    scope: (key: string) => boolean,
+    newErrors: Record<string, string>,
+) {
+    const preserved = Object.fromEntries(
+        Object.entries(checkout.errors ?? {}).filter(([key]) => !scope(key)),
+    );
+
+    checkout.errors = { ...preserved, ...newErrors };
+}
+
 const isLoading = ref(false);
 
 const send = async () => {
     if (isLoading.value) return;
+
+    if (!validateConfiguration()) {
+        await scrollToFirstError();
+        return;
+    }
 
     isLoading.value = true;
     try {
@@ -722,6 +805,7 @@ const send = async () => {
             if (!firstError) return;
 
             currentStep.value = stepForField(firstError);
+            await scrollToTop();
         }
     } finally {
         isLoading.value = false;

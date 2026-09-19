@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import logo from "~/assets/logo/logo.png";
+import BrandLogo from "./BrandLogo.vue";
 
 withDefaults(
     defineProps<{
@@ -28,6 +29,14 @@ const currentYear = new Date().getFullYear();
         <div
             class="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-secondary-950"
         >
+            <NuxtLink
+                to="/"
+                class="absolute left-6 top-6 z-10 inline-flex"
+                aria-label="AMUMA home"
+            >
+                <BrandLogo icon-class="h-8 w-8" text-class="text-lg" />
+            </NuxtLink>
+
             <div
                 class="pointer-events-none absolute inset-0 overflow-hidden"
                 aria-hidden="true"

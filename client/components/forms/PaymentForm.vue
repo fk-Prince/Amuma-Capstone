@@ -23,7 +23,9 @@ export interface CardDetails {
 import visaIcon from "@/assets/icons/visa.png";
 import gcashIcon from "@/assets/icons/gcash.png";
 import LabelInput from "../ui/BaseInput.vue";
+import PaymentTermsModal from "../ui/PaymentTermsModal.vue";
 import { formatAmount } from "~/utils/currency";
+import { getPaymentTerms } from "~/utils/paymentTerms";
 
 type PaymentMethod = "CREDIT-CARD" | "GCASH" | "CASH";
 
@@ -49,6 +51,7 @@ interface Props {
     totalAmount: number;
     currency?: string;
     allowShortCash?: boolean;
+    termsContext?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -105,6 +108,15 @@ const allMethods: {
 ];
 
 const methods = computed(() => allMethods.filter((m) => m.enabled));
+
+const terms = computed(() => getPaymentTerms(props.termsContext));
+const agreedToTerms = ref(false);
+const showTermsModal = ref(false);
+const termsBlocked = computed(() => !!terms.value && !agreedToTerms.value);
+
+watch(terms, () => {
+    agreedToTerms.value = false;
+});
 
 const isCard = computed(() => checkout.payment_method === "CREDIT-CARD");
 const isGCash = computed(() => checkout.payment_method === "GCASH");
@@ -210,10 +222,16 @@ const validateCardForm = () => {
 };
 
 const handleCardPay = () => {
-    if (props.processing) return;
+    if (props.processing || termsBlocked.value) return;
     if (!validateCardForm()) return;
 
     props.onCardPay?.();
+};
+
+const handleGCashPay = () => {
+    if (props.processing || termsBlocked.value) return;
+
+    props.onGCashPay?.();
 };
 
 const cashReceivedInput = ref("");
@@ -248,7 +266,7 @@ const isCashSufficient = computed(() =>
 );
 
 const handleCashPay = () => {
-    if (props.processing) return;
+    if (props.processing || termsBlocked.value) return;
 
     if (!isCashSufficient.value) {
         cashError.value = props.allowShortCash
@@ -512,9 +530,29 @@ watch(isCash, (active) => {
                     />
                 </div>
 
+                <div v-if="terms" class="flex items-start gap-2">
+                    <input
+                        type="checkbox"
+                        v-model="agreedToTerms"
+                        class="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                    />
+
+                    <span class="text-xs text-slate-500 dark:text-gray-400">
+                        I have read and agree to the
+                        <button
+                            type="button"
+                            class="font-semibold text-primary hover:underline"
+                            @click.stop.prevent="showTermsModal = true"
+                        >
+                            Terms and Conditions
+                        </button>
+                        for this payment.
+                    </span>
+                </div>
+
                 <button
                     type="submit"
-                    :disabled="processing"
+                    :disabled="processing || termsBlocked"
                     class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     <LoaderCircle
@@ -548,7 +586,7 @@ watch(isCash, (active) => {
                             <img
                                 :src="gcashIcon"
                                 alt="GCash"
-                                class="h-6 w-auto object-contain"
+                                class="h-6 w-auto max-w-7 object-contain"
                             />
                         </div>
 
@@ -582,10 +620,30 @@ watch(isCash, (active) => {
                     </span>
                 </div>
 
+                <div v-if="terms" class="flex items-start gap-2">
+                    <input
+                        type="checkbox"
+                        v-model="agreedToTerms"
+                        class="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                    />
+
+                    <span class="text-xs text-slate-500 dark:text-gray-400">
+                        I have read and agree to the
+                        <button
+                            type="button"
+                            class="font-semibold text-primary hover:underline"
+                            @click.stop.prevent="showTermsModal = true"
+                        >
+                            Terms and Conditions
+                        </button>
+                        for this payment.
+                    </span>
+                </div>
+
                 <button
                     type="button"
-                    @click="onGCashPay"
-                    :disabled="processing || !onGCashPay"
+                    @click="handleGCashPay"
+                    :disabled="processing || !onGCashPay || termsBlocked"
                     class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     <LoaderCircle
@@ -685,10 +743,32 @@ watch(isCash, (active) => {
                     @update:model-value="handleCashAmountInput"
                 />
 
+                <div v-if="terms" class="flex items-start gap-2">
+                    <input
+                        type="checkbox"
+                        v-model="agreedToTerms"
+                        class="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                    />
+
+                    <span class="text-xs text-slate-500 dark:text-gray-400">
+                        I have read and agree to the
+                        <button
+                            type="button"
+                            class="font-semibold text-primary hover:underline"
+                            @click.stop.prevent="showTermsModal = true"
+                        >
+                            Terms and Conditions
+                        </button>
+                        for this payment.
+                    </span>
+                </div>
+
                 <button
                     type="button"
                     @click="handleCashPay"
-                    :disabled="processing || !cashReceivedAmount"
+                    :disabled="
+                        processing || !cashReceivedAmount || termsBlocked
+                    "
                     class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     <LoaderCircle
@@ -700,5 +780,11 @@ watch(isCash, (active) => {
                 </button>
             </div>
         </div>
+
+        <PaymentTermsModal
+            v-if="showTermsModal && terms"
+            :terms="terms"
+            @close="showTermsModal = false"
+        />
     </div>
 </template>

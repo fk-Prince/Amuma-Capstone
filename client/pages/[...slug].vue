@@ -1,10 +1,30 @@
 <template>
     <div
-        class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 px-6"
+        class="relative min-h-screen flex items-center justify-center overflow-hidden bg-secondary-950 px-6"
     >
-        <div class="text-center max-w-lg">
+        <div
+            class="pointer-events-none absolute inset-0 overflow-hidden"
+            aria-hidden="true"
+        >
             <div
-                class="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary"
+                class="absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-primary-500/15 blur-[140px]"
+            />
+            <div
+                class="absolute -bottom-40 -right-40 h-[420px] w-[420px] rounded-full bg-accent-500/10 blur-[140px]"
+            />
+        </div>
+
+        <NuxtLink
+            to="/"
+            class="absolute left-6 top-6 z-10 inline-flex"
+            aria-label="AMUMA home"
+        >
+            <BrandLogo />
+        </NuxtLink>
+
+        <div class="relative z-10 text-center max-w-lg">
+            <div
+                class="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full border border-white/10 bg-primary-500/10 text-primary-300"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -12,7 +32,6 @@
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
-                    stroke-width="1.8"
                 >
                     <path
                         stroke-linecap="round"
@@ -22,15 +41,15 @@
                 </svg>
             </div>
 
-            <h1 class="text-8xl font-black tracking-tight text-gray-900">
+            <h1 class="text-8xl font-black tracking-tight text-white">
                 404
             </h1>
 
-            <h2 class="mt-4 text-2xl font-semibold text-gray-800">
+            <h2 class="mt-4 text-2xl font-semibold text-gray-200">
                 Page not found
             </h2>
 
-            <p class="mt-3 text-gray-500 leading-relaxed">
+            <p class="mt-3 text-gray-400 leading-relaxed">
                 Sorry, the page you are looking for doesn't exist or has been
                 moved somewhere else.
             </p>
@@ -62,6 +81,8 @@
     </div>
 </template>
 <script setup lang="ts">
+import BrandLogo from "~/components/ui/BrandLogo.vue";
+
 definePageMeta({
     layout: false,
 });

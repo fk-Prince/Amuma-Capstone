@@ -589,6 +589,10 @@ class InvoiceService
                 throw new Exception('This invoice is already void.', 422);
             }
 
+            if ($invoice->status === Invoice::STATUS_WRITTEN_OFF) {
+                throw new Exception('This invoice has been written off and can no longer be voided.', 422);
+            }
+
             $reason = trim((string) ($payload['reason'] ?? ''));
 
             if ($reason === '') {
@@ -611,6 +615,50 @@ class InvoiceService
 
             return [
                 'message' => 'Invoice voided successfully.',
+                'invoice_code' => $invoice->invoice_code,
+                'data' => !empty($payload['p_uuid'])
+                    ? $this->invoiceRepository->getPatientWithUuid($payload)
+                    : null,
+            ];
+        });
+    }
+
+    // No InvoiceAdjustment here, unlike void: that would hand the patient a credit for a debt the branch is writing off, not refunding.
+    public function writeOffInvoice(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            $invoice = Invoice::where('invoice_code', $payload['invoice_code'])
+                ->where('branch_id', $payload['branch_id'])
+                ->lockForUpdate()
+                ->first();
+
+            if (!$invoice) {
+                throw new Exception('Invoice not found.', 404);
+            }
+
+            if ($invoice->status === Invoice::STATUS_VOID) {
+                throw new Exception('A voided invoice cannot be written off.', 422);
+            }
+
+            if ($invoice->status === Invoice::STATUS_WRITTEN_OFF) {
+                throw new Exception('This invoice is already written off.', 422);
+            }
+
+            $reason = trim((string) ($payload['reason'] ?? ''));
+
+            if ($reason === '') {
+                throw new Exception('A reason is required to write off an invoice.', 422);
+            }
+
+            $invoice->update([
+                'status' => Invoice::STATUS_WRITTEN_OFF,
+                'written_off_at' => now(),
+                'written_off_by' => $payload['user_id'] ?? null,
+                'write_off_reason' => $reason,
+            ]);
+
+            return [
+                'message' => 'Invoice written off successfully.',
                 'invoice_code' => $invoice->invoice_code,
                 'data' => !empty($payload['p_uuid'])
                     ? $this->invoiceRepository->getPatientWithUuid($payload)

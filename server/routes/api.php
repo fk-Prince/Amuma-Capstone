@@ -44,6 +44,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::post('/webhook/xendit', [XenditController::class, 'xenditWebhook']);
+    Route::get('/payments/status/{reference}', [XenditController::class, 'checkStatus']);
 
 
     Route::post('/google/url', [AuthController::class, 'google']);
@@ -95,7 +96,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/patient-access/action', [PatientAccessController::class, 'retrieveAction']);
     Route::post('/patient-access/action', [PatientAccessController::class, 'executeAction']);
 
-    // Raised by accounting at the branch, not by the family.
+    // WITHDRAWALS
     Route::post('/withdrawals/issue', [RefundController::class, 'issue']);
 
     // PORTAL (family/client-facing)

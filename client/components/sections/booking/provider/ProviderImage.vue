@@ -9,13 +9,19 @@
                 <div class="flex-1 bg-gray-200 dark:bg-white/10" />
 
                 <div class="flex w-40 flex-col gap-[3px]">
-                    <div class="flex-1 bg-gray-200 rounded-tr-2xl dark:bg-white/10" />
+                    <div
+                        class="flex-1 bg-gray-200 rounded-tr-2xl dark:bg-white/10"
+                    />
                     <div class="flex-1 bg-gray-200 dark:bg-white/10" />
-                    <div class="flex-1 bg-gray-200 rounded-br-2xl dark:bg-white/10" />
+                    <div
+                        class="flex-1 bg-gray-200 rounded-br-2xl dark:bg-white/10"
+                    />
                 </div>
             </div>
 
-            <div class="sm:hidden h-[240px] w-full rounded-2xl bg-gray-200 dark:bg-white/10" />
+            <div
+                class="sm:hidden h-[240px] w-full rounded-2xl bg-gray-200 dark:bg-white/10"
+            />
         </div>
 
         <div
@@ -28,6 +34,7 @@
 
         <template v-else>
             <div
+                v-if="sideImages.length > 0"
                 class="hidden sm:flex gap-[3px] h-[420px] overflow-hidden rounded-2xl"
             >
                 <button
@@ -84,6 +91,22 @@
             </div>
 
             <button
+                v-else
+                type="button"
+                class="group relative hidden h-[420px] w-full overflow-hidden rounded-2xl sm:block"
+                @click="openImage(0)"
+            >
+                <img
+                    :src="images[0]?.image_url"
+                    :alt="images[0]?.description ?? ''"
+                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div
+                    class="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10"
+                ></div>
+            </button>
+
+            <button
                 type="button"
                 @click="openImage(0)"
                 class="hidden sm:inline-flex absolute bottom-8 right-3 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 dark:border-white/10 dark:bg-secondary dark:text-white dark:hover:bg-white/5"
@@ -138,14 +161,14 @@
             <button
                 @click="emit('share')"
                 aria-label="Share"
-                class="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white dark:bg-white/10 dark:text-white dark:ring-1 dark:ring-white/20 dark:hover:bg-white/20 dark:hover:bg-white/10"
+                class="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white dark:bg-white/10 dark:text-white dark:ring-1 dark:ring-white/20 dark:hover:bg-white/10"
             >
                 <Share2 class="h-4 w-4" />
             </button>
             <button
                 @click="emit('favorite')"
                 aria-label="Add to favorites"
-                class="group flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white dark:bg-white/10 dark:text-white dark:ring-1 dark:ring-white/20 dark:hover:bg-white/20 dark:hover:bg-white/10"
+                class="group flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white dark:bg-white/10 dark:text-white dark:ring-1 dark:ring-white/20 dark:hover:bg-white/10"
             >
                 <Heart
                     class="h-4 w-4 transition-colors group-hover:fill-red-500 group-hover:text-red-500"

@@ -645,6 +645,7 @@
                                 title="Branch payment"
                                 description="Choose your payment method to activate this branch."
                                 submit-label="Confirm & add branch"
+                                terms-context="subscription"
                             />
                         </div>
                     </div>
@@ -999,6 +1000,20 @@ const nextStep = async () => {
     }
 
     if (currentStep.value === 3) {
+        if (
+            // Equal times mean the branch is open 24 hours, not that it's
+            // closed before it opens.
+            form.settings.opening &&
+            form.settings.closing &&
+            form.settings.closing < form.settings.opening
+        ) {
+            errors.value = {
+                ...errors.value,
+                closing: "Closing time must be later than opening time.",
+            };
+            return;
+        }
+
         const passed = await validateOnServer();
         if (!passed) return;
 

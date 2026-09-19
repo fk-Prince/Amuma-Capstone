@@ -24,6 +24,10 @@ export function statusClasses(status: string | null | undefined) {
         case "void":
             return "bg-danger/10 text-danger";
 
+        case "written off":
+        case "written_off":
+            return "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300";
+
         default:
             return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
     }

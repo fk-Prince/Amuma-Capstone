@@ -30,6 +30,15 @@ class PaymentService extends BaseService {
         return await this.request(this.resource + "/receipt", "POST", payload);
     }
 
+    async checkStatus(reference: string): Promise<{
+        status: "pending" | "submitted" | "failed" | "unknown";
+    }> {
+        return await this.request(
+            `${this.getBackendApi}/api/auth/payments/status/${reference}`,
+            "GET",
+        );
+    }
+
     private get resource(): string {
         const backend = this.getBackendApi;
         return `${backend}/api/payments`;

@@ -25,6 +25,7 @@
                         :onCardPay="payCard"
                         :onGCashPay="payGCash"
                         :enableGCash="true"
+                        terms-context="subscription"
                     />
                 </div>
             </div>

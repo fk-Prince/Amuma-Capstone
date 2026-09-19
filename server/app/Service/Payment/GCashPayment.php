@@ -4,6 +4,7 @@ namespace App\Service\Payment;
 
 use App\Interfaces\IFacilityPayment;
 use App\Interfaces\ISubscriptionPayment;
+use App\Models\Branch;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Arr;
@@ -44,8 +45,8 @@ class GCashPayment implements ISubscriptionPayment, IFacilityPayment
                 'amount' => $subscription['total_amount'],
                 'payer_email' => $user->email,
                 'payment_methods' => ['GCASH'],
-                'success_redirect_url' => $this->redirectUrl('success'),
-                'failure_redirect_url' => $this->redirectUrl('failed'),
+                'success_redirect_url' => $this->subscriptionRedirectUrl($reference, 'success'),
+                'failure_redirect_url' => $this->subscriptionRedirectUrl($reference, 'failed'),
                 'metadata' => [
                     'payment_type' => $isRenewal ? 'RENEWAL' : 'SUBSCRIPTION',
                     'reference_id' => $reference,
@@ -80,8 +81,8 @@ class GCashPayment implements ISubscriptionPayment, IFacilityPayment
                 'amount' => $payload['total'],
                 'payer_email' => $user->email,
                 'payment_methods' => ['GCASH'],
-                'success_redirect_url' => $this->redirectUrl('success'),
-                'failure_redirect_url' => $this->redirectUrl('failed'),
+                'success_redirect_url' => $this->bookingRedirectUrl($payload['branch'], $reference, 'success'),
+                'failure_redirect_url' => $this->bookingRedirectUrl($payload['branch'], $reference, 'failed'),
                 'metadata' => [
                     'payment_type' => 'BOOKING_FACILITY',
                     'reference_id' => $reference,
@@ -91,9 +92,14 @@ class GCashPayment implements ISubscriptionPayment, IFacilityPayment
         return $this->invoiceResponse($response, $reference);
     }
 
-    private function redirectUrl(string $status): string
+    private function subscriptionRedirectUrl(string $reference, string $status): string
     {
-        return config('app.client_url') . '/payment/complete?status=' . $status;
+        return config('app.client_url') . "/product/payment-complete?status={$status}&ref={$reference}";
+    }
+
+    private function bookingRedirectUrl(Branch $branch, string $reference, string $status): string
+    {
+        return config('app.client_url') . "/booking/provider/{$branch->uuid}/payment-complete?status={$status}&ref={$reference}";
     }
 
     private function invoiceResponse(Response $response, string $reference): JsonResponse

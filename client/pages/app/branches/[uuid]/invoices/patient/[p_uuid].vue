@@ -22,31 +22,6 @@
                     </svg>
                     Back
                 </button>
-
-                <div class="flex flex-wrap items-center gap-3">
-                    <button
-                        type="button"
-                        class="inline-flex items-center gap-2 rounded-xl border border-primary-100 bg-white px-4 py-2 text-sm font-medium text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-primary-50 dark:border-primary-500/20 dark:bg-secondary dark:text-primary-300 dark:hover:bg-primary-500/10"
-                        @click="handlePrint"
-                    >
-                        <svg
-                            class="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.75"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-                            <path d="M6 9V3h12v6" />
-                            <path
-                                d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
-                            />
-                            <path d="M8 14h8v6H8z" />
-                        </svg>
-                        Print
-                    </button>
-                </div>
             </div>
 
             <div
@@ -287,12 +262,6 @@
                                     label="Credit"
                                     :value="creditOnAccount"
                                     variant="refunded"
-                                    :action-label="
-                                        refundHistory.length
-                                            ? 'View withdrawals'
-                                            : undefined
-                                    "
-                                    :on-action="openRefundHistory"
                                     :hint="creditHint"
                                     :hint-action-label="
                                         hasRefundable
@@ -893,6 +862,20 @@
                                                 </p>
 
                                                 <p
+                                                    v-if="invoice.write_off_reason"
+                                                    class="mt-1 text-[12px] text-amber-600 dark:text-amber-300"
+                                                >
+                                                    Written off:
+                                                    {{ invoice.write_off_reason }}
+                                                    <template
+                                                        v-if="invoice.written_off_by"
+                                                    >
+                                                        · by
+                                                        {{ invoice.written_off_by }}
+                                                    </template>
+                                                </p>
+
+                                                <p
                                                     class="mt-1 text-[12px] text-gray-400 dark:text-gray-500"
                                                 >
                                                     {{
@@ -949,8 +932,9 @@
                                                 >
                                                     <button
                                                         v-if="
-                                                            invoice.status?.toLowerCase() !==
-                                                            'void'
+                                                            !isClosedStatus(
+                                                                invoice.status,
+                                                            )
                                                         "
                                                         type="button"
                                                         class="rounded-lg border border-danger/30 px-3 py-1.5 text-[12px] font-semibold text-danger transition hover:bg-danger/10"
@@ -961,6 +945,26 @@
                                                         "
                                                     >
                                                         Void
+                                                    </button>
+
+                                                    <button
+                                                        v-if="
+                                                            !isClosedStatus(
+                                                                invoice.status,
+                                                            ) &&
+                                                            Number(
+                                                                invoice.balance_due,
+                                                            ) > 0
+                                                        "
+                                                        type="button"
+                                                        class="rounded-lg border border-amber-500/40 px-3 py-1.5 text-[12px] font-semibold text-amber-600 transition hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-500/10"
+                                                        @click="
+                                                            openWriteOffModal(
+                                                                invoice,
+                                                            )
+                                                        "
+                                                    >
+                                                        Write off
                                                     </button>
 
                                                     <button
@@ -1644,6 +1648,15 @@
             @close="closeVoidModal"
         />
 
+        <WriteOffInvoiceModal
+            :invoice="writeOffTarget"
+            :reason="writeOffReason"
+            :processing="writingOffInvoice"
+            @update:reason="writeOffReason = $event"
+            @confirm="confirmWriteOff"
+            @close="closeWriteOffModal"
+        />
+
         <RefundReviewModal
             :open="refundReviewOpen"
             :requests="pendingRefundRequests"
@@ -1679,6 +1692,7 @@
             @view-receipt="openReceiptByNo"
             @pay-invoice="payFromEntity"
             @void-invoice="openVoidModal"
+            @write-off-invoice="openWriteOffModal"
             @close="closeEntityInvoices"
         />
 
@@ -1764,6 +1778,7 @@ import RefundReviewModal from "~/components/sections/app/Billing/RefundReviewMod
 import InvoiceAdjustmentModal from "~/components/sections/portal/InvoiceAdjustmentModal.vue";
 import SectionLoader from "~/components/sections/app/Billing/SectionLoader.vue";
 import VoidInvoiceModal from "~/components/sections/app/Billing/VoidInvoiceModal.vue";
+import WriteOffInvoiceModal from "~/components/sections/app/Billing/WriteOffInvoiceModal.vue";
 import PatientAdmissions from "~/components/sections/app/Billing/PatientAdmissions.vue";
 import PatientServices from "~/components/sections/app/Billing/PatientServices.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
@@ -1859,13 +1874,10 @@ async function openInvoicePicker() {
     invoicePickerOpen.value = true;
 }
 const transactionsOpen = ref(false);
-const refundsOpen = ref(false);
 
-const historyMode = computed<"receipts" | "refunds" | null>(() => {
-    if (transactionsOpen.value) return "receipts";
-
-    return refundsOpen.value ? "refunds" : null;
-});
+const historyMode = computed<"receipts" | "refunds" | null>(() =>
+    transactionsOpen.value ? "receipts" : null,
+);
 
 const transactions = computed(() =>
     [
@@ -2056,6 +2068,12 @@ const tabRefunds = computed(() =>
 
 const isVoided = (status?: string) => (status ?? "").toLowerCase() === "void";
 
+const isClosedStatus = (status?: string) => {
+    const value = (status ?? "").toLowerCase();
+
+    return value === "void" || value === "written off" || value === "written_off";
+};
+
 const issuingRefund = ref(false);
 
 const totalRefundable = computed(() =>
@@ -2219,6 +2237,59 @@ async function confirmVoid() {
     }
 }
 
+const writeOffTarget = ref<PatientInvoiceItem | null>(null);
+const writeOffReason = ref("");
+const writingOffInvoice = ref(false);
+
+function openWriteOffModal(invoice: PatientInvoiceItem) {
+    writeOffTarget.value = invoice;
+    writeOffReason.value = "";
+}
+
+function closeWriteOffModal() {
+    if (writingOffInvoice.value) return;
+
+    writeOffTarget.value = null;
+    writeOffReason.value = "";
+}
+
+async function confirmWriteOff() {
+    if (
+        !writeOffTarget.value ||
+        writingOffInvoice.value ||
+        !writeOffReason.value.trim()
+    )
+        return;
+
+    writingOffInvoice.value = true;
+
+    try {
+        const res = await invoiceService.action({
+            type: "write-off",
+            branch_uuid: uuid.value,
+            p_uuid: patientUuid.value,
+            invoice_code: writeOffTarget.value.invoice_code,
+            reason: writeOffReason.value.trim() || undefined,
+        });
+
+        success(res.message ?? "Invoice written off successfully.");
+
+        summary.value = res?.data?.data ?? res?.data ?? null;
+
+        writeOffTarget.value = null;
+        writeOffReason.value = "";
+    } catch (err: any) {
+        error(
+            err?.data?.message ??
+                err?.response?.data?.message ??
+                err?.message ??
+                "Failed to write off invoice. Please try again.",
+        );
+    } finally {
+        writingOffInvoice.value = false;
+    }
+}
+
 function amountFor(code: string) {
     return resolveInvoiceAmount(
         payableInvoices.value,
@@ -2303,16 +2374,10 @@ function invoiceCodesLabel(codes: string[]) {
 
 function closeHistory() {
     transactionsOpen.value = false;
-    refundsOpen.value = false;
 }
 
-// Receipts and refunds are read from the invoices, so that section has to be
-// on hand before the history can list anything.
-async function openRefundHistory() {
-    await loadSection("invoices");
-    refundsOpen.value = true;
-}
-
+// Receipts are read from the invoices, so that section has to be on hand
+// before the history can list anything.
 async function openReceiptHistory() {
     await loadSection("invoices");
     transactionsOpen.value = true;
@@ -2767,12 +2832,6 @@ async function handleCashPay(cash: number) {
         error(err?.message ?? "Payment failed. Please try again.");
     } finally {
         processingPayment.value = false;
-    }
-}
-
-function handlePrint() {
-    if (typeof window !== "undefined") {
-        window.print();
     }
 }
 

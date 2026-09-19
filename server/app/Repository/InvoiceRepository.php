@@ -749,9 +749,21 @@ class InvoiceRepository
             $item['period']
         );
 
+        $futurePeriodIds = $admissionItems
+            ->filter(
+                fn($row) =>
+                $row['admission']->patient_admission_id === $item['admission']->patient_admission_id
+                    && $row['period']->admission_period_id !== $currentPeriodId
+            )
+            ->map(fn($row) => $row['period']->admission_period_id)
+            ->unique()
+            ->values()
+            ->all();
+
         $calculation['outstanding'] = OutstandingBalance::forInvoices(
             $patientInvoices,
-            $item['invoice']
+            $item['invoice'],
+            $futurePeriodIds
         );
 
         return $calculation;
@@ -832,10 +844,15 @@ class InvoiceRepository
             ),
 
             'status' => match (true) {
+                $invoice->status === Invoice::STATUS_WRITTEN_OFF => 'Written Off',
                 $balance <= 0 && $paid > 0 => 'Paid',
                 $paid > 0 => 'Partial',
                 default => 'Pending',
             },
+
+            'write_off_reason' => $invoice->write_off_reason,
+            'written_off_at' => $invoice->written_off_at?->toIso8601String(),
+            'written_off_by' => $this->writtenOffByName($invoice),
 
             'refund_status' =>
             $invoice->refund_status,
@@ -915,6 +932,19 @@ class InvoiceRepository
         return $name !== '' ? $name : $user->email;
     }
 
+    private function writtenOffByName(object $invoice): ?string
+    {
+        $user = $invoice->writtenOffBy;
+
+        if (!$user) {
+            return null;
+        }
+
+        $name = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+
+        return $name !== '' ? $name : $user->email;
+    }
+
     private function formatInvoiceDetail(
         object $invoice
     ): array {
@@ -955,10 +985,14 @@ class InvoiceRepository
             'refund_requested_amount' =>   $refundProcessing,
             'balance_due' => $balance,
             'status' => match (true) {
+                $invoice->status === Invoice::STATUS_WRITTEN_OFF => 'Written Off',
                 $balance <= 0 && $paid > 0 => 'Paid',
                 $paid > 0 => 'Partial',
                 default => 'Pending',
             },
+            'write_off_reason' => $invoice->write_off_reason,
+            'written_off_at' => $invoice->written_off_at?->toIso8601String(),
+            'written_off_by' => $this->writtenOffByName($invoice),
             'refund_status' =>  $invoice->refund_status,
 
             'created_at' =>

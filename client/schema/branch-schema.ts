@@ -187,6 +187,14 @@ export const settingSchema = z.object({
         (value) => value ?? "",
         z.string().min(1, "Closing time is required."),
     ),
-});
+}).refine(
+    // Equal times mean the branch is open 24 hours, not that it's closed
+    // before it opens.
+    (data) => !data.opening || !data.closing || data.closing >= data.opening,
+    {
+        message: "Closing time must be later than opening time.",
+        path: ["closing"],
+    },
+);
 
 export type OperationSetting = z.infer<typeof settingSchema>;

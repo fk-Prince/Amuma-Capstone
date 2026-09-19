@@ -132,7 +132,7 @@ import { useGeo } from "~/composables/useGeo";
 definePageMeta({
     layout: "default",
     navVariant: 4,
-    navTheme: "dark",
+    navTheme: "light",
     middleware: ["prevent-staff-booking"],
 });
 useHead({ title: "Search Homecare" });

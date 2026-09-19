@@ -33,6 +33,14 @@ class FacilityWebhook
             'total' => $data['total'],
         ];
 
-        return $this->bookingService->storePaidBooking($user, $data, $result, $data['breakdown']);
+        $response = $this->bookingService->storePaidBooking($user, $data, $result, $data['breakdown']);
+
+        Cache::put(
+            "xendit_payment_status_{$reference}",
+            ['status' => $response->getStatusCode() < 300 ? 'submitted' : 'failed'],
+            now()->addDay()
+        );
+
+        return $response;
     }
 }

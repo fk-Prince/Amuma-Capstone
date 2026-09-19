@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('invoice_id')
                 ->constrained('invoices', 'invoice_id');
             $table->decimal('price', 10, 2);
+            $table->string('description')->nullable();
             $table->timestamps();
         });
     }

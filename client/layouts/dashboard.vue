@@ -2,6 +2,12 @@
     <div
         class="relative h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden lg:gap-3 lg:p-3 print:h-auto print:gap-0 print:overflow-visible print:p-0"
     >
+        <AuthTransitionScreen
+            v-if="!authReady"
+            title="Setting things up"
+            subtitle=""
+        />
+
         <div
             class="pointer-events-none absolute inset-0 overflow-hidden print:hidden"
             aria-hidden="true"
@@ -51,16 +57,19 @@
 <script setup lang="ts">
 import DashboardSidebar from "~/components/sections/DashboardSidebar.vue";
 import DashboardHeader from "~/components/sections/DashboardHeader.vue";
+import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useBranchStore } from "~/stores/branch";
+import { useAuthReady } from "~/composables/useAuthUser";
 
 import { authMenuList } from "~/config/authMenu";
 import { PermissionAction } from "~/utils/permissions";
 
 const route = useRoute();
 const isOpen = ref(false);
+const authReady = useAuthReady();
 
 const branchStore = useBranchStore();
 

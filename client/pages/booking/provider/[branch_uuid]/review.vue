@@ -169,6 +169,7 @@
                             processing-label="Confirming payment..."
                             gcash-label="Pay with GCash"
                             gcash-processing-label="Redirecting to GCash..."
+                            terms-context="booking"
                             @card-pay="handleCardPay"
                             @g-cash-pay="handleGCashPay"
                         />
@@ -198,7 +199,7 @@ import { useBranch } from "~/composables/useBranchProvider";
 useHead({ title: "Review Booking" });
 definePageMeta({
     navVariant: 4,
-    navTheme: "dark",
+    navTheme: "light",
     middleware: [
         "auth-client",
         "prevent-staff-booking",
@@ -340,12 +341,10 @@ async function handleCardPay() {
                     category: bookingStore.category,
                     total: bookingAmount.value,
                 }),
-            onSuccess: async (result) => {
+            onSuccess: async () => {
                 await navigateTo({
-                    path: `/booking/provider/${uuid}/success`,
-                    query: {
-                        status: result.status,
-                    },
+                    path: `/booking/provider/${uuid}/payment-complete`,
+                    query: { status: "success" },
                 });
             },
         });
@@ -373,7 +372,10 @@ async function handleGCashPay() {
                     total: bookingAmount.value,
                 }),
             onSuccess: async () => {
-                await navigateTo(`/booking/provider/${uuid}/success`);
+                await navigateTo({
+                    path: `/booking/provider/${uuid}/payment-complete`,
+                    query: { status: "success" },
+                });
             },
             onClose: () => {
                 processingPayment.value = false;
@@ -398,7 +400,7 @@ async function handleSubmit() {
             action: "regular",
         });
         toast.success(res.message);
-        window.location.href = `/booking/provider/${uuid}/success`;
+        window.location.href = `/booking/provider/${uuid}/success?category=${bookingStore.category}`;
         // router.push({
         //     path: `/booking/provider/${uuid}/success`,
         //     // query: {

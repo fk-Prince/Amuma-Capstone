@@ -12,6 +12,9 @@ class Invoice extends Model
     public const STATUS_PARTIAL = 'partially_paid';
     public const STATUS_PAID = 'paid';
     public const STATUS_VOID = 'void';
+    public const STATUS_WRITTEN_OFF = 'written_off';
+
+    public const CLOSED_STATUSES = [self::STATUS_VOID, self::STATUS_WRITTEN_OFF];
 
     protected $primaryKey = 'invoice_id';
 
@@ -25,12 +28,16 @@ class Invoice extends Model
         'voided_at',
         'voided_by',
         'void_reason',
+        'written_off_at',
+        'written_off_by',
+        'write_off_reason',
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
         'created_at' => 'datetime',
         'voided_at' => 'datetime',
+        'written_off_at' => 'datetime',
     ];
 
     public function branch(): BelongsTo
@@ -47,9 +54,19 @@ class Invoice extends Model
         return $this->belongsTo(User::class, 'voided_by', 'user_id');
     }
 
+    public function writtenOffBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'written_off_by', 'user_id');
+    }
+
     public function getIsVoidedAttribute(): bool
     {
         return $this->status === self::STATUS_VOID;
+    }
+
+    public function getIsWrittenOffAttribute(): bool
+    {
+        return $this->status === self::STATUS_WRITTEN_OFF;
     }
 
     public function invoiceServices(): HasMany
@@ -69,24 +86,12 @@ class Invoice extends Model
             ->sortByDesc('invoice_admission_id')
             ->first();
 
-        if ($stay) {
-            $contract = $stay->branchContract;
-
-            $label = collect([
-                'ADMISSION',
-                $contract?->accommodation_type,
-                $contract?->billing_cycle,
-            ])->filter()->implode(' - ');
-
-            $code = AdmissionPeriod::codeFor($stay->admission_period_id);
-
-            return $code ? $code . '-' . $label : $label;
+        if ($stay?->description) {
+            return $stay->description;
         }
 
         $services = $this->invoiceServices
-            ->map(fn($line) => $line->scheduleService?->service_id === null
-                ? 'Activities of Daily Living (ADL)'
-                : $line->scheduleService?->service?->service_name)
+            ->pluck('description')
             ->filter()
             ->unique()
             ->values();
@@ -201,7 +206,7 @@ class Invoice extends Model
 
     public function syncStatus()
     {
-        if ($this->status === self::STATUS_VOID) {
+        if (in_array($this->status, self::CLOSED_STATUSES, true)) {
             return $this;
         }
 
@@ -242,6 +247,10 @@ class Invoice extends Model
 
     public function getBalanceDueAttribute()
     {
+        if (in_array($this->status, self::CLOSED_STATUSES, true)) {
+            return 0.0;
+        }
+
         return round(max($this->adjusted_total - $this->net_paid_amount, 0),      2);
     }
 
@@ -256,9 +265,7 @@ class Invoice extends Model
             : 'partially refunded';
     }
 
-    // Resolved once per patient per request: the refund credit figures and the
-    // billing summary each ask for the same ids several times over, and on a
-    // list that repetition was costing two subqueries per call.
+
     private static array $patientInvoiceIdCache = [];
 
     public static function patientInvoiceIds(mixed $patientId)

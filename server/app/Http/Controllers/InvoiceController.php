@@ -69,6 +69,11 @@ class InvoiceController extends Controller
             return $this->invoiceService->voidInvoice(
                 $request->all() + ['user_id' => $request->user()?->user_id]
             );
+        } else if ($request->type === 'write-off') {
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Update);
+            return $this->invoiceService->writeOffInvoice(
+                $request->all() + ['user_id' => $request->user()?->user_id]
+            );
         }
     }
 }

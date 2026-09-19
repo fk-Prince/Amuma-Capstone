@@ -51,8 +51,8 @@ const navInner = computed(() => {
     if (variant.value === 2 || variant.value === 3) return "px-4 sm:px-10";
     if (variant.value === 1 || variant.value === 4)
         return "mx-auto max-w-[100rem] px-6";
-    if (variant.value === 5) return "px-6";
-    if (variant.value === 6) return "mx-auto max-w-[100rem] px-6 sm:px-10";
+    if (variant.value === 5 || variant.value === 6) return "px-6";
+    if (variant.value === 7) return "mx-auto max-w-[100rem] px-6 sm:px-10";
 
     return "px-6";
 });
@@ -103,7 +103,8 @@ const header = computed(() => {
         case 4:
             return [
                 "relative w-full h-[70px] flex items-center",
-                "transition-all duration-300 ease-out bg-secondary dark:bg-surface",
+                "transition-all duration-300 ease-out",
+                `bg-white border-b border-muted-light ${DARK_CHROME_SOLID}`,
             ]
                 .filter(Boolean)
                 .join(" ");
@@ -116,12 +117,18 @@ const header = computed(() => {
                 "shadow-[0_10px_40px_-12px_rgba(0,0,0,0.55)]",
             ].join(" ");
         case 6:
-            return (
-                ["relative w-full h-[90px] flex items-center bg-transparent"]
-                    //${DARK_CHROME_SOLID} border-b border-muted-light
-                    .filter(Boolean)
-                    .join(" ")
-            );
+            return [
+                "fixed top-4 sm:top-6 z-50",
+                AUTH_BOX,
+                "h-[72px] sm:h-[90px] rounded-[20px] flex items-center",
+                "border border-light/20 bg-light/10 backdrop-blur-sm",
+                "shadow-[0_10px_40px_-12px_rgba(0,0,0,0.55)]",
+            ].join(" ");
+        case 7:
+            return [
+                "fixed top-0 left-0 z-50 w-full h-[90px] flex items-center",
+                `bg-white border-b border-muted-light ${DARK_CHROME_SOLID}`,
+            ].join(" ");
     }
 });
 
@@ -240,7 +247,7 @@ watch(
     <header :class="header">
         <nav
             class="relative flex justify-between items-center w-full"
-            :class="[navInner, variant === 5 ? 'h-full' : 'h-[90px]']"
+            :class="[navInner, variant === 5 || variant === 6 ? 'h-full' : 'h-[90px]']"
         >
             <nav
                 v-if="variant === 5"
@@ -267,6 +274,14 @@ watch(
             </nav>
             <nav
                 v-if="variant === 6"
+                class="relative flex h-full w-full items-center justify-center"
+            >
+                <NuxtLink to="/" aria-label="AMUMA home">
+                    <BrandLogo />
+                </NuxtLink>
+            </nav>
+            <nav
+                v-if="variant === 7"
                 class="flex w-full items-center justify-between"
             >
                 <NuxtLink to="/" class="shrink-0" aria-label="AMUMA home">

@@ -15,6 +15,7 @@ class InvoiceAdmission extends Model
         'invoice_id',
         'admission_period_id',
         'price',
+        'description',
     ];
 
     public function admissionPeriod()
@@ -25,6 +26,28 @@ class InvoiceAdmission extends Model
     public function invoice()
     {
         return $this->belongsTo(Invoice::class,  'invoice_id', 'invoice_id');
+    }
+
+    protected static function booted()
+    {
+        static::creating(function (self $line) {
+            if ($line->description) {
+                return;
+            }
+
+            $period = $line->admissionPeriod;
+            $contract = $line->branchContract;
+
+            $label = $period?->reason === AdmissionPeriod::REASON_EXTENDED
+                ? 'EXTENSION'
+                : 'ADMISSION';
+
+            $line->description = collect([
+                $label,
+                $contract?->billing_cycle,
+                $contract?->accommodation_type,
+            ])->filter()->implode(' - ');
+        });
     }
 
     public function getPatientAdmissionAttribute()

@@ -229,7 +229,7 @@ import { useSubscriptionBrowser } from "~/composables/useSubscriptionBrowser";
 
 definePageMeta({
     layout: "owner",
-    middleware: "auth-client",
+    middleware: ["auth-client", "owner-guard"],
 });
 
 useHead({

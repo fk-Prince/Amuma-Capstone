@@ -260,6 +260,10 @@ class RefundService
 
     public function createRefundCurrentInvoice(Invoice $invoice, PatientAdmission $admission,  AdmissionPeriod $period)
     {
+        if (in_array($invoice->status, Invoice::CLOSED_STATUSES, true)) {
+            return;
+        }
+
         $calculation = DischargeCalculator::getDischargeCalculation(
             $invoice,
             $admission,
@@ -328,6 +332,10 @@ class RefundService
     */
     private function cancelInvoice(Invoice $invoice, string $reason): void
     {
+        if (in_array($invoice->status, Invoice::CLOSED_STATUSES, true)) {
+            return;
+        }
+
         $adjustedTotal = (float) $invoice->adjusted_total;
 
         if (!$this->hasCreditNote($invoice) && $adjustedTotal > 0) {

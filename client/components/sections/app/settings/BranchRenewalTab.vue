@@ -719,6 +719,7 @@
                             title="Renewal payment"
                             description="Choose how to pay for this branch's renewal."
                             submit-label="Confirm renewal"
+                            terms-context="subscription"
                         />
                     </div>
                 </div>

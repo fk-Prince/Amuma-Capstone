@@ -68,7 +68,18 @@ export const use3DS = (
         `;
 
         const titleEl = document.createElement("span");
-        titleEl.innerHTML = `🔒 ${title}`;
+        titleEl.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        `;
+        titleEl.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <span>${title}</span>
+        `;
 
         const closeBtn = document.createElement("button");
 
@@ -99,8 +110,7 @@ export const use3DS = (
             border: none;
         `;
 
-        // Covers the iframe while the payment is being finalised, so the card
-        // form can't be interacted with after 3DS has already succeeded.
+
         const busy = document.createElement("div");
 
         busy.style.cssText = `
@@ -162,10 +172,7 @@ export const use3DS = (
         let completionCallback: (() => void) | null = null;
         let closeCallback: (() => void) | null = null;
 
-        /**
-         * Reflects the "payment is being finalised" state: the close affordances
-         * are disabled and the iframe is covered.
-         */
+
         const setProcessing = (value: boolean) => {
             isProcessing = value;
 
@@ -199,7 +206,6 @@ export const use3DS = (
             }
         };
 
-        /** User-initiated close — blocked while the payment is being finalised. */
         const requestClose = () => {
             if (isProcessing) return;
 

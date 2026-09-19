@@ -181,7 +181,7 @@ interface PlanRecord {
 
 definePageMeta({
     layout: "owner",
-    middleware: "auth-client",
+    middleware: ["auth-client", "owner-guard"],
 });
 
 useHead({

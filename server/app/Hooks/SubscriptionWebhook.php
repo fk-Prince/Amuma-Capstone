@@ -28,8 +28,16 @@ class SubscriptionWebhook
             'masked_card_number' => null,
         ];
 
-        return ($metadata['type'] ?? null) === 'renewal'
+        $response = ($metadata['type'] ?? null) === 'renewal'
             ? $this->subscriptionService->renewSubscriber($result)
             : $this->subscriptionService->newSubscriber($result);
+
+        Cache::put(
+            "xendit_payment_status_{$reference}",
+            ['status' => $response->getStatusCode() < 300 ? 'submitted' : 'failed'],
+            now()->addDay()
+        );
+
+        return $response;
     }
 }

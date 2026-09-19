@@ -11,6 +11,7 @@ use Carbon\Carbon;
 class DischargeCalculator
 {
     private const YEARLY_HALF_REFUND_WINDOW_DAYS = 183;
+    private const MONTHLY_HALF_REFUND_WINDOW_DAYS = 14;
 
     public static function getDischargeCalculation(Invoice $invoice,  PatientAdmission $admission,  AdmissionPeriod $period)
     {
@@ -30,6 +31,10 @@ class DischargeCalculator
 
         $paid = InvoiceMoney::netPaid($invoice);
 
+        if (in_array($invoice->status, Invoice::CLOSED_STATUSES, true)) {
+            return self::closedInvoiceDischargeCalculation($invoice, $admission, $admissionDate, $dischargeDate, $paid);
+        }
+
         if (!$contract) {
             return self::emptyDischargeCalculation($admission, $admissionDate,  $dischargeDate, $paid);
         }
@@ -47,8 +52,8 @@ class DischargeCalculator
         $feeBaseAmount = $periodPrice;
 
 
-        $withinRefundWindow = $billingCycle === 'YEARLY'
-            && self::isWithinYearlyHalfRefundWindow($admission);
+        $withinRefundWindow = ($billingCycle === 'YEARLY' && self::isWithinYearlyHalfRefundWindow($admission))
+            || ($billingCycle === 'MONTHLY' && self::isWithinMonthlyHalfRefundWindow($period));
 
         $daysStayedAmount = 0.0;
         $retainedHalf = 0.0;
@@ -122,6 +127,16 @@ class DischargeCalculator
         bool $eligibleForRefund,
         string $billingCycle
     ): array {
+        if ($withinRefundWindow && $billingCycle === 'MONTHLY') {
+            return [
+                $eligibleForRefund ? 'Refund available' : 'No refund',
+                'Half-retention policy',
+                $eligibleForRefund
+                    ? 'Discharged less than 2 weeks into the month. Half of the month is retained, and the days already stayed are deducted from the other half. What is left is refunded.'
+                    : 'Discharged less than 2 weeks into the month. Half of the month is retained, and the days already stayed have used up the other half, so nothing is left to refund.',
+            ];
+        }
+
         if ($withinRefundWindow) {
             return [
                 $eligibleForRefund ? 'Refund available' : 'No refund',
@@ -187,6 +202,11 @@ class DischargeCalculator
         return $days !== null && $days <= self::YEARLY_HALF_REFUND_WINDOW_DAYS;
     }
 
+    public static function isWithinMonthlyHalfRefundWindow(AdmissionPeriod $period): bool
+    {
+        return $period->consumedDays() < self::MONTHLY_HALF_REFUND_WINDOW_DAYS;
+    }
+
     public static function getContractPrice(mixed $contract)
     {
         return round((float) ($contract->price ?? 0), 2);
@@ -235,5 +255,53 @@ class DischargeCalculator
     public static function periodPrice(AdmissionPeriod $period)
     {
         return round((float) $period->invoiceAdmissionLines()->sum('price'), 2);
+    }
+
+    // A void/written-off invoice is closed: no further payment is required and
+    // no refund is worked out against it, since void already credited the
+    // patient and written-off already gave up on collecting it.
+    public static function closedInvoiceDischargeCalculation(
+        Invoice $invoice,
+        PatientAdmission $admission,
+        ?Carbon $admissionDate,
+        ?Carbon $dischargeDate,
+        float $paid
+    ) {
+        $isWrittenOff = $invoice->status === Invoice::STATUS_WRITTEN_OFF;
+
+        return [
+            'admission_id' => $admission->patient_admission_id,
+            'eligible_for_refund' => false,
+            'billing_cycle' => null,
+            'admission_date' => $admissionDate?->toIso8601String(),
+            'discharge_date' => $dischargeDate?->toIso8601String(),
+            'days_since_admission' => self::calculateAdmissionDays($admissionDate),
+            'contract_price' => 0,
+            'amount_paid' => round($paid, 2),
+            'required_payment' => 0,
+            'fee_base_amount' => 0,
+            'days_stayed_amount' => 0,
+            'retained_amount' => 0,
+            'refund_amount' => 0,
+            'consumed_days' => 0,
+            'remaining_days' => 0,
+            'period_days' => 0,
+            'period_start' => null,
+            'period_end' => null,
+            'daily_rate' => 0,
+            'period_price' => 0,
+            'invoice_total' => round((float) $invoice->adjusted_total, 2),
+            'invoice_code' => $invoice->invoice_code,
+            'retained_half' => 0,
+            'policy' => 'No refund',
+            'policy_title' => $isWrittenOff ? 'Written off' : 'Void',
+            'policy_description' => $isWrittenOff
+                ? 'This invoice has been written off as bad debt. It no longer requires payment and is not eligible for a refund.'
+                : 'This invoice has been voided. It no longer requires payment and is not eligible for a refund.',
+            'is_within_refund_window' => false,
+            'is_under_required_payment' => false,
+            'payment_shortfall' => 0,
+            'is_closed_invoice' => true,
+        ];
     }
 }
