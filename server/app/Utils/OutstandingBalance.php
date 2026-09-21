@@ -12,7 +12,8 @@ class OutstandingBalance
     public static function forInvoices(
         mixed $invoices,
         ?Invoice $dischargeInvoice = null,
-        array $futurePeriodIds = []
+        array $futurePeriodIds = [],
+        ?int $admissionId = null
     ): array {
         $invoices = collect($invoices)
             ->reject(fn($invoice) => $invoice->status === Invoice::STATUS_VOID)
@@ -42,21 +43,30 @@ class OutstandingBalance
             fn($invoice) => in_array($invoice->invoice_id, $medicalIds, true)
         );
 
-        $balance = fn($list) => round((float) $list->sum('balance_due'), 2);
-
-        $withoutFuture = round((float) $invoices->sum(
-            fn($invoice) => max(
+        $due = fn($invoice) => round(
+            max(
                 0,
                 $invoice->balance_due - $invoice->invoiceAdmissionLines
                     ->whereIn('admission_period_id', $futurePeriodIds)
                     ->sum('price')
+            ),
+            2
+        );
+
+        $balance = fn($list) => round((float) $list->sum($due), 2);
+
+        $ofAdmission = $accommodation->filter(
+            fn($invoice) => $invoice->invoiceAdmissionLines->contains(
+                fn($line) => $admissionId !== null
+                    && (int) $line->admissionPeriod?->patient_admission_id === $admissionId
             )
-        ), 2);
+        );
 
         return [
-            'total_balance' => $balance($invoices),
-            'balance_excluding_future' => $withoutFuture,
+            'total_balance' => round((float) $invoices->sum('balance_due'), 2),
+            'balance_excluding_future' => $balance($invoices),
             'accommodation_balance' => $balance($accommodation),
+            'admission_balance' => $balance($ofAdmission),
             'service_balance' => $balance($scheduled),
             'adl_balance' => $balance($adl),
 
@@ -67,16 +77,16 @@ class OutstandingBalance
                 : $balance($invoices),
 
             'unpaid_invoice_count' => $invoices
-                ->filter(fn($invoice) => $invoice->balance_due > 0)
+                ->filter(fn($invoice) => $due($invoice) > 0)
                 ->count(),
 
             'invoices' => $invoices
-                ->filter(fn($invoice) => $invoice->balance_due > 0)
+                ->filter(fn($invoice) => $due($invoice) > 0)
                 ->map(fn($invoice) => [
                     'invoice_code' => $invoice->invoice_code,
                     'description' => $invoice->paymentDescription(),
                     'kind' => self::kind($invoice, $medical, $adl),
-                    'balance_due' => round((float) $invoice->balance_due, 2),
+                    'balance_due' => $due($invoice),
                     'is_discharge_invoice' => $dischargeInvoice
                         && $invoice->invoice_id === $dischargeInvoice->invoice_id,
                 ])

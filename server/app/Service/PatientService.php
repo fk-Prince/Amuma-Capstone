@@ -54,6 +54,82 @@ class PatientService
     }
 
 
+    public function storeAvatar(mixed $avatar): ?string
+    {
+        if ($avatar instanceof UploadedFile) {
+            try {
+                return SupabaseService::store($avatar)['url'] ?? null;
+            } catch (\Throwable $e) {
+                throw new Exception(
+                    'We couldn\'t upload the patient photo. Please try again or use a different image.',
+                    422,
+                    $e
+                );
+            }
+        }
+
+        return is_string($avatar) && filter_var($avatar, FILTER_VALIDATE_URL)
+            ? $avatar
+            : null;
+    }
+
+    public function updatePatient(string $uuid, int $branchId, array $payload)
+    {
+        $patient = $this->patientRepository->findByFields([
+            ['uuid', '=', $uuid],
+            ['branch_id', '=', $branchId],
+        ]);
+
+        if (!$patient) {
+            return response()->json(['message' => 'Patient not found.'], 404);
+        }
+
+        $data = [
+            'first_name' => $payload['first_name'],
+            'middle_name' => $payload['middle_name'] ?? null,
+            'last_name' => $payload['last_name'],
+            'gender' => $payload['gender'],
+            'date_of_birth' => $payload['date_of_birth'] ?? null,
+            'phone_number' => $payload['phone_number'] ?? null,
+            'citizenship' => $payload['citizenship'] ?? null,
+            'blood_type' => $payload['blood_type'] ?? null,
+            'height' => $payload['height'] ?? null,
+            'weight' => $payload['weight'] ?? null,
+            'allergies' => $this->parseAllergies($payload['allergies'] ?? null),
+            'address' => $payload['address'] ?? null,
+        ];
+
+        if ($payload['avatar'] instanceof UploadedFile) {
+            $data['avatar'] = $this->storeAvatar($payload['avatar']);
+        } elseif (!empty($payload['remove_avatar'])) {
+            $data['avatar'] = null;
+        }
+
+        $patient = $this->patientRepository->update($patient, $data);
+
+        return response()->json([
+            'message' => 'Patient updated successfully.',
+            'data' => [
+                'uuid' => $patient->uuid,
+                'avatar' => $patient->avatar_url,
+                'first_name' => $patient->first_name,
+                'middle_name' => $patient->middle_name,
+                'last_name' => $patient->last_name,
+                'full_name' => trim("{$patient->first_name} {$patient->middle_name} {$patient->last_name}"),
+                'gender' => $patient->gender,
+                'date_of_birth' => $patient->date_of_birth?->format('Y-m-d'),
+                'age' => $patient->date_of_birth?->age,
+                'phone_number' => $patient->phone_number,
+                'citizenship' => $patient->citizenship,
+                'blood_type' => $patient->blood_type,
+                'height' => $patient->height,
+                'weight' => $patient->weight,
+                'allergies' => $patient->allergies ?? [],
+                'location' => ['full_address' => $patient->location?->full_address],
+            ],
+        ]);
+    }
+
     // DONE MEDICAL
     public function createMedicalPatient(array $payload)
     {
@@ -85,6 +161,7 @@ class PatientService
             'date_of_birth'      => $patient['date_of_birth'] ?? null,
             'phone_number'       => $patient['phone_number'] ?? null,
             'citizenship'        => $patient['citizenship'] ?? null,
+            'avatar'             => $this->storeAvatar($patient['avatar'] ?? null),
             'allergies'          => $this->parseAllergies($patient['allergies'] ?? null),
         ]);
 
@@ -198,6 +275,7 @@ class PatientService
             'date_of_birth'      => $patient['date_of_birth'] ?? null,
             'phone_number'       => $patient['phone_number'] ?? null,
             'citizenship'        => $patient['citizenship'] ?? null,
+            'avatar'             => $this->storeAvatar($patient['avatar'] ?? null),
             'occupation'         => $patient['occupation'] ?? null,
             'marital_status'     => $patient['marital_status'] ?? null,
             'allergies'          => $this->parseAllergies($patient['allergies'] ?? null),

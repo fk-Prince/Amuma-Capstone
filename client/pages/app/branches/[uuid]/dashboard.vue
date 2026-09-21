@@ -7,7 +7,7 @@
     </div>
 
     <div v-else class="min-h-screen-header">
-        <div class="px-4 py-3 sm:px-5 lg:px-6 lg:py-4">
+        <div class="p-4">
             <div v-if="!activeBranch || loading" class="space-y-3">
                 <div
                     class="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4"
@@ -824,7 +824,11 @@ const groupedPlans = computed(() => {
         {
             accommodation_type: string;
             category: string;
-            cycles: { branch_contract_id: number; billing_cycle: string; price: number }[];
+            cycles: {
+                branch_contract_id: number;
+                billing_cycle: string;
+                price: number;
+            }[];
         }
     >();
 
@@ -880,12 +884,7 @@ const occupancySegments = computed(() => [
 
 const totalBookings = computed(() => {
     const b = dashboard.value.bookings;
-    return (
-        b.pending_confirmation +
-        b.approved +
-        b.expired +
-        b.rejected
-    );
+    return b.pending_confirmation + b.approved + b.expired + b.rejected;
 });
 
 const bookingSegments = computed(() => [

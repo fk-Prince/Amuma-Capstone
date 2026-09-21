@@ -41,6 +41,7 @@ enum RoleEnum: string
                 ->all(),
 
             self::Admission => [
+                ModuleEnum::Bookings->value => ModuleEnum::Bookings->actionColumns(),
                 ModuleEnum::Patients->value => [
                     PermissionAction::Read->value,
                     PermissionAction::Export->value,

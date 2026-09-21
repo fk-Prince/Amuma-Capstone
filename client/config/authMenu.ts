@@ -40,6 +40,13 @@ export const authMenuList: MenuItems[] = [
         group: "Operations",
     },
     {
+        label: "Patients",
+        icon: Users,
+        to: "/app/branches/[uuid]/patients",
+        modules: ["Patients"],
+        group: "Operations",
+    },
+    {
         label: "Schedules",
         icon: CalendarCheck2,
         to: "/app/branches/[uuid]/schedules",
@@ -53,13 +60,7 @@ export const authMenuList: MenuItems[] = [
         modules: ["Admissions"],
         group: "Operations",
     },
-    {
-        label: "Patients",
-        icon: Users,
-        to: "/app/branches/[uuid]/patients",
-        modules: ["Patients"],
-        group: "Operations",
-    },
+
     {
         label: "Rooms & Beds",
         icon: BedDouble,

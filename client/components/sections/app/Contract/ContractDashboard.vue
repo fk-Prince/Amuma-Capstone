@@ -1,6 +1,6 @@
 <template>
     <div
-        class="rounded-3xl border border-muted-light bg-white overflow-hidden font-sans dark:bg-secondary dark:border-white/10"
+        class="border rounded-t-lg border-muted-light bg-white overflow-hidden font-sans dark:bg-secondary dark:border-white/10"
     >
         <div class="p-5 md:p-6">
             <div class="flex items-center gap-2 mb-4">
@@ -51,7 +51,9 @@
                 <div
                     class="w-7 h-7 rounded-lg bg-accent-50 flex items-center justify-center dark:bg-accent-500/15"
                 >
-                    <Building2 class="w-3.5 h-3.5 text-accent-600 dark:text-accent-300" />
+                    <Building2
+                        class="w-3.5 h-3.5 text-accent-600 dark:text-accent-300"
+                    />
                 </div>
                 <p class="text-sm font-semibold text-secondary dark:text-white">
                     Facility Overview
@@ -107,8 +109,14 @@
                 v-for="action in visibleActions"
                 :key="action.action"
                 type="button"
+                :disabled="isLocked(action.action)"
+                :title="
+                    isLocked(action.action)
+                        ? lockedTitle(action.action)
+                        : undefined
+                "
                 @click="handleAction(action.action)"
-                class="group rounded-2xl px-4 py-3.5 flex items-center justify-between text-left transition-colors hover:bg-light/70 dark:hover:bg-white/5"
+                class="group rounded-2xl px-4 py-3.5 flex items-center justify-between text-left transition-colors hover:bg-light/70 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent dark:hover:bg-white/5"
             >
                 <div class="flex items-center gap-3">
                     <div
@@ -116,13 +124,15 @@
                         :class="action.iconBg"
                     >
                         <component
-                            :is="action.icon"
+                            :is="isLocked(action.action) ? Lock : action.icon"
                             class="w-4 h-4"
                             :class="action.iconColor"
                         />
                     </div>
 
-                    <span class="font-semibold text-sm text-secondary dark:text-white">
+                    <span
+                        class="font-semibold text-sm text-secondary dark:text-white"
+                    >
                         {{ action.label }}
                     </span>
                 </div>
@@ -144,6 +154,7 @@ import {
     FileText,
     HeartHandshake,
     HomeIcon,
+    Lock,
     TrendingUp,
     UserPlus,
     Users,
@@ -167,10 +178,21 @@ interface Overview {
     patient_retention: string;
 }
 
-defineProps<{
+const props = defineProps<{
     overview: Overview;
     loading: boolean;
+    homecareLocked?: boolean;
+    facilityLocked?: boolean;
 }>();
+
+const isLocked = (action: ActionType) =>
+    (action === "create-homecare" && !!props.homecareLocked) ||
+    (action === "create-facility" && !!props.facilityLocked);
+
+const lockedTitle = (action: ActionType) =>
+    action === "create-facility"
+        ? "Locked — this branch has no In-house Facility plan."
+        : "Locked — this branch has no Homecare Services plan.";
 
 const emit = defineEmits<{
     action: [type: ActionType];

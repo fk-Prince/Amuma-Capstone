@@ -11,6 +11,12 @@
         </div>
 
         <div class="space-y-8">
+            <AvatarUpload
+                :model-value="model.avatar"
+                :name="`${model.first_name} ${model.last_name}`"
+                @update:model-value="update('avatar', $event)"
+            />
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <BaseInput
                     label="First Name"
@@ -188,6 +194,7 @@ import BaseInput from "../ui/BaseInput.vue";
 import PhoneInput from "../ui/PhoneInput.vue";
 import Combobox from "../ui/Combobox.vue";
 import DatePickerField from "../ui/DatePickerField.vue";
+import AvatarUpload from "../ui/AvatarUpload.vue";
 import type { Patient } from "~/types/patient";
 import { getLocalDateStr } from "~/utils/time";
 const props = defineProps<{

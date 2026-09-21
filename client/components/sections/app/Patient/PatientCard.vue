@@ -4,15 +4,11 @@
     >
         <div class="flex items-start justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
-                <div
-                    class="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"
-                >
-                    <img
-                        :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(patient.full_name)}&background=random&color=fff`"
-                        :alt="patient.full_name"
-                        class="h-full w-full object-cover"
-                    />
-                </div>
+                <PatientAvatar
+                    :src="patient.avatar"
+                    :name="patient.full_name"
+                    size-class="h-12 w-12 text-base"
+                />
 
                 <div class="min-w-0">
                     <p class="text-sm font-semibold text-slate-900 truncate dark:text-white">
@@ -80,6 +76,7 @@
 <script setup lang="ts">
 import { MapPin } from "lucide-vue-next";
 import { calculateAge } from "~/utils/user";
+import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 import type { PatientRetrieve } from "~/types/patient";
 
 defineProps<{

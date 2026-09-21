@@ -23,6 +23,7 @@ export interface PortalInvoice {
     total: number;
     adjusted_total: number;
     amount_paid: number;
+    net_paid: number;
     balance_due: number;
     refund_status: string;
     void_reason?: string | null;

@@ -146,6 +146,7 @@ export interface InvoiceItem {
     total: number;
     adjusted_total: number;
     amount_paid: number;
+    net_paid?: number;
     balance_due: number;
     refund_status: string;
     created_at: string | null;

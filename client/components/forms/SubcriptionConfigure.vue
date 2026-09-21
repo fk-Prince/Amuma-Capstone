@@ -51,7 +51,7 @@
                     </p>
                     <Combobox
                         v-model="setting.closing"
-                        :items="timeItems"
+                        :items="closingItems"
                         required
                         placeholder="Closing time"
                         class="w-full"
@@ -106,6 +106,10 @@ const timeItems = computed(() =>
         label: t,
         value: t,
     })),
+);
+
+const closingItems = computed(() =>
+    timeItems.value.filter((item) => item.value !== "00:00"),
 );
 
 function clearError(field: string) {

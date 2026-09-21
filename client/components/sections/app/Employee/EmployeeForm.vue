@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref, watch } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import PhoneInput from "~/components/ui/PhoneInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
@@ -81,6 +81,27 @@ const {
         emit("back");
     },
 });
+
+const assignmentItems = computed(() =>
+    employeeAssignmentTypes.value.filter(
+        (type) =>
+            type.value !== "both" ||
+            employee.value.role_name !== "caregiver" ||
+            employee.value.assignment_type === "both" && (isEditMode.value || isViewMode.value),
+    ),
+);
+
+watch(
+    [assignmentItems, () => employee.value.role_name, () => employee.value.assignment_type],
+    ([items, role, current]) => {
+        if (isViewMode.value || isEditMode.value) return;
+
+        if (role === "caregiver" && current === "both" && items.length) {
+            employee.value.assignment_type = items[0].value;
+        }
+    },
+    { immediate: true },
+);
 
 const activeTab = ref("information");
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -568,7 +589,7 @@ init();
                                         position="top"
                                         v-model="employee.assignment_type"
                                         :disabled="isViewMode"
-                                        :items="employeeAssignmentTypes"
+                                        :items="assignmentItems"
                                     />
                                     <p
                                         v-if="errors.assignment_type"

@@ -1,20 +1,33 @@
 <template>
-    <div class="min-h-screen-header bg-slate-50 dark:bg-surface">
-        <div class="w-full mx-auto px-4 lg:px-8 py-8">
+    <div class="min-h-screen-header bg-slate-50 dark:bg-surface rounded-lg">
+        <div class="w-full mx-auto p-4">
+            <PlanLockNotice
+                v-if="facilityLocked"
+                class="mb-6"
+                title="Admissions are read-only"
+                message="This branch has no In-house Facility plan. You can view admissions, but starting or processing one is locked."
+            />
+
             <div
-                class="relative mb-6 grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm sm:inline-grid sm:w-auto dark:border-white/10 dark:bg-secondary"
+                class="relative mb-6 grid w-full grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm sm:inline-grid sm:w-auto dark:border-white/10 dark:bg-secondary"
             >
                 <div
                     class="absolute inset-y-1 left-1 rounded-lg bg-primary transition-transform duration-300 ease-out"
                     :style="{
-                        width: 'calc((100% - 0.45rem) / 3)',
+                        width: 'calc((100% - 0.5rem) / 3)',
                         transform: `translateX(${sliderOffset})`,
                     }"
                 />
 
                 <button
                     type="button"
-                    class="relative z-10 rounded-lg px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors"
+                    :disabled="facilityLocked"
+                    :title="
+                        facilityLocked
+                            ? 'Locked — this branch has no In-house Facility plan.'
+                            : undefined
+                    "
+                    class="relative z-10 rounded-lg px-2 sm:px-4 py-2 text-center text-xs sm:text-sm font-medium leading-tight sm:whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                     :class="
                         viewMode === 'form'
                             ? 'text-white'
@@ -27,7 +40,7 @@
 
                 <button
                     type="button"
-                    class="relative z-10 rounded-lg px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors"
+                    class="relative z-10 rounded-lg px-2 sm:px-4 py-2 text-center text-xs sm:text-sm font-medium leading-tight sm:whitespace-nowrap transition-colors"
                     :class="
                         viewMode === 'table'
                             ? 'text-white'
@@ -40,7 +53,7 @@
 
                 <button
                     type="button"
-                    class="relative z-10 rounded-lg px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors"
+                    class="relative z-10 rounded-lg px-2 sm:px-4 py-2 text-center text-xs sm:text-sm font-medium leading-tight sm:whitespace-nowrap transition-colors"
                     :class="
                         viewMode === 'bookings'
                             ? 'text-white'
@@ -62,7 +75,7 @@
                     :pagination="admissionPagination"
                     :loading="loadingAdmissions"
                     searchable
-                    search-placeholder="Search by patient code, name or reference ID…"
+                    search-placeholder="Search by patient code or name…"
                     empty-title="No admissions found"
                     empty-description="Try adjusting your search."
                     @search="onAdmissionSearch"
@@ -71,6 +84,7 @@
                     <!-- :on-row-click="selectAdmissionRow" -->
                     <template #actions>
                         <button
+                            v-if="!facilityLocked"
                             type="button"
                             class="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
                             @click="startNewAdmission"
@@ -120,7 +134,7 @@
                     :pagination="bookingPagination"
                     :loading="loadingBookings"
                     searchable
-                    search-placeholder="Search by patient code, name or booking reference…"
+                    search-placeholder="Search by name or booking reference…"
                     empty-title="No bookings found"
                     empty-description="No pending admission bookings available."
                     @search="onBookingSearch"
@@ -136,36 +150,18 @@
                     </template>
 
                     <template #cell-actions="{ row }">
-                        <div class="flex justify-end">
+                        <div class="flex flex-wrap justify-end gap-x-4 gap-y-1">
                             <button
-                                v-if="
-                                    row.status?.toLowerCase() === 'approved' &&
-                                    row.admission_type?.toLowerCase() ===
-                                        'pre-admission'
-                                "
+                                v-if="canProcessBooking(row)"
                                 type="button"
                                 class="text-primary font-medium hover:underline"
                                 @click="openBooking(row)"
                             >
                                 Process
                             </button>
-                            <!-- v-if="row.status?.toLowerCase() === 'pending'" -->
-                            <!-- <button
-                                type="button"
-                                class="text-primary font-medium hover:underline"
-                                @click="
-                                    router.push({
-                                        path: `/app/branches/${uuid}/bookings`,
-                                        query: {
-                                            reference_id: row.reference_id,
-                                        },
-                                    })
-                                "
-                            >
-                                View Booking
-                            </button> -->
                             <button
                                 v-if="
+                                    row.p_uuid &&
                                     row.status?.toLowerCase() !== 'pending' &&
                                     row.status?.toLowerCase() !== 'rejected' &&
                                     row.status?.toLowerCase() !== 'missed'
@@ -237,6 +233,22 @@
                         </button>
                     </div>
 
+                    <div
+                        v-if="referenceNotice"
+                        class="mx-[3rem] md:mx-[3.5rem] mt-3 flex items-start gap-2 rounded-xl border px-4 py-3 text-[13px] leading-relaxed"
+                        :class="{
+                            'border-amber-100 bg-amber-50 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300':
+                                referenceNotice.tone === 'pending',
+                            'border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300':
+                                referenceNotice.tone === 'approved',
+                            'border-rose-100 bg-rose-50 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300':
+                                referenceNotice.tone === 'blocked',
+                        }"
+                    >
+                        <Info class="mt-0.5 h-4 w-4 shrink-0" />
+                        <span>{{ referenceNotice.message }}</span>
+                    </div>
+
                     <section class="px-6" id="step1" ref="step1">
                         <AdmissionDetail
                             variant="page"
@@ -282,7 +294,9 @@
                             "
                             @update:errors="assessmentErrors = $event"
                         />
+                    </section>
 
+                    <section class="px-6" id="step5" ref="step5">
                         <AssessmentForm
                             :model="assessmentData"
                             :errors="assessmentErrors"
@@ -296,32 +310,14 @@
 
                 <aside class="hidden lg:block">
                     <div class="sticky top-8 space-y-5">
-                        <div class="px-6 py-6 border-b">
-                            <p
-                                class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500"
-                            >
-                                Completion
-                            </p>
-                            <div class="mt-3 flex items-center gap-2">
-                                <div
-                                    class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden dark:bg-white/10"
-                                >
-                                    <div
-                                        class="h-full rounded-full bg-primary transition-all duration-300"
-                                        :style="{ width: `${progress}%` }"
-                                    ></div>
-                                </div>
+                        <BookingProgressHeader
+                            title="Admission Progress"
+                            :progress="progress"
+                        />
 
-                                <span
-                                    class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500"
-                                >
-                                    {{ Math.round(progress) }}%
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="flex-1 overflow-y-auto px-3 py-4">
+                        <div class="flex-1 overflow-y-auto px-3 py-2">
                             <BookingSteps
+                                compact
                                 :active="activeStep"
                                 :completed="completedSteps"
                                 @go="scrollTo"
@@ -361,9 +357,11 @@ import { useRoute, useRouter } from "vue-router";
 import { useBookingFlowValidation } from "~/composables/useBookingFlowValidation";
 
 import BookingSteps from "~/components/sections/booking/provider/BookingSteps.vue";
+import BookingProgressHeader from "~/components/sections/booking/provider/BookingProgressHeader.vue";
 import DataTable, { type DataTableColumn } from "~/components/ui/DataTable.vue";
 import GuardianForm from "~/components/forms/GuardianForm.vue";
 import PatientForm from "~/components/forms/PatientForm.vue";
+import { Info } from "lucide-vue-next";
 import BaseButton from "~/components/ui/BaseButton.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import AssessmentForm from "~/components/forms/AssessmentForm.vue";
@@ -399,6 +397,8 @@ import { patientService } from "~/api/patient/PatientService";
 import { admissionService } from "~/api/admission/AdmissionService";
 import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
 import { useToast } from "~/composables/useToast";
+import { useBranchPlan } from "~/composables/useBranchPlan";
+import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
 
 useHead({ title: "Admission" });
 
@@ -452,19 +452,28 @@ const {
     reserved,
 });
 
-const viewMode = ref<"form" | "table" | "bookings">("form");
+const { hasFacilityPlan } = useBranchPlan();
+const facilityLocked = computed(() => !hasFacilityPlan.value);
+const viewMode = ref<"form" | "table" | "bookings">(
+    facilityLocked.value ? "table" : "form",
+);
 const isPaid = ref(false);
 const referenceInput = ref((route.query.reference_id as string) ?? "");
 const roomContract = ref<RoomContract[]>([]);
 const loadingContract = ref(true);
 const loadingReference = ref(false);
 const referenceError = ref("");
+const referenceNotice = ref<{
+    tone: "pending" | "approved" | "blocked";
+    message: string;
+} | null>(null);
 
 async function loadByReference() {
     if (!referenceInput.value) return;
 
     loadingReference.value = true;
     referenceError.value = "";
+    referenceNotice.value = null;
 
     try {
         const [bookingResponse] = await Promise.all([
@@ -493,6 +502,7 @@ async function loadByReference() {
             blood_type: booking.patient?.blood_type ?? "",
             address: booking.patient?.address ?? "",
             allergies: booking.patient?.allergies ?? "",
+            avatar: booking.patient?.avatar ?? null,
         });
 
         Object.assign(guardianData, {
@@ -535,6 +545,17 @@ async function loadByReference() {
 
         bookingStore.lastSubmittedId = booking.reference_id;
 
+        referenceNotice.value =
+            booking.status === "approved"
+                ? {
+                      tone: "approved",
+                      message: `Booking ${booking.reference_id} has already been approved. You can continue with the admission.`,
+                  }
+                : {
+                      tone: "pending",
+                      message: `Booking ${booking.reference_id} is still pending approval. You can still admit this patient; completing the admission will approve the booking.`,
+                  };
+
         router.replace({
             query: {
                 ...route.query,
@@ -545,6 +566,10 @@ async function loadByReference() {
         error(err.message ?? "Internal Server Error.");
         referenceError.value =
             err.message ?? "Couldn't find an admission with that reference ID.";
+        referenceNotice.value = {
+            tone: "blocked",
+            message: referenceError.value,
+        };
     } finally {
         loadingReference.value = false;
     }
@@ -638,6 +663,7 @@ async function fetchBookings() {
                               .filter(Boolean)
                               .join(" / ")
                         : "N / A",
+                admission_type: booking.facility?.type ?? "",
                 status: booking.status,
                 created_at: stringToDateTime(booking.created_at) ?? "—",
             }),
@@ -660,7 +686,13 @@ function onBookingPageChange() {
     fetchBookings();
 }
 
+const canProcessBooking = (row: any) =>
+    !facilityLocked.value &&
+    row.admission_type?.toLowerCase() === "pre-admission" &&
+    ["pending", "approved"].includes(row.status?.toLowerCase());
+
 function openBooking(row: any) {
+    if (facilityLocked.value) return;
     referenceInput.value = row.reference_id;
     viewMode.value = "form";
     loadByReference();
@@ -731,6 +763,7 @@ async function fetchAdmissions() {
 
 function onAdmissionSearch(query: string) {
     admissionSearchQuery.value = query;
+    admissionPagination.reset();
     fetchAdmissions();
 }
 
@@ -761,8 +794,10 @@ function statusBadgeClass(status: string) {
 }
 
 function startNewAdmission() {
+    if (facilityLocked.value) return;
     referenceInput.value = "";
     referenceError.value = "";
+    referenceNotice.value = null;
     viewMode.value = "form";
 }
 
@@ -780,7 +815,9 @@ onMounted(async () => {
     loading.value = true;
 
     try {
-        if (referenceInput.value) {
+        if (facilityLocked.value) {
+            await fetchAdmissions();
+        } else if (referenceInput.value) {
             await loadByReference();
         } else {
             await loadRoomContracts();
@@ -825,6 +862,9 @@ async function submit() {
 }
 
 function deepToRaw<T>(val: T): T {
+    if (val instanceof Blob) {
+        return val;
+    }
     if (Array.isArray(val)) {
         return val.map(deepToRaw) as any;
     }
@@ -841,51 +881,56 @@ const step1 = ref<HTMLElement | null>(null);
 const step2 = ref<HTMLElement | null>(null);
 const step3 = ref<HTMLElement | null>(null);
 const step4 = ref<HTMLElement | null>(null);
+const step5 = ref<HTMLElement | null>(null);
 
 const activeStep = ref("step1");
 
+const stepRefs = { step1, step2, step3, step4, step5 };
+type StepKey = keyof typeof stepRefs;
+const stepOrder: StepKey[] = ["step1", "step2", "step3", "step4", "step5"];
+
 const scrollTo = (step: string) => {
-    if (step === "step5") {
+    if (step === "step6") {
         submit();
         return;
     }
 
     activeStep.value = step;
 
-    const map: Record<string, any> = {
-        step1,
-        step2,
-        step3,
-        step4,
-    };
-
     nextTick(() => {
-        map[step]?.value?.scrollIntoView({
+        stepRefs[step as StepKey]?.value?.scrollIntoView({
             behavior: "smooth",
             block: "start",
         });
     });
 };
 
-const stepRefs: Record<string, typeof step1> = {
-    step1,
-    step2,
-    step3,
-    step4,
+const findScroller = (el: HTMLElement) => {
+    let node = el.parentElement;
+
+    while (node) {
+        const { overflowY } = getComputedStyle(node);
+        if (overflowY === "auto" || overflowY === "scroll") return node;
+        node = node.parentElement;
+    }
+
+    return null;
 };
-const stepOrder = ["step1", "step2", "step3", "step4"];
 
 const updateActiveStepFromScroll = () => {
-    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
-    const offset = (isDesktop ? 32 : 112) + 24;
+    const first = stepRefs.step1.value;
+    if (!first) return;
 
-    let current = stepOrder[0];
+    const scroller = findScroller(first);
+    const containerTop = scroller ? scroller.getBoundingClientRect().top : 0;
+
+    let current: StepKey = "step1";
 
     for (const key of stepOrder) {
-        const el = stepRefs[key]?.value;
+        const el = stepRefs[key].value;
         if (!el) continue;
 
-        if (el.getBoundingClientRect().top - offset <= 0) {
+        if (el.getBoundingClientRect().top - containerTop - 24 <= 0) {
             current = key;
         }
     }
@@ -895,6 +940,7 @@ const updateActiveStepFromScroll = () => {
 
 onMounted(() => {
     window.addEventListener("scroll", updateActiveStepFromScroll, {
+        capture: true,
         passive: true,
     });
 
@@ -902,7 +948,9 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-    window.removeEventListener("scroll", updateActiveStepFromScroll);
+    window.removeEventListener("scroll", updateActiveStepFromScroll, {
+        capture: true,
+    });
 });
 const viewModes = ["form", "table", "bookings"] as const;
 const sliderOffset = computed(() => {

@@ -5,29 +5,34 @@
             :key="step.key"
             type="button"
             @click="$emit('go', step.key)"
-            class="group relative flex min-h-[88px] w-full items-start gap-4 rounded-2xl p-3 text-left transition-all duration-200"
-            :class="
+            class="group relative flex w-full items-start text-left transition-all duration-200"
+            :class="[
+                compact
+                    ? 'min-h-[64px] gap-3 rounded-xl p-2'
+                    : 'min-h-[88px] gap-4 rounded-2xl p-3',
                 active === step.key
                     ? 'bg-primary-50 shadow-sm ring-1 ring-primary-200 dark:bg-primary-500/10 dark:ring-primary-500/20'
-                    : 'hover:bg-muted-light dark:hover:bg-white/5'
-            "
+                    : 'hover:bg-muted-light dark:hover:bg-white/5',
+            ]"
         >
             <div
-                class="relative flex h-full w-10 shrink-0 flex-col items-center"
+                class="relative flex h-full shrink-0 flex-col items-center"
+                :class="compact ? 'w-8' : 'w-10'"
             >
                 <div
-                    class="relative z-[999] flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold transition-all duration-200"
-                    :class="
+                    class="relative z-[999] flex shrink-0 items-center justify-center rounded-full border font-semibold transition-all duration-200"
+                    :class="[
+                        compact ? 'h-8 w-8 text-xs' : 'h-10 w-10 text-sm',
                         isCompleted(step.key) && active !== step.key
                             ? 'border-primary-500 bg-primary-500 text-white shadow-sm shadow-primary-500/20'
                             : active === step.key
                               ? 'border-primary-500 bg-primary-500 text-white shadow-md shadow-primary-500/20 ring-4 ring-primary-100 dark:ring-primary-500/20'
-                              : 'border-muted-light bg-white text-muted group-hover:border-primary-200 group-hover:bg-primary-50 group-hover:text-primary-600 dark:border-white/10 dark:bg-secondary dark:text-gray-400 dark:group-hover:border-primary-500/40 dark:group-hover:bg-primary-500/10 dark:group-hover:text-primary-400'
-                    "
+                              : 'border-muted-light bg-white text-muted group-hover:border-primary-200 group-hover:bg-primary-50 group-hover:text-primary-600 dark:border-white/10 dark:bg-secondary dark:text-gray-400 dark:group-hover:border-primary-500/40 dark:group-hover:bg-primary-500/10 dark:group-hover:text-primary-400',
+                    ]"
                 >
                     <Check
                         v-if="isCompleted(step.key) && active !== step.key"
-                        class="h-4.5 w-4.5 stroke-[2.5]"
+                        :class="compact ? 'h-3.5 w-3.5 stroke-[2.5]' : 'h-4.5 w-4.5 stroke-[2.5]'"
                     />
 
                     <span v-else>
@@ -38,26 +43,28 @@
                 <!-- Connector -->
                 <div
                     v-if="index < steps.length - 1"
-                    class="absolute left-1/2 top-10 h-[48px] w-0.5 -translate-x-1/2 transition-colors duration-300"
-                    :class="
+                    class="absolute left-1/2 w-0.5 -translate-x-1/2 transition-colors duration-300"
+                    :class="[
+                        compact ? 'top-8 h-[32px]' : 'top-10 h-[48px]',
                         isCompleted(step.key)
                             ? 'bg-primary-300'
-                            : 'bg-gray-200 dark:bg-white/10'
-                    "
+                            : 'bg-gray-200 dark:bg-white/10',
+                    ]"
                 />
             </div>
 
             <div class="min-w-0 flex-1 py-0.5">
                 <div class="flex items-center justify-between gap-2">
                     <span
-                        class="text-sm font-semibold leading-5 transition-colors"
-                        :class="
+                        class="font-semibold leading-5 transition-colors"
+                        :class="[
+                            compact ? 'text-[13px]' : 'text-sm',
                             active === step.key
                                 ? 'text-primary-600 dark:text-primary-300'
                                 : isCompleted(step.key)
                                   ? 'text-secondary dark:text-white'
-                                  : 'text-muted-dark dark:text-gray-400'
-                        "
+                                  : 'text-muted-dark dark:text-gray-400',
+                        ]"
                     >
                         {{ step.title }}
                     </span>
@@ -70,7 +77,14 @@
                     </span>
                 </div>
 
-                <p class="mt-1 text-xs leading-4 text-muted dark:text-gray-400">
+                <p
+                    class="text-muted dark:text-gray-400"
+                    :class="
+                        compact
+                            ? 'mt-0.5 text-[11px] leading-4'
+                            : 'mt-1 text-xs leading-4'
+                    "
+                >
                     {{ step.desc }}
                 </p>
 
@@ -94,11 +108,13 @@ const props = withDefaults(
         active?: string;
         completed?: string[];
         hideReview?: boolean;
+        compact?: boolean;
     }>(),
     {
         active: "step1",
         completed: () => [],
         hideReview: false,
+        compact: false,
     },
 );
 

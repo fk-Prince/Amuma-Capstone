@@ -1,7 +1,7 @@
 ﻿<template>
     <div
         v-if="isLoading"
-        class="grid min-h-full gap-5 items-start p-4 sm:p-6 lg:p-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+        class="grid min-h-full gap-5 items-start grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     >
         <div
             class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
@@ -657,9 +657,7 @@
                                 >
                                     {{
                                         formatDuration(
-                                            serviceWorkedMinutesCapped(
-                                                service,
-                                            ) / 60,
+                                            serviceElapsedMinutes(service) / 60,
                                         ) || "0 hrs"
                                     }}
                                 </p>
@@ -1351,45 +1349,29 @@ function initials(name?: string | null) {
         .toUpperCase();
 }
 
-function workedMinutes(scan: {
-    in_timestamp: string | null;
-    out_timestamp: string | null;
-}) {
-    if (!scan.in_timestamp) {
+function serviceElapsedMinutes(service: ScheduleServiceItem) {
+    const visit = attendanceVisit.value;
+    const scheduledAt = visit?.scheduled_at;
+    const scheduled = service.duration_minutes ?? 0;
+
+    if (visit?.status === "completed") {
+        return scheduled;
+    }
+
+    if (visit?.status !== "ongoing" || !scheduledAt) {
         return 0;
     }
 
-    const start = new Date(scan.in_timestamp).getTime();
-
-    const end = scan.out_timestamp
-        ? new Date(scan.out_timestamp).getTime()
-        : Date.now();
-
-    return Math.max(0, Math.round((end - start) / 60000));
-}
-
-function serviceWorkedMinutes(service: ScheduleServiceItem) {
-    return (service.assignees ?? []).reduce(
-        (total, assignee) =>
-            total +
-            (assignee.online ?? []).reduce(
-                (sum, scan) => sum + workedMinutes(scan),
-                0,
-            ),
-        0,
+    const elapsed = Math.round(
+        (Date.now() - new Date(scheduledAt).getTime()) / 60000,
     );
-}
 
-function serviceWorkedMinutesCapped(service: ScheduleServiceItem) {
-    return Math.min(
-        serviceWorkedMinutes(service),
-        service.duration_minutes ?? 0,
-    );
+    return Math.min(Math.max(elapsed, 0), scheduled);
 }
 
 function serviceRemainingMinutes(service: ScheduleServiceItem) {
     return Math.max(
-        (service.duration_minutes ?? 0) - serviceWorkedMinutesCapped(service),
+        (service.duration_minutes ?? 0) - serviceElapsedMinutes(service),
         0,
     );
 }
@@ -1399,7 +1381,9 @@ function servicePercent(service: ScheduleServiceItem) {
 
     if (!scheduled) return 0;
 
-    return Math.round((serviceWorkedMinutesCapped(service) / scheduled) * 100);
+    const percent = (serviceElapsedMinutes(service) / scheduled) * 100;
+
+    return Math.min(Math.round(percent * 10) / 10, 100);
 }
 
 const billing = ref<BillingData>({
@@ -1644,7 +1628,10 @@ function mapPatientRecord(item: any): PatientData {
 
         status: deriveStatusLabel(ctx),
 
-        photo: patient?.photo ?? "https://placehold.co/200x200?text=Patient",
+        photo:
+            patient?.avatar ??
+            patient?.photo ??
+            "https://placehold.co/200x200?text=Patient",
 
         room_label: ctx?.room?.room_no ?? ctx?.bed?.bed_no ?? "Room N/A",
 
@@ -1781,12 +1768,20 @@ async function loadPatientData() {
     noPatients.value = false;
 
     try {
-        const res = await patientAccessService.retrieveAction({
-            action: "overview",
-            section: "profile,financials,schedule,activity",
-        });
+        const [profileRes, extendedRes] = await Promise.all([
+            patientAccessService.retrieveAction({
+                action: "overview",
+                section: "profile",
+            }),
+            patientAccessService.retrieveAction({
+                action: "overview",
+                section: "financials,schedule,activity",
+            }),
+        ]);
 
-        const records: any[] = Array.isArray(res?.data) ? res.data : [];
+        const records: any[] = Array.isArray(profileRes?.data)
+            ? profileRes.data
+            : [];
 
         if (!records.length) {
             lovedOnes.value = [];
@@ -1798,11 +1793,22 @@ async function loadPatientData() {
             return;
         }
 
-        const mappedPatients = records.map(mapPatientRecord);
+        const extendedByPatientId = new Map(
+            (Array.isArray(extendedRes?.data) ? extendedRes.data : []).map(
+                (entry: any) => [Number(entry?.patient_id ?? 0), entry],
+            ),
+        );
+
+        const merged = records.map((record: any) => ({
+            ...record,
+            ...(extendedByPatientId.get(Number(record?.patient_id ?? 0)) ?? {}),
+        }));
+
+        const mappedPatients = merged.map(mapPatientRecord);
 
         lovedOnes.value = mappedPatients;
 
-        rawRecords.value = records;
+        rawRecords.value = merged;
 
         const homecareIndex = mappedPatients.findIndex(
             (patient) => patient.location_type === "homecare",

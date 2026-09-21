@@ -17,6 +17,7 @@ const currentYear = new Date().getFullYear();
 </script>
 
 <template>
+    <ClientOnly>
     <Teleport to="body">
     <Transition
         enter-active-class="transition-opacity duration-300 ease-out"
@@ -91,4 +92,5 @@ const currentYear = new Date().getFullYear();
         </div>
     </Transition>
     </Teleport>
+    </ClientOnly>
 </template>

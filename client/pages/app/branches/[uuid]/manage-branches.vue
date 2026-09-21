@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-screen-header bg-slate-50 px-4 py-8 lg:px-8 dark:bg-secondary"
+        class="min-h-screen-header bg-slate-50 dark:bg-secondary rounded-lg p-1"
     >
         <BranchDashboard :stats-data="statsData" />
 
@@ -550,7 +550,7 @@ const mapBranch = (b: any): Branch => ({
 const fetchStats = async () => {
     const res = await agencyService.list({
         per_page: 10,
-        agency_id: branchStore.activeBranch?.agency.agency_id,
+        agency_id: branchStore.activeBranch?.agency?.agency_id,
         type: "stats",
         branch_uuid: route.params.uuid,
     });
@@ -576,8 +576,6 @@ const agency = computed(() => {
     };
 });
 
-// Guards against a slow early page overwriting the results of a later, more
-// specific query when the user keeps typing.
 let requestId = 0;
 
 const fetchBranches = async (page = 1) => {
@@ -590,7 +588,7 @@ const fetchBranches = async (page = 1) => {
         const res = await agencyService.list({
             per_page: 10,
             page,
-            agency_id: branchStore.activeBranch?.agency.agency_id,
+            agency_id: branchStore.activeBranch?.agency?.agency_id,
             type: "agency_branches",
             branch_uuid: route.params.uuid,
             search: search.value.trim() || undefined,

@@ -119,12 +119,12 @@
                                 <div
                                     class="flex flex-wrap items-center gap-x-2 gap-y-1.5"
                                 >
-                                    <span
+                                    <!-- <span
                                         v-if="invoice.period_code"
                                         class="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-600 dark:bg-white/10 dark:text-gray-300"
                                     >
                                         {{ invoice.period_code }}
-                                    </span>
+                                    </span> -->
 
                                     <span
                                         class="text-[12px] font-semibold capitalize text-slate-800 dark:text-white"
@@ -386,8 +386,31 @@ function isCurrent(admission: Admission) {
     return admission.patient_admission_id === currentAdmissionId.value;
 }
 
+function mergeByPeriod(invoices: InvoiceAccommodation[]) {
+    const merged = new Map<number | string, InvoiceAccommodation>();
+
+    const lines = [...invoices].sort(
+        (a, b) => a.invoice_admission_id - b.invoice_admission_id,
+    );
+
+    for (const line of lines) {
+        const key =
+            line.admission_period_id ?? `line-${line.invoice_admission_id}`;
+        const primary = merged.get(key);
+
+        if (!primary) {
+            merged.set(key, { ...line });
+            continue;
+        }
+
+        primary.price = String(Number(primary.price) + Number(line.price));
+    }
+
+    return [...merged.values()];
+}
+
 function sortedInvoices(invoices: InvoiceAccommodation[]) {
-    const byId = [...invoices].sort(
+    const byId = mergeByPeriod(invoices).sort(
         (a, b) => (a.admission_period_id ?? 0) - (b.admission_period_id ?? 0),
     );
 
@@ -532,9 +555,6 @@ function periodLength(invoice: InvoiceAccommodation) {
         return `${rounded} hr${rounded === 1 ? "" : "s"}`;
     }
 
-    // Billing runs on calendar months, which are 28 to 31 days long. Measuring
-    // in days made a 30-day month read as "30 days" while a 31-day one read as
-    // "1 month", so whole months are counted on the calendar instead.
     const months =
         (end.getFullYear() - start.getFullYear()) * 12 +
         (end.getMonth() - start.getMonth());
@@ -558,8 +578,6 @@ function periodLength(invoice: InvoiceAccommodation) {
     return `${days} day${days === 1 ? "" : "s"}`;
 }
 
-// A period charged less than its plan was cut short or started late, so the
-// full price is worth showing next to what it actually came to.
 function priceNote(invoice: InvoiceAccommodation) {
     const charged = Number(invoice.price ?? 0);
     const plan = Number(invoice.contract?.price ?? 0);
@@ -569,7 +587,7 @@ function priceNote(invoice: InvoiceAccommodation) {
     }
 
     const length = periodLength(invoice);
-    const basis = `of ${formatCurrency(plan)}`;
+    const basis = `of  ${formatCurrency(plan)}`;
 
     return length ? `${basis} · ${length} charged` : basis;
 }

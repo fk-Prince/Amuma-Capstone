@@ -1,8 +1,6 @@
 <template>
-    <div
-        class="min-h-screen-header w-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8 dark:bg-surface"
-    >
-        <div class="mx-auto space-y-5">
+    <div class="min-h-screen-header w-full p-3">
+        <div class="mx-auto w-full space-y-5">
             <div
                 class="flex flex-wrap items-center justify-between gap-3 no-print"
             >
@@ -248,6 +246,12 @@
                                 <SummaryCard
                                     label="Total Amount"
                                     :value="summary.total_amount"
+                                    :hint="
+                                        Number(summary.total_written_off ?? 0) >
+                                        0
+                                            ? `₱${formatMoney(summary.total_written_off)} written off`
+                                            : undefined
+                                    "
                                 />
 
                                 <SummaryCard
@@ -256,6 +260,12 @@
                                     variant="paid"
                                     action-label="View receipts"
                                     :on-action="openReceiptHistory"
+                                />
+
+                                <SummaryCard
+                                    label="Balance Due"
+                                    :value="summary.total_balance"
+                                    variant="balance"
                                 />
 
                                 <SummaryCard
@@ -271,12 +281,6 @@
                                             : undefined
                                     "
                                     :hint-action="openCreditRefund"
-                                />
-
-                                <SummaryCard
-                                    label="Balance Due"
-                                    :value="summary.total_balance"
-                                    variant="balance"
                                 />
                             </div>
 
@@ -862,16 +866,24 @@
                                                 </p>
 
                                                 <p
-                                                    v-if="invoice.write_off_reason"
+                                                    v-if="
+                                                        invoice.write_off_reason
+                                                    "
                                                     class="mt-1 text-[12px] text-amber-600 dark:text-amber-300"
                                                 >
                                                     Written off:
-                                                    {{ invoice.write_off_reason }}
+                                                    {{
+                                                        invoice.write_off_reason
+                                                    }}
                                                     <template
-                                                        v-if="invoice.written_off_by"
+                                                        v-if="
+                                                            invoice.written_off_by
+                                                        "
                                                     >
                                                         · by
-                                                        {{ invoice.written_off_by }}
+                                                        {{
+                                                            invoice.written_off_by
+                                                        }}
                                                     </template>
                                                 </p>
 
@@ -923,49 +935,101 @@
                                                             invoice.balance_due,
                                                         ) > 0
                                                             ? `₱${formatMoney(invoice.balance_due)} due`
-                                                            : "Settled"
+                                                            : Number(
+                                                                    invoice.written_off_amount ??
+                                                                        0,
+                                                                ) > 0
+                                                              ? "Written off"
+                                                              : "Settled"
                                                     }}
                                                 </p>
 
-                                                <div
-                                                    class="mt-2 flex items-center justify-end gap-2"
+                                                <p
+                                                    v-if="
+                                                        Number(
+                                                            invoice.written_off_amount ??
+                                                                0,
+                                                        ) > 0
+                                                    "
+                                                    class="mt-0.5 text-[12px] font-semibold text-amber-700 dark:text-amber-300"
                                                 >
-                                                    <button
-                                                        v-if="
-                                                            !isClosedStatus(
-                                                                invoice.status,
-                                                            )
-                                                        "
-                                                        type="button"
-                                                        class="rounded-lg border border-danger/30 px-3 py-1.5 text-[12px] font-semibold text-danger transition hover:bg-danger/10"
-                                                        @click="
-                                                            openVoidModal(
-                                                                invoice,
-                                                            )
-                                                        "
-                                                    >
-                                                        Void
-                                                    </button>
+                                                    ₱{{
+                                                        formatMoney(
+                                                            invoice.written_off_amount,
+                                                        )
+                                                    }}
+                                                    bad debt
+                                                </p>
 
-                                                    <button
-                                                        v-if="
-                                                            !isClosedStatus(
-                                                                invoice.status,
-                                                            ) &&
-                                                            Number(
-                                                                invoice.balance_due,
-                                                            ) > 0
-                                                        "
-                                                        type="button"
-                                                        class="rounded-lg border border-amber-500/40 px-3 py-1.5 text-[12px] font-semibold text-amber-600 transition hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-500/10"
-                                                        @click="
-                                                            openWriteOffModal(
-                                                                invoice,
-                                                            )
-                                                        "
+                                                <div
+                                                    class="mt-2 flex items-center justify-between gap-2"
+                                                >
+                                                    <div
+                                                        class="flex flex-wrap items-center gap-2"
                                                     >
-                                                        Write off
-                                                    </button>
+                                                        <button
+                                                            v-if="
+                                                                !isClosedStatus(
+                                                                    invoice.status,
+                                                                )
+                                                            "
+                                                            type="button"
+                                                            class="rounded-lg border border-primary/30 px-3 py-1.5 text-[12px] font-semibold text-primary transition hover:bg-primary/10"
+                                                            @click="
+                                                                openAdjustModal(
+                                                                    invoice,
+                                                                )
+                                                            "
+                                                        >
+                                                            {{
+                                                                isPaidStatus(
+                                                                    invoice.status,
+                                                                )
+                                                                    ? "Issue Refund/Credit"
+                                                                    : "Adjust"
+                                                            }}
+                                                        </button>
+
+                                                        <button
+                                                            v-if="
+                                                                !isClosedStatus(
+                                                                    invoice.status,
+                                                                ) &&
+                                                                !isPaidStatus(
+                                                                    invoice.status,
+                                                                )
+                                                            "
+                                                            type="button"
+                                                            class="rounded-lg border border-danger/30 px-3 py-1.5 text-[12px] font-semibold text-danger transition hover:bg-danger/10"
+                                                            @click="
+                                                                openVoidModal(
+                                                                    invoice,
+                                                                )
+                                                            "
+                                                        >
+                                                            Void
+                                                        </button>
+
+                                                        <button
+                                                            v-if="
+                                                                !isClosedStatus(
+                                                                    invoice.status,
+                                                                ) &&
+                                                                Number(
+                                                                    invoice.balance_due,
+                                                                ) > 0
+                                                            "
+                                                            type="button"
+                                                            class="rounded-lg border border-amber-500/40 px-3 py-1.5 text-[12px] font-semibold text-amber-600 transition hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-500/10"
+                                                            @click="
+                                                                openWriteOffModal(
+                                                                    invoice,
+                                                                )
+                                                            "
+                                                        >
+                                                            Write off
+                                                        </button>
+                                                    </div>
 
                                                     <button
                                                         v-if="
@@ -1368,7 +1432,7 @@
                                                 {{
                                                     creditCoversEverything
                                                         ? "Nothing left to collect"
-                                                        : "Still to collect in cash"
+                                                        : "Still unpaid after credit"
                                                 }}
                                             </span>
 
@@ -1380,6 +1444,16 @@
                                                 }}
                                             </span>
                                         </div>
+
+                                        <p
+                                            class="pt-1 leading-5 text-emerald-800/80 dark:text-emerald-300/70"
+                                        >
+                                            Paying with credit creates 1 receipt
+                                            for the credit applied. Credit and
+                                            cash can't be combined, so untick
+                                            this to pay the balance in cash
+                                            instead.
+                                        </p>
 
                                         <p
                                             v-if="
@@ -1399,7 +1473,7 @@
                                 </div>
 
                                 <button
-                                    v-if="creditCoversEverything"
+                                    v-if="useCredit"
                                     type="button"
                                     :disabled="processingPayment"
                                     class="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
@@ -1639,6 +1713,19 @@
             </div>
         </Teleport>
 
+        <AdjustInvoiceModal
+            :invoice="adjustTarget"
+            :amount="adjustAmount"
+            :direction="adjustDirection"
+            :reason="adjustReason"
+            :processing="adjustingInvoice"
+            @update:amount="adjustAmount = $event"
+            @update:direction="adjustDirection = $event"
+            @update:reason="adjustReason = $event"
+            @confirm="confirmAdjust"
+            @close="closeAdjustModal"
+        />
+
         <VoidInvoiceModal
             :invoice="voidTarget"
             :reason="voidReason"
@@ -1691,6 +1778,7 @@
             @view-invoice="viewInvoice"
             @view-receipt="openReceiptByNo"
             @pay-invoice="payFromEntity"
+            @adjust-invoice="openAdjustModal"
             @void-invoice="openVoidModal"
             @write-off-invoice="openWriteOffModal"
             @close="closeEntityInvoices"
@@ -1779,6 +1867,7 @@ import InvoiceAdjustmentModal from "~/components/sections/portal/InvoiceAdjustme
 import SectionLoader from "~/components/sections/app/Billing/SectionLoader.vue";
 import VoidInvoiceModal from "~/components/sections/app/Billing/VoidInvoiceModal.vue";
 import WriteOffInvoiceModal from "~/components/sections/app/Billing/WriteOffInvoiceModal.vue";
+import AdjustInvoiceModal from "~/components/sections/app/Billing/AdjustInvoiceModal.vue";
 import PatientAdmissions from "~/components/sections/app/Billing/PatientAdmissions.vue";
 import PatientServices from "~/components/sections/app/Billing/PatientServices.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
@@ -2071,8 +2160,13 @@ const isVoided = (status?: string) => (status ?? "").toLowerCase() === "void";
 const isClosedStatus = (status?: string) => {
     const value = (status ?? "").toLowerCase();
 
-    return value === "void" || value === "written off" || value === "written_off";
+    return (
+        value === "void" || value === "written off" || value === "written_off"
+    );
 };
+
+const isPaidStatus = (status?: string) =>
+    (status ?? "").toLowerCase() === "paid";
 
 const issuingRefund = ref(false);
 
@@ -2287,6 +2381,72 @@ async function confirmWriteOff() {
         );
     } finally {
         writingOffInvoice.value = false;
+    }
+}
+
+const adjustTarget = ref<PatientInvoiceItem | null>(null);
+const adjustAmount = ref(0);
+const adjustDirection = ref<"add" | "deduct">("deduct");
+const adjustReason = ref("");
+const adjustingInvoice = ref(false);
+
+function openAdjustModal(invoice: PatientInvoiceItem) {
+    adjustTarget.value = invoice;
+    adjustAmount.value = 0;
+    adjustDirection.value = "deduct";
+    adjustReason.value = "";
+}
+
+function closeAdjustModal() {
+    if (adjustingInvoice.value) return;
+
+    adjustTarget.value = null;
+    adjustAmount.value = 0;
+    adjustReason.value = "";
+}
+
+async function confirmAdjust() {
+    if (
+        !adjustTarget.value ||
+        adjustingInvoice.value ||
+        !adjustReason.value.trim() ||
+        !(adjustAmount.value > 0)
+    )
+        return;
+
+    adjustingInvoice.value = true;
+
+    try {
+        const signedAmount =
+            adjustDirection.value === "add"
+                ? adjustAmount.value
+                : -adjustAmount.value;
+
+        const res = await invoiceService.action({
+            type: "adjust",
+            branch_uuid: uuid.value,
+            p_uuid: patientUuid.value,
+            invoice_code: adjustTarget.value.invoice_code,
+            amount: signedAmount,
+            reason: adjustReason.value.trim(),
+        });
+
+        success(res.message ?? "Invoice adjusted successfully.");
+
+        summary.value = res?.data?.data ?? res?.data ?? null;
+
+        adjustTarget.value = null;
+        adjustAmount.value = 0;
+        adjustReason.value = "";
+    } catch (err: any) {
+        error(
+            err?.data?.message ??
+                err?.response?.data?.message ??
+                err?.message ??
+                "Failed to adjust invoice. Please try again.",
+        );
+    } finally {
+        adjustingInvoice.value = false;
     }
 }
 
@@ -3110,6 +3270,11 @@ const SummaryCard = (props: {
             container: "bg-danger/5",
             label: "text-danger",
             value: "text-danger",
+        },
+        writtenoff: {
+            container: "bg-amber-50/60 dark:bg-amber-500/10",
+            label: "text-amber-700 dark:text-amber-300",
+            value: "text-amber-700 dark:text-amber-300",
         },
     };
 

@@ -121,14 +121,27 @@
                             </span>
 
                             <div class="min-w-0">
-                                <h4
-                                    class="font-semibold text-secondary dark:text-white"
-                                    :class="
-                                        variant === 3 ? 'text-base' : 'text-xl'
-                                    "
-                                >
-                                    {{ log.schedule_code }}
-                                </h4>
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                    <h4
+                                        class="font-semibold text-secondary dark:text-white"
+                                        :class="
+                                            variant === 3 ? 'text-base' : 'text-xl'
+                                        "
+                                    >
+                                        {{ log.schedule_code }}
+                                    </h4>
+
+                                    <span
+                                        v-if="variant !== 3"
+                                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ring-1"
+                                        :class="statusPill(log.status)"
+                                    >
+                                        <span
+                                            class="h-1.5 w-1.5 rounded-full bg-current opacity-70"
+                                        />
+                                        {{ log.status }}
+                                    </span>
+                                </div>
 
                                 <div
                                     v-if="variant === 3"
@@ -225,14 +238,6 @@
                                 >
                                     Assign
                                 </ActionButton>
-
-                                <ActionButton
-                                    v-if="variant === 2"
-                                    variant="outline"
-                                    @click="goToPatientSchedule(log)"
-                                >
-                                    View Patient
-                                </ActionButton>
                             </div>
 
                             <ActionButton
@@ -294,6 +299,21 @@
                                         </span>
                                     </div>
 
+                                    <button
+                                        type="button"
+                                        :disabled="
+                                            !canRequestReview(log) ||
+                                            sendingReview === log.schedule_id
+                                        "
+                                        class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-muted-light disabled:bg-transparent disabled:text-muted dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20 dark:disabled:border-white/10 dark:disabled:bg-transparent dark:disabled:text-gray-400"
+                                        @click="requestScheduleReview(log)"
+                                    >
+                                        <Bell class="h-3.5 w-3.5 shrink-0" />
+                                        <span>{{
+                                            reviewButtonLabel(log)
+                                        }}</span>
+                                    </button>
+
                                     <div class="w-full">
                                         <div
                                             class="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"
@@ -328,7 +348,7 @@
 
                             <div
                                 v-else
-                                class="flex w-full flex-wrap items-center gap-2"
+                                class="flex w-full flex-wrap items-center justify-end gap-2"
                             >
                                 <div
                                     class="rounded-xl border border-primary/20 bg-primary/5 px-4 py-2"
@@ -344,68 +364,6 @@
                                             formatDuration(log.total_hours) ||
                                             "0 hrs"
                                         }}
-                                    </p>
-                                </div>
-
-                                <div
-                                    v-if="
-                                        remainingMinutes(log) > 0 ||
-                                        !['completed', 'cancelled'].includes(
-                                            log.status,
-                                        )
-                                    "
-                                    class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 dark:border-amber-500/20 dark:bg-amber-500/10"
-                                >
-                                    <p
-                                        class="text-[10px] uppercase text-amber-600/70 dark:text-amber-300"
-                                    >
-                                        Remaining
-                                    </p>
-
-                                    <p
-                                        class="text-sm font-bold text-amber-700 dark:text-amber-300"
-                                    >
-                                        {{ formatRemaining(log) }}
-                                    </p>
-                                </div>
-
-                                <div
-                                    class="rounded-xl border px-4 py-2 dark:border-white/10"
-                                    :class="{
-                                        'border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10':
-                                            log.status === 'pending',
-                                        'border-blue-200 bg-blue-50 dark:border-blue-500/20 dark:bg-blue-500/10':
-                                            log.status === 'ongoing',
-                                        'border-green-200 bg-green-50':
-                                            log.status === 'completed',
-                                        'border-red-200 bg-red-50':
-                                            log.status === 'cancelled',
-                                        'border-orange-300 bg-orange-50':
-                                            log.status === 'missed',
-                                    }"
-                                >
-                                    <p
-                                        class="text-[10px] uppercase text-muted dark:text-gray-400"
-                                    >
-                                        Status
-                                    </p>
-
-                                    <p
-                                        class="text-sm font-bold capitalize"
-                                        :class="{
-                                            'text-amber-700 dark:text-amber-300':
-                                                log.status === 'pending',
-                                            'text-blue-700 dark:text-blue-300':
-                                                log.status === 'ongoing',
-                                            'text-green-700':
-                                                log.status === 'completed',
-                                            'text-red-700':
-                                                log.status === 'cancelled',
-                                            'text-orange-700':
-                                                log.status === 'missed',
-                                        }"
-                                    >
-                                        {{ log.status }}
                                     </p>
                                 </div>
                             </div>
@@ -432,7 +390,9 @@
 
                                     <template v-if="log.assignees.length">
                                         <div
-                                            v-for="assignee in log.assignees"
+                                            v-for="assignee in visibleAssignees(
+                                                log,
+                                            )"
                                             :key="assignee.employee_id"
                                             class="flex items-center justify-between gap-3"
                                         >
@@ -526,11 +486,35 @@
                                                 <span
                                                     v-if="assignee.note"
                                                     class="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary"
+                                                    :title="shiftHours(assignee.note) ?? undefined"
                                                 >
                                                     {{ assignee.note }}
+                                                    <template v-if="shiftHours(assignee.note)">
+                                                        · {{ shiftHours(assignee.note) }}
+                                                    </template>
+                                                </span>
+
+                                                <span
+                                                    v-if="
+                                                        shiftEnded(log, assignee.note) &&
+                                                        isOnDuty(log, assignee.employee_id)
+                                                    "
+                                                    class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+                                                >
+                                                    <TriangleAlert class="h-3 w-3" />
+                                                    Shift ended · still on duty
                                                 </span>
                                             </div>
                                         </div>
+
+                                        <button
+                                            v-if="hasMoreAssignees(log)"
+                                            type="button"
+                                            class="w-full rounded-lg border border-muted-light py-1.5 text-xs font-semibold text-muted transition hover:bg-muted-light/40 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
+                                            @click="loadMoreAssignees(log)"
+                                        >
+                                            Load more
+                                        </button>
                                     </template>
 
                                     <div v-else class="flex items-center gap-3">
@@ -558,25 +542,55 @@
                                 </div>
 
                                 <div
-                                    class="mt-4 flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-3"
+                                    v-if="
+                                        ![
+                                            'completed',
+                                            'cancelled',
+                                            'missed',
+                                        ].includes(log.status)
+                                    "
+                                    class="mt-4 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-500/20 dark:bg-amber-500/10"
                                 >
                                     <div>
                                         <p
-                                            class="text-[11px] text-muted dark:text-gray-400"
+                                            class="text-[11px] text-amber-600/70 dark:text-amber-300"
                                         >
-                                            Hours worked so far
+                                            Remaining
                                         </p>
 
                                         <p
-                                            class="text-sm font-bold text-primary"
+                                            class="text-sm font-bold text-amber-700 dark:text-amber-300"
                                         >
-                                            {{
-                                                formatDuration(
-                                                    log.total_worked_minutes /
-                                                        60,
-                                                ) || "0 hrs"
-                                            }}
+                                            {{ formatRemaining(log) }}
                                         </p>
+                                    </div>
+
+                                    <div
+                                        v-if="totalGapMinutes(log) > 0"
+                                        class="flex items-center gap-2"
+                                    >
+                                        <div class="text-right">
+                                            <p
+                                                class="text-[11px] text-amber-600/70 dark:text-amber-300"
+                                            >
+                                                Total Late/Gap
+                                            </p>
+
+                                            <p
+                                                class="text-sm font-bold text-amber-700 dark:text-amber-300"
+                                            >
+                                                {{ formatTotalGap(log) }}
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30"
+                                            @click="openDeductionModal(log)"
+                                        >
+                                            <Minus class="h-3.5 w-3.5" />
+                                            Request deduction
+                                        </button>
                                     </div>
                                 </div>
 
@@ -595,17 +609,21 @@
 
                                     <div
                                         v-else
-                                        v-for="(scan, index) in log.online_logs"
-                                        :key="index"
+                                        v-for="entry in visibleAttendance(log)"
+                                        :key="entry.index"
                                         class="rounded-lg border border-muted-light dark:border-white/10 bg-muted-light/40 dark:bg-white/5 p-4"
                                     >
                                         <div
-                                            v-if="scan.employee_name"
+                                            v-if="entry.scan.employee_name"
                                             class="mb-3 flex items-center gap-2"
                                         >
                                             <img
-                                                v-if="scan.employee_avatar"
-                                                :src="scan.employee_avatar"
+                                                v-if="
+                                                    entry.scan.employee_avatar
+                                                "
+                                                :src="
+                                                    entry.scan.employee_avatar
+                                                "
                                                 class="h-6 w-6 rounded-full object-cover"
                                             />
                                             <div
@@ -613,19 +631,22 @@
                                                 class="flex h-6 w-6 items-center justify-center rounded-full bg-muted-light dark:bg-white/10 text-[10px] font-semibold text-muted dark:text-gray-400"
                                             >
                                                 {{
-                                                    initials(scan.employee_name)
+                                                    initials(
+                                                        entry.scan
+                                                            .employee_name,
+                                                    )
                                                 }}
                                             </div>
 
                                             <p
                                                 class="text-xs font-medium text-secondary dark:text-white"
                                             >
-                                                {{ scan.employee_name }}
+                                                {{ entry.scan.employee_name }}
                                             </p>
                                         </div>
 
                                         <div
-                                            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+                                            class="grid grid-cols-1 gap-4 sm:grid-cols-2"
                                         >
                                             <div>
                                                 <p
@@ -638,16 +659,19 @@
                                                     class="text-sm text-secondary dark:text-white"
                                                 >
                                                     {{
-                                                        scan.in_timestamp
+                                                        entry.scan.in_timestamp
                                                             ? formatDateTime(
-                                                                  scan.in_timestamp,
+                                                                  entry.scan
+                                                                      .in_timestamp,
                                                               )
                                                             : "Not checked in"
                                                     }}
                                                 </p>
 
                                                 <p
-                                                    v-if="scan.in_timestamp"
+                                                    v-if="
+                                                        entry.scan.in_timestamp
+                                                    "
                                                     class="text-[11px] text-emerald-600 dark:text-emerald-300"
                                                 >
                                                     QR scanned
@@ -665,33 +689,22 @@
                                                     class="text-sm text-secondary dark:text-white"
                                                 >
                                                     {{
-                                                        scan.out_timestamp
+                                                        entry.scan.out_timestamp
                                                             ? formatDateTime(
-                                                                  scan.out_timestamp,
+                                                                  entry.scan
+                                                                      .out_timestamp,
                                                               )
                                                             : "Not checked out"
                                                     }}
                                                 </p>
 
                                                 <p
-                                                    v-if="scan.out_timestamp"
+                                                    v-if="
+                                                        entry.scan.out_timestamp
+                                                    "
                                                     class="text-[11px] text-emerald-600 dark:text-emerald-300"
                                                 >
                                                     QR scanned
-                                                </p>
-                                            </div>
-
-                                            <div>
-                                                <p
-                                                    class="text-[11px] uppercase text-muted dark:text-gray-400"
-                                                >
-                                                    Worked Hours
-                                                </p>
-
-                                                <p
-                                                    class="text-sm font-semibold text-secondary dark:text-white"
-                                                >
-                                                    {{ duration(scan) }}
                                                 </p>
                                             </div>
 
@@ -719,13 +732,39 @@
                                             </div> -->
                                         </div>
 
+                                        <p
+                                            v-if="
+                                                attendanceGapLabel(
+                                                    log,
+                                                    entry.index,
+                                                )
+                                            "
+                                            class="mt-3 text-[11px] font-medium text-amber-600 dark:text-amber-300"
+                                        >
+                                            {{
+                                                attendanceGapLabel(
+                                                    log,
+                                                    entry.index,
+                                                )
+                                            }}
+                                        </p>
+
                                         <div
-                                            v-if="scan.notes"
+                                            v-if="entry.scan.notes"
                                             class="mt-3 border-t border-muted-light dark:border-white/10 pt-3 text-xs text-muted dark:text-gray-400"
                                         >
-                                            {{ scan.notes }}
+                                            {{ entry.scan.notes }}
                                         </div>
                                     </div>
+
+                                    <button
+                                        v-if="hasMoreAttendance(log)"
+                                        type="button"
+                                        class="w-full rounded-lg border border-muted-light py-1.5 text-xs font-semibold text-muted transition hover:bg-muted-light/40 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
+                                        @click="loadMoreAttendance(log)"
+                                    >
+                                        Load more
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -745,45 +784,62 @@
             @scanned="handleQrScanned"
         />
 
+        <InvoiceDeductionModal
+            :open="showDeductionModal"
+            :log="deductionSchedule"
+            :gap-minutes="deductionSchedule ? totalGapMinutes(deductionSchedule) : 0"
+            :is-saving="isSendingDeduction"
+            @close="closeDeductionModal"
+            @confirm="submitDeductionRequest"
+        />
+
         <template v-if="variant === 1 || variant === 2">
             <AssignADLModal
                 :open="showAssignModal"
                 :schedule="selectedSchedule"
                 :branch-uuid="String(route.params.uuid)"
                 :is-saving="isAssigning"
+                :conflicts="assignConflicts"
                 @close="closeAssignModal"
                 @confirm="handleAssignConfirm"
             />
 
-            <QrScanner v-if="variant === 1 && showScanner" @close="showScanner = false" />
+            <QrScanner
+                v-if="variant === 1 && showScanner"
+                @close="showScanner = false"
+            />
         </template>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import {
+    TriangleAlert,
     ChevronDown,
     CalendarClock,
     MapPinned,
     Phone,
     Mail,
+    Bell,
+    Minus,
 } from "lucide-vue-next";
 import type { ScheduleItem, AuditRow } from "~/types/schedule";
 import ActionButton from "~/components/ui/ActionButton.vue";
 import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import { useToast } from "~/composables/useToast";
 import { formatDuration, formatDurationShort } from "~/utils/time";
 import AssignADLModal from "./AssignADLModal.vue";
+import InvoiceDeductionModal from "./InvoiceDeductionModal.vue";
 import QrCodeModal from "~/components/ui/QrCodeModal.vue";
 import QrScanner from "~/components/ui/QrScanner.vue";
 import { scheduleService } from "~/api/schedule/ScheduleService.js";
+import { patientAccessService } from "~/api/patient-access/PatientAccessService";
 
 const { success, error } = useToast();
 
 const route = useRoute();
-const router = useRouter();
 
 const props = withDefaults(
     defineProps<{
@@ -807,6 +863,7 @@ const emit = defineEmits<{
 const selectedSchedule = ref<AuditRow>();
 const showAssignModal = ref(false);
 const isAssigning = ref(false);
+const assignConflicts = ref<string[]>([]);
 const showScanner = ref(false);
 
 const expandedKey = ref<string | null>(null);
@@ -825,10 +882,51 @@ function toggleRow(log: AuditRow) {
     expandedKey.value = expandedKey.value === key ? null : key;
 }
 
-function goToPatientSchedule(log: AuditRow) {
-    router.push(
-        `/app/branches/${route.params.uuid}/patients/${log.patient_uuid}?tab=schedule`,
-    );
+const PAGE_SIZE = 2;
+
+const visibleAssigneeCounts = ref<Record<string, number>>({});
+const visibleAttendanceCounts = ref<Record<string, number>>({});
+
+function visibleAssignees(log: AuditRow) {
+    const count = visibleAssigneeCounts.value[rowKey(log)] ?? PAGE_SIZE;
+
+    return log.assignees.slice(0, count);
+}
+
+function hasMoreAssignees(log: AuditRow): boolean {
+    const count = visibleAssigneeCounts.value[rowKey(log)] ?? PAGE_SIZE;
+
+    return log.assignees.length > count;
+}
+
+function loadMoreAssignees(log: AuditRow) {
+    const key = rowKey(log);
+    const count = visibleAssigneeCounts.value[key] ?? PAGE_SIZE;
+
+    visibleAssigneeCounts.value[key] = count + PAGE_SIZE;
+}
+
+function newestFirstAttendance(log: AuditRow) {
+    return log.online_logs.map((scan, index) => ({ scan, index })).reverse();
+}
+
+function visibleAttendance(log: AuditRow) {
+    const count = visibleAttendanceCounts.value[rowKey(log)] ?? PAGE_SIZE;
+
+    return newestFirstAttendance(log).slice(0, count);
+}
+
+function hasMoreAttendance(log: AuditRow): boolean {
+    const count = visibleAttendanceCounts.value[rowKey(log)] ?? PAGE_SIZE;
+
+    return log.online_logs.length > count;
+}
+
+function loadMoreAttendance(log: AuditRow) {
+    const key = rowKey(log);
+    const count = visibleAttendanceCounts.value[key] ?? PAGE_SIZE;
+
+    visibleAttendanceCounts.value[key] = count + PAGE_SIZE;
 }
 
 function onRowClick(log: AuditRow) {
@@ -840,9 +938,6 @@ function openAssignModal(log: AuditRow) {
     showAssignModal.value = true;
 }
 
-// AuditRow is a flattened one-row-per-service view of a schedule; the
-// "Update" flow (ScheduleDetails) needs the original nested ScheduleItem,
-// same as the Medical schedule list already provides via view-details.
 function viewDetails(log: AuditRow) {
     const schedule = props.logs.find((s) => s.schedule_id === log.schedule_id);
     if (schedule) emit("view-details", schedule);
@@ -850,6 +945,7 @@ function viewDetails(log: AuditRow) {
 
 function closeAssignModal() {
     showAssignModal.value = false;
+    assignConflicts.value = [];
     selectedSchedule.value = undefined;
 }
 
@@ -858,6 +954,7 @@ async function handleAssignConfirm(payload: {
     assignments: unknown[];
 }) {
     isAssigning.value = true;
+    assignConflicts.value = [];
     try {
         const res = await scheduleService.action({
             type: "assign",
@@ -869,11 +966,16 @@ async function handleAssignConfirm(payload: {
         emit("update", res.data);
         closeAssignModal();
     } catch (err: any) {
-        error(
-            err?.response?.data?.message ??
-                err?.message ??
-                "Failed to assign staff.",
-        );
+        if (err?.status === 409) {
+            assignConflicts.value = [err.message];
+            error("Schedule conflict");
+        } else {
+            error(
+                err?.response?.data?.message ??
+                    err?.message ??
+                    "Failed to assign staff.",
+            );
+        }
         console.error(err);
     } finally {
         isAssigning.value = false;
@@ -940,6 +1042,194 @@ function handleQrScanned() {
     closeQrModal();
 }
 
+const REVIEW_NOTIFY_COOLDOWN_MS = 10 * 60 * 1000;
+
+const reviewNotifyTick = ref(0);
+const sendingReview = ref<number | null>(null);
+const secondsTick = ref(0);
+let secondsTickInterval: ReturnType<typeof setInterval> | null = null;
+
+onMounted(() => {
+    secondsTickInterval = setInterval(() => {
+        secondsTick.value++;
+    }, 1000);
+});
+
+onUnmounted(() => {
+    if (secondsTickInterval) clearInterval(secondsTickInterval);
+});
+
+type ShiftKey = "am" | "pm" | "full";
+
+const SHIFT_HOURS: Record<ShiftKey, { start: number; end: number; label: string }> = {
+    am: { start: 0, end: 12, label: "12:00 AM – 12:00 PM" },
+    pm: { start: 12, end: 24, label: "12:00 PM – 12:00 AM" },
+    full: { start: 0, end: 24, label: "Whole booking" },
+};
+
+function shiftOf(note?: string | null): ShiftKey | null {
+    const text = (note ?? "").toLowerCase();
+
+    if (/\bfull\b/.test(text)) return "full";
+    if (/\bam\b/.test(text)) return "am";
+    if (/\bpm\b/.test(text)) return "pm";
+
+    return null;
+}
+
+function shiftHours(note?: string | null): string | null {
+    const shift = shiftOf(note);
+
+    return shift ? SHIFT_HOURS[shift].label : null;
+}
+
+function shiftEnded(log: AuditRow, note?: string | null): boolean {
+    secondsTick.value;
+
+    const shift = shiftOf(note);
+
+    if (!shift || shift === "full" || log.status?.toLowerCase() !== "ongoing") return false;
+
+    const now = new Date();
+    const hour = now.getHours() + now.getMinutes() / 60;
+    const { start, end } = SHIFT_HOURS[shift];
+
+    return hour < start || hour >= end;
+}
+
+function reviewNotifyKey(log: AuditRow) {
+    return `adl-review-notify:${log.schedule_id}`;
+}
+
+function lastReviewNotifyAt(log: AuditRow): number {
+    if (typeof window === "undefined") return 0;
+
+    try {
+        const raw = window.localStorage.getItem(reviewNotifyKey(log));
+        return raw ? Number(raw) || 0 : 0;
+    } catch {
+        return 0;
+    }
+}
+
+function canRequestReview(log: AuditRow): boolean {
+    reviewNotifyTick.value;
+    secondsTick.value;
+
+    return Date.now() - lastReviewNotifyAt(log) >= REVIEW_NOTIFY_COOLDOWN_MS;
+}
+
+function formatCountdown(ms: number): string {
+    const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function reviewButtonLabel(log: AuditRow): string {
+    secondsTick.value;
+
+    if (canRequestReview(log)) {
+        return "Notify Admission Staff";
+    }
+
+    const waitMs =
+        REVIEW_NOTIFY_COOLDOWN_MS - (Date.now() - lastReviewNotifyAt(log));
+
+    return `Available in ${formatCountdown(waitMs)}`;
+}
+
+async function requestScheduleReview(log: AuditRow) {
+    if (!canRequestReview(log) || sendingReview.value === log.schedule_id) {
+        return;
+    }
+
+    sendingReview.value = log.schedule_id;
+
+    try {
+        await patientAccessService.executeAction({
+            action: "request_schedule_review",
+            patient_id: log.patient_id,
+            schedule_id: log.schedule_id,
+        });
+
+        try {
+            window.localStorage.setItem(
+                reviewNotifyKey(log),
+                String(Date.now()),
+            );
+        } catch {}
+
+        reviewNotifyTick.value++;
+        success("Admission staff have been notified to review this schedule.");
+    } catch (err: any) {
+        error(
+            err?.data?.message ||
+                err?.message ||
+                "Failed to send the notification.",
+        );
+    } finally {
+        sendingReview.value = null;
+    }
+}
+
+const showDeductionModal = ref(false);
+const deductionSchedule = ref<AuditRow | null>(null);
+const isSendingDeduction = ref(false);
+
+function openDeductionModal(log: AuditRow) {
+    deductionSchedule.value = log;
+    showDeductionModal.value = true;
+}
+
+function closeDeductionModal() {
+    showDeductionModal.value = false;
+    deductionSchedule.value = null;
+}
+
+async function submitDeductionRequest(payload: {
+    amount: number;
+    reason: string;
+}) {
+    const log = deductionSchedule.value;
+
+    if (!log) return;
+
+    isSendingDeduction.value = true;
+
+    try {
+        if (props.variant === 3) {
+            await patientAccessService.executeAction({
+                action: "request_invoice_deduction",
+                patient_id: log.patient_id,
+                schedule_id: log.schedule_id,
+                amount: payload.amount,
+                reason: payload.reason,
+            });
+        } else {
+            await scheduleService.action({
+                type: "request_deduction",
+                branch_uuid: route.params.uuid,
+                schedule_id: log.schedule_id,
+                amount: payload.amount,
+                reason: payload.reason,
+            });
+        }
+
+        success("Accounting has been notified to review this deduction request.");
+        closeDeductionModal();
+    } catch (err: any) {
+        error(
+            err?.data?.message ||
+                err?.message ||
+                "Failed to send the deduction request.",
+        );
+    } finally {
+        isSendingDeduction.value = false;
+    }
+}
+
 const search = ref("");
 
 const filteredLogs = computed<AuditRow[]>(() => {
@@ -992,6 +1282,7 @@ const filteredLogs = computed<AuditRow[]>(() => {
                 scheduled_at: schedule.scheduled_at ?? null,
                 schedule_services_id: service.schedule_services_id,
                 total_hours: service.hours_booked ?? schedule.total_hours ?? 0,
+                price: service.price ?? 0,
 
                 is_active: !!firstAssignee,
                 employee_id: firstAssignee?.employee_id ?? null,
@@ -1002,6 +1293,7 @@ const filteredLogs = computed<AuditRow[]>(() => {
                 assignees,
 
                 address: schedule.address ?? schedule.patient?.address ?? null,
+                patient_id: schedule.patient?.patient_id ?? null,
                 patient_uuid: schedule.patient?.patient_uuid ?? "",
                 patient_full_name: schedule.patient?.full_name ?? "",
 
@@ -1155,17 +1447,38 @@ function workedMinutes(scan: {
     return Math.max(0, Math.round((end - start) / 60000));
 }
 
-function duration(scan: {
-    in_timestamp: string | null;
-    out_timestamp: string | null;
-}) {
-    if (!scan.in_timestamp) {
-        return "—";
+function attendanceGapMinutes(log: AuditRow, index: number): number | null {
+    const scan = log.online_logs[index];
+
+    if (!scan?.in_timestamp) return null;
+
+    const inTime = new Date(scan.in_timestamp).getTime();
+
+    if (index === 0) {
+        if (!log.scheduled_at) return null;
+
+        return Math.floor(
+            (inTime - new Date(log.scheduled_at).getTime()) / 60000,
+        );
     }
 
-    const minutes = workedMinutes(scan);
+    const previous = log.online_logs[index - 1];
 
-    return formatDuration(minutes / 60) || "0 hrs";
+    if (!previous?.out_timestamp) return null;
+
+    return Math.floor(
+        (inTime - new Date(previous.out_timestamp).getTime()) / 60000,
+    );
+}
+
+function attendanceGapLabel(log: AuditRow, index: number): string | null {
+    const minutes = attendanceGapMinutes(log, index);
+
+    if (minutes === null || minutes <= 0) return null;
+
+    const label = formatDurationShort(minutes / 60);
+
+    return index === 0 ? `Late by ${label}` : `Gap of ${label}`;
 }
 
 function statusPill(status: string) {
@@ -1187,11 +1500,22 @@ function statusPill(status: string) {
     );
 }
 
+function elapsedMinutes(log: AuditRow): number {
+    if (!log.scheduled_at) return log.total_worked_minutes;
+
+    return Math.max(
+        0,
+        Math.round((Date.now() - new Date(log.scheduled_at).getTime()) / 60000),
+    );
+}
+
 function progressPercent(log: AuditRow) {
     const booked = (log.total_hours ?? 0) * 60;
-    if (booked <= 0) return log.total_worked_minutes > 0 ? 100 : 0;
+    const elapsed = elapsedMinutes(log);
 
-    return Math.min(100, Math.round((log.total_worked_minutes / booked) * 100));
+    if (booked <= 0) return elapsed > 0 ? 100 : 0;
+
+    return Math.min(100, Math.round((elapsed / booked) * 100));
 }
 
 function progressWidth(log: AuditRow) {
@@ -1200,8 +1524,23 @@ function progressWidth(log: AuditRow) {
     return `${percent > 0 ? Math.max(percent, 6) : 0}%`;
 }
 
+function scheduledEndTime(log: AuditRow) {
+    if (!log.scheduled_at) return null;
+
+    return (
+        new Date(log.scheduled_at).getTime() +
+        (log.total_hours ?? 0) * 60 * 60000
+    );
+}
+
 function overtimeMinutes(log: AuditRow) {
-    return Math.max(log.total_worked_minutes - log.total_hours * 60, 0);
+    const end = scheduledEndTime(log);
+
+    if (end === null) {
+        return Math.max(log.total_worked_minutes - log.total_hours * 60, 0);
+    }
+
+    return Math.max(0, Math.round((Date.now() - end) / 60000));
 }
 
 function progressFill(log: AuditRow) {
@@ -1223,7 +1562,7 @@ function progressFill(log: AuditRow) {
 
 function progressTextTone(log: AuditRow) {
     if (overtimeMinutes(log) > 0) return "text-amber-600 dark:text-amber-300";
-    if (log.total_worked_minutes <= 0) return "text-muted dark:text-gray-400";
+    if (elapsedMinutes(log) <= 0) return "text-muted dark:text-gray-400";
 
     return log.status?.toLowerCase() === "ongoing"
         ? "text-emerald-600 dark:text-emerald-300"
@@ -1231,10 +1570,12 @@ function progressTextTone(log: AuditRow) {
 }
 
 function progressLabel(log: AuditRow) {
-    if (log.total_worked_minutes <= 0) return "Not started";
+    const elapsed = elapsedMinutes(log);
+
+    if (elapsed <= 0) return "Not started";
 
     return `${progressPercent(log)}% · ${formatDurationShort(
-        log.total_worked_minutes / 60,
+        elapsed / 60,
     )} done`;
 }
 
@@ -1249,11 +1590,47 @@ function remainingLabel(log: AuditRow) {
 }
 
 function remainingMinutes(log: AuditRow) {
-    return Math.max(log.total_hours * 60 - log.total_worked_minutes, 0);
+    const end = scheduledEndTime(log);
+
+    if (end === null) {
+        return Math.max(log.total_hours * 60 - log.total_worked_minutes, 0);
+    }
+
+    return Math.max(0, Math.round((end - Date.now()) / 60000));
+}
+
+function formatMinutesLong(totalMinutes: number): string {
+    if (totalMinutes <= 0) return "0 mins";
+
+    const days = Math.floor(totalMinutes / 1440);
+    const hours = Math.floor((totalMinutes % 1440) / 60);
+    const minutes = totalMinutes % 60;
+
+    const parts: string[] = [];
+
+    if (days) parts.push(`${days} day${days > 1 ? "s" : ""}`);
+    if (hours) parts.push(`${hours} hr${hours > 1 ? "s" : ""}`);
+    if (minutes) parts.push(`${minutes} min${minutes > 1 ? "s" : ""}`);
+
+    if (parts.length <= 1) return parts[0] ?? "0 mins";
+
+    return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
 }
 
 function formatRemaining(log: AuditRow) {
-    return formatDuration(remainingMinutes(log) / 60) || "0 hrs";
+    return formatMinutesLong(remainingMinutes(log));
+}
+
+function totalGapMinutes(log: AuditRow): number {
+    return log.online_logs.reduce((total, _scan, index) => {
+        const gap = attendanceGapMinutes(log, index);
+
+        return total + (gap && gap > 0 ? gap : 0);
+    }, 0);
+}
+
+function formatTotalGap(log: AuditRow): string {
+    return formatMinutesLong(totalGapMinutes(log));
 }
 
 function remainingShort(log: AuditRow) {

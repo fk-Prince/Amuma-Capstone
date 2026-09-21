@@ -52,5 +52,13 @@ class PatientAccessController extends Controller
         if ($request->action === 'cancel_admission') {
             return $this->patientAccessService->cancelAdmission($payload, $request->user());
         }
+
+        if ($request->action === 'request_schedule_review') {
+            return $this->patientAccessService->requestScheduleReview($payload, $request->user());
+        }
+
+        if ($request->action === 'request_invoice_deduction') {
+            return $this->patientAccessService->requestInvoiceDeduction($payload, $request->user());
+        }
     }
 }

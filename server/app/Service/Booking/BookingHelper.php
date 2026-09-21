@@ -6,6 +6,7 @@ use App\Repository\BranchContractRepository;
 use App\Repository\ServiceRepository;
 use App\Service\External\SupabaseService;
 use Exception;
+use Illuminate\Http\UploadedFile;
 
 class BookingHelper
 {
@@ -190,6 +191,24 @@ class BookingHelper
         return $assessment;
     }
 
+    public function resolvePatient(mixed $patient): array
+    {
+        $patient = is_array($patient) ? $patient : [];
+        $avatar = $patient['avatar'] ?? null;
+
+        if ($avatar instanceof UploadedFile) {
+            try {
+                $patient['avatar'] = SupabaseService::store($avatar)['url'] ?? null;
+            } catch (\Throwable $e) {
+                throw new Exception('We couldn\'t upload the patient photo. Please try again or use a different image.', 422);
+            }
+        } elseif (!is_string($avatar) || !filter_var($avatar, FILTER_VALIDATE_URL)) {
+            unset($patient['avatar']);
+        }
+
+        return $patient;
+    }
+
     public function resolveDiagnoses(mixed $diagnoses): array
     {
         if (!is_array($diagnoses)) {
@@ -217,7 +236,7 @@ class BookingHelper
 
             $diagnosis['diagnosis_file'] = $uploadResult['url'];
         } catch (\Throwable $e) {
-            throw new Exception('We couldn\'t upload your diagnosis file. Please try again or use a different file.', 422, $e);
+            throw new Exception('We couldn\'t upload your diagnosis file. Please try again or use a different file.', 422);
         }
 
         return $diagnosis;

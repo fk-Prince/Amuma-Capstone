@@ -1,6 +1,6 @@
 <template>
     <div
-        class="w-full rounded-t-2xl border border-muted-light/70 bg-white font-sans shadow-sm shadow-secondary/[0.03] dark:bg-secondary dark:border-white/10"
+        class="w-full rounded-t-lg border border-muted-light/70 bg-white font-sans shadow-sm shadow-secondary/[0.03] dark:bg-secondary dark:border-white/10"
     >
         <div class="flex flex-col gap-3 p-4 sm:p-5">
             <div class="flex items-center gap-3">
@@ -32,7 +32,9 @@
                             </span>
                         </span>
 
-                        <span class="mt-0.5 block truncate text-xs text-muted dark:text-gray-400">
+                        <span
+                            class="mt-0.5 block truncate text-xs text-muted dark:text-gray-400"
+                        >
                             Refine appointments by date, status or service type
                         </span>
                     </span>
@@ -61,6 +63,27 @@
                             <component :is="option.icon" class="h-4 w-4" />
                         </button>
                     </div>
+
+                    <button
+                        type="button"
+                        class="flex h-9 w-9 items-center justify-center rounded-lg border border-muted-light text-muted transition-colors hover:bg-primary-50 hover:text-primary-600 dark:border-white/10 dark:text-gray-400 dark:hover:bg-primary-500/10 dark:hover:text-primary-300"
+                        :aria-pressed="overviewVisible"
+                        :aria-label="
+                            overviewVisible
+                                ? 'Hide schedule overview'
+                                : 'Show schedule overview'
+                        "
+                        @click="emit('toggleOverview')"
+                    >
+                        <component
+                            :is="
+                                overviewVisible
+                                    ? PanelRightClose
+                                    : PanelRightOpen
+                            "
+                            class="h-4 w-4"
+                        />
+                    </button>
 
                     <button
                         type="button"
@@ -157,7 +180,9 @@
                                 @change="emitChange(true)"
                             />
 
-                            <span class="shrink-0 text-xs text-muted sm:px-1 dark:text-gray-400">
+                            <span
+                                class="shrink-0 text-xs text-muted sm:px-1 dark:text-gray-400"
+                            >
                                 to
                             </span>
 
@@ -270,6 +295,8 @@ import {
     LayoutGrid,
     GanttChart,
     SlidersHorizontal,
+    PanelRightClose,
+    PanelRightOpen,
 } from "lucide-vue-next";
 
 export type ScheduleView = "timeline" | "cards";
@@ -288,14 +315,17 @@ export interface ScheduleFilters {
 const props = withDefaults(
     defineProps<{
         defaultExpanded?: boolean;
+        overviewVisible?: boolean;
     }>(),
     {
         defaultExpanded: false,
+        overviewVisible: true,
     },
 );
 
 const emit = defineEmits<{
     (e: "change", filters: ScheduleFilters): void;
+    (e: "toggleOverview"): void;
 }>();
 
 const route = useRoute();

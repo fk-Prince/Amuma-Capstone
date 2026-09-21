@@ -9,7 +9,7 @@
         />
 
         <div
-            class="pointer-events-none absolute inset-0 overflow-hidden print:hidden"
+            class="pointer-events-none absolute inset-0 overflow-hidden dark:hidden print:hidden"
             aria-hidden="true"
         >
             <div
@@ -45,7 +45,7 @@
             </div>
 
             <main
-                class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative"
+                class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative lg:-mt-1 lg:pt-1"
             >
                 <div class="relative min-h-full flex flex-col">
                     <slot />

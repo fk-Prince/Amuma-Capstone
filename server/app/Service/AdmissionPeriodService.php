@@ -52,7 +52,8 @@ class AdmissionPeriodService
     {
         return $admission->periods()
             ->whereNotIn('status', AdmissionPeriod::CLOSED_STATUSES)
-            ->where('admission_period_id', '>', $current->admission_period_id)
+            ->where('admission_period_id', '!=', $current->admission_period_id)
+            ->where('start_date', '>=', $current->end_date)
             ->with('invoiceAdmissionLines.invoice', 'branchContract')
             ->orderBy('admission_period_id')
             ->get();
@@ -81,13 +82,186 @@ class AdmissionPeriodService
     }
 
 
-    public function carryForward(mixed $futurePeriods, BranchContract $newContract)
+    public function moveBilling(AdmissionPeriod $period, AdmissionPeriod $next, float $oldPrice, float $oldConsumed, float $newRemaining, BranchContract $newContract, array &$upgrades): void
+    {
+        $lines = $period->invoiceAdmissionLines->values();
+        $before = $lines->map(fn($line) => (float) $line->price);
+        $total = $before->sum();
+
+        if ($lines->isEmpty() || $total <= 0) {
+            return;
+        }
+
+        $this->repriceConsumed($period, $oldPrice, $oldConsumed);
+
+        $kept = $lines
+            ->map(fn($line, $index) => round($before[$index] - (float) $line->price, 2))
+            ->all();
+
+        $deltas = $this->allocateDelta($kept, round($newRemaining - array_sum($kept), 2));
+
+        $perInvoice = [];
+
+        foreach ($lines as $index => $line) {
+            $entry = $perInvoice[$line->invoice_id]
+                ?? ['invoice' => $line->invoice, 'kept' => 0.0, 'delta' => 0.0, 'description' => $line->description];
+
+            $perInvoice[$line->invoice_id] = [
+                'invoice' => $entry['invoice'],
+                'description' => $entry['description'],
+                'kept' => round($entry['kept'] + $kept[$index], 2),
+                'delta' => round($entry['delta'] + $deltas[$index], 2),
+            ];
+        }
+
+        foreach ($perInvoice as $entry) {
+            $invoice = $entry['invoice'];
+            $delta = $entry['delta'];
+            $description = $this->changeDescription($period->branchContract, $newContract);
+            $separate = $delta >= 0.01 && $this->settled($invoice);
+
+            if ($separate) {
+                $this->addUpgrade($upgrades, $invoice, $next, $delta, $description);
+                $delta = 0.0;
+            }
+
+            if (abs($delta) >= 0.01) {
+                InvoiceAdjustment::create([
+                    'invoice_id' => $invoice->invoice_id,
+                    'type'       => 'correction',
+                    'amount'     => $delta,
+                    'reason'     => $delta > 0
+                        ? 'Accommodation upgraded mid-period. Difference for the remaining days.'
+                        : 'Accommodation downgraded mid-period. Credit for the remaining days.',
+                ]);
+            }
+
+            $price = round($entry['kept'] + $delta, 2);
+
+            if ($price > 0) {
+                $invoice->invoiceAdmissionLines()->create([
+                    'admission_period_id' => $next->admission_period_id,
+                    'price'               => $price,
+                    'description'         => $separate ? $entry['description'] : $description,
+                ]);
+            }
+
+            $invoice->refresh();
+            $invoice->syncStatus();
+        }
+    }
+
+    private function settled(Invoice $invoice): bool
+    {
+        $invoice->refresh();
+
+        return $invoice->balance_due <= 0 && (float) $invoice->net_paid_amount > 0;
+    }
+
+    private function addUpgrade(array &$upgrades, Invoice $origin, AdmissionPeriod $period, float $price, string $description): void
+    {
+        $upgrades[$origin->invoice_id]['invoice'] = $origin;
+        $upgrades[$origin->invoice_id]['lines'][] = [
+            'period' => $period,
+            'price' => $price,
+            'description' => $description,
+        ];
+    }
+
+    public function issueUpgrades(array $upgrades): void
+    {
+        foreach ($upgrades as $entry) {
+            $lines = collect($entry['lines'])->filter(fn($line) => $line['price'] >= 0.01);
+
+            if ($lines->isEmpty()) {
+                continue;
+            }
+
+            $invoice = Invoice::create([
+                'branch_id'    => $entry['invoice']->branch_id,
+                'total_amount' => round($lines->sum('price'), 2),
+                'status'       => Invoice::STATUS_PENDING,
+            ]);
+
+            foreach ($lines as $line) {
+                $invoice->invoiceAdmissionLines()->create([
+                    'admission_period_id' => $line['period']->admission_period_id,
+                    'price'               => round($line['price'], 2),
+                    'description'         => $line['description'],
+                ]);
+            }
+        }
+    }
+
+    private function allocateDelta(array $amounts, float $delta): array
+    {
+        $deltas = array_fill(0, count($amounts), 0.0);
+
+        if (abs($delta) < 0.01) {
+            return $deltas;
+        }
+
+        if ($delta > 0) {
+            $total = array_sum($amounts);
+            $last = count($amounts) - 1;
+            $assigned = 0.0;
+
+            foreach ($amounts as $index => $amount) {
+                $deltas[$index] = $index === $last
+                    ? round($delta - $assigned, 2)
+                    : round($total > 0 ? $amount / $total * $delta : $delta / count($amounts), 2);
+
+                $assigned = round($assigned + $deltas[$index], 2);
+            }
+
+            return $deltas;
+        }
+
+        $remaining = $delta;
+
+        foreach (array_reverse(array_keys($amounts)) as $index) {
+            $take = max($remaining, -$amounts[$index]);
+            $deltas[$index] = round($take, 2);
+            $remaining = round($remaining - $take, 2);
+
+            if ($remaining >= 0) {
+                break;
+            }
+        }
+
+        return $deltas;
+    }
+
+    private function direction(?BranchContract $from, BranchContract $to): string
+    {
+        if (!$from || (float) $to->price === (float) $from->price) {
+            return 'CHANGE';
+        }
+
+        return (float) $to->price > (float) $from->price ? 'UPGRADE' : 'DOWNGRADE';
+    }
+
+    private function changeDescription(?BranchContract $from, BranchContract $to): string
+    {
+        return collect([
+            'ACCOMMODATION ' . $this->direction($from, $to),
+            $from ? "{$from->accommodation_type} to {$to->accommodation_type}" : $to->accommodation_type,
+            $to->billing_cycle,
+        ])->implode(' - ');
+    }
+
+    private function carriedDescription(AdmissionPeriod $period, ?BranchContract $from, BranchContract $to, ?string $current): ?string
+    {
+        if (!$from || $from->accommodation_type === $to->accommodation_type) {
+            return $current;
+        }
+
+        return $this->changeDescription($from, $to);
+    }
+
+    public function carryForward(mixed $futurePeriods, BranchContract $newContract, array &$upgrades): void
     {
         foreach ($futurePeriods as $future) {
-            // A future period can carry a different billing cycle than the one
-            // being changed now — an extended stay booked ahead on a yearly
-            // plan, say, sitting past a monthly period. Reprice it on its own
-            // cycle's equivalent contract, not the one just chosen for today.
             $futureCycle = $future->branchContract?->billing_cycle;
 
             $contract = $futureCycle === $newContract->billing_cycle
@@ -99,30 +273,43 @@ class AdmissionPeriodService
                 ->first();
 
             if (!$contract) {
-                // No equivalent plan exists on this period's own cycle. Leave
-                // it exactly as booked rather than reprice it under the wrong
-                // one.
                 continue;
             }
 
             $newPrice = (float) $contract->price;
+            $oldContract = $future->branchContract;
 
             $future->update([
                 'branch_contract_id' => $contract->branch_contract_id,
             ]);
 
-            $deltaByInvoice = $future->invoiceAdmissionLines
-                ->groupBy('invoice_id')
-                ->map(fn($lines) => round(
-                    $lines->count() * $newPrice - (float) $lines->sum('price'),
-                    2
-                ));
+            $lines = $future->invoiceAdmissionLines->values();
+            $prices = $lines->map(fn($line) => (float) $line->price)->all();
+            $deltas = $this->allocateDelta($prices, round($newPrice - array_sum($prices), 2));
 
-            foreach ($future->invoiceAdmissionLines as $line) {
-                $line->update(['price' => $newPrice]);
+            $groups = [];
+
+            foreach ($lines as $index => $line) {
+                $groups[$line->invoice_id][] = [$line, $deltas[$index]];
             }
 
-            foreach ($deltaByInvoice as $invoiceId => $delta) {
+            foreach ($groups as $invoiceId => $entries) {
+                $delta = round(array_sum(array_column($entries, 1)), 2);
+                $invoice = $invoiceId ? Invoice::find($invoiceId) : null;
+
+                if ($invoice && $delta >= 0.01 && $this->settled($invoice)) {
+                    $this->addUpgrade($upgrades, $invoice, $future, $delta, $this->changeDescription($oldContract, $contract));
+
+                    continue;
+                }
+
+                foreach ($entries as [$line, $lineDelta]) {
+                    $line->update([
+                        'price' => round((float) $line->price + $lineDelta, 2),
+                        'description' => $this->carriedDescription($future, $oldContract, $contract, $line->description),
+                    ]);
+                }
+
                 if (!$invoiceId || abs($delta) < 0.01) {
                     continue;
                 }
@@ -138,9 +325,34 @@ class AdmissionPeriodService
                     'reason'     => $reason,
                 ]);
 
-                Invoice::find($invoiceId)?->syncStatus();
+                $invoice->syncStatus();
             }
         }
+    }
+
+    public function sameAccommodation(AdmissionPeriod $period, BranchContract $chosen): BranchContract
+    {
+        $current = $period->branchContract;
+
+        if (!$current || $current->accommodation_type === $chosen->accommodation_type) {
+            return $chosen;
+        }
+
+        $contract = BranchContract::where('branch_id', $current->branch_id)
+            ->where('category', $current->category)
+            ->where('accommodation_type', $current->accommodation_type)
+            ->where('billing_cycle', $chosen->billing_cycle)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$contract) {
+            throw new Exception(
+                "No active {$current->accommodation_type} {$chosen->billing_cycle} contract exists for this branch.",
+                422
+            );
+        }
+
+        return $contract;
     }
 
     public function resolveContract(AdmissionPeriod $period,  Room $room,   array $payload)

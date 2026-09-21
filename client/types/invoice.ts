@@ -120,6 +120,7 @@ export interface InvoiceServiceLine {
     schedule_services_id: number;
     price: number;
     note: string | null;
+    description?: string | null;
     service_name: string | null;
     type?: string | null;
     hours_booked?: number | null;
@@ -131,6 +132,7 @@ export interface InvoiceAccommodationLine {
     invoice_admission_id: number;
     branch_contract_id: number;
     price: number;
+    description?: string | null;
     patient_admission_id: number;
     patient_name: string;
 }
@@ -148,6 +150,7 @@ export interface InvoiceRefund {
     refund_method: string | null;
     status: RefundStatus;
     declined_reason: string | null;
+    reason?: string | null;
     masked_account_detail: string | null;
     created_at: string | null;
 }
@@ -265,6 +268,11 @@ export interface DischargeCalculation {
     invoice_total: number;
     invoice_code: string | null;
     retained_half: number;
+    total_paid?: number;
+    total_refund_amount?: number;
+    period_code?: string | null;
+    invoice_codes?: string[];
+    future_periods?: DischargeFuturePeriod[];
     policy: string;
     policy_title: string;
     policy_description: string;
@@ -279,10 +287,25 @@ export interface DischargeCalculation {
     outstanding?: DischargeOutstanding | null;
 }
 
+export interface DischargeFuturePeriod {
+    admission_period_id: number;
+    period_code: string | null;
+    billing_cycle: string | null;
+    accommodation_type: string | null;
+    start_date: string | null;
+    end_date: string | null;
+    price: number;
+    paid: number;
+    refundable: number;
+    invoice_codes: string[];
+    status: string;
+}
+
 export interface DischargeOutstanding {
     total_balance: number;
     balance_excluding_future: number;
     accommodation_balance: number;
+    admission_balance?: number;
     service_balance: number;
     adl_balance: number;
     other_balance: number;
@@ -299,9 +322,12 @@ export interface DischargeOutstanding {
 export interface InvoiceDetail {
     invoice_id: number;
     invoice_code: string;
+    description?: string | null;
     schedule_code?: string | null;
     total: number;
     adjusted_total?: number;
+    written_off_amount?: number;
+    write_off_reason?: string | null;
     amount_paid: number;
     refunded_amount: number;
     refund_requested_amount: number;
@@ -333,6 +359,7 @@ export interface PatientInvoiceItem {
     refundable_amount?: number;
     has_pending_refund?: boolean;
     balance_due: number;
+    written_off_amount?: number;
     status: string;
     refund_status: RefundSummaryStatus;
     created_at: string | null;
@@ -364,6 +391,7 @@ export interface PatientInvoiceSummary {
     total_refund_requested: number;
     total_refundable: number;
     total_balance: number;
+    total_written_off?: number | string;
     refund_status: RefundSummaryStatus;
     status: string;
     invoice_count: number;
@@ -434,6 +462,7 @@ export interface PatientSummaryRow {
     total_refund_requested: number | string;
     total_refundable: number | string;
     total_balance: number | string;
+    total_written_off?: number | string;
     status: string;
     invoice_count: number;
     latest_invoice?: {

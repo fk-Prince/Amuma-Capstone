@@ -1,33 +1,39 @@
 <template>
-    <div
-        class="h-full w-full mx-auto bg-slate-50 dark:bg-secondary lg:space-y-5"
-    >
-        <div v-if="!addEmployeeTab" class="h-full flex flex-col min-h-0 p-4">
+    <div class="h-full w-full mx-auto lg:space-y-5 rounded-lg">
+        <div v-if="!addEmployeeTab" class="h-full flex flex-col min-h-0">
             <EmployeeDashboard
                 :total-employee="totalEmployee"
                 :on-duty="onDuty"
                 :on-leave="onLeave"
             />
 
-            <ClientOnly>
-                <EmployeeSearch
-                    @addEmployee="openAddEmployee"
-                    v-model="searchData"
-                    v-model:activeTab="activeTab"
-                />
-            </ClientOnly>
+            <div
+                class="overflow-hidden rounded-lg mt-2 border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+            >
+                <div
+                    class="border-b border-slate-100 py-5 px-3 dark:border-white/10"
+                >
+                    <ClientOnly>
+                        <EmployeeSearch
+                            @addEmployee="openAddEmployee"
+                            v-model="searchData"
+                            v-model:activeTab="activeTab"
+                        />
+                    </ClientOnly>
+                </div>
 
-            <div class="flex-1 min-h-0 mt-2">
-                <EmployeeList
-                    class="h-full"
-                    :employees="employees"
-                    :loading="loading"
-                    :current-page="currentPage"
-                    :total-pages="totalPages"
-                    :total-items="totalEmployee"
-                    @select="updateEmployee"
-                    @page-change="handlePageChange"
-                />
+                <div class="flex-1 min-h-0">
+                    <EmployeeList
+                        class="h-full"
+                        :employees="employees"
+                        :loading="loading"
+                        :current-page="currentPage"
+                        :total-pages="totalPages"
+                        :total-items="totalEmployee"
+                        @select="updateEmployee"
+                        @page-change="handlePageChange"
+                    />
+                </div>
             </div>
         </div>
 

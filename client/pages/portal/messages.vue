@@ -257,7 +257,7 @@ onBeforeUnmount(() => {
 
 <template>
     <div
-        class="flex h-screen-header min-h-0 w-full flex-col bg-slate-50/60 p-0 dark:bg-surface lg:p-5"
+        class="flex h-screen-header min-h-0 w-full flex-col dark:bg-surface bg-light"
     >
         <div
             v-if="loadingList"

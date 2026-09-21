@@ -1,7 +1,9 @@
 <template>
-    <div class="w-full mx-auto p-4 md:p-6 space-y-6">
+    <div class="w-full mx-auto px-1 py-2 space-y-3">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Branch Settings</h1>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
+                Branch Settings
+            </h1>
 
             <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                 Manage your branch information, agency details, images, and
@@ -85,7 +87,8 @@
 
                     <BranchRenewalTab
                         v-else-if="
-                            activeTab === 'renewal' && branchStore.activeBranch
+                            activeTab === 'renewal' &&
+                            branchStore.activeBranch?.uuid
                         "
                         :uuid="branchStore.activeBranch.uuid"
                     />
@@ -97,7 +100,13 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { Building2, Landmark, Image, Settings, RefreshCw } from "lucide-vue-next";
+import {
+    Building2,
+    Landmark,
+    Image,
+    Settings,
+    RefreshCw,
+} from "lucide-vue-next";
 
 import { useBranchStore } from "~/stores/branch";
 

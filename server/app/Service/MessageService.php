@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Events\MessageSent;
 use App\Models\Branch;
+use App\Models\CaregiverFacilityShift;
 use App\Models\Client;
 use App\Models\Conversation;
 use App\Models\Employee;
@@ -11,6 +12,7 @@ use App\Models\EmployeeBranch;
 use App\Models\Message;
 use App\Models\Patient;
 use App\Models\PatientAccess;
+use App\Models\PatientAdmission;
 use App\Models\ScheduleAssigned;
 use App\Models\User;
 use App\Service\External\SupabaseService;
@@ -21,6 +23,12 @@ use Illuminate\Support\Facades\DB;
 
 class MessageService
 {
+    private const NOT_MESSAGEABLE_BY_FAMILY = [
+        'administrator',
+        'branch_owner',
+        'accounting',
+    ];
+
     private const UNRESTRICTED_ROLES = [
         'admission',
         'administrator',
@@ -100,12 +108,16 @@ class MessageService
 
         $branchId = $access->patient->branch_id;
 
-        $worksHere = EmployeeBranch::where('branch_id', $branchId)
+        $role = EmployeeBranch::where('branch_id', $branchId)
             ->where('employee_id', $payload['employee_id'])
-            ->exists();
+            ->value('role_name');
 
-        if (!$worksHere) {
+        if (!$role) {
             throw new Exception('That staff member is not part of this branch.', 403);
+        }
+
+        if (in_array($role, self::NOT_MESSAGEABLE_BY_FAMILY, true)) {
+            throw new Exception('This staff member can\'t be messaged from the portal.', 403);
         }
 
         $conversation = Conversation::firstOrCreate(
@@ -133,9 +145,20 @@ class MessageService
                 fn($schedule) => $schedule->where('patient_id', $patient->patient_id)
             )
             ->pluck('employee_id')
+            ->merge(
+                CaregiverFacilityShift::where('is_active', true)
+                    ->whereHas(
+                        'admission',
+                        fn($admission) => $admission
+                            ->where('patient_id', $patient->patient_id)
+                            ->where('status', PatientAdmission::STATUS_ADMITTED)
+                    )
+                    ->pluck('caregiver_id')
+            )
             ->unique();
 
         return EmployeeBranch::where('branch_id', $patient->branch_id)
+            ->whereNotIn('role_name', self::NOT_MESSAGEABLE_BY_FAMILY)
             ->whereHas(
                 'employees',
                 fn($employee) => $employee->where('status', '!=', Employee::STATUS_INACTIVE)

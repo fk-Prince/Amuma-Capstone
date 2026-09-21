@@ -15,16 +15,21 @@ import {
 import type { PatientRetrieve } from "~/types/patient";
 import { formatDate } from "~/utils/time";
 import ActionButton from "~/components/ui/ActionButton.vue";
+import PatientAvatar from "~/components/ui/PatientAvatar.vue";
+import { Modules } from "~/types/module";
 
-const { hasRole } = usePermissions();
+const { canUpdate, canExport } = usePermissions();
 
-const canManagePatient = computed(() => hasRole("admission"));
+const allowed = {
+    update: computed(() => canUpdate(Modules.Patients)),
+    export: computed(() => canExport(Modules.Patients)),
+};
 
 const props = defineProps<{
     patient: PatientRetrieve;
 }>();
 
-const emit = defineEmits<{ print: [] }>();
+const emit = defineEmits<{ print: []; edit: [] }>();
 
 function fullName(
     firstName?: string | null,
@@ -53,10 +58,20 @@ const facts = computed(() => [
 ]);
 
 const actions = [
-    { label: "Share", icon: Share2 },
-    { label: "Send", icon: Send },
-    { label: "Print", icon: Printer, onClick: () => emit("print") },
-    { label: "Edit", icon: Pencil },
+    { label: "Share", icon: Share2, permission: "export" },
+    { label: "Send", icon: Send, permission: "export" },
+    {
+        label: "Print",
+        icon: Printer,
+        permission: "export",
+        onClick: () => emit("print"),
+    },
+    {
+        label: "Edit",
+        icon: Pencil,
+        permission: "update",
+        onClick: () => emit("edit"),
+    },
 ] as const;
 </script>
 
@@ -66,11 +81,12 @@ const actions = [
         class="border-b border-gray-100 px-4 py-4 sm:px-5 sm:py-5 dark:border-white/10"
     >
         <div class="flex items-start gap-3 sm:gap-4">
-            <div
-                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-base font-semibold text-white sm:h-14 sm:w-14 sm:text-xl"
-            >
-                {{ patient.first_name.charAt(0) }}
-            </div>
+            <PatientAvatar
+                :src="patient.avatar"
+                :name="patient.full_name"
+                size-class="h-11 w-11 text-base sm:h-14 sm:w-14 sm:text-xl"
+                rounded-class="rounded-xl"
+            />
 
             <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
@@ -137,9 +153,11 @@ const actions = [
                 :key="action.label"
                 variant="outline"
                 extra-class="shrink-0 border-transparent dark:border-transparent px-3 py-1.5 text-gray-500 hover:bg-primary-50 hover:text-primary dark:text-gray-400 dark:hover:bg-primary-500/10"
-                :disabled="!canManagePatient"
+                :disabled="!allowed[action.permission].value"
                 :tooltip="
-                    canManagePatient ? '' : 'Only admission staff can do this.'
+                    allowed[action.permission].value
+                        ? ''
+                        : `You don't have permission to ${action.permission} patient records.`
                 "
                 @click="action.onClick?.()"
             >

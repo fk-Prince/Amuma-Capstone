@@ -15,6 +15,7 @@ import {
 } from "lucide-vue-next";
 import type { PatientRetrieve } from "~/types/patient";
 import { formatDate } from "~/utils/time";
+import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 
 const props = defineProps<{
     patient: PatientRetrieve;
@@ -77,49 +78,77 @@ function statusClasses(status?: string) {
 <template>
     <div class="space-y-6">
         <section class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary">
-            <div class="flex items-start gap-4">
-                <div
-                    class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary text-xl font-semibold text-white"
-                >
-                    {{ patient.first_name.charAt(0) }}
+            <div class="flex flex-wrap items-start gap-x-12 gap-y-5">
+                <div class="flex items-start gap-4">
+                    <PatientAvatar
+                        :src="patient.avatar"
+                        :name="patient.full_name"
+                        size-class="h-14 w-14 text-xl"
+                        rounded-class="rounded-xl"
+                    />
+
+                    <div>
+                        <p
+                            class="text-xs font-medium uppercase tracking-wide text-primary"
+                        >
+                            Patient Overview
+                        </p>
+
+                        <h2
+                            class="mt-1 text-xl font-semibold text-secondary dark:text-white"
+                        >
+                            {{ patient.full_name }}
+                        </h2>
+
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <span
+                                class="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary dark:bg-primary-500/10"
+                            >
+                                {{ patient.gender }}
+                            </span>
+
+                            <span
+                                v-if="patient.latest_admission"
+                                class="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary dark:bg-primary-500/10"
+                            >
+                                {{
+                                    patient.latest_admission?.status.toLowerCase() ===
+                                    "admitted"
+                                        ? "Currently Admitted"
+                                        : patient.latest_admission?.status
+                                }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
-                <div>
-                    <p
-                        class="text-xs font-medium uppercase tracking-wide text-primary"
-                    >
-                        Patient Overview
-                    </p>
+                <div class="flex flex-wrap items-center gap-x-12 gap-y-4 sm:pt-6">
+                    <div class="flex items-center gap-3">
+                        <Pill class="h-4 w-4 shrink-0 text-primary" />
+                        <div>
+                            <p class="text-xs text-muted dark:text-gray-400">
+                                Recorded Medications
+                            </p>
+                            <p
+                                class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
+                            >
+                                {{ patient.medications_count ?? 0 }}
+                            </p>
+                        </div>
+                    </div>
 
-                    <h2
-                        class="mt-1 text-xl font-semibold text-secondary dark:text-white"
-                    >
-                        {{ patient.full_name }}
-                    </h2>
-
-                    <div class="mt-3 flex flex-wrap gap-2">
-                        <span
-                            class="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary dark:bg-primary-500/10"
-                        >
-                            {{ patient.gender }}
-                        </span>
-
-                        <span
-                            v-if="patient.latest_admission"
-                            class="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary dark:bg-primary-500/10"
-                        >
-                            {{
-                                patient.latest_admission?.status.toLowerCase() ===
-                                "admitted"
-                                    ? "Currently Admitted"
-                                    : patient.latest_admission?.status
-                            }}
-                        </span>
-                        <!-- <span
-                            class="rounded-full bg-muted-light px-3 py-1 text-xs font-medium text-secondary dark:bg-white/10 dark:text-white"
-                        >
-                            {{ patient.blood_type || "N/A" }}
-                        </span> -->
+                    <div class="flex items-center gap-3">
+                        <HeartPulse class="h-4 w-4 shrink-0 text-primary" />
+                        <div>
+                            <p class="text-xs text-muted dark:text-gray-400">
+                                Recorded Vital Signs
+                            </p>
+                            <p
+                                class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
+                            >
+                                {{ patient.vitals_count ?? 0 }}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -171,7 +200,7 @@ function statusClasses(status?: string) {
             </div>
 
             <div
-                class="mt-6 grid gap-6 border-t border-muted-light pt-6 sm:grid-cols-4 dark:border-white/10"
+                class="mt-6 grid gap-6 border-t border-muted-light pt-6 sm:grid-cols-3 dark:border-white/10"
             >
                 <div class="flex items-center gap-3">
                     <Ruler class="h-4 w-4 shrink-0 text-primary" />
@@ -197,34 +226,6 @@ function statusClasses(status?: string) {
                             class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
                         >
                             {{ patient.weight ? patient.weight + " kg" : "N/A" }}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-3">
-                    <Pill class="h-4 w-4 shrink-0 text-primary" />
-                    <div>
-                        <p class="text-xs text-muted dark:text-gray-400">
-                            Recorded Medications
-                        </p>
-                        <p
-                            class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
-                        >
-                            {{ patient.medications_count ?? 0 }}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-3">
-                    <HeartPulse class="h-4 w-4 shrink-0 text-primary" />
-                    <div>
-                        <p class="text-xs text-muted dark:text-gray-400">
-                            Recorded Vital Signs
-                        </p>
-                        <p
-                            class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
-                        >
-                            {{ patient.vitals_count ?? 0 }}
                         </p>
                     </div>
                 </div>

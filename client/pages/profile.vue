@@ -2,8 +2,8 @@
     <div
         :class="
             embedded
-                ? 'w-full'
-                : 'min-h-screen bg-slate-50/70 pt-[124px] dark:bg-surface'
+                ? 'w-full bg-white rounded-lg'
+                : 'min-h-screen bg-white pt-[124px] rounded-lg dark:bg-surface'
         "
     >
         <div
@@ -16,11 +16,17 @@
             <div
                 class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between"
             >
-                <h1
-                    class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white"
-                >
-                    My Profile
-                </h1>
+                <div>
+                    <h1
+                        class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white"
+                    >
+                        My Profile
+                    </h1>
+
+                    <p class="mt-1 text-sm text-muted dark:text-gray-400">
+                        Manage your personal details and account settings.
+                    </p>
+                </div>
 
                 <div class="flex items-center gap-2">
                     <button
@@ -48,26 +54,6 @@
             </div>
 
             <div class="lg:flex lg:items-start lg:gap-6">
-                <!-- <div
-                    class="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-secondary lg:w-56 lg:shrink-0 lg:flex-col lg:gap-0.5 lg:rounded-2xl lg:p-2"
-                >
-                    <button
-                        v-for="tab in tabs"
-                        :key="tab.value"
-                        type="button"
-                        class="flex items-center gap-2.5 rounded-lg px-4 py-1.5 text-sm font-medium transition lg:w-full lg:px-3 lg:py-2.5"
-                        :class="
-                            activeTab === tab.value
-                                ? 'bg-primary text-white shadow-sm'
-                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200'
-                        "
-                        @click="activeTab = tab.value"
-                    >
-                        <component :is="tab.icon" class="h-4 w-4 shrink-0" />
-                        {{ tab.label }}
-                    </button>
-                </div> -->
-
                 <div class="mt-5 min-w-0 flex-1 lg:mt-0">
                     <div v-if="loading" class="space-y-10 py-10">
                         <div
@@ -123,7 +109,7 @@
                         </div>
                         <div v-show="activeTab === 'profile'" class="space-y-5">
                             <section
-                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                                class="grid gap-6 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
                             >
                                 <div>
                                     <h2
@@ -182,7 +168,7 @@
 
                             <!-- Personal info -->
                             <section
-                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                                class="grid gap-6 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
                             >
                                 <div>
                                     <h2
@@ -277,7 +263,7 @@
                             <!-- Address -->
                             <section
                                 v-if="canEditLocation"
-                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                                class="grid gap-6 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
                             >
                                 <div>
                                     <h2
@@ -385,9 +371,8 @@
                                 </div>
                             </section>
 
-                            <!-- Password -->
                             <section
-                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                                class="grid gap-6 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
                             >
                                 <div>
                                     <h2
@@ -462,9 +447,8 @@
                                 </div>
                             </section>
 
-                            <!-- Account -->
                             <section
-                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                                class="grid gap-6 border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
                             >
                                 <div>
                                     <h2
@@ -517,7 +501,6 @@
                             </section>
                         </div>
 
-                        <!-- NOTIFICATIONS -->
                         <div
                             v-show="activeTab === 'notifications'"
                             class="space-y-5"
@@ -526,7 +509,7 @@
                                 class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <div
-                                    class="flex w-fit items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 dark:border-white/10 dark:bg-secondary"
+                                    class="rounded-2xl border border-slate-200 flex w-fit items-center gap-1 bg-white p-1 dark:border-white/10 dark:bg-secondary"
                                 >
                                     <button
                                         v-for="nTab in notificationFilters"
@@ -538,7 +521,9 @@
                                                 ? 'bg-primary text-white shadow-sm'
                                                 : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200'
                                         "
-                                        @click="setNotificationFilter(nTab.value)"
+                                        @click="
+                                            setNotificationFilter(nTab.value)
+                                        "
                                     >
                                         {{ nTab.label }}
 
@@ -576,9 +561,8 @@
                             </div>
 
                             <section
-                                class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
+                                class="bg-white p-4 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
                             >
-                                <!-- Loading -->
                                 <div
                                     v-if="notificationsLoading"
                                     class="space-y-3"
@@ -590,7 +574,6 @@
                                     />
                                 </div>
 
-                                <!-- Empty -->
                                 <div
                                     v-else-if="!notifications.length"
                                     class="flex flex-col items-center justify-center py-20 text-center"
@@ -622,7 +605,6 @@
                                     </p>
                                 </div>
 
-                                <!-- List -->
                                 <ul v-else class="space-y-2.5">
                                     <li
                                         v-for="item in notifications"
@@ -630,17 +612,11 @@
                                         class="group relative flex cursor-pointer items-start gap-4 overflow-hidden rounded-xl border p-4 transition hover:-translate-y-px hover:border-primary-200 hover:shadow-md dark:hover:border-primary-500/40"
                                         :class="
                                             item.unread
-                                                ? 'border-primary-100 bg-primary-50/40 dark:border-primary-500/25 dark:bg-primary-500/5'
+                                                ? ' bg-primary-50/40 border-primary dark:border-primary-500/25 dark:bg-primary-500/5'
                                                 : 'border-slate-200 dark:border-white/10'
                                         "
                                         @click="openNotification(item)"
                                     >
-                                        <span
-                                            v-if="item.unread"
-                                            class="absolute inset-y-0 left-0 w-1 bg-primary"
-                                            aria-hidden="true"
-                                        />
-
                                         <span
                                             class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
                                             :class="
@@ -728,71 +704,6 @@
                                     </button>
                                 </div>
                             </section>
-
-                            <!-- Email preferences: not wired up to anything
-                                 real yet, kept for later.
-                            <section
-                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
-                            >
-                                <div>
-                                    <h2
-                                        class="text-sm font-semibold text-slate-900 dark:text-white"
-                                    >
-                                        Email preferences
-                                    </h2>
-                                    <p
-                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
-                                    >
-                                        What we send to your inbox.
-                                    </p>
-                                </div>
-
-                                <div class="space-y-5">
-                                    <div
-                                        v-for="pref in preferences"
-                                        :key="pref.key"
-                                        class="flex items-start gap-3"
-                                    >
-                                        <button
-                                            type="button"
-                                            role="switch"
-                                            :aria-checked="pref.enabled"
-                                            class="relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors"
-                                            :class="
-                                                pref.enabled
-                                                    ? 'bg-primary'
-                                                    : 'bg-slate-200 dark:bg-white/10'
-                                            "
-                                            @click="
-                                                pref.enabled = !pref.enabled
-                                            "
-                                        >
-                                            <span
-                                                class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform"
-                                                :class="
-                                                    pref.enabled
-                                                        ? 'translate-x-4'
-                                                        : 'translate-x-0'
-                                                "
-                                            />
-                                        </button>
-
-                                        <div>
-                                            <p
-                                                class="text-sm font-medium text-slate-800 dark:text-white"
-                                            >
-                                                {{ pref.label }}
-                                            </p>
-                                            <p
-                                                class="text-sm text-slate-500 dark:text-gray-400"
-                                            >
-                                                {{ pref.description }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-                            -->
                         </div>
 
                         <!-- APPEARANCE -->
@@ -801,7 +712,7 @@
                             class="space-y-5"
                         >
                             <section
-                                class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                                class="grid gap-6 bg-white p-6 lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
                             >
                                 <div>
                                     <h2
@@ -856,7 +767,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import {
+    computed,
+    onBeforeUnmount,
+    onMounted,
+    reactive,
+    ref,
+    watch,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
     Bell,
@@ -926,9 +844,6 @@ const initialTab = validTabValues.includes(route.query.tab as string)
 
 const activeTab = ref(initialTab);
 
-// Keeps the URL in sync with the active tab so the dropdown can deep-link
-// straight to it (My Profile -> General, the bell's "View all" -> Notifications)
-// and so the tab survives a refresh or a shared link.
 watch(activeTab, (value) => {
     router.replace({
         query: { ...route.query, tab: value },
@@ -1360,7 +1275,6 @@ const setNotificationFilter = (value: "all" | "unread") => {
 const openNotification = async (item: Notification) => {
     if (!item.unread) return;
 
-    // Patched locally rather than refetching the list.
     item.unread = false;
     unreadCount.value = Math.max(unreadCount.value - 1, 0);
 

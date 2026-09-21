@@ -28,6 +28,15 @@ class AuthService
             throw new Exception(__('Incorrect credentials'), 404);
         }
 
+        if (empty($user->password)) {
+            throw new Exception(
+                __('This email is registered with :provider. Please sign in with :provider instead.', [
+                    'provider' => Str::title($user->provider),
+                ]),
+                409
+            );
+        }
+
         if (!Hash::check($payload['password'], $user->password)) {
             throw new Exception(__('Incorrect credentials'), 401);
         }
@@ -131,14 +140,10 @@ class AuthService
                     ),
             ]);
         } elseif ($user->provider !== 'google') {
-            $user->update([
-                'provider' => 'google',
-                'provider_id' => $googleUser->getId(),
-            ]);
-
-            $user->client()->updateOrCreate(
-                ['user_id' => $user->user_id],
-                ['avatar' => $googleUser->getAvatar()],
+            return redirect()->away(
+                config('app.client_url') . '/auth/signin?error=' . urlencode(
+                    __('This email is registered with email and password. Please sign in with your email and password instead.')
+                )
             );
         }
 

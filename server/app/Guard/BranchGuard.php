@@ -15,7 +15,7 @@ class BranchGuard
         self::$branchRepository = $branchRepository;
     }
 
-    public static function resolveBranch(string $id, bool $facility = false)
+    public static function resolveBranch(string $id, bool $facility = false, bool $homecare = false)
     {
         if (!self::$branchRepository) {
             self::$branchRepository = app(BranchRepository::class);
@@ -29,6 +29,10 @@ class BranchGuard
 
         if ($facility && !$branch->hasFacilitySubscription()) {
             throw new Exception(__('No active facility subscription.'), 403);
+        }
+
+        if ($homecare && !$branch->hasHomecareSubscription()) {
+            throw new Exception(__('No active homecare subscription.'), 403);
         }
 
         return $branch;

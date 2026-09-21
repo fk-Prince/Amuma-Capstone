@@ -10,6 +10,7 @@ use App\Guard\BranchGuard;
 use App\Http\Resources\EmployeeScheduleResource;
 use App\Repository\ScheduleRepository;
 use App\Http\Resources\ScheduleResource;
+use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\Invoice;
@@ -29,7 +30,8 @@ class ScheduleService
         private ScheduleRepository $scheduleRepository,
         private PatientRepository $patientRepository,
         private InvoiceRepository $invoiceRepository,
-        private NotificationRepository $notificationRepository
+        private NotificationRepository $notificationRepository,
+        private NotificationService $notificationService
     ) {}
 
     public function createSchedule(array $payload)
@@ -140,7 +142,7 @@ class ScheduleService
             });
 
         $serviceNames = $schedule->scheduleServices
-            ->mapWithKeys(fn($ss) => [$ss->schedule_services_id => $ss->service->service_name ?? 'Unknown Service']);
+            ->mapWithKeys(fn($ss) => [$ss->schedule_services_id => $ss->service?->service_name ?? 'ADL']);
 
         $conflicts = [];
 
@@ -154,7 +156,7 @@ class ScheduleService
                     'employee_id' => $employeeId,
                     'employee_name' => $employeeNames[$employeeId] ?? "Employee #{$employeeId}",
                     'schedule_services_id' => $assignment['schedule_services_id'] ?? null,
-                    'service_name' => $serviceNames[$assignment['schedule_services_id'] ?? null] ?? "ADL Homecare",
+                    'service_name' => $serviceNames[$assignment['schedule_services_id'] ?? null] ?? 'ADL',
                     'conflict_schedule_codes' => $conflictScheduleCodes,
                 ];
             }
@@ -170,6 +172,71 @@ class ScheduleService
         return $this->updateSchedule($user, $schedule, $payload);
     }
 
+
+    private const ASSISTANT_NOTE = 'Assistant';
+
+    private function assistingIds(?string $type, $employeeIds, $branchId)
+    {
+        $employeeIds = collect($employeeIds);
+
+        if ($type !== 'Medical' || $employeeIds->isEmpty()) {
+            return collect();
+        }
+
+        return EmployeeBranch::whereIn('employee_id', $employeeIds->all())
+            ->where('branch_id', $branchId)
+            ->where('role_name', 'caregiver')
+            ->pluck('employee_id')
+            ->map(fn($id) => (int) $id);
+    }
+
+    private function assertStaffing(?string $type, $employeeIds, $branchId): void
+    {
+        $employeeIds = collect($employeeIds);
+
+        if ($employeeIds->isEmpty()) {
+            return;
+        }
+
+        $allowed = match ($type) {
+            'Medical' => ['nurse', 'caregiver'],
+            'ADL' => ['caregiver'],
+            default => null,
+        };
+
+        if ($allowed === null) {
+            return;
+        }
+
+        $roles = EmployeeBranch::whereIn('employee_id', $employeeIds->all())
+            ->where('branch_id', $branchId)
+            ->pluck('role_name', 'employee_id');
+
+        foreach ($employeeIds as $employeeId) {
+            if (!in_array($roles[$employeeId] ?? null, $allowed, true)) {
+                throw new Exception(
+                    $type === 'Medical'
+                        ? 'Only a nurse, or a caregiver assisting a nurse, can be assigned to a Medical service.'
+                        : 'Only a caregiver can be assigned to an ADL service.',
+                    422
+                );
+            }
+        }
+
+        if ($type === 'Medical' && !$employeeIds->contains(fn($id) => ($roles[$id] ?? null) === 'nurse')) {
+            throw new Exception(
+                'A medical service needs a nurse. A caregiver can only assist, not be assigned alone.',
+                422
+            );
+        }
+    }
+
+    private function conflictMessage(int $employeeId, array $codes): string
+    {
+        $name = Employee::find($employeeId)?->full_name ?? "Employee #{$employeeId}";
+
+        return "{$name} has a schedule conflict with " . implode(', ', $codes) . '.';
+    }
 
     public function updateSchedule(User $user, Schedule $schedule, array $payload)
     {
@@ -241,15 +308,17 @@ class ScheduleService
                     ->where('schedule_services_id', $scheduleServicesId)
                     ->firstOrFail();
 
+                $rowEmployeeIds = collect($rows)->pluck('employee_id')->filter()->map(fn($id) => (int) $id)->unique()->values();
+
+                if (!$isFinalizing) {
+                    $this->assertStaffing($scheduleService->type, $rowEmployeeIds, $branch->branch_id);
+                }
+
+                $assisting = $this->assistingIds($scheduleService->type, $rowEmployeeIds, $branch->branch_id);
+
                 foreach ($scheduleService->assigned()->get() as $existing) {
                     $existing->update(['is_active' => false]);
                 }
-
-                $requiredRole = match ($scheduleService->type) {
-                    'Medical' => 'nurse',
-                    'ADL' => 'caregiver',
-                    default => null,
-                };
 
                 $seen = [];
 
@@ -272,35 +341,31 @@ class ScheduleService
                         true
                     );
 
-                    if (!$isFinalizing && $this->scheduleRepository->employeeHasActiveConflict(
+                    $conflictCodes = $isFinalizing ? [] : $this->scheduleRepository->activeConflictCodes(
                         $employeeId,
                         (string) $branch->branch_id,
                         $schedule->schedule_id,
                         $targetStart,
                         $targetEnd
-                    )) {
-                        throw new Exception(
-                            'This employee is already assigned to another schedule during this time and cannot be assigned here.',
-                            409
-                        );
+                    );
+
+                    if ($conflictCodes) {
+                        throw new Exception($this->conflictMessage($employeeId, $conflictCodes), 409);
                     }
 
                     $roleName = EmployeeBranch::where('employee_id', $employeeId)
                         ->where('branch_id', $branch->branch_id)
                         ->value('role_name');
 
-                    if ($requiredRole !== null && $roleName !== $requiredRole) {
-                        throw new Exception(
-                            "Only a {$requiredRole} can be assigned to a {$scheduleService->type} service.",
-                            422
-                        );
-                    }
-
                     $note = $assignment['note'] ?? null;
 
                     $note = is_string($note) && trim($note) !== ''
                         ? mb_substr(trim($note), 0, 255)
                         : null;
+
+                    if ($assisting->contains($employeeId)) {
+                        $note = self::ASSISTANT_NOTE;
+                    }
 
                     $scheduleService->assigned()->updateOrCreate(
                         ['employee_id' => $employeeId],
@@ -472,6 +537,48 @@ class ScheduleService
     {
         return $this->scheduleRepository->getOverview($payload);
     }
+
+    public function requestInvoiceDeduction(array $payload, User $user)
+    {
+        $schedule = $this->scheduleRepository->findByFields([
+            ['schedule_id', '=', $payload['schedule_id']],
+        ]);
+
+        if (!$schedule) {
+            throw new Exception('Schedule dont exists', 404);
+        }
+
+        $branch = Branch::find($payload['branch_id']);
+
+        if (!$branch) {
+            throw new Exception('Branch not found.', 404);
+        }
+
+        $amount = (float) ($payload['amount'] ?? 0);
+
+        if ($amount <= 0) {
+            throw new Exception('Enter a deduction amount greater than zero.', 422);
+        }
+
+        $reason = trim((string) ($payload['reason'] ?? ''));
+
+        $message = "{$user->first_name} requested a ₱" . number_format($amount, 2)
+            . " deduction for the invoice for schedule {$schedule->schedule_code}"
+            . ($reason !== '' ? " due to {$reason}." : '.');
+
+        $this->notificationService->notifyAccountingStaff(
+            $branch,
+            $message,
+            $user,
+            $schedule,
+            (string) $schedule->schedule_id,
+        );
+
+        return response()->json([
+            'message' => 'Accounting has been notified to review this deduction request.',
+        ]);
+    }
+
     public function retrieveSchedule(User $user, array $payload)
     {
         if (!empty($payload['assigned_only'])) {
@@ -566,42 +673,25 @@ class ScheduleService
                     ->pluck('employee_id')
                     ->map(fn($id) => (int) $id);
 
-                $requiredRole = match ($scheduleService->type) {
-                    'Medical' => 'nurse',
-                    'ADL' => 'caregiver',
-                    default => null,
-                };
+                $this->assertStaffing($scheduleService->type, $desiredEmployeeIds, $branchId);
 
+                $assisting = $this->assistingIds($scheduleService->type, $desiredEmployeeIds, $branchId);
 
                 foreach ($desiredEmployeeIds as $employeeId) {
                     if ($currentlyActiveIds->contains($employeeId)) {
                         continue;
                     }
 
-                    if ($this->scheduleRepository->employeeHasActiveConflict(
+                    $conflictCodes = $this->scheduleRepository->activeConflictCodes(
                         $employeeId,
                         (string) $branchId,
                         $schedule->schedule_id,
                         $targetStart,
                         $targetEnd
-                    )) {
-                        throw new Exception(
-                            'This employee is already assigned to another schedule during this time and cannot be assigned here.',
-                            409
-                        );
-                    }
+                    );
 
-                    if ($requiredRole !== null) {
-                        $roleName = EmployeeBranch::where('employee_id', $employeeId)
-                            ->where('branch_id', $branchId)
-                            ->value('role_name');
-
-                        if ($roleName !== $requiredRole) {
-                            throw new Exception(
-                                "Only a {$requiredRole} can be assigned to a {$scheduleService->type} service.",
-                                422
-                            );
-                        }
+                    if ($conflictCodes) {
+                        throw new Exception($this->conflictMessage($employeeId, $conflictCodes), 409);
                     }
                 }
 
@@ -617,6 +707,11 @@ class ScheduleService
                 foreach ($desiredEmployeeIds as $employeeId) {
                     $hasNote = $notesByEmployee->has($employeeId);
                     $note = $notesByEmployee->get($employeeId);
+
+                    if ($assisting->contains($employeeId)) {
+                        $hasNote = true;
+                        $note = self::ASSISTANT_NOTE;
+                    }
 
                     if ($currentlyActiveIds->contains($employeeId)) {
 

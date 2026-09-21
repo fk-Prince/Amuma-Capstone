@@ -38,7 +38,7 @@ const filteredTabs = computed(() => {
 </script>
 
 <template>
-    <div class="space-y-4 mt-5">
+    <div class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="relative flex-1 min-w-[220px] max-w-sm">
                 <svg

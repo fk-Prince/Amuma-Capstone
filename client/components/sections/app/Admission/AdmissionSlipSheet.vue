@@ -133,6 +133,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { formatAmount } from "~/utils/currency";
+import { formatPhone } from "~/utils/phone";
 import { formatDate, stringToDateTime } from "~/utils/time";
 import type { AdmissionSlip } from "~/types/admission-slip";
 
@@ -160,7 +161,7 @@ const groups = computed(() => {
                     value: formatDate(patient.date_of_birth),
                 },
                 { label: "Gender", value: patient.gender },
-                { label: "Contact", value: patient.phone_number },
+                { label: "Contact", value: formatPhone(patient.phone_number) },
             ].filter((row) => !!row.value),
         },
         {

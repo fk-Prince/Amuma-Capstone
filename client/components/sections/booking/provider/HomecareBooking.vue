@@ -703,7 +703,7 @@ const scheduledHoursLabel = computed(() => {
     const closing = props.settings?.closing;
 
     if (!opening || !closing) return null;
-    if (opening === "00:00" && closing === "00:00") return null;
+    if (opening === "00:00" && (closing === "00:00" || closing === "23:59")) return null;
 
     return `${format24To12(opening)} – ${format24To12(closing)}`;
 });

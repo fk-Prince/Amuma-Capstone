@@ -79,42 +79,16 @@ class EmployeeScheduleResource extends JsonResource
                                 : null;
                         }
 
-                        $onlineSessions = ($scheduleService->assigned ?? collect())
-                            ->flatMap(fn($sibling) => $sibling->onlineSchedules ?? collect());
-
-                        $workedMinutes = $onlineSessions
-                            ->filter(fn($session) => $session->in_timestamp && $session->out_timestamp)
-                            ->sum(fn($session) => Carbon::parse($session->in_timestamp)
-                                ->diffInMinutes(Carbon::parse($session->out_timestamp)));
-
-                        $latestInTimestamp = $onlineSessions
-                            ->filter(fn($session) => $session->in_timestamp)
-                            ->sortByDesc('in_timestamp')
-                            ->first()?->in_timestamp;
-
-                        $activeSession = $onlineSessions
-                            ->first(fn($session) => $session->in_timestamp && !$session->out_timestamp);
-
                         $estimatedEnd = null;
                         $remainingMinutes = $durationMinutes;
 
                         if ($durationMinutes !== null) {
-                            if ($activeSession) {
-                                $remainingMinutes = max(round($durationMinutes - $workedMinutes), 0);
-                                $anchor = Carbon::parse($activeSession->in_timestamp)->max(Carbon::parse($schedule->scheduled_at));
-                                $end = $anchor->copy()->addMinutes($remainingMinutes);
-                            } elseif ($latestInTimestamp) {
-                                $remainingMinutes = max(round($durationMinutes - $workedMinutes), 0);
-                                $anchor = Carbon::now()->max(Carbon::parse($schedule->scheduled_at));
-                                $end = $anchor->copy()->addMinutes($remainingMinutes);
-                            } else {
-                                $end = Carbon::parse($schedule->scheduled_at)->addMinutes($durationMinutes);
-                            }
+                            $start = Carbon::parse($schedule->scheduled_at);
+                            $end = $start->copy()->addMinutes($durationMinutes);
 
-                            if ($end->second >= 30) {
-                                $end->addMinute();
-                            }
-                            $end->second(0);
+                            $remainingMinutes = $start->isFuture()
+                                ? round($durationMinutes)
+                                : max(round(Carbon::now()->diffInMinutes($end, false)), 0);
 
                             $estimatedEnd = $end->toISOString();
                         }

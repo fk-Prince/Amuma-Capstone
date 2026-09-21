@@ -44,27 +44,11 @@
                     </div>
 
                     <div class="min-w-0 flex-1">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <p
-                                class="truncate text-sm font-semibold text-secondary dark:text-white"
-                            >
-                                {{ member.client?.full_name ?? "Unnamed" }}
-                            </p>
-
-                            <span
-                                v-if="member.is_primary"
-                                class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary"
-                            >
-                                Primary
-                            </span>
-
-                            <span
-                                v-if="!member.have_access"
-                                class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-white/10 dark:text-gray-400"
-                            >
-                                No access
-                            </span>
-                        </div>
+                        <p
+                            class="truncate text-sm font-semibold text-secondary dark:text-white"
+                        >
+                            {{ member.client?.full_name ?? "Unnamed" }}
+                        </p>
 
                         <p
                             class="mt-0.5 text-xs font-medium capitalize text-primary-700 dark:text-primary-300"

@@ -20,7 +20,10 @@ class UserService
 
     public function getUserBranch(User $user)
     {
-        $user->load('employee.permissions.modules', 'employee.employeeBranch');
+        $user->load([
+            'employee.permissions.modules',
+            'employee.employeeBranch' => fn($query) => $query->orderBy('employee_branch_id'),
+        ]);
         $employee = $user->employee;
         $permissionsByBranch = ($employee?->permissions ?? collect())->groupBy('branch_id');
 

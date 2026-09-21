@@ -38,6 +38,7 @@ class PatientResource extends JsonResource
             'patient_code' => $this->patient_code,
             'full_name' => trim("{$this->first_name} {$this->middle_name} {$this->last_name}"),
             'first_name' => $this->first_name,
+            'avatar' => $this->avatar_url,
             'middle_name' => $this->middle_name,
             'last_name' => $this->last_name,
             'gender' => $this->gender,
@@ -210,6 +211,9 @@ class PatientResource extends JsonResource
 
         return [
             'patient_admission_id' => $admission->patient_admission_id,
+            'caregiver_count' => \App\Models\CaregiverFacilityShift::where('admission_id', $admission->patient_admission_id)
+                ->where('is_active', true)
+                ->count(),
             'status' => $admission->status,
             'admitted_at' => $admission->admitted_at,
             'end_date' => $admission->end_date,
@@ -247,7 +251,8 @@ class PatientResource extends JsonResource
                         $invoice->invoice,
                         ($this->futurePeriods($admission, $period) ?? collect())
                             ->pluck('admission_period_id')
-                            ->all()
+                            ->all(),
+                        $admission->patient_admission_id
                     ),
                 ]
                 : null,
@@ -345,6 +350,7 @@ class PatientResource extends JsonResource
             'invoice_code' => $invoice?->invoice_code,
             'status' => $invoice?->status,
             'price' => round((float) $invoiceAdmissionLines->price, 2),
+            'description' => $invoiceAdmissionLines->description,
 
             'paid_amount' => $invoice?->amount_paid ?? 0,
             'refunded_amount' => $invoice?->refunded_amount ?? 0,

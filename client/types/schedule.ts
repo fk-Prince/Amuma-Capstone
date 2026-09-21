@@ -26,6 +26,7 @@ export interface ScheduleServiceItem {
     service_id: number;
     service_name: string | null;
     hours_booked: number | null;
+    price: number;
     duration_minutes: number;
     end_service: string;
     type: string | null;
@@ -131,6 +132,7 @@ export interface AuditRow {
     schedule_code: string;
     scheduled_at?: string | null;
     total_hours: number;
+    price: number;
     status: string;
     category: string | null;
 
@@ -142,6 +144,7 @@ export interface AuditRow {
     note: string | null;
 
     address: string | null;
+    patient_id: number | null;
     patient_uuid: string;
     patient_full_name: string;
     total_worked_minutes: number;

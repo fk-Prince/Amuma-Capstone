@@ -29,6 +29,7 @@ return new class extends Migration
             $table->date('date_of_birth')->nullable();
             $table->string('phone_number', 20)->nullable();
             $table->string('citizenship', 20)->nullable();
+            $table->string('avatar')->nullable();
             $table->json('allergies')->nullable();
             $table->timestamps();
         });

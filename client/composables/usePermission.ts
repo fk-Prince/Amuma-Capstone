@@ -1,16 +1,30 @@
 import { useBranchStore } from "~/stores/branch";
+import { useBranchPlan } from "~/composables/useBranchPlan";
+import { Modules } from "~/types/module";
 import { PermissionAction, type PermissionActionKey } from "~/utils/permissions";
+
+const FACILITY_MODULES: string[] = [Modules.Admissions, Modules.RoomsAndBeds];
 
 export const usePermissions = () => {
     const branchStore = useBranchStore();
+    const { hasFacilityPlan } = useBranchPlan();
 
     const actionsFor = (module_name: string): PermissionActionKey[] =>
         (branchStore.activeBranch?.permissions ?? []).find(
             (p) => p.module_name === module_name,
         )?.actions ?? [];
 
-    const can = (module_name: string, action: PermissionActionKey) =>
-        actionsFor(module_name).includes(action);
+    const can = (module_name: string, action: PermissionActionKey) => {
+        if (
+            action !== PermissionAction.Read &&
+            FACILITY_MODULES.includes(module_name) &&
+            !hasFacilityPlan.value
+        ) {
+            return false;
+        }
+
+        return actionsFor(module_name).includes(action);
+    };
 
     const hasModule = (...modules: string[]) =>
         modules.some((module_name) => can(module_name, PermissionAction.Read));

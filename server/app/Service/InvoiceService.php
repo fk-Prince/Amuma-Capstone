@@ -134,6 +134,10 @@ class InvoiceService
             throw new Exception('Enter a cash amount greater than 0.', 422);
         }
 
+        if ($cash > 0 && $useCredit) {
+            throw new Exception('Pay with credit or with cash, not both.', 422);
+        }
+
         $allocations = collect($payload['allocations'] ?? [])
             ->map(fn($amount) => round((float) $amount, 2))
             ->filter(fn($amount) => $amount > 0);
@@ -146,7 +150,7 @@ class InvoiceService
                     fn($invoice) => $allocations->has($invoice->invoice_code)
                 )
             )
-            ->sortBy('created_at')
+            ->sortBy(fn($invoice) => $invoice->paymentOrder())
             ->values();
 
         if ($payable->isEmpty()) {
@@ -392,6 +396,7 @@ class InvoiceService
             'transaction_id' => $transaction->transaction_id,
             'prior_balance'  => $priorBalance,
             'new_balance'    => round($priorBalance - $applied, 2),
+            'cash_tendered'  => $applied,
             'issued_by'      => $user?->user_id,
             'created_at'     => now(),
         ]);
@@ -593,28 +598,105 @@ class InvoiceService
                 throw new Exception('This invoice has been written off and can no longer be voided.', 422);
             }
 
+            if ($invoice->status === Invoice::STATUS_PAID) {
+                throw new Exception('A paid invoice can no longer be voided. Issue a refund or credit instead.', 422);
+            }
+
             $reason = trim((string) ($payload['reason'] ?? ''));
 
             if ($reason === '') {
                 throw new Exception('A reason is required to void an invoice.', 422);
             }
 
+            $upgrades = $this->invoiceRepository->upgradesOf($invoice);
+
+            $paidUpgrade = $upgrades->first(fn($upgrade) => (float) $upgrade->net_paid_amount > 0);
+
+            if ($paidUpgrade) {
+                throw new Exception(
+                    "{$paidUpgrade->invoice_code} was issued for an accommodation upgrade on this invoice and already has a payment. Void it first.",
+                    422
+                );
+            }
+
+            foreach ($upgrades as $upgrade) {
+                $this->closeAsVoid($upgrade, $reason, $payload['user_id'] ?? null);
+            }
+
+            $this->closeAsVoid($invoice, $reason, $payload['user_id'] ?? null);
+
+            return [
+                'message' => $upgrades->isEmpty()
+                    ? 'Invoice voided successfully.'
+                    : 'Invoice voided successfully along with its upgrade invoice ' . $upgrades->pluck('invoice_code')->implode(', ') . '.',
+                'invoice_code' => $invoice->invoice_code,
+                'data' => !empty($payload['p_uuid'])
+                    ? $this->invoiceRepository->getPatientWithUuid($payload)
+                    : null,
+            ];
+        });
+    }
+
+    private function closeAsVoid(Invoice $invoice, string $reason, ?int $userId): void
+    {
+        InvoiceAdjustment::create([
+            'invoice_id' => $invoice->invoice_id,
+            'type' => InvoiceAdjustment::TYPE_VOID,
+            'amount' => round(-(float) $invoice->adjusted_total, 2),
+            'reason' => $reason,
+        ]);
+
+        $invoice->update([
+            'status' => Invoice::STATUS_VOID,
+            'voided_at' => now(),
+            'voided_by' => $userId,
+            'void_reason' => $reason,
+        ]);
+    }
+
+    public function adjustInvoice(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            $invoice = Invoice::where('invoice_code', $payload['invoice_code'])
+                ->where('branch_id', $payload['branch_id'])
+                ->lockForUpdate()
+                ->first();
+
+            if (!$invoice) {
+                throw new Exception('Invoice not found.', 404);
+            }
+
+            if (in_array($invoice->status, Invoice::CLOSED_STATUSES, true)) {
+                throw new Exception('This invoice is void or written off and can no longer be adjusted.', 422);
+            }
+
+            $reason = trim((string) ($payload['reason'] ?? ''));
+
+            if ($reason === '') {
+                throw new Exception('A reason is required to adjust an invoice.', 422);
+            }
+
+            $amount = (float) ($payload['amount'] ?? 0);
+
+            if ($amount === 0.0) {
+                throw new Exception('Enter a non-zero adjustment amount.', 422);
+            }
+
+            if ($amount < 0 && abs($amount) > (float) $invoice->adjusted_total + 0.01) {
+                throw new Exception("The deduction can't exceed the invoice's billed total.", 422);
+            }
+
             InvoiceAdjustment::create([
                 'invoice_id' => $invoice->invoice_id,
-                'type' => InvoiceAdjustment::TYPE_VOID,
-                'amount' => round(-(float) $invoice->adjusted_total, 2),
+                'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                'amount' => round($amount, 2),
                 'reason' => $reason,
             ]);
 
-            $invoice->update([
-                'status' => Invoice::STATUS_VOID,
-                'voided_at' => now(),
-                'voided_by' => $payload['user_id'] ?? null,
-                'void_reason' => $reason,
-            ]);
+            $invoice->syncStatus();
 
             return [
-                'message' => 'Invoice voided successfully.',
+                'message' => 'Invoice adjusted successfully.',
                 'invoice_code' => $invoice->invoice_code,
                 'data' => !empty($payload['p_uuid'])
                     ? $this->invoiceRepository->getPatientWithUuid($payload)

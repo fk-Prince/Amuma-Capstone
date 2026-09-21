@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-screen-header bg-[#EEF3FB] p-2 overflow-visible flex flex-col dark:bg-surface"
+        class="min-h-screen-header bg-[#EEF3FB] dark:bg-surface overflow-visible flex flex-col"
     >
         <div
             class="grid grid-cols-1 gap-4 items-stretch w-full flex-1 min-h-0"
@@ -9,7 +9,7 @@
             <div class="w-full min-w-0 min-h-0 flex flex-col order-1">
                 <template v-if="!selectedReferenceId">
                     <div
-                        class="rounded-xl bg-white shadow-sm border border-[#E4EFED] overflow-visible flex flex-col h-full min-h-0 dark:bg-secondary dark:border-white/10"
+                        class="rounded-lg bg-white shadow-sm border border-[#E4EFED] overflow-visible flex flex-col h-full min-h-0 dark:bg-secondary dark:border-white/10"
                     >
                         <div
                             class="flex flex-col gap-3 px-6 py-4 border-b border-[#E4EFED] shrink-0 dark:border-white/10"
@@ -24,7 +24,9 @@
                                     :date-to="dateTo"
                                     @update:search="searchQuery = $event"
                                     @update:type="typeFilter = $event"
-                                    @update:bookingType="bookingTypeFilter = $event"
+                                    @update:bookingType="
+                                        bookingTypeFilter = $event
+                                    "
                                     @update:status="statusFilter = $event"
                                     @update:dateFrom="dateFrom = $event"
                                     @update:dateTo="dateTo = $event"
@@ -54,9 +56,6 @@
                         </div>
 
                         <div class="flex-1 min-h-0 overflow-visible">
-                            <!-- Corner-specific radii beat DataTable's own
-                                 `rounded-2xl`, so the table sits flush under
-                                 the filter bar and matches the card below. -->
                             <DataTable
                                 class="rounded-t-none rounded-b-xl border-none h-full"
                                 :columns="columns"
@@ -83,7 +82,9 @@
                                             #{{ row.reference_id }}
                                         </span>
 
-                                        <span class="text-[11px] text-gray-400 dark:text-gray-500">
+                                        <span
+                                            class="text-[11px] text-gray-400 dark:text-gray-500"
+                                        >
                                             {{
                                                 stringToDateTime(row.created_at)
                                             }}
@@ -125,12 +126,16 @@
                                     <div class="flex items-center gap-2">
                                         <span
                                             class="px-2 py-0.5 rounded-md text-[11px] font-medium capitalize shrink-0"
-                                            :class="categoryClasses(row.category)"
+                                            :class="
+                                                categoryClasses(row.category)
+                                            "
                                         >
                                             {{ row.category ?? "—" }}
                                         </span>
 
-                                        <span class="text-xs text-muted dark:text-gray-400">
+                                        <span
+                                            class="text-xs text-muted dark:text-gray-400"
+                                        >
                                             {{ bookingType(row) }}
                                         </span>
                                     </div>
@@ -138,7 +143,9 @@
 
                                 <template #cell-schedule="{ row }">
                                     <div class="flex flex-col gap-0.5">
-                                        <span class="text-sm text-[#16302E] dark:text-white">
+                                        <span
+                                            class="text-sm text-[#16302E] dark:text-white"
+                                        >
                                             {{ serviceDate(row) }}
                                         </span>
 
@@ -147,7 +154,11 @@
                                             class="text-[11px] text-gray-400 dark:text-gray-500"
                                         >
                                             Valid until
-                                            {{ stringToDateTime(row.valid_until) }}
+                                            {{
+                                                stringToDateTime(
+                                                    row.valid_until,
+                                                )
+                                            }}
                                         </span>
                                     </div>
                                 </template>
@@ -168,9 +179,7 @@
                                         <button
                                             v-if="
                                                 row.status?.toLowerCase() ===
-                                                    'pending' &&
-                                                row.facility?.type !==
-                                                    'Pre-Admission'
+                                                'pending'
                                             "
                                             type="button"
                                             class="px-3 py-1.5 text-xs font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 transition"
@@ -229,13 +238,15 @@
                     </button>
 
                     <div
-                        class="bg-white rounded-2xl min-h-[calc(100dvh-var(--header-h))] shadow-sm border border-[#E4EFED] py-16 text-center dark:bg-secondary dark:border-white/10"
+                        class="bg-white rounded-lg min-h-[calc(100dvh-var(--header-h))] shadow-sm border border-[#E4EFED] py-16 text-center dark:bg-secondary dark:border-white/10"
                     >
                         <div
                             class="mx-auto h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin"
                         />
 
-                        <p class="text-sm text-muted dark:text-gray-400 mt-3">Loading booking…</p>
+                        <p class="text-sm text-muted dark:text-gray-400 mt-3">
+                            Loading booking…
+                        </p>
                     </div>
                 </div>
 
@@ -297,11 +308,15 @@
                     <div
                         class="bg-white rounded-2xl min-h-[calc(100dvh-var(--header-h))] shadow-sm border border-[#E4EFED] py-16 text-center dark:bg-secondary dark:border-white/10"
                     >
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        <p
+                            class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                        >
                             Booking not found
                         </p>
 
-                        <p class="text-xs text-gray-400 mt-1 dark:text-gray-500">
+                        <p
+                            class="text-xs text-gray-400 mt-1 dark:text-gray-500"
+                        >
                             We couldn't find a booking with reference "{{
                                 selectedReferenceId
                             }}".
@@ -329,7 +344,7 @@
 
                 <template v-else-if="selectedBooking">
                     <div
-                        class="w-full bg-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden dark:bg-secondary"
+                        class="w-full bg-[#EEF3FB] rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden dark:bg-secondary"
                     >
                         <div
                             class="px-5 py-4 border-b border-[#EDF4F3] bg-gradient-to-r from-[#0E7C7B]/[0.05] to-transparent dark:border-white/10"
@@ -475,12 +490,14 @@
                             <div
                                 v-if="
                                     selectedBooking.status?.toLowerCase() ===
-                                        'pending' && !isPreAdmissionFacility
+                                    'pending'
                                 "
                                 class="space-y-3"
                             >
                                 <div class="flex items-center gap-3 mb-2">
-                                    <div class="h-px flex-1 bg-[#EDF4F3] dark:bg-white/10" />
+                                    <div
+                                        class="h-px flex-1 bg-[#EDF4F3] dark:bg-white/10"
+                                    />
 
                                     <span
                                         class="text-[10px] uppercase tracking-[0.14em] text-[#8AA09D] font-mono whitespace-nowrap dark:text-gray-500"
@@ -488,7 +505,9 @@
                                         Review Booking
                                     </span>
 
-                                    <div class="h-px flex-1 bg-[#EDF4F3] dark:bg-white/10" />
+                                    <div
+                                        class="h-px flex-1 bg-[#EDF4F3] dark:bg-white/10"
+                                    />
                                 </div>
 
                                 <div class="flex flex-col gap-3">
@@ -896,8 +915,6 @@ const handleNewBooking = (booking: any) => {
     pagination.totalItems.value++;
 };
 
-// Facility care happens at the branch, so it has no visit address — falling
-// back to the patient's home address there would be misleading.
 const serviceAddress = (row: any) => {
     if (String(row?.category ?? "").toLowerCase() === "facility") {
         return "On-site";
@@ -905,7 +922,6 @@ const serviceAddress = (row: any) => {
 
     return row?.homecare?.address || row?.patient?.address || "";
 };
-
 
 const OVERVIEW_STATUS_KEYS: Record<string, string> = {
     pending: "pending_confirmation",
@@ -915,7 +931,12 @@ const OVERVIEW_STATUS_KEYS: Record<string, string> = {
 
 function syncBookingStatus(
     booking: any,
-    changes: { status: string; reason?: string },
+    changes: {
+        status: string;
+        reason?: string;
+        reviewed_by?: string | null;
+        reviewed_at?: string | null;
+    },
 ) {
     const previous = String(booking.status ?? "").toLowerCase();
     const next = String(changes.status).toLowerCase();
@@ -937,7 +958,8 @@ function syncBookingStatus(
     const fromKey = OVERVIEW_STATUS_KEYS[previous];
     const toKey = OVERVIEW_STATUS_KEYS[next];
 
-    if (fromKey) counts[fromKey] = Math.max(0, Number(counts[fromKey] ?? 0) - 1);
+    if (fromKey)
+        counts[fromKey] = Math.max(0, Number(counts[fromKey] ?? 0) - 1);
     if (toKey) counts[toKey] = Number(counts[toKey] ?? 0) + 1;
 
     const recent = counts.recent?.find(
@@ -985,6 +1007,8 @@ const rejectBooking = async (reason: string) => {
         syncBookingStatus(booking, {
             status: res.data?.status ?? "rejected",
             reason: res.data?.reason ?? reason,
+            reviewed_by: res.data?.reviewed_by,
+            reviewed_at: res.data?.reviewed_at,
         });
 
         rejectTarget.value = null;
@@ -1002,17 +1026,27 @@ const confirmBooking = async (booking: any) => {
     isApproving.value = true;
 
     try {
-        const res = await bookingService.actionBooking({
-            ...booking,
-            reference_id: booking.reference_id,
-            action: "approve",
-            branch_uuid: branch_uuid.value,
-        });
+        const res = await bookingService.actionBooking(
+            booking.facility?.type === "Pre-Admission"
+                ? {
+                      action: "accept",
+                      reference_id: booking.reference_id,
+                      branch_uuid: branch_uuid.value,
+                  }
+                : {
+                      ...booking,
+                      reference_id: booking.reference_id,
+                      action: "approve",
+                      branch_uuid: branch_uuid.value,
+                  },
+        );
 
         success(res.message ?? "Booking approved successfully.");
 
         syncBookingStatus(booking, {
             status: res.data?.status ?? "approved",
+            reviewed_by: res.data?.reviewed_by,
+            reviewed_at: res.data?.reviewed_at,
         });
     } catch (err: any) {
         error(err?.message ?? "Failed to approve booking.");
@@ -1036,7 +1070,7 @@ const refresh = async () => {
             }),
         ]);
 
-        selectedBooking.value = res ?? null;
+        selectedBooking.value = res?.data ?? res ?? null;
     } catch (err) {
         console.error(err);
     }
@@ -1156,7 +1190,7 @@ async function resolveSelectedBooking(referenceId: string | null) {
             branch_uuid: branch_uuid.value,
         });
 
-        selectedBooking.value = res ?? null;
+        selectedBooking.value = res?.data ?? res ?? null;
     } catch (err) {
         console.error("Failed to load booking by reference_id", err);
         selectedBooking.value = null;

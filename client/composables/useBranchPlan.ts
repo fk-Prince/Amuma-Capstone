@@ -24,8 +24,13 @@ export const useBranchPlan = () => {
         }
     };
 
+    const hasFacilityPlan = computed(() => hasPlan("B"));
+    const hasHomecarePlan = computed(() => hasPlan("A"));
+
     return {
         planCode,
         hasPlan,
+        hasFacilityPlan,
+        hasHomecarePlan,
     };
 };

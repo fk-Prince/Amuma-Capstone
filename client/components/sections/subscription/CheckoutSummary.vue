@@ -1,6 +1,6 @@
 <template>
-    <div class="w-full max-w-5xl mx-auto space-y-6">
-        <div class="bg-white rounded-2xl shadow-sm p-6 dark:bg-secondary">
+    <div class="w-full mx-auto space-y-6">
+        <div class="bg-white rounded-2xl shadow-sm py-6 dark:bg-secondary">
             <div class="flex items-center justify-between gap-4">
                 <div class="flex items-center gap-4">
                     <div
@@ -14,11 +14,15 @@
                     </div>
 
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+                        <h2
+                            class="text-xl font-bold text-slate-900 dark:text-white"
+                        >
                             Review & Confirm
                         </h2>
 
-                        <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
+                        <p
+                            class="text-sm text-slate-500 mt-1 dark:text-gray-400"
+                        >
                             Review your information before activating your
                             subscription.
                         </p>
@@ -48,10 +52,14 @@
             </div>
         </div>
 
-        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5 dark:bg-secondary">
+        <section
+            class="bg-white rounded-2xl shadow-sm p-6 space-y-5 dark:bg-secondary"
+        >
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">
+                    <h3
+                        class="text-base font-semibold text-slate-900 dark:text-white"
+                    >
                         Subscription Details
                     </h3>
 
@@ -103,13 +111,19 @@
             </div>
         </section>
 
-        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5 dark:bg-secondary">
+        <section
+            class="bg-white rounded-2xl shadow-sm p-6 space-y-5 dark:bg-secondary"
+        >
             <div>
-                <h3 class="text-base font-semibold text-slate-900 dark:text-white">
+                <h3
+                    class="text-base font-semibold text-slate-900 dark:text-white"
+                >
                     Agency Information
                 </h3>
 
-                <p class="text-sm text-slate-500 dark:text-gray-400">Registered agency details.</p>
+                <p class="text-sm text-slate-500 dark:text-gray-400">
+                    Registered agency details.
+                </p>
             </div>
             <div class="flex flex-col sm:flex-row gap-5">
                 <div
@@ -149,9 +163,13 @@
             </div>
         </section>
 
-        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5 dark:bg-secondary">
+        <section
+            class="bg-white rounded-2xl shadow-sm p-6 space-y-5 dark:bg-secondary"
+        >
             <div>
-                <h3 class="text-base font-semibold text-slate-900 dark:text-white">
+                <h3
+                    class="text-base font-semibold text-slate-900 dark:text-white"
+                >
                     Branch Information
                 </h3>
 
@@ -209,9 +227,13 @@
             </div>
         </section>
 
-        <section class="bg-white rounded-2xl shadow-sm p-6 space-y-5 dark:bg-secondary">
+        <section
+            class="bg-white rounded-2xl shadow-sm p-6 space-y-5 dark:bg-secondary"
+        >
             <div>
-                <h3 class="text-base font-semibold text-slate-900 dark:text-white">
+                <h3
+                    class="text-base font-semibold text-slate-900 dark:text-white"
+                >
                     Operation Settings
                 </h3>
 
@@ -255,7 +277,9 @@
             </div>
         </section>
 
-        <div class="flex gap-3 rounded-2xl bg-blue-50 px-5 py-4 dark:bg-primary-500/10">
+        <div
+            class="flex gap-3 rounded-2xl bg-blue-50 px-5 py-4 dark:bg-primary-500/10"
+        >
             <i class="ti ti-info-circle text-blue-500 text-lg mt-0.5" />
 
             <p class="text-sm text-blue-700 leading-relaxed">

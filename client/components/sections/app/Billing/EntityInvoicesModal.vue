@@ -179,45 +179,79 @@
                                                     ? `₱${formatMoney(
                                                           invoice.balance_due,
                                                       )} due`
-                                                    : "Settled"
+                                                    : Number(
+                                                            invoice.written_off_amount ??
+                                                                0,
+                                                        ) > 0
+                                                      ? `₱${formatMoney(invoice.written_off_amount)} written off`
+                                                      : "Settled"
                                             }}
                                         </p>
 
                                         <div
-                                            class="mt-2 flex items-center justify-end gap-2"
+                                            class="mt-2 flex items-center justify-between gap-2"
                                         >
-                                            <button
-                                                v-if="!isClosedStatus(invoice)"
-                                                type="button"
-                                                class="rounded-lg border border-danger/30 px-3 py-1.5 text-[12px] font-semibold text-danger transition hover:bg-danger/10"
-                                                @click="
-                                                    emit(
-                                                        'void-invoice',
-                                                        invoice,
-                                                    )
-                                                "
+                                            <div
+                                                class="flex flex-wrap items-center gap-2"
                                             >
-                                                Void
-                                            </button>
+                                                <button
+                                                    v-if="!isClosedStatus(invoice)"
+                                                    type="button"
+                                                    class="rounded-lg border border-primary/30 px-3 py-1.5 text-[12px] font-semibold text-primary transition hover:bg-primary/10"
+                                                    @click="
+                                                        emit(
+                                                            'adjust-invoice',
+                                                            invoice,
+                                                        )
+                                                    "
+                                                >
+                                                    {{
+                                                        isPaidStatus(invoice)
+                                                            ? "Issue Refund/Credit"
+                                                            : "Adjust"
+                                                    }}
+                                                </button>
 
-                                            <button
-                                                v-if="
-                                                    !isClosedStatus(invoice) &&
-                                                    Number(
-                                                        invoice.balance_due,
-                                                    ) > 0
-                                                "
-                                                type="button"
-                                                class="rounded-lg border border-amber-500/40 px-3 py-1.5 text-[12px] font-semibold text-amber-600 transition hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-500/10"
-                                                @click="
-                                                    emit(
-                                                        'write-off-invoice',
-                                                        invoice,
-                                                    )
-                                                "
-                                            >
-                                                Write off
-                                            </button>
+                                                <button
+                                                    v-if="
+                                                        !isClosedStatus(
+                                                            invoice,
+                                                        ) &&
+                                                        !isPaidStatus(invoice)
+                                                    "
+                                                    type="button"
+                                                    class="rounded-lg border border-danger/30 px-3 py-1.5 text-[12px] font-semibold text-danger transition hover:bg-danger/10"
+                                                    @click="
+                                                        emit(
+                                                            'void-invoice',
+                                                            invoice,
+                                                        )
+                                                    "
+                                                >
+                                                    Void
+                                                </button>
+
+                                                <button
+                                                    v-if="
+                                                        !isClosedStatus(
+                                                            invoice,
+                                                        ) &&
+                                                        Number(
+                                                            invoice.balance_due,
+                                                        ) > 0
+                                                    "
+                                                    type="button"
+                                                    class="rounded-lg border border-amber-500/40 px-3 py-1.5 text-[12px] font-semibold text-amber-600 transition hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-500/10"
+                                                    @click="
+                                                        emit(
+                                                            'write-off-invoice',
+                                                            invoice,
+                                                        )
+                                                    "
+                                                >
+                                                    Write off
+                                                </button>
+                                            </div>
 
                                             <button
                                                 v-if="
@@ -397,6 +431,7 @@ const emit = defineEmits<{
     (event: "view-invoice", invoiceCode: string): void;
     (event: "view-receipt", receiptNo: string | null | undefined): void;
     (event: "pay-invoice", invoice: PatientInvoiceItem): void;
+    (event: "adjust-invoice", invoice: PatientInvoiceItem): void;
     (event: "void-invoice", invoice: PatientInvoiceItem): void;
     (event: "write-off-invoice", invoice: PatientInvoiceItem): void;
     (event: "close"): void;
@@ -406,6 +441,10 @@ function isClosedStatus(invoice: PatientInvoiceItem) {
     const status = (invoice.status ?? "").toLowerCase();
 
     return status === "void" || status === "written off" || status === "written_off";
+}
+
+function isPaidStatus(invoice: PatientInvoiceItem) {
+    return (invoice.status ?? "").toLowerCase() === "paid";
 }
 
 function adlHoursBooked(invoice: PatientInvoiceItem) {

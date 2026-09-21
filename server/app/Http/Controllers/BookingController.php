@@ -54,6 +54,12 @@ class BookingController extends Controller
                 'user' => $request->user(),
             ]);
             return $this->bookingService->bookingAction($request->all());
+        } else if ($request->action === 'accept') {
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Approve);
+            $request->merge([
+                'user' => $request->user(),
+            ]);
+            return $this->bookingService->accept($request->all());
         } else if ($request->action === 'reject') {
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Reject);
             $request->merge([

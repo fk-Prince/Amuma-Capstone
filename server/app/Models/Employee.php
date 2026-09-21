@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\CapitalizesNames;
 use App\Models\Location;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 class Employee extends Model
 {
+    use CapitalizesNames;
+
     protected $primaryKey = 'employee_id';
 
     public const STATUS_ACTIVE = 'active';

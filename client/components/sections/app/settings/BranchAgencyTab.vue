@@ -45,7 +45,7 @@ const props = defineProps<{
     uuid?: string;
 }>();
 
-const agency = defineModel<Agency | null>("agency", {
+const agency = defineModel<Agency | null | undefined>("agency", {
     required: true,
 });
 
@@ -122,7 +122,7 @@ const handleSave = async (): Promise<boolean> => {
         const res = await agencyService.update(props.uuid as string, payload);
         await branchStore.refreshBranch();
         agency.value = branchStore.activeBranch?.agency ?? null;
-        localValue.value = agency.value;
+        localValue.value = agency.value ?? null;
 
         success(res.message);
 

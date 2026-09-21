@@ -14,6 +14,7 @@ import {
     Building2,
     HeartPulse,
     Printer,
+    BedDouble,
 } from "lucide-vue-next";
 import Pagination from "~/components/ui/Pagination.vue";
 import PatientDetails from "~/components/sections/app/Booking/PatientDetails.vue";
@@ -166,6 +167,33 @@ function isCompleteAdmission(booking: PortalBooking) {
     return booking.facility?.type === "Complete";
 }
 
+function assignedRoom(booking: PortalBooking) {
+    if (!["approved", "completed"].includes(booking.status)) return null;
+
+    const reserved = booking.reserved;
+
+    if (!reserved?.room?.room_no && !reserved?.bed?.bed_no) return null;
+
+    return {
+        roomBed: `${reserved.room?.room_no ?? "—"} / ${reserved.bed?.bed_no ?? "—"}`,
+        plan: reserved.accommodation_type || booking.facility?.plan || "—",
+    };
+}
+
+function showValidUntil(booking: PortalBooking) {
+    return !["approved", "completed"].includes(booking.status);
+}
+
+function summaryGridClass(booking: PortalBooking) {
+    const cards =
+        2 + (assignedRoom(booking) ? 1 : 0) + (showValidUntil(booking) ? 1 : 0);
+
+    if (cards >= 4) return "sm:grid-cols-4";
+    if (cards === 3) return "sm:grid-cols-3";
+
+    return "sm:grid-cols-2";
+}
+
 function typeLabel(booking: PortalBooking) {
     const type = booking.homecare?.type ?? booking.facility?.type;
 
@@ -275,7 +303,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="min-h-full space-y-6 p-5 pb-16">
+    <div class="min-h-full space-y-6 p-4 pb-16">
         <div
             v-if="meta"
             class="inline-flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm dark:border-white/10 dark:bg-secondary"
@@ -550,7 +578,8 @@ onMounted(() => {
                             </div>
 
                             <div
-                                class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3"
+                                class="mt-5 grid grid-cols-2 gap-3"
+                                :class="summaryGridClass(booking)"
                             >
                                 <div
                                     class="rounded-xl bg-gray-50/80 px-3.5 py-3 dark:bg-white/5"
@@ -566,6 +595,29 @@ onMounted(() => {
                                         class="mt-1.5 truncate text-sm font-semibold text-gray-800 dark:text-white"
                                     >
                                         {{ typeLabel(booking) }}
+                                    </p>
+                                </div>
+
+                                <div
+                                    v-if="assignedRoom(booking)"
+                                    class="rounded-xl bg-primary-50 px-3.5 py-3 ring-1 ring-inset ring-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/25"
+                                >
+                                    <div
+                                        class="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-primary-600 dark:text-primary-300"
+                                    >
+                                        <BedDouble class="h-3.5 w-3.5" />
+                                        Room / Bed · Plan
+                                    </div>
+
+                                    <p
+                                        class="mt-1.5 truncate text-sm font-semibold text-gray-900 dark:text-white"
+                                    >
+                                        {{ assignedRoom(booking)?.roomBed }}
+                                        <span
+                                            class="font-medium capitalize text-primary-600 dark:text-primary-300"
+                                        >
+                                            · {{ assignedRoom(booking)?.plan }}
+                                        </span>
                                     </p>
                                 </div>
 
@@ -587,7 +639,8 @@ onMounted(() => {
                                 </div>
 
                                 <div
-                                    class="col-span-2 rounded-xl bg-gray-50/80 px-3.5 py-3 sm:col-span-1 dark:bg-white/5"
+                                    v-if="showValidUntil(booking)"
+                                    class="rounded-xl bg-gray-50/80 px-3.5 py-3 dark:bg-white/5"
                                 >
                                     <div
                                         class="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"

@@ -11,6 +11,10 @@ class AccommodationHelper
 {
     public static function settle(AdmissionPeriod $period): void
     {
+        if (in_array($period->status, AdmissionPeriod::CLOSED_STATUSES, true)) {
+            return;
+        }
+
         $outstanding = $period->invoiceAdmissionLines()
             ->with('invoice.allocations.refundAllocations', 'invoice.invoiceAdjustments')
             ->get()

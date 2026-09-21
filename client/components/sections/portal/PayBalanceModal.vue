@@ -26,12 +26,14 @@ const emit = defineEmits<{
     (event: "update:useCredit", value: boolean): void;
 }>();
 
-const cardAmount = computed(
+const cardAmount = computed(() => (props.useCredit ? 0 : props.amount));
+
+const leftAfterCredit = computed(
     () => Math.round(Math.max(0, props.amount - props.creditToApply) * 100) / 100,
 );
 
 const creditCoversEverything = computed(
-    () => props.useCredit && props.amount > 0 && cardAmount.value <= 0,
+    () => props.useCredit && props.creditToApply > 0,
 );
 
 function peso(value: number) {
@@ -234,16 +236,20 @@ function peso(value: number) {
                                     class="flex justify-between gap-3 text-emerald-900 dark:text-emerald-300"
                                 >
                                     <span class="font-semibold">
-                                        {{
-                                            creditCoversEverything
-                                                ? "Nothing left to charge"
-                                                : "Still to charge to your card"
-                                        }}
+                                        Still unpaid after credit
                                     </span>
                                     <span class="font-bold">
-                                        {{ peso(cardAmount) }}
+                                        {{ peso(leftAfterCredit) }}
                                     </span>
                                 </div>
+
+                                <p
+                                    class="pt-1 leading-5 text-emerald-800/80 dark:text-emerald-300/70"
+                                >
+                                    Paying with credit creates 1 receipt. Credit
+                                    and card can't be combined, so untick this
+                                    to pay by card instead.
+                                </p>
 
                                 <p
                                     v-if="availableCredit > creditToApply"
@@ -277,6 +283,7 @@ function peso(value: number) {
                             :total-amount="cardAmount"
                             :processing="processing"
                             :on-card-pay="onCardPay"
+                            terms-context="balance"
                             gcash-label="GCash is not available yet"
                             gcash-description="GCash payments aren't available yet. Please use a card for now."
                             title="Card details"

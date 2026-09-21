@@ -15,6 +15,26 @@ const emit = defineEmits<{
 
 const lines = computed(() => props.receipt.lines ?? []);
 
+const tableRows = computed(() =>
+    lines.value.flatMap((line) =>
+        (line.rows?.length
+            ? line.rows
+            : [
+                  {
+                      description: line.description || "Payment for balance",
+                      amount: line.amount_applied,
+                  },
+              ]
+        ).map((row, index) => ({
+            key: `${line.line_no}-${index}`,
+            description: row.description,
+            amount: row.amount,
+            hoursBooked: index === 0 ? line.hours_booked : null,
+            creditDrawn: index === 0 && Number(line.amount_applied) < 0,
+        })),
+    ),
+);
+
 const isOnline = computed(() => props.receipt.channel === "portal");
 
 const isCredit = computed(() => props.receipt.payment.method === "CREDIT");
@@ -251,24 +271,19 @@ onBeforeUnmount(() => {
 
                             <tbody>
                                 <tr
-                                    v-for="line in lines"
-                                    :key="line.line_no"
+                                    v-for="row in tableRows"
+                                    :key="row.key"
                                     class="align-top"
                                 >
                                     <td class="border-r border-black px-2 py-1">
-                                        {{
-                                            line.description ||
-                                            "Payment for balance"
-                                        }}
+                                        {{ row.description }}
 
-                                        <span v-if="line.hours_booked">
-                                            · {{ formatDuration(line.hours_booked) }} booked
+                                        <span v-if="row.hoursBooked">
+                                            · {{ formatDuration(row.hoursBooked) }} booked
                                         </span>
 
                                         <span
-                                            v-if="
-                                                Number(line.amount_applied) < 0
-                                            "
+                                            v-if="row.creditDrawn"
                                             class="ml-1 uppercase tracking-wide"
                                         >
                                             — credit drawn
@@ -278,12 +293,12 @@ onBeforeUnmount(() => {
                                     <td
                                         class="px-2 py-1 text-right font-mono font-bold"
                                     >
-                                        {{ peso(line.amount_applied) }}
+                                        {{ peso(row.amount) }}
                                     </td>
                                 </tr>
 
                                 <tr
-                                    v-for="n in Math.max(0, 3 - lines.length)"
+                                    v-for="n in Math.max(0, 3 - tableRows.length)"
                                     :key="`pad-${n}`"
                                 >
                                     <td class="border-r border-black px-2 py-1">

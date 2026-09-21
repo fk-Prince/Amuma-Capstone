@@ -28,49 +28,8 @@ class ScheduleRepository
             END
         ";
 
-        $workedMinutes = "
-            COALESCE((
-                SELECT SUM(EXTRACT(EPOCH FROM (os.out_timestamp - os.in_timestamp)) / 60)
-                FROM schedule_assigned sa
-                JOIN online_schedules os ON os.schedule_assigned_id = sa.schedule_assigned_id
-                WHERE sa.schedule_services_id = ss.schedule_services_id
-                  AND os.out_timestamp IS NOT NULL
-            ), 0)
-        ";
-
-        $latestCheckIn = "
-            (
-                SELECT MAX(os.in_timestamp)
-                FROM schedule_assigned sa
-                JOIN online_schedules os ON os.schedule_assigned_id = sa.schedule_assigned_id
-                WHERE sa.schedule_services_id = ss.schedule_services_id
-            )
-        ";
-
-        $hasActiveSession = "
-            EXISTS (
-                SELECT 1
-                FROM schedule_assigned sa
-                JOIN online_schedules os ON os.schedule_assigned_id = sa.schedule_assigned_id
-                WHERE sa.schedule_services_id = ss.schedule_services_id
-                  AND os.in_timestamp IS NOT NULL
-                  AND os.out_timestamp IS NULL
-            )
-        ";
-
         return "(
-            SELECT MAX(
-                CASE
-                    WHEN {$hasActiveSession} THEN
-                        GREATEST({$latestCheckIn}, schedules.scheduled_at)
-                        + GREATEST({$durationMinutes} - {$workedMinutes}, 0) * INTERVAL '1 minute'
-                    WHEN {$latestCheckIn} IS NOT NULL THEN
-                        GREATEST(NOW(), schedules.scheduled_at)
-                        + GREATEST({$durationMinutes} - {$workedMinutes}, 0) * INTERVAL '1 minute'
-                    ELSE
-                        schedules.scheduled_at + ({$durationMinutes}) * INTERVAL '1 minute'
-                END
-            )
+            SELECT MAX(schedules.scheduled_at + ({$durationMinutes}) * INTERVAL '1 minute')
             FROM schedule_services ss
             LEFT JOIN services sv ON sv.service_id = ss.service_id
             WHERE ss.schedule_id = schedules.schedule_id
@@ -78,13 +37,13 @@ class ScheduleRepository
     }
 
 
-    public function employeeHasActiveConflict(
+    public function activeConflictCodes(
         int $employeeId,
         string $branchId,
         string $excludeScheduleId,
         Carbon $targetStart,
         Carbon $targetEnd
-    ): bool {
+    ): array {
         $conflictWindowSql = self::conflictWindowSql(self::branchTimezone($branchId));
 
         return ScheduleAssigned::query()
@@ -96,7 +55,23 @@ class ScheduleRepository
                     ->where('schedules.scheduled_at', '<=', $targetEnd)
                     ->whereRaw($conflictWindowSql, [$targetStart]);
             })
-            ->exists();
+            ->with('scheduleService.schedule')
+            ->get()
+            ->map(fn($assignment) => $assignment->scheduleService?->schedule?->schedule_code)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    public function employeeHasActiveConflict(
+        int $employeeId,
+        string $branchId,
+        string $excludeScheduleId,
+        Carbon $targetStart,
+        Carbon $targetEnd
+    ): bool {
+        return $this->activeConflictCodes($employeeId, $branchId, $excludeScheduleId, $targetStart, $targetEnd) !== [];
     }
 
     public function calculateScheduleDurationMinutes(Schedule $schedule): float

@@ -693,11 +693,11 @@
                                 </div>
                             </div>
 
-                            <p
+                            <!-- <p
                                 class="mt-3 text-xs text-amber-800/80 dark:text-amber-300/70"
                             >
                                 Payments already made stay put.
-                            </p>
+                            </p> -->
 
                             <div
                                 v-if="priceReference.length"

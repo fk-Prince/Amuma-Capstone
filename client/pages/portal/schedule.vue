@@ -337,9 +337,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="flex min-h-full flex-1 flex-col p-4">
+    <div class="flex min-h-full flex-1 flex-col">
         <div
-            class="flex flex-1 flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-gray-100 dark:bg-secondary dark:ring-white/10"
+            class="flex flex-1 flex-col overflow-hidden rounded-lg bg-white dark:bg-secondary shadow-sm ring-1 ring-gray-100 dark:ring-white/10"
         >
             <template v-if="isLoading">
                 <div class="flex flex-1 animate-pulse flex-col">
@@ -347,15 +347,23 @@ onBeforeUnmount(() => {
                         class="flex items-center justify-between gap-4 border-b border-gray-100 px-5 py-5 sm:px-7 sm:py-6 dark:border-white/10"
                     >
                         <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-xl bg-gray-100 dark:bg-white/10" />
+                            <div
+                                class="h-10 w-10 rounded-xl bg-gray-100 dark:bg-white/10"
+                            />
 
                             <div class="space-y-2">
-                                <div class="h-4 w-24 rounded bg-gray-100 dark:bg-white/10" />
-                                <div class="h-3 w-52 rounded bg-gray-100 dark:bg-white/10" />
+                                <div
+                                    class="h-4 w-24 rounded bg-gray-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-3 w-52 rounded bg-gray-100 dark:bg-white/10"
+                                />
                             </div>
                         </div>
 
-                        <div class="h-12 w-56 rounded-2xl bg-gray-100 dark:bg-white/10" />
+                        <div
+                            class="h-12 w-56 rounded-2xl bg-gray-100 dark:bg-white/10"
+                        />
                     </div>
 
                     <div
@@ -366,23 +374,37 @@ onBeforeUnmount(() => {
                             :key="i"
                             class="flex min-w-[230px] items-center gap-3 rounded-2xl bg-white p-3 dark:bg-secondary"
                         >
-                            <div class="h-10 w-10 rounded-full bg-gray-100 dark:bg-white/10" />
+                            <div
+                                class="h-10 w-10 rounded-full bg-gray-100 dark:bg-white/10"
+                            />
 
                             <div class="flex-1 space-y-2">
-                                <div class="h-3 w-24 rounded bg-gray-100 dark:bg-white/10" />
-                                <div class="h-2.5 w-20 rounded bg-gray-100 dark:bg-white/10" />
-                                <div class="h-3 w-16 rounded-full bg-gray-100 dark:bg-white/10" />
+                                <div
+                                    class="h-3 w-24 rounded bg-gray-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-2.5 w-20 rounded bg-gray-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-3 w-16 rounded-full bg-gray-100 dark:bg-white/10"
+                                />
                             </div>
                         </div>
                     </div>
 
-                    <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
+                    <div
+                        class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6"
+                    >
                         <div
                             class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between"
                         >
                             <div class="space-y-2">
-                                <div class="h-4 w-36 rounded bg-gray-100 dark:bg-white/10" />
-                                <div class="h-3 w-48 rounded bg-gray-100 dark:bg-white/10" />
+                                <div
+                                    class="h-4 w-36 rounded bg-gray-100 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-3 w-48 rounded bg-gray-100 dark:bg-white/10"
+                                />
                             </div>
 
                             <div
@@ -390,7 +412,9 @@ onBeforeUnmount(() => {
                             />
                         </div>
 
-                        <div class="mt-5 h-11 rounded-2xl bg-gray-50 dark:bg-white/5" />
+                        <div
+                            class="mt-5 h-11 rounded-2xl bg-gray-50 dark:bg-white/5"
+                        />
 
                         <div class="mt-5 space-y-3">
                             <div
@@ -401,13 +425,21 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
 
-                    <div class="border-t border-gray-100 bg-blue-50/40 px-5 py-4 sm:px-7 dark:border-white/10 dark:bg-blue-500/10">
+                    <div
+                        class="border-t border-gray-100 bg-blue-50/40 px-5 py-4 sm:px-7 dark:border-white/10 dark:bg-blue-500/10"
+                    >
                         <div class="flex gap-3">
-                            <div class="h-9 w-9 shrink-0 rounded-xl bg-blue-100 dark:bg-blue-500/15" />
+                            <div
+                                class="h-9 w-9 shrink-0 rounded-xl bg-blue-100 dark:bg-blue-500/15"
+                            />
 
                             <div class="flex-1 space-y-2">
-                                <div class="h-3 w-52 rounded bg-blue-100 dark:bg-blue-500/15" />
-                                <div class="h-2.5 w-full max-w-lg rounded bg-blue-100/70 dark:bg-blue-500/15" />
+                                <div
+                                    class="h-3 w-52 rounded bg-blue-100 dark:bg-blue-500/15"
+                                />
+                                <div
+                                    class="h-2.5 w-full max-w-lg rounded bg-blue-100/70 dark:bg-blue-500/15"
+                                />
                             </div>
                         </div>
                     </div>
@@ -434,7 +466,9 @@ onBeforeUnmount(() => {
                         <Info class="h-5 w-5" />
                     </div>
 
-                    <p class="mt-4 text-sm font-semibold text-gray-800 dark:text-white">
+                    <p
+                        class="mt-4 text-sm font-semibold text-gray-800 dark:text-white"
+                    >
                         Unable to load schedule
                     </p>
 
@@ -473,7 +507,9 @@ onBeforeUnmount(() => {
                                     Schedule
                                 </h1>
 
-                                <p class="text-xs text-gray-400 dark:text-gray-500">
+                                <p
+                                    class="text-xs text-gray-400 dark:text-gray-500"
+                                >
                                     Track every schedules for your loved one
                                 </p>
                             </div>
@@ -628,12 +664,16 @@ onBeforeUnmount(() => {
                     </button>
                 </div>
 
-                <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
+                <div
+                    class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6"
+                >
                     <div
                         class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between"
                     >
                         <div>
-                            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                            <p
+                                class="text-sm font-semibold text-gray-900 dark:text-white"
+                            >
                                 Patient Schedules
                             </p>
 
@@ -642,7 +682,9 @@ onBeforeUnmount(() => {
                             >
                                 <span>{{ lovedOne?.name }}</span>
 
-                                <span class="text-gray-300 dark:text-gray-500">•</span>
+                                <span class="text-gray-300 dark:text-gray-500"
+                                    >•</span
+                                >
 
                                 <span>{{ scheduleSummary }}</span>
                             </div>

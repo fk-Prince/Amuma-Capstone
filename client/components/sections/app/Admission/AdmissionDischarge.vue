@@ -325,6 +325,7 @@
                                                         </span>
 
                                                         <span
+                                                            v-if="!isMonthly"
                                                             class="flex justify-between gap-3"
                                                         >
                                                             <span
@@ -349,6 +350,7 @@
                                                         </span>
 
                                                         <span
+                                                            v-if="!isMonthly"
                                                             class="flex justify-between gap-3"
                                                         >
                                                             <span
@@ -378,13 +380,18 @@
                                                             <span
                                                                 class="text-slate-500 dark:text-gray-400"
                                                             >
-                                                                {{ periodDays }}
-                                                                ×
-                                                                {{
-                                                                    formatCurrency(
-                                                                        dailyRate,
-                                                                    )
-                                                                }}/day
+                                                                <template v-if="isMonthly">
+                                                                    Month charged
+                                                                </template>
+                                                                <template v-else>
+                                                                    {{ periodDays }}
+                                                                    ×
+                                                                    {{
+                                                                        formatCurrency(
+                                                                            dailyRate,
+                                                                        )
+                                                                    }}/day
+                                                                </template>
                                                             </span>
 
                                                             <span
@@ -458,8 +465,11 @@
                                                             <span
                                                                 class="text-slate-500 dark:text-gray-400"
                                                             >
-                                                                Half + days
-                                                                stayed
+                                                                {{
+                                                                    isMonthly
+                                                                        ? "Retained"
+                                                                        : "Half + days stayed"
+                                                                }}
                                                             </span>
 
                                                             <span
@@ -467,7 +477,7 @@
                                                             >
                                                                 {{
                                                                     formatCurrency(
-                                                                        requiredPaymentAmount,
+                                                                        currentRetainedAmount,
                                                                     )
                                                                 }}
                                                             </span>
@@ -500,7 +510,7 @@
                                             </div>
 
                                             <div
-                                                v-if="hasRequiredPayment"
+                                                v-if="currentRetainedAmount > 0"
                                                 class="flex justify-between gap-4"
                                             >
                                                 <span
@@ -514,7 +524,7 @@
                                                 >
                                                     {{
                                                         formatCurrency(
-                                                            requiredPaymentAmount,
+                                                            currentRetainedAmount,
                                                         )
                                                     }}
                                                 </span>
@@ -541,28 +551,6 @@
                                                 </span>
                                             </div>
 
-                                            <div
-                                                v-else-if="
-                                                    isUnderRequiredPayment
-                                                "
-                                                class="border-t border-slate-200 pt-2 flex justify-between gap-4 dark:border-white/10"
-                                            >
-                                                <span
-                                                    class="font-semibold text-slate-700 dark:text-gray-300"
-                                                >
-                                                    Still to collect
-                                                </span>
-
-                                                <span
-                                                    class="shrink-0 font-bold text-rose-600 dark:text-rose-300"
-                                                >
-                                                    {{
-                                                        formatCurrency(
-                                                            requiredPaymentShortfall,
-                                                        )
-                                                    }}
-                                                </span>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -613,142 +601,88 @@
                                         </span>
                                     </div>
 
-                                    <div
-                                        v-if="futureInvoices.length"
-                                        class="mt-4 max-h-60 space-y-2.5 overflow-y-auto pr-1"
-                                    >
+                                    <div class="mt-4 space-y-2">
                                         <div
-                                            v-for="invoice in futureInvoices"
-                                            :key="invoice.invoice_admission_id"
-                                            class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/10 dark:bg-white/5"
+                                            v-for="period in futureRows"
+                                            :key="period.admission_period_id"
+                                            class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/5"
                                         >
-                                            <div
-                                                class="flex items-center justify-between gap-3"
-                                            >
-                                                <div class="min-w-0">
-                                                    <div
-                                                        class="flex items-center gap-2"
-                                                    >
-                                                        <p
-                                                            class="text-sm font-semibold text-primary-950 dark:text-primary-300"
-                                                        >
-                                                            {{
-                                                                invoice.invoice_code
-                                                            }}
-                                                        </p>
-
-                                                        <span
-                                                            class="shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold uppercase dark:border-white/10"
-                                                            :class="
-                                                                statusClasses(
-                                                                    invoice.status,
-                                                                )
-                                                            "
-                                                        >
-                                                            {{ invoice.status }}
-                                                        </span>
-                                                    </div>
-
-                                                    <p
-                                                        class="mt-0.5 text-xs lowercase text-slate-500 dark:text-gray-400"
-                                                    >
-                                                        {{
-                                                            invoice.contract
-                                                                ?.billing_cycle ??
-                                                            "—"
-                                                        }}
-                                                        billing
-                                                    </p>
-
-                                                    <div
-                                                        v-if="
-                                                            hasAnyAmount(
-                                                                invoice,
-                                                            )
-                                                        "
-                                                        class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs"
-                                                    >
-                                                        <span
-                                                            v-if="
-                                                                hasAmount(
-                                                                    invoice.paid_amount,
-                                                                )
-                                                            "
-                                                            class="text-slate-500 dark:text-gray-400"
-                                                        >
-                                                            Paid
-                                                            {{
-                                                                formatCurrency(
-                                                                    invoice.paid_amount,
-                                                                )
-                                                            }}
-                                                        </span>
-
-                                                        <span
-                                                            v-if="
-                                                                hasAmount(
-                                                                    invoice.refunded_amount,
-                                                                )
-                                                            "
-                                                            class="text-rose-500 dark:text-rose-300"
-                                                        >
-                                                            Refunded
-                                                            {{
-                                                                formatCurrency(
-                                                                    invoice.refunded_amount,
-                                                                )
-                                                            }}
-                                                        </span>
-
-                                                        <span
-                                                            v-if="
-                                                                hasAmount(
-                                                                    invoice.net_paid_amount,
-                                                                )
-                                                            "
-                                                            class="font-medium text-emerald-600 dark:text-emerald-300"
-                                                        >
-                                                            Refundable
-                                                            {{
-                                                                formatCurrency(
-                                                                    invoice.net_paid_amount,
-                                                                )
-                                                            }}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
+                                            <div class="min-w-0">
                                                 <p
-                                                    class="shrink-0 text-sm font-semibold text-primary-950 dark:text-primary-300"
+                                                    class="text-sm font-semibold capitalize text-primary-950 dark:text-primary-300"
                                                 >
                                                     {{
-                                                        formatCurrency(
-                                                            invoice.price,
-                                                        )
+                                                        (
+                                                            period.billing_cycle ??
+                                                            ""
+                                                        ).toLowerCase()
                                                     }}
+                                                    ·
+                                                    {{ period.accommodation_type }}
+                                                </p>
+
+                                                <p
+                                                    class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
+                                                >
+                                                    {{ formatDate(period.start_date) }}
+                                                    →
+                                                    {{ formatDate(period.end_date) }}
                                                 </p>
                                             </div>
+
+                                            <p
+                                                class="shrink-0 text-sm font-semibold text-primary-950 dark:text-primary-300"
+                                            >
+                                                {{ formatCurrency(period.price) }}
+                                            </p>
                                         </div>
                                     </div>
 
                                     <div
                                         v-if="hasRefundableFutureInvoices"
-                                        class="mt-5 rounded-lg border border-emerald-200 bg-emerald-50/60 p-3.5 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+                                        class="mt-4 flex flex-col gap-2.5 sm:flex-row"
                                     >
-                                        <p
-                                            class="text-sm font-medium text-emerald-900 dark:text-emerald-300"
+                                        <div
+                                            class="flex-1 rounded-lg bg-slate-50 p-3 dark:bg-white/5"
                                         >
-                                            These periods will be refunded
-                                        </p>
+                                            <p
+                                                class="text-[11px] text-slate-500 dark:text-gray-400"
+                                            >
+                                                Paid
+                                            </p>
 
-                                        <p
-                                            class="mt-0.5 text-xs leading-5 text-emerald-800/80 dark:text-emerald-300/70"
+                                            <p
+                                                class="mt-0.5 text-sm font-semibold text-primary-950 dark:text-primary-300"
+                                            >
+                                                {{ formatCurrency(futurePaidAmount) }}
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            class="flex-1 rounded-lg bg-emerald-50 p-3 dark:bg-emerald-500/10"
                                         >
-                                            The patient never stays them, so
-                                            everything paid on the upcoming
-                                            periods is returned automatically.
-                                        </p>
+                                            <p
+                                                class="text-[11px] text-emerald-700 dark:text-emerald-300"
+                                            >
+                                                To be refunded
+                                            </p>
+
+                                            <p
+                                                class="mt-0.5 text-sm font-semibold text-emerald-700 dark:text-emerald-300"
+                                            >
+                                                {{ formatCurrency(futureRefundAmount) }}
+                                            </p>
+                                        </div>
                                     </div>
+
+                                    <p
+                                        v-if="hasRefundableFutureInvoices"
+                                        class="mt-4 text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                    >
+                                        The patient never stays these periods,
+                                        so everything paid on them is returned
+                                        automatically.
+                                    </p>
 
                                     <p
                                         v-else
@@ -802,55 +736,6 @@
                         </div>
 
                         <div
-                            v-if="showCurrentPeriodBlock && hasRequiredPayment"
-                            class="mt-6 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 dark:border-white/10 dark:bg-white/5"
-                        >
-                            <div>
-                                <p
-                                    class="text-sm font-semibold text-slate-700 dark:text-gray-400"
-                                >
-                                    Required payment
-                                </p>
-
-                                <p
-                                    class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
-                                >
-                                    {{ requiredPaymentDescription }}
-                                </p>
-                            </div>
-
-                            <div class="text-right">
-                                <p
-                                    class="text-lg font-bold"
-                                    :class="
-                                        isUnderRequiredPayment
-                                            ? 'text-rose-600 dark:text-rose-300'
-                                            : 'text-emerald-600 dark:text-emerald-300'
-                                    "
-                                >
-                                    {{ formatCurrency(requiredPaymentAmount) }}
-                                </p>
-
-                                <p
-                                    class="mt-0.5 text-xs"
-                                    :class="
-                                        isUnderRequiredPayment
-                                            ? 'text-rose-500 dark:text-rose-300'
-                                            : 'text-emerald-600 dark:text-emerald-300'
-                                    "
-                                >
-                                    {{
-                                        isUnderRequiredPayment
-                                            ? `Short by ${formatCurrency(
-                                                  requiredPaymentShortfall,
-                                              )}`
-                                            : "Payment threshold met"
-                                    }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div
                             v-if="outstanding"
                             class="mt-6 flex items-center justify-between gap-3 rounded-xl border px-5 py-4"
                             :class="
@@ -869,8 +754,9 @@
                                 <p
                                     class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                 >
-                                    Everything this patient owes, not counting
-                                    periods that have not started.
+                                    What this admission still owes, not counting
+                                    periods that have not started. Services and
+                                    schedules are not included.
                                 </p>
                             </div>
 
@@ -915,26 +801,52 @@
                         class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-4 sm:px-8 py-5 dark:border-white/10 dark:bg-white/5"
                     >
                         <div
-                            v-if="
-                                showCurrentPeriodBlock && isUnderRequiredPayment
+                            v-if="owesBalance"
+                            class="flex items-start gap-3 rounded-lg border p-3.5"
+                            :class="
+                                mayForce
+                                    ? 'border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10'
+                                    : 'border-rose-200 bg-rose-50 dark:border-rose-500/20 dark:bg-rose-500/10'
                             "
-                            class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3.5 dark:border-amber-500/20 dark:bg-amber-500/10"
                         >
                             <div>
                                 <p
-                                    class="text-sm font-semibold text-amber-900 dark:text-amber-300"
+                                    class="text-sm font-semibold"
+                                    :class="
+                                        mayForce
+                                            ? 'text-amber-900 dark:text-amber-300'
+                                            : 'text-rose-800 dark:text-rose-300'
+                                    "
                                 >
-                                    Payment required before discharge
+                                    {{
+                                        mayForce
+                                            ? "Not fully paid"
+                                            : "You don't have permission to do this"
+                                    }}
                                 </p>
 
                                 <p
-                                    class="mt-0.5 text-xs leading-5 text-amber-800 dark:text-amber-300"
+                                    class="mt-0.5 text-xs leading-5"
+                                    :class="
+                                        mayForce
+                                            ? 'text-amber-800 dark:text-amber-300'
+                                            : 'text-rose-700 dark:text-rose-300'
+                                    "
                                 >
-                                    The patient has paid
-                                    {{ formatCurrency(currentNetPaidAmount) }}
-                                    but must have at least
-                                    {{ formatCurrency(requiredPaymentAmount) }}
-                                    paid before discharge.
+                                    <template v-if="mayForce">
+                                        This patient still owes
+                                        {{ formatCurrency(overallBalance) }}.
+                                        Force discharge ends the stay and
+                                        writes this admission's unpaid balance off as bad debt.
+                                    </template>
+
+                                    <template v-else>
+                                        This patient still owes
+                                        {{ formatCurrency(overallBalance) }}.
+                                        Only someone with force discharge
+                                        permission can discharge a patient with
+                                        an unpaid balance.
+                                    </template>
                                 </p>
                             </div>
                         </div>
@@ -951,7 +863,7 @@
 
                             <button
                                 type="button"
-                                :disabled="loading || isUnderRequiredPayment"
+                                :disabled="loading || (owesBalance && !mayForce)"
                                 class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
                                 @click="handleConfirm"
                             >
@@ -981,7 +893,9 @@
                                 {{
                                     loading
                                         ? "Discharging…"
-                                        : "Discharge patient"
+                                        : owesBalance
+                                          ? "Force discharge"
+                                          : "Discharge patient"
                                 }}
                             </button>
                         </div>
@@ -989,6 +903,26 @@
                 </div>
             </div>
         </Transition>
+
+        <ConfirmDialog
+            :open="confirming"
+            :title="owesBalance ? 'Force discharge patient?' : 'Discharge patient?'"
+            :message="
+                owesBalance
+                    ? `This patient still owes ${formatCurrency(overallBalance)}.`
+                    : 'This ends the current admission and any future periods.'
+            "
+            :description="
+                owesBalance
+                    ? 'This admission\'s unpaid balance will be marked as bad debt and written off. Services and schedules are not affected. This action cannot be undone.'
+                    : 'This action cannot be undone.'
+            "
+            :confirm-label="owesBalance ? 'Yes, force discharge' : 'Yes, discharge'"
+            variant="danger"
+            :loading="loading"
+            @confirm="confirmDischargeNow"
+            @cancel="confirming = false"
+        />
     </Teleport>
 </template>
 
@@ -1003,6 +937,9 @@ import { INVOICE_STATUS } from "~/types/invoice";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
 import { useDischargeRefund } from "~/composables/useDischargeRefund";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
+import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 
 const props = withDefaults(
     defineProps<{
@@ -1025,6 +962,7 @@ const emit = defineEmits<{
             refund: boolean;
             currentRefundAmount: number | null;
             note: string;
+            force: boolean;
         },
     ];
     cancel: [];
@@ -1051,6 +989,9 @@ const {
     periodStart,
     periodEnd,
     daysStayedAmount,
+    currentRetainedAmount,
+    totalPaidAmount,
+    currentBillingCycle,
     daysSinceAdmissionStart,
     feeBaseAmount,
     isWithinRefundWindow,
@@ -1070,16 +1011,51 @@ const outstanding = computed(
 );
 
 const overallBalance = computed(() =>
-    getNumber(outstanding.value?.balance_excluding_future),
+    getNumber(
+        outstanding.value?.admission_balance ??
+            outstanding.value?.accommodation_balance,
+    ),
 );
 
 const futureInvoices = computed(() => {
     return props.futureInvoices ?? [];
 });
 
-const futureInvoiceCount = computed(() => {
-    return futureInvoices.value.length;
-});
+const futureRows = computed(
+    () => props.admission?.discharge_calculation?.future_periods ?? [],
+);
+
+const futureInvoiceCount = computed(() => futureRows.value.length);
+
+const futurePaidAmount = computed(
+    () =>
+        Math.round(
+            futureRows.value.reduce(
+                (sum, row) => sum + getNumber(row.paid),
+                0,
+            ) * 100,
+        ) / 100,
+);
+
+const futureRefundAmount = computed(
+    () =>
+        Math.round(
+            futureRows.value.reduce(
+                (sum, row) => sum + getNumber(row.refundable),
+                0,
+            ) * 100,
+        ) / 100,
+);
+
+const isMonthly = computed(() => currentBillingCycle.value === "MONTHLY");
+
+const { canForceDischarge } = usePermissions();
+
+const mayForce = computed(() => canForceDischarge(Modules.Admissions));
+
+const owesBalance = computed(() => overallBalance.value > 0);
+
+const confirming = ref(false);
 
 function getNumber(value: unknown, fallback = 0): number {
     const number = Number(value);
@@ -1100,7 +1076,7 @@ function isRefundable(invoice?: InvoiceAccommodation | null): boolean {
 }
 
 const hasRefundableFutureInvoices = computed(() => {
-    return futureInvoices.value.some((invoice) => isRefundable(invoice));
+    return futureRows.value.some((row) => getNumber(row.refundable) > 0);
 });
 
 const showCurrentPeriodBlock = computed(() => {
@@ -1154,17 +1130,6 @@ const isCurrentInvoiceRefundable = computed(() => {
     return getNetPaid(currentInvoice.value) > 0;
 });
 
-const canDischarge = computed(() => {
-    if (!showCurrentPeriodBlock.value) {
-        return true;
-    }
-
-    if (requiredPaymentAmount.value === null) {
-        return true;
-    }
-
-    return !isUnderRequiredPayment.value;
-});
 
 function statusClasses(status?: string | null) {
     const s = (status ?? "").toLowerCase();
@@ -1180,9 +1145,15 @@ function handleConfirm() {
         return;
     }
 
-    if (!canDischarge.value) {
+    if (owesBalance.value && !mayForce.value) {
         return;
     }
+
+    confirming.value = true;
+}
+
+function confirmDischargeNow() {
+    confirming.value = false;
 
     proceedWithDischarge();
 }
@@ -1198,6 +1169,8 @@ function proceedWithDischarge() {
             : null,
 
         note: dischargeNote.value.trim(),
+
+        force: owesBalance.value,
     });
 }
 
@@ -1207,6 +1180,7 @@ function handleClose() {
     }
 
     dischargeNote.value = "";
+    confirming.value = false;
 
     emit("cancel");
 }

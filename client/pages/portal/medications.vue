@@ -129,18 +129,17 @@ function splitRecordsByCategory(rawRecords: any[] | null | undefined) {
     };
 }
 
-function mapPatientRecord(item: any): LovedOne {
-    const patient = item?.patient ?? {};
+const medicationLoaded = ref<Record<number, boolean>>({});
+const isSwitchingMedication = ref(false);
 
-    const { meds, vitalRecords } = splitRecordsByCategory(patient.medication);
+async function fetchMedicationFor(patientId: number) {
+    const res = await patientAccessService.retrieveAction({
+        action: "overview",
+        section: "medication",
+        patient_id: patientId,
+    });
 
-    return {
-        patient_id: patient.patient_id ?? 0,
-        uuid: patient.uuid ?? null,
-        name: patient.full_name || "Unnamed Resident",
-        medications: meds,
-        vitals: vitalRecords,
-    };
+    return splitRecordsByCategory(res?.data?.patient?.medication);
 }
 
 async function loadPatientData() {
@@ -151,14 +150,40 @@ async function loadPatientData() {
     try {
         const res = await patientAccessService.retrieveAction({
             action: "overview",
-            section: "medication",
+            section: "profile",
         });
 
         const records: any[] = Array.isArray(res?.data) ? res.data : [];
 
         if (records.length) {
-            lovedOnes.value = records.map(mapPatientRecord);
+            lovedOnes.value = records.map((item: any) => {
+                const patient = item?.patient ?? {};
+
+                return {
+                    patient_id: patient.patient_id ?? 0,
+                    uuid: patient.uuid ?? null,
+                    name: patient.full_name || "Unnamed Resident",
+                    medications: [],
+                    vitals: [],
+                };
+            });
+
             selectedIndex.value = resolveIndex(lovedOnes.value);
+
+            const patientId = lovedOnes.value[selectedIndex.value]?.patient_id;
+
+            if (patientId) {
+                const { meds, vitalRecords } =
+                    await fetchMedicationFor(patientId);
+                const lo = lovedOnes.value[selectedIndex.value];
+
+                if (lo) {
+                    lo.medications = meds;
+                    lo.vitals = vitalRecords;
+                }
+
+                medicationLoaded.value[selectedIndex.value] = true;
+            }
         } else {
             lovedOnes.value = [];
             noPatients.value = true;
@@ -175,6 +200,32 @@ async function loadPatientData() {
     updateLovedOnesScrollState();
 }
 
+watch(selectedIndex, async (idx) => {
+    if (medicationLoaded.value[idx]) return;
+
+    const patientId = lovedOnes.value[idx]?.patient_id;
+
+    if (!patientId) return;
+
+    isSwitchingMedication.value = true;
+
+    try {
+        const { meds, vitalRecords } = await fetchMedicationFor(patientId);
+        const lo = lovedOnes.value[idx];
+
+        if (lo) {
+            lo.medications = meds;
+            lo.vitals = vitalRecords;
+        }
+
+        medicationLoaded.value[idx] = true;
+    } catch (err) {
+        console.error("Error loading medications for resident:", err);
+    } finally {
+        isSwitchingMedication.value = false;
+    }
+});
+
 onMounted(() => {
     loadPatientData();
     window.addEventListener("resize", updateLovedOnesScrollState);
@@ -186,7 +237,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="min-h-full space-y-6 p-5 mb-10">
+    <div
+        class="min-h-full space-y-6 mb-10 rounded-lg bg-white dark:bg-secondary"
+    >
         <div v-if="isLoading" class="space-y-5">
             <div
                 class="animate-pulse rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
@@ -318,7 +371,7 @@ onBeforeUnmount(() => {
         <template v-else>
             <div
                 v-if="lovedOnes.length"
-                class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                class="overflow-hidden border rounded-t-lg border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div
                     class="border-b border-gray-100 px-5 py-4 sm:px-6 dark:border-white/10"
@@ -424,7 +477,7 @@ onBeforeUnmount(() => {
             </div>
 
             <div
-                class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                class="overflow-hidden rounded-b-lg border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div
                     class="border-b border-gray-100 px-5 py-5 sm:px-6 dark:border-white/10"
@@ -490,7 +543,14 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
 
-                <div class="p-5 sm:p-6">
+                <div
+                    class="p-5 sm:p-6 transition-opacity"
+                    :class="
+                        isSwitchingMedication
+                            ? 'pointer-events-none animate-pulse opacity-40'
+                            : ''
+                    "
+                >
                     <div class="mb-4 flex items-center gap-2">
                         <Pill
                             class="h-4 w-4 text-primary-600 dark:text-primary-300"
@@ -536,7 +596,12 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div
-                    class="border-t border-gray-100 p-5 sm:p-6 dark:border-white/10"
+                    class="border-t border-gray-100 p-5 sm:p-6 transition-opacity dark:border-white/10"
+                    :class="
+                        isSwitchingMedication
+                            ? 'pointer-events-none animate-pulse opacity-40'
+                            : ''
+                    "
                 >
                     <div class="mb-4 flex items-center justify-between gap-4">
                         <div class="flex items-center gap-2">

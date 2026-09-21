@@ -19,7 +19,7 @@ export default defineNuxtRouteMiddleware((to) => {
         });
     }
 
-    if (!user.value.hasBooking) {
+    if (!user.value.hasBooking && !user.value.hasPatient) {
         return navigateTo({
             path: "/unauthenticated",
             query: { redirect: to.fullPath, reason: "no-booking" },

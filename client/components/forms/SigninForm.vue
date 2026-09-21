@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { useRoute } from "vue-router";
 import { Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-vue-next";
 import AlertMessage from "../ui/AlertMessage.vue";
 import AuthTransitionScreen from "../ui/AuthTransitionScreen.vue";
@@ -11,6 +12,7 @@ import type { Alert } from "~/types/alert.js";
 import type { SigninRequest } from "~/types/auth.js";
 import { useBranchStore } from "#imports";
 
+const route = useRoute();
 const branch = useBranchStore();
 const user = useAuthUser();
 const redirecting = ref(false);
@@ -93,6 +95,14 @@ async function handleSignIn() {
         loading.value = false;
     }
 }
+
+onMounted(() => {
+    const providerError = route.query.error;
+
+    if (typeof providerError === "string" && providerError) {
+        showAlert(alert, "error", providerError, 0);
+    }
+});
 
 async function googleUrl() {
     loading.value = true;

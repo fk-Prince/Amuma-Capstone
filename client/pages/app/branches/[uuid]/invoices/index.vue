@@ -1,6 +1,6 @@
 <template>
     <div
-        class="flex min-h-screen-header flex-1 flex-col gap-6 bg-slate-100 dark:bg-surface"
+        class="flex min-h-screen-header flex-1 flex-col gap-2 bg-slate-100 dark:bg-surface"
     >
         <InvoiceOverview
             :overview="overview"
@@ -8,9 +8,9 @@
             :loading="overviewLoading"
         />
 
-        <div class="flex-1 flex flex-col gap-6 min-h-0 px-6 pb-6">
+        <div class="flex-1 flex flex-col gap-3 min-h-0">
             <div
-                class="flex flex-1 min-h-0 bg-white border rounded-2xl mt-3 border-slate-200 flex-col overflow-hidden dark:bg-secondary dark:border-white/10"
+                class="flex flex-1 min-h-0 bg-white border rounded-lg border-slate-200 flex-col overflow-hidden dark:bg-secondary dark:border-white/10"
             >
                 <div
                     class="flex flex-col gap-4 border-b border-slate-200 p-4 shrink-0 lg:flex-row lg:items-center lg:justify-between dark:border-white/10"
@@ -215,7 +215,14 @@
 
                     <template #cell-actions="{ row }">
                         <button
-                            v-if="row.status?.toLowerCase() !== 'void'"
+                            v-if="
+                                ![
+                                    'void',
+                                    'paid',
+                                    'written off',
+                                    'written_off',
+                                ].includes(row.status?.toLowerCase())
+                            "
                             type="button"
                             class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-500/20 dark:text-red-300 dark:hover:bg-red-500/10"
                             @click.stop="openVoidModal(row)"

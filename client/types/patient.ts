@@ -7,6 +7,7 @@ import type { DischargeCalculation } from "./invoice";
 export interface Patient {
     patient_id?: number;
     uuid?: string;
+    patient_code?: string | null;
     first_name: string;
     middle_name: string;
     last_name: string;
@@ -23,6 +24,7 @@ export interface Patient {
     address?: string;
     reference_id?: string;
     allergies?: string;
+    avatar?: File | string | null;
 }
 
 export interface Guardian {
@@ -113,6 +115,7 @@ export interface PatientRetrieve {
     uuid: string;
     patient_code?: string | null;
     full_name: string;
+    avatar?: string | null;
     first_name: string;
     middle_name?: string;
     last_name: string;
@@ -167,6 +170,7 @@ export interface PatientBilling {
 
 export interface Admission {
     patient_admission_id: number;
+    caregiver_count?: number;
     status: string;
     admitted_at: string;
     end_date?: string | null;
@@ -210,6 +214,7 @@ export interface InvoiceAccommodation {
     invoice_code: string;
     invoice_id: number;
     price: string;
+    description?: string | null;
 
     paid_amount: string;
     refunded_amount: string;

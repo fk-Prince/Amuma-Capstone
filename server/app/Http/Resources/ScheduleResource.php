@@ -231,6 +231,7 @@ class ScheduleResource extends JsonResource
                 'patient_id' => $patient->patient_id,
                 'patient_uuid' => $patient->uuid,
                 'patient_code' => $patient->patient_code,
+                'avatar' => $patient->avatar_url,
                 'full_name' => trim(
                     "{$patient->first_name} {$patient->last_name}"
                 ),
@@ -277,6 +278,8 @@ class ScheduleResource extends JsonResource
                         'hours_booked' => $scheduleService->hours_booked !== null
                             ? (float) $scheduleService->hours_booked
                             : null,
+
+                        'price' => (float) ($scheduleService->invoiceServices->first()->price ?? 0),
 
                         'duration_minutes' => $this->resolveDurationMinutes($scheduleService),
 

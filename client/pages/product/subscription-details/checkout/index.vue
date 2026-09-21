@@ -1,6 +1,6 @@
 ﻿<template>
     <div class="min-h-screen bg-slate-50 w-full pt-[124px] dark:bg-secondary">
-        <div class="w-[88%] max-w-[1600px] mx-auto px-4 sm:px-10 py-10">
+        <div class="w-[88%] max-w-[1600px] mx-auto px-5 py-10">
             <div class="mb-8">
                 <h1 class="text-2xl font-bold text-slate-800 dark:text-white">
                     Confirm your subscription
@@ -12,7 +12,7 @@
             </div>
 
             <div
-                class="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-10 items-start"
+                class="w-full grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-10 items-start"
             >
                 <div class="w-full">
                     <CheckoutSummary :total-amount="total" />

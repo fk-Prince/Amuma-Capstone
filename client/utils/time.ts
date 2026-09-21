@@ -6,12 +6,18 @@ function minutesToHHMM(totalMinutes: number): string {
     return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
-// GENERATE 00:00 to 23:00
+// GENERATE 00:00 to 23:59 — 23:59 is appended as the true end-of-day option
+// so a closing time can represent midnight without colliding with "00:00",
+// which is reserved to mean "open 24 hours".
 export function generate24HourTimes(stepMinutes = 60): string[] {
     const times: string[] = [];
 
     for (let totalMinutes = 0; totalMinutes < 24 * 60; totalMinutes += stepMinutes) {
         times.push(minutesToHHMM(totalMinutes));
+    }
+
+    if (times[times.length - 1] !== "23:59") {
+        times.push("23:59");
     }
 
     return times;
@@ -48,10 +54,6 @@ export function format24To12(time: string | undefined | null) {
     let hour = Number(hourStr);
 
     const ampm = hour >= 12 ? "PM" : "AM";
-
-    if (hour === 0) {
-        return `00:${minute} AM`;
-    }
 
     hour = hour % 12 || 12;
 
@@ -100,7 +102,7 @@ export function generateAvailableAmPmTimesBySchedule(
     let closingMinutes = 24 * 60;
 
     // Not 24 hours
-    if (!(openingTime === "00:00" && closingTime === "00:00")) {
+    if (!(openingTime === "00:00" && (closingTime === "00:00" || closingTime === "23:59"))) {
         const [openHour = 0, openMinute = 0] = openingTime.split(":").map(Number);
         const [closeHour = 0, closeMinute = 0] = closingTime.split(":").map(Number);
 
@@ -151,7 +153,8 @@ export function getBranchTimeDisplay(
     }
 
     const is24HourWindow =
-        availability.opening === "00:00" && availability.closing === "00:00";
+        availability.opening === "00:00" &&
+        (availability.closing === "00:00" || availability.closing === "23:59");
 
     if (!isOpen) {
         return {
@@ -197,7 +200,7 @@ export const getTimeSlots = (
     let openingHour = parseHourString(openingTime);
     let closingHour = parseHourString(closingTime);
 
-    if (openingTime === "00:00" && closingTime === "00:00") {
+    if (openingTime === "00:00" && (closingTime === "00:00" || closingTime === "23:59")) {
         openingHour = 0;
         closingHour = 24;
     }
@@ -404,15 +407,18 @@ export const formatDurationShort = (hours: number) => {
 export const formatDuration = (hours: number) => {
     if (!hours || hours <= 0) return "";
 
-    let remainingHours = hours;
+    let remaining = Math.round(hours * 60);
 
-    const months = Math.floor(remainingHours / (24 * 30));
-    remainingHours %= 24 * 30;
+    if (remaining <= 0) return "";
 
-    const days = Math.floor(remainingHours / 24);
-    remainingHours %= 24;
+    const months = Math.floor(remaining / (24 * 30 * 60));
+    remaining %= 24 * 30 * 60;
 
-    const roundedHours = Math.round(remainingHours * 100) / 100;
+    const days = Math.floor(remaining / (24 * 60));
+    remaining %= 24 * 60;
+
+    const wholeHours = Math.floor(remaining / 60);
+    const minutes = remaining % 60;
 
     const parts: string[] = [];
 
@@ -424,11 +430,15 @@ export const formatDuration = (hours: number) => {
         parts.push(`${days} day${days > 1 ? "s" : ""}`);
     }
 
-    if (roundedHours) {
-        parts.push(
-            `${roundedHours} hr${roundedHours > 1 ? "s" : ""}`
-        );
+    if (wholeHours) {
+        parts.push(`${wholeHours} hr${wholeHours > 1 ? "s" : ""}`);
     }
 
-    return parts.join(" and ");
+    if (minutes) {
+        parts.push(`${minutes} min${minutes > 1 ? "s" : ""}`);
+    }
+
+    if (parts.length < 2) return parts[0] ?? "";
+
+    return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
 };

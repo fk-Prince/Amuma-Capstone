@@ -1,14 +1,14 @@
 <template>
-    <div
-        class="flex h-screen-header min-h-0 w-full bg-slate-100 dark:bg-surface lg:p-6"
-    >
+    <div class="flex h-screen-header min-h-0 w-full dark:bg-surface">
         <div
             class="grid h-full min-h-0 w-full grid-cols-1 gap-0 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-5"
         >
             <aside
                 class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-2xl lg:border lg:border-slate-200 dark:bg-secondary dark:lg:border-white/10"
             >
-                <div class="shrink-0 border-b border-slate-200 p-4 dark:border-white/10">
+                <div
+                    class="shrink-0 border-b border-slate-200 p-4 dark:border-white/10"
+                >
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p
@@ -17,7 +17,9 @@
                                 Messages
                             </p>
 
-                            <p class="mt-0.5 text-xs leading-4 text-slate-400 dark:text-gray-500">
+                            <p
+                                class="mt-0.5 text-xs leading-4 text-slate-400 dark:text-gray-500"
+                            >
                                 {{
                                     tab === "families"
                                         ? "Families of patients assigned to you."
@@ -52,7 +54,11 @@
                             @click="switchTab(option.value)"
                         >
                             <component
-                                :is="option.value === 'families' ? Users : Stethoscope"
+                                :is="
+                                    option.value === 'families'
+                                        ? Users
+                                        : Stethoscope
+                                "
                                 class="h-3.5 w-3.5 shrink-0"
                             />
 
@@ -138,7 +144,9 @@
                                     {{ patientLabel(item.patient_names) }}
                                 </p>
 
-                                <p class="mt-1 truncate text-xs text-slate-400 dark:text-gray-500">
+                                <p
+                                    class="mt-1 truncate text-xs text-slate-400 dark:text-gray-500"
+                                >
                                     {{ item.last_message ?? "No messages yet" }}
                                 </p>
                             </div>
@@ -269,7 +277,9 @@
                                 </button>
                             </div>
 
-                            <div class="border-b border-slate-100 p-2.5 dark:border-white/10">
+                            <div
+                                class="border-b border-slate-100 p-2.5 dark:border-white/10"
+                            >
                                 <BaseInput
                                     v-model="composerSearch"
                                     placeholder="Search by name or email..."
@@ -465,12 +475,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import {
-    MessageCircle,
-    PenSquare,
-    Users,
-    Stethoscope,
-} from "lucide-vue-next";
+import { MessageCircle, PenSquare, Users, Stethoscope } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
 import MessageThread from "~/components/messaging/MessageThread.vue";

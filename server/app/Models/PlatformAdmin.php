@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\CapitalizesNames;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 class PlatformAdmin extends Model
 {
+    use CapitalizesNames;
+
 
     protected $primaryKey = 'platform_admin_id';
 

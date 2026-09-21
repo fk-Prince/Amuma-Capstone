@@ -17,6 +17,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnlineScheduleController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PatientAccessController;
+use App\Http\Controllers\CaregiverShiftController;
 use App\Http\Controllers\PatientAdmissionController;
 use App\Http\Controllers\PatientActivityController;
 use App\Http\Controllers\PatientController;
@@ -90,6 +91,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/action', [BookingController::class, 'action']);
     Route::post('/invoices/action', [InvoiceController::class, 'action']);
     Route::post('/admissions/action', [PatientAdmissionController::class, 'action']);
+    Route::get('/caregiver-shifts', [CaregiverShiftController::class, 'index']);
+    Route::post('/caregiver-shifts', [CaregiverShiftController::class, 'store']);
+    Route::put('/caregiver-shifts/{id}', [CaregiverShiftController::class, 'update']);
     Route::post('/subscriptions/action', [SubscriptionController::class, 'action']);
     Route::apiResource('plans', PlanController::class)->only(['update']);
 

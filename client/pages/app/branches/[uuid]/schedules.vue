@@ -1,12 +1,18 @@
 <template>
-    <div class="min-h-screen-header bg-light p-3 sm:p-4 lg:p-6 font-sans dark:bg-surface">
+    <div class="min-h-screen-header bg-light font-sans dark:bg-surface">
         <div
-            class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 w-full lg:h-[calc(100dvh-var(--header-h)-3rem)]"
+            class="grid grid-cols-1 gap-4 w-full lg:h-[calc(100dvh-var(--header-h)-3rem)]"
+            :class="showOverview && isDesktop ? 'lg:grid-cols-[1fr_400px]' : ''"
         >
             <div class="flex min-w-0 min-h-0 flex-col">
-                <ScheduleFilter />
+                <ScheduleFilter
+                    :overview-visible="showOverview"
+                    @toggle-overview="showOverview = !showOverview"
+                />
 
-                <div class="flex-1 w-full mx-auto rounded-b-2xl bg-white dark:bg-secondary">
+                <div
+                    class="flex-1 w-full mx-auto rounded-b-lg bg-white dark:bg-secondary"
+                >
                     <div v-if="pending" class="p-4 space-y-3">
                         <div
                             v-for="n in 6"
@@ -18,8 +24,12 @@
                             />
 
                             <div class="flex-1 space-y-2">
-                                <div class="h-3 w-1/3 rounded bg-slate-200 dark:bg-white/15" />
-                                <div class="h-2.5 w-1/2 rounded bg-slate-100 dark:bg-white/10" />
+                                <div
+                                    class="h-3 w-1/3 rounded bg-slate-200 dark:bg-white/15"
+                                />
+                                <div
+                                    class="h-2.5 w-1/2 rounded bg-slate-100 dark:bg-white/10"
+                                />
                             </div>
 
                             <div
@@ -57,11 +67,15 @@
                             </svg>
                         </div>
 
-                        <p class="text-sm font-semibold text-slate-600 dark:text-gray-400">
+                        <p
+                            class="text-sm font-semibold text-slate-600 dark:text-gray-400"
+                        >
                             No schedules found
                         </p>
 
-                        <p class="max-w-xs text-sm text-slate-400 dark:text-gray-500">
+                        <p
+                            class="max-w-xs text-sm text-slate-400 dark:text-gray-500"
+                        >
                             Try adjusting your filters or check back later for
                             new schedules.
                         </p>
@@ -117,7 +131,7 @@
                 </div>
             </div>
 
-            <div class="min-w-0 lg:flex hidden">
+            <div v-if="showOverview && isDesktop" class="min-w-0 flex">
                 <ScheduleOverview
                     :overview="overviewData"
                     @new-schedule="handleNewScheduleEvent"
@@ -125,13 +139,54 @@
             </div>
         </div>
 
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition duration-200 ease-out"
+                enter-from-class="opacity-0"
+                leave-active-class="transition duration-150 ease-in"
+                leave-to-class="opacity-0"
+            >
+                <div
+                    v-if="showOverview && !isDesktop"
+                    class="fixed inset-0 z-50"
+                >
+                    <div
+                        class="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
+                        @click="showOverview = false"
+                    />
+
+                    <aside
+                        class="absolute inset-y-0 right-0 flex w-[min(400px,88vw)] flex-col overflow-y-auto bg-[#EEF3FB] p-3 shadow-2xl dark:bg-surface"
+                    >
+                        <button
+                            type="button"
+                            aria-label="Hide schedule overview"
+                            class="mb-2 ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-black/5 dark:text-gray-400 dark:hover:bg-white/10"
+                            @click="showOverview = false"
+                        >
+                            <X class="h-4 w-4" />
+                        </button>
+
+                        <ScheduleOverview
+                            :overview="overviewData"
+                            @new-schedule="handleNewScheduleEvent"
+                        />
+                    </aside>
+                </div>
+            </Transition>
+        </Teleport>
+
         <AssignEmployeeModal
             :open="assignModalOpen"
             :schedule="assigneSchedule"
             :employees="employeeData"
             :isFetching="isFetchingEmployee"
             :isSaving="savingAssignment"
-            @close="assignModalOpen = false"
+            :conflicts="assignConflicts"
+            @close="
+                assignModalOpen = false;
+                assignConflicts = [];
+            "
             @confirm="onAssignSubmit"
         />
 
@@ -142,9 +197,11 @@
             :is-fetching-employees="isFetchingEmployee"
             :submit-loading="updatingAssignment"
             :save-conflicts="saveConflicts"
+            :conflict-messages="updateConflicts"
             @close="
                 showScheduleModal = false;
                 saveConflicts = null;
+                updateConflicts = [];
             "
             @schedule="onUpdateSchedule"
             @reschedule-preview="onReschedulePreview"
@@ -166,6 +223,29 @@ import ScheduleDetails from "~/components/sections/app/Patient/ScheduleDetails.v
 import { useToast } from "~/composables/useToast";
 import AssignEmployeeModal from "~/components/sections/app/Patient/AssignEmployeeModal.vue";
 import { scheduleService } from "~/api/schedule/ScheduleService";
+import { X } from "lucide-vue-next";
+
+const OVERVIEW_WIDTH = 1280;
+const DESKTOP_WIDTH = 1024;
+
+const showOverview = ref(true);
+const isDesktop = ref(true);
+
+function syncViewport() {
+    isDesktop.value = window.innerWidth >= DESKTOP_WIDTH;
+
+    if (!isDesktop.value) showOverview.value = false;
+}
+
+onMounted(() => {
+    isDesktop.value = window.innerWidth >= DESKTOP_WIDTH;
+    showOverview.value = window.innerWidth >= OVERVIEW_WIDTH;
+    window.addEventListener("resize", syncViewport);
+});
+
+onUnmounted(() => {
+    window.removeEventListener("resize", syncViewport);
+});
 
 const route = useRoute();
 const uuid = computed(() => route.params.uuid as string);
@@ -226,6 +306,8 @@ const selectedSchedule = ref<ScheduleItem | null>(null);
 const assignModalOpen = ref(false);
 const assigneSchedule = ref<ScheduleItem>();
 const saveConflicts = ref<any[] | null>(null);
+const updateConflicts = ref<string[]>([]);
+const assignConflicts = ref<string[]>([]);
 
 function viewSchedule(s: ScheduleItem) {
     selectedSchedule.value = s;
@@ -282,11 +364,13 @@ function onAdlScheduleUpdated(updated: ScheduleItem) {
 
 async function onUpdateSchedule(payload: any) {
     updatingAssignment.value = true;
+    updateConflicts.value = [];
     try {
         const res = await updateSchedule(payload, uuid.value);
 
         if (res?.has_conflicts) {
             saveConflicts.value = res.conflicts ?? [];
+            error("Schedule conflict");
             return;
         }
 
@@ -294,7 +378,12 @@ async function onUpdateSchedule(payload: any) {
         success(res.message);
         showScheduleModal.value = false;
     } catch (err: any) {
-        error(err.error ?? err.message);
+        if (err?.status === 409) {
+            updateConflicts.value = [err.message];
+            error("Schedule conflict");
+        } else {
+            error(err.error ?? err.message);
+        }
     } finally {
         updatingAssignment.value = false;
     }
@@ -302,13 +391,19 @@ async function onUpdateSchedule(payload: any) {
 
 async function onAssignSubmit(payload: any) {
     savingAssignment.value = true;
+    assignConflicts.value = [];
 
     try {
         const res = await handleAssignment(payload, uuid.value);
         success(res.message);
         assignModalOpen.value = false;
     } catch (err: any) {
-        error(err.error);
+        if (err?.status === 409) {
+            assignConflicts.value = [err.message];
+            error("Schedule conflict");
+        } else {
+            error(err.error ?? err.message);
+        }
     } finally {
         savingAssignment.value = false;
     }

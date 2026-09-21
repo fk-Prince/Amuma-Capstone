@@ -21,7 +21,7 @@ const overview = computed<Overview>(() => {
     <div class="w-full">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div
-                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-200 dark:border-white/10 dark:bg-secondary dark:hover:border-blue-500/20"
+                class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-blue-200 dark:border-white/10 dark:bg-secondary dark:hover:border-blue-500/20"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-blue-100/50 blur-2xl dark:bg-blue-500/15"
@@ -72,7 +72,7 @@ const overview = computed<Overview>(() => {
             </div>
 
             <div
-                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:border-white/10 dark:bg-secondary dark:hover:border-emerald-500/20"
+                class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:border-white/10 dark:bg-secondary dark:hover:border-emerald-500/20"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-100/50 blur-2xl dark:bg-emerald-500/15"
@@ -126,7 +126,7 @@ const overview = computed<Overview>(() => {
 
             <!-- Occupied -->
             <div
-                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-violet-200 dark:border-white/10 dark:bg-secondary dark:hover:border-violet-500/20"
+                class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-violet-200 dark:border-white/10 dark:bg-secondary dark:hover:border-violet-500/20"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-violet-100/50 blur-2xl dark:bg-violet-500/15"
@@ -180,7 +180,7 @@ const overview = computed<Overview>(() => {
 
             <!-- Maintenance -->
             <div
-                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200 dark:border-white/10 dark:bg-secondary dark:hover:border-rose-500/20"
+                class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200 dark:border-white/10 dark:bg-secondary dark:hover:border-rose-500/20"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-rose-100/50 blur-2xl dark:bg-rose-500/15"

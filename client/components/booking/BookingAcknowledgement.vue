@@ -34,6 +34,21 @@ const serviceType = computed(() => {
     return "—";
 });
 
+const assignedRoom = computed(() => {
+    const booking = props.booking;
+
+    if (!["approved", "completed"].includes(booking.status)) return null;
+
+    const reserved = booking.reserved;
+
+    if (!reserved?.room?.room_no && !reserved?.bed?.bed_no) return null;
+
+    return {
+        roomBed: `${reserved.room?.room_no ?? "—"} / ${reserved.bed?.bed_no ?? "—"}`,
+        plan: reserved.accommodation_type || booking.facility?.plan || "—",
+    };
+});
+
 const patientName = computed(() => {
     const patient = props.booking.patient;
 
@@ -261,6 +276,34 @@ onBeforeUnmount(() => {
                             </p>
                         </div>
 
+                        <template v-if="assignedRoom">
+                            <div
+                                class="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 dark:border-white/15 dark:bg-white/5"
+                            >
+                                <p
+                                    class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400"
+                                >
+                                    Room / Bed
+                                </p>
+                                <p class="mt-0.5 text-sm font-semibold">
+                                    {{ assignedRoom.roomBed }}
+                                </p>
+                            </div>
+
+                            <div
+                                class="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 dark:border-white/15 dark:bg-white/5"
+                            >
+                                <p
+                                    class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400"
+                                >
+                                    Plan
+                                </p>
+                                <p class="mt-0.5 text-sm font-semibold capitalize">
+                                    {{ assignedRoom.plan }}
+                                </p>
+                            </div>
+                        </template>
+
                         <div class="col-span-2">
                             <p
                                 class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400"
@@ -270,7 +313,10 @@ onBeforeUnmount(() => {
                             <p class="mt-0.5 text-sm">{{ serviceAddress }}</p>
                         </div>
 
-                        <div v-if="booking.valid_until" class="col-span-2">
+                        <div
+                            v-if="booking.valid_until && booking.status === 'pending'"
+                            class="col-span-2"
+                        >
                             <p
                                 class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400"
                             >

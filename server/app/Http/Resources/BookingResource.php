@@ -42,6 +42,7 @@ class BookingResource extends JsonResource
                 'uuid' => $patientUuid,
                 'patient_code' => $patientModel?->patient_code,
                 'patient_id' => $existingPatientId,
+                'avatar' => $patientModel?->avatar_url ?? ($data['patient']['avatar'] ?? null),
                 'first_name' => $data['patient']['first_name'] ?? null,
                 'middle_name' => $data['patient']['middle_name'] ?? null,
                 'last_name' => $data['patient']['last_name'] ?? null,

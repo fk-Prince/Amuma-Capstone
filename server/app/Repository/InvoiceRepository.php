@@ -5,7 +5,9 @@ namespace App\Repository;
 use App\Models\Transaction;
 use App\Http\Resources\PatientInvoiceSummaryResource;
 use App\Http\Resources\RefundResource;
+use App\Models\AdmissionPeriod;
 use App\Models\Invoice;
+use App\Models\InvoiceAdmission;
 use App\Models\InvoiceAdjustment;
 use App\Models\Patient;
 use App\Models\Payment;
@@ -115,6 +117,39 @@ class InvoiceRepository
         );
 
         return $invoices;
+    }
+
+    public function upgradesOf(Invoice $invoice)
+    {
+        $periodIds = $invoice->invoiceAdmissionLines()
+            ->pluck('admission_period_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $covered = $periodIds;
+
+        while ($periodIds) {
+            $periodIds = AdmissionPeriod::whereIn('parent_admission_period_id', $periodIds)
+                ->whereNotIn('admission_period_id', $covered)
+                ->pluck('admission_period_id')
+                ->all();
+
+            $covered = array_merge($covered, $periodIds);
+        }
+
+        if (!$covered) {
+            return collect();
+        }
+
+        return Invoice::whereIn(
+            'invoice_id',
+            InvoiceAdmission::whereIn('admission_period_id', $covered)->pluck('invoice_id')
+        )
+            ->where('invoice_id', '>', $invoice->invoice_id)
+            ->whereNotIn('status', Invoice::CLOSED_STATUSES)
+            ->get();
     }
 
     public function getPatientWithUuid(array $payload)
@@ -339,7 +374,7 @@ class InvoiceRepository
         );
 
         $overallPaid = (float) $settledInvoices->sum(
-            fn($invoice) => $invoice->amount_paid
+            fn($invoice) => $invoice->net_paid_amount
         );
 
         $overallRefunded = $this->refundRepository->refundedCreditFor(
@@ -364,6 +399,13 @@ class InvoiceRepository
         // and what is held as credit are two separate figures.
         $overallBalance = round(
             (float) $patientInvoices->sum('balance_due'),
+            2
+        );
+
+        $overallWrittenOff = round(
+            (float) $patientInvoices
+                ->where('status', Invoice::STATUS_WRITTEN_OFF)
+                ->sum(fn($invoice) => max(0, $invoice->adjusted_total - $invoice->net_paid_amount)),
             2
         );
 
@@ -420,6 +462,7 @@ class InvoiceRepository
             'total_refundable' => $overallRefundable,
             'refund_status' => $refundStatus,
             'total_balance' => $overallBalance,
+            'total_written_off' => $overallWrittenOff,
 
             'status' => match (true) {
                 $overallBalance <= 0 && $overallPaid > 0 => 'Paid',
@@ -754,6 +797,9 @@ class InvoiceRepository
                 fn($row) =>
                 $row['admission']->patient_admission_id === $item['admission']->patient_admission_id
                     && $row['period']->admission_period_id !== $currentPeriodId
+                    && !in_array($row['period']->status, \App\Models\AdmissionPeriod::CLOSED_STATUSES, true)
+                    && Carbon::parse($row['period']->start_date)
+                    ->gte(Carbon::parse($item['period']->end_date))
             )
             ->map(fn($row) => $row['period']->admission_period_id)
             ->unique()
@@ -763,7 +809,8 @@ class InvoiceRepository
         $calculation['outstanding'] = OutstandingBalance::forInvoices(
             $patientInvoices,
             $item['invoice'],
-            $futurePeriodIds
+            $futurePeriodIds,
+            $item['admission']->patient_admission_id
         );
 
         return $calculation;
@@ -845,12 +892,15 @@ class InvoiceRepository
 
             'status' => match (true) {
                 $invoice->status === Invoice::STATUS_WRITTEN_OFF => 'Written Off',
-                $balance <= 0 && $paid > 0 => 'Paid',
+                $balance <= 0 => 'Paid',
                 $paid > 0 => 'Partial',
                 default => 'Pending',
             },
 
             'write_off_reason' => $invoice->write_off_reason,
+            'written_off_amount' => $invoice->status === Invoice::STATUS_WRITTEN_OFF
+                ? round(max(0, $invoice->adjusted_total - $invoice->net_paid_amount), 2)
+                : 0.0,
             'written_off_at' => $invoice->written_off_at?->toIso8601String(),
             'written_off_by' => $this->writtenOffByName($invoice),
 
@@ -986,11 +1036,14 @@ class InvoiceRepository
             'balance_due' => $balance,
             'status' => match (true) {
                 $invoice->status === Invoice::STATUS_WRITTEN_OFF => 'Written Off',
-                $balance <= 0 && $paid > 0 => 'Paid',
+                $balance <= 0 => 'Paid',
                 $paid > 0 => 'Partial',
                 default => 'Pending',
             },
             'write_off_reason' => $invoice->write_off_reason,
+            'written_off_amount' => $invoice->status === Invoice::STATUS_WRITTEN_OFF
+                ? round(max(0, $invoice->adjusted_total - $invoice->net_paid_amount), 2)
+                : 0.0,
             'written_off_at' => $invoice->written_off_at?->toIso8601String(),
             'written_off_by' => $this->writtenOffByName($invoice),
             'refund_status' =>  $invoice->refund_status,
@@ -1145,8 +1198,9 @@ class InvoiceRepository
                 Invoice::STATUS_PENDING,
                 Invoice::STATUS_PARTIAL,
             ])
-            ->orderBy('created_at')
-            ->get();
+            ->get()
+            ->sortBy(fn($invoice) => $invoice->paymentOrder())
+            ->values();
 
         $totalRefunded = (float) $invoices->sum(
             fn($invoice) =>

@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Models\Patient;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class PatientRepository
@@ -22,6 +23,26 @@ class PatientRepository
         }
         return Patient::create($payload);
     }
+    public function update(Patient $patient, array $payload)
+    {
+        if (array_key_exists('address', $payload)) {
+            $address = $payload['address'];
+            unset($payload['address']);
+
+            if ($patient->location) {
+                $patient->location->update(['full_address' => $address]);
+            } elseif ($address) {
+                $payload['location_id'] = $this->locationRepository
+                    ->create(['full_address' => $address])
+                    ->location_id;
+            }
+        }
+
+        $patient->update($payload);
+
+        return $patient->load('location');
+    }
+
     public function findByFields(array $conditions)
     {
         return Patient::where($conditions)->first();
@@ -98,10 +119,18 @@ class PatientRepository
                     $search = $payload['search'];
 
                     $query->where(function ($q) use ($search) {
-                        $q->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere('middle_name', 'like', "%{$search}%")
-                            ->orWhere('uuid', '=', $search);
+                        $q->where('patient_code', 'ilike', "%{$search}%")
+                            ->orWhere('first_name', 'ilike', "%{$search}%")
+                            ->orWhere('last_name', 'ilike', "%{$search}%")
+                            ->orWhere('middle_name', 'ilike', "%{$search}%")
+                            ->orWhereRaw(
+                                "LOWER(CONCAT_WS(' ', first_name, middle_name, last_name)) LIKE ?",
+                                ['%' . strtolower($search) . '%']
+                            );
+
+                        if (Str::isUuid($search)) {
+                            $q->orWhere('uuid', '=', $search);
+                        }
                     });
                 })
                 ->paginate($payload['per_page'] ?? 10);

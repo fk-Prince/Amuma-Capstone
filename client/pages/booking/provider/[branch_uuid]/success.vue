@@ -158,7 +158,7 @@ import backdrop from "~/assets/logo/signinLogo2.png";
 import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.vue";
 import { patientAccessService } from "~/api/patient-access/PatientAccessService";
 import { useBookingStore } from "~/stores/booking";
-import { fetchAuthUser } from "~/composables/useAuthUser";
+import { useAuthUser } from "~/composables/useAuthUser";
 
 definePageMeta({ layout: false });
 useHead({ title: "Booking Submitted" });
@@ -166,6 +166,7 @@ useHead({ title: "Booking Submitted" });
 const route = useRoute();
 const router = useRouter();
 const bookingStore = useBookingStore();
+const authUser = useAuthUser();
 
 const category = computed<"homecare" | "facility">(() => {
     const fromQuery = route.query.category;
@@ -226,7 +227,10 @@ onMounted(() => {
     const reference = referenceId.value;
 
     bookingStore.$reset?.();
-    fetchAuthUser();
+
+    if (authUser.value) {
+        authUser.value = { ...authUser.value, hasBooking: true };
+    }
 
     if (reference) loadAcknowledgement(reference);
 

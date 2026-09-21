@@ -21,9 +21,9 @@
                 </h3>
 
                 <p class="mt-2 text-xs leading-5 text-muted dark:text-gray-400">
-                    <template v-if="Number(invoice.amount_paid ?? 0) > 0">
+                    <template v-if="paidAmount > 0">
                         This invoice will be voided and the ₱{{
-                            formatMoney(invoice.amount_paid)
+                            formatMoney(paidAmount)
                         }}
                         already paid on it will be transferred to the patient's
                         credit. This cannot be undone.
@@ -80,10 +80,11 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { formatAmount } from "~/utils/currency";
 import type { PatientInvoiceItem } from "~/types/invoice";
 
-defineProps<{
+const props = defineProps<{
     // The invoice being voided, or null when the dialog is closed.
     invoice: PatientInvoiceItem | null;
     reason: string;
@@ -95,6 +96,14 @@ const emit = defineEmits<{
     (event: "confirm"): void;
     (event: "close"): void;
 }>();
+
+const paidAmount = computed(() =>
+    Math.max(
+        0,
+        Number(props.invoice?.amount_paid ?? 0) -
+            Number(props.invoice?.refunded_amount ?? 0),
+    ),
+);
 
 function formatMoney(amount: number | string | null | undefined) {
     return formatAmount(amount, { treatMissingAsZero: true });

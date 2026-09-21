@@ -127,6 +127,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { formatDate, stringToDateTime } from "~/utils/time";
+import { formatPhone } from "~/utils/phone";
 import { formatAssignmentType } from "~/types/employee";
 import type { EmployeeSlip } from "~/types/employee-slip";
 
@@ -155,7 +156,7 @@ const groups = computed(() => {
                     label: "Date of birth",
                     value: formatDate(employee.birth_date),
                 },
-                { label: "Contact", value: employee.phone_number },
+                { label: "Contact", value: formatPhone(employee.phone_number) },
             ].filter((row) => !!row.value),
         },
         {

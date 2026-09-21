@@ -2,11 +2,13 @@
     <div
         class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden lg:gap-3 lg:p-3"
     >
-        <AuthTransitionScreen
-            v-if="!authReady"
-            title="Setting things up"
-            subtitle=""
-        />
+        <ClientOnly>
+            <AuthTransitionScreen
+                v-if="!authReady"
+                title="Setting things up"
+                subtitle=""
+            />
+        </ClientOnly>
 
         <OwnerSidebar :open="isOpen" @close="isOpen = false" />
 

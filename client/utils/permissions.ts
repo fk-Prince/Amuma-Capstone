@@ -243,6 +243,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
         [Modules.BranchSettings]: MODULE_ACTIONS[Modules.BranchSettings],
     },
     admission: {
+        [Modules.Bookings]: MODULE_ACTIONS[Modules.Bookings],
         [Modules.Patients]: [PermissionAction.Read, PermissionAction.Export],
         [Modules.Schedules]: MODULE_ACTIONS[Modules.Schedules],
         [Modules.Admissions]: MODULE_ACTIONS[Modules.Admissions].filter(

@@ -1,6 +1,31 @@
 <template>
     <div class="w-full space-y-6">
-        <div class="flex items-center justify-between">
+        <div
+            v-if="loading && !images.length"
+            class="animate-pulse space-y-6 rounded-2xl border border-slate-200 p-6 dark:border-white/10"
+        >
+            <div class="flex items-center justify-between">
+                <div class="space-y-2">
+                    <div class="h-5 w-40 rounded bg-slate-200 dark:bg-white/10" />
+                    <div class="h-3.5 w-64 max-w-full rounded bg-slate-100 dark:bg-white/5" />
+                </div>
+
+                <div class="h-10 w-32 rounded-xl bg-slate-200 dark:bg-white/10" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
+                <div
+                    v-for="i in 5"
+                    :key="i"
+                    class="aspect-square rounded-2xl bg-slate-100 dark:bg-white/5"
+                />
+            </div>
+        </div>
+
+        <div
+            v-if="!(loading && !images.length)"
+            class="flex items-center justify-between"
+        >
             <div>
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
                     Branch Images

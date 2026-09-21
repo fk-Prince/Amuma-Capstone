@@ -1,6 +1,6 @@
 <template>
-    <div class="flex min-h-screen-header flex-col bg-slate-50 dark:bg-surface">
-        <div class="mx-auto flex w-full flex-1 flex-col space-y-6 p-4">
+    <div class="flex min-h-screen-header flex-col dark:bg-surface">
+        <div class="mx-auto flex w-full flex-1 flex-col space-y-6">
             <div
                 class="flex flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >

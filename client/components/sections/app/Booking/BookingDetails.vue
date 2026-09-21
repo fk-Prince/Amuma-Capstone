@@ -1,7 +1,7 @@
 <template>
     <div class="space-y-5 pb-8">
         <div
-            class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden dark:bg-secondary"
+            class="bg-white rounded-lg shadow-sm border border-[#E4EFED] overflow-hidden dark:bg-secondary dark:border-white/10"
         >
             <div
                 class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 px-7 py-6 border-b border-[#EDF4F3] bg-gradient-to-b from-[#0E7C7B]/[0.04] to-transparent dark:border-white/10"
@@ -342,6 +342,7 @@
                                 booking.facility?.type !== 'Pre-Admission'
                             "
                             label="Plan"
+                            :class="isCompleteAdmission ? highlightClass : ''"
                             :value="
                                 booking.facility?.plan ||
                                 reserveInfo?.accommodation_type
@@ -365,6 +366,9 @@
                         <template v-if="reserveInfo">
                             <Field
                                 label="Room / Bed"
+                                :class="
+                                    isCompleteAdmission ? highlightClass : ''
+                                "
                                 :value="`${reserveInfo.room_no} / ${reserveInfo.bed_no}`"
                             />
                         </template>
@@ -581,6 +585,13 @@ const category = computed(() => {
 const isFacility = computed(() => {
     return category.value === "facility";
 });
+
+const isCompleteAdmission = computed(
+    () => isFacility.value && props.booking.facility?.type === "Complete",
+);
+
+const highlightClass =
+    "rounded-xl bg-[#EAF4F2] px-4 py-3 ring-1 ring-[#0E7C7B]/25 dark:bg-accent-500/10 dark:ring-accent-500/30";
 
 const serviceType = computed(() => {
     if (props.booking.booking_type !== "online") {

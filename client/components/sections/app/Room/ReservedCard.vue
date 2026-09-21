@@ -9,6 +9,11 @@ import {
     Bookmark,
 } from "lucide-vue-next";
 import { stringToDateTime } from "~/utils/time";
+import { Modules } from "~/types/module";
+import PatientAvatar from "~/components/ui/PatientAvatar.vue";
+import { usePermissions } from "~/composables/usePermission";
+
+const { canUpdate } = usePermissions();
 
 const props = defineProps<{
     bed: Bed;
@@ -78,11 +83,12 @@ const admissionStatusClasses = (status?: string) => {
             class="w-full flex items-start gap-2.5 text-left"
             @click="toggleDetails"
         >
-            <div
-                class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[11px] font-semibold shrink-0 ring-2 ring-white shadow-sm dark:bg-indigo-500/15 dark:text-indigo-300"
-            >
-                {{ reservedInitials }}
-            </div>
+            <PatientAvatar
+                :src="reservation?.patient?.avatar"
+                :name="reservedPatientName"
+                size-class="w-9 h-9 text-[11px]"
+                class="ring-2 ring-white shadow-sm"
+            />
 
             <div class="min-w-0 flex-1">
                 <p class="text-xs font-semibold text-gray-800 truncate dark:text-white">
@@ -147,6 +153,7 @@ const admissionStatusClasses = (status?: string) => {
         </div>
 
         <button
+            v-if="canUpdate(Modules.RoomsAndBeds)"
             type="button"
             @click="emit('editBed', bed.bed_id)"
             class="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-blue-600 bg-white border border-blue-200 rounded-lg py-2 hover:bg-blue-50 transition-colors dark:text-blue-300 dark:bg-secondary dark:border-blue-500/20 dark:hover:bg-blue-500/10"

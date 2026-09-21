@@ -20,7 +20,17 @@ class InvoiceResource extends JsonResource
         return [
             'invoice_id'   => $this->invoice_id,
             'invoice_code' => $this->invoice_code,
+            'description'  => $this->when(
+                $this->resource->relationLoaded('invoiceAdmissionLines')
+                    && $this->resource->relationLoaded('invoiceServices'),
+                fn() => $this->paymentDescription()
+            ),
             'total'        => (float) $this->total_amount,
+            'adjusted_total' => $this->adjusted_total,
+            'written_off_amount' => $this->status === Invoice::STATUS_WRITTEN_OFF
+                ? round(max(0, $this->adjusted_total - $this->net_paid_amount), 2)
+                : 0.0,
+            'write_off_reason' => $this->write_off_reason,
             'amount_paid'  => $this->amount_paid,
             'refunded_amount'          => $this->refunded_amount,
             'refund_requested_amount' => InvoiceMoney::pendingWithdrawal($this->resource),
@@ -52,6 +62,7 @@ class InvoiceResource extends JsonResource
                         'price'                => (float) $service->price,
                         'amount'               => (float) $service->price * $quantity,
                         'note'                 => $service->note,
+                        'description'          => $service->description,
                         'service_name'         => $isAdl
                             ? 'Activity of Daily Living (ADL)'
                             : ($scheduleService?->service?->service_name ?? null),
@@ -69,7 +80,8 @@ class InvoiceResource extends JsonResource
                     'admission_period_id'  => $facility->admission_period_id,
                     'branch_contract_id'   => $facility->branchContract?->branch_contract_id,
                     'price'                => (float) $facility->price,
-                    'patient_admission_id' => $facility->patientAdmission?->patient_admission_id,
+                    'description'          => $facility->description,
+                    'patient_admission_id' =>$facility->patientAdmission?->patient_admission_id,
 
                     'patient_name' => trim(
                         ($facility->patientAdmission->patient->first_name ?? '') . ' ' .
@@ -394,6 +406,10 @@ class InvoiceResource extends JsonResource
      */
     protected function resolveStatus(): string
     {
+        if (in_array($this->status, Invoice::CLOSED_STATUSES, true)) {
+            return $this->status;
+        }
+
         if ($this->amount_paid <= 0) {
             return Invoice::STATUS_PENDING;
         }

@@ -282,9 +282,112 @@ const BOOKING_TERMS: PaymentTerms = {
     ],
 };
 
+const BALANCE_TERMS: PaymentTerms = {
+    heading: "Online Payment Terms",
+    lastUpdated: "September 20, 2026",
+    sections: [
+        {
+            title: "Scope",
+            blocks: [
+                {
+                    type: "paragraph",
+                    text: "These terms apply to any payment you make through the AMUMA family portal on behalf of a resident under your account, including homecare and facility invoices.",
+                },
+            ],
+        },
+        {
+            title: "Accepted payment methods",
+            blocks: [
+                {
+                    type: "paragraph",
+                    text: "Payments made through the portal may be completed via GCash or Credit/Debit Card. Cash payments are accepted only in person at the branch and are recorded by branch staff — they are not processed through the portal.",
+                },
+            ],
+        },
+        {
+            title: "Payment authorization",
+            blocks: [
+                {
+                    type: "paragraph",
+                    text: "By submitting a payment, you confirm that you are authorized to pay on behalf of the resident and that the payment method used belongs to you or that you have permission to use it.",
+                },
+            ],
+        },
+        {
+            title: "Invoice accuracy",
+            blocks: [
+                {
+                    type: "paragraph",
+                    text: "Please review the invoice details (services, dates, and amount due) before paying. If you believe an invoice contains an error, contact the branch to request a review before submitting payment — adjustments cannot be applied to an invoice after it has been paid in full.",
+                },
+            ],
+        },
+        {
+            title: "Processing time",
+            blocks: [
+                {
+                    type: "paragraph",
+                    text: "Payments are typically reflected on your account immediately. In rare cases (e.g., payment gateway delays), it may take up to 24 hours for a payment to be confirmed. If a payment does not reflect within this window, contact support before attempting to pay again.",
+                },
+            ],
+        },
+        {
+            title: "Invoice adjustments",
+            blocks: [
+                {
+                    type: "paragraph",
+                    text: "Charges may be adjusted by the branch to correct billing errors, apply discounts, or account for schedule changes (e.g., an accommodation change, a shortened service, or a late/incomplete visit). Adjustments are applied to the invoice before payment is due; they do not affect invoices you have already paid in full.",
+                },
+            ],
+        },
+        {
+            title: "Refunds and credits",
+            blocks: [
+                {
+                    type: "list",
+                    items: [
+                        "A refund reflects credit created on your account, most commonly from an invoice adjustment made after a payment.",
+                        "Credit on your account can be applied automatically to a future invoice or withdrawn as a payout upon request.",
+                        "A withdrawal request is reviewed by branch/accounting staff and may be approved or rejected; approved withdrawals are paid out via the method selected at request time.",
+                        "Refunds and withdrawals are not guaranteed to be instant and follow the branch's review process.",
+                    ],
+                },
+            ],
+        },
+        {
+            title: "Non-refundable charges",
+            blocks: [
+                {
+                    type: "paragraph",
+                    text: "Services already rendered (completed homecare visits, facility accommodation already provided) are not eligible for refund except where an invoice adjustment has reduced the billed amount for that period.",
+                },
+            ],
+        },
+        {
+            title: "Data and security",
+            blocks: [
+                {
+                    type: "paragraph",
+                    text: "Payment details are processed through our payment gateway partner and are not stored on AMUMA's servers. By paying through the portal, you consent to your payment information being shared with the gateway solely to process the transaction.",
+                },
+            ],
+        },
+        {
+            title: "Changes to these terms",
+            blocks: [
+                {
+                    type: "paragraph",
+                    text: "These terms may be updated from time to time. Continued use of the payment feature after changes take effect constitutes acceptance of the updated terms.",
+                },
+            ],
+        },
+    ],
+};
+
 const PAYMENT_TERMS: Partial<Record<string, PaymentTerms>> = {
     subscription: SUBSCRIPTION_TERMS,
     booking: BOOKING_TERMS,
+    balance: BALANCE_TERMS,
 };
 
 export function getPaymentTerms(

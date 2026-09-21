@@ -4,18 +4,15 @@ import { medicationService } from "~/api/medication/MedicationService";
 import { patientActivityService } from "~/api/patient-activity/PatientActivityService";
 import { patientService } from "~/api/patient/PatientService";
 import { scheduleService } from "~/api/schedule/ScheduleService";
-import { serviceService } from "~/api/service/ServiceService";
 import { vitalService } from "~/api/vital/VitalService";
 import type { Employee } from "~/types/employee";
 import type { MarkDosePayload, Medication, MedicationForm, Vital, VitalFormData } from "~/types/medication";
 import type { PatientActivity, PatientActivityForm } from "~/types/patient-activity";
 import type { PatientRetrieve } from "~/types/patient";
 import type { ScheduleItem } from "~/types/schedule";
-import type { Service } from "~/types/service";
 
 export function usePatient() {
     const patientData = ref<PatientRetrieve | null>(null);
-    const serviceData = ref<Service[]>([]);
     const scheduleData = ref<ScheduleItem[]>([]);
     const employeeData = ref<Employee[]>([]);
     const loading = ref(true);
@@ -48,13 +45,6 @@ export function usePatient() {
             }, uuid);
             patientData.value = patientRes.data;
             loading.value = false;
-            const [serviceRes] = await Promise.all([
-                serviceService.list({
-                    branch_uuid: b_uuid,
-                    type: "facility",
-                }),
-            ]);
-            serviceData.value = serviceRes.services ?? serviceRes.data ?? [];
         } catch (error) {
             console.error(error);
             loading.value = false;
@@ -316,21 +306,6 @@ export function usePatient() {
         }
     }
 
-    async function handleScheduleAction(payload: any, p_uuid: string, b_uuid: string) {
-        try {
-            const res = await scheduleService.create({
-                branch_uuid: b_uuid,
-                patient_uuid: p_uuid,
-                ...payload.form,
-                services: payload.services,
-            });
-
-            return res;
-        } catch (err) {
-            throw err;
-        }
-    }
-
     async function handleAssignment(payload: any, b_uuid: string) {
         try {
             const res = await scheduleService.action({
@@ -378,7 +353,6 @@ export function usePatient() {
 
     return {
         patientData,
-        serviceData,
         scheduleData,
         employeeData,
         loading,
@@ -397,7 +371,6 @@ export function usePatient() {
         handleMedicationAction,
         handleVitalAction,
         handlePatientActivityAction,
-        handleScheduleAction,
         handleAssignment,
         fetchData,
         fetchMedications,

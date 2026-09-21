@@ -119,8 +119,6 @@ const residentStatus = ref<"Active" | "Discharged" | "On Leave">("Active");
 const advanceBalance = ref(0);
 const pendingWithdrawal = ref(0);
 
-// Credit a withdrawal has claimed is still the family's money until accounting
-// releases it, so the card states it rather than reading as nothing left.
 const creditOnAccount = computed(
     () => advanceBalance.value + pendingWithdrawal.value,
 );
@@ -128,8 +126,6 @@ const refundRequests = ref<RefundRequest[]>([]);
 const loadingRequests = ref(false);
 const openReasonId = ref<number | null>(null);
 
-// Credit that has not been withdrawn is not money on the move, so it is left to
-// the refunds dialog rather than listed alongside cash that changed hands.
 const invoiceTransactions = computed(() =>
     transactions.value.filter(
         (transaction) =>
@@ -141,7 +137,6 @@ const invoiceTransactions = computed(() =>
 
 const RECENT_LIMIT = 5;
 
-// The dialogs page through the full history; the cards only ever preview it.
 const PAGE_SIZE = 2;
 
 type TransactionFilter = "all" | "payment" | "refund";
@@ -156,12 +151,6 @@ const transactionFilters: { value: TransactionFilter; label: string }[] = [
 
 const showRefunds = ref(false);
 
-/*
-  The refunds dialog looks at the credit itself rather than at the withdrawal
-  that may have claimed it, so every row keeps the bill it came off and the
-  credit note that released it. Its amount is always the credit, which is why
-  the status is stated as credited whatever the withdrawal is doing.
-*/
 const refundTransactions = computed(() =>
     rawTransactions.value
         .filter((entry: any) => entry.type === "refund")
@@ -182,9 +171,6 @@ const refundTransactions = computed(() =>
         })),
 );
 
-// Says where the overpayment came from in the same terms as the summary above:
-// the bill was lowered after it had already been paid, and the difference is
-// what each row below returned.
 const refundExplanation = computed(() => {
     const billed = peso(totalInvoiceAmount.value);
     const adjusted = peso(totalAdjustedAmount.value);
@@ -212,7 +198,10 @@ const refundBreakdown = computed(() =>
             value: peso(totalRefundedAmount.value),
             highlight: true,
         },
-    ].filter((row): row is { label: string; value: string; highlight?: boolean } => !!row),
+    ].filter(
+        (row): row is { label: string; value: string; highlight?: boolean } =>
+            !!row,
+    ),
 );
 
 const filteredTransactions = computed(() =>
@@ -260,9 +249,13 @@ const totalPaidAmount = computed(() =>
     ),
 );
 
-// Every credit counts from the moment it is raised, whatever has since become
-// of the withdrawal: the money already came off the invoices it was drawn from,
-// so leaving it out would report the bill as overpaid twice.
+const keptPaidAmount = computed(() =>
+    invoices.value.reduce(
+        (total, invoice) => total + Number(invoice.net_paid || 0),
+        0,
+    ),
+);
+
 const totalRefundedAmount = computed(() =>
     transactions.value
         .filter((transaction) => transaction.type === "refund")
@@ -295,9 +288,6 @@ function round2(value: number) {
     return Math.round((Number(value) || 0) * 100) / 100;
 }
 
-// Summed per invoice, never netted across them. Subtracting all payments from
-// all charges let credit sitting on a settled invoice cancel out a debt on an
-// unpaid one, so a family that still owed money was shown a zero balance.
 const currentBalance = computed(() =>
     round2(
         invoices.value.reduce(
@@ -482,6 +472,7 @@ function mapInvoices(items: any[]): InvoiceSummary[] {
                 invoice.adjusted_total ?? invoice.total ?? 0,
             ),
             amount_paid: Number(invoice.amount_paid ?? 0),
+            net_paid: Number(invoice.net_paid ?? invoice.amount_paid ?? 0),
             balance_due: Number(invoice.balance_due ?? 0),
             refund_status: invoice.refund_status ?? "none",
             void_reason: invoice.void_reason ?? null,
@@ -604,7 +595,7 @@ function mapPatientRecord(item: any): LovedOne {
         patient_id: patient.patient_id,
         uuid: patient.uuid ?? null,
         full_name: patient.full_name,
-        photo: patient.photo ?? null,
+        photo: patient.avatar ?? patient.photo ?? null,
         branch_name: org.name ?? null,
         branch_address: org.full_address ?? null,
         status: mapResidentStatus(ctx.status),
@@ -678,7 +669,7 @@ function updateBillingFromRecord(item: any) {
         // Counts every invoice: money paid on one that was later voided still
         // left the family's pocket.
         amountPaid: [...mappedInvoices, ...mappedVoided].reduce(
-            (sum, invoice) => sum + invoice.amount_paid,
+            (sum, invoice) => sum + invoice.net_paid,
             0,
         ),
         balanceDue: currentBalance.value,
@@ -746,25 +737,58 @@ function prevLovedOne() {
         lovedOnes.value.length;
 }
 
+async function fetchFinancialsFor(patientId: number) {
+    const res = await patientAccessService.retrieveAction({
+        action: "overview",
+        section: "financials",
+        patient_id: patientId,
+    });
+
+    return res?.data ?? null;
+}
+
 async function loadPatientData() {
     isLoading.value = true;
     loadError.value = null;
     noPatients.value = false;
 
     try {
-        const res = await patientAccessService.retrieveAction({
-            action: "overview",
-            section: "profile,financials",
-        });
+        const [profileRes, financialsRes] = await Promise.all([
+            patientAccessService.retrieveAction({
+                action: "overview",
+                section: "profile",
+            }),
+            patientAccessService.retrieveAction({
+                action: "overview",
+                section: "financials",
+            }),
+        ]);
 
-        const records: any[] = Array.isArray(res?.data) ? res.data : [];
+        const records: any[] = Array.isArray(profileRes?.data)
+            ? profileRes.data
+            : [];
 
         if (records.length) {
-            lovedOnes.value = records.map(mapPatientRecord);
-            rawRecords.value = records;
+            const financialsByPatientId = new Map(
+                (Array.isArray(financialsRes?.data)
+                    ? financialsRes.data
+                    : []
+                ).map((entry: any) => [Number(entry?.patient_id ?? 0), entry]),
+            );
+
+            const merged = records.map((record: any) => ({
+                ...record,
+                ...(financialsByPatientId.get(
+                    Number(record?.patient_id ?? 0),
+                ) ?? {}),
+            }));
+
+            lovedOnes.value = merged.map(mapPatientRecord);
+            rawRecords.value = merged;
 
             selectedIndex.value = resolveIndex(lovedOnes.value);
-            updateBillingFromRecord(records[selectedIndex.value]);
+
+            updateBillingFromRecord(rawRecords.value[selectedIndex.value]);
         } else {
             noPatients.value = true;
         }
@@ -808,13 +832,7 @@ async function refreshLedger() {
     isLoadingLedger.value = true;
 
     try {
-        const res = await patientAccessService.retrieveAction({
-            action: "overview",
-            section: "financials",
-            patient_id: patientId,
-        });
-
-        const record = res?.data;
+        const record = await fetchFinancialsFor(patientId);
 
         if (!record) return;
 
@@ -940,7 +958,8 @@ async function submit() {
             await fetchRefundRequests();
         }
     } catch (err: any) {
-        formError.value = err?.message || "Failed to submit the withdrawal request.";
+        formError.value =
+            err?.message || "Failed to submit the withdrawal request.";
     } finally {
         isRefunding.value = false;
     }
@@ -1006,7 +1025,12 @@ async function payBalance() {
     payAmount.value = amount;
 
     const credit = creditToApply.value;
-    const charge = round2(amount - credit);
+    const charge = useCredit.value ? 0 : amount;
+
+    if (useCredit.value && credit <= 0) {
+        error("There is no credit available to apply.");
+        return;
+    }
     const creditPayload = credit > 0 ? { credit_amount: credit } : {};
 
     const onSuccess = async (res: any) => {
@@ -1114,6 +1138,9 @@ function applyReceiptLocally(receipt: PaymentReceiptData) {
 
             invoice.amount_paid =
                 Number(invoice.amount_paid) + line.amount_applied;
+
+            invoice.net_paid = Number(invoice.net_paid) + line.amount_applied;
+
             invoice.balance_due = remaining;
             invoice.status = remaining <= 0 ? "paid" : "partial";
         }
@@ -1147,7 +1174,7 @@ function applyReceiptLocally(receipt: PaymentReceiptData) {
 
     billing.value = {
         ...billing.value,
-        amountPaid: totalPaidAmount.value,
+        amountPaid: keptPaidAmount.value,
         balanceDue: currentBalance.value,
     };
 }
@@ -1172,7 +1199,7 @@ async function openReceipt(receiptNo?: string | null) {
 </script>
 
 <template>
-    <div class="min-h-full bg-slate-50/60 px-5 pb-16 pt-5 dark:bg-surface">
+    <div class="bg-white p-2 dark:bg-surface rounded-lg">
         <div class="h-full">
             <div v-if="isLoading" class="space-y-5">
                 <div
@@ -1803,37 +1830,6 @@ async function openReceipt(receiptNo?: string | null) {
                             <div class="bg-white p-5 sm:p-6 dark:bg-secondary">
                                 <div class="flex items-start justify-between">
                                     <div
-                                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300"
-                                    >
-                                        <AppIcon
-                                            name="file-text"
-                                            class="h-5 w-5"
-                                        />
-                                    </div>
-                                </div>
-
-                                <p
-                                    class="mt-5 text-xs font-medium text-gray-400 dark:text-gray-500"
-                                >
-                                    Total Invoices
-                                </p>
-
-                                <p
-                                    class="mt-1 text-2xl font-bold text-gray-900 dark:text-white"
-                                >
-                                    {{ billing.invoiceCount || 0 }}
-                                </p>
-
-                                <p
-                                    class="mt-1 text-[11px] text-gray-400 dark:text-gray-500"
-                                >
-                                    Billing records
-                                </p>
-                            </div>
-
-                            <div class="bg-white p-5 sm:p-6 dark:bg-secondary">
-                                <div class="flex items-start justify-between">
-                                    <div
                                         class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-primary-500/10 dark:text-blue-300"
                                     >
                                         <AppIcon
@@ -1841,55 +1837,81 @@ async function openReceipt(receiptNo?: string | null) {
                                             class="h-5 w-5"
                                         />
                                     </div>
-
-                                    <span
-                                        v-if="
-                                            totalAdjustedAmount !==
-                                            totalInvoiceAmount
-                                        "
-                                        class="rounded-full bg-amber-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-amber-600 dark:bg-amber-500/10 dark:text-amber-300"
-                                    >
-                                        Adjusted
-                                    </span>
                                 </div>
 
                                 <p
                                     class="mt-5 text-xs font-medium text-gray-400 dark:text-gray-500"
                                 >
-                                    Total Billed
+                                    Total Billing
                                 </p>
 
-                                <div
-                                    v-if="
-                                        totalAdjustedAmount !==
-                                        totalInvoiceAmount
-                                    "
+                                <p
+                                    class="mt-1 text-2xl font-bold text-gray-900 dark:text-white"
                                 >
-                                    <p
-                                        class="mt-1 text-xs text-gray-400 line-through dark:text-gray-500"
-                                    >
-                                        {{ peso(totalInvoiceAmount) }}
-                                    </p>
+                                    {{ peso(totalAdjustedAmount) }}
+                                </p>
+                            </div>
 
-                                    <p
-                                        class="mt-0.5 text-2xl font-bold text-gray-900 dark:text-white"
+                            <div
+                                class="flex flex-col bg-white p-5 sm:p-6 dark:bg-secondary"
+                            >
+                                <div class="flex items-start justify-between">
+                                    <div
+                                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
                                     >
-                                        {{ peso(totalAdjustedAmount) }}
-                                    </p>
+                                        <AppIcon
+                                            name="check-circle"
+                                            class="h-5 w-5"
+                                        />
+                                    </div>
                                 </div>
 
                                 <p
-                                    v-else
-                                    class="mt-1 text-2xl font-bold text-gray-900 dark:text-white"
+                                    class="mt-5 text-xs font-medium text-gray-400 dark:text-gray-500"
                                 >
-                                    {{ peso(totalInvoiceAmount) }}
+                                    Total Payment
                                 </p>
 
                                 <p
-                                    class="mt-1 text-[11px] text-gray-400 dark:text-gray-500"
+                                    class="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-300"
                                 >
-                                    Adjusted billing total
+                                    {{ peso(keptPaidAmount) }}
                                 </p>
+
+                                <button
+                                    type="button"
+                                    :disabled="!refundTransactions.length"
+                                    class="mt-4 w-full border-t border-gray-100 pt-4 text-left transition disabled:cursor-default enabled:hover:opacity-80 dark:border-white/10"
+                                    @click="showRefunds = true"
+                                >
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
+                                        <p
+                                            class="text-xs font-medium text-gray-400 dark:text-gray-500"
+                                        >
+                                            Refunded/Credited
+                                        </p>
+
+                                        <AppIcon
+                                            name="arrow-down-circle"
+                                            class="h-4 w-4 text-blue-500 dark:text-blue-300"
+                                        />
+                                    </div>
+
+                                    <p
+                                        class="mt-1 text-lg font-bold text-blue-600 dark:text-blue-300"
+                                    >
+                                        {{ peso(totalRefundedAmount) }}
+                                    </p>
+
+                                    <p
+                                        v-if="refundTransactions.length"
+                                        class="mt-0.5 text-[11px] font-medium text-primary-600 dark:text-primary-300"
+                                    >
+                                        View history
+                                    </p>
+                                </button>
                             </div>
 
                             <div
@@ -1934,7 +1956,7 @@ async function openReceipt(receiptNo?: string | null) {
                                 <p
                                     class="mt-5 text-xs font-medium text-gray-400 dark:text-gray-500"
                                 >
-                                    Total Balance
+                                    Balance
                                 </p>
 
                                 <p
@@ -2043,8 +2065,9 @@ async function openReceipt(receiptNo?: string | null) {
                                     v-if="openRefundRequest"
                                     class="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-[11px] leading-4 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
                                 >
-                                    A withdrawal request is already being reviewed.
-                                    You can ask for another once it is settled.
+                                    A withdrawal request is already being
+                                    reviewed. You can ask for another once it is
+                                    settled.
                                 </p>
 
                                 <button
@@ -2071,113 +2094,46 @@ async function openReceipt(receiptNo?: string | null) {
                         <div
                             class="border-t border-gray-100 p-5 sm:p-6 dark:border-white/10"
                         >
-                            <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                                <div>
-                                    <div
-                                        class="flex items-center justify-between"
-                                    >
-                                        <p
-                                            class="text-xs font-medium text-gray-400 dark:text-gray-500"
-                                        >
-                                            Amount Paid
-                                        </p>
-
-                                        <AppIcon
-                                            name="check-circle"
-                                            class="h-4 w-4 text-emerald-500 dark:text-emerald-300"
-                                        />
-                                    </div>
-
+                            <div>
+                                <div class="flex items-center justify-between">
                                     <p
-                                        class="mt-1 text-lg font-bold text-emerald-600 dark:text-emerald-300"
+                                        class="text-xs font-medium text-gray-400 dark:text-gray-500"
                                     >
-                                        {{ peso(totalPaidAmount) }}
+                                        Payment Progress
                                     </p>
+
+                                    <span
+                                        class="text-xs font-semibold text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{ paymentProgress }}%
+                                    </span>
                                 </div>
 
-                                <button
-                                    type="button"
-                                    :disabled="!refundTransactions.length"
-                                    class="rounded-xl text-left transition disabled:cursor-default enabled:hover:opacity-80"
-                                    @click="showRefunds = true"
+                                <div
+                                    class="mt-3 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10"
                                 >
                                     <div
-                                        class="flex items-center justify-between"
-                                    >
-                                        <p
-                                            class="text-xs font-medium text-gray-400 dark:text-gray-500"
-                                        >
-                                            Refunded
-                                        </p>
-
-                                        <AppIcon
-                                            name="arrow-down-circle"
-                                            class="h-4 w-4 text-blue-500 dark:text-blue-300"
-                                        />
-                                    </div>
-
-                                    <p
-                                        class="mt-1 text-lg font-bold text-blue-600 dark:text-blue-300"
-                                    >
-                                        {{ peso(totalRefundedAmount) }}
-                                    </p>
-
-                                    <p
-                                        v-if="refundTransactions.length"
-                                        class="mt-0.5 text-[11px] font-medium text-primary-600 dark:text-primary-300"
-                                    >
-                                        View {{ refundTransactions.length }}
-                                        refund{{
-                                            refundTransactions.length === 1
-                                                ? ""
-                                                : "s"
-                                        }}
-                                    </p>
-                                </button>
-
-                                <div>
-                                    <div
-                                        class="flex items-center justify-between"
-                                    >
-                                        <p
-                                            class="text-xs font-medium text-gray-400 dark:text-gray-500"
-                                        >
-                                            Payment Progress
-                                        </p>
-
-                                        <span
-                                            class="text-xs font-semibold text-gray-500 dark:text-gray-400"
-                                        >
-                                            {{ paymentProgress }}%
-                                        </span>
-                                    </div>
-
-                                    <div
-                                        class="mt-3 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10"
-                                    >
-                                        <div
-                                            class="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                                            :style="{
-                                                width: `${paymentProgress}%`,
-                                            }"
-                                        />
-                                    </div>
-
-                                    <p
-                                        class="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500"
-                                    >
-                                        {{ peso(appliedToBills) }} of
-                                        {{ peso(totalAdjustedAmount) }} paid
-                                    </p>
-
-                                    <p
-                                        v-if="overpaidAmount > 0"
-                                        class="mt-0.5 text-[11px] text-emerald-600 dark:text-emerald-300"
-                                    >
-                                        {{ peso(overpaidAmount) }} paid above
-                                        the adjusted bill is on your credit
-                                    </p>
+                                        class="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                                        :style="{
+                                            width: `${paymentProgress}%`,
+                                        }"
+                                    />
                                 </div>
+
+                                <p
+                                    class="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500"
+                                >
+                                    {{ peso(appliedToBills) }} of
+                                    {{ peso(totalAdjustedAmount) }} paid
+                                </p>
+
+                                <p
+                                    v-if="overpaidAmount > 0"
+                                    class="mt-0.5 text-[11px] text-emerald-600 dark:text-emerald-300"
+                                >
+                                    {{ peso(overpaidAmount) }} paid above the
+                                    adjusted bill is on your credit
+                                </p>
                             </div>
                         </div>
                     </section>

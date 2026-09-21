@@ -60,11 +60,7 @@ class RefundService
         );
     }
 
-    /*
-      Money on the invoice that no longer has a bill to sit against. It only
-      appears once a credit note has lowered the total, and it is turned into a
-      credit straight away, so a settled invoice reads zero here.
-    */
+
     public function getCreditableAmount(Invoice $invoice)
     {
         $invoice->loadMissing('allocations.refundAllocations.refund.transaction', 'invoiceAdjustments');
@@ -256,6 +252,42 @@ class RefundService
     public function hasRequiredPayment(Invoice $invoice, AdmissionPeriod $period, PatientAdmission $admission)
     {
         return $this->getNetPaidAmount($invoice) >= $this->getRequiredPaymentAmount($period, $admission);
+    }
+
+    public function settleDischarge(PatientAdmission $admission, AdmissionPeriod $period, bool $force = false): void
+    {
+        $plan = DischargeCalculator::plan($admission, $period);
+
+        $shortfall = round((float) collect($plan['invoices'])->sum('owed'), 2);
+
+        if ($shortfall > 0 && !$force) {
+            $paid = round((float) collect($plan['invoices'])->sum('net_paid'), 2);
+            $required = round((float) collect($plan['invoices'])->sum('new_total'), 2);
+
+            throw new Exception(
+                "Required payment has not been met. Paid: {$paid}, Required: {$required}, Short by: {$shortfall}",
+                422
+            );
+        }
+
+        foreach ($plan['invoices'] as $entry) {
+            $invoice = $entry['invoice'];
+
+            if ($entry['credit'] >= 0.01 && !($force && $entry['net_paid'] <= 0)) {
+                InvoiceAdjustment::create([
+                    'invoice_id' => $invoice->invoice_id,
+                    'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                    'amount' => round(-$entry['credit'], 2),
+                    'reason' => 'Discharged early. The unused part of the stay is credited back.',
+                ]);
+            }
+
+            $invoice->refresh()->syncStatus();
+
+            if (!$entry['has_current'] && $invoice->net_paid_amount <= 0) {
+                $invoice->update(['status' => Invoice::STATUS_VOID]);
+            }
+        }
     }
 
     public function createRefundCurrentInvoice(Invoice $invoice, PatientAdmission $admission,  AdmissionPeriod $period)

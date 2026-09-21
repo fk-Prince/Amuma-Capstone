@@ -304,7 +304,7 @@
                         </p>
                         <Combobox
                             v-model="setting.closing"
-                            :items="timeItems"
+                            :items="closingItems"
                             required
                             placeholder="Closing time"
                             class="w-full"
@@ -366,7 +366,10 @@ const setting = reactive<OperationSetting>({
     is_open: activeBranch.value?.settings?.is_open ?? false,
     time_zone: activeBranch.value?.settings?.time_zone ?? "",
     opening: activeBranch.value?.settings?.opening ?? "",
-    closing: activeBranch.value?.settings?.closing ?? "",
+    closing:
+        activeBranch.value?.settings?.closing === "00:00"
+            ? "23:59"
+            : (activeBranch.value?.settings?.closing ?? ""),
     currency: activeBranch.value?.settings?.currency ?? "",
 });
 
@@ -386,6 +389,10 @@ const timeItems = computed(() =>
         label: t,
         value: t,
     })),
+);
+
+const closingItems = computed(() =>
+    timeItems.value.filter((item) => item.value !== "00:00"),
 );
 
 async function save() {

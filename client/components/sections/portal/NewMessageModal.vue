@@ -190,8 +190,7 @@ const allCount = computed(() =>
                                 v-else-if="!matchingCount"
                                 class="px-3 py-10 text-center text-sm text-slate-400 dark:text-gray-500"
                             >
-                                No one is assigned to your loved one's schedule
-                                yet. Switch to all staff to reach the branch.
+                                No one is assigned to your loved one yet. Switch to all staff to reach the branch.
                             </p>
 
                             <div

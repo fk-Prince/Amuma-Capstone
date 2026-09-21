@@ -17,7 +17,10 @@ class BranchContractController extends Controller
 
     public function store(StoreBranchContractRequest $request)
     {
-        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        $branch = BranchGuard::resolveBranch(
+            $request->branch_uuid,
+            homecare: strcasecmp((string) $request->category, 'Homecare') === 0,
+        );
         BranchGuard::mergeRequest($request, $branch);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Contracts, PermissionAction::Create);
         return $this->branchContractService->createBranchContract($request->all());
@@ -47,7 +50,10 @@ class BranchContractController extends Controller
 
     public function update(Request $request, string $id)
     {
-        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        $branch = BranchGuard::resolveBranch(
+            $request->branch_uuid,
+            homecare: strcasecmp((string) $request->category, 'Homecare') === 0,
+        );
         BranchGuard::mergeRequest($request, $branch);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Contracts, PermissionAction::Update);
         return $this->branchContractService->updateBranchContract($request->all(), $id);

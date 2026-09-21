@@ -77,6 +77,10 @@ class PaymentService
             throw new Exception('Enter an amount greater than 0.', 422);
         }
 
+        if ($amount > 0 && $creditAmount > 0) {
+            throw new Exception('Pay with credit or with a card, not both.', 422);
+        }
+
         if ($creditAmount > 0) {
             $available = $this->refundRepository->creditFor($access->patient_id);
 
@@ -106,9 +110,10 @@ class PaymentService
                     Invoice::STATUS_PARTIAL,
                 ])
                 ->when($codes, fn($q) => $q->whereIn('invoice_code', $codes))
-                ->orderBy('created_at')
                 ->lockForUpdate()
-                ->get();
+                ->get()
+                ->sortBy(fn($invoice) => $invoice->paymentOrder())
+                ->values();
 
             if ($codes && $invoices->isEmpty()) {
                 throw new Exception('The selected invoices are no longer payable.', 422);
@@ -182,6 +187,7 @@ class PaymentService
             $receipt = $this->paymentRepository->create([
                 'transaction_id'        => $transaction->transaction_id,
                 'prior_balance'         => $totalBalance,
+                'cash_tendered'         => $amount,
                 'created_at'            => now(),
             ]);
 

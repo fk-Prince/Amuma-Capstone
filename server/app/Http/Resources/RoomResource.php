@@ -45,6 +45,7 @@ class RoomResource extends JsonResource
                             'patient' => $bed->reservedAdmission->patient
                                 ? [
                                     'patient_id' => $bed->reservedAdmission->patient->patient_id,
+                                    'avatar' => $bed->reservedAdmission->patient->avatar_url,
                                     'first_name' =>   $bed->reservedAdmission->patient->first_name,
                                     'last_name' => $bed->reservedAdmission->patient->last_name,
                                     'gender' => $bed->reservedAdmission->patient->gender,
@@ -68,6 +69,7 @@ class RoomResource extends JsonResource
                                 'patient' => $bed->currentAdmission->patient
                                     ? [
                                         'patient_id' => $bed->currentAdmission->patient->patient_id,
+                                        'avatar' => $bed->currentAdmission->patient->avatar_url,
                                         'first_name' =>   $bed->currentAdmission->patient->first_name,
                                         'last_name' => $bed->currentAdmission->patient->last_name,
                                         'gender' => $bed->currentAdmission->patient->gender,

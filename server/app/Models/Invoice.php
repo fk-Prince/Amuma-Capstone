@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class Invoice extends Model
 {
@@ -82,12 +84,17 @@ class Invoice extends Model
 
     public function paymentDescription(): string
     {
-        $stay = $this->invoiceAdmissionLines
-            ->sortByDesc('invoice_admission_id')
-            ->first();
+        $lines = $this->invoiceAdmissionLines->filter(fn($line) => $line->description);
+        $priced = $lines->filter(fn($line) => (float) $line->price > 0);
 
-        if ($stay?->description) {
-            return $stay->description;
+        $stays = ($priced->isNotEmpty() ? $priced : $lines)
+            ->sortByDesc('invoice_admission_id')
+            ->pluck('description')
+            ->unique()
+            ->values();
+
+        if ($stays->isNotEmpty()) {
+            return $stays->first();
         }
 
         $services = $this->invoiceServices
@@ -97,10 +104,64 @@ class Invoice extends Model
             ->values();
 
         if ($services->isNotEmpty()) {
-            return $services->implode(', ');
+            $more = $services->count() - 2;
+
+            return $services->take(2)->implode(', ') . ($more > 0 ? " (+{$more} more)" : '');
         }
 
         return 'Payment for balance';
+    }
+
+    public function paymentOrder(): array
+    {
+        $this->loadMissing('invoiceAdmissionLines.admissionPeriod');
+
+        $start = $this->invoiceAdmissionLines
+            ->map(fn($line) => $line->admissionPeriod?->start_date
+                ? Carbon::parse($line->admissionPeriod->start_date)->timestamp
+                : null)
+            ->filter()
+            ->min();
+
+        return [$start ?? $this->created_at?->timestamp ?? 0, $this->invoice_id];
+    }
+
+    public function paymentLines(): Collection
+    {
+        $lines = $this->invoiceAdmissionLines->filter(fn($line) => $line->description);
+        $priced = $lines->filter(fn($line) => (float) $line->price > 0);
+        $stays = $priced->isNotEmpty() ? $priced : $lines;
+
+        if ($stays->isNotEmpty()) {
+            $stays->loadMissing('admissionPeriod');
+
+            return $stays
+                ->sortBy(fn($line) => [
+                    $line->admissionPeriod?->start_date
+                        ? Carbon::parse($line->admissionPeriod->start_date)->timestamp
+                        : 0,
+                    $line->invoice_admission_id,
+                ])
+                ->groupBy('description')
+                ->map(fn($group, $description) => [
+                    'description' => $description,
+                    'weight' => (float) $group->sum('price'),
+                ])
+                ->values();
+        }
+
+        return $this->invoiceServices
+            ->filter(fn($line) => $line->description)
+            ->groupBy('description')
+            ->map(fn($group, $description) => [
+                'description' => $description,
+                'weight' => (float) $group->sum(fn($line) => (float) $line->price * (
+                    $line->scheduleService?->service_id === null
+                        ? max(1, (float) ($line->scheduleService?->hours_booked ?? 1))
+                        : 1
+                )),
+            ])
+            ->values();
     }
 
     public function adlHoursBooked(): ?float

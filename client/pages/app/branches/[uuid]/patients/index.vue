@@ -18,6 +18,7 @@ import { calculateAge } from "~/utils/user";
 import { patientService } from "~/api/patient/PatientService";
 import type { PatientRetrieve } from "~/types/patient";
 import PatientCard from "~/components/sections/app/Patient/PatientCard.vue";
+import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 import PatientFilter from "~/components/sections/app/Patient/PatientFilter.vue";
 import BaseDropdownMenu from "~/components/ui/BaseDropdownMenu.vue";
 import { usePagination } from "~/composables/usePagination";
@@ -56,7 +57,6 @@ const actionMenuItems = [
     { label: "Diagnosis & Assessment", icon: Stethoscope, tab: "assessment" },
     { label: "Admission", icon: BedDouble, tab: "admissions" },
     { label: "Schedule", icon: CalendarDays, tab: "schedule" },
-    { label: "Service", icon: HandHeart, tab: "service" },
     { label: "Medication", icon: Pill, tab: "medication" },
     { label: "Vital Signs", icon: HeartPulse, tab: "vitals" },
     { label: "Activity", icon: Activity, tab: "activity" },
@@ -185,7 +185,7 @@ const emptyStateSubtitle = computed(() =>
 </script>
 
 <template>
-    <div class="min-h-screen-header bg-slate-100 p-2 dark:bg-surface">
+    <div class="min-h-screen-header bg-slate-100 dark:bg-surface rounded-lg">
         <div
             class="w-full min-h-[calc(100dvh-var(--header-h)-1rem)] lg:h-[calc(100dvh-var(--header-h)-1rem)] flex flex-col gap-4"
         >
@@ -351,15 +351,10 @@ const emptyStateSubtitle = computed(() =>
                                 >
                                     <td class="py-4 pl-6 pr-3">
                                         <div class="flex items-center gap-3">
-                                            <div
-                                                class="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"
-                                            >
-                                                <img
-                                                    :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(patient.full_name)}&background=random&color=fff`"
-                                                    :alt="patient.full_name"
-                                                    class="h-full w-full object-cover"
-                                                />
-                                            </div>
+                                            <PatientAvatar
+                                                :src="patient.avatar"
+                                                :name="patient.full_name"
+                                            />
                                             <div>
                                                 <p
                                                     class="text-sm font-semibold text-[#16302E] dark:text-white"

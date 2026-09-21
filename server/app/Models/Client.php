@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\CapitalizesNames;
 use App\Models\Location;
 use Illuminate\Database\Eloquent\Model;
 
 class Client extends Model
 {
+    use CapitalizesNames;
+
     protected $primaryKey = 'client_id';
 
 

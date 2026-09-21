@@ -886,7 +886,7 @@ const form = reactive({
     branch: emptyBranch(),
     settings: {
         opening: "00:00",
-        closing: "00:00",
+        closing: "23:59",
         currency: "PHP",
         time_zone: "Asia/Manila",
         reserved_walkin_slots: 3,

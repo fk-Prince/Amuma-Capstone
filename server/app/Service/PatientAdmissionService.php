@@ -7,7 +7,6 @@ use App\Models\AdmissionPeriod;
 use App\Models\Bed;
 use App\Models\Booking;
 use App\Models\Invoice;
-use App\Models\InvoiceAdjustment;
 use App\Models\Patient;
 use App\Models\PatientAdmission;
 use App\Models\Room;
@@ -282,10 +281,6 @@ class PatientAdmissionService
                 ->with('branchContract', 'invoiceAdmissionLines')
                 ->first();
 
-            $currentInvoiceIds = $currentPeriod
-                ? $currentPeriod->invoiceAdmissionLines->pluck('invoice_id')->unique()
-                : collect();
-
             $dischargedAt = now();
 
             $admission->update([
@@ -302,39 +297,13 @@ class PatientAdmissionService
                 ]);
             }
 
-            $invoiceIds = $admission->invoiceAdmission()
-                ->pluck('invoice_id')
-                ->unique()
-                ->filter();
+            if ($currentPeriod) {
+                $force = !empty($payload['force']);
 
-            if ($invoiceIds->isNotEmpty()) {
-                $invoices = Invoice::with([
-                    'allocations.refundAllocations.refund.transaction',
-                    'invoiceAdmissionLines.admissionPeriod.branchContract',
-                ])
-                    ->whereIn('invoice_id', $invoiceIds)
-                    ->get();
+                $this->refundService->settleDischarge($admission, $currentPeriod, $force);
 
-                foreach ($invoices as $invoice) {
-                    if ($currentPeriod && $currentInvoiceIds->contains($invoice->invoice_id)) {
-                        $this->refundService->createRefundCurrentInvoice(
-                            $invoice,
-                            $admission,
-                            $currentPeriod
-                        );
-
-                        continue;
-                    }
-
-                    $this->refundService->createRefundFutureInvoice($invoice);
-
-                    $invoice->refresh();
-
-                    if ($invoice->net_paid_amount <= 0) {
-                        $invoice->update([
-                            'status' => Invoice::STATUS_VOID,
-                        ]);
-                    }
+                if ($force) {
+                    $this->writeOffOutstanding($admission, $payload['user'] ?? null);
                 }
             }
 
@@ -347,6 +316,21 @@ class PatientAdmissionService
                 ),
             ]);
         });
+    }
+
+    private function writeOffOutstanding(PatientAdmission $admission, ?User $user): void
+    {
+        Invoice::with('allocations.refundAllocations', 'invoiceAdjustments')
+            ->whereIn('invoice_id', $admission->invoiceAdmission()->pluck('invoice_id')->unique())
+            ->whereNotIn('status', Invoice::CLOSED_STATUSES)
+            ->get()
+            ->filter(fn(Invoice $invoice) => $invoice->balance_due > 0)
+            ->each(fn(Invoice $invoice) => $invoice->update([
+                'status' => Invoice::STATUS_WRITTEN_OFF,
+                'written_off_at' => now(),
+                'written_off_by' => $user?->user_id,
+                'write_off_reason' => 'Force discharged with an unpaid balance. Marked as bad debt.',
+            ]));
     }
 
     /*
@@ -458,6 +442,8 @@ class PatientAdmissionService
             if (!$period) {
                 throw new Exception('No accommodation record found for this admission.', 400);
             }
+
+            $contract = $this->periods->sameAccommodation($period, $contract);
 
             $coverageEnd = $admission->periods()
                 ->whereNotIn('status', AdmissionPeriod::CLOSED_STATUSES)
@@ -695,29 +681,7 @@ class PatientAdmissionService
                 2
             );
 
-            $difference = round($newRemaining - $oldRemaining, 2);
-
-            $target = $period->invoiceAdmissionLines
-                ->map(fn($line) => $line->invoice)
-                ->filter()
-                ->sortByDesc('invoice_id')
-                ->first();
-
-            if ($target && abs($difference) > 0) {
-                InvoiceAdjustment::create([
-                    'invoice_id' => $target->invoice_id,
-                    'type'       => 'correction',
-                    'amount'     => $difference,
-                    'reason'     => $difference > 0
-                        ? 'Accommodation upgraded mid-period. Difference for the remaining days.'
-                        : 'Accommodation downgraded mid-period. Credit for the remaining days.',
-                ]);
-            }
-
-
             $windowEnd = Carbon::parse($period->end_date);
-
-            $this->periods->repriceConsumed($period, $oldPrice, $oldConsumed);
 
             $periodStart = Carbon::parse($period->start_date);
 
@@ -729,7 +693,9 @@ class PatientAdmissionService
 
             AccommodationHelper::supersede($period);
 
-            $this->periods->carryForward($futurePeriods, $newContract);
+            $upgrades = [];
+
+            $this->periods->carryForward($futurePeriods, $newContract, $upgrades);
 
             $next = $this->periods->open(
                 $admission,
@@ -741,19 +707,19 @@ class PatientAdmissionService
                 $payload['reason'] ?? null
             );
 
-            if ($target) {
-                $target->invoiceAdmissionLines()->create([
-                    'admission_period_id' => $next->admission_period_id,
-                    'price'               => $newRemaining,
-                ]);
-            }
+            $this->periods->moveBilling(
+                $period,
+                $next,
+                $oldPrice,
+                $oldConsumed,
+                $newRemaining,
+                $newContract,
+                $upgrades
+            );
 
-            $target?->refresh();
-            $target?->syncStatus();
+            $this->periods->issueUpgrades($upgrades);
 
-            if (!$target || $target->balance_due <= 0) {
-                AccommodationHelper::settle($next);
-            }
+            AccommodationHelper::settle($next);
 
             if (!$isSameBed) {
                 $this->transfers->move(
@@ -789,6 +755,12 @@ class PatientAdmissionService
     public function storeAdmission(User $user, array $payload)
     {
         $referenceId = $payload['reference_id'] ?? null;
+
+        if (isset($payload['patient']) && is_array($payload['patient'])) {
+            $payload['patient']['avatar'] = $this->patientService->storeAvatar(
+                $payload['patient']['avatar'] ?? null
+            );
+        }
 
         return DB::transaction(function () use ($referenceId, $payload, $user) {
             if ($referenceId) {
@@ -1022,11 +994,15 @@ class PatientAdmissionService
             throw new Exception('Booking does not exist.', 404);
         }
 
-        if ($booking->status !== Booking::STATUS_PENDING) {
-            throw new Exception(
-                "Booking cannot be processed. Current status: {$booking->status}.",
-                400
-            );
+        if (!in_array($booking->status, [Booking::STATUS_PENDING, Booking::STATUS_APPROVED], true)) {
+            $message = match ($booking->status) {
+                Booking::STATUS_REJECTED => 'This booking was rejected' . ($booking->reason ? ": {$booking->reason}" : '.') . ' It cannot be admitted.',
+                Booking::STATUS_EXPIRED => 'This booking has expired and cannot be admitted.',
+                Booking::STATUS_CANCELLED => 'This booking was cancelled and cannot be admitted.',
+                default => "Booking cannot be processed. Current status: {$booking->status}.",
+            };
+
+            throw new Exception($message, 400);
         }
 
         $bookingData = $booking->booking_data;

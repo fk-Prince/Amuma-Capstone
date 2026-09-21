@@ -65,11 +65,49 @@ class PaymentReceiptResource extends JsonResource
                 'description'       => $allocation->description
                     ?: $allocation->invoice?->paymentDescription()
                     ?: 'Payment for balance',
+                'rows'              => $this->lineRows($allocation),
                 'invoice_date'      => $allocation->invoice?->created_at?->toIso8601String(),
                 'amount_applied'    => (float) $allocation->amount,
                 'hours_booked'      => $allocation->invoice?->adlHoursBooked(),
             ]),
         ];
+    }
+
+    protected function lineRows($allocation): array
+    {
+        $amount = round((float) $allocation->amount, 2);
+        $groups = $allocation->invoice?->paymentLines() ?? collect();
+
+        if ($groups->count() <= 1 || $amount <= 0) {
+            return [[
+                'description' => $allocation->description
+                    ?: ($groups->first()['description'] ?? 'Payment for balance'),
+                'amount' => $amount,
+            ]];
+        }
+
+        $skip = round((float) $allocation->invoice->allocations()
+            ->where('allocation_id', '<', $allocation->allocation_id)
+            ->sum('amount'), 2);
+
+        $rows = [];
+        $remaining = $amount;
+        $last = $groups->count() - 1;
+
+        foreach ($groups->values() as $index => $group) {
+            $weight = round((float) $group['weight'], 2);
+            $available = max(0, round($weight - $skip, 2));
+            $skip = max(0, round($skip - $weight, 2));
+
+            $share = $index === $last ? $remaining : min($remaining, $available);
+
+            if ($share > 0) {
+                $rows[] = ['description' => $group['description'], 'amount' => round($share, 2)];
+                $remaining = round($remaining - $share, 2);
+            }
+        }
+
+        return $rows ?: [['description' => $groups->first()['description'], 'amount' => $amount]];
     }
 
     protected function resolveIssuerName(): ?string

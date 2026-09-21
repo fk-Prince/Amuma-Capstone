@@ -2,7 +2,7 @@
     <div class="w-full">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div
-                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary-200 dark:border-white/10 dark:bg-secondary dark:hover:border-primary-500/40"
+                class="relative group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary-200 dark:border-white/10 dark:bg-secondary dark:hover:border-primary-500/40"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary-100/40 blur-2xl dark:bg-primary-500/10"
@@ -55,9 +55,8 @@
                 </div>
             </div>
 
-            <!-- On Duty -->
             <div
-                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:border-white/10 dark:bg-secondary dark:hover:border-emerald-500/40"
+                class="relative group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:border-white/10 dark:bg-secondary dark:hover:border-emerald-500/40"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-100/50 blur-2xl dark:bg-emerald-500/10"
@@ -110,9 +109,8 @@
                 </div>
             </div>
 
-            <!-- On Leave -->
             <div
-                class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200 dark:border-white/10 dark:bg-secondary dark:hover:border-rose-500/40"
+                class="relative group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200 dark:border-white/10 dark:bg-secondary dark:hover:border-rose-500/40"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-rose-100/50 blur-2xl dark:bg-rose-500/10"
@@ -154,7 +152,9 @@
                         {{ props.onLeave ?? 0 }}
                     </p>
 
-                    <p class="mt-3 text-xs text-rose-500 dark:text-rose-300">Current on leave</p>
+                    <p class="mt-3 text-xs text-rose-500 dark:text-rose-300">
+                        Current on leave
+                    </p>
                 </div>
             </div>
         </div>

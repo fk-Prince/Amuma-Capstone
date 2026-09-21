@@ -59,6 +59,13 @@
                     </button>
                 </div>
 
+                <ScheduleConflictNotice :lines="conflicts ?? []" />
+
+                <ScheduleConflictNotice
+                    title="Nurse required"
+                    :lines="missingNurseLines"
+                />
+
                 <div
                     class="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[60%_40%]"
                 >
@@ -321,11 +328,18 @@
                                             v-model="entry.note"
                                             type="text"
                                             :maxlength="NOTE_MAX"
+                                            :readonly="isNoteLocked(entry, service.schedule_services_id)"
                                             placeholder="Note for this assignment"
                                             class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
                                         />
 
                                         <div
+                                            v-if="
+                                                !isNoteLocked(
+                                                    entry,
+                                                    service.schedule_services_id,
+                                                )
+                                            "
                                             class="mt-2 flex flex-wrap items-center gap-1.5"
                                         >
                                             <span
@@ -392,6 +406,26 @@
                             <!-- A plain search field rather than a combobox:
                                  assignment is multi-select, so the list has to
                                  stay open while several people are picked. -->
+                            <div
+                                v-if="isActiveServiceMedical"
+                                class="flex items-center gap-1 rounded-lg bg-slate-100 p-0.5 dark:bg-white/10"
+                            >
+                                <button
+                                    v-for="option in ROLE_FILTERS"
+                                    :key="option.value"
+                                    type="button"
+                                    class="rounded-md px-2.5 py-1 text-[11px] font-medium transition"
+                                    :class="
+                                        roleFilter === option.value
+                                            ? 'bg-white text-primary shadow-sm dark:bg-secondary'
+                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                    "
+                                    @click="roleFilter = option.value"
+                                >
+                                    {{ option.label }}
+                                </button>
+                            </div>
+
                             <div class="relative">
                                 <Search
                                     class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
@@ -404,6 +438,17 @@
                                     class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
                                 />
                             </div>
+
+                            <label
+                                class="inline-flex w-fit cursor-pointer select-none items-center gap-2 text-xs font-medium text-slate-600 dark:text-gray-300"
+                            >
+                                <input
+                                    v-model="availableOnly"
+                                    type="checkbox"
+                                    class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30 dark:border-white/20 dark:bg-transparent"
+                                />
+                                Available only
+                            </label>
                         </div>
 
                         <div
@@ -534,6 +579,16 @@
                                             class="truncate text-xs capitalize text-slate-500 dark:text-gray-400"
                                         >
                                             {{ employee.role_name ?? "Staff" }}
+                                            <template
+                                                v-if="
+                                                    isAssistant(
+                                                        employee,
+                                                        activeService,
+                                                    )
+                                                "
+                                            >
+                                                · Assistant
+                                            </template>
                                         </p>
 
                                         <p
@@ -786,7 +841,7 @@
                         <button
                             type="button"
                             class="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-                            :disabled="isSaving"
+                            :disabled="isSaving || missingNurseLines.length > 0"
                             @click="confirm"
                         >
                             <Loader2
@@ -803,6 +858,7 @@
 </template>
 
 <script setup lang="ts">
+import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
 import { computed, ref, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
@@ -837,6 +893,7 @@ const props = defineProps<{
     employees?: Employee[];
     isFetching?: boolean;
     isSaving?: boolean;
+    conflicts?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -859,7 +916,7 @@ const NOTE_MAX = 255;
 const NOTE_PRESETS_ADL = ["AM Shift", "PM Shift", "Full Shift"];
 const NOTE_PRESETS_OTHER = [
     "Primary",
-    "Assistance",
+    "Assistant",
     "Supervisor",
     "Observer",
     "Stand-by",
@@ -947,15 +1004,59 @@ function initialsFor(employeeId: number) {
  * fails on submit. Anyone already assigned stays visible so they can still be
  * removed.
  */
+const availableOnly = ref(false);
+
+const ROLE_FILTERS = [
+    { value: "all", label: "All" },
+    { value: "nurse", label: "Nurse" },
+    { value: "caregiver", label: "Caregiver" },
+] as const;
+
+const roleFilter = ref<"all" | "nurse" | "caregiver">("all");
+
+const isActiveServiceMedical = computed(
+    () => serviceTypeFor(activeService.value) === "Medical",
+);
+
+function assignmentRank(employee: Employee): number {
+    const wanted = props.schedule?.category === "Facility" ? "facility" : "online";
+
+    if (employee.assignment_type === wanted) return 0;
+    if (employee.assignment_type === "both") return 1;
+
+    return 2;
+}
+
+const sortedEmployees = computed(() =>
+    [...(props.employees ?? [])].sort((a, b) => assignmentRank(a) - assignmentRank(b)),
+);
+
 const filteredEmployees = computed(() => {
     const term = employeeSearch.value.trim().toLowerCase();
-    const required = requiredRoleFor(activeService.value);
+    const allowed = allowedRolesFor(activeService.value);
 
-    return (props.employees ?? []).filter((employee) => {
+    return sortedEmployees.value.filter((employee) => {
         if (
-            required &&
-            (employee.role_name ?? "").toLowerCase() !== required &&
+            allowed &&
+            !allowed.includes((employee.role_name ?? "").toLowerCase()) &&
             !isSelected(employee.employee_id)
+        ) {
+            return false;
+        }
+
+        if (
+            isActiveServiceMedical.value &&
+            roleFilter.value !== "all" &&
+            (employee.role_name ?? "").toLowerCase() !== roleFilter.value &&
+            !isSelected(employee.employee_id)
+        ) {
+            return false;
+        }
+
+        if (
+            availableOnly.value &&
+            !isSelected(employee.employee_id) &&
+            isPickDisabled(employee)
         ) {
             return false;
         }
@@ -996,6 +1097,50 @@ const isActiveServiceAdl = computed(
     () => serviceTypeFor(activeService.value) === "ADL",
 );
 
+function allowedRolesFor(serviceId: number | null): string[] | null {
+    const type = serviceTypeFor(serviceId);
+
+    if (type === "Medical") return ["nurse", "caregiver"];
+    if (type === "ADL") return ["caregiver"];
+
+    return null;
+}
+
+function isNoteLocked(entry: AssignmentEntry, serviceId: number) {
+    const employee = employeeById(entry.employee_id);
+
+    return Boolean(employee) && isAssistant(employee as Employee, serviceId);
+}
+
+function isAssistant(employee: Employee, serviceId: number | null) {
+    return (
+        serviceTypeFor(serviceId) === "Medical" &&
+        (employee.role_name ?? "").toLowerCase() === "caregiver"
+    );
+}
+
+const missingNurseLines = computed(() =>
+    (props.schedule?.services ?? [])
+        .filter((service) => service.type === "Medical")
+        .filter((service) => {
+            const picked = selectionFor(service.schedule_services_id);
+
+            return (
+                picked.length > 0 &&
+                !picked.some(
+                    (entry) =>
+                        (
+                            employeeById(entry.employee_id)?.role_name ?? ""
+                        ).toLowerCase() === "nurse",
+                )
+            );
+        })
+        .map(
+            (service) =>
+                `${service.service_name ?? "This medical service"} needs a nurse. A caregiver can only assist, not be assigned alone.`,
+        ),
+);
+
 function requiredRoleFor(serviceId: number | null): string | null {
     const type = serviceTypeFor(serviceId);
 
@@ -1033,6 +1178,8 @@ function requiredRoleLabelFor(service: ScheduleServiceItem) {
 }
 
 const requiredRoleLabel = computed(() => {
+    if (isActiveServiceMedical.value) return "Nurse or Caregiver";
+
     const role = requiredRoleFor(activeService.value);
 
     return role ? role.charAt(0).toUpperCase() + role.slice(1) : "";
@@ -1042,11 +1189,11 @@ function hasRoleMismatch(
     employee: Employee,
     serviceId: number | null = activeService.value,
 ) {
-    const required = requiredRoleFor(serviceId);
+    const allowed = allowedRolesFor(serviceId);
 
-    if (!required) return false;
+    if (!allowed) return false;
 
-    return (employee.role_name ?? "").toLowerCase() !== required;
+    return !allowed.includes((employee.role_name ?? "").toLowerCase());
 }
 
 function isSelected(employeeId: string | number) {
@@ -1068,7 +1215,11 @@ function isPickDisabled(employee: Employee) {
         return true;
     }
 
-    return !isActiveServiceAdl.value && !employee.is_assigned;
+    return (
+        !isActiveServiceAdl.value &&
+        !isAssistant(employee, activeService.value) &&
+        !employee.is_assigned
+    );
 }
 
 function isEmployeeClockedIn(
@@ -1106,7 +1257,18 @@ function toggleEmployee(serviceId: number, employeeId: number) {
 
     const next =
         index === -1
-            ? [...current, { employee_id: Number(employeeId), note: "" }]
+            ? [
+                  ...current,
+                  {
+                      employee_id: Number(employeeId),
+                      note: isNoteLocked(
+                          { employee_id: Number(employeeId), note: "" },
+                          serviceId,
+                      )
+                          ? "Assistant"
+                          : "",
+                  },
+              ]
             : current.filter((_, i) => i !== index);
 
     assignments.value = {
@@ -1132,10 +1294,12 @@ function requestToggle(serviceId: number | null, employee: Employee) {
         return;
     }
 
-    const requiredRole = requiredRoleFor(serviceId);
-
-    if (requiredRole && hasRoleMismatch(employee, serviceId)) {
-        toastError(`Only a ${requiredRole} can be assigned to this service.`);
+    if (hasRoleMismatch(employee, serviceId)) {
+        toastError(
+            serviceTypeFor(serviceId) === "Medical"
+                ? "Only a nurse, or a caregiver assisting a nurse, can be assigned to this service."
+                : "Only a caregiver can be assigned to this service.",
+        );
         return;
     }
 
@@ -1146,7 +1310,11 @@ function requestToggle(serviceId: number | null, employee: Employee) {
         return;
     }
 
-    if (serviceTypeFor(serviceId) !== "ADL" && !employee.is_assigned) {
+    if (
+        serviceTypeFor(serviceId) !== "ADL" &&
+        !isAssistant(employee, serviceId) &&
+        !employee.is_assigned
+    ) {
         toastError(
             `${employeeName(employee)} is not specialized for this service and cannot be assigned.`,
         );
@@ -1193,7 +1361,9 @@ function confirm() {
             entries.map((entry) => ({
                 employee_id: Number(entry.employee_id),
                 schedule_services_id: Number(serviceId),
-                note: entry.note.trim() || null,
+                note: isNoteLocked(entry, Number(serviceId))
+                    ? "Assistant"
+                    : entry.note.trim() || null,
             })),
     );
 

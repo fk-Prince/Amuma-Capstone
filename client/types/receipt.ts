@@ -5,6 +5,7 @@ export interface ReceiptLine {
     payment_reference: string | null;
     invoice_code: string;
     description?: string | null;
+    rows?: { description: string; amount: number }[];
     invoice_date: string | null;
     amount_applied: number;
     hours_booked?: number | null;

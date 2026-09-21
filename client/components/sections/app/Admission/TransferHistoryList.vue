@@ -21,10 +21,14 @@
                 class="absolute -left-6 top-1.5 h-3.5 w-3.5 rounded-full bg-white border-2 border-primary-300 dark:bg-secondary"
             />
 
-            <div class="rounded-xl border border-primary-100 p-4 dark:border-primary-500/20">
+            <div
+                class="rounded-xl border border-primary-100 p-4 dark:border-primary-500/20"
+            >
                 <div class="flex items-center justify-between gap-3">
                     <div class="flex items-center gap-2 text-sm min-w-0">
-                        <span class="text-slate-500 truncate dark:text-gray-400">
+                        <span
+                            class="text-slate-500 truncate dark:text-gray-400"
+                        >
                             Room {{ transfer.from_room?.room_no ?? "—" }}
                             <span
                                 v-if="transfer.from_bed?.bed_no"
@@ -44,7 +48,9 @@
                             <line x1="5" y1="12" x2="19" y2="12" />
                             <polyline points="12 5 19 12 12 19" />
                         </svg>
-                        <span class="font-medium text-primary-900 truncate dark:text-primary-300">
+                        <span
+                            class="font-medium text-primary-900 truncate dark:text-primary-300"
+                        >
                             Room {{ transfer.to_room?.room_no ?? "—" }}
                             <span
                                 v-if="transfer.to_bed?.bed_no"
@@ -55,7 +61,9 @@
                         </span>
                     </div>
 
-                    <span class="shrink-0 text-xs text-muted dark:text-gray-400">
+                    <span
+                        class="shrink-0 text-xs text-muted dark:text-gray-400"
+                    >
                         {{ stringToDateTime(transfer.created_at) }}
                     </span>
                 </div>
@@ -70,16 +78,19 @@
                         Accommodation change
                     </span>
 
-                    <span class="text-slate-500 dark:text-gray-400">
+                    <!-- <span class="text-slate-500 dark:text-gray-400">
                         {{ transfer.from_contract?.accommodation_type ?? "—" }}
                         {{ transfer.from_contract?.billing_cycle ?? "" }}
                         →
                         {{ transfer.to_contract?.accommodation_type ?? "—" }}
                         {{ transfer.to_contract?.billing_cycle ?? "" }}
-                    </span>
+                    </span> -->
                 </div>
 
-                <p v-if="transfer.reason" class="mt-2 text-xs text-slate-500 dark:text-gray-400">
+                <p
+                    v-if="transfer.reason"
+                    class="mt-2 text-xs text-slate-500 dark:text-gray-400"
+                >
                     {{ transfer.reason }}
                 </p>
             </div>
@@ -102,5 +113,4 @@ const sortedTransfers = computed(() =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     ),
 );
-
 </script>

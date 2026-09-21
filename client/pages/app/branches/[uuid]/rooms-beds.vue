@@ -12,8 +12,11 @@ import type { Bed, BedForm } from "~/types/bed";
 import { bedService } from "~/api/bed/BedService";
 import { usePagination } from "~/composables/usePagination";
 import { useDebounceFn } from "@vueuse/core";
+import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
+import { useBranchPlan } from "~/composables/useBranchPlan";
 
 const { success, error } = useToast();
+const { hasFacilityPlan } = useBranchPlan();
 
 definePageMeta({
     layout: "dashboard",
@@ -309,14 +312,22 @@ const roomMatchesCurrentFilter = (room: Room) => {
 </script>
 
 <template>
-    <div class="min-h-screen-header bg-slate-50 dark:bg-surface">
-        <div class="mx-auto space-y-6 p-4 md:p-6">
+    <div class="min-h-screen-header rounded-lg">
+        <div class="mx-auto space-y-6">
+            <PlanLockNotice
+                v-if="!hasFacilityPlan"
+                title="Rooms & beds are read-only"
+                message="This branch has no In-house Facility plan. You can view rooms and beds, but adding or editing them is locked."
+            />
+
             <RoomDashboard @addRoom="addRoomClicked" :overview="overview" />
 
             <div
-                class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
-                <div class="border-b border-slate-100 p-5 dark:border-white/10">
+                <div
+                    class="border-b border-slate-100 py-5 dark:border-white/10"
+                >
                     <RoomSearch
                         v-model="searchData"
                         v-model:activeTab="activeTab"

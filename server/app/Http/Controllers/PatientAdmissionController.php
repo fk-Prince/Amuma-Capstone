@@ -24,7 +24,7 @@ class PatientAdmissionController extends Controller
 
     public function store(Request $request)
     {
-        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Create);
         BranchGuard::mergeRequest($request, $branch);
         return $this->patientAdmissionService->storeAdmission($request->user(), $request->all());
@@ -32,7 +32,7 @@ class PatientAdmissionController extends Controller
 
     public function action(Request $request)
     {
-        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
 
         $action = match ($request->action) {
             'admit' => PermissionAction::Admit,

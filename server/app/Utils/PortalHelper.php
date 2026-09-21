@@ -87,7 +87,9 @@ class PortalHelper
         $wantsActivity = $wantsAll || in_array('activity', $sections, true);
         $wantsAdmissions = $wantsAll || in_array('admissions', $sections, true);
 
-        $payload = [];
+        $payload = [
+            'patient_id' => $patient->patient_id,
+        ];
 
         if ($wantsProfile) {
             $payload['access'] = self::access($access);
@@ -628,6 +630,10 @@ class PortalHelper
             ? $startTime->copy()->addMinutes($totalMinutes)
             : null;
 
+        $isOnsite = $schedule->category === Schedule::CATEGORYFACILITY;
+        $serviceLocation = $schedule->location ?? $patient->location;
+        $serviceAddress = $serviceLocation?->full_address;
+
         return [
             'schedule_id' => $schedule->schedule_id,
             'schedule_code' => $schedule->schedule_code,
@@ -645,6 +651,11 @@ class PortalHelper
             'type' => $schedule->scheduleServices->contains(
                 fn($service) => $service->hours_booked !== null
             ) ? 'adl' : 'medical',
+
+            'is_onsite' => $isOnsite,
+            'address' => $isOnsite
+                ? 'On-site'
+                : ($serviceAddress ?? 'No address on file'),
 
             'patient' => [
                 'patient_id' => $patient->patient_id,
@@ -672,6 +683,8 @@ class PortalHelper
             'hours_booked' => $scheduleService->hours_booked !== null
                 ? (float) $scheduleService->hours_booked
                 : null,
+
+            'price' => (float) ($scheduleService->invoiceServices->first()->price ?? 0),
 
             'duration_minutes' => self::resolveDurationMinutes($scheduleService),
             'type' => $scheduleService->type,
@@ -761,6 +774,7 @@ class PortalHelper
                 'total' => (float) $invoice->total_amount,
                 'adjusted_total' => (float) $invoice->adjusted_total,
                 'amount_paid' => (float) $invoice->amount_paid,
+                'net_paid' => (float) $invoice->net_paid_amount,
                 'balance_due' => (float) $invoice->balance_due,
                 'refund_status' => $invoice->refund_status,
                 'void_reason' => $invoice->void_reason,

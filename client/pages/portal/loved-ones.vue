@@ -1,7 +1,7 @@
 ﻿<template>
     <div class="min-h-full p-4 sm:p-6 lg:p-8 space-y-5">
         <div v-if="isLoading" class="space-y-5 animate-pulse">
-            <div class="flex items-center gap-2">
+            <!-- <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-full bg-gray-200 shrink-0 dark:bg-white/15"></div>
 
                 <div
@@ -20,7 +20,7 @@
                 </div>
 
                 <div class="w-8 h-8 rounded-full bg-gray-200 shrink-0 dark:bg-white/15"></div>
-            </div>
+            </div> -->
 
             <div
                 class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 dark:bg-secondary dark:border-white/10"
@@ -42,11 +42,15 @@
                             ></div>
                         </div>
 
-                        <div class="h-4 w-40 rounded bg-gray-100 dark:bg-white/10"></div>
+                        <div
+                            class="h-4 w-40 rounded bg-gray-100 dark:bg-white/10"
+                        ></div>
                         <div
                             class="h-4 w-full max-w-md rounded bg-gray-100 dark:bg-white/10"
                         ></div>
-                        <div class="h-4 w-32 rounded bg-gray-100 dark:bg-white/10"></div>
+                        <div
+                            class="h-4 w-32 rounded bg-gray-100 dark:bg-white/10"
+                        ></div>
 
                         <div class="flex flex-wrap gap-2 pt-1">
                             <div
@@ -81,7 +85,9 @@
                     :key="card"
                     class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
                 >
-                    <div class="h-4 w-36 rounded bg-gray-200 mb-5 dark:bg-white/15"></div>
+                    <div
+                        class="h-4 w-36 rounded bg-gray-200 mb-5 dark:bg-white/15"
+                    ></div>
 
                     <div class="space-y-5">
                         <div
@@ -97,7 +103,9 @@
                                 <div
                                     class="h-3.5 w-32 rounded bg-gray-200 dark:bg-white/15"
                                 ></div>
-                                <div class="h-3 w-24 rounded bg-gray-100 dark:bg-white/10"></div>
+                                <div
+                                    class="h-3 w-24 rounded bg-gray-100 dark:bg-white/10"
+                                ></div>
                             </div>
                         </div>
                     </div>
@@ -113,23 +121,33 @@
                     <div
                         class="flex items-center gap-1 bg-gray-50 rounded-lg p-1 w-fit dark:bg-white/5"
                     >
-                        <div class="h-7 w-24 rounded-md bg-gray-200 dark:bg-white/15"></div>
-                        <div class="h-7 w-24 rounded-md bg-gray-100 dark:bg-white/10"></div>
+                        <div
+                            class="h-7 w-24 rounded-md bg-gray-200 dark:bg-white/15"
+                        ></div>
+                        <div
+                            class="h-7 w-24 rounded-md bg-gray-100 dark:bg-white/10"
+                        ></div>
                     </div>
 
-                    <div class="h-4 w-14 rounded bg-gray-100 dark:bg-white/10"></div>
+                    <div
+                        class="h-4 w-14 rounded bg-gray-100 dark:bg-white/10"
+                    ></div>
                 </div>
 
                 <div class="space-y-3">
                     <div class="px-2 sm:px-4 pt-2 space-y-2">
-                        <div class="h-4 w-36 rounded bg-gray-200 dark:bg-white/15"></div>
+                        <div
+                            class="h-4 w-36 rounded bg-gray-200 dark:bg-white/15"
+                        ></div>
                         <div
                             class="h-3 w-full max-w-md rounded bg-gray-100 dark:bg-white/10"
                         ></div>
                     </div>
 
                     <div class="px-2 sm:px-4">
-                        <div class="h-10 rounded-lg bg-gray-50 dark:bg-white/5"></div>
+                        <div
+                            class="h-10 rounded-lg bg-gray-50 dark:bg-white/5"
+                        ></div>
                     </div>
 
                     <div
@@ -165,7 +183,9 @@
             v-else-if="loadError"
             class="bg-white dark:bg-secondary rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm p-8 sm:p-10 text-center"
         >
-            <p class="text-sm text-rose-500 dark:text-rose-300">{{ loadError }}</p>
+            <p class="text-sm text-rose-500 dark:text-rose-300">
+                {{ loadError }}
+            </p>
 
             <button
                 type="button"
@@ -388,7 +408,10 @@
                                 :to="patientRoute(link.to)"
                                 class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-primary-500 text-primary-600 text-sm font-medium hover:bg-primary-500 hover:text-white transition-colors dark:text-primary-300"
                             >
-                                <component :is="link.icon" class="w-3.5 h-3.5" />
+                                <component
+                                    :is="link.icon"
+                                    class="w-3.5 h-3.5"
+                                />
                                 {{ link.label }}
                             </NuxtLink>
 
@@ -420,7 +443,9 @@
                 <div
                     class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 min-w-0 dark:bg-secondary dark:border-white/10"
                 >
-                    <p class="text-sm font-semibold text-gray-800 mb-4 dark:text-white">
+                    <p
+                        class="text-sm font-semibold text-gray-800 mb-4 dark:text-white"
+                    >
                         Personal Information
                     </p>
 
@@ -438,7 +463,9 @@
                                 >
                                     {{ lovedOne.birthdate }}
                                 </p>
-                                <p class="text-xs text-gray-400 break-words dark:text-gray-500">
+                                <p
+                                    class="text-xs text-gray-400 break-words dark:text-gray-500"
+                                >
                                     {{ lovedOne.age }} years old ·
                                     {{ lovedOne.gender }}
                                 </p>
@@ -458,7 +485,11 @@
                                 >
                                     {{ lovedOne.bloodType }}
                                 </p>
-                                <p class="text-xs text-gray-400 dark:text-gray-500">Blood type</p>
+                                <p
+                                    class="text-xs text-gray-400 dark:text-gray-500"
+                                >
+                                    Blood type
+                                </p>
                             </div>
                         </li>
 
@@ -484,7 +515,9 @@
                                 >
                                     {{ lovedOne.contactNumber }}
                                 </p>
-                                <p class="text-xs text-gray-400 dark:text-gray-500">
+                                <p
+                                    class="text-xs text-gray-400 dark:text-gray-500"
+                                >
                                     Contact number
                                 </p>
                             </div>
@@ -503,7 +536,9 @@
                                 >
                                     {{ lovedOne.homeAddress }}
                                 </p>
-                                <p class="text-xs text-gray-400 dark:text-gray-500">
+                                <p
+                                    class="text-xs text-gray-400 dark:text-gray-500"
+                                >
                                     Home address
                                 </p>
                             </div>
@@ -514,7 +549,9 @@
                 <div
                     class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 min-w-0 flex flex-col dark:bg-secondary dark:border-white/10"
                 >
-                    <p class="text-sm font-semibold text-gray-800 mb-4 dark:text-white">
+                    <p
+                        class="text-sm font-semibold text-gray-800 mb-4 dark:text-white"
+                    >
                         Diagnosis
                     </p>
 
@@ -525,7 +562,9 @@
                             {{ latestDiagnosis.diagnosis || "Diagnosis" }}
                         </p>
 
-                        <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                        <p
+                            class="mt-0.5 text-xs text-gray-400 dark:text-gray-500"
+                        >
                             {{
                                 latestDiagnosis.diagnosis_date
                                     ? `Last updated ${formatDate(latestDiagnosis.diagnosis_date)}`
@@ -548,7 +587,9 @@
                         View all diagnoses ({{ lovedOne.diagnoses.length }})
                     </button>
 
-                    <p class="text-sm font-semibold text-gray-800 mt-6 mb-4 dark:text-white">
+                    <p
+                        class="text-sm font-semibold text-gray-800 mt-6 mb-4 dark:text-white"
+                    >
                         Assessment
                     </p>
 
@@ -570,7 +611,9 @@
                         View all assessments ({{ lovedOne.assessments.length }})
                     </button>
 
-                    <p class="text-sm font-semibold text-gray-800 mt-6 mb-3 dark:text-white">
+                    <p
+                        class="text-sm font-semibold text-gray-800 mt-6 mb-3 dark:text-white"
+                    >
                         Allergies
                     </p>
 
@@ -595,7 +638,9 @@
                 <div
                     class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 min-w-0 dark:bg-secondary dark:border-white/10"
                 >
-                    <p class="text-sm font-semibold text-gray-800 mb-4 dark:text-white">
+                    <p
+                        class="text-sm font-semibold text-gray-800 mb-4 dark:text-white"
+                    >
                         Patient Access & Emergency Contact
                     </p>
 
@@ -612,7 +657,9 @@
                             >
                                 {{ lovedOne.client.name }}
                             </p>
-                            <p class="text-xs text-gray-400 break-words dark:text-gray-500">
+                            <p
+                                class="text-xs text-gray-400 break-words dark:text-gray-500"
+                            >
                                 Your relationship to this patient ·
                                 {{ lovedOne.relationship }}
                             </p>
@@ -643,7 +690,9 @@
                             >
                                 {{ lovedOne.contactNumber }}
                             </p>
-                            <p class="text-xs text-gray-400 dark:text-gray-500">Contact number</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">
+                                Contact number
+                            </p>
                         </div>
                     </li>
 
@@ -664,7 +713,11 @@
                                 >
                                     {{ lovedOne.client.email }}
                                 </p>
-                                <p class="text-xs text-gray-400 dark:text-gray-500">Email</p>
+                                <p
+                                    class="text-xs text-gray-400 dark:text-gray-500"
+                                >
+                                    Email
+                                </p>
                             </div>
                         </li>
 
@@ -679,14 +732,18 @@
                             </span>
 
                             <div class="min-w-0 flex-1">
-                                <p class="text-sm font-medium text-gray-800 dark:text-white">
+                                <p
+                                    class="text-sm font-medium text-gray-800 dark:text-white"
+                                >
                                     {{
                                         lovedOne.haveAccess
                                             ? "Full access"
                                             : "Access revoked"
                                     }}
                                 </p>
-                                <p class="text-xs text-gray-400 break-words dark:text-gray-500">
+                                <p
+                                    class="text-xs text-gray-400 break-words dark:text-gray-500"
+                                >
                                     Granted {{ lovedOne.accessGrantedAt }}
                                 </p>
                             </div>
@@ -748,48 +805,20 @@
                     </NuxtLink>
                 </div>
 
-                <div v-if="medicationsLoading" class="space-y-3 animate-pulse">
-                    <div class="px-2 sm:px-4 pt-4 space-y-2">
-                        <div class="h-4 w-36 rounded bg-gray-200 dark:bg-white/15"></div>
-                        <div
-                            class="h-3 w-full max-w-md rounded bg-gray-100 dark:bg-white/10"
-                        ></div>
-                    </div>
-
-                    <div class="px-2 sm:px-4">
-                        <div class="h-10 rounded-lg bg-gray-50 dark:bg-white/5"></div>
-                    </div>
-
-                    <div
-                        v-for="row in 4"
-                        :key="row"
-                        class="grid grid-cols-2 sm:grid-cols-4 gap-4 px-2 sm:px-4 py-4 border-b border-gray-50 dark:border-white/10"
-                    >
-                        <div
-                            class="h-3.5 w-28 max-w-full rounded bg-gray-100 dark:bg-white/10"
-                        ></div>
-                        <div
-                            class="h-3.5 w-24 max-w-full rounded bg-gray-100 dark:bg-white/10"
-                        ></div>
-                        <div
-                            class="hidden sm:block h-3.5 w-20 max-w-full rounded bg-gray-100 dark:bg-white/10"
-                        ></div>
-                        <div
-                            class="hidden sm:block h-3.5 w-16 max-w-full rounded bg-gray-100 dark:bg-white/10"
-                        ></div>
-                    </div>
-                </div>
-
                 <div
-                    v-else-if="activeHealthTab === 'medications'"
+                    v-if="activeHealthTab === 'medications'"
                     class="space-y-3 min-w-0"
                 >
                     <div class="px-2 sm:px-4 pt-4">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                        <h3
+                            class="text-sm font-semibold text-gray-900 dark:text-white"
+                        >
                             Latest Medications
                         </h3>
 
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <p
+                            class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                        >
                             Recently recorded medications for this patient.
                         </p>
                     </div>
@@ -810,11 +839,15 @@
                         v-else
                         class="mx-2 sm:mx-4 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center dark:border-white/10 dark:bg-white/5"
                     >
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        <p
+                            class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                        >
                             No medications recorded
                         </p>
 
-                        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                        <p
+                            class="mt-1 text-xs text-gray-400 dark:text-gray-500"
+                        >
                             Medication records will appear here once added.
                         </p>
                     </div>
@@ -822,11 +855,15 @@
 
                 <div v-else class="space-y-3 min-w-0">
                     <div class="px-2 sm:px-4 pt-4">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                        <h3
+                            class="text-sm font-semibold text-gray-900 dark:text-white"
+                        >
                             Latest Vital Signs
                         </h3>
 
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <p
+                            class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                        >
                             Most recently recorded vital signs for this patient.
                         </p>
                     </div>
@@ -845,11 +882,15 @@
                         v-else
                         class="mx-2 sm:mx-4 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center dark:border-white/10 dark:bg-white/5"
                     >
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        <p
+                            class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                        >
                             No vital signs recorded
                         </p>
 
-                        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                        <p
+                            class="mt-1 text-xs text-gray-400 dark:text-gray-500"
+                        >
                             Vital sign records will appear here once added.
                         </p>
                     </div>
@@ -1363,8 +1404,7 @@ function mapPatientRecord(item: any): LovedOne {
             ? patient.assessments
             : [],
         diagnoses: Array.isArray(patient.diagnoses) ? patient.diagnoses : [],
-        medications: [],
-        vitals: [],
+        ...splitRecordsByCategory(patient.medication),
     };
 }
 
@@ -1376,7 +1416,7 @@ async function loadPatientData() {
     try {
         const res = await patientAccessService.retrieveAction({
             action: "overview",
-            section: "profile",
+            section: "profile,medication",
         });
 
         const records: any[] = Array.isArray(res?.data) ? res.data : [];
@@ -1395,49 +1435,6 @@ async function loadPatientData() {
         isLoading.value = false;
     }
 }
-
-const medicationsLoading = ref(false);
-const medicationsLoadedFor = ref<number | null>(null);
-
-async function loadMedicationData(patientId: number) {
-    if (!patientId || medicationsLoadedFor.value === patientId) return;
-
-    medicationsLoading.value = true;
-
-    try {
-        const res = await patientAccessService.retrieveAction({
-            action: "overview",
-            section: "medication",
-            patient_id: patientId,
-            latest_only: true,
-        });
-
-        const { medications, vitals } = splitRecordsByCategory(
-            res?.data?.patient?.medication,
-        );
-
-        const target = lovedOnes.value.find(
-            (lo) => lo.patient_id === patientId,
-        );
-
-        if (target) {
-            target.medications = medications;
-            target.vitals = vitals;
-        }
-
-        medicationsLoadedFor.value = patientId;
-    } catch (err) {
-        console.error("Error loading medication data:", err);
-    } finally {
-        medicationsLoading.value = false;
-    }
-}
-
-watch(selectedIndex, () => {
-    if (lovedOne.value.patient_id) {
-        loadMedicationData(lovedOne.value.patient_id);
-    }
-});
 
 const latestMedications = computed<Medication[]>(() => {
     const medications = lovedOne.value?.medications ?? [];
@@ -1467,10 +1464,6 @@ const latestVitals = computed<Vital[]>(() => {
 
 onMounted(async () => {
     await loadPatientData();
-
-    if (lovedOne.value.patient_id) {
-        await loadMedicationData(lovedOne.value.patient_id);
-    }
 });
 </script>
 

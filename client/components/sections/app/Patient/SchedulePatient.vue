@@ -176,8 +176,13 @@
                                         <!-- The day header above already states
                                              the date, so the row only needs the
                                              time. -->
-                                        <p
-                                            class="flex items-center gap-1 pt-1 text-xs font-medium text-slate-600 dark:text-gray-400"
+                                        <button
+                                            type="button"
+                                            title="Jump to this time on the timeline"
+                                            class="-mx-1 mt-1 flex items-center gap-1 rounded-md px-1 py-0.5 text-left text-xs font-medium text-slate-600 transition hover:bg-primary/10 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-gray-400 dark:hover:text-primary"
+                                            @click.stop="
+                                                scrollToSchedule(schedule, day, index)
+                                            "
                                         >
                                             <svg
                                                 width="11"
@@ -186,7 +191,7 @@
                                                 fill="none"
                                                 stroke="currentColor"
                                                 stroke-width="2"
-                                                class="shrink-0 opacity-50"
+                                                class="shrink-0 opacity-60"
                                             >
                                                 <circle cx="12" cy="12" r="9" />
                                                 <path d="M12 7v5l3 3" />
@@ -199,7 +204,7 @@
                                             >
                                                 – {{ schedule.end_time }}
                                             </span>
-                                        </p>
+                                        </button>
                                     </div>
 
                                     <div class="flex items-center gap-2">
@@ -263,10 +268,13 @@
                                             sIndex
                                         "
                                         class="group absolute flex cursor-pointer flex-col justify-center gap-1 rounded-xl border border-slate-200/60 px-4 py-2.5 text-xs shadow-sm transition-all duration-150 hover:z-10 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10"
-                                        :class="
+                                        :class="[
                                             scheduleStatusTheme(schedule.status)
-                                                .card
-                                        "
+                                                .card,
+                                            highlightedScheduleId === schedule.schedule_id
+                                                ? 'ring-2 ring-primary/60'
+                                                : '',
+                                        ]"
                                         :style="{
                                             left: `${getServiceLeft(schedule, sIndex, day)}px`,
                                             width: `${getServiceWidth(service)}px`,
@@ -418,10 +426,13 @@
                                 <div
                                     v-else
                                     class="group absolute flex cursor-pointer flex-col justify-center gap-1 rounded-xl border-r border-t border-b border-slate-200/60 px-4 py-2.5 text-xs shadow-sm transition-all duration-150 hover:z-10 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10"
-                                    :class="
+                                    :class="[
                                         scheduleStatusTheme(schedule.status)
-                                            .card
-                                    "
+                                            .card,
+                                        highlightedScheduleId === schedule.schedule_id
+                                            ? 'ring-2 ring-primary/60'
+                                            : '',
+                                    ]"
                                     :style="{
                                         left: `${getScheduleLeft(schedule, day)}px`,
                                         width: `${getScheduleWidth(schedule)}px`,
@@ -579,6 +590,36 @@ function rowHeight(schedule: ScheduleItem) {
 }
 
 const timelineContainers = ref<HTMLElement[]>([]);
+
+const highlightedScheduleId = ref<number | null>(null);
+let highlightTimer: ReturnType<typeof setTimeout> | undefined;
+
+function scrollToSchedule(
+    schedule: ScheduleItem,
+    day: (typeof dayGroups.value)[number],
+    dayIndex: number,
+) {
+    const container = timelineContainers.value[dayIndex];
+
+    if (!container) return;
+
+    container.scrollTo({
+        left: Math.max(
+            0,
+            labelWidth.value +
+                getScheduleLeft(schedule, day) -
+                container.clientWidth / 2 +
+                getScheduleWidth(schedule) / 2,
+        ),
+        behavior: "smooth",
+    });
+
+    highlightedScheduleId.value = schedule.schedule_id;
+    clearTimeout(highlightTimer);
+    highlightTimer = setTimeout(() => {
+        highlightedScheduleId.value = null;
+    }, 1600);
+}
 
 function scrollToCurrentTime() {
     const todayIndex = dayGroups.value.findIndex((d) => d.isToday);

@@ -92,7 +92,53 @@ class BookingService
 
             return response()->json([
                 'message' => "Booking {$booking['reference_id']} has been approved successfully.",
-                'data'  => $booking->fresh()
+                'data'  => new BookingResource($booking->fresh())
+            ], 200);
+        });
+    }
+
+    public function accept(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            $booking = $this->bookingRepository->findByField([
+                ['reference_id', '=', $payload['reference_id']],
+                ['branch_id', '=', $payload['branch_id']],
+            ]);
+
+            if (!$booking) throw new Exception('Booking doesn\'t exist', 404);
+
+            if ($booking->status !== Booking::STATUS_PENDING) {
+                throw new Exception(
+                    "Booking cannot be approved. Current status: {$booking->status}.",
+                    400
+                );
+            }
+
+            if ($booking->valid_until && Carbon::now()->isAfter(Carbon::parse($booking->valid_until))) {
+                throw new Exception('Booking has expired.', 422);
+            }
+
+            $facilityType = $booking->booking_data['facility']['type'] ?? '';
+
+            if (strcasecmp($facilityType, Booking::TYPE_PREADMISSION) !== 0) {
+                throw new Exception('Only pre-admission bookings can be approved without processing.', 422);
+            }
+
+            $booking->update([
+                'status' => Booking::STATUS_APPROVED,
+                'reviewed_by' => ($payload['user'] ?? null)?->employee?->employee_id,
+            ]);
+
+            $this->notificationService->notifyBookingDecision(
+                $payload['branch'],
+                $booking->fresh(),
+                Booking::STATUS_APPROVED,
+                $payload['user'] ?? null
+            );
+
+            return response()->json([
+                'message' => "Booking {$booking->reference_id} has been approved.",
+                'data' => new BookingResource($booking->fresh()),
             ], 200);
         });
     }
@@ -145,6 +191,9 @@ class BookingService
                 $bookingData['payment']['payment_method'] = $payload['payment_method'];
                 $bookingData['payment']['xendit_invoice_id'] = $result['xendit_invoice_id'];
                 $bookingData['payment']['masked_card_number'] = $result['masked_card_number'];
+                $bookingData['patient'] = $this->bookingHelper->resolvePatient(
+                    $bookingData['patient'] ?? []
+                );
                 $bookingData['diagnoses'] = $this->bookingHelper->resolveDiagnoses(
                     $bookingData['diagnoses'] ?? []
                 );
@@ -209,6 +258,9 @@ class BookingService
                 $assessments = [$assessments];
             }
             $bookingData['assessment'] = array_values(array_filter($assessments));
+            $bookingData['patient'] = $this->bookingHelper->resolvePatient(
+                $bookingData['patient'] ?? []
+            );
             $bookingData['diagnoses'] = $this->bookingHelper->resolveDiagnoses(
                 $bookingData['diagnoses'] ?? []
             );
@@ -335,7 +387,7 @@ class BookingService
             );
 
             return [
-                'data' => $booking->fresh(),
+                'data' => new BookingResource($booking->fresh()),
                 'message' => 'Booking has successfully rejected',
             ];
         });

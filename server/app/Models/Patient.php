@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\CapitalizesNames;
 use App\Repository\RefundRepository;
 use App\Utils\InvoiceMoney;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Patient extends Model
 {
+    use CapitalizesNames;
+
     use HasUuids;
 
     protected $primaryKey = 'patient_id';
@@ -26,6 +29,7 @@ class Patient extends Model
         'date_of_birth',
         'phone_number',
         'citizenship',
+        'avatar',
         'allergies',
     ];
 
@@ -41,8 +45,19 @@ class Patient extends Model
         return ['uuid'];
     }
 
-    // The uuid stays the key used in routes and queries; this is the readable
-    // handle staff search by and quote to a family.
+    public function getAvatarUrlAttribute(): string
+    {
+        if ($this->avatar) {
+            return $this->avatar;
+        }
+
+        $name = trim("{$this->first_name} {$this->last_name}");
+
+        return 'https://ui-avatars.com/api/?name=' . urlencode($name ?: 'Patient')
+            . '&background=random&color=fff';
+    }
+
+
     protected static function booted()
     {
         static::creating(function ($patient) {
@@ -209,7 +224,7 @@ class Patient extends Model
 
         return [
             'balance_due' => (float) $invoices->sum('balance_due'),
-            'total_paid' => (float) $invoices->sum('amount_paid'),
+            'total_paid' => (float) $invoices->sum('net_paid_amount'),
             'refundable' => app(RefundRepository::class)
                 ->creditFor($this->patient_id),
             'pending_withdrawal' => app(RefundRepository::class)

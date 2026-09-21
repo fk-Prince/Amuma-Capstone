@@ -343,6 +343,19 @@ function mapPatientRecord(item: any): LovedOne {
     };
 }
 
+const activityLoaded = ref<Record<number, boolean>>({});
+const isSwitchingActivity = ref(false);
+
+async function fetchActivitiesFor(patientId: number) {
+    const res = await patientAccessService.retrieveAction({
+        action: "overview",
+        section: "activity",
+        patient_id: patientId,
+    });
+
+    return Array.isArray(res?.data?.activities) ? res.data.activities : [];
+}
+
 async function loadPatientData() {
     isLoading.value = true;
     loadError.value = null;
@@ -351,7 +364,7 @@ async function loadPatientData() {
     try {
         const res = await patientAccessService.retrieveAction({
             action: "overview",
-            section: "profile,activity",
+            section: "profile",
         });
 
         const records: any[] = Array.isArray(res?.data) ? res.data : [];
@@ -359,6 +372,17 @@ async function loadPatientData() {
         if (records.length) {
             lovedOnes.value = records.map(mapPatientRecord);
             selectedIndex.value = resolveIndex(lovedOnes.value);
+
+            const patientId = lovedOnes.value[selectedIndex.value]?.patient_id;
+
+            if (patientId) {
+                const activities = await fetchActivitiesFor(patientId);
+                const lo = lovedOnes.value[selectedIndex.value];
+
+                if (lo) lo.activities = activities;
+
+                activityLoaded.value[selectedIndex.value] = true;
+            }
         } else {
             lovedOnes.value = [];
             noPatients.value = true;
@@ -372,13 +396,37 @@ async function loadPatientData() {
     }
 }
 
+watch(selectedIndex, async (idx) => {
+    if (activityLoaded.value[idx]) return;
+
+    const patientId = lovedOnes.value[idx]?.patient_id;
+
+    if (!patientId) return;
+
+    isSwitchingActivity.value = true;
+
+    try {
+        const activities = await fetchActivitiesFor(patientId);
+        const lo = lovedOnes.value[idx];
+
+        if (lo) lo.activities = activities;
+
+        activityLoaded.value[idx] = true;
+        currentPage.value = 1;
+    } catch (err) {
+        console.error("Error loading updates for resident:", err);
+    } finally {
+        isSwitchingActivity.value = false;
+    }
+});
+
 onMounted(() => {
     loadPatientData();
 });
 </script>
 
 <template>
-    <div class="min-h-full space-y-6 p-5 pb-16">
+    <div class="min-h-full space-y-6 dark:bg-surface bg-white rounded-lg">
         <div v-if="isLoading" class="space-y-5">
             <div
                 class="overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
@@ -456,7 +504,7 @@ onMounted(() => {
 
         <div
             v-else-if="loadError"
-            class="overflow-hidden rounded-3xl border border-rose-100 bg-white shadow-sm dark:border-rose-500/20 dark:bg-secondary"
+            class="overflow-hidden rounded-lg border border-rose-100 bg-white shadow-sm dark:border-rose-500/20 dark:bg-secondary"
         >
             <div class="flex flex-col items-center px-6 py-14 text-center">
                 <div
@@ -490,7 +538,7 @@ onMounted(() => {
 
         <template v-else>
             <div
-                class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                class="overflow-hidden rounded-t-lg border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div class="p-5 sm:p-6">
                     <div
@@ -680,7 +728,12 @@ onMounted(() => {
 
             <div
                 v-if="!activityGroups.length"
-                class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                class="overflow-hidden h-full rounded-b-lg border border-gray-100 bg-white shadow-sm transition-opacity dark:border-white/10 dark:bg-secondary"
+                :class="
+                    isSwitchingActivity
+                        ? 'pointer-events-none animate-pulse opacity-40'
+                        : ''
+                "
             >
                 <div class="flex flex-col items-center px-6 py-14 text-center">
                     <div
@@ -721,7 +774,12 @@ onMounted(() => {
             <div
                 v-for="group in activityGroups"
                 :key="group.key"
-                class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-opacity dark:border-white/10 dark:bg-secondary"
+                :class="
+                    isSwitchingActivity
+                        ? 'pointer-events-none animate-pulse opacity-40'
+                        : ''
+                "
             >
                 <div
                     class="flex items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6 dark:border-white/10"

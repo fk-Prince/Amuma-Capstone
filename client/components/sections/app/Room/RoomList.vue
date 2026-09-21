@@ -456,7 +456,11 @@ const cancelAddBed = () => {
                                             @edit-bed="editingBedId = $event"
                                         />
 
-                                        <template v-else>
+                                        <template
+                                            v-else-if="
+                                                canUpdate(Modules.RoomsAndBeds)
+                                            "
+                                        >
                                             <button
                                                 type="button"
                                                 @click="

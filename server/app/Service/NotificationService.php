@@ -2,12 +2,15 @@
 
 namespace App\Service;
 
+use App\Enums\ModuleEnum;
 use App\Events\NotificationEvent;
 use App\Guard\BranchGuard;
 use App\Http\Resources\NotificationResource;
 use App\Mail\BookingDecisionMailer;
 use App\Models\Booking;
 use App\Models\Branch;
+use App\Models\Employee;
+use App\Models\Module;
 use App\Models\Patient;
 use App\Models\User;
 use App\Repository\EmployeeRepository;
@@ -236,10 +239,11 @@ class NotificationService
         string $messageType,
         ?User $actor = null,
         mixed $reference = null,
-        ?string $referenceId = null
+        ?string $referenceId = null,
+        ?array $roles = null,
     ): void {
         $employees = $this->employeeRepository->getBranchStaffByRoles(
-            self::BOOKING_ROLES,
+            $roles ?? self::BOOKING_ROLES,
             $branch->branch_id
         );
 
@@ -259,6 +263,58 @@ class NotificationService
                 $referenceId ?? '',
                 $messageType,
                 $reference
+            ));
+        }
+    }
+
+    public function notifyAccountingStaff(
+        Branch $branch,
+        string $message,
+        ?User $actor = null,
+        mixed $reference = null,
+        ?string $referenceId = null,
+    ) {
+        $module = Module::where('module_name', ModuleEnum::BillingAndInvoices->value)
+            ->first();
+
+        if (!$module) {
+            return;
+        }
+
+        $recipients = Employee::query()
+            ->with('users')
+            ->whereHas(
+                'employeeBranch',
+                fn($q) => $q->where('branch_id', $branch->branch_id)
+            )
+            ->whereHas(
+                'permissions',
+                fn($q) => $q->where('module_id', $module->module_id)
+                    ->where('branch_id', $branch->branch_id)
+                    ->where('can_read', true)
+            )
+            ->get();
+
+        foreach ($recipients as $employee) {
+            if (!$employee->user_id || !$employee->users?->uuid) {
+                continue;
+            }
+
+            $this->notificationRepository->create([
+                'branch_id' => $branch->branch_id,
+                'to_user_id' => $employee->user_id,
+                'from_user_id' => $actor?->user_id ?? $employee->user_id,
+                'message_type' => 'Billing',
+                'message' => $message,
+            ]);
+
+            event(new NotificationEvent(
+                $employee->users->uuid,
+                (string) $branch->uuid,
+                $message,
+                $referenceId ?? '',
+                'Billing',
+                $reference,
             ));
         }
     }

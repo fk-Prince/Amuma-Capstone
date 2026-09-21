@@ -43,46 +43,22 @@ class DischargeCalculator
         $contractPrice = self::getContractPrice($contract);
         $days = self::calculateAdmissionDays($admissionDate);
 
-        $consumedDays = $period->consumedDays();
-        $remainingDays = $period->remainingDays();
-        $dailyRate = $period->dailyRate();
-        $periodPrice = self::periodPrice($period);
+        $plan = self::plan($admission, $period);
 
+        $current = $plan['entries']->where('scope', 'current');
+        $future = $plan['entries']->where('scope', 'future');
 
-        $feeBaseAmount = $periodPrice;
-
-
-        $withinRefundWindow = ($billingCycle === 'YEARLY' && self::isWithinYearlyHalfRefundWindow($admission))
-            || ($billingCycle === 'MONTHLY' && self::isWithinMonthlyHalfRefundWindow($period));
-
-        $daysStayedAmount = 0.0;
-        $retainedHalf = 0.0;
-        $periodKeep = $periodPrice;
-
-        if ($withinRefundWindow) {
-            $daysStayedAmount = round($dailyRate * $consumedDays, 2);
-            $retainedHalf = round($periodPrice / 2, 2);
-
-            $periodKeep = round(
-                min($periodPrice, $retainedHalf + $daysStayedAmount),
-                2
-            );
-        }
-
-
-        $adjustedTotal = round((float) $invoice->adjusted_total, 2);
-        $periodCredit = round(max(0, $periodPrice - $periodKeep), 2);
-
-        $requiredPayment = round(max(0, $adjustedTotal - $periodCredit), 2);
-
-
-        $refundAmount = round(max(0, $paid - $requiredPayment), 2);
-        $stillOwed = round(max(0, $requiredPayment - $paid), 2);
+        $currentPaid = round((float) $current->sum('paid'), 2);
+        $refundAmount = round((float) $current->sum('refundable'), 2);
+        $requiredPayment = round((float) collect($plan['invoices'])->sum('new_total'), 2);
+        $stillOwed = round((float) collect($plan['invoices'])->sum('owed'), 2);
+        $totalPaid = round((float) collect($plan['invoices'])->sum('net_paid'), 2);
+        $totalRefund = round((float) collect($plan['invoices'])->sum('refund'), 2);
 
         $eligibleForRefund = $refundAmount > 0;
 
         [$policy, $policyTitle, $policyDescription] = self::getDischargePolicyText(
-            $withinRefundWindow,
+            $plan['within_window'],
             $eligibleForRefund,
             $billingCycle
         );
@@ -95,30 +71,197 @@ class DischargeCalculator
             'discharge_date' => $dischargeDate?->toIso8601String(),
             'days_since_admission' => $days,
             'contract_price' => $contractPrice,
-            'amount_paid' => round($paid, 2),
+            'amount_paid' => $currentPaid,
+            'total_paid' => $totalPaid,
             'required_payment' => $requiredPayment,
-            'fee_base_amount' => $feeBaseAmount,
-            'days_stayed_amount' => $daysStayedAmount,
-            'retained_amount' => $requiredPayment,
+            'fee_base_amount' => $plan['period_price'],
+            'days_stayed_amount' => $plan['days_stayed_amount'],
+            'retained_amount' => $plan['period_keep'],
             'refund_amount' => $refundAmount,
+            'total_refund_amount' => $totalRefund,
 
-            'consumed_days' => $consumedDays,
-            'remaining_days' => $remainingDays,
+            'consumed_days' => $plan['consumed_days'],
+            'remaining_days' => $period->remainingDays(),
             'period_days' => $period->totalDays(),
             'period_start' => $period->start_date,
             'period_end' => $period->end_date,
-            'daily_rate' => round($dailyRate, 2),
-            'period_price' => $periodPrice,
-            'invoice_total' => $adjustedTotal,
+            'daily_rate' => round($period->dailyRate(), 2),
+            'period_price' => $plan['period_price'],
+            'invoice_total' => $plan['period_price'],
             'invoice_code' => $invoice->invoice_code,
-            'retained_half' => $retainedHalf,
+            'retained_half' => $plan['retained_half'],
 
             'policy' => $policy,
             'policy_title' => $policyTitle,
             'policy_description' => $policyDescription,
-            'is_within_refund_window' => $withinRefundWindow,
+            'is_within_refund_window' => $plan['within_window'],
             'is_under_required_payment' => $stillOwed > 0,
             'payment_shortfall' => $stillOwed,
+
+            'period_code' => AdmissionPeriod::codeFor($period->admission_period_id),
+            'invoice_codes' => $current
+                ->map(fn(array $entry) => $entry['line']->invoice?->invoice_code)
+                ->filter()
+                ->unique()
+                ->values()
+                ->all(),
+
+            'future_periods' => $future
+                ->groupBy(fn(array $entry) => $entry['period']->admission_period_id)
+                ->map(function ($group) {
+                    $futurePeriod = $group->first()['period'];
+                    $price = round((float) $group->sum(fn(array $entry) => (float) $entry['line']->price), 2);
+                    $paid = round((float) $group->sum('paid'), 2);
+
+                    return [
+                        'admission_period_id' => $futurePeriod->admission_period_id,
+                        'period_code' => AdmissionPeriod::codeFor($futurePeriod->admission_period_id),
+                        'billing_cycle' => $futurePeriod->branchContract?->billing_cycle,
+                        'accommodation_type' => $futurePeriod->branchContract?->accommodation_type,
+                        'start_date' => $futurePeriod->start_date,
+                        'end_date' => $futurePeriod->end_date,
+                        'price' => $price,
+                        'paid' => $paid,
+                        'refundable' => round((float) $group->sum('refundable'), 2),
+                        'invoice_codes' => $group
+                            ->map(fn(array $entry) => $entry['line']->invoice?->invoice_code)
+                            ->filter()
+                            ->unique()
+                            ->values()
+                            ->all(),
+                        'status' => $paid >= $price - 0.01
+                            ? 'paid'
+                            : ($paid > 0 ? 'partially_paid' : 'unpaid'),
+                    ];
+                })
+                ->values()
+                ->all(),
+        ];
+    }
+
+    public static function plan(PatientAdmission $admission, AdmissionPeriod $period): array
+    {
+        $contract = $period->branchContract;
+        $cycle = $contract ? self::getBillingCycle($contract) : '';
+
+        $consumedDays = $period->consumedDays();
+        $periodPrice = self::periodPrice($period);
+        $dailyRate = $period->dailyRate();
+
+        $withinWindow = ($cycle === 'YEARLY' && self::isWithinYearlyHalfRefundWindow($admission))
+            || ($cycle === 'MONTHLY' && self::isWithinMonthlyHalfRefundWindow($period));
+
+        $retainedHalf = 0.0;
+        $daysStayedAmount = 0.0;
+        $periodKeep = $periodPrice;
+
+        if ($withinWindow) {
+            $retainedHalf = round($periodPrice / 2, 2);
+            $daysStayedAmount = $cycle === 'MONTHLY'
+                ? 0.0
+                : round($dailyRate * $consumedDays, 2);
+
+            $periodKeep = round(min($periodPrice, $retainedHalf + $daysStayedAmount), 2);
+        }
+
+        $periodCredit = round(max(0, $periodPrice - $periodKeep), 2);
+        $creditRate = $periodPrice > 0 ? $periodCredit / $periodPrice : 0.0;
+
+        $futurePeriods = $admission->periods()
+            ->whereNotIn('status', AdmissionPeriod::CLOSED_STATUSES)
+            ->where('admission_period_id', '!=', $period->admission_period_id)
+            ->where('start_date', '>=', $period->end_date)
+            ->with('invoiceAdmissionLines.invoice', 'branchContract')
+            ->orderBy('start_date')
+            ->orderBy('admission_period_id')
+            ->get();
+
+        $entries = collect();
+
+        $currentLines = $period->invoiceAdmissionLines()->with('invoice')->get()->values();
+        $assignedCredit = 0.0;
+
+        foreach ($currentLines as $index => $line) {
+            $credit = $index === $currentLines->count() - 1
+                ? round($periodCredit - $assignedCredit, 2)
+                : round((float) $line->price * $creditRate, 2);
+
+            $assignedCredit = round($assignedCredit + $credit, 2);
+
+            $entries->push([
+                'scope' => 'current',
+                'line' => $line,
+                'period' => $period,
+                'credit' => $credit,
+            ]);
+        }
+
+        foreach ($futurePeriods as $futurePeriod) {
+            foreach ($futurePeriod->invoiceAdmissionLines as $line) {
+                $entries->push([
+                    'scope' => 'future',
+                    'line' => $line,
+                    'period' => $futurePeriod,
+                    'credit' => round((float) $line->price, 2),
+                ]);
+            }
+        }
+
+        $entries = $entries
+            ->filter(fn(array $entry) => $entry['line']->invoice
+                && !in_array($entry['line']->invoice->status, Invoice::CLOSED_STATUSES, true))
+            ->values();
+
+        $invoices = [];
+        $shares = [];
+
+        foreach ($entries->groupBy(fn(array $entry) => $entry['line']->invoice_id) as $invoiceId => $group) {
+            $invoice = $group->first()['line']->invoice;
+            $invoice->loadMissing(
+                'allocations.refundAllocations.refund.transaction',
+                'invoiceAdjustments',
+                'invoiceAdmissionLines'
+            );
+
+            $adjusted = round((float) $invoice->adjusted_total, 2);
+            $netPaid = round((float) $invoice->net_paid_amount, 2);
+            $groupCredit = round((float) $group->sum('credit'), 2);
+            $credit = round(min($groupCredit, $adjusted), 2);
+            $newTotal = round(max(0, $adjusted - $credit), 2);
+            $refund = round(max(0, min($credit, $netPaid - $newTotal)), 2);
+            $lineTotal = (float) $invoice->invoiceAdmissionLines->sum('price');
+
+            $invoices[$invoiceId] = [
+                'invoice' => $invoice,
+                'credit' => $credit,
+                'new_total' => $newTotal,
+                'net_paid' => $netPaid,
+                'refund' => $refund,
+                'owed' => round(max(0, $newTotal - $netPaid), 2),
+                'has_current' => $group->contains('scope', 'current'),
+            ];
+
+            foreach ($group as $entry) {
+                $price = (float) $entry['line']->price;
+
+                $shares[$entry['line']->invoice_admission_id] = [
+                    'paid' => $lineTotal > 0 ? round($netPaid * $price / $lineTotal, 2) : 0.0,
+                    'refundable' => $groupCredit > 0
+                        ? round($refund * $entry['credit'] / $groupCredit, 2)
+                        : 0.0,
+                ];
+            }
+        }
+
+        return [
+            'within_window' => $withinWindow,
+            'period_price' => $periodPrice,
+            'period_keep' => $periodKeep,
+            'retained_half' => $retainedHalf,
+            'days_stayed_amount' => $daysStayedAmount,
+            'consumed_days' => $consumedDays,
+            'invoices' => $invoices,
+            'entries' => $entries->map(fn(array $entry) => $entry + $shares[$entry['line']->invoice_admission_id])->values(),
         ];
     }
 
@@ -132,8 +275,8 @@ class DischargeCalculator
                 $eligibleForRefund ? 'Refund available' : 'No refund',
                 'Half-retention policy',
                 $eligibleForRefund
-                    ? 'Discharged less than 2 weeks into the month. Half of the month is retained, and the days already stayed are deducted from the other half. What is left is refunded.'
-                    : 'Discharged less than 2 weeks into the month. Half of the month is retained, and the days already stayed have used up the other half, so nothing is left to refund.',
+                    ? 'Discharged less than 2 weeks into the month. Half of the month is retained and the other half is refunded. The days already stayed are not counted.'
+                    : 'Discharged less than 2 weeks into the month. Half of the month is retained and the other half is refunded, but nothing has been paid beyond the retained half, so there is nothing to refund.',
             ];
         }
 

@@ -103,31 +103,14 @@
         <aside
             class="hidden lg:flex flex-col bg-white border-r sticky top-0 h-screen dark:bg-secondary"
         >
-            <div class="px-6 py-6 border-b">
-                <p
-                    class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500"
-                >
-                    Admission Progress
-                </p>
-                <div class="mt-3 flex items-center gap-2">
-                    <div
-                        class="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden dark:bg-white/10"
-                    >
-                        <div
-                            class="h-full rounded-full bg-primary transition-all duration-300"
-                            :style="{ width: `${progress}%` }"
-                        ></div>
-                    </div>
-                    <span
-                        class="text-xs font-medium text-gray-400 shrink-0 dark:text-gray-500"
-                    >
-                        {{ Math.round(progress) }}%
-                    </span>
-                </div>
-            </div>
+            <BookingProgressHeader
+                title="Admission Progress"
+                :progress="progress"
+            />
 
-            <div class="min-h-0 flex-1 overflow-y-auto px-3 py-4">
+            <div class="min-h-0 flex-1 overflow-y-auto px-3 py-2">
                 <BookingSteps
+                    compact
                     active="step6"
                     :completed="completedSteps"
                     @go="goEditStep"
@@ -156,6 +139,7 @@ import { ref, computed, onMounted, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "~/composables/useToast";
 import BookingSteps from "~/components/sections/booking/provider/BookingSteps.vue";
+import BookingProgressHeader from "~/components/sections/booking/provider/BookingProgressHeader.vue";
 import BaseButton from "~/components/ui/BaseButton.vue";
 import { useBookingStore } from "~/stores/booking";
 import type { CardDetails } from "~/types/payment";

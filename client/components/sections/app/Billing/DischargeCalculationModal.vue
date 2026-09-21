@@ -73,7 +73,11 @@
                             <span
                                 class="rounded-full bg-primary-50 px-3 py-1.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
                             >
-                                Refund Eligible
+                                {{
+                                    calculation.eligible_for_refund
+                                        ? "Refund Eligible"
+                                        : "No Refund"
+                                }}
                             </span>
                         </div>
                     </div>
@@ -85,18 +89,13 @@
                         />
 
                         <Field
-                            label="Contract Price"
-                            :value="`₱${formatMoney(calculation.contract_price)}`"
+                            label="Period Charge"
+                            :value="`₱${formatMoney(calculation.period_price)}`"
                         />
 
                         <Field
                             label="Amount Paid"
                             :value="`₱${formatMoney(calculation.amount_paid)}`"
-                        />
-
-                        <Field
-                            label="Required Payment"
-                            :value="`₱${formatMoney(calculation.required_payment)}`"
                         />
 
                         <Field
@@ -122,13 +121,6 @@
                             <Field
                                 label="Days Since Admission"
                                 :value="calculation.days_since_admission"
-                            />
-
-                            <Field
-                                label="Payment Shortfall"
-                                :value="`₱${formatMoney(
-                                    calculation.payment_shortfall,
-                                )}`"
                             />
 
                             <Field

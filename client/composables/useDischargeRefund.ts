@@ -97,6 +97,16 @@ export function useDischargeRefund(admission: Ref<Admission | undefined>) {
         getNumber(calculation.value?.retained_amount),
     );
 
+    const currentRetainedAmount = computed(() =>
+        getNumber(calculation.value?.retained_amount),
+    );
+
+    const totalPaidAmount = computed(() =>
+        getNumber(
+            calculation.value?.total_paid ?? calculation.value?.amount_paid,
+        ),
+    );
+
     const daysSinceAdmissionStart = computed<number | null>(
         () => calculation.value?.days_since_admission ?? null,
     );
@@ -159,6 +169,10 @@ export function useDischargeRefund(admission: Ref<Admission | undefined>) {
                 : "The whole period is charged because the patient is being discharged after 6 months.";
         }
 
+        if (currentBillingCycle.value === "MONTHLY") {
+            return "The stay so far plus half of this month. The other half of the month is refunded, whatever the days stayed.";
+        }
+
         const stayed = consumedDays.value;
 
         if (stayed <= 0) {
@@ -188,6 +202,8 @@ export function useDischargeRefund(admission: Ref<Admission | undefined>) {
         periodStart,
         periodEnd,
         halfYearlyPrice,
+        currentRetainedAmount,
+        totalPaidAmount,
         daysStayedAmount,
 
         daysSinceAdmissionStart,

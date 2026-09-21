@@ -1,7 +1,7 @@
 import { reactive } from "vue";
 import { z } from "zod";
 import { getLocalDateStr } from "~/utils/time";
-import type { Assessment, Guardian, Patient } from "./patient";
+import type { Assessment, Diagnosis, Guardian, Patient } from "./patient";
 import { reserved, type Reserved } from './contract';
 import type { User } from "./auth";
 
@@ -45,6 +45,7 @@ export interface BookingRetrieve {
     patient: Patient;
     guardian: Guardian;
     assessment: Assessment;
+    diagnoses?: Diagnosis[];
     payment: {
         total_amount: number,
         paid: boolean,

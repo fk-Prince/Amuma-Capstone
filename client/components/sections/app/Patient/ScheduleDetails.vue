@@ -23,19 +23,26 @@
                             Schedule Details
                         </p>
 
-                        <div class="mt-1 flex flex-wrap items-center gap-2">
-                            <h2
-                                class="text-lg font-semibold text-slate-800 dark:text-white"
-                            >
-                                {{ schedule.schedule_code }}
-                            </h2>
-
-                            <span
-                                class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium capitalize text-slate-600 dark:bg-white/10 dark:text-gray-400"
-                            >
-                                {{ schedule.category }}
+                        <h2
+                            class="mt-1 truncate text-xl font-semibold text-slate-800 dark:text-white"
+                        >
+                            {{ schedule.patient?.full_name ?? "Patient" }}
+                            <span v-if="schedule.category" class="capitalize">
+                                - {{ schedule.category }}
                             </span>
-                        </div>
+                        </h2>
+
+                        <p
+                            class="mt-1 text-xs text-slate-700 dark:text-white"
+                        >
+                            {{ schedule.schedule_code }}
+                            <template v-if="schedule.scheduled_date">
+                                • {{ formatDate(schedule.scheduled_date) }}
+                            </template>
+                            <template v-if="schedule.start_time">
+                                • {{ schedule.start_time }}
+                            </template>
+                        </p>
                     </div>
 
                     <span
@@ -46,6 +53,23 @@
                         {{ scheduleStatusLabel(schedule.status) }}
                     </span>
                 </div>
+
+                <ScheduleConflictNotice
+                    v-if="isEditing"
+                    title="Nurse required"
+                    :lines="missingNurseLines"
+                />
+
+                <ScheduleConflictNotice :lines="conflictLines">
+                    <button
+                        v-if="saveConflicts?.length"
+                        type="button"
+                        class="mt-2 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700"
+                        @click="unassignConflictingStaff"
+                    >
+                        Unassign conflicting staff
+                    </button>
+                </ScheduleConflictNotice>
 
                 <div
                     class="min-h-0 flex-1 space-y-4 overflow-y-auto p-6 xl:space-y-0"
@@ -671,6 +695,26 @@
                                             </p>
 
                                             <div
+                                                v-if="service.type === 'Medical'"
+                                                class="flex items-center gap-1 rounded-lg bg-slate-100 p-0.5 dark:bg-white/10"
+                                            >
+                                                <button
+                                                    v-for="option in ROLE_FILTERS"
+                                                    :key="option.value"
+                                                    type="button"
+                                                    class="rounded-md px-2.5 py-1 text-[11px] font-medium transition"
+                                                    :class="
+                                                        roleFilter === option.value
+                                                            ? 'bg-white text-primary shadow-sm dark:bg-secondary'
+                                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                                    "
+                                                    @click="roleFilter = option.value"
+                                                >
+                                                    {{ option.label }}
+                                                </button>
+                                            </div>
+
+                                            <div
                                                 class="relative w-full sm:w-64"
                                             >
                                                 <Search
@@ -684,6 +728,17 @@
                                                     class="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
                                                 />
                                             </div>
+
+                                            <label
+                                                class="inline-flex w-fit cursor-pointer select-none items-center gap-2 text-xs font-medium text-slate-600 dark:text-gray-300"
+                                            >
+                                                <input
+                                                    v-model="availableOnly"
+                                                    type="checkbox"
+                                                    class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30 dark:border-white/20 dark:bg-transparent"
+                                                />
+                                                Available only
+                                            </label>
                                         </div>
 
                                         <div
@@ -858,6 +913,18 @@
 
                                                     <span
                                                         v-else-if="
+                                                            isAssistant(
+                                                                service,
+                                                                employee,
+                                                            )
+                                                        "
+                                                        class="shrink-0 rounded-full bg-sky-50 px-2 py-1 text-[11px] font-medium text-sky-700 dark:bg-sky-500/10 dark:text-sky-300"
+                                                    >
+                                                        Assistant
+                                                    </span>
+
+                                                    <span
+                                                        v-else-if="
                                                             !employee.is_assigned &&
                                                             service.type !==
                                                                 'ADL'
@@ -898,6 +965,14 @@
                                                         "
                                                         type="text"
                                                         maxlength="255"
+                                                        :readonly="
+                                                            isNoteLocked(
+                                                                service.schedule_services_id,
+                                                                Number(
+                                                                    employee.employee_id,
+                                                                ),
+                                                            )
+                                                        "
                                                         placeholder="Note for this assignment"
                                                         class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
                                                         @input="
@@ -914,6 +989,14 @@
                                                     />
 
                                                     <div
+                                                        v-if="
+                                                            !isNoteLocked(
+                                                                service.schedule_services_id,
+                                                                Number(
+                                                                    employee.employee_id,
+                                                                ),
+                                                            )
+                                                        "
                                                         class="mt-2 flex flex-wrap items-center gap-1.5"
                                                     >
                                                         <span
@@ -1161,24 +1244,10 @@
         @confirm="confirmCompleteSchedule"
         @cancel="completeConfirmOpen = false"
     />
-
-    <ConfirmDialog
-        :open="conflictDialogOpen"
-        title="Schedule conflict"
-        :message="conflictDialogMessage"
-        description="Unassign them, or pick a different date/time, before saving this change."
-        confirm-label="Unassign Conflicting Staff"
-        cancel-label="Review Manually"
-        variant="danger"
-        @confirm="unassignConflictingStaff"
-        @cancel="
-            conflictDialogOpen = false;
-            emit('clear-save-conflicts');
-        "
-    />
 </template>
 
 <script setup lang="ts">
+import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
 import { ref, computed, watch } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
@@ -1188,6 +1257,7 @@ import {
     getLocalDateStr,
     generateAvailableAmPmTimes,
     formatDuration,
+    formatDate,
 } from "~/utils/time";
 
 function formatServiceDuration(minutes?: number | null): string {
@@ -1239,6 +1309,7 @@ const props = defineProps<{
     employees?: Employee[];
     isFetchingEmployees?: boolean;
     saveConflicts?: SaveConflict[] | null;
+    conflictMessages?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -1332,7 +1403,7 @@ const assignments = ref<Record<number, AssignmentEntry[]>>({});
 const NOTE_PRESETS_ADL = ["AM Shift", "PM Shift", "Full Shift"];
 const NOTE_PRESETS_OTHER = [
     "Primary",
-    "Assistance",
+    "Assistant",
     "Supervisor",
     "Observer",
     "Stand-by",
@@ -1357,11 +1428,11 @@ const isScheduleLocked = computed(() =>
 const employeeSearch = ref("");
 
 const bodyGridClass =
-    "xl:grid xl:items-start xl:gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]";
+    "xl:grid xl:items-start xl:gap-x-5 xl:gap-y-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] xl:grid-rows-[repeat(6,min-content)_1fr]";
 
 const leftColClass = "xl:col-start-1";
 
-const servicesColClass = "xl:col-start-2 xl:row-span-3 xl:row-start-1";
+const servicesColClass = "xl:col-start-2 xl:row-span-7 xl:row-start-1";
 
 function employeeLabel(employee: Employee) {
     return (
@@ -1390,22 +1461,103 @@ function requiredRoleFor(service: ScheduleServiceItem): string | null {
 }
 
 function requiredRoleLabel(service: ScheduleServiceItem) {
+    if (service.type === "Medical") return "Nurse or Caregiver";
+
     const role = requiredRoleFor(service);
 
     return role ? role.charAt(0).toUpperCase() + role.slice(1) : "Staff";
 }
 
+function allowedRolesFor(service: ScheduleServiceItem): string[] | null {
+    if (service.type === "Medical") return ["nurse", "caregiver"];
+    if (service.type === "ADL") return ["caregiver"];
+
+    return null;
+}
+
+function isAssistant(service: ScheduleServiceItem, employee: Employee) {
+    return (
+        service.type === "Medical" &&
+        (employee.role_name ?? "").toLowerCase() === "caregiver"
+    );
+}
+
+const missingNurseLines = computed(() =>
+    (props.schedule?.services ?? [])
+        .filter((service) => service.type === "Medical")
+        .filter((service) => {
+            const picked = entriesFor(service.schedule_services_id);
+
+            return (
+                picked.length > 0 &&
+                !picked.some(
+                    (entry) =>
+                        (
+                            employeeById(entry.employee_id)?.role_name ?? ""
+                        ).toLowerCase() === "nurse",
+                )
+            );
+        })
+        .map(
+            (service) =>
+                `${service.service_name ?? "This medical service"} needs a nurse. A caregiver can only assist, not be assigned alone.`,
+        ),
+);
+
+const availableOnly = ref(false);
+
+const ROLE_FILTERS = [
+    { value: "all", label: "All" },
+    { value: "nurse", label: "Nurse" },
+    { value: "caregiver", label: "Caregiver" },
+] as const;
+
+const roleFilter = ref<"all" | "nurse" | "caregiver">("all");
+
+function assignmentRank(employee: Employee): number {
+    const wanted = props.schedule?.category === "Facility" ? "facility" : "online";
+
+    if (employee.assignment_type === wanted) return 0;
+    if (employee.assignment_type === "both") return 1;
+
+    return 2;
+}
+
+const sortedEmployees = computed(() =>
+    [...(props.employees ?? [])].sort((a, b) => assignmentRank(a) - assignmentRank(b)),
+);
+
 function eligibleFor(service: ScheduleServiceItem) {
-    const required = requiredRoleFor(service);
+    const allowed = allowedRolesFor(service);
     const term = employeeSearch.value.trim().toLowerCase();
 
-    return (props.employees ?? []).filter((employee) => {
-        if (required && (employee.role_name ?? "").toLowerCase() !== required) {
+    return sortedEmployees.value.filter((employee) => {
+        if (
+            allowed &&
+            !allowed.includes((employee.role_name ?? "").toLowerCase())
+        ) {
             if (
                 !isAssigned(service.schedule_services_id, employee.employee_id)
             ) {
                 return false;
             }
+        }
+
+        if (
+            service.type === "Medical" &&
+            roleFilter.value !== "all" &&
+            (employee.role_name ?? "").toLowerCase() !== roleFilter.value &&
+            !isAssigned(service.schedule_services_id, employee.employee_id)
+        ) {
+            return false;
+        }
+
+        if (
+            availableOnly.value &&
+            !isAssigned(service.schedule_services_id, employee.employee_id) &&
+            isPickDisabled(service, employee)
+        ) {
+            return false;
         }
 
         if (!term) return true;
@@ -1431,30 +1583,20 @@ function isPickDisabled(service: ScheduleServiceItem, employee: Employee) {
 
     if (employee.is_busy) return true;
 
-    return service.type !== "ADL" && !employee.is_assigned;
+    return (
+        service.type !== "ADL" &&
+        !isAssistant(service, employee) &&
+        !employee.is_assigned
+    );
 }
 
-const conflictDialogOpen = ref(false);
-
-const conflictDialogMessage = computed(() => {
-    const conflicts = props.saveConflicts ?? [];
-
-    if (!conflicts.length) return "";
-
-    const lines = conflicts.map(
+const conflictLines = computed(() => [
+    ...(props.saveConflicts ?? []).map(
         (c) =>
-            `${c.employee_name} (${c.service_name}) is already on ${c.conflict_schedule_codes.join(", ")} at this time.`,
-    );
-
-    return lines.join(" ");
-});
-
-watch(
-    () => props.saveConflicts,
-    (conflicts) => {
-        conflictDialogOpen.value = Boolean(conflicts && conflicts.length);
-    },
-);
+            `${c.employee_name}${c.service_name ? ` (${c.service_name})` : ""} has a schedule conflict with ${c.conflict_schedule_codes.join(", ")}.`,
+    ),
+    ...(props.conflictMessages ?? []),
+]);
 
 function unassignConflictingStaff() {
     (props.saveConflicts ?? []).forEach(
@@ -1468,11 +1610,21 @@ function unassignConflictingStaff() {
         },
     );
 
-    conflictDialogOpen.value = false;
     emit("clear-save-conflicts");
 }
 
+function isNoteLocked(serviceId: number, employeeId: number) {
+    const service = props.schedule?.services?.find(
+        (s) => s.schedule_services_id === serviceId,
+    );
+    const employee = employeeById(employeeId);
+
+    return Boolean(service && employee && isAssistant(service, employee));
+}
+
 function noteFor(serviceId: number, employeeId: number) {
+    if (isNoteLocked(serviceId, employeeId)) return "Assistant";
+
     return (
         entriesFor(serviceId).find(
             (entry) => Number(entry.employee_id) === Number(employeeId),
@@ -1517,7 +1669,15 @@ function toggleAssignee(serviceId: number, employeeId: number) {
         ...assignments.value,
         [serviceId]:
             index === -1
-                ? [...current, { employee_id: employeeId, note: "" }]
+                ? [
+                      ...current,
+                      {
+                          employee_id: employeeId,
+                          note: isNoteLocked(serviceId, employeeId)
+                              ? "Assistant"
+                              : "",
+                      },
+                  ]
                 : current.filter((_, i) => i !== index),
     };
 }
@@ -1678,7 +1838,12 @@ function buildSchedulePayload() {
                 return entries.map((entry) => ({
                     schedule_services_id: service.schedule_services_id,
                     employee_id: Number(entry.employee_id),
-                    note: entry.note.trim() || null,
+                    note: isNoteLocked(
+                        service.schedule_services_id,
+                        Number(entry.employee_id),
+                    )
+                        ? "Assistant"
+                        : entry.note.trim() || null,
                 }));
             },
         ),
@@ -1689,6 +1854,13 @@ function handleSchedule() {
     if (!props.schedule) return;
 
     if (!validate()) return;
+
+    if (
+        missingNurseLines.value.length &&
+        !["cancelled", "completed"].includes(form.value.status)
+    ) {
+        return;
+    }
 
     if (form.value.status === "cancelled") {
         cancelConfirmOpen.value = true;

@@ -1,7 +1,7 @@
 <template>
     <div class="w-full lg:h-full flex flex-col min-h-0">
         <div
-            class="lg:h-full rounded-2xl bg-white border border-[#E4EFED] p-5 flex flex-col overflow-hidden dark:border-white/10 dark:bg-secondary"
+            class="lg:h-full rounded-lg bg-white border border-[#E4EFED] p-5 flex flex-col overflow-hidden dark:bg-secondary dark:border-white/10"
         >
             <button
                 type="button"
@@ -46,7 +46,7 @@
                 </div>
 
                 <div
-                    class="h-10 w-10 rounded-xl bg-[#EAF4F2] flex items-center justify-center text-[#0E7C7B] dark:text-accent-300 dark:bg-accent-500/15"
+                    class="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center text-primary dark:bg-primary-500/10"
                 >
                     <CalendarDays class="h-5 w-5" />
                 </div>
@@ -64,7 +64,7 @@
                     v-show="open"
                     class="flex-1 overflow-hidden lg:overflow-auto"
                 >
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div
                             class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
@@ -177,17 +177,18 @@
                                 Schedule today
                             </p>
                         </div>
-                    </div>
 
-                    <div class="grid grid-cols-1 gap-3 mt-3">
                         <div
                             class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
                         >
-                            <p
-                                class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
-                            >
-                                Next Slot
-                            </p>
+                            <div class="flex items-center justify-between">
+                                <p
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
+                                >
+                                    Next Slot
+                                </p>
+                                <Clock class="h-4 w-4 text-[#0E7C7B] dark:text-accent-300" />
+                            </div>
 
                             <p
                                 class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
@@ -214,7 +215,9 @@
                             Upcoming Schedule
                         </p>
 
-                        <div class="space-y-3">
+                        <div
+                            class="min-h-[280px] max-h-[440px] space-y-3 overflow-y-auto pr-1"
+                        >
                             <div
                                 v-for="item in overview?.schedule
                                     ?.upcoming_list ?? []"

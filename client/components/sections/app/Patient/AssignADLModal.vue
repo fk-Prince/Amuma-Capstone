@@ -59,6 +59,8 @@
                     </button>
                 </div>
 
+                <ScheduleConflictNotice :lines="conflicts ?? []" />
+
                 <div class="grid flex-1 overflow-hidden lg:grid-cols-[60%_40%]">
                     <div class="overflow-y-auto p-6 space-y-4">
                         <div
@@ -67,7 +69,7 @@
                             <p
                                 class="text-sm font-semibold text-slate-800 dark:text-white"
                             >
-                                Hours Booked
+                                Duration Booked
                             </p>
                             <p
                                 class="mt-1 text-xs text-slate-500 dark:text-gray-400"
@@ -298,6 +300,17 @@
                                     class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
                                 />
                             </div>
+
+                            <label
+                                class="inline-flex w-fit cursor-pointer select-none items-center gap-2 text-xs font-medium text-slate-600 dark:text-gray-300"
+                            >
+                                <input
+                                    v-model="availableOnly"
+                                    type="checkbox"
+                                    class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30 dark:border-white/20 dark:bg-transparent"
+                                />
+                                Available only
+                            </label>
                         </div>
 
                         <div
@@ -336,7 +349,9 @@
                                             ? 'border-primary bg-primary/5'
                                             : 'border-slate-200 hover:border-primary/40 dark:border-white/10',
                                         !isCaregiver(employee) ||
-                                        isAssignmentTypeMismatch(employee)
+                                        isAssignmentTypeMismatch(employee) ||
+                                        (employee.is_busy &&
+                                            !isSelected(employee.employee_id))
                                             ? 'opacity-60'
                                             : '',
                                     ]"
@@ -646,6 +661,7 @@
 </template>
 
 <script setup lang="ts">
+import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
 import { ref, computed, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import { fullName, initials } from "~/utils/user";
@@ -679,6 +695,7 @@ const props = defineProps<{
     schedule?: AuditRow;
     branchUuid: string;
     isSaving?: boolean;
+    conflicts?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -727,9 +744,26 @@ const assignments = ref<AssignmentEntry[]>([]);
 
 const patientName = computed(() => props.schedule?.patient_full_name ?? "");
 
+const availableOnly = ref(false);
+
+function assignmentRank(employee: Employee): number {
+    const wanted = props.schedule?.category === "Facility" ? "facility" : "online";
+
+    if (employee.assignment_type === wanted) return 0;
+    if (employee.assignment_type === "both") return 1;
+
+    return 2;
+}
+
 const filteredEmployees = computed(() => {
-    const caregivers = employeeData.value.filter((employee) =>
-        isCaregiver(employee),
+    const caregivers = [...employeeData.value]
+        .sort((a, b) => assignmentRank(a) - assignmentRank(b))
+        .filter(
+        (employee) =>
+            isCaregiver(employee) &&
+            (!availableOnly.value ||
+                isSelected(employee.employee_id) ||
+                (!employee.is_busy && !isAssignmentTypeMismatch(employee))),
     );
 
     const term = employeeSearch.value.trim().toLowerCase();
@@ -888,6 +922,13 @@ function toggleEmployee(employeeId: string) {
 function handleEmployeeClick(employee: Employee) {
     if (isSelected(employee.employee_id)) {
         toggleEmployee(String(employee.employee_id));
+        return;
+    }
+
+    if (employee.is_busy) {
+        toastError(
+            `${fullName(employee.first_name, "", employee.last_name)} is busy or has a schedule conflict and can't be assigned to this booking.`,
+        );
         return;
     }
 

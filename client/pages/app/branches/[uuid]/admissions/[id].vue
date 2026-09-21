@@ -1,6 +1,6 @@
 <template>
-    <div class="min-h-screen-header bg-slate-50 dark:bg-surface">
-        <div class="w-full mx-auto px-4 lg:px-8 py-8">
+    <div class="min-h-screen-header ">
+        <div class="w-full mx-auto ">
             <button
                 type="button"
                 class="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline mb-6"
@@ -153,19 +153,25 @@
             </div>
 
             <template v-else>
-                <!-- One card for the whole record: the patient, their current
-                     admission, the timeline and the side panels are sections
-                     inside it rather than separately bordered boxes. -->
+                <PlanLockNotice
+                    v-if="facilityLocked"
+                    class="mb-4"
+                    title="This admission is read-only"
+                    message="This branch has no In-house Facility plan. You can view the record, but admitting, extending, moving or discharging is locked."
+                />
+
                 <div
-                    class="overflow-hidden rounded-2xl bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] dark:bg-secondary dark:border-primary-500/20"
+                    class="overflow-hidden rounded-lg bg-white border border-primary-100 shadow-[0_0_40px_rgba(10,40,87,0.06)] dark:bg-secondary dark:border-primary-500/20"
                 >
-                <div class="p-4 sm:p-6 flex flex-col gap-5">
+                
+                <div class="p-4 flex flex-col gap-5">
                     <div class="flex items-start gap-3 sm:gap-4 min-w-0">
-                        <div
-                            class="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary text-base sm:text-lg font-semibold"
-                        >
-                            {{ initials }}
-                        </div>
+                        <PatientAvatar
+                            :src="patient.avatar"
+                            :name="patient.full_name"
+                            size-class="h-12 w-12 sm:h-14 sm:w-14 text-base sm:text-lg"
+                            rounded-class="rounded-2xl"
+                        />
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2.5 flex-wrap">
                                 <h1
@@ -260,11 +266,13 @@
                     >
                         <ActionButton
                             variant="primary"
-                            :disabled="isWaiting || isAdmitted"
+                            :disabled="isWaiting || isAdmitted || facilityLocked"
                             :tooltip="
-                                isAdmitted
-                                    ? 'This patient is already admitted. Discharge them before starting a new admission.'
-                                    : 'This patient already has an admission waiting to be admitted.'
+                                blockedTip(
+                                    isAdmitted
+                                        ? 'This patient is already admitted. Discharge them before starting a new admission.'
+                                        : 'This patient already has an admission waiting to be admitted.',
+                                )
                             "
                             @click="openNewAdmissionModal"
                         >
@@ -273,11 +281,13 @@
 
                         <ActionButton
                             variant="primary"
-                            :disabled="!isWaiting"
+                            :disabled="!isWaiting || facilityLocked"
                             :tooltip="
-                                isAdmitted
-                                    ? 'This patient is already admitted.'
-                                    : 'There is no waiting admission to admit. Start a new admission first.'
+                                blockedTip(
+                                    isAdmitted
+                                        ? 'This patient is already admitted.'
+                                        : 'There is no waiting admission to admit. Start a new admission first.',
+                                )
                             "
                             @click="handleAdmitClick"
                         >
@@ -294,8 +304,8 @@
                         </ActionButton>
                         <ActionButton
                             variant="outline"
-                            :disabled="!isAdmitted"
-                            :tooltip="unavailableWhileNotAdmitted"
+                            :disabled="!isAdmitted || facilityLocked"
+                            :tooltip="blockedTip(unavailableWhileNotAdmitted)"
                             @click="handleExtendClick"
                         >
                             Extend Stay
@@ -303,28 +313,52 @@
 
                         <ActionButton
                             variant="outline"
-                            :disabled="!isAdmitted"
-                            :tooltip="unavailableWhileNotAdmitted"
+                            :disabled="!isAdmitted || facilityLocked"
+                            :tooltip="blockedTip(unavailableWhileNotAdmitted)"
                             @click="openChangeRoomModal"
                         >
                             Change Room / Accommodation
                         </ActionButton>
 
                         <ActionButton
-                            variant="danger"
+                            variant="outline"
+                            :disabled="!isAdmitted || facilityLocked"
+                            :tooltip="blockedTip(unavailableWhileNotAdmitted)"
+                            @click="addServiceModalOpen = true"
+                        >
+                            Add Service
+                        </ActionButton>
+
+                        <ActionButton
+                            variant="outline"
                             :disabled="!isAdmitted"
                             :tooltip="unavailableWhileNotAdmitted"
+                            @click="caregiverModalOpen = true"
+                        >
+                            {{
+                                caregiverCount > 0
+                                    ? "View Caregiver"
+                                    : "Assign Caregiver"
+                            }}
+                        </ActionButton>
+
+                        <ActionButton
+                            variant="danger"
+                            :disabled="!isAdmitted || facilityLocked"
+                            :tooltip="blockedTip(unavailableWhileNotAdmitted)"
                             @click="dischargeDialogOpen = true"
                         >
                             Discharge
                         </ActionButton>
                         <ActionButton
                             variant="danger"
-                            :disabled="!isWaiting"
+                            :disabled="!isWaiting || facilityLocked"
                             :tooltip="
-                                isAdmitted
-                                    ? 'This patient is already admitted. Use Discharge instead of Cancel.'
-                                    : 'Only an admission still waiting to be admitted can be cancelled.'
+                                blockedTip(
+                                    isAdmitted
+                                        ? 'This patient is already admitted. Use Discharge instead of Cancel.'
+                                        : 'Only an admission still waiting to be admitted can be cancelled.',
+                                )
                             "
                             @click="cancelAdmissionDialogOpen = true"
                         >
@@ -903,11 +937,32 @@
             :admission="latestAdmission ?? null"
             @close="transferHistoryModalOpen = false"
         />
+
+        <CaregiverShiftModal
+            :open="caregiverModalOpen"
+            :admission-id="
+                (currentAdmission ?? latestAdmission)?.patient_admission_id ??
+                null
+            "
+            :patient-name="patient?.full_name"
+            :branch-uuid="String(route.params.uuid)"
+            @close="caregiverModalOpen = false"
+            @count="caregiverCount = $event"
+        />
+
+        <AddServiceModal
+            :open="addServiceModalOpen"
+            :patient-uuid="id"
+            :patient-name="patient?.full_name"
+            :branch-uuid="uuid"
+            @close="addServiceModalOpen = false"
+        />
     </div>
 </template>
 <script setup lang="ts"">
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { formatPhone } from "~/utils/phone";
 import type { PatientRetrieve, Admission } from "~/types/patient";
 import type { RoomContract, Reserved } from "~/types/contract";
 import { patientService } from "~/api/patient/PatientService";
@@ -922,12 +977,17 @@ import type { Room } from "~/types/room";
 import type { Bed } from "~/types/bed";
 import ChangeRoomModal from "~/components/sections/app/Admission/ChangeRoomModal.vue";
 import TransferHistoryModal from "~/components/sections/app/Admission/TransferHistoryModal.vue";
+import CaregiverShiftModal from "~/components/sections/app/Admission/CaregiverShiftModal.vue";
 import AdmissionTimeline from "~/components/sections/app/Admission/AdmissionTimeline.vue";
 import ActionButton from "~/components/ui/ActionButton.vue";
 import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
 import AdmissionDischarge from "~/components/sections/app/Admission/AdmissionDischarge.vue";
 import AdmissionCancel from "~/components/sections/app/Admission/AdmissionCancel.vue";
+import AddServiceModal from "~/components/sections/app/Admission/AddServiceModal.vue";
+import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
+import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 import { useBranchStore } from "~/stores/branch";
+import { useBranchPlan } from "~/composables/useBranchPlan";
 
 definePageMeta({
     layout: "dashboard",
@@ -970,6 +1030,17 @@ const patientOutstanding = computed(
 
 const currentAdmission = computed<Admission | undefined>(
     () => patient.value?.current_admission,
+);
+
+const caregiverModalOpen = ref(false);
+const caregiverCount = ref(0);
+
+watch(
+    () => (currentAdmission.value ?? latestAdmission.value)?.caregiver_count,
+    (count) => {
+        caregiverCount.value = count ?? 0;
+    },
+    { immediate: true },
 );
 
 // One stay at a time: the one in progress, or the most recent if the patient has
@@ -1033,7 +1104,7 @@ const patientFacts = computed(() => {
         { label: "Gender", value: patient.value?.gender },
         { label: "Age", value: age ? `${age} years old` : null },
         { label: "Blood type", value: patient.value?.blood_type },
-        { label: "Contact", value: patient.value?.phone_number },
+        { label: "Contact", value: formatPhone(patient.value?.phone_number) },
         {
             label: "Address",
             value: patient.value?.location?.full_address,
@@ -1063,6 +1134,16 @@ const unavailableWhileNotAdmitted = computed(() => {
 
     return "This patient has no active admission. Start a new admission first.";
 });
+
+const { hasFacilityPlan } = useBranchPlan();
+const facilityLocked = computed(() => !hasFacilityPlan.value);
+const addServiceModalOpen = ref(false);
+
+function blockedTip(reason: string) {
+    return facilityLocked.value
+        ? "Locked — this branch has no In-house Facility plan."
+        : reason;
+}
 
 const isInvoiceUnpaid = computed(() => {
     return (latestInvoice.value?.status ?? "").toLowerCase() !== "paid";
@@ -1115,11 +1196,13 @@ function confirmDischarge(payload: {
     refund: boolean;
     currentRefundAmount: number | null;
     note: string;
+    force: boolean;
 }) {
     runAction("discharge", {
         refund: payload.refund,
         current_refund_amount: payload.currentRefundAmount,
         note: payload.note,
+        force: payload.force,
     });
 }
 

@@ -23,7 +23,9 @@
                     class="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
                 >
                     <div class="min-w-0">
-                        <p class="text-xs font-semibold text-gray-400 dark:text-gray-500">
+                        <p
+                            class="text-xs font-semibold text-gray-400 dark:text-gray-500"
+                        >
                             Admission Timeline
                         </p>
 

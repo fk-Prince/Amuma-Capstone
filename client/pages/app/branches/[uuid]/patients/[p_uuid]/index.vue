@@ -11,7 +11,6 @@ import { useToast } from "~/composables/useToast";
 import Overview from "~/components/sections/app/Patient/Overview.vue";
 import PatientAssessment from "~/components/sections/app/Patient/PatientAssessment.vue";
 import PatientFamily from "~/components/sections/app/Patient/PatientFamily.vue";
-import ServicePatient from "~/components/sections/app/Patient/ServicePatient.vue";
 import AssignEmployeeModal from "~/components/sections/app/Patient/AssignEmployeeModal.vue";
 import type { ScheduleItem } from "~/types/schedule";
 import ScheduleDetails from "~/components/sections/app/Patient/ScheduleDetails.vue";
@@ -22,12 +21,8 @@ import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import Pagination from "~/components/ui/Pagination.vue";
 import PatientAdmission from "~/components/sections/app/Patient/PatientAdmission.vue";
-import {
-    ChevronRight,
-    ArrowLeft,
-    Stethoscope,
-    HeartPulse,
-} from "lucide-vue-next";
+import PatientEditModal from "~/components/sections/app/Patient/PatientEditModal.vue";
+import { ChevronRight, Stethoscope, HeartPulse } from "lucide-vue-next";
 import { type ConflictItem } from "~/types/schedule";
 import type {
     Medication,
@@ -55,7 +50,6 @@ const router = useRouter();
 
 const {
     patientData,
-    serviceData,
     scheduleData,
     employeeData,
     loading,
@@ -78,7 +72,6 @@ const {
     handleMedicationAction,
     handleDosageAction,
     handlePatientActivityAction,
-    handleScheduleAction,
     handleAssignment,
     updateSchedule,
     fetchSchedules,
@@ -87,21 +80,11 @@ const {
 const uuid = computed(() => route.params.p_uuid as string);
 const b_uuid = computed(() => route.params.uuid as string);
 
-function goBack() {
-    if (window.history.state?.back) {
-        router.back();
-        return;
-    }
-
-    router.push(`/app/branches/${b_uuid.value}/patients`);
-}
-
 const tabs = [
     "Overview",
     "Diagnosis & Assessment",
     "Admission",
     "Schedule",
-    "Service",
     "Medication",
     "Vital Signs",
     "Activity",
@@ -112,7 +95,6 @@ const tabSlugMap: Record<Tab, string> = {
     Overview: "overview",
     "Diagnosis & Assessment": "assessment",
     Schedule: "schedule",
-    Service: "service",
     Medication: "medication",
     "Vital Signs": "vitals",
     Admission: "admissions",
@@ -147,10 +129,26 @@ const showRecordVital = ref(false);
 const showAddActivity = ref(false);
 const showScheduleModal = ref(false);
 const showPrintModal = ref(false);
+const showEditModal = ref(false);
+
+function onPatientSaved(updated: Record<string, any>) {
+    if (!patientData.value) return;
+
+    const { location, ...fields } = updated;
+
+    patientData.value = {
+        ...patientData.value,
+        ...fields,
+        location: {
+            location_id: patientData.value.location?.location_id ?? 0,
+            ...patientData.value.location,
+            ...location,
+        },
+    };
+}
 
 const savingVital = ref(false);
 const savingActivity = ref(false);
-const savingSchedule = ref(false);
 const savingDosage = ref(false);
 const savingAssignment = ref(false);
 const updatingAssignment = ref(false);
@@ -189,25 +187,19 @@ const yesterdayStr = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
 const scheduleFrom = ref(yesterdayStr);
 const scheduleTo = ref("");
 
-function describeConflicts(conflicts: ConflictItem[]): string {
-    const first = conflicts[0];
+const assignConflicts = ref<string[]>([]);
+const updateConflicts = ref<string[]>([]);
 
-    if (!first) {
-        return "That assignment conflicts with an existing schedule.";
+function conflictLines(conflicts: ConflictItem[]): string[] {
+    if (!conflicts.length) {
+        return ["That assignment conflicts with an existing schedule."];
     }
 
-    if (conflicts.length === 1) {
-        const codes = first.conflict_schedule_codes.join(", ");
-        return `${first.employee_name} has a scheduling conflict with ${codes}.`;
-    }
+    return conflicts.map((c) => {
+        const service = c.service_name ? ` (${c.service_name})` : "";
 
-    return conflicts
-        .map((c) => {
-            const codes = c.conflict_schedule_codes.join(", ");
-            const service = c.service_name ? ` (${c.service_name})` : "";
-            return `${c.employee_name}${service} — conflicts with ${codes}`;
-        })
-        .join("\n");
+        return `${c.employee_name}${service} has a schedule conflict with ${c.conflict_schedule_codes.join(", ")}.`;
+    });
 }
 
 function vitalAction(vital: Vital) {
@@ -301,22 +293,6 @@ async function onDosageSubmit(payload: MarkDosePayload) {
     }
 }
 
-async function onScheduleSubmit(payload: any) {
-    savingSchedule.value = true;
-    try {
-        const res = await handleScheduleAction(
-            payload,
-            uuid.value,
-            b_uuid.value,
-        );
-        success(res.message);
-    } catch (err: any) {
-        error(err.error);
-    } finally {
-        savingSchedule.value = false;
-    }
-}
-
 function viewSchedule(s: ScheduleItem) {
     selectedSchedule.value = s;
     handleAssign(s, false);
@@ -350,11 +326,13 @@ function updateScheduleInList(updated: ScheduleItem | undefined) {
 
 async function runAssignment(payload: any) {
     savingAssignment.value = true;
+    assignConflicts.value = [];
     try {
         const res: any = await handleAssignment(payload, b_uuid.value);
 
         if (res?.has_conflicts) {
-            error(describeConflicts(res.conflicts ?? []));
+            assignConflicts.value = conflictLines(res.conflicts ?? []);
+            error("Schedule conflict");
             return;
         }
 
@@ -362,7 +340,12 @@ async function runAssignment(payload: any) {
         success(res.message);
         assignModalOpen.value = false;
     } catch (err: any) {
-        error(err.error);
+        if (err?.status === 409) {
+            assignConflicts.value = [err.message];
+            error("Schedule conflict");
+        } else {
+            error(err.error ?? err.message);
+        }
     } finally {
         savingAssignment.value = false;
     }
@@ -374,11 +357,13 @@ function onAssignSubmit(payload: any) {
 
 async function runScheduleUpdate(payload: any) {
     updatingAssignment.value = true;
+    updateConflicts.value = [];
     try {
         const res: any = await updateSchedule(payload, b_uuid.value);
 
         if (res?.has_conflicts) {
-            error(describeConflicts(res.conflicts ?? []));
+            updateConflicts.value = conflictLines(res.conflicts ?? []);
+            error("Schedule conflict");
             return;
         }
 
@@ -386,7 +371,12 @@ async function runScheduleUpdate(payload: any) {
         success(res.message);
         showScheduleModal.value = false;
     } catch (err: any) {
-        error(err.error ?? err.message);
+        if (err?.status === 409) {
+            updateConflicts.value = [err.message];
+            error("Schedule conflict");
+        } else {
+            error(err.error ?? err.message);
+        }
     } finally {
         updatingAssignment.value = false;
     }
@@ -415,18 +405,7 @@ const filteredScheduleData = computed(() => {
         .filter((schedule) => schedule.services.length > 0);
 });
 
-const visibleTabs = computed(() => {
-    if (!patientData.value?.latest_admission) {
-        return tabs.filter((tab) => tab !== "Service");
-    }
-
-    return tabs;
-});
-
-// The same sections the tab row shows, for the picker used on small screens.
-const tabItems = computed(() =>
-    visibleTabs.value.map((tab) => ({ label: tab, value: tab })),
-);
+const tabItems = tabs.map((tab) => ({ label: tab, value: tab }));
 
 function resetSchedule(updated: ScheduleItem) {
     updateScheduleInList(updated);
@@ -535,113 +514,192 @@ onMounted(async () => {
 // );
 </script>
 <template>
-    <div class="min-h-screen-header bg-gray-50 p-4 sm:p-6 dark:bg-surface">
-        <div class="w-full min-w-0 space-y-4">
-            <button
-                type="button"
-                class="flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-gray-400 dark:hover:text-white"
-                @click="goBack"
+    <div class="min-h-screen-header bg-gray-50 dark:bg-surface">
+        <div class="w-full min-w-0 rounded-full bg-white">
+            <div
+                v-if="loading"
+                class="animate-pulse overflow-hidden rounded-lg bg-white dark:bg-secondary"
             >
-                <ArrowLeft class="h-4 w-4" />
-                Back
-            </button>
-
-            <div v-if="loading" class="space-y-4 animate-pulse">
                 <div
-                    class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
+                    class="border-b border-gray-100 px-4 py-4 sm:px-5 sm:py-5 dark:border-white/10"
                 >
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-start gap-3 sm:gap-4">
                         <div
-                            class="h-14 w-14 rounded-full bg-gray-200 dark:bg-white/15"
+                            class="h-11 w-11 shrink-0 rounded-xl bg-gray-200 dark:bg-white/15 sm:h-14 sm:w-14"
                         />
 
-                        <div class="space-y-3">
-                            <div
-                                class="h-5 w-48 rounded bg-gray-200 dark:bg-white/15"
-                            />
-
-                            <div class="flex gap-3">
+                        <div class="min-w-0 flex-1 space-y-3">
+                            <div class="flex items-center gap-2">
                                 <div
-                                    class="h-3 w-28 rounded bg-gray-200 dark:bg-white/15"
+                                    class="h-5 w-44 rounded bg-gray-200 dark:bg-white/15"
                                 />
                                 <div
-                                    class="h-3 w-20 rounded bg-gray-200 dark:bg-white/15"
-                                />
-                                <div
-                                    class="h-3 w-32 rounded bg-gray-200 dark:bg-white/15"
+                                    class="h-5 w-20 rounded bg-gray-100 dark:bg-white/10"
                                 />
                             </div>
 
-                            <div
-                                class="h-3 w-60 rounded bg-gray-200 dark:bg-white/15"
-                            />
+                            <div class="flex flex-wrap gap-x-6 gap-y-2.5">
+                                <div
+                                    v-for="i in 3"
+                                    :key="i"
+                                    class="space-y-1.5"
+                                >
+                                    <div
+                                        class="h-2.5 w-16 rounded bg-gray-100 dark:bg-white/10"
+                                    />
+                                    <div
+                                        class="h-3.5 w-24 rounded bg-gray-200 dark:bg-white/15"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div
-                    class="rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-sm dark:border-white/10 dark:bg-secondary"
-                >
-                    <div class="flex gap-8">
+                    <div class="mt-4 flex justify-end gap-3 sm:mt-3">
                         <div
                             v-for="i in 4"
                             :key="i"
-                            class="h-4 w-20 rounded bg-gray-200 dark:bg-white/15"
+                            class="h-8 w-16 rounded-lg bg-gray-100 dark:bg-white/10"
                         />
                     </div>
                 </div>
 
-                <div
-                    class="flex justify-between rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-secondary"
-                >
-                    <div
-                        class="h-10 w-48 rounded-xl bg-gray-200 dark:bg-white/15"
-                    />
-
-                    <div
-                        class="h-10 w-40 rounded-xl bg-gray-200 dark:bg-white/15"
-                    />
-                </div>
-
-                <div
-                    v-for="i in 2"
-                    :key="i"
-                    class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
-                >
-                    <div class="space-y-5">
+                <div class="space-y-4 px-3 sm:px-5">
+                    <div class="flex gap-7 py-4">
                         <div
-                            class="h-5 w-44 rounded bg-gray-200 dark:bg-white/15"
+                            v-for="i in 7"
+                            :key="i"
+                            class="h-4 w-20 shrink-0 rounded bg-gray-200 dark:bg-white/15"
                         />
+                    </div>
 
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div v-for="j in 4" :key="j" class="space-y-2">
+                    <div class="space-y-6">
+                        <div
+                            class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary"
+                        >
+                            <div
+                                class="flex flex-wrap items-start gap-x-12 gap-y-5"
+                            >
+                                <div class="flex items-start gap-4">
+                                    <div
+                                        class="h-14 w-14 shrink-0 rounded-xl bg-gray-200 dark:bg-white/15"
+                                    />
+
+                                    <div class="space-y-2.5">
+                                        <div
+                                            class="h-3 w-24 rounded bg-gray-100 dark:bg-white/10"
+                                        />
+                                        <div
+                                            class="h-6 w-56 rounded bg-gray-200 dark:bg-white/15"
+                                        />
+                                        <div class="flex gap-2">
+                                            <div
+                                                class="h-6 w-14 rounded-full bg-gray-100 dark:bg-white/10"
+                                            />
+                                            <div
+                                                class="h-6 w-32 rounded-full bg-gray-100 dark:bg-white/10"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div
-                                    class="h-3 w-20 rounded bg-gray-200 dark:bg-white/15"
+                                    class="flex flex-wrap items-center gap-x-12 gap-y-4 sm:pt-6"
+                                >
+                                    <div
+                                        v-for="i in 2"
+                                        :key="i"
+                                        class="flex items-center gap-3"
+                                    >
+                                        <div
+                                            class="h-4 w-4 rounded bg-gray-200 dark:bg-white/15"
+                                        />
+                                        <div class="space-y-1.5">
+                                            <div
+                                                class="h-3 w-28 rounded bg-gray-100 dark:bg-white/10"
+                                            />
+                                            <div
+                                                class="h-3.5 w-6 rounded bg-gray-200 dark:bg-white/15"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                v-for="(count, row) in [3, 3, 2]"
+                                :key="row"
+                                class="mt-6 grid gap-6 border-t border-gray-100 pt-6 sm:grid-cols-3 dark:border-white/10"
+                            >
+                                <div
+                                    v-for="i in count"
+                                    :key="i"
+                                    class="flex items-center gap-3"
+                                >
+                                    <div
+                                        class="h-4 w-4 rounded bg-gray-200 dark:bg-white/15"
+                                    />
+                                    <div class="space-y-1.5">
+                                        <div
+                                            class="h-3 w-16 rounded bg-gray-100 dark:bg-white/10"
+                                        />
+                                        <div
+                                            class="h-3.5 w-28 rounded bg-gray-200 dark:bg-white/15"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                class="mt-6 space-y-2 border-t border-gray-100 pt-6 dark:border-white/10"
+                            >
+                                <div
+                                    class="h-3 w-14 rounded bg-gray-100 dark:bg-white/10"
                                 />
                                 <div
-                                    class="h-4 rounded bg-gray-200 dark:bg-white/15"
+                                    class="h-4 w-32 rounded bg-gray-200 dark:bg-white/15"
                                 />
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-10 gap-2">
+                        <div
+                            class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary"
+                        >
                             <div
-                                v-for="j in 20"
-                                :key="j"
-                                class="h-7 rounded-full bg-gray-200 dark:bg-white/15"
+                                class="h-4 w-36 rounded bg-gray-200 dark:bg-white/15"
                             />
+                            <div class="mt-4 space-y-2.5">
+                                <div
+                                    v-for="i in 2"
+                                    :key="i"
+                                    class="flex items-start justify-between gap-3 rounded-xl border border-gray-100 p-3.5 dark:border-white/10"
+                                >
+                                    <div class="space-y-2">
+                                        <div
+                                            class="h-3.5 w-40 rounded bg-gray-200 dark:bg-white/15"
+                                        />
+                                        <div
+                                            class="h-3 w-24 rounded bg-gray-100 dark:bg-white/10"
+                                        />
+                                    </div>
+                                    <div
+                                        class="h-6 w-16 rounded-full bg-gray-100 dark:bg-white/10"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
             <template v-else>
                 <div
-                    class="min-w-0 max-w-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                    class="min-w-0 max-w-full overflow-hidden rounded-lg bg-white dark:bg-secondary"
                 >
                     <PatientHeader
                         v-if="patientData"
                         :patient="patientData"
                         @print="showPrintModal = true"
+                        @edit="showEditModal = true"
                     />
 
                     <div class="min-w-0 space-y-4 px-3 sm:px-5">
@@ -663,7 +721,7 @@ onMounted(async () => {
                         >
                             <nav class="flex w-max gap-4 sm:gap-7">
                                 <button
-                                    v-for="tab in visibleTabs"
+                                    v-for="tab in tabs"
                                     :key="tab"
                                     class="relative shrink-0 whitespace-nowrap py-4 text-sm font-medium"
                                     :class="
@@ -813,14 +871,6 @@ onMounted(async () => {
                             v-if="activeTab === 'Admission' && patientData"
                             :patient="patientData"
                         />
-                        <ServicePatient
-                            v-if="activeTab === 'Service' && patientData"
-                            :patient="patientData"
-                            :submitLoading="savingSchedule"
-                            :services="serviceData"
-                            @schedule="onScheduleSubmit"
-                        />
-
                         <div v-if="activeTab === 'Schedule'">
                             <div
                                 class="mb-5 rounded-2xl bg-white p-4 dark:bg-secondary"
@@ -937,6 +987,15 @@ onMounted(async () => {
             </template>
         </div>
 
+        <PatientEditModal
+            v-if="patientData"
+            :open="showEditModal"
+            :patient="patientData"
+            :branch-uuid="b_uuid"
+            @close="showEditModal = false"
+            @saved="onPatientSaved"
+        />
+
         <PatientPrintModal
             :open="showPrintModal"
             :patient-uuid="uuid"
@@ -950,7 +1009,11 @@ onMounted(async () => {
             :employees="employeeData"
             :isFetching="isFetchingEmployee"
             :isSaving="savingAssignment"
-            @close="assignModalOpen = false"
+            :conflicts="assignConflicts"
+            @close="
+                assignModalOpen = false;
+                assignConflicts = [];
+            "
             @confirm="onAssignSubmit"
         />
 
@@ -970,7 +1033,11 @@ onMounted(async () => {
             :is-fetching-employees="isFetchingEmployee"
             @schedule="onUpdateSchedule"
             :submit-loading="updatingAssignment"
-            @close="showScheduleModal = false"
+            :conflict-messages="updateConflicts"
+            @close="
+                showScheduleModal = false;
+                updateConflicts = [];
+            "
         />
 
         <ActionVitalModal

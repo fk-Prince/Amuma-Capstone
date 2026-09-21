@@ -6,6 +6,7 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
+use App\Http\Requests\Patient\UpdatePatientRequest;
 use App\Service\PatientService;
 use Illuminate\Http\Request;
 
@@ -29,6 +30,27 @@ class PatientController extends Controller
         // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Patients, PermissionAction::Read);
         BranchGuard::mergeRequest($request, $branch);
         return $this->patientService->showPatient($uuid);
+    }
+
+    public function update(UpdatePatientRequest $request, string $uuid)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+
+        AuthGuard::requireModule(
+            $request->user(),
+            $branch->branch_id,
+            ModuleEnum::Patients,
+            PermissionAction::Update
+        );
+
+        $payload = $request->validated();
+        $payload['avatar'] = $request->file('avatar');
+
+        return $this->patientService->updatePatient(
+            $uuid,
+            $branch->branch_id,
+            $payload
+        );
     }
 
     public function storeDiagnosis(Request $request, string $uuid)

@@ -1,6 +1,36 @@
 <template>
     <div class="space-y-6">
-        <div>
+        <div
+            v-if="loading"
+            class="animate-pulse space-y-6 rounded-2xl border border-slate-200 p-6 dark:border-white/10"
+        >
+            <div class="space-y-2">
+                <div class="h-5 w-52 rounded bg-slate-200 dark:bg-white/10" />
+                <div class="h-3.5 w-80 max-w-full rounded bg-slate-100 dark:bg-white/5" />
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="h-11 w-11 rounded-xl bg-slate-200 dark:bg-white/10" />
+                <div class="space-y-2">
+                    <div class="h-4 w-36 rounded bg-slate-200 dark:bg-white/10" />
+                    <div class="h-3 w-24 rounded bg-slate-100 dark:bg-white/5" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-3 dark:border-white/10">
+                <div v-for="i in 3" :key="i" class="space-y-2">
+                    <div class="h-2.5 w-16 rounded bg-slate-100 dark:bg-white/5" />
+                    <div class="h-4 w-28 rounded bg-slate-200 dark:bg-white/10" />
+                </div>
+            </div>
+
+            <div class="space-y-3 border-t border-slate-100 pt-4 dark:border-white/10">
+                <div class="h-12 rounded-xl bg-slate-100 dark:bg-white/5" />
+                <div class="h-12 rounded-xl bg-slate-100 dark:bg-white/5" />
+            </div>
+        </div>
+
+        <div v-if="!loading">
             <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                 Subscription &amp; Renewal
             </h2>
@@ -10,17 +40,8 @@
             </p>
         </div>
 
-        <div v-if="loading" class="space-y-4">
-            <div
-                class="h-36 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/10"
-            />
-            <div
-                class="h-24 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/10"
-            />
-        </div>
-
         <div
-            v-else-if="!subscription"
+            v-if="!loading && !subscription"
             class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50/60 px-6 py-12 text-center dark:border-white/10 dark:bg-white/5"
         >
             <div
@@ -41,7 +62,7 @@
             </p>
         </div>
 
-        <template v-else>
+        <template v-else-if="!loading">
             <div
                 class="overflow-hidden rounded-2xl border shadow-sm dark:border-white/10"
                 :class="statusTone.border"
