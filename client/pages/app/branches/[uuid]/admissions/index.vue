@@ -640,6 +640,7 @@ const admissionColumns: DataTableColumn[] = [
 const bookingColumns: DataTableColumn[] = [
     { key: "reference_id", label: "Reference ID" },
     { key: "patient_name", label: "Patient" },
+    { key: "type_label", label: "Type" },
     { key: "accommodation", label: "Accommodation" },
     { key: "room_bed", label: "Room / Bed" },
     { key: "status", label: "Status" },
@@ -690,6 +691,7 @@ async function fetchBookings() {
                               .join(" / ")
                         : "N / A",
                 admission_type: booking.facility?.type ?? "",
+                type_label: admissionTypeLabel(booking.facility?.type),
                 status: booking.status,
                 created_at: stringToDateTime(booking.created_at) ?? "—",
             }),
@@ -710,6 +712,17 @@ function onBookingSearch(query: string) {
 
 function onBookingPageChange() {
     fetchBookings();
+}
+
+function admissionTypeLabel(type?: string | null) {
+    switch ((type ?? "").toLowerCase()) {
+        case "pre-admission":
+            return "Pre-admission";
+        case "complete":
+            return "Complete admission";
+        default:
+            return "—";
+    }
 }
 
 const canProcessBooking = (row: any) =>
