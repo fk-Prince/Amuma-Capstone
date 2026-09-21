@@ -769,6 +769,17 @@ class PatientAdmissionService
                 if ($type === Booking::TYPE_PREADMISSION) {
                     $facility = $payload['facility'] ?? [];
 
+                    $existing = Booking::where('reference_id', $referenceId)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($existing?->isProcessed()) {
+                        throw new Exception(
+                            "Booking {$referenceId} has already been processed.",
+                            409
+                        );
+                    }
+
                     if (isset($payload['reserved']['room']['beds'])) {
                         unset($payload['reserved']['room']['beds']);
                     }

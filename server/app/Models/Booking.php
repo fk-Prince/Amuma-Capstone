@@ -116,4 +116,10 @@ class Booking extends Model
     {
         return data_get($this->booking_data, 'reserved.bed.bed_id');
     }
+
+    public function isProcessed(): bool
+    {
+        return filled(data_get($this->booking_data, 'reserved.room'))
+            || filled(data_get($this->booking_data, 'reserved.bed'));
+    }
 }

@@ -71,6 +71,7 @@ class BookingResource extends JsonResource
             'assessment' => $data['assessment'] ?? null,
             'diagnoses' => $data['diagnoses'] ?? [],
             'reserved' => $data['reserved'] ?? null,
+            'is_processed' => $this->isProcessed(),
             'client' => $this->user,
             'payment' => $data['payment'] ?? null,
             'created_at' => $this->created_at,

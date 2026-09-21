@@ -65,15 +65,24 @@ const dateStringSchema = z
         message: "Diagnosis date cannot be in the future",
     });
 
+const FILE_TYPE_MESSAGE = "Upload a PDF, PNG, or JPG file.";
+
 const diagnosisFileSchema = z
-    .instanceof(File)
+    .union(
+        [z.instanceof(File, { message: FILE_TYPE_MESSAGE }), z.string()],
+        { message: FILE_TYPE_MESSAGE },
+    )
     .optional()
-    .refine((file) => !file || file.size <= MAX_FILE_SIZE, {
+    .refine((file) => !(file instanceof File) || file.size <= MAX_FILE_SIZE, {
         message: "File must be 10MB or smaller",
     })
-    .refine((file) => !file || ACCEPTED_FILE_TYPES.includes(file.type), {
-        message: "File must be a PDF, PNG, or JPG",
-    });
+    .refine(
+        (file) =>
+            !(file instanceof File) || ACCEPTED_FILE_TYPES.includes(file.type),
+        {
+            message: "File must be a PDF, PNG, or JPG",
+        },
+    );
 export const assessmentSchema = z
     .object({
         diagnosis: z

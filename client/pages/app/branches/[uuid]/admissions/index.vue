@@ -168,13 +168,9 @@
                                 "
                                 type="button"
                                 class="text-primary font-medium hover:underline"
-                                @click="
-                                    router.push({
-                                        path: `/app/branches/${uuid}/patients/${row.p_uuid}`,
-                                    })
-                                "
+                                @click="viewAdmission(row)"
                             >
-                                View Patient
+                                View Admission
                             </button>
                         </div>
                     </template>
@@ -241,6 +237,8 @@
                                 referenceNotice.tone === 'pending',
                             'border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300':
                                 referenceNotice.tone === 'approved',
+                            'border-sky-100 bg-sky-50 text-sky-700 dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-300':
+                                referenceNotice.tone === 'processed',
                             'border-rose-100 bg-rose-50 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300':
                                 referenceNotice.tone === 'blocked',
                         }"
@@ -464,7 +462,7 @@ const loadingContract = ref(true);
 const loadingReference = ref(false);
 const referenceError = ref("");
 const referenceNotice = ref<{
-    tone: "pending" | "approved" | "blocked";
+    tone: "pending" | "approved" | "processed" | "blocked";
     message: string;
 } | null>(null);
 
@@ -521,7 +519,16 @@ async function loadByReference() {
         }
 
         if (booking.diagnoses?.length) {
-            diagnosisData.splice(0, diagnosisData.length, ...booking.diagnoses);
+            diagnosisData.splice(
+                0,
+                diagnosisData.length,
+                ...booking.diagnoses.map((entry: any) => ({
+                    ...entry,
+                    diagnosis_file_name:
+                        entry.diagnosis_file_name ??
+                        fileNameFromUrl(entry.diagnosis_file),
+                })),
+            );
         }
 
         if (booking.facility) {
@@ -545,16 +552,36 @@ async function loadByReference() {
 
         bookingStore.lastSubmittedId = booking.reference_id;
 
-        referenceNotice.value =
-            booking.status === "approved"
-                ? {
-                      tone: "approved",
-                      message: `Booking ${booking.reference_id} has already been approved. You can continue with the admission.`,
-                  }
-                : {
-                      tone: "pending",
-                      message: `Booking ${booking.reference_id} is still pending approval. You can still admit this patient; completing the admission will approve the booking.`,
-                  };
+        const reservedPlace = [
+            booking.reserved?.room?.room_no
+                ? `Room ${booking.reserved.room.room_no}`
+                : null,
+            booking.reserved?.bed?.bed_no
+                ? `Bed ${booking.reserved.bed.bed_no}`
+                : null,
+        ]
+            .filter(Boolean)
+            .join(" · ");
+
+        if (booking.is_processed) {
+            referenceNotice.value = {
+                tone: "processed",
+                message: reservedPlace
+                    ? `Booking ${booking.reference_id} has already been processed. ${reservedPlace} is reserved for this patient.`
+                    : `Booking ${booking.reference_id} has already been processed.`,
+            };
+        } else {
+            referenceNotice.value =
+                booking.status === "approved"
+                    ? {
+                          tone: "approved",
+                          message: `Booking ${booking.reference_id} has already been approved. You can continue with the admission.`,
+                      }
+                    : {
+                          tone: "pending",
+                          message: `Booking ${booking.reference_id} has not been approved in Bookings yet. You can still continue with the admission; completing it will approve the booking.`,
+                      };
+        }
 
         router.replace({
             query: {
@@ -574,6 +601,14 @@ async function loadByReference() {
         loadingReference.value = false;
     }
 }
+function fileNameFromUrl(value?: unknown): string | undefined {
+    if (typeof value !== "string" || !value) return undefined;
+
+    const last = value.split("?")[0]?.split("/").pop();
+
+    return last ? decodeURIComponent(last) : undefined;
+}
+
 function normalizeAccommodationType(type: string): "Common" | "VIP" {
     return type?.toUpperCase() === "VIP" ? "VIP" : "Common";
 }

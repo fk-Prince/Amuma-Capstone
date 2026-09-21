@@ -273,6 +273,7 @@ watch(
             activeIndex.value = diagnoses.value.length - 1;
         }
     },
+    { deep: true },
 );
 
 function update<K extends keyof Diagnosis>(

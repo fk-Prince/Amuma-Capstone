@@ -58,6 +58,7 @@ export interface BookingRetrieve {
         balance_amount?: number,
     };
     reserved: Reserved | null;
+    is_processed?: boolean;
     valid_until?: string;
     created_at: string;
     updated_at: string;

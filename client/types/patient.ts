@@ -42,7 +42,7 @@ export interface Diagnosis {
     diagnosis?: string;
     diagnosis_date?: string;
     diagnosis_notes?: string;
-    diagnosis_file?: File;
+    diagnosis_file?: File | string;
     diagnosis_file_name?: string;
 }
 
