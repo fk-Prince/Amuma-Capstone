@@ -1021,7 +1021,7 @@ class PatientAdmissionService
 
         if ($facilityType !== 'pre-admission') {
             throw new Exception(
-                "This booking cannot be processed because the booking type is '{$facilityType}'. It must be 'pre-admission'."
+                "Only pre-admission bookings can be processed here."
             );
         }
 

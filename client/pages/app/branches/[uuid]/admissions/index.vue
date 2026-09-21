@@ -461,6 +461,7 @@ const roomContract = ref<RoomContract[]>([]);
 const loadingContract = ref(true);
 const loadingReference = ref(false);
 const referenceError = ref("");
+const bookingProcessed = ref(false);
 const referenceNotice = ref<{
     tone: "pending" | "approved" | "processed" | "blocked";
     message: string;
@@ -472,6 +473,7 @@ async function loadByReference() {
     loadingReference.value = true;
     referenceError.value = "";
     referenceNotice.value = null;
+    bookingProcessed.value = false;
 
     try {
         const [bookingResponse] = await Promise.all([
@@ -484,6 +486,15 @@ async function loadByReference() {
 
         const booking: BookingRetrieve =
             bookingResponse.data ?? bookingResponse;
+
+        if (booking.is_processed) {
+            bookingProcessed.value = true;
+            referenceNotice.value = {
+                tone: "processed",
+                message: `Booking ${booking.reference_id} has already been processed.`,
+            };
+            return;
+        }
 
         Object.assign(patientData, {
             first_name: booking.patient?.first_name ?? "",
@@ -552,36 +563,16 @@ async function loadByReference() {
 
         bookingStore.lastSubmittedId = booking.reference_id;
 
-        const reservedPlace = [
-            booking.reserved?.room?.room_no
-                ? `Room ${booking.reserved.room.room_no}`
-                : null,
-            booking.reserved?.bed?.bed_no
-                ? `Bed ${booking.reserved.bed.bed_no}`
-                : null,
-        ]
-            .filter(Boolean)
-            .join(" · ");
-
-        if (booking.is_processed) {
-            referenceNotice.value = {
-                tone: "processed",
-                message: reservedPlace
-                    ? `Booking ${booking.reference_id} has already been processed. ${reservedPlace} is reserved for this patient.`
-                    : `Booking ${booking.reference_id} has already been processed.`,
-            };
-        } else {
-            referenceNotice.value =
-                booking.status === "approved"
-                    ? {
-                          tone: "approved",
-                          message: `Booking ${booking.reference_id} has already been approved. You can continue with the admission.`,
-                      }
-                    : {
-                          tone: "pending",
-                          message: `Booking ${booking.reference_id} has not been approved in Bookings yet. You can still continue with the admission; completing it will approve the booking.`,
-                      };
-        }
+        referenceNotice.value =
+            booking.status === "approved"
+                ? {
+                      tone: "approved",
+                      message: `Booking ${booking.reference_id} has already been approved. You can continue with the admission.`,
+                  }
+                : {
+                      tone: "pending",
+                      message: `Booking ${booking.reference_id} has not been approved in Bookings yet. You can still continue with the admission; completing it will approve the booking.`,
+                  };
 
         router.replace({
             query: {
@@ -833,6 +824,7 @@ function startNewAdmission() {
     referenceInput.value = "";
     referenceError.value = "";
     referenceNotice.value = null;
+    bookingProcessed.value = false;
     viewMode.value = "form";
 }
 
@@ -868,6 +860,13 @@ onMounted(async () => {
 });
 
 async function submit() {
+    if (bookingProcessed.value) {
+        error(
+            `Booking ${referenceInput.value} has already been processed and can't be submitted again.`,
+        );
+        return;
+    }
+
     const firstInvalid = validateAll();
     if (firstInvalid) {
         scrollTo(firstInvalid);
