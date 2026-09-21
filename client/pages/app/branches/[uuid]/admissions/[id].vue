@@ -994,7 +994,7 @@ definePageMeta({
     middleware: ["auth-client"],
 });
 
-useHead({ title: "Admission History" });
+useHead({ title: "Patient Admission" });
 
 const unpaidAmount = computed(() => {
     if (patient.value?.latest_admission?.status !=='waiting') return 0;
