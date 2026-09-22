@@ -30,7 +30,7 @@ import type {
 
 import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
 
-useHead({ title: "Settings" });
+useHead({ title: "Patient Balance" });
 
 definePageMeta({
     layout: "portal",

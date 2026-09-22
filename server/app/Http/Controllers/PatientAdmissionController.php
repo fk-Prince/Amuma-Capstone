@@ -17,7 +17,7 @@ class PatientAdmissionController extends Controller
     public function admissionAction(AdmissionRequest $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Patients, PermissionAction::Read);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Read);
         BranchGuard::mergeRequest($request, $branch);
         return $this->patientAdmissionService->action($request->all());
     }
@@ -44,7 +44,6 @@ class PatientAdmissionController extends Controller
                     : PermissionAction::Discharge,
                 default => PermissionAction::Update,
             };
-
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, $action);
         }
 
