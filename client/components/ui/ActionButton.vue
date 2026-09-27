@@ -1,6 +1,5 @@
 <script setup>
-import { watch, onBeforeUnmount } from "vue";
-import { string } from "zod";
+import { ref, computed, watch, nextTick, onBeforeUnmount } from "vue";
 
 const props = defineProps({
     variant: {
@@ -61,6 +60,43 @@ const handleClick = (event) => {
     }
 };
 
+const wrapper = ref(null);
+const tip = ref(null);
+const tipVisible = ref(false);
+const tipStyle = ref({});
+
+const showTip = async () => {
+    if (!props.disabled || !props.tooltip) return;
+
+    tipVisible.value = true;
+    tipStyle.value = { visibility: "hidden" };
+    window.addEventListener("scroll", hideTip, true);
+    await nextTick();
+
+    if (!wrapper.value || !tip.value) return;
+
+    const margin = 8;
+    const anchor = wrapper.value.getBoundingClientRect();
+    const box = tip.value.getBoundingClientRect();
+
+    const left = Math.min(
+        Math.max(anchor.right - box.width, margin),
+        window.innerWidth - box.width - margin,
+    );
+    const below = anchor.bottom + margin;
+    const top =
+        below + box.height > window.innerHeight - margin
+            ? anchor.top - box.height - margin
+            : below;
+
+    tipStyle.value = { left: `${left}px`, top: `${top}px` };
+};
+
+const hideTip = () => {
+    tipVisible.value = false;
+    window.removeEventListener("scroll", hideTip, true);
+};
+
 watch(
     () => props.loading,
     (isLoading) => {
@@ -69,6 +105,7 @@ watch(
 );
 
 onBeforeUnmount(() => {
+    hideTip();
     if (props.loading) {
         document.body.classList.remove("cursor-wait");
     }
@@ -76,7 +113,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="relative inline-block group">
+    <div
+        ref="wrapper"
+        class="relative inline-block"
+        @mouseenter="showTip"
+        @mouseleave="hideTip"
+    >
         <button
             :type="type"
             :disabled="isBlocked"
@@ -95,11 +137,15 @@ onBeforeUnmount(() => {
             <slot />
         </button>
 
-        <div
-            v-if="disabled && tooltip"
-            class="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden w-max max-w-xs rounded-md bg-gray-900 px-3 py-2 text-[12px] text-white shadow-lg group-hover:block"
-        >
-            {{ tooltip }}
-        </div>
+        <Teleport to="body">
+            <div
+                v-if="tipVisible && disabled && tooltip"
+                ref="tip"
+                class="pointer-events-none fixed z-[1000] w-max max-w-xs rounded-md bg-gray-900 px-3 py-2 text-[12px] text-white shadow-lg"
+                :style="tipStyle"
+            >
+                {{ tooltip }}
+            </div>
+        </Teleport>
     </div>
 </template>

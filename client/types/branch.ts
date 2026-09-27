@@ -17,11 +17,12 @@ export interface Branch {
     settings?: BranchSettings | null;
     plan?: BranchPlan[] | null;
     role_name?: string;
+    employee_status?: "active" | "inactive" | "on_leave" | null;
     permissions?: Permissions[];
     agency?: Agency;
     images?: BranchImage[];
     email: string;
-    is_verified: boolean;
+    status: "pending" | "verified" | "rejected";
     subscription_status?: "pending" | "approved" | "rejected" | null;
     rejection_reason?: string | null;
     document?: File | string;
@@ -105,6 +106,10 @@ interface BranchPlan {
     plan_code: "A" | "B" | "C";
     name: string;
     status: string;
+}
+
+export interface UserAgency extends Agency {
+    branches: Branch[];
 }
 
 export interface UserBranch {

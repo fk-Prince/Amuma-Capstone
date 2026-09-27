@@ -10,12 +10,16 @@ class Branch extends Model
     use HasUuids;
     protected $primaryKey = 'branch_id';
 
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_VERIFIED = 'verified';
+    public const STATUS_REJECTED = 'rejected';
+
     protected $fillable = [
         'agency_id',
         'name',
         'location_id',
         'description',
-        'is_verified',
+        'status',
         'contact_number',
         'document',
         'settings',
@@ -56,7 +60,6 @@ class Branch extends Model
 
     protected $casts = [
         'settings' => 'array',
-        'is_verified' => 'boolean',
     ];
 
     public function uniqueIds()

@@ -270,14 +270,6 @@
                                 </svg>
                             </div>
                         </div>
-
-                        <div class="relative mt-2">
-                            <span
-                                class="rounded-full bg-muted-light dark:bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-muted-dark dark:text-gray-300"
-                            >
-                                {{ stats.inactive }} inactive
-                            </span>
-                        </div>
                     </div>
                 </section>
 
@@ -625,6 +617,17 @@
                                                 />
                                                 {{ agencyUnverified }} pending
                                             </span>
+
+                                            <span
+                                                v-if="stats.agenciesRejected"
+                                                class="inline-flex items-center gap-1.5 text-[11px] font-medium text-red-500 dark:text-red-400"
+                                            >
+                                                <span
+                                                    class="h-1.5 w-1.5 rounded-full bg-red-400/70 ring-1 ring-red-200 dark:ring-red-500/30"
+                                                />
+                                                {{ stats.agenciesRejected }}
+                                                rejected
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -782,6 +785,17 @@
                                                     class="h-1.5 w-1.5 rounded-full bg-accent-100 ring-1 ring-accent-200 dark:bg-white/10 dark:ring-white/20"
                                                 />
                                                 {{ branchUnverified }} pending
+                                            </span>
+
+                                            <span
+                                                v-if="stats.branchesRejected"
+                                                class="inline-flex items-center gap-1.5 text-[11px] font-medium text-red-500 dark:text-red-400"
+                                            >
+                                                <span
+                                                    class="h-1.5 w-1.5 rounded-full bg-red-400/70 ring-1 ring-red-200 dark:ring-red-500/30"
+                                                />
+                                                {{ stats.branchesRejected }}
+                                                rejected
                                             </span>
                                         </div>
                                     </div>
@@ -1145,7 +1159,18 @@
                                             v-if="sub.pending_plan"
                                             class="mt-1 whitespace-nowrap text-[10px] text-accent-600 dark:text-accent-300"
                                         >
-                                            → {{ sub.pending_plan.name }} on
+                                            → {{ sub.pending_plan.name }}
+                                            <template
+                                                v-if="
+                                                    sub.pending_plan
+                                                        .billing_interval
+                                                "
+                                            >
+                                                ({{
+                                                    sub.pending_plan.billing_interval.toLowerCase()
+                                                }})
+                                            </template>
+                                            on
                                             {{
                                                 formatDate(
                                                     sub.pending_plan.starts_at,
@@ -1261,11 +1286,11 @@ interface Subscription {
     branch?: {
         uuid: string;
         name: string;
-        is_verified: boolean;
+        status: "pending" | "verified" | "rejected";
         agency?: {
             uuid: string;
             name: string;
-            is_verified: boolean;
+            status: "pending" | "verified" | "rejected";
         };
     };
     subscription?: {
@@ -1303,6 +1328,7 @@ interface VerificationBucket {
     total: number;
     verified: number;
     unverified: number;
+    rejected: number;
     verified_this_month: number;
     pending: PendingVerificationItem[];
     recently_verified: RecentlyVerifiedItem[];
@@ -1331,6 +1357,7 @@ const emptyBucket = (): VerificationBucket => ({
     total: 0,
     verified: 0,
     unverified: 0,
+    rejected: 0,
     verified_this_month: 0,
     pending: [],
     recently_verified: [],
@@ -1378,6 +1405,7 @@ const normalizeBucket = (bucket: any): VerificationBucket => ({
     total: Number(bucket?.total) || 0,
     verified: Number(bucket?.verified) || 0,
     unverified: Number(bucket?.unverified) || 0,
+    rejected: Number(bucket?.rejected) || 0,
     verified_this_month: Number(bucket?.verified_this_month) || 0,
     pending: Array.isArray(bucket?.pending) ? bucket.pending : [],
     recently_verified: Array.isArray(bucket?.recently_verified)
@@ -1446,15 +1474,17 @@ const stats = computed(() => ({
     total: overview.value.total,
     pending: Number(overview.value.by_status.pending) || 0,
     active: Number(overview.value.by_status.active) || 0,
-    inactive: Number(overview.value.by_status.inactive) || 0,
+    rejected: Number(overview.value.by_status.rejected) || 0,
     expired: Number(overview.value.by_status.expired) || 0,
 
     agenciesTotal: overview.value.agencies.total,
     agenciesVerified: overview.value.agencies.verified,
+    agenciesRejected: overview.value.agencies.rejected,
     agenciesVerifiedThisMonth: overview.value.agencies.verified_this_month,
 
     branchesTotal: overview.value.branches.total,
     branchesVerified: overview.value.branches.verified,
+    branchesRejected: overview.value.branches.rejected,
     branchesVerifiedThisMonth: overview.value.branches.verified_this_month,
 
     revenue: overview.value.revenue_total,
@@ -1484,11 +1514,21 @@ const branchVerifiedPct = computed(() => {
 });
 
 const agencyUnverified = computed(() =>
-    Math.max(stats.value.agenciesTotal - stats.value.agenciesVerified, 0),
+    Math.max(
+        stats.value.agenciesTotal -
+            stats.value.agenciesVerified -
+            stats.value.agenciesRejected,
+        0,
+    ),
 );
 
 const branchUnverified = computed(() =>
-    Math.max(stats.value.branchesTotal - stats.value.branchesVerified, 0),
+    Math.max(
+        stats.value.branchesTotal -
+            stats.value.branchesVerified -
+            stats.value.branchesRejected,
+        0,
+    ),
 );
 
 const agencyDashOffset = computed(
@@ -1539,10 +1579,10 @@ const statusSegments = computed(() => {
             color: "#0E7C7B",
         },
         {
-            key: "inactive",
-            label: "Inactive",
-            count: stats.value.inactive,
-            pct: Math.round((stats.value.inactive / total) * 100),
+            key: "rejected",
+            label: "Rejected",
+            count: stats.value.rejected,
+            pct: Math.round((stats.value.rejected / total) * 100),
             color: "#94a3b8",
         },
         {

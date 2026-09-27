@@ -27,6 +27,7 @@ export interface UseEmployeeFormOptions {
     employee: () => Employee | null | undefined;
     mode: () => "view" | "edit" | undefined;
     onSaved?: (employee?: Employee) => void;
+    onStatusChanged?: (employee?: Employee) => void;
 }
 
 export function useEmployeeForm(options: UseEmployeeFormOptions) {
@@ -274,31 +275,34 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
     function validate() {
         const result = employeeSchema.safeParse(employee.value);
 
-        if (result.success) {
-            errors.value = {};
-            return true;
-        }
-
         const fieldErrors: Record<string, string> = {};
 
-        result.error.issues.forEach((issue) => {
-            const path = issue.path.join(".");
+        if (!result.success) {
+            result.error.issues.forEach((issue) => {
+                const path = issue.path.join(".");
 
-            if (!fieldErrors[path]) {
-                fieldErrors[path] = issue.message;
+                if (!fieldErrors[path]) {
+                    fieldErrors[path] = issue.message;
+                }
+            });
+        }
+
+        const password = employee.value.password ?? "";
+
+        if (isEditMode.value && password) {
+            if (password.length < 8) {
+                fieldErrors.password = "Password must be at least 8 characters.";
+            } else if (password !== employee.value.password_confirmation) {
+                fieldErrors.password_confirmation = "Passwords do not match.";
             }
-        });
+        }
 
         errors.value = fieldErrors;
 
-        return false;
+        return Object.keys(fieldErrors).length === 0;
     }
 
-    async function saveEmployee() {
-        if (!validate()) {
-            return false;
-        }
-
+    function buildPayload() {
         const permissionPayload = Object.entries(permissions.value)
             .filter(([, actions]) => actions.length)
             .map(([moduleId, actions]) => ({
@@ -306,8 +310,18 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 actions,
             }));
 
-        const payload = {
-            ...employee.value,
+        const { password, password_confirmation, ...details } = employee.value;
+
+        const hasAssignment = ["nurse", "caregiver"].includes(
+            String(details.role_name ?? "").toLowerCase(),
+        );
+
+        return {
+            ...details,
+            assignment_type: hasAssignment ? details.assignment_type : null,
+            ...(isEditMode.value && password
+                ? { password, password_confirmation }
+                : {}),
             documents: employee.value.documents.filter(
                 (doc) => doc.label.trim() && (doc.file || doc.url),
             ),
@@ -315,6 +329,63 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             type: "employee",
             branch_uuid: uuid,
         };
+    }
+
+    const isOnLeave = computed(() => employee.value.status === "on_leave");
+
+    async function toggleLeave() {
+        const next: EmployeeStatus = isOnLeave.value ? "active" : "on_leave";
+
+        if (!isViewMode.value) {
+            employee.value.status = next;
+            return true;
+        }
+
+        const current = options.employee();
+
+        if (!current?.uuid || saving.value) return false;
+
+        const previous = employee.value.status;
+
+        employee.value.status = next;
+        saving.value = true;
+
+        try {
+            const res: any = await employeeService.updateStatus(current.uuid, {
+                status: next,
+                branch_uuid: uuid,
+            });
+
+            loadedStatus.value = next;
+
+            success(res?.message ?? "Employee status updated.");
+
+            const saved = (res?.employee?.data ??
+                res?.employee ??
+                null) as Employee | null;
+
+            options.onStatusChanged?.(saved ?? undefined);
+
+            return true;
+        } catch (err: any) {
+            employee.value.status = previous;
+
+            error(
+                err?.data?.message || err?.message || "Internal Server Error",
+            );
+
+            return false;
+        } finally {
+            saving.value = false;
+        }
+    }
+
+    async function saveEmployee() {
+        if (!validate()) {
+            return false;
+        }
+
+        const payload = buildPayload();
 
         saving.value = true;
 
@@ -329,6 +400,9 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             }
 
             success(res.message);
+
+            employee.value.password = "";
+            employee.value.password_confirmation = "";
 
             if (user.value?.uuid === current?.uuid) {
                 await fetchAuthUser();
@@ -369,7 +443,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
     }
 
     const pageTitle = computed(() => {
-        if (isViewMode.value) return "View Employee";
+        if (isViewMode.value) return "Employee";
         if (isEditMode.value) return "Edit Employee";
         return "Add Employee";
     });
@@ -415,6 +489,8 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         initials,
         validate,
         saveEmployee,
+        isOnLeave,
+        toggleLeave,
         employeeSlip,
         dismissSlip,
         isActive,

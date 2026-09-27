@@ -22,6 +22,16 @@ class SubscriptionRepository
         return Subscription::create($payload);
     }
 
+    public function findDueForRenewalReminder(int $days)
+    {
+        return Subscription::query()
+            ->with(['plans', 'pendingPlan', 'branchLinks.branch'])
+            ->whereIn('status', [Subscription::STATUS_ACTIVE, Subscription::STATUS_EXPIRED])
+            ->whereNull('pending_plan_id')
+            ->whereDate('end_date', '<=', Carbon::today()->addDays($days))
+            ->get();
+    }
+
     public function findByFields(array $payload)
     {
         return Subscription::where($payload)->first();
@@ -56,11 +66,6 @@ class SubscriptionRepository
     }
 
 
-    // A subscription covering several branches has one branch_subscription row
-    // per branch, so filtering straight on that table would list the same
-    // subscription once per covered branch. Every card already shows every
-    // covered branch (with a switcher), so the list is one row per subscription:
-    // whichever of its matching links sorts first stands in for the group.
     public function paginate(array $payload)
     {
         $filtered = $this->filteredBranchSubscriptionQuery($payload);
@@ -100,10 +105,23 @@ class SubscriptionRepository
                 BranchSubscription::STATUS_REJECTED,
             ], true)) {
                 $query->where('status', $status);
+            } elseif ($status === 'expiring') {
+                $query->where('status', '!=', BranchSubscription::STATUS_REJECTED)
+                    ->whereHas('subscription', fn($q) => $this->expiringSoon($q));
             } else {
                 $query->where('status', '!=', BranchSubscription::STATUS_REJECTED)
                     ->whereHas('subscription', fn($q) => $q->where('status', $status));
             }
+        }
+
+        if (!empty($payload['plan_code'])) {
+            $query->whereHas(
+                'subscription',
+                fn($q) => $q->whereHas(
+                    'plans',
+                    fn($planQuery) => $planQuery->where('plan_code', $payload['plan_code'])
+                )
+            );
         }
 
         if (!empty($payload['search'])) {
@@ -123,6 +141,13 @@ class SubscriptionRepository
         return $query;
     }
 
+    private function expiringSoon($query)
+    {
+        return $query->where('status', Subscription::STATUS_ACTIVE)
+            ->where('end_date', '>=', today())
+            ->where('end_date', '<', today()->addWeek());
+    }
+
     public function overviewSubscription()
     {
         $counts = Subscription::query()
@@ -133,8 +158,8 @@ class SubscriptionRepository
         return [
             'pending' => (int) ($counts['pending'] ?? 0),
             'active' => (int) ($counts['active'] ?? 0),
-            'inactive' => (int) ($counts['inactive'] ?? 0),
             'expired' => (int) ($counts['expired'] ?? 0),
+            'expiring_soon' => $this->expiringSoon(Subscription::query())->count(),
             'rejected' => BranchSubscription::where('status', BranchSubscription::STATUS_REJECTED)->count(),
             'active_branches' => BranchSubscription::where(
                 'status',
@@ -161,7 +186,7 @@ class SubscriptionRepository
         $statuses = [
             Subscription::STATUS_PENDING,
             Subscription::STATUS_ACTIVE,
-            Subscription::STATUS_INACTIVE,
+            Subscription::STATUS_REJECTED,
             Subscription::STATUS_EXPIRED,
         ];
 
@@ -175,12 +200,14 @@ class SubscriptionRepository
 
         $branchTotals = Branch::query()
             ->selectRaw('COUNT(*) as total')
-            ->selectRaw('COUNT(*) FILTER (WHERE is_verified = true) as verified')
+            ->selectRaw("COUNT(*) FILTER (WHERE status = 'verified') as verified")
+            ->selectRaw("COUNT(*) FILTER (WHERE status = 'rejected') as rejected")
             ->first();
 
         $agencyTotals = Agency::query()
             ->selectRaw('COUNT(*) as total')
-            ->selectRaw('COUNT(*) FILTER (WHERE is_verified = true) as verified')
+            ->selectRaw("COUNT(*) FILTER (WHERE status = 'verified') as verified")
+            ->selectRaw("COUNT(*) FILTER (WHERE status = 'rejected') as rejected")
             ->first();
 
         $planBreakdown = Plan::query()
@@ -191,9 +218,10 @@ class SubscriptionRepository
             ->selectRaw('COUNT(subscriptions.subscription_id) as total')
             ->leftJoin(
                 'subscriptions',
-                'subscriptions.plan_id',
-                '=',
-                'plans.plan_id'
+                function ($join) {
+                    $join->on('subscriptions.plan_id', '=', 'plans.plan_id')
+                        ->where('subscriptions.status', '!=', Subscription::STATUS_REJECTED);
+                }
             )
             ->groupBy(
                 'plans.plan_id',
@@ -277,10 +305,12 @@ class SubscriptionRepository
                 'branches' => [
                     'total' => (int) ($branchTotals->total ?? 0),
                     'verified' => (int) ($branchTotals->verified ?? 0),
+                    'rejected' => (int) ($branchTotals->rejected ?? 0),
                 ],
                 'agencies' => [
                     'total' => (int) ($agencyTotals->total ?? 0),
                     'verified' => (int) ($agencyTotals->verified ?? 0),
+                    'rejected' => (int) ($agencyTotals->rejected ?? 0),
                 ],
                 'plan_breakdown' => $planBreakdown,
                 'revenue_total' => (float) $revenue,

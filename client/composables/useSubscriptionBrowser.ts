@@ -1,13 +1,17 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
+import { useToast } from "~/composables/useToast";
 
 const PER_PAGE = 9;
 const SEARCH_DEBOUNCE_MS = 350;
 
 export type SubscriptionView = "requests" | "approved" | "rejected";
-export type ApprovedStatus = "active" | "inactive" | "expired";
+export type ApprovedStatus = "active" | "expired" | "expiring";
+export type PlanFilter = "all" | "A" | "B" | "C";
 
 export function useSubscriptionBrowser(initialView: SubscriptionView) {
+    const { success, error } = useToast();
+
     const subscriptions = ref<any[]>([]);
     const loading = ref(true);
     const loadingMore = ref(false);
@@ -23,6 +27,7 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
     const search = ref("");
     const view = ref<SubscriptionView>(initialView);
     const approvedStatus = ref<ApprovedStatus>("active");
+    const planFilter = ref<PlanFilter>("all");
 
     let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -44,6 +49,8 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
         try {
             const res = await subscriptionService.list({
                 status: statusParam.value,
+                plan_code:
+                    planFilter.value === "all" ? undefined : planFilter.value,
                 search: search.value.trim() || undefined,
                 page: targetPage,
                 per_page: PER_PAGE,
@@ -66,7 +73,7 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
                 hasMore.value = list.length === PER_PAGE;
             }
         } catch (err) {
-            console.error("Failed to fetch subscriptions:", err);
+            error((err as any)?.message || "Failed to load subscriptions.");
 
             if (targetPage === 1) {
                 subscriptions.value = [];
@@ -94,7 +101,7 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
             });
             overview.value = res.data ?? res;
         } catch (err) {
-            console.error("Failed to fetch subscription overview:", err);
+            error((err as any)?.message || "Failed to load the overview.");
         } finally {
             overviewLoading.value = false;
         }
@@ -107,7 +114,7 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
     const approveSubscription = async (subscription: any) => {
         const uuid = subscription.uuid;
 
-        if (processingAction.value[uuid]) return;
+        if (processingAction.value[uuid]) return false;
 
         processingAction.value = {
             ...processingAction.value,
@@ -126,8 +133,9 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
             total.value = Math.max(0, total.value - 1);
 
             fetchOverview();
+            success("Request approved.");
         } catch (err) {
-            console.error("Failed to approve subscription:", err);
+            error((err as any)?.message || "Failed to approve the request.");
         } finally {
             const next = { ...processingAction.value };
             delete next[uuid];
@@ -138,7 +146,7 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
     const rejectSubscription = async (subscription: any, reason = "") => {
         const uuid = subscription.uuid;
 
-        if (processingAction.value[uuid]) return;
+        if (processingAction.value[uuid]) return "";
 
         processingAction.value = {
             ...processingAction.value,
@@ -158,8 +166,13 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
             total.value = Math.max(0, total.value - 1);
 
             fetchOverview();
+            success("Request rejected.");
+            return null;
         } catch (err) {
-            console.error("Failed to reject subscription:", err);
+            const message =
+                (err as any)?.message || "Failed to reject the request.";
+            error(message);
+            return message;
         } finally {
             const next = { ...processingAction.value };
             delete next[uuid];
@@ -176,7 +189,7 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
         );
     });
 
-    watch([view, approvedStatus], () => fetchSubscriptions(1));
+    watch([view, approvedStatus, planFilter], () => fetchSubscriptions(1));
 
     onMounted(() => {
         fetchSubscriptions(1);
@@ -195,6 +208,7 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
         search,
         view,
         approvedStatus,
+        planFilter,
         isSearching,
         fetchSubscriptions,
         loadMore,

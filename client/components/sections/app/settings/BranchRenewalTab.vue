@@ -6,25 +6,41 @@
         >
             <div class="space-y-2">
                 <div class="h-5 w-52 rounded bg-slate-200 dark:bg-white/10" />
-                <div class="h-3.5 w-80 max-w-full rounded bg-slate-100 dark:bg-white/5" />
+                <div
+                    class="h-3.5 w-80 max-w-full rounded bg-slate-100 dark:bg-white/5"
+                />
             </div>
 
             <div class="flex items-center gap-3">
-                <div class="h-11 w-11 rounded-xl bg-slate-200 dark:bg-white/10" />
+                <div
+                    class="h-11 w-11 rounded-xl bg-slate-200 dark:bg-white/10"
+                />
                 <div class="space-y-2">
-                    <div class="h-4 w-36 rounded bg-slate-200 dark:bg-white/10" />
-                    <div class="h-3 w-24 rounded bg-slate-100 dark:bg-white/5" />
+                    <div
+                        class="h-4 w-36 rounded bg-slate-200 dark:bg-white/10"
+                    />
+                    <div
+                        class="h-3 w-24 rounded bg-slate-100 dark:bg-white/5"
+                    />
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-3 dark:border-white/10">
+            <div
+                class="grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-3 dark:border-white/10"
+            >
                 <div v-for="i in 3" :key="i" class="space-y-2">
-                    <div class="h-2.5 w-16 rounded bg-slate-100 dark:bg-white/5" />
-                    <div class="h-4 w-28 rounded bg-slate-200 dark:bg-white/10" />
+                    <div
+                        class="h-2.5 w-16 rounded bg-slate-100 dark:bg-white/5"
+                    />
+                    <div
+                        class="h-4 w-28 rounded bg-slate-200 dark:bg-white/10"
+                    />
                 </div>
             </div>
 
-            <div class="space-y-3 border-t border-slate-100 pt-4 dark:border-white/10">
+            <div
+                class="space-y-3 border-t border-slate-100 pt-4 dark:border-white/10"
+            >
                 <div class="h-12 rounded-xl bg-slate-100 dark:bg-white/5" />
                 <div class="h-12 rounded-xl bg-slate-100 dark:bg-white/5" />
             </div>
@@ -90,28 +106,16 @@
                                 </p>
 
                                 <p
-                                    class="mt-0.5 text-xs capitalize text-slate-500 dark:text-gray-400"
+                                    v-if="subscription.billing_interval"
+                                    class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
                                 >
                                     Billed
                                     {{
-                                        (
-                                            subscription.billing_interval ?? ""
-                                        ).toLowerCase()
+                                        subscription.billing_interval.toLowerCase()
                                     }}
                                 </p>
                             </div>
                         </div>
-
-                        <span
-                            class="inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide"
-                            :class="statusTone.badge"
-                        >
-                            <span
-                                class="h-1.5 w-1.5 rounded-full"
-                                :class="statusTone.dot"
-                            />
-                            {{ statusLabel }}
-                        </span>
                     </div>
 
                     <div
@@ -167,6 +171,27 @@
             </div>
 
             <div
+                v-if="canRenew && !hasPendingUpgrade"
+                class="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-xs text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
+            >
+                <Clock class="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                    <template v-if="isExpired">
+                        This subscription expired on
+                        {{ formatDate(subscription.end_date) }}. Renew now to
+                        keep your branch running.
+                    </template>
+                    <template v-else>
+                        {{ Math.max(daysRemaining, 0) }}
+                        {{ daysRemaining === 1 ? "day" : "days" }} left — renew
+                        before {{ formatDate(subscription.end_date) }} to avoid
+                        interruption. You'll be reminded every day until you
+                        renew.
+                    </template>
+                </span>
+            </div>
+
+            <div
                 class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div>
@@ -174,9 +199,11 @@
                         class="text-sm font-bold text-slate-900 dark:text-white"
                     >
                         {{
-                            coveredBranches.length > 1
-                                ? "Renew this subscription"
-                                : "Renew this branch"
+                            hasPendingUpgrade
+                                ? "Pending plan"
+                                : coveredBranches.length > 1
+                                  ? "Renew this subscription"
+                                  : "Renew this branch"
                         }}
                     </h3>
 
@@ -184,12 +211,21 @@
                         class="mt-1 max-w-lg text-xs leading-5 text-slate-500 dark:text-gray-400"
                     >
                         <template v-if="hasPendingUpgrade">
-                            You've already paid ahead — renewing again is
-                            available once {{ pendingPlan.name }} takes over.
+                            {{ pendingPlan.name }} is already paid for and takes
+                            over when the current period ends. You can renew
+                            again once it does.
+                        </template>
+                        <template v-else-if="canRenew">
+                            Renewal is open. Choose monthly or yearly — the
+                            new period is added after the current end date, so
+                            you never lose the days you've already paid for.
                         </template>
                         <template v-else>
-                            Renewing early adds time on top of what's left — you
-                            never lose the days you've already paid for.
+                            Renewal opens on {{ formatDate(renewalOpensAt) }},
+                            {{ windowDays }} days before this subscription ends.
+                            <template v-if="upgradePlan">
+                                Upgrading is available anytime.
+                            </template>
                         </template>
                     </p>
                 </div>
@@ -239,7 +275,13 @@
                     <div class="flex items-start gap-3 text-xs text-primary">
                         <RefreshCw class="mt-0.5 h-4 w-4 shrink-0" />
                         <span>
-                            Upgrade to {{ pendingPlan.name }} starts on
+                            Upgrade to {{ pendingPlan.name }}
+                            <template v-if="pendingPlan.billing_interval">
+                                ({{
+                                    pendingPlan.billing_interval.toLowerCase()
+                                }})
+                            </template>
+                            starts on
                             {{ formatDate(pendingPlan.starts_at) }}, when the
                             current period ends.
                         </span>
@@ -269,9 +311,7 @@
                                     class="rounded-md bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
                                 >
                                     {{ forfeitedDays }}
-                                    {{
-                                        forfeitedDays === 1 ? "day" : "days"
-                                    }}
+                                    {{ forfeitedDays === 1 ? "day" : "days" }}
                                     lost
                                 </span>
                             </template>
@@ -458,7 +498,7 @@
                     </div>
                 </div>
 
-                <template v-if="!hasPendingUpgrade">
+                <template v-if="!hasPendingUpgrade && canSubmitRenewal">
                     <p
                         class="mb-2 mt-5 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                     >
@@ -552,7 +592,8 @@
 
                         <button
                             type="button"
-                            class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                            :disabled="!canSubmitRenewal"
+                            class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                             @click="openRenew"
                         >
                             <RefreshCw class="h-4 w-4" />
@@ -571,13 +612,22 @@
                 class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div
-                    class="border-b border-slate-100 px-5 py-3 dark:border-white/10"
+                    class="flex items-center justify-between border-b border-slate-100 px-5 py-3 dark:border-white/10"
                 >
                     <h3
                         class="text-sm font-bold text-slate-900 dark:text-white"
                     >
                         Payment history
                     </h3>
+
+                    <button
+                        v-if="payments.length > RECENT_PAYMENTS"
+                        type="button"
+                        class="text-xs font-semibold text-primary hover:underline"
+                        @click="showAllPayments = true"
+                    >
+                        View all
+                    </button>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -608,7 +658,7 @@
                             class="divide-y divide-slate-100 dark:divide-white/10"
                         >
                             <tr
-                                v-for="payment in payments"
+                                v-for="payment in recentPayments"
                                 :key="payment.subscription_payment_id"
                                 class="transition hover:bg-slate-50/60 dark:hover:bg-white/5"
                             >
@@ -677,6 +727,12 @@
             </div>
         </template>
 
+        <SubscriptionPaymentsModal
+            :open="showAllPayments"
+            :payments="payments"
+            @close="showAllPayments = false"
+        />
+
         <Teleport to="body">
             <div
                 v-if="showRenew"
@@ -740,6 +796,7 @@
                             title="Renewal payment"
                             description="Choose how to pay for this branch's renewal."
                             submit-label="Confirm renewal"
+                            gcash-processing-label="Waiting for GCash payment..."
                             terms-context="subscription"
                         />
                     </div>
@@ -761,9 +818,11 @@ import {
 } from "lucide-vue-next";
 
 import PaymentForm from "~/components/forms/PaymentForm.vue";
+import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionPaymentsModal.vue";
 import { formatAmount } from "~/utils/currency";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { planService } from "~/api/plan/PlanService";
+import { paymentService } from "~/api/payment/PaymentService";
 import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import { useToast } from "~/composables/useToast";
 import type { CardDetails } from "~/types/payment";
@@ -772,7 +831,7 @@ const props = defineProps<{
     uuid: string;
 }>();
 
-const { success, error } = useToast();
+const { success, error, info } = useToast();
 
 const UPGRADE_TIMINGS = [
     { value: "now", label: "Start today" },
@@ -793,7 +852,7 @@ const plans = ref<any[]>([]);
 const renewInterval = ref<"monthly" | "yearly">("monthly");
 
 const card = ref<CardDetails>({
-    number: "4000000000002503",
+    number: "4000000000001000",
     expMonth: "04",
     expYear: "29",
     cvc: "123",
@@ -802,7 +861,17 @@ const card = ref<CardDetails>({
     email: "prince.sestoso@gmail.com",
 });
 
+const RECENT_PAYMENTS = 5;
+
 const payments = computed(() => subscription.value?.payments ?? []);
+
+const recentPayments = computed(() =>
+    [...payments.value]
+        .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))
+        .slice(0, RECENT_PAYMENTS),
+);
+
+const showAllPayments = ref(false);
 
 const coveredBranches = computed<
     { uuid: string; name: string; status: string }[]
@@ -894,6 +963,20 @@ const yearlySavings = computed(() => {
     );
 });
 
+const subscriptionInterval = computed<"monthly" | "yearly">(() =>
+    String(subscription.value?.billing_interval ?? "monthly").toLowerCase() ===
+    "yearly"
+        ? "yearly"
+        : "monthly",
+);
+
+const renewal = computed(() => subscription.value?.renewal ?? null);
+const canRenew = computed(() => renewal.value?.can_renew ?? true);
+const windowDays = computed(() => renewal.value?.window_days ?? 7);
+const renewalOpensAt = computed(() => renewal.value?.opens_at ?? null);
+
+const canSubmitRenewal = computed(() => isUpgrading.value || canRenew.value);
+
 const daysRemaining = computed(() => {
     if (!subscription.value?.end_date) return 0;
 
@@ -907,13 +990,6 @@ const isExpired = computed(() => daysRemaining.value < 0);
 const isExpiringSoon = computed(
     () => !isExpired.value && daysRemaining.value <= 14,
 );
-
-const statusLabel = computed(() => {
-    if (isExpired.value) return "Expired";
-    if (isExpiringSoon.value) return "Expiring soon";
-
-    return subscription.value?.status ?? "Active";
-});
 
 const statusTone = computed(() => {
     if (isExpired.value) {
@@ -974,8 +1050,8 @@ const projectedEndDate = computed(() => {
     return projected.toISOString();
 });
 
-const fetchSubscription = async () => {
-    loading.value = true;
+const fetchSubscription = async (silent = false) => {
+    if (silent !== true) loading.value = true;
 
     try {
         const [subRes, planRes] = await Promise.all([
@@ -989,11 +1065,7 @@ const fetchSubscription = async () => {
         subscription.value = subRes?.data?.[0] ?? null;
         plans.value = planRes ?? [];
 
-        const interval = String(
-            subscription.value?.billing_interval ?? "monthly",
-        ).toLowerCase();
-
-        renewInterval.value = interval === "yearly" ? "yearly" : "monthly";
+        renewInterval.value = subscriptionInterval.value;
     } catch (err: any) {
         error(err?.message ?? "Failed to load subscription.");
     } finally {
@@ -1002,6 +1074,11 @@ const fetchSubscription = async () => {
 };
 
 const openRenew = () => {
+    if (!canSubmitRenewal.value) {
+        error(`Renewal opens on ${formatDate(renewalOpensAt.value)}.`);
+        return;
+    }
+
     if (!renewTotal.value) {
         error("This plan has no price for the selected billing cycle.");
         return;
@@ -1046,10 +1123,18 @@ const payCard = async () => {
                 success(result?.message ?? "Subscription renewed.");
 
                 if (result?.subscription) {
+                    const { payment, ...changes } = result.subscription;
+
                     subscription.value = {
                         ...subscription.value,
-                        ...result.subscription,
+                        ...changes,
+                        payments: payment
+                            ? [...payments.value, payment]
+                            : payments.value,
                     };
+
+                    wantsUpgrade.value = false;
+                    renewInterval.value = subscriptionInterval.value;
                 }
 
                 showRenew.value = false;
@@ -1059,6 +1144,45 @@ const payCard = async () => {
         error(err?.message ?? "Renewal payment failed.");
     } finally {
         processing.value = false;
+    }
+};
+
+const waitForGcashConfirmation = async (reference?: string) => {
+    if (!reference) return { status: "unknown" as const, message: null };
+
+    for (let attempt = 0; attempt < 10; attempt++) {
+        try {
+            const result = await paymentService.checkStatus(reference);
+
+            if (result.status === "submitted" || result.status === "failed") {
+                return result;
+            }
+        } catch {
+            break;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+
+    return { status: "pending" as const, message: null };
+};
+
+const finishGcashPayment = async (reference?: string) => {
+    const outcome = await waitForGcashConfirmation(reference);
+
+    if (outcome.status === "submitted") {
+        await fetchSubscription(true);
+        wantsUpgrade.value = false;
+        renewInterval.value = subscriptionInterval.value;
+        success(outcome.message ?? "Subscription renewed.");
+    } else if (outcome.status === "failed") {
+        error(
+            "We couldn't record your GCash payment. If you were charged, it will be refunded.",
+        );
+    } else {
+        info(
+            "GCash payment received. It will appear here as soon as it is confirmed.",
+        );
     }
 };
 
@@ -1084,12 +1208,9 @@ const payGCash = async () => {
                 processing.value = false;
             },
 
-            onSuccess: async () => {
+            onSuccess: async (invoice: any) => {
                 showRenew.value = false;
-                success(
-                    "GCash payment received. The renewal appears here once GCash confirms it.",
-                );
-                await fetchSubscription();
+                await finishGcashPayment(invoice?.external_id);
             },
         });
     } catch (err: any) {

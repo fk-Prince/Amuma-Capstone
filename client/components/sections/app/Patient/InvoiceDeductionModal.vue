@@ -38,7 +38,8 @@
                         <p
                             class="mt-1 text-xs text-slate-400 dark:text-gray-500"
                         >
-                            Total late/gap: {{ formatDurationShort(gapMinutes / 60) }}
+                            Total late/gap:
+                            {{ formatDurationShort(gapMinutes / 60) }}
                         </p>
 
                         <p
@@ -59,17 +60,25 @@
 
                 <div class="space-y-4 p-6">
                     <p class="text-sm text-slate-500 dark:text-gray-400">
-                        This sends accounting a request to review and adjust
-                        the invoice for this schedule — it does not change the
+                        This sends accounting a request to review and adjust the
+                        invoice for this schedule — it does not change the
                         invoice by itself.
                     </p>
 
                     <div
                         v-if="hourlyRate > 0"
-                        class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
+                        class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
                     >
-                        Calculated at {{ peso(hourlyRate) }}/hr, counting only
-                        each full half-hour of late/gap time.
+                        <span>
+                            Calculated at {{ peso(hourlyRate) }}/hr ×
+                            {{ formatDurationShort(gapMinutes / 60) }}
+                        </span>
+
+                        <span
+                            class="shrink-0 text-sm font-semibold text-slate-800 dark:text-white"
+                        >
+                            {{ peso(suggestedAmount) }}
+                        </span>
                     </div>
 
                     <div>
@@ -106,7 +115,10 @@
                         </p>
 
                         <button
-                            v-if="suggestedAmount > 0 && amount !== suggestedAmount"
+                            v-if="
+                                suggestedAmount > 0 &&
+                                amount !== suggestedAmount
+                            "
                             type="button"
                             class="mt-1.5 text-xs font-medium text-primary hover:underline"
                             @click="amount = suggestedAmount"
@@ -183,8 +195,9 @@ const maxAmount = computed(
 const suggestedAmount = computed(() => {
     if (hourlyRate.value <= 0) return 0;
 
-    const units = Math.floor((props.gapMinutes ?? 0) / 30);
-    const suggested = Math.round(units * (hourlyRate.value / 2) * 100) / 100;
+    const suggested =
+        Math.round(((props.gapMinutes ?? 0) / 60) * hourlyRate.value * 100) /
+        100;
 
     return maxAmount.value > 0
         ? Math.min(suggested, maxAmount.value)

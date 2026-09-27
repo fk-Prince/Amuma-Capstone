@@ -60,7 +60,7 @@ class SubscriptionService
 
     private function grantOwnerPermissions(int $employeeId, int $branchId): void
     {
-        $owner = RoleEnum::BranchOwner->permissions();
+        $owner = RoleEnum::BranchManager->permissions();
         foreach ($this->moduleRepository->getAllModules() as $module) {
             EmployeePermission::updateOrCreate(
                 [
@@ -102,11 +102,7 @@ class SubscriptionService
 
 
         if ($subscription->pendingPlanIsDue()) {
-            $subscription->update([
-                'plan_id' => $subscription->pending_plan_id,
-                'pending_plan_id' => null,
-                'pending_plan_starts_at' => null,
-            ]);
+            $subscription->update($subscription->pendingPlanChanges());
 
             $subscription->refresh();
         }
@@ -128,6 +124,18 @@ class SubscriptionService
             throw new Exception(__('Plan not found.'), 404);
         }
 
+        $isUpgrade = $plan->plan_id !== $subscription->plan_id;
+
+        if (!$isUpgrade && !$subscription->isRenewable()) {
+            throw new Exception(
+                __('Renewal opens on :date, :days days before this subscription ends.', [
+                    'date' => $subscription->renewalOpensAt()->toFormattedDateString(),
+                    'days' => Subscription::RENEWAL_WINDOW_DAYS,
+                ]),
+                422
+            );
+        }
+
         $interval = BillingIntervalEnum::tryFrom(
             strtoupper($payload['billing_interval'] ?? $subscription->billing_interval)
         );
@@ -136,12 +144,9 @@ class SubscriptionService
             throw new Exception(__('Invalid billing interval.'), 422);
         }
 
-
         $currentEnd = $subscription->end_date
             ? Carbon::parse($subscription->end_date)
             : Carbon::now();
-
-        $isUpgrade = $plan->plan_id !== $subscription->plan_id;
 
         $startNow = $isUpgrade
             && ($payload['upgrade_timing'] ?? 'after') === 'now';
@@ -188,17 +193,20 @@ class SubscriptionService
             $startsAt = $meta['upgrade_starts_at'] ?? null;
 
             $changes = [
-                'end_date' => $meta['endDate'],
                 'status' => Subscription::STATUS_ACTIVE,
             ];
 
             if ($startsAt) {
                 $changes['pending_plan_id'] = $paidPlanId;
                 $changes['pending_plan_starts_at'] = $startsAt;
+                $changes['pending_billing_interval'] = $meta['billing_interval'];
             } else {
+                $changes['end_date'] = $meta['endDate'];
                 $changes['plan_id'] = $paidPlanId;
+                $changes['billing_interval'] = $meta['billing_interval'];
                 $changes['pending_plan_id'] = null;
                 $changes['pending_plan_starts_at'] = null;
+                $changes['pending_billing_interval'] = null;
 
                 if (!empty($meta['upgrade_starts_now'])) {
                     $changes['start_date'] = Carbon::now();
@@ -207,7 +215,7 @@ class SubscriptionService
 
             $subscription->update($changes);
 
-            $subscription->payments()->create([
+            $payment = $subscription->payments()->create([
                 'subscription_id' => $subscription->subscription_id,
                 'plan_id' => $paidPlanId,
                 'xendit_invoice_id' => $payload['xendit_invoice_id'] ?? null,
@@ -220,15 +228,31 @@ class SubscriptionService
                 'payment_method' => $meta['payment_method'] ?? null,
             ]);
 
+            $subscription->load(['plans', 'pendingPlan']);
+
+            $message = match (true) {
+                (bool) $startsAt => __('Subscription plan upgraded successfully.'),
+                !empty($meta['is_upgrade']) => __('Branch subscription updated.'),
+                default => __('Subscription renewed successfully.'),
+            };
+
             return response()->json([
                 'status' => true,
-                'message' => __('Subscription renewed successfully.'),
+                'message' => $message,
                 'subscription' => [
                     'uuid' => $subscription->uuid,
                     'status' => $subscription->status,
                     'billing_interval' => $subscription->billing_interval,
                     'start_date' => $subscription->start_date,
                     'end_date' => $subscription->end_date,
+                    'renewal' => $subscription->renewalSummary(),
+                    'plan' => [
+                        'plan_id' => $subscription->plans?->plan_id,
+                        'name' => $subscription->plans?->name,
+                        'plan_code' => $subscription->plans?->plan_code,
+                    ],
+                    'pending_plan' => $subscription->pendingPlanSummary(),
+                    'payment' => $payment->load('plan')->historyRow(),
                 ],
             ], 200);
         });
@@ -256,15 +280,7 @@ class SubscriptionService
                 ? $today->diffInDays($startsAt)
                 : 0;
 
-            $subscription->update([
-                'plan_id' => $subscription->pending_plan_id,
-                'pending_plan_id' => null,
-                'pending_plan_starts_at' => null,
-                'start_date' => Carbon::now(),
-                'end_date' => $subscription->end_date
-                    ? Carbon::parse($subscription->end_date)->subDays($forfeited)
-                    : $subscription->end_date,
-            ]);
+            $subscription->update($subscription->pendingPlanChanges(Carbon::now()));
 
             return response()->json([
                 'status' => true,
@@ -276,6 +292,7 @@ class SubscriptionService
                     'billing_interval' => $subscription->billing_interval,
                     'start_date' => $subscription->start_date,
                     'end_date' => $subscription->end_date,
+                    'renewal' => $subscription->renewalSummary(),
                     'plan' => [
                         'plan_id' => $plan?->plan_id,
                         'name' => $plan?->name,
@@ -507,6 +524,7 @@ class SubscriptionService
                 $subscription = $this->subscriptionRepository->create([
                     'plan_id' => $plan['plan_id'],
                     'agency_id' => $agencyData->agency_id ?? null,
+                    'billing_interval' => $billing_interval->value,
                     'start_date' => Carbon::now(),
                     'end_date' => $endDate,
                 ]);
@@ -544,7 +562,7 @@ class SubscriptionService
                     ]);
                 }
                 $employee->employeeBranch()->create([
-                    'role_name' => 'branch_owner',
+                    'role_name' => RoleEnum::AgencyOwner->value,
                     'branch_id'   => $branchData->branch_id,
                     'employee_id' => $employee->employee_id,
                 ]);
@@ -596,7 +614,7 @@ class SubscriptionService
                         'name' => $branchData->name,
                         'description' => $branchData->description,
                         'image' => $branchData->image,
-                        'is_verified' => $branchData->is_verified,
+                        'status' => $branchData->status,
                         'contact_number' => $branchData->contact_number,
                         'email' => $branchData->email,
                         'location' => $branchLocation ? [
@@ -713,26 +731,22 @@ class SubscriptionService
                 'status' => BranchSubscription::STATUS_PENDING,
             ]);
 
-            $employee = $this->employeeRepository->findEmployeeByFields([
-                ['user_id', '=', $user->user_id],
-            ]);
+            $owner = User::find($agency->registered_by);
+            $ownerEmployee = $owner
+                ? $this->employeeRepository->findEmployeeByFields([
+                    ['user_id', '=', $owner->user_id],
+                ])
+                : null;
 
-            if (!$employee) {
-                $employee = $this->employeeRepository->createEmployee([
-                    'user_id'    => $user->user_id,
-                    'first_name' => $user->first_name,
-                    'last_name'  => $user->last_name,
-                    'avatar'     => $user->avatar,
+            if ($ownerEmployee) {
+                $ownerEmployee->employeeBranch()->create([
+                    'role_name' => RoleEnum::AgencyOwner->value,
+                    'branch_id' => $branchData->branch_id,
+                    'employee_id' => $ownerEmployee->employee_id,
                 ]);
+
+                $this->grantOwnerPermissions($ownerEmployee->employee_id, $branchData->branch_id);
             }
-
-            $employee->employeeBranch()->create([
-                'role_name' => 'branch_owner',
-                'branch_id'   => $branchData->branch_id,
-                'employee_id' => $employee->employee_id,
-            ]);
-
-            $this->grantOwnerPermissions($employee->employee_id, $branchData->branch_id);
 
             $adminMessage = "New branch request from {$branchData->name} (included in an existing subscription) is awaiting your review.";
 
@@ -769,7 +783,7 @@ class SubscriptionService
                     'name' => $branchData->name,
                     'description' => $branchData->description,
                     'image' => $branchData->image,
-                    'is_verified' => $branchData->is_verified,
+                    'status' => $branchData->status,
                     'contact_number' => $branchData->contact_number,
                     'email' => $branchData->email,
                     'location' => [
@@ -874,12 +888,12 @@ class SubscriptionService
 
             $link->update(['status' => BranchSubscription::STATUS_APPROVED]);
 
-            if (! $branch->is_verified) {
-                $branch->update(['is_verified' => true]);
+            if ($branch->status !== Branch::STATUS_VERIFIED) {
+                $branch->update(['status' => Branch::STATUS_VERIFIED]);
             }
 
-            if ($agency && ! $agency->is_verified) {
-                $agency->update(['is_verified' => true]);
+            if ($agency && $agency->status !== Agency::STATUS_VERIFIED) {
+                $agency->update(['status' => Agency::STATUS_VERIFIED]);
             }
 
 
@@ -933,7 +947,7 @@ class SubscriptionService
 
     public function reject(array $payload)
     {
-        return DB::transaction(function () use ($payload) {
+        $link = DB::transaction(function () use ($payload) {
 
             $link = $this->resolveBranchLink($payload);
 
@@ -950,6 +964,11 @@ class SubscriptionService
                 'status' => BranchSubscription::STATUS_REJECTED,
                 'rejection_reason' => $reason ?: null,
             ]);
+
+
+            if ($link->branch && $link->branch->status === Branch::STATUS_PENDING) {
+                $link->branch->update(['status' => Branch::STATUS_REJECTED]);
+            }
 
             $remaining = BranchSubscription::where('subscription_id', $link->subscription_id)
                 ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
@@ -982,13 +1001,22 @@ class SubscriptionService
                 ]);
             }
 
-            $this->announceRejection($link->branch, $reason);
-
-            return response()->json([
-                'message' => 'Branch request rejected.',
-                'data' => $link->fresh(['branch.agencies', 'subscription.plans']),
-            ]);
+            return $link;
         });
+
+        try {
+            $this->announceRejection($link->branch, (string) $link->rejection_reason);
+        } catch (\Throwable $e) {
+            Log::error('Branch rejection notice failed', [
+                'branch_subscription_id' => $link->branch_subscription_id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Branch request rejected.',
+            'data' => $link->fresh(['branch.agencies', 'subscription.plans']),
+        ]);
     }
 
     private function announceRejection(?Branch $branch, string $reason): void

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id('employee_branch_id');
             $table->string('role_name');
             $table->enum('assignment_type', ['online', 'facility', 'both'])->nullable();
+            $table->enum('status', ['active', 'inactive', 'on_leave'])->default('active');
             $table->foreignId('branch_id')
                 ->constrained('branches', 'branch_id');
             $table->foreignId('employee_id')

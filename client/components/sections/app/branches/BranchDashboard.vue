@@ -1,7 +1,7 @@
 <template>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div
-            class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary-200 dark:border-white/10 dark:bg-secondary dark:hover:border-primary-500/40"
+            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary-200 dark:border-white/10 dark:bg-secondary dark:hover:border-primary-500/40"
         >
             <div
                 class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary-100/40 blur-2xl dark:bg-primary-500/10"
@@ -33,7 +33,9 @@
                     Total Branches
                 </p>
 
-                <p class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-white">
+                <p
+                    class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                >
                     {{ statsData.total_branches }}
                 </p>
 
@@ -54,7 +56,7 @@
         </div>
 
         <div
-            class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:border-white/10 dark:bg-secondary dark:hover:border-emerald-500/40"
+            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:border-white/10 dark:bg-secondary dark:hover:border-emerald-500/40"
         >
             <div
                 class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-100/50 blur-2xl dark:bg-emerald-500/10"
@@ -95,7 +97,9 @@
                     Active Branches
                 </p>
 
-                <p class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-white">
+                <p
+                    class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                >
                     {{ statsData.active_branches }}
                 </p>
 
@@ -109,7 +113,7 @@
         </div>
 
         <div
-            class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-fuchsia-200 dark:border-white/10 dark:bg-secondary dark:hover:border-fuchsia-500/40"
+            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-fuchsia-200 dark:border-white/10 dark:bg-secondary dark:hover:border-fuchsia-500/40"
         >
             <div
                 class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-fuchsia-100/50 blur-2xl dark:bg-fuchsia-500/10"
@@ -131,7 +135,6 @@
                             <path d="M12 7v5l3 3" />
                         </svg>
                     </div>
-
                 </div>
 
                 <p
@@ -140,14 +143,23 @@
                     Expiring Soon
                 </p>
 
-                <p class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-white">
+                <p
+                    class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                >
                     {{ statsData.expiring_soon }}
                 </p>
+
+                <div
+                    class="mt-3 flex items-center gap-2 text-xs text-fuchsia-600 dark:text-fuchsia-300"
+                >
+                    <span class="h-1.5 w-1.5 rounded-full bg-fuchsia-500" />
+                    Expiring in 1 week
+                </div>
             </div>
         </div>
 
         <div
-            class="relative overflow-hidden group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200 dark:border-white/10 dark:bg-secondary dark:hover:border-rose-500/40"
+            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200 dark:border-white/10 dark:bg-secondary dark:hover:border-rose-500/40"
         >
             <div
                 class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-rose-100/50 blur-2xl dark:bg-rose-500/10"
@@ -186,11 +198,15 @@
                     Maintenance Alerts
                 </p>
 
-                <p class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-white">
+                <p
+                    class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                >
                     {{ statsData.maintenance_alerts }}
                 </p>
 
-                <p class="mt-3 text-xs text-rose-500 dark:text-rose-300">Subscription expired</p>
+                <p class="mt-3 text-xs text-rose-500 dark:text-rose-300">
+                    Subscription expired
+                </p>
             </div>
         </div>
     </div>

@@ -10,5 +10,6 @@ export interface Agency {
     id_front?: string | File;
     id_back?: string | File;
     document?: string | File;
-    is_verified: boolean
+    status: "pending" | "verified" | "rejected";
+    registered_by?: { name: string | null; email: string } | null;
 }

@@ -73,7 +73,8 @@ const noPatients = ref(false);
 const lovedOnes = ref<LovedOne[]>([]);
 const selectedIndex = ref(0);
 
-const { resolveIndex, syncQuery } = usePatientQuerySelection();
+const { syncQuery, selectedParams, indexOfPatient } =
+    usePatientQuerySelection();
 
 watch(selectedIndex, () =>
     syncQuery(lovedOnes.value[selectedIndex.value]?.uuid),
@@ -362,27 +363,40 @@ async function loadPatientData() {
     noPatients.value = false;
 
     try {
-        const res = await patientAccessService.retrieveAction({
-            action: "overview",
-            section: "profile",
-        });
+        const [res, activityRes] = await Promise.all([
+            patientAccessService.retrieveAction({
+                action: "overview",
+                section: "profile",
+            }),
+            patientAccessService
+                .retrieveAction({
+                    action: "overview",
+                    section: "activity",
+                    ...selectedParams(),
+                })
+                .catch(() => null),
+        ]);
 
         const records: any[] = Array.isArray(res?.data) ? res.data : [];
 
         if (records.length) {
             lovedOnes.value = records.map(mapPatientRecord);
-            selectedIndex.value = resolveIndex(lovedOnes.value);
 
-            const patientId = lovedOnes.value[selectedIndex.value]?.patient_id;
+            const index = indexOfPatient(
+                lovedOnes.value,
+                activityRes?.data?.patient_id,
+            );
+            const lo = lovedOnes.value[index];
 
-            if (patientId) {
-                const activities = await fetchActivitiesFor(patientId);
-                const lo = lovedOnes.value[selectedIndex.value];
-
-                if (lo) lo.activities = activities;
-
-                activityLoaded.value[selectedIndex.value] = true;
+            if (lo && Number(activityRes?.data?.patient_id) === lo.patient_id) {
+                lo.activities = Array.isArray(activityRes?.data?.activities)
+                    ? activityRes.data.activities
+                    : [];
+                activityLoaded.value[index] = true;
             }
+
+            if (selectedIndex.value === index) loadActivitiesAt(index);
+            else selectedIndex.value = index;
         } else {
             lovedOnes.value = [];
             noPatients.value = true;
@@ -396,7 +410,9 @@ async function loadPatientData() {
     }
 }
 
-watch(selectedIndex, async (idx) => {
+watch(selectedIndex, (idx) => loadActivitiesAt(idx));
+
+async function loadActivitiesAt(idx: number) {
     if (activityLoaded.value[idx]) return;
 
     const patientId = lovedOnes.value[idx]?.patient_id;
@@ -418,7 +434,7 @@ watch(selectedIndex, async (idx) => {
     } finally {
         isSwitchingActivity.value = false;
     }
-});
+}
 
 onMounted(() => {
     loadPatientData();

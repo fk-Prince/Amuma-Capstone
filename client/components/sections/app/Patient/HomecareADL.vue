@@ -348,7 +348,7 @@
 
                             <div
                                 v-else
-                                class="flex w-full flex-wrap items-center justify-end gap-2"
+                                class="flex w-full flex-wrap items-center gap-2"
                             >
                                 <div
                                     class="rounded-xl border border-primary/20 bg-primary/5 px-4 py-2"
@@ -542,34 +542,25 @@
                                 </div>
 
                                 <div
-                                    v-if="
-                                        ![
-                                            'completed',
-                                            'cancelled',
-                                            'missed',
-                                        ].includes(log.status)
-                                    "
-                                    class="mt-4 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-500/20 dark:bg-amber-500/10"
+                                    v-if="isOpen(log) || totalGapMinutes(log) > 0"
+                                    class="mt-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-500/20 dark:bg-amber-500/10"
                                 >
-                                    <div>
-                                        <p
-                                            class="text-[11px] text-amber-600/70 dark:text-amber-300"
-                                        >
-                                            Remaining
-                                        </p>
+                                    <div class="flex items-center gap-6">
+                                        <div v-if="isOpen(log)">
+                                            <p
+                                                class="text-[11px] text-amber-600/70 dark:text-amber-300"
+                                            >
+                                                Remaining
+                                            </p>
 
-                                        <p
-                                            class="text-sm font-bold text-amber-700 dark:text-amber-300"
-                                        >
-                                            {{ formatRemaining(log) }}
-                                        </p>
-                                    </div>
+                                            <p
+                                                class="text-sm font-bold text-amber-700 dark:text-amber-300"
+                                            >
+                                                {{ formatRemaining(log) }}
+                                            </p>
+                                        </div>
 
-                                    <div
-                                        v-if="totalGapMinutes(log) > 0"
-                                        class="flex items-center gap-2"
-                                    >
-                                        <div class="text-right">
+                                        <div v-if="totalGapMinutes(log) > 0">
                                             <p
                                                 class="text-[11px] text-amber-600/70 dark:text-amber-300"
                                             >
@@ -582,16 +573,20 @@
                                                 {{ formatTotalGap(log) }}
                                             </p>
                                         </div>
-
-                                        <button
-                                            type="button"
-                                            class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30"
-                                            @click="openDeductionModal(log)"
-                                        >
-                                            <Minus class="h-3.5 w-3.5" />
-                                            Request deduction
-                                        </button>
                                     </div>
+
+                                    <button
+                                        v-if="
+                                            canRequestDeduction &&
+                                            totalGapMinutes(log) > 0
+                                        "
+                                        type="button"
+                                        class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30"
+                                        @click="openDeductionModal(log)"
+                                    >
+                                        <Minus class="h-3.5 w-3.5" />
+                                        Request deduction
+                                    </button>
                                 </div>
 
                                 <div class="mt-5 space-y-3 pb-5">
@@ -672,9 +667,20 @@
                                                     v-if="
                                                         entry.scan.in_timestamp
                                                     "
-                                                    class="text-[11px] text-emerald-600 dark:text-emerald-300"
+                                                    class="text-[11px]"
+                                                    :class="
+                                                        entry.scan.type_in ===
+                                                        'force'
+                                                            ? 'text-amber-600 dark:text-amber-300'
+                                                            : 'text-emerald-600 dark:text-emerald-300'
+                                                    "
                                                 >
-                                                    QR scanned
+                                                    {{
+                                                        entry.scan.type_in ===
+                                                        "force"
+                                                            ? "Force clocked in"
+                                                            : "QR scanned"
+                                                    }}
                                                 </p>
                                             </div>
 
@@ -702,9 +708,20 @@
                                                     v-if="
                                                         entry.scan.out_timestamp
                                                     "
-                                                    class="text-[11px] text-emerald-600 dark:text-emerald-300"
+                                                    class="text-[11px]"
+                                                    :class="
+                                                        entry.scan.type_out ===
+                                                        'force'
+                                                            ? 'text-amber-600 dark:text-amber-300'
+                                                            : 'text-emerald-600 dark:text-emerald-300'
+                                                    "
                                                 >
-                                                    QR scanned
+                                                    {{
+                                                        entry.scan.type_out ===
+                                                        "force"
+                                                            ? "Force clocked out"
+                                                            : "QR scanned"
+                                                    }}
                                                 </p>
                                             </div>
 
@@ -836,6 +853,8 @@ import QrCodeModal from "~/components/ui/QrCodeModal.vue";
 import QrScanner from "~/components/ui/QrScanner.vue";
 import { scheduleService } from "~/api/schedule/ScheduleService.js";
 import { patientAccessService } from "~/api/patient-access/PatientAccessService";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 
 const { success, error } = useToast();
 
@@ -1174,6 +1193,18 @@ async function requestScheduleReview(log: AuditRow) {
     }
 }
 
+const { canAssign } = usePermissions();
+
+const canRequestDeduction = computed(
+    () => props.variant !== 3 && canAssign(Modules.Schedules),
+);
+
+const CLOSED_STATUSES = ["completed", "cancelled", "missed"];
+
+function isOpen(log: AuditRow) {
+    return !CLOSED_STATUSES.includes(log.status);
+}
+
 const showDeductionModal = ref(false);
 const deductionSchedule = ref<AuditRow | null>(null);
 const isSendingDeduction = ref(false);
@@ -1199,23 +1230,13 @@ async function submitDeductionRequest(payload: {
     isSendingDeduction.value = true;
 
     try {
-        if (props.variant === 3) {
-            await patientAccessService.executeAction({
-                action: "request_invoice_deduction",
-                patient_id: log.patient_id,
-                schedule_id: log.schedule_id,
-                amount: payload.amount,
-                reason: payload.reason,
-            });
-        } else {
-            await scheduleService.action({
-                type: "request_deduction",
-                branch_uuid: route.params.uuid,
-                schedule_id: log.schedule_id,
-                amount: payload.amount,
-                reason: payload.reason,
-            });
-        }
+        await scheduleService.action({
+            type: "request_deduction",
+            branch_uuid: route.params.uuid,
+            schedule_id: log.schedule_id,
+            amount: payload.amount,
+            reason: payload.reason,
+        });
 
         success("Accounting has been notified to review this deduction request.");
         closeDeductionModal();
@@ -1251,8 +1272,9 @@ const filteredLogs = computed<AuditRow[]>(() => {
 
             const online_logs = (service.assignees ?? []).flatMap((assignee) =>
                 (assignee.online ?? []).map((scan) => ({
-                    qr_in: scan.qr_in ?? null,
-                    qr_out: scan.qr_out ?? null,
+                    online_schedule_id: scan.online_schedule_id,
+                    type_in: scan.type_in ?? "scanned",
+                    type_out: scan.type_out ?? null,
                     in_timestamp: scan.in_timestamp ?? null,
                     out_timestamp: scan.out_timestamp ?? null,
                     notes: scan.notes ?? null,

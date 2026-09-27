@@ -148,7 +148,7 @@ class MedicationService
         }
 
         $existing = $medication->schedules()
-            ->where('date', $schedule['date'])
+            ->whereDate('date', $schedule['date'])
             ->where('time', $schedule['time'])
             ->first();
 

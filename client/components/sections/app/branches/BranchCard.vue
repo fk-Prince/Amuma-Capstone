@@ -1,18 +1,13 @@
 <template>
     <div
-        :role="isRejected ? undefined : 'button'"
-        :tabindex="active || isRejected ? -1 : 0"
-        class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 transition-all duration-200 ease-out transform-gpu focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-white/10 dark:bg-white/5"
+        class="flex h-full flex-col rounded-2xl border border-slate-100 bg-slate-50/60 p-4 transition-all duration-200 ease-out transform-gpu dark:border-white/10 dark:bg-white/5"
         :class="
             isRejected
                 ? 'opacity-80'
                 : active
                   ? 'border-primary-200 bg-white ring-1 ring-primary-200 dark:border-primary-500/40 dark:bg-white/10 dark:ring-primary-500/30'
-                  : 'cursor-pointer hover:-translate-y-1 hover:border-primary-200 hover:bg-white hover:shadow-md dark:hover:border-primary-500/40 dark:hover:bg-white/10'
+                  : ''
         "
-        @click="select"
-        @keydown.enter.prevent="select"
-        @keydown.space.prevent="select"
     >
         <div class="flex items-start gap-3">
             <img
@@ -37,7 +32,7 @@
                             :class="
                                 isRejected
                                     ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
-                                    : branch.is_verified
+                                    : branch.status === 'verified'
                                       ? 'bg-primary-50 text-primary dark:bg-primary-500/10'
                                       : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'
                             "
@@ -60,7 +55,7 @@
                             </svg>
 
                             <svg
-                                v-else-if="branch.is_verified"
+                                v-else-if="branch.status === 'verified'"
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 24 24"
                                 fill="none"
@@ -95,7 +90,7 @@
                             {{
                                 isRejected
                                     ? "Rejected"
-                                    : branch.is_verified
+                                    : branch.status === 'verified'
                                       ? "Verified"
                                       : "Pending review"
                             }}
@@ -154,38 +149,31 @@
         </div>
 
         <div
-            class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-x divide-slate-200 border-t border-slate-200 pt-3 dark:divide-white/10 dark:border-white/10"
+            class="mt-4 grid grid-cols-2 divide-x divide-slate-200 border-t border-slate-200 pt-3 dark:divide-white/10 dark:border-white/10"
         >
-            <div class="text-center">
-                <p class="text-sm font-semibold text-slate-900 dark:text-white">
-                    {{ branch.rooms }}
-                </p>
+            <div class="flex flex-col justify-center pr-3">
                 <p class="text-[11px] text-slate-400 dark:text-gray-500">
-                    Rooms
+                    Plan
+                </p>
+                <p
+                    v-if="branch.plan"
+                    class="mt-1 text-sm font-semibold"
+                    :class="{
+                        'text-primary': branch.plan.plan_code === 'A',
+                        'text-accent': branch.plan.plan_code === 'B',
+                        'text-secondary dark:text-white': branch.plan.plan_code === 'C',
+                    }"
+                >
+                    {{ branch.plan.name }}
+                </p>
+                <p v-else class="mt-1 text-xs text-slate-400 dark:text-gray-500">
+                    —
                 </p>
             </div>
-            <div class="text-center">
-                <p class="text-sm font-semibold text-slate-900 dark:text-white">
-                    {{ branch.staffs }}
-                </p>
-                <p class="text-[11px] text-slate-400 dark:text-gray-500">
-                    Staffs
-                </p>
-            </div>
-            <div class="text-center">
-                <p class="text-sm font-semibold text-slate-900 dark:text-white">
-                    {{ branch.patients }}
-                </p>
-                <p class="text-[11px] text-slate-400 dark:text-gray-500">
-                    Patients
-                </p>
-            </div>
-        </div>
 
-        <div class="mt-4 flex items-center gap-2">
             <div
                 v-if="isRejected"
-                class="min-w-0 flex-1 rounded-lg bg-rose-50 px-3 py-2 text-left dark:bg-rose-500/10"
+                class="min-w-0 pl-3 text-left"
             >
                 <p
                     class="text-[10px] font-semibold uppercase tracking-wide text-rose-500 dark:text-rose-300"
@@ -200,53 +188,66 @@
                 </p>
             </div>
 
-            <span
+            <div
                 v-else
-                class="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-medium"
-                :class="
-                    active
-                        ? 'text-slate-400 dark:text-gray-500'
-                        : 'text-primary'
-                "
+                class="flex flex-col divide-y divide-slate-200 pl-3 dark:divide-white/10"
             >
-                {{ active ? "Current branch" : "View this branch" }}
+                <div class="flex items-center justify-between pb-1.5 text-xs">
+                    <span class="text-slate-500 dark:text-gray-400">
+                        Patients
+                    </span>
+                    <span class="font-semibold text-slate-900 dark:text-white">
+                        {{ branch.patients }}
+                    </span>
+                </div>
 
-                <svg
-                    v-if="!active"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    class="w-3.5 h-3.5"
-                >
-                    <polyline points="9 18 15 12 9 6" />
-                </svg>
-            </span>
+                <div class="flex items-center justify-between pt-1.5 text-xs">
+                    <span class="text-slate-500 dark:text-gray-400">
+                        Staff
+                    </span>
+                    <span class="font-semibold text-slate-900 dark:text-white">
+                        {{ branch.staffs }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-auto flex items-center gap-2 pt-4">
+            <button
+                v-if="isRejected"
+                type="button"
+                class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-primary-600"
+                @click.stop="emit('resubmit', branch)"
+            >
+                <RotateCw class="h-3.5 w-3.5" />
+                Resubmit
+            </button>
 
             <button
+                v-else
                 type="button"
-                class="h-8 w-8 shrink-0 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-500 dark:hover:text-gray-300"
-                @click.stop="emit('menu', branch)"
+                class="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-medium text-primary"
+                @click.stop="reviewsOpen = true"
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    class="w-4 h-4"
-                >
-                    <circle cx="12" cy="5" r="1.2" />
-                    <circle cx="12" cy="12" r="1.2" />
-                    <circle cx="12" cy="19" r="1.2" />
-                </svg>
+                <Star class="h-3.5 w-3.5" />
+                View reviews
             </button>
         </div>
     </div>
+
+    <BranchReviewsModal
+        :open="reviewsOpen"
+        :branch-uuid="branch.uuid"
+        :branch-name="branch.name"
+        @close="reviewsOpen = false"
+    />
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
+import { RotateCw, Star } from "lucide-vue-next";
+import BranchReviewsModal from "./BranchReviewsModal.vue";
+
 interface BranchCardData {
     branch_id: number;
     uuid: string;
@@ -254,12 +255,12 @@ interface BranchCardData {
     address: string;
     phone: string;
     email: string;
-    is_verified: boolean;
+    status: "pending" | "verified" | "rejected";
     review_status?: "pending" | "verified" | "rejected";
     rejection_reason?: string | null;
-    rooms: number;
     staffs: number;
     patients: number;
+    plan: { plan_code: string; name: string } | null;
     image: string;
 }
 
@@ -269,16 +270,9 @@ const props = defineProps<{
 }>();
 
 const isRejected = computed(() => props.branch.review_status === "rejected");
+const reviewsOpen = ref(false);
 
 const emit = defineEmits<{
-    select: [branch: BranchCardData];
-    menu: [branch: BranchCardData];
+    resubmit: [branch: BranchCardData];
 }>();
-
-// A rejected branch has no dashboard to open.
-function select() {
-    if (props.active || isRejected.value) return;
-
-    emit("select", props.branch);
-}
 </script>

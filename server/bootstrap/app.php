@@ -33,9 +33,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (Throwable $e) {
-            $status = $e instanceof HttpExceptionInterface
-                ? $e->getStatusCode()
-                : 500;
+            $code = $e->getCode();
+
+            $status = match (true) {
+                $e instanceof HttpExceptionInterface => $e->getStatusCode(),
+                is_int($code) && $code >= 400 && $code < 600 => $code,
+                default => 500,
+            };
 
             if ($e instanceof ValidationException) {
                 return response()->json([

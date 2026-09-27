@@ -25,6 +25,7 @@
                 :key="branch.uuid"
                 :branch="branch"
                 @select="handleSelect"
+                @hover="$emit('hover', $event)"
             />
         </div>
 
@@ -42,7 +43,10 @@ import CardBooking from "./CardBooking.vue";
 import type { BranchRetrieve } from "~/types/branch";
 import { ref, onMounted } from "vue";
 
-defineEmits(["select"]);
+defineEmits<{
+    (e: "select", branch: BranchRetrieve): void;
+    (e: "hover", uuid: string | null): void;
+}>();
 
 const props = defineProps<{
     branches: BranchRetrieve[];

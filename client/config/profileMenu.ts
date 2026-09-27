@@ -13,7 +13,7 @@ export const handleMenuClick = async (item: any) => {
 
         const preferred =
             branchStore.activeBranch ??
-            branches.find((branch) => branch.is_verified) ??
+            branches.find((branch) => branch.status === "verified") ??
             branches[0];
 
         const uuid = preferred?.uuid;

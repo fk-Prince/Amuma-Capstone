@@ -54,18 +54,7 @@ const threadSubtitle = computed(() => {
 
     if (!row) return null;
 
-    const names = row.patient_names ?? [];
-
-    const caring = names.length
-        ? "Caring for " +
-          (names.length > 2
-              ? `${names.slice(0, 2).join(", ")} +${names.length - 2} more`
-              : names.join(", "))
-        : null;
-
-    return [row.staff_role, row.branch?.name, caring]
-        .filter(Boolean)
-        .join(" · ");
+    return [row.staff_role, row.branch?.name].filter(Boolean).join(" · ");
 });
 
 async function load() {
@@ -264,7 +253,7 @@ onBeforeUnmount(() => {
             class="grid h-full min-h-0 w-full flex-1 grid-cols-1 gap-0 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-5"
         >
             <aside
-                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-3xl lg:border lg:border-gray-100 lg:shadow-sm dark:bg-secondary dark:lg:border-white/10"
+                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-lg lg:border lg:border-gray-100 lg:shadow-sm dark:bg-secondary dark:lg:border-white/10"
             >
                 <div
                     class="shrink-0 border-b border-gray-100 px-5 py-5 dark:border-white/10"
@@ -340,7 +329,7 @@ onBeforeUnmount(() => {
             class="grid h-full min-h-0 w-full flex-1 grid-cols-1 gap-0 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-5"
         >
             <aside
-                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-3xl lg:border lg:border-gray-100 lg:shadow-sm dark:bg-secondary dark:lg:border-white/10"
+                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-lg lg:border lg:border-gray-100 lg:shadow-sm dark:bg-secondary dark:lg:border-white/10"
             >
                 <div
                     class="shrink-0 border-b border-gray-100 px-5 py-5 dark:border-white/10"

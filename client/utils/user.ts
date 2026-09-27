@@ -10,13 +10,13 @@ export const roleMeta: Record<string, { label: string; class: string }> = {
         label: 'Owner',
         class: 'bg-purple-50 text-purple-600 border-purple-200',
     },
-    branch_owner: {
-        label: 'Branch Owner',
-        class: 'bg-indigo-50 text-indigo-600 border-indigo-200',
+    agency_owner: {
+        label: 'Agency Owner',
+        class: 'bg-purple-50 text-purple-600 border-purple-200',
     },
-    administrator: {
-        label: 'Administrator',
-        class: 'bg-red-50 text-red-600 border-red-200',
+    branch_manager: {
+        label: 'Branch Manager',
+        class: 'bg-indigo-50 text-indigo-600 border-indigo-200',
     },
     accounting: {
         label: 'Accounting Staff',

@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Models\BranchContract;
 use App\Models\Employee;
+use App\Models\EmployeeBranch;
 use App\Models\Patient;
 use App\Models\PatientAdmission;
 use App\Models\Schedule;
@@ -60,9 +61,9 @@ class BranchContractRepository
             ->count('patient_id');
 
         $caregivers = Employee::query()
-            ->where('status', Employee::STATUS_ACTIVE)
             ->whereHas('employeeBranch', function ($query) use ($branchId) {
                 $query->where('branch_id', $branchId)
+                    ->where('status', EmployeeBranch::STATUS_ACTIVE)
                     ->where('role_name', 'caregiver');
             })
             ->count();

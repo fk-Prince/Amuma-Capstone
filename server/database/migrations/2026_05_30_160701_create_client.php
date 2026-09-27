@@ -25,7 +25,6 @@ return new class extends Migration
             $table->string('last_name')->nullable();
             $table->string('phone_number')->nullable();
             $table->string('avatar')->nullable();
-            $table->boolean('is_verified')->default(false);
             $table->string('occupation')->nullable();
             $table->timestamps();
         });

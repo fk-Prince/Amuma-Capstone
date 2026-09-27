@@ -198,7 +198,7 @@
                                 </span>
 
                                 <NuxtLink
-                                    v-if="patient.uuid"
+                                    v-if="patient.uuid && canViewPatient"
                                     :to="`/app/branches/${uuid}/patients/${patient.uuid}`"
                                     class="shrink-0 text-xs font-medium text-primary hover:underline dark:text-primary-300"
                                 >
@@ -266,12 +266,18 @@
                     >
                         <ActionButton
                             variant="primary"
-                            :disabled="isWaiting || isAdmitted || facilityLocked"
+                            :disabled="
+                                isWaiting ||
+                                isAdmitted ||
+                                facilityLocked ||
+                                !canCreateAdmission
+                            "
                             :tooltip="
                                 blockedTip(
                                     isAdmitted
                                         ? 'This patient is already admitted. Discharge them before starting a new admission.'
                                         : 'This patient already has an admission waiting to be admitted.',
+                                    canCreateAdmission,
                                 )
                             "
                             @click="openNewAdmissionModal"
@@ -281,12 +287,13 @@
 
                         <ActionButton
                             variant="primary"
-                            :disabled="!isWaiting || facilityLocked"
+                            :disabled="!isWaiting || facilityLocked || !canAdmitAdmission"
                             :tooltip="
                                 blockedTip(
                                     isAdmitted
                                         ? 'This patient is already admitted.'
                                         : 'There is no waiting admission to admit. Start a new admission first.',
+                                    canAdmitAdmission,
                                 )
                             "
                             @click="handleAdmitClick"
@@ -296,16 +303,28 @@
 
                         <ActionButton
                             variant="outline"
-                            :disabled="!isAdmitted"
-                            :tooltip="unavailableWhileNotAdmitted"
+                            :disabled="!isAdmitted || !canReadAdmissions"
+                            :tooltip="
+                                blockedTip(
+                                    unavailableWhileNotAdmitted,
+                                    canReadAdmissions,
+                                )
+                            "
                             @click="transferHistoryModalOpen = true"
                         >
                             Transfer History
                         </ActionButton>
                         <ActionButton
                             variant="outline"
-                            :disabled="!isAdmitted || facilityLocked"
-                            :tooltip="blockedTip(unavailableWhileNotAdmitted)"
+                            :disabled="
+                                !isAdmitted || facilityLocked || !canUpdateAdmission
+                            "
+                            :tooltip="
+                                blockedTip(
+                                    unavailableWhileNotAdmitted,
+                                    canUpdateAdmission,
+                                )
+                            "
                             @click="handleExtendClick"
                         >
                             Extend Stay
@@ -313,8 +332,15 @@
 
                         <ActionButton
                             variant="outline"
-                            :disabled="!isAdmitted || facilityLocked"
-                            :tooltip="blockedTip(unavailableWhileNotAdmitted)"
+                            :disabled="
+                                !isAdmitted || facilityLocked || !canUpdateAdmission
+                            "
+                            :tooltip="
+                                blockedTip(
+                                    unavailableWhileNotAdmitted,
+                                    canUpdateAdmission,
+                                )
+                            "
                             @click="openChangeRoomModal"
                         >
                             Change Room / Accommodation
@@ -322,8 +348,12 @@
 
                         <ActionButton
                             variant="outline"
-                            :disabled="!isAdmitted || facilityLocked"
-                            :tooltip="blockedTip(unavailableWhileNotAdmitted)"
+                            :disabled="
+                                !isAdmitted || facilityLocked || !canAddService
+                            "
+                            :tooltip="
+                                blockedTip(unavailableWhileNotAdmitted, canAddService)
+                            "
                             @click="addServiceModalOpen = true"
                         >
                             Add Service
@@ -331,8 +361,13 @@
 
                         <ActionButton
                             variant="outline"
-                            :disabled="!isAdmitted"
-                            :tooltip="unavailableWhileNotAdmitted"
+                            :disabled="!isAdmitted || !canViewCaregiver"
+                            :tooltip="
+                                blockedTip(
+                                    unavailableWhileNotAdmitted,
+                                    canViewCaregiver,
+                                )
+                            "
                             @click="caregiverModalOpen = true"
                         >
                             {{
@@ -344,20 +379,30 @@
 
                         <ActionButton
                             variant="danger"
-                            :disabled="!isAdmitted || facilityLocked"
-                            :tooltip="blockedTip(unavailableWhileNotAdmitted)"
+                            :disabled="
+                                !isAdmitted || facilityLocked || !canDischargeAdmission
+                            "
+                            :tooltip="
+                                blockedTip(
+                                    unavailableWhileNotAdmitted,
+                                    canDischargeAdmission,
+                                )
+                            "
                             @click="dischargeDialogOpen = true"
                         >
                             Discharge
                         </ActionButton>
                         <ActionButton
                             variant="danger"
-                            :disabled="!isWaiting || facilityLocked"
+                            :disabled="
+                                !isWaiting || facilityLocked || !canUpdateAdmission
+                            "
                             :tooltip="
                                 blockedTip(
                                     isAdmitted
                                         ? 'This patient is already admitted. Use Discharge instead of Cancel.'
                                         : 'Only an admission still waiting to be admitted can be cancelled.',
+                                    canUpdateAdmission,
                                 )
                             "
                             @click="cancelAdmissionDialogOpen = true"
@@ -988,6 +1033,8 @@ import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
 import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 import { useBranchStore } from "~/stores/branch";
 import { useBranchPlan } from "~/composables/useBranchPlan";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 
 definePageMeta({
     layout: "dashboard",
@@ -1137,9 +1184,28 @@ const unavailableWhileNotAdmitted = computed(() => {
 
 const { hasFacilityPlan } = useBranchPlan();
 const facilityLocked = computed(() => !hasFacilityPlan.value);
+const { hasModule, canCreate, canAdmit, canUpdate, canDischarge, canAssign } =
+    usePermissions();
+const canViewPatient = computed(() => hasModule(Modules.Patients));
 const addServiceModalOpen = ref(false);
 
-function blockedTip(reason: string) {
+const canCreateAdmission = computed(() => canCreate(Modules.Admissions));
+const canAdmitAdmission = computed(() => canAdmit(Modules.Admissions));
+const canUpdateAdmission = computed(() => canUpdate(Modules.Admissions));
+const canDischargeAdmission = computed(() => canDischarge(Modules.Admissions));
+const canAddService = computed(() => canAssign(Modules.Schedules));
+const canViewCaregiver = computed(() =>
+    hasModule(Modules.Admissions, Modules.Schedules),
+);
+const canReadAdmissions = computed(() => hasModule(Modules.Admissions));
+
+const noPermissionTip = "You don't have permission to do this.";
+
+function blockedTip(reason: string, permitted = true) {
+    if (!permitted) {
+        return noPermissionTip;
+    }
+
     return facilityLocked.value
         ? "Locked — this branch has no In-house Facility plan."
         : reason;

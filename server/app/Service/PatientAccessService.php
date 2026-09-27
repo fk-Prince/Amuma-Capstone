@@ -168,44 +168,4 @@ class PatientAccessService
             'message' => 'Admission staff have been notified to review this schedule.',
         ]);
     }
-
-    public function requestInvoiceDeduction(array $payload, User $user)
-    {
-        $access = $this->patientAccessRepository->verifyAccess($payload);
-        $patient = $access->patient()->with('branch')->firstOrFail();
-
-        if (!$patient->branch) {
-            throw new Exception('This patient has no branch on file.', 422);
-        }
-
-        $schedule = Schedule::where('schedule_id', $payload['schedule_id'])
-            ->where('patient_id', $patient->patient_id)
-            ->firstOrFail();
-
-        $amount = (float) ($payload['amount'] ?? 0);
-
-        if ($amount <= 0) {
-            throw new Exception('Enter a deduction amount greater than zero.', 422);
-        }
-
-        $reason = trim((string) ($payload['reason'] ?? ''));
-        $patientName = trim("{$patient->first_name} {$patient->last_name}");
-
-        $message = ($patientName !== '' ? "{$patientName}'s family" : 'A family member')
-            . ' requested a ₱' . number_format($amount, 2)
-            . " deduction for the invoice for schedule {$schedule->schedule_code}"
-            . ($reason !== '' ? " due to {$reason}." : '.');
-
-        $this->notificationService->notifyAccountingStaff(
-            $patient->branch,
-            $message,
-            $user,
-            $schedule,
-            (string) $schedule->schedule_id,
-        );
-
-        return response()->json([
-            'message' => 'Accounting has been notified to review this deduction request.',
-        ]);
-    }
 }

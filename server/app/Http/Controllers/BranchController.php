@@ -6,7 +6,7 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
-use App\Http\Requests\BranchRequest;
+use App\Http\Requests\Branch\BranchRequest;
 use App\Service\BranchService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;

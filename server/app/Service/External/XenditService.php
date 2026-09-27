@@ -61,22 +61,34 @@ class XenditService
                 'verify' => false,
             ])->withBasicAuth(config('services.xendit.secret_key'), '');
 
-            if ($isCardCharge) {
-                $request->post(
+            $response = $isCardCharge
+                ? $request->post(
                     "https://api.xendit.co/credit_card_charges/{$id}/refunds",
                     [
                         'external_id' => (string) Str::uuid(),
                         'amount' => $amount,
                     ]
-                )->throw();
-            } else {
-                $request->post('https://api.xendit.co/refunds', [
+                )
+                : $request->post('https://api.xendit.co/refunds', [
                     'invoice_id' => $id,
                     'reference_id' => (string) Str::uuid(),
                     'amount' => $amount,
                     'reason' => 'CANCELLATION',
-                ])->throw();
+                ]);
+
+            if (in_array($response->json('error_code'), [
+                'REFUND_AMOUNT_EXCEEDED_ERROR',
+                'MAXIMUM_REFUND_AMOUNT_REACHED_ERROR',
+            ], true)) {
+                Log::warning('Xendit payment was already refunded', [
+                    'id' => $id,
+                    'amount' => $amount,
+                ]);
+
+                return true;
             }
+
+            $response->throw();
 
             return true;
         } catch (Exception $e) {

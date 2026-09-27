@@ -69,16 +69,15 @@ export const usePermissions = () => {
     const hasRole = (...roles: string[]) =>
         roles.map((r) => r.toLowerCase()).includes(role.value);
 
-    const canChart = computed(() => hasRole("nurse", "caregiver"));
+    const canChart = computed(() => canUpdate(Modules.Patients));
 
-    const canLogActivity = computed(() =>
-        hasRole("nurse", "caregiver", "admission"),
-    );
+    const canLogActivity = computed(() => canUpdate(Modules.Patients));
 
-    const chartingBlockedReason = "Only a nurse or caregiver can record this.";
+    const chartingBlockedReason =
+        "You need permission to update patients to record this.";
 
     const careTeamBlockedReason =
-        "Only admission staff, a nurse or a caregiver can record this.";
+        "You need permission to update patients to record this.";
 
     return {
         actionsFor,

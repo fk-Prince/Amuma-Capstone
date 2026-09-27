@@ -1,4 +1,5 @@
 export interface Location {
+    uuid?: string;
     address?: string;
     street: string,
     city: string,

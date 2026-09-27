@@ -72,6 +72,17 @@
         </div>
 
         <Combobox
+            class="shrink-0 sm:w-44"
+            :model-value="planFilter"
+            :items="planOptions"
+            placeholder="Plan"
+            input-class="h-10 px-3.5 rounded-xl"
+            @update:model-value="
+                emit('update:planFilter', $event as PlanFilter)
+            "
+        />
+
+        <Combobox
             v-if="view === 'approved'"
             class="shrink-0 sm:w-40"
             :model-value="approvedStatus"
@@ -113,11 +124,17 @@
 import Combobox from "~/components/ui/Combobox.vue";
 
 export type SubscriptionView = "requests" | "approved" | "rejected";
-export type ApprovedStatus = "active" | "inactive" | "expired";
+export type ApprovedStatus = "active" | "expired" | "expiring";
+export type PlanFilter = "all" | "A" | "B" | "C";
 
 type ComboboxItem = {
     label: string;
     value: ApprovedStatus;
+};
+
+type PlanComboboxItem = {
+    label: string;
+    value: PlanFilter;
 };
 
 const props = withDefaults(
@@ -125,11 +142,13 @@ const props = withDefaults(
         search: string;
         view: SubscriptionView;
         approvedStatus: ApprovedStatus;
+        planFilter?: PlanFilter;
         views?: SubscriptionView[];
         loading?: boolean;
     }>(),
     {
         views: () => ["requests", "approved", "rejected"],
+        planFilter: "all",
         loading: false,
     },
 );
@@ -138,6 +157,7 @@ const emit = defineEmits<{
     (e: "update:search", value: string): void;
     (e: "update:view", value: SubscriptionView): void;
     (e: "update:approvedStatus", value: ApprovedStatus): void;
+    (e: "update:planFilter", value: PlanFilter): void;
     (e: "refresh"): void;
 }>();
 
@@ -147,12 +167,31 @@ const statusOptions: ComboboxItem[] = [
         value: "active",
     },
     {
-        label: "Inactive",
-        value: "inactive",
+        label: "Expiring Soon",
+        value: "expiring",
     },
     {
         label: "Expired",
         value: "expired",
+    },
+];
+
+const planOptions: PlanComboboxItem[] = [
+    {
+        label: "All Plans",
+        value: "all",
+    },
+    {
+        label: "Homecare Services",
+        value: "A",
+    },
+    {
+        label: "In-house Facility",
+        value: "B",
+    },
+    {
+        label: "Hybrid",
+        value: "C",
     },
 ];
 

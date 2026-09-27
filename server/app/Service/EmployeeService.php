@@ -9,7 +9,7 @@ use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Http\Resources\EmployeeResource;
 use App\Http\Resources\EmployeeScheduleResource;
-use App\Models\Employee;
+use App\Models\EmployeeBranch;
 use App\Models\EmployeePermission;
 use App\Models\Module;
 use App\Models\User;
@@ -62,6 +62,46 @@ class EmployeeService
         }
 
         return $documents;
+    }
+
+    public function updateStatus(array $payload, string $uuid, User $user)
+    {
+        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
+        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Update);
+
+        $target = $this->userRepository->findByField('uuid', $uuid);
+
+        $employee = $target
+            ? $this->employeeRepository->findEmployeeByFields([['user_id', '=', $target->user_id]])
+            : null;
+
+        $employeeBranch = $employee
+            ? $employee->employeeBranch()->where('branch_id', $branch->branch_id)->first()
+            : null;
+
+        if (!$employeeBranch) {
+            throw new Exception('Employee not found.', 404);
+        }
+
+        if ($employeeBranch->status === EmployeeBranch::STATUS_INACTIVE) {
+            throw new Exception('Inactive employees cannot be put on leave.', 422);
+        }
+
+        $employeeBranch->update(['status' => $payload['status']]);
+
+        return response()->json([
+            'message' => $payload['status'] === EmployeeBranch::STATUS_ONLEAVE
+                ? 'Employee is now on leave.'
+                : 'Employee is back from leave.',
+            'employee' => $this->employeeRow($target, $branch->branch_id),
+        ], 200);
+    }
+
+    private function assignmentTypeFor(string $role, ?string $assignment): ?string
+    {
+        $assignable = [RoleEnum::Nurse->value, RoleEnum::Caregiver->value];
+
+        return in_array(RoleEnum::slug($role), $assignable, true) ? $assignment : null;
     }
 
     private function employeeRow(User $user, int $branchId): EmployeeResource
@@ -133,7 +173,7 @@ class EmployeeService
                 'birth_date' => Carbon::parse($employee->birth_date)->toDateString(),
                 'phone_number' => $employee->phone_number,
                 'role_name' => $payload['role_name'],
-                'assignment_type' => $payload['assignment_type'],
+                'assignment_type' => $this->assignmentTypeFor($payload['role_name'], $payload['assignment_type'] ?? null),
             ],
             'branch' => [
                 'name' => $branch->name,
@@ -198,7 +238,6 @@ class EmployeeService
                 'phone_number' => $payload['phone_number'],
                 'birth_date' => $payload['birth_date'],
                 'avatar' => $image,
-                'status' => $payload['status'] ?? Employee::STATUS_ACTIVE,
                 'documents' => $this->resolveDocuments($payload),
             ]);
 
@@ -208,9 +247,10 @@ class EmployeeService
 
             $employee->employeeBranch()->create([
                 'role_name' => RoleEnum::slug($payload['role_name']),
-                'assignment_type' => $payload['assignment_type'],
+                'assignment_type' => $this->assignmentTypeFor($payload['role_name'], $payload['assignment_type'] ?? null),
                 'branch_id' => $branch->branch_id,
                 'employee_id' => $employee->employee_id,
+                'status' => $payload['status'] ?? EmployeeBranch::STATUS_ACTIVE,
             ]);
 
             //INSERT PERMISSION
@@ -226,8 +266,6 @@ class EmployeeService
 
     public function updateEmployee(array $payload, string $uuid, User $user)
     {
-
-
         return DB::transaction(function () use ($payload, $uuid, $user) {
             $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
             AuthGuard::requireModule($user,   $branch->branch_id, ModuleEnum::EmployeeManagement,  PermissionAction::Update);
@@ -246,7 +284,13 @@ class EmployeeService
                 throw new Exception('Employee not found.', 404);
             }
 
-            $user = $this->userRepository->update($employee->user_id, ['email' => $payload['email']]);
+            $userChanges = ['email' => $payload['email']];
+
+            if (!empty($payload['password'])) {
+                $userChanges['password'] = Hash::make($payload['password']);
+            }
+
+            $user = $this->userRepository->update($employee->user_id, $userChanges);
 
 
             // UPDATE LOCATION
@@ -284,18 +328,20 @@ class EmployeeService
                 'birth_date' => $payload['birth_date'],
                 'avatar' => $image,
                 'location_id' => $employee->location_id,
-                'status' => $payload['status'] ?? $employee->status,
                 'documents' => $this->resolveDocuments($payload),
             ]);
 
 
             // UPDATE EMPLOYEE BRANCH
-            $employee->employeeBranch()
+            $employeeBranch = $employee->employeeBranch()
                 ->where('branch_id', $branch->branch_id)
-                ->update([
-                    'role_name' => RoleEnum::slug($payload['role_name']),
-                    'assignment_type' => $payload['assignment_type'],
-                ]);
+                ->first();
+
+            $employeeBranch?->update([
+                'role_name' => RoleEnum::slug($payload['role_name']),
+                'assignment_type' => $this->assignmentTypeFor($payload['role_name'], $payload['assignment_type'] ?? null),
+                'status' => $payload['status'] ?? $employeeBranch->status,
+            ]);
 
 
             // UPDATE PERMISSIONS
@@ -311,30 +357,6 @@ class EmployeeService
         });
     }
 
-    // public function getEmployees(array $payload, User $user, string $type)
-    // {
-    //     $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
-    //     if ($type === 'regular') {
-    //         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Read);
-    //         $result =  $this->employeeRepository->getPaginateEmployee($payload, $branch->branch_id);
-    //         request()->merge([
-    //             'branch_id' => $branch->branch_id
-    //         ]);
-    //         return EmployeeResource::collection($result['users'])
-    //             ->additional([
-    //                 'total_employee' => $result['total_employee'],
-    //                 'status_counts' => $result['status_counts'],
-    //             ]);
-    //     } else if ($type === 'schedule') {
-    //         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Create);
-    //         $result = $this->employeeRepository->getEmployeesWithBusyLabel($payload['schedule_id'], $branch->branch_id);
-    //         return EmployeeScheduleResource::collection($result);
-    //     } else if ($type === 'service') {
-    //         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::Services, PermissionAction::Create);
-    //         $result = $this->employeeRepository->getEmployeeServices($branch->branch_id, $payload);
-    //         return $result;
-    //     }
-    // }
     public function getEmployees(array $payload, User $user, string $type)
     {
         $branchId = $payload['branch_id'];

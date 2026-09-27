@@ -2,9 +2,11 @@
 
 namespace App\Guard;
 
+use App\Models\EmployeeBranch;
 use App\Repository\BranchRepository;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class BranchGuard
 {
@@ -33,6 +35,21 @@ class BranchGuard
 
         if ($homecare && !$branch->hasHomecareSubscription()) {
             throw new Exception(__('No active homecare subscription.'), 403);
+        }
+
+        $employee = Auth::user()?->employee;
+
+        if ($employee) {
+            $employeeBranch = $employee->employeeBranch()
+                ->where('branch_id', $branch->branch_id)
+                ->first();
+
+            if ($employeeBranch && $employeeBranch->status === EmployeeBranch::STATUS_INACTIVE) {
+                throw new Exception(
+                    __('Your account is inactive in this branch. Please contact your branch manager or agency owner to have it reactivated.'),
+                    403
+                );
+            }
         }
 
         return $branch;

@@ -122,6 +122,7 @@ class OnlineScheduleService
 
             $session = OnlineSchedule::create([
                 'schedule_assigned_id' => $assigned->schedule_assigned_id,
+                'type_in' => OnlineSchedule::TYPE_SCANNED,
                 'in_timestamp' => now(),
             ]);
 
@@ -152,6 +153,7 @@ class OnlineScheduleService
 
             $session->update([
                 'out_timestamp' => now(),
+                'type_out' => OnlineSchedule::TYPE_SCANNED,
             ]);
 
             broadcast(new QrScanned($payload['token'], 'out'));

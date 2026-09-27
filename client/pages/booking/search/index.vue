@@ -26,6 +26,7 @@
                             <SearchBooking
                                 :branches="branches"
                                 :loading="loading"
+                                @hover="hoveredBranchUuid = $event"
                             />
 
                             <div
@@ -67,8 +68,10 @@
                         <LocationPin
                             class="flex-1 h-full w-full z-20"
                             :locations="locations"
-                            :center-lat="centerLat"
-                            :center-lng="centerLng"
+                            :center-lat="mapCenter.lat"
+                            :center-lng="mapCenter.lng"
+                            :zoom="mapCenter.zoom"
+                            :hovered-uuid="hoveredBranchUuid"
                         />
 
                         <Transition name="fade">
@@ -104,7 +107,9 @@
                                         >
                                             Finding care near you
                                         </p>
-                                        <p class="text-xs text-slate-500 mt-1 dark:text-gray-400">
+                                        <p
+                                            class="text-xs text-slate-500 mt-1 dark:text-gray-400"
+                                        >
                                             Please wait while we search
                                         </p>
                                     </div>
@@ -127,7 +132,7 @@ import LocationPin from "~/components/ui/LocationPin.vue";
 import SearchBooking from "~/components/sections/booking/search/SearchBooking.vue";
 import { branchService } from "~/api/branch/BranchService";
 import type { BranchRetrieve } from "~/types/branch";
-import { useGeo } from "~/composables/useGeo";
+import { useGeo, DAVAO_DEFAULT } from "~/composables/useGeo";
 
 definePageMeta({
     layout: "default",
@@ -139,9 +144,11 @@ useHead({ title: "Search Homecare" });
 
 const route = useRoute();
 const router = useRouter();
-const { centerLat, centerLng, geocodeLocation } = useGeo();
+const { centerLat, centerLng, geocodeLocation, resolveDefaultCenter } =
+    useGeo();
 
 const branches = ref<BranchRetrieve[]>([]);
+const hoveredBranchUuid = ref<string | null>(null);
 const loading = ref(false);
 const loadingMore = ref(false);
 const page = ref(1);
@@ -149,13 +156,19 @@ const lastPage = ref(1);
 
 const PER_PAGE = 6;
 
-const DEFAULT_LOCATION = {
-    label: "Davao City",
-    lat: 7.1907,
-    long: 125.4553,
-};
+const DEFAULT_LOCATION = DAVAO_DEFAULT;
 
 const hasMore = computed(() => page.value < lastPage.value);
+
+const isNationwideSearch = computed(() => {
+    if (route.query.location_explicit === "1") return false;
+
+    const hasProviderName = !!route.query.provider_name;
+    const hasCareType =
+        !!route.query.plan_code && route.query.plan_code !== "C";
+
+    return hasProviderName || hasCareType;
+});
 
 let requestId = 0;
 const l = async (opts: { append?: boolean } = {}) => {
@@ -170,20 +183,31 @@ const l = async (opts: { append?: boolean } = {}) => {
     }
 
     try {
-        if (!append && route.query.location) {
+        if (!append && !isNationwideSearch.value && route.query.location) {
             await geocodeLocation(route.query.location as string);
         }
 
-        const payload = {
-            provider_name: route.query.provider_name ?? "",
-            location: route.query.location ?? DEFAULT_LOCATION.label,
-            lat: route.query.lat ?? DEFAULT_LOCATION.lat,
-            long: route.query.long ?? DEFAULT_LOCATION.long,
-            plan_code: route.query.plan_code ?? "",
-            sort: route.query.sort ?? "recommended",
-            per_page: PER_PAGE,
-            page: page.value,
-        };
+        const payload = isNationwideSearch.value
+            ? {
+                  provider_name: route.query.provider_name ?? "",
+                  location: "",
+                  lat: "",
+                  long: "",
+                  plan_code: route.query.plan_code ?? "",
+                  sort: route.query.sort ?? "recommended",
+                  per_page: PER_PAGE,
+                  page: page.value,
+              }
+            : {
+                  provider_name: route.query.provider_name ?? "",
+                  location: route.query.location ?? DEFAULT_LOCATION.label,
+                  lat: route.query.lat ?? DEFAULT_LOCATION.lat,
+                  long: route.query.long ?? DEFAULT_LOCATION.long,
+                  plan_code: route.query.plan_code ?? "",
+                  sort: route.query.sort ?? "recommended",
+                  per_page: PER_PAGE,
+                  page: page.value,
+              };
 
         const res = await branchService.filtered(payload);
 
@@ -217,11 +241,12 @@ const loadMore = () => {
 onMounted(async () => {
     if (Object.keys(route.query).length === 0) {
         loading.value = true;
+        const defaultCenter = await resolveDefaultCenter();
         await router.replace({
             query: {
-                location: DEFAULT_LOCATION.label,
-                lat: DEFAULT_LOCATION.lat,
-                long: DEFAULT_LOCATION.long,
+                location: defaultCenter.label,
+                lat: defaultCenter.lat,
+                long: defaultCenter.long,
                 plan_code: "C",
                 sort: "recommended",
             },
@@ -241,6 +266,7 @@ const locations = computed(() =>
     branches.value
         .filter((branch) => branch.location)
         .map((branch) => ({
+            uuid: branch.uuid,
             latitude: Number(branch.location.latitude),
             longitude: Number(branch.location.longitude),
             label: branch.name,
@@ -250,6 +276,34 @@ const locations = computed(() =>
             country: branch.location.country,
         })),
 );
+
+const mapCenter = computed(() => {
+    if (!isNationwideSearch.value) {
+        return { lat: centerLat.value, lng: centerLng.value, zoom: undefined };
+    }
+
+    const locs = locations.value;
+    const first = locs[0];
+    if (!first) {
+        return { lat: undefined, lng: undefined, zoom: undefined };
+    }
+
+    const norm = (v?: string) => (v ?? "").trim().toLowerCase();
+    const cityKeys = new Set(
+        locs.map((l) => `${norm(l.city)}|${norm(l.country)}`),
+    );
+    const countryKeys = new Set(locs.map((l) => norm(l.country)));
+
+    if (cityKeys.size === 1) {
+        return { lat: first.latitude, lng: first.longitude, zoom: 12 };
+    }
+
+    if (countryKeys.size === 1) {
+        return { lat: undefined, lng: undefined, zoom: undefined };
+    }
+
+    return { lat: first.latitude, lng: first.longitude, zoom: 12 };
+});
 </script>
 
 <style scoped>

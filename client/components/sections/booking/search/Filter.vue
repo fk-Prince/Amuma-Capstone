@@ -26,9 +26,10 @@
                     >
                         <span class="flex items-center gap-1.5 text-slate-600 dark:text-gray-300">
                             <MapPin class="h-3.5 w-3.5 text-slate-400 dark:text-gray-500" />
-                            <span class="text-slate-900 font-medium dark:text-white">{{
-                                locationLabel
-                            }}</span>
+                            <span
+                                class="w-[110px] truncate text-slate-900 font-medium dark:text-white"
+                                >{{ locationLabel }}</span
+                            >
                         </span>
                         <span class="text-slate-300 dark:text-white/10">|</span>
                         <span class="flex items-center gap-1.5 text-slate-600 dark:text-gray-300">
@@ -349,6 +350,7 @@ import {
     ArrowUpDown,
     SlidersHorizontal,
 } from "lucide-vue-next";
+import { DAVAO_DEFAULT } from "~/composables/useGeo";
 
 const route = useRoute();
 const router = useRouter();
@@ -379,11 +381,7 @@ const sortOptions = [
     { label: "Nearest", value: "nearest" },
 ];
 
-const DEFAULT_LOCATION = {
-    label: "Davao City",
-    lat: 7.1907,
-    long: 125.4553,
-};
+const DEFAULT_LOCATION = DAVAO_DEFAULT;
 
 const activeSortOption = ref((route.query.sort as string) ?? "recommended");
 
@@ -402,10 +400,12 @@ watch(searchName, () => {
 
 onBeforeUnmount(() => clearTimeout(searchDebounce));
 
+const explicitLocation = ref((route.query.location_explicit as string) === "1");
+
 const searchLocation = ref(
-    (route.query.location as string) ??
-        props.searchLocation ??
-        DEFAULT_LOCATION.label,
+    explicitLocation.value
+        ? ((route.query.location as string) ?? props.searchLocation ?? "")
+        : "",
 );
 
 const planCodeType = ref(
@@ -421,8 +421,19 @@ const long = ref<string | number>(
 );
 
 const locationLabel = computed(() => {
-    const loc = searchLocation.value || DEFAULT_LOCATION.label;
-    return loc.length > 15 ? loc.substring(0, 12) + "..." : loc;
+    if (route.query.location_explicit === "1") {
+        return (route.query.location as string) || DEFAULT_LOCATION.label;
+    }
+
+    const hasProviderName = !!route.query.provider_name;
+    const hasCareType =
+        !!route.query.plan_code && route.query.plan_code !== "C";
+
+    if (hasProviderName || hasCareType) {
+        return "All Locations";
+    }
+
+    return (route.query.location as string) || DEFAULT_LOCATION.label;
 });
 
 const careTypeLabel = computed(() => {
@@ -439,11 +450,16 @@ const sortLabel = computed(() => {
 function buildQuery() {
     return {
         provider_name: String(searchName.value ?? ""),
-        location: String(searchLocation.value || DEFAULT_LOCATION.label),
+        location: String(
+            searchLocation.value ||
+                (route.query.location as string) ||
+                DEFAULT_LOCATION.label,
+        ),
         lat: String(lat.value ?? ""),
         long: String(long.value ?? ""),
         plan_code: String(planCodeType.value ?? "C"),
         sort: String(activeSortOption.value ?? "recommended"),
+        location_explicit: explicitLocation.value ? "1" : "",
     };
 }
 
@@ -456,6 +472,7 @@ const updateQuery = () => {
         long: String(route.query.long ?? ""),
         plan_code: String(route.query.plan_code ?? "C"),
         sort: String(route.query.sort ?? "recommended"),
+        location_explicit: String(route.query.location_explicit ?? ""),
     };
 
     if (JSON.stringify(current) === JSON.stringify(query)) {
@@ -469,6 +486,7 @@ const onLocationInput = (value: string) => {
     searchLocation.value = value;
     lat.value = "";
     long.value = "";
+    explicitLocation.value = true;
 };
 
 const handleLocation = (data: any) => {
@@ -476,6 +494,7 @@ const handleLocation = (data: any) => {
     lat.value = data.lat ?? DEFAULT_LOCATION.lat;
     long.value = data.lng ?? DEFAULT_LOCATION.long;
     locating.value = false;
+    explicitLocation.value = true;
     updateQuery();
 };
 
@@ -486,11 +505,12 @@ function applyFilters() {
 
 function resetFilters() {
     searchName.value = "";
-    searchLocation.value = DEFAULT_LOCATION.label;
+    searchLocation.value = "";
     lat.value = DEFAULT_LOCATION.lat;
     long.value = DEFAULT_LOCATION.long;
     planCodeType.value = "C";
     activeSortOption.value = "recommended";
+    explicitLocation.value = false;
 
     // Was only resetting the local form state — the URL query (and the
     // results it drives) stayed on whatever was previously applied.
@@ -502,7 +522,7 @@ const hasActiveFilters = computed(
     () =>
         planCodeType.value !== "C" ||
         activeSortOption.value !== "recommended" ||
-        (searchLocation.value || "") !== DEFAULT_LOCATION.label,
+        explicitLocation.value,
 );
 </script>
 

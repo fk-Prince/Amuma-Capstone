@@ -222,26 +222,8 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
     string,
     Partial<Record<Modules, PermissionActionKey[]>>
 > = {
-    branch_owner: MODULE_ACTIONS,
-    administrator: {
-        ...(Object.fromEntries(
-            Object.keys(MODULE_ACTIONS).map((module) => [
-                module,
-                [PermissionAction.Read],
-            ]),
-        ) as Partial<Record<Modules, PermissionActionKey[]>>),
-        [Modules.Admissions]: [
-            PermissionAction.Read,
-            PermissionAction.ForceDischarge,
-        ],
-        [Modules.RoomsAndBeds]: MODULE_ACTIONS[Modules.RoomsAndBeds],
-        [Modules.Services]: MODULE_ACTIONS[Modules.Services],
-        [Modules.Contracts]: MODULE_ACTIONS[Modules.Contracts],
-        [Modules.EmployeeManagement]:
-            MODULE_ACTIONS[Modules.EmployeeManagement],
-        [Modules.ManageBranches]: MODULE_ACTIONS[Modules.ManageBranches],
-        [Modules.BranchSettings]: MODULE_ACTIONS[Modules.BranchSettings],
-    },
+    agency_owner: MODULE_ACTIONS,
+    branch_manager: MODULE_ACTIONS,
     admission: {
         [Modules.Bookings]: MODULE_ACTIONS[Modules.Bookings],
         [Modules.Patients]: [PermissionAction.Read, PermissionAction.Export],
@@ -249,6 +231,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
         [Modules.Admissions]: MODULE_ACTIONS[Modules.Admissions].filter(
             (action) => action !== PermissionAction.ForceDischarge,
         ),
+        [Modules.RoomsAndBeds]: [PermissionAction.Read],
         [Modules.Services]: [PermissionAction.Read],
         [Modules.Contracts]: [PermissionAction.Read],
         [Modules.EmployeeManagement]: [PermissionAction.Read],

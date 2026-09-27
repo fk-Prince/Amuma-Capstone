@@ -199,28 +199,26 @@ const allCount = computed(() =>
                                 class="mb-3 last:mb-0"
                             >
                                 <div
-                                    v-if="contacts.length > 1 && group.visible.length"
-                                    class="px-1.5 pb-1.5"
+                                    v-if="group.visible.length"
+                                    class="flex min-w-0 items-baseline justify-between gap-3 px-1.5 pb-2 pt-1"
                                 >
                                     <p
-                                        class="truncate text-xs font-bold text-slate-700 dark:text-gray-200"
+                                        v-if="contacts.length > 1"
+                                        class="min-w-0 truncate text-xs font-bold text-slate-700 dark:text-gray-200"
                                     >
                                         {{ group.contact.patient_name }}
                                     </p>
-                                </div>
 
-                                <p
-                                    v-if="
-                                        group.contact.branch.name &&
-                                        group.visible.length
-                                    "
-                                    class="flex items-center gap-1.5 px-1.5 pb-2 text-[11px] text-slate-400 dark:text-gray-500"
-                                >
-                                    <Building2 class="h-3.5 w-3.5 shrink-0" />
-                                    <span class="truncate">
-                                        {{ group.contact.branch.name }}
-                                    </span>
-                                </p>
+                                    <p
+                                        v-if="group.contact.branch.name"
+                                        class="flex min-w-0 max-w-[60%] items-center gap-1 text-[11px] text-slate-400 dark:text-gray-500"
+                                    >
+                                        <Building2 class="h-3 w-3 shrink-0" />
+                                        <span class="truncate">
+                                            {{ group.contact.branch.name }}
+                                        </span>
+                                    </p>
+                                </div>
 
                                 <button
                                     v-for="member in group.visible"
@@ -248,24 +246,14 @@ const allCount = computed(() =>
 
                                                 <span
                                                     v-if="member.conversation_id"
-                                                    class="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-white/10 dark:text-gray-400"
+                                                    class="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                                                 >
-                                                    Existing
-                                                </span>
-
-                                                <span
-                                                    v-else-if="member.role"
-                                                    class="shrink-0 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-500/15 dark:text-primary-200"
-                                                >
-                                                    {{ member.role }}
+                                                    Existing chat
                                                 </span>
                                             </div>
 
                                             <p
-                                                v-if="
-                                                    member.conversation_id &&
-                                                    member.role
-                                                "
+                                                v-if="member.role"
                                                 class="mt-0.5 truncate text-[11px] font-semibold text-primary-600 dark:text-primary-300"
                                             >
                                                 {{ member.role }}
@@ -306,7 +294,7 @@ const allCount = computed(() =>
                         </div>
 
                         <div
-                            class="flex shrink-0 justify-end border-t border-slate-200 px-4 py-3 pb-[env(safe-area-inset-bottom)] sm:px-5 dark:border-white/10"
+                            class="flex shrink-0 justify-end border-t border-slate-200 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5 dark:border-white/10"
                         >
                             <button
                                 type="button"

@@ -21,7 +21,6 @@ class Client extends Model
         'location_id',
         'phone_number',
         'occupation',
-        'is_verified',
         'avatar',
     ];
 

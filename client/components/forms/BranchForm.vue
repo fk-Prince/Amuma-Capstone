@@ -1,17 +1,11 @@
 <template>
-    <div class="w-full mx-auto space-y-8">
+    <div class="w-full mx-auto space-y-8" :class="cardClass">
         <div class="space-y-6">
-            <div>
-                <h2
-                    class="text-lg font-semibold text-slate-900 dark:text-white"
-                >
-                    Branch Information
-                </h2>
-
-                <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
-                    Update your branch details and contact information.
-                </p>
-            </div>
+            <FormSectionHeader
+                :title="isNew ? 'Branch Profile' : 'Branch Information'"
+                description="Update your branch details and contact information."
+                :icon="isNew ? Store : undefined"
+            />
 
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-8">
                 <div class="space-y-5">
@@ -117,24 +111,18 @@
             </div>
         </div>
 
-        <div class="space-y-5">
-            <div>
-                <h2
-                    class="text-lg font-semibold text-slate-900 dark:text-white"
-                >
-                    Verification
-                </h2>
+        <div class="space-y-5" :class="dividerClass">
+            <FormSectionHeader
+                title="Verification"
+                :description="
+                    lockVerification
+                        ? 'Tax details and the document this branch was verified with, these cannot be changed here.'
+                        : 'Tax details and a supporting document for this branch.'
+                "
+                :icon="isNew ? ShieldCheck : undefined"
+            />
 
-                <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
-                    {{
-                        lockVerification
-                            ? "Tax details and the document this branch was verified with, these cannot be changed here."
-                            : "Tax details and a supporting document for this branch."
-                    }}
-                </p>
-            </div>
-
-            <div class="max-w-md">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
                 <LabelInput
                     v-model="tin"
                     label="TIN (Taxpayer Identification Number)"
@@ -145,28 +133,26 @@
                     :error="errors?.branch_tin"
                     data-field="branch_tin"
                 />
-            </div>
 
-            <div v-if="lockVerification" class="space-y-2">
-                <p
-                    class="text-sm font-semibold text-slate-700 dark:text-gray-300"
-                >
-                    Document
-                </p>
+                <div v-if="lockVerification" class="space-y-2">
+                    <p
+                        class="text-sm font-semibold text-slate-700 dark:text-gray-300"
+                    >
+                        Document
+                    </p>
 
-                <DocumentLink
-                    v-if="documentUrl"
-                    :url="documentUrl"
-                    label="Branch Document"
-                />
+                    <DocumentLink
+                        v-if="documentUrl"
+                        :url="documentUrl"
+                        label="Branch Document"
+                    />
 
-                <p v-else class="text-xs text-muted dark:text-gray-500">
-                    No document on file
-                </p>
-            </div>
+                    <p v-else class="text-xs text-muted dark:text-gray-500">
+                        No document on file
+                    </p>
+                </div>
 
-            <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div class="space-y-2 p-4" data-field="branch_document">
+                <div v-else class="space-y-2" data-field="branch_document">
                     <div class="flex items-center justify-between">
                         <label
                             class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
@@ -212,8 +198,6 @@
                             class="h-full w-full object-cover"
                         />
 
-                        <!-- PDFs can't be previewed as an image, so show the
-                             file name instead of an empty dropzone. -->
                         <div
                             v-else-if="branchDocumentName"
                             class="absolute inset-0 flex flex-col items-center justify-center px-4 text-center"
@@ -335,31 +319,15 @@
 
         <div
             class="space-y-5"
+            :class="dividerClass"
             data-field="location.street location.city location.province location.country location"
         >
-            <div
-                class="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+            <FormSectionHeader
+                title="Primary Address"
+                description="Pick the branch location on the map."
+                :icon="isNew ? MapPin : undefined"
             >
-                <div>
-                    <h2
-                        class="text-lg font-semibold text-slate-900 dark:text-white"
-                    >
-                        Primary Address
-                    </h2>
-
-                    <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
-                        Choose between map location or manual address.
-                    </p>
-
-                    <p
-                        v-if="locationError && useGeolocation"
-                        class="text-xs text-red-500 mt-1"
-                    >
-                        {{ locationError }}
-                    </p>
-                </div>
-
-                <div class="flex items-center gap-3 shrink-0">
+                <template #actions>
                     <button
                         type="button"
                         @click="resetLocation"
@@ -367,100 +335,41 @@
                     >
                         Reset
                     </button>
+                </template>
+            </FormSectionHeader>
 
-                    <span
-                        class="text-xs text-slate-500 dark:text-gray-400 whitespace-nowrap"
-                    >
-                        Use map
-                    </span>
+            <ClientOnly>
+                <LocationSelector
+                    :initial-lat="branch.location?.latitude || undefined"
+                    :initial-lng="branch.location?.longitude || undefined"
+                    :initial-street="branch.location?.street || undefined"
+                    :initial-city="branch.location?.city || undefined"
+                    :initial-province="branch.location?.province || undefined"
+                    :initial-country="branch.location?.country || undefined"
+                    manual-fallback
+                    @location-selected="handleLocation"
+                    @location-cleared="clearLocation"
+                    ref="locationSelectorRef"
+                />
 
-                    <button
-                        type="button"
-                        @click="useGeolocation = !useGeolocation"
-                        class="relative inline-flex h-6 w-11 items-center rounded-full transition"
-                        :class="
-                            useGeolocation
-                                ? 'bg-primary'
-                                : 'bg-slate-200 dark:bg-white/10'
-                        "
-                    >
-                        <span
-                            class="h-4 w-4 rounded-full bg-white shadow transition-transform dark:bg-secondary"
-                            :class="
-                                useGeolocation
-                                    ? 'translate-x-6'
-                                    : 'translate-x-1'
-                            "
-                        />
-                    </button>
-                </div>
-            </div>
-
-            <template v-if="useGeolocation">
-                <ClientOnly>
-                    <LocationSelector
-                        :initial-lat="branch.location?.latitude || undefined"
-                        :initial-lng="branch.location?.longitude || undefined"
-                        :initial-street="branch.location?.street || undefined"
-                        :initial-city="branch.location?.city || undefined"
-                        :initial-province="
-                            branch.location?.province || undefined
-                        "
-                        :initial-country="branch.location?.country || undefined"
-                        @location-selected="handleLocation"
-                        @location-cleared="clearLocation"
-                        ref="locationSelectorRef"
+                <template #fallback>
+                    <div
+                        class="w-full h-[400px] rounded-xl border border-gray-200 bg-slate-50 animate-pulse dark:border-white/10 dark:bg-secondary"
                     />
+                </template>
+            </ClientOnly>
 
-                    <template #fallback>
-                        <div
-                            class="h-64 rounded-xl bg-slate-50 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 dark:bg-secondary"
-                        >
-                            Loading map...
-                        </div>
-                    </template>
-                </ClientOnly>
-            </template>
-
-            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <LabelInput
-                    v-model="branch.location.street"
-                    label="Street"
-                    @update:modelValue="clearError('location.street')"
-                    :error="errors?.['location.street']"
-                    data-field="location.street"
-                />
-
-                <LabelInput
-                    v-model="branch.location.city"
-                    label="City"
-                    @update:modelValue="clearError('location.city')"
-                    :error="errors?.['location.city']"
-                    data-field="location.city"
-                />
-
-                <LabelInput
-                    v-model="branch.location.province"
-                    label="Province"
-                    @update:modelValue="clearError('location.province')"
-                    :error="errors?.['location.province']"
-                    data-field="location.province"
-                />
-
-                <LabelInput
-                    v-model="branch.location.country"
-                    label="Country"
-                    @update:modelValue="clearError('location.country')"
-                    :error="errors?.['location.country']"
-                    data-field="location.country"
-                />
-            </div>
+            <p v-if="locationError" class="text-xs text-red-500">
+                {{ locationError }}
+            </p>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { MapPin, ShieldCheck, Store } from "lucide-vue-next";
+import { ref, computed } from "vue";
+import FormSectionHeader from "../ui/FormSectionHeader.vue";
 import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
 import PhoneInput from "../ui/PhoneInput.vue";
@@ -471,8 +380,21 @@ import { formatTin } from "~/schema/tin-schema";
 const props = defineProps<{
     branch: Branch;
     errors?: Record<string, string> | null;
+    mode?: "new" | "edit";
     lockVerification?: boolean;
 }>();
+
+const isNew = computed(() => props.mode === "new");
+
+const cardClass = computed(() =>
+    isNew.value
+        ? "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8 dark:border-white/10 dark:bg-white/[0.03]"
+        : "",
+);
+
+const dividerClass = computed(() =>
+    isNew.value ? "border-t border-slate-200 pt-8 dark:border-white/10" : "",
+);
 
 const documentUrl = computed(() =>
     typeof props.branch.document === "string" ? props.branch.document : null,
@@ -510,7 +432,6 @@ const branchImagePreview = ref<string | null>(
     initialPreview(props.branch.image),
 );
 const branchImageInput = ref<HTMLInputElement | null>(null);
-const useGeolocation = ref(true);
 
 const branchDocumentPreview = ref<string | null>(
     initialPreview((props.branch as any).document),
@@ -518,8 +439,6 @@ const branchDocumentPreview = ref<string | null>(
 const branchDocumentInput = ref<HTMLInputElement | null>(null);
 const showBranchDocumentList = ref(false);
 
-// A previously saved PDF comes back as a URL string; one picked but not yet
-// uploaded is still a raw File, so derive its name from whichever it is.
 const branchDocumentName = ref<string | null>(
     (props.branch as any).document instanceof File &&
         (props.branch as any).document.type === "application/pdf"
@@ -548,41 +467,39 @@ const locationError = computed(() => {
     ];
 
     return keys.some((k) => props.errors?.[k])
-        ? "Location is required. Please complete address information."
+        ? "Location is required. Pick a spot on the map or enter the full address with the city and province."
         : "";
-});
-
-// Manual fields only exist in the DOM with map mode off, so a location error caught on the map would have nowhere to show.
-watch(locationError, (hasError) => {
-    if (hasError) {
-        useGeolocation.value = false;
-    }
 });
 
 const handleLocation = ({
     lat,
     lng,
+    label,
     street,
     city,
     province,
     country,
 }: {
-    lat: number;
-    lng: number;
+    lat: number | null;
+    lng: number | null;
+    label: string;
     street: string;
     city: string;
     province: string;
     country: string;
 }) => {
+    const resolvedStreet =
+        label || [street, city, province, country].filter(Boolean).join(", ");
+
     emit("update:branch", {
         ...props.branch,
         location: {
-            street: street ?? "",
+            street: resolvedStreet,
             city: city ?? "",
             province: province ?? "",
             country: country ?? "",
-            latitude: lat ?? 0,
-            longitude: lng ?? 0,
+            latitude: lat ?? undefined,
+            longitude: lng ?? undefined,
         },
     });
 
@@ -597,12 +514,12 @@ const handleLocation = ({
     });
 
     if (
-        !street?.trim() ||
+        !resolvedStreet?.trim() ||
         !city?.trim() ||
         !province?.trim() ||
         !country?.trim()
     ) {
-        if (!street?.trim()) {
+        if (!resolvedStreet?.trim()) {
             updatedErrors["location.street"] = "Street is required";
         }
 
@@ -617,8 +534,6 @@ const handleLocation = ({
         if (!country?.trim()) {
             updatedErrors["location.country"] = "Country is required";
         }
-
-        useGeolocation.value = false;
     }
 
     emit("update:errors", updatedErrors);
@@ -643,7 +558,7 @@ const locationSelectorRef = ref<InstanceType<typeof LocationSelector> | null>(
 );
 
 const resetLocation = () => {
-    if (useGeolocation.value && locationSelectorRef.value) {
+    if (locationSelectorRef.value) {
         locationSelectorRef.value.clearSelection();
     } else {
         clearLocation();
@@ -655,7 +570,7 @@ const handleBranchImage = (event: Event) => {
     if (!file) return;
     emit("update:branch", { ...props.branch, image: file });
     branchImagePreview.value = URL.createObjectURL(file);
-    clearError("image");
+    clearError("branch_image");
 };
 
 const removeBranchImage = () => {

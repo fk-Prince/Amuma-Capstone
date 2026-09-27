@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-full p-4">
+    <div class="min-h-full">
         <SubscriptionOverview
             :overview="overview"
             :loading="overviewLoading"
@@ -21,6 +21,7 @@
                     v-model:search="search"
                     v-model:view="view"
                     v-model:approvedStatus="approvedStatus"
+                    v-model:planFilter="planFilter"
                     :loading="loading"
                     @refresh="fetchSubscriptions()"
                     :views="['requests', 'rejected']"
@@ -29,12 +30,12 @@
 
             <div
                 v-if="loading"
-                class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+                class="grid grid-cols-1 gap-4 p-3 md:grid-cols-2 xl:grid-cols-3"
             >
                 <div
                     v-for="n in 6"
                     :key="n"
-                    class="overflow-hidden rounded-2xl border border-slate-100 dark:border-white/10 bg-white dark:bg-secondary shadow-sm"
+                    class="overflow-hidden rounded-lg border border-slate-100 dark:border-white/10 bg-white dark:bg-secondary shadow-sm"
                 >
                     <div
                         class="animate-pulse space-y-0 divide-y divide-slate-100 dark:divide-white/10"
@@ -104,7 +105,7 @@
 
             <div
                 v-else-if="subscriptions.length === 0"
-                class="flex min-h-[45vh] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 px-6 text-center"
+                class="m-3 flex min-h-80 flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 px-6 text-center"
             >
                 <div
                     class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent-50 dark:bg-accent-500/10 text-accent-500 dark:text-accent-300 ring-1 ring-inset ring-accent-100 dark:ring-accent-500/20"
@@ -178,7 +179,7 @@
 
             <template v-else>
                 <div
-                    class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+                    class="grid grid-cols-1 gap-4 p-3 md:grid-cols-2 xl:grid-cols-3"
                 >
                     <SubscriptionCard
                         v-for="subscription in subscriptions"
@@ -201,11 +202,12 @@
                         !!rejecting &&
                         processingAction[rejecting.uuid] === 'reject'
                     "
+                    :server-error="rejectError"
                     @close="rejecting = null"
                     @confirm="confirmReject"
                 />
 
-                <div class="mt-8 flex flex-col items-center gap-3">
+                <div class="mb-6 mt-5 flex flex-col items-center gap-3">
                     <button
                         v-if="hasMore"
                         type="button"
@@ -263,6 +265,7 @@ const {
     search,
     view,
     approvedStatus,
+    planFilter,
     isSearching,
     fetchSubscriptions,
     loadMore,
@@ -273,7 +276,10 @@ const {
 
 const rejecting = ref<any | null>(null);
 
+const rejectError = ref("");
+
 const askRejectReason = (subscription: any) => {
+    rejectError.value = "";
     rejecting.value = subscription;
 };
 
@@ -282,9 +288,16 @@ const confirmReject = async (reason: string) => {
 
     if (!subscription) return;
 
-    await rejectSubscription(subscription, reason);
+    rejectError.value = "";
 
-    rejecting.value = null;
+    const failure = await rejectSubscription(subscription, reason);
+
+    if (failure === null) {
+        rejecting.value = null;
+        return;
+    }
+
+    rejectError.value = failure;
 };
 
 const emptyStateTitle = computed(() => {

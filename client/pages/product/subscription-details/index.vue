@@ -7,8 +7,6 @@ definePageMeta({
 });
 
 useHead({ title: "Subscription Details" });
-
-const stepCompleted = ref(false);
 </script>
 <template>
     <ClientOnly>
@@ -16,11 +14,11 @@ const stepCompleted = ref(false);
             <div class="w-[88%] max-w-[1600px] mx-auto px-4 sm:px-10 py-4">
                 <div class="grid grid-cols-1 gap-3 items-start">
                     <div class="max-w-2xl">
-                        <span
+                        <!-- <span
                             class="inline-block text-xs font-semibold tracking-wide uppercase text-primary bg-primary-50 px-3 py-1 rounded-full mb-2 mt-2 dark:bg-primary-500/10"
                         >
                             Subscription setup
-                        </span>
+                        </span> -->
 
                         <h1
                             class="text-3xl md:text-4xl font-extrabold text-secondary dark:text-white"
@@ -30,7 +28,7 @@ const stepCompleted = ref(false);
 
                         <p class="mt-3 text-muted dark:text-gray-400">
                             Complete your subscription by reviewing your plan,
-                            branch and agency information, billing cycle, and
+                            agency and branch information, billing cycle, and
                             payment details.
                         </p>
                     </div>
@@ -38,12 +36,8 @@ const stepCompleted = ref(false);
                     <div
                         class="w-full flex justify-center items-center flex-col"
                     >
-                        <Subscription v-model:stepCompleted="stepCompleted" />
+                        <Subscription />
                     </div>
-
-                    <!-- <aside class="xl:sticky xl:top-6">
-                        <SubscriptionSummary :stepCompleted="stepCompleted" />
-                    </aside> -->
                 </div>
             </div>
         </div>

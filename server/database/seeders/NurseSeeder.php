@@ -19,14 +19,11 @@ class NurseSeeder extends Seeder
     private const NURSE_COUNT = 5;
 
 
-    // Cycled across the nurses so test data covers a homecare-only nurse, a
-    // facility-only nurse, and one that can be assigned to both, instead of
-    // every seeded nurse being interchangeable.
     private const ASSIGNMENT_TYPES = ['both', 'online', 'facility'];
 
     public function run(): void
     {
-        $branches = Branch::all();
+        $branches = Branch::orderBy('branch_id')->limit(1)->get();
 
         if ($branches->isEmpty()) {
             $this->command->warn('No branches found. Seed branches first.');
@@ -49,7 +46,6 @@ class NurseSeeder extends Seeder
                 [
                     'first_name' => "Nurse{$i}",
                     'last_name' => 'Account',
-                    'status' => Employee::STATUS_ACTIVE,
                     'avatar' => 'https://ui-avatars.com/api/?name=N' . $i,
                     'birth_date' => now()->subYears(25 + $i)->subDays($i * 30)->toDateString(),
                     'phone_number' => '918' . str_pad((string) (1000000 + $i), 7, '0', STR_PAD_LEFT),
@@ -67,6 +63,7 @@ class NurseSeeder extends Seeder
                     [
                         'role_name' => 'nurse',
                         'assignment_type' => $assignmentType,
+                        'status' => EmployeeBranch::STATUS_ACTIVE,
                     ]
                 );
 

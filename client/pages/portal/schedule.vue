@@ -1,12 +1,5 @@
 ﻿<script setup lang="ts">
-import {
-    ref,
-    computed,
-    nextTick,
-    onMounted,
-    onBeforeUnmount,
-    watch,
-} from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import {
     Info,
     CalendarDays,
@@ -56,15 +49,12 @@ const noPatients = ref(false);
 const lovedOnes = ref<LovedOne[]>([]);
 const selectedIndex = ref(0);
 
-const { resolveIndex, syncQuery } = usePatientQuerySelection();
+const { syncQuery, selectedParams, indexOfPatient } =
+    usePatientQuerySelection();
 
 watch(selectedIndex, () =>
     syncQuery(lovedOnes.value[selectedIndex.value]?.uuid),
 );
-
-const lovedOnesScrollRef = ref<HTMLElement | null>(null);
-const canScrollLovedOnesLeft = ref(false);
-const canScrollLovedOnesRight = ref(false);
 
 const activeScheduleType = ref<"adl" | "medical">("adl");
 const scheduleLogs = ref<ScheduleItem[]>([]);
@@ -109,23 +99,17 @@ const scheduleSummary = computed(() => {
         : `${totalResults.value} ${label} in ${monthLabel.value}`;
 });
 
-const selectedPatientInitials = computed(() => initials(lovedOne.value?.name));
-
-const selectedPatientLocation = computed(() => {
-    if (!lovedOne.value) {
-        return "No active location";
-    }
-
-    if (lovedOne.value.location_type === "homecare") {
+function patientLocation(patient: LovedOne) {
+    if (patient.location_type === "homecare") {
         return "Homecare";
     }
 
-    if (lovedOne.value.location_type === "facility") {
-        return lovedOne.value.branch_name || "Facility";
+    if (patient.location_type === "facility") {
+        return patient.branch_name || "Facility";
     }
 
     return "No active record";
-});
+}
 
 function initials(name?: string | null) {
     if (!name) {
@@ -191,25 +175,18 @@ function patientStatusLabel(patient: LovedOne) {
         : patient.status || "Inactive";
 }
 
-function updateLovedOnesScrollState() {
-    const el = lovedOnesScrollRef.value;
+function nextLovedOne() {
+    if (!lovedOnes.value.length) return;
 
-    if (!el) {
-        canScrollLovedOnesLeft.value = false;
-        canScrollLovedOnesRight.value = false;
-        return;
-    }
-
-    canScrollLovedOnesLeft.value = el.scrollLeft > 4;
-    canScrollLovedOnesRight.value =
-        el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+    selectedIndex.value = (selectedIndex.value + 1) % lovedOnes.value.length;
 }
 
-function scrollLovedOnes(direction: 1 | -1) {
-    lovedOnesScrollRef.value?.scrollBy({
-        left: direction * 260,
-        behavior: "smooth",
-    });
+function prevLovedOne() {
+    if (!lovedOnes.value.length) return;
+
+    selectedIndex.value =
+        (selectedIndex.value - 1 + lovedOnes.value.length) %
+        lovedOnes.value.length;
 }
 
 function stepMonth(direction: 1 | -1) {
@@ -219,6 +196,26 @@ function stepMonth(direction: 1 | -1) {
     monthFilter.value = `${target.getFullYear()}-${String(
         target.getMonth() + 1,
     ).padStart(2, "0")}`;
+}
+
+const logsPatientId = ref<number | null>(null);
+
+function fetchScheduleLogs(target: Record<string, unknown>, page = 1) {
+    return patientAccessService.retrieveAction({
+        action: "schedule",
+        type: activeScheduleType.value,
+        month: monthFilter.value,
+        page,
+        per_page: PER_PAGE,
+        ...target,
+    });
+}
+
+function applyScheduleLogs(res: any, page: number) {
+    scheduleLogs.value = Array.isArray(res?.data) ? res.data : [];
+    scheduleMeta.value = res?.meta ?? null;
+    currentPage.value = res?.meta?.current_page ?? page;
+    logsPatientId.value = Number(res?.patient_id ?? 0) || null;
 }
 
 async function loadScheduleLogs(page = 1) {
@@ -233,18 +230,10 @@ async function loadScheduleLogs(page = 1) {
     logsLoading.value = true;
 
     try {
-        const res = await patientAccessService.retrieveAction({
-            action: "schedule",
-            type: activeScheduleType.value,
-            patient_id: patient.patient_id,
-            month: monthFilter.value,
+        applyScheduleLogs(
+            await fetchScheduleLogs({ patient_id: patient.patient_id }, page),
             page,
-            per_page: PER_PAGE,
-        });
-
-        scheduleLogs.value = Array.isArray(res?.data) ? res.data : [];
-        scheduleMeta.value = res?.meta ?? null;
-        currentPage.value = res?.meta?.current_page ?? page;
+        );
     } catch (err) {
         console.error("Error loading schedule history:", err);
         scheduleLogs.value = [];
@@ -254,16 +243,39 @@ async function loadScheduleLogs(page = 1) {
     }
 }
 
-async function loadPatients() {
+function mapLovedOne(item: any): LovedOne {
+    const ctx = item?.location_context ?? {};
+
+    const locationType: LovedOne["location_type"] =
+        ctx?.type === "facility" || ctx?.type === "admission_fallback"
+            ? "facility"
+            : ctx?.type === "homecare"
+              ? "homecare"
+              : "none";
+
+    return {
+        patient_id: Number(item?.patient?.patient_id ?? 0),
+        uuid: item?.patient?.uuid ?? null,
+        name: item?.patient?.full_name || "Unnamed Resident",
+        branch_name: item?.organization?.name ?? null,
+        location_type: locationType,
+        status: ctx?.status ?? "",
+    };
+}
+
+async function initialLoad() {
     isLoading.value = true;
     loadError.value = null;
     noPatients.value = false;
 
     try {
-        const res = await patientAccessService.retrieveAction({
-            action: "overview",
-            section: "profile",
-        });
+        const [res, logsRes] = await Promise.all([
+            patientAccessService.retrieveAction({
+                action: "overview",
+                section: "profile",
+            }),
+            fetchScheduleLogs(selectedParams()).catch(() => null),
+        ]);
 
         const records: any[] = Array.isArray(res?.data) ? res.data : [];
 
@@ -272,27 +284,22 @@ async function loadPatients() {
             return;
         }
 
-        lovedOnes.value = records.map((item: any) => {
-            const ctx = item?.location_context ?? {};
+        lovedOnes.value = records.map(mapLovedOne);
 
-            const locationType: LovedOne["location_type"] =
-                ctx?.type === "facility" || ctx?.type === "admission_fallback"
-                    ? "facility"
-                    : ctx?.type === "homecare"
-                      ? "homecare"
-                      : "none";
+        const index = indexOfPatient(lovedOnes.value, logsRes?.patient_id);
 
-            return {
-                patient_id: Number(item?.patient?.patient_id ?? 0),
-                uuid: item?.patient?.uuid ?? null,
-                name: item?.patient?.full_name || "Unnamed Resident",
-                branch_name: item?.organization?.name ?? null,
-                location_type: locationType,
-                status: ctx?.status ?? "",
-            };
-        });
+        if (
+            logsRes &&
+            Number(logsRes.patient_id) === lovedOnes.value[index]?.patient_id
+        ) {
+            applyScheduleLogs(logsRes, 1);
+        }
 
-        selectedIndex.value = resolveIndex(lovedOnes.value);
+        if (selectedIndex.value !== index) {
+            selectedIndex.value = index;
+        } else if (logsPatientId.value !== lovedOne.value?.patient_id) {
+            loadScheduleLogs();
+        }
     } catch (err: any) {
         console.error("Error loading patients:", err);
         loadError.value = err?.message || "Failed to load patients.";
@@ -301,22 +308,9 @@ async function loadPatients() {
     }
 }
 
-async function initialLoad() {
-    await loadPatients();
-
-    if (lovedOnes.value.length) {
-        await loadScheduleLogs();
-    }
-
-    await nextTick();
-    updateLovedOnesScrollState();
-}
-
-function updateAllScrollStates() {
-    updateLovedOnesScrollState();
-}
-
 watch(selectedIndex, () => {
+    if (lovedOne.value?.patient_id === logsPatientId.value) return;
+
     currentPage.value = 1;
     loadScheduleLogs(1);
 });
@@ -326,14 +320,7 @@ watch([activeScheduleType, monthFilter], () => {
     loadScheduleLogs(1);
 });
 
-onMounted(() => {
-    initialLoad();
-    window.addEventListener("resize", updateAllScrollStates);
-});
-
-onBeforeUnmount(() => {
-    window.removeEventListener("resize", updateAllScrollStates);
-});
+onMounted(initialLoad);
 </script>
 
 <template>
@@ -362,34 +349,8 @@ onBeforeUnmount(() => {
                         </div>
 
                         <div
-                            class="h-12 w-56 rounded-2xl bg-gray-100 dark:bg-white/10"
+                            class="h-[52px] w-56 rounded-2xl bg-gray-100 sm:w-80 dark:bg-white/10"
                         />
-                    </div>
-
-                    <div
-                        class="flex gap-3 overflow-hidden border-b border-gray-100 bg-gray-50/50 p-4 sm:px-7 dark:border-white/10 dark:bg-white/5"
-                    >
-                        <div
-                            v-for="i in 3"
-                            :key="i"
-                            class="flex min-w-[230px] items-center gap-3 rounded-2xl bg-white p-3 dark:bg-secondary"
-                        >
-                            <div
-                                class="h-10 w-10 rounded-full bg-gray-100 dark:bg-white/10"
-                            />
-
-                            <div class="flex-1 space-y-2">
-                                <div
-                                    class="h-3 w-24 rounded bg-gray-100 dark:bg-white/10"
-                                />
-                                <div
-                                    class="h-2.5 w-20 rounded bg-gray-100 dark:bg-white/10"
-                                />
-                                <div
-                                    class="h-3 w-16 rounded-full bg-gray-100 dark:bg-white/10"
-                                />
-                            </div>
-                        </div>
                     </div>
 
                     <div
@@ -516,152 +477,118 @@ onBeforeUnmount(() => {
                         </div>
 
                         <div
-                            v-if="lovedOne"
-                            class="flex items-center gap-3 rounded-2xl bg-white/80 px-3 py-2 ring-1 ring-gray-100 backdrop-blur dark:bg-secondary dark:ring-white/10"
+                            v-if="lovedOnes.length"
+                            class="flex flex-col items-center gap-2 sm:items-end"
                         >
+                            <div class="flex w-full items-center gap-1.5 sm:w-auto">
+                                <button
+                                    v-if="lovedOnes.length > 1"
+                                    type="button"
+                                    aria-label="Previous loved one"
+                                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-400"
+                                    @click="prevLovedOne"
+                                >
+                                    <ChevronLeft class="h-4 w-4" />
+                                </button>
+
+                                <div
+                                    class="min-w-0 flex-1 overflow-hidden rounded-2xl bg-white/80 ring-1 ring-gray-100 backdrop-blur sm:w-80 sm:flex-none dark:bg-secondary dark:ring-white/10"
+                                >
+                                    <div
+                                        class="flex transition-transform duration-300 ease-in-out"
+                                        :style="{
+                                            transform: `translateX(-${selectedIndex * 100}%)`,
+                                        }"
+                                    >
+                                        <div
+                                            v-for="lo in lovedOnes"
+                                            :key="lo.patient_id"
+                                            class="flex w-full shrink-0 items-center gap-3 px-3 py-2"
+                                        >
+                                            <div
+                                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-500 text-[11px] font-bold text-white"
+                                            >
+                                                {{ initials(lo.name) }}
+                                            </div>
+
+                                            <div class="min-w-0 flex-1">
+                                                <p
+                                                    class="truncate text-xs font-semibold text-gray-800 dark:text-white"
+                                                >
+                                                    {{ lo.name }}
+                                                </p>
+
+                                                <p
+                                                    class="mt-0.5 flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500"
+                                                >
+                                                    <component
+                                                        :is="
+                                                            lo.location_type ===
+                                                            'homecare'
+                                                                ? House
+                                                                : Building2
+                                                        "
+                                                        class="h-3 w-3 shrink-0"
+                                                    />
+                                                    <span class="truncate">
+                                                        {{ patientLocation(lo) }}
+                                                    </span>
+                                                </p>
+                                            </div>
+
+                                            <span
+                                                class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-semibold capitalize"
+                                                :class="
+                                                    statusStyle(
+                                                        patientStatusKey(lo),
+                                                    ).badge
+                                                "
+                                            >
+                                                <span
+                                                    class="h-1.5 w-1.5 rounded-full"
+                                                    :class="
+                                                        statusStyle(
+                                                            patientStatusKey(lo),
+                                                        ).dot
+                                                    "
+                                                />
+                                                {{ patientStatusLabel(lo) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    v-if="lovedOnes.length > 1"
+                                    type="button"
+                                    aria-label="Next loved one"
+                                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-400"
+                                    @click="nextLovedOne"
+                                >
+                                    <ChevronRight class="h-4 w-4" />
+                                </button>
+                            </div>
+
                             <div
-                                class="flex h-9 w-9 items-center justify-center rounded-full bg-primary-500 text-[11px] font-bold text-white"
+                                v-if="lovedOnes.length > 1"
+                                class="flex items-center justify-center gap-1.5 sm:w-80 sm:self-end sm:mr-[34px]"
                             >
-                                {{ selectedPatientInitials }}
-                            </div>
-
-                            <div class="min-w-0">
-                                <p
-                                    class="max-w-[180px] truncate text-xs font-semibold text-gray-800 dark:text-white"
-                                >
-                                    {{ lovedOne.name }}
-                                </p>
-
-                                <p
-                                    class="mt-0.5 flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500"
-                                >
-                                    <component
-                                        :is="
-                                            lovedOne.location_type ===
-                                            'homecare'
-                                                ? House
-                                                : Building2
-                                        "
-                                        class="h-3 w-3 shrink-0"
-                                    />
-                                    <span class="truncate">
-                                        {{ selectedPatientLocation }}
-                                    </span>
-                                </p>
-                            </div>
-
-                            <span
-                                class="ml-1 inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-semibold capitalize"
-                                :class="
-                                    statusStyle(patientStatusKey(lovedOne))
-                                        .badge
-                                "
-                            >
-                                <span
-                                    class="h-1.5 w-1.5 rounded-full"
-                                    :class="
-                                        statusStyle(patientStatusKey(lovedOne))
-                                            .dot
-                                    "
-                                />
-                                {{ patientStatusLabel(lovedOne) }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    v-if="lovedOnes.length > 1"
-                    class="relative border-b border-gray-100 bg-gray-50/50 dark:border-white/10 dark:bg-white/5"
-                >
-                    <button
-                        v-if="canScrollLovedOnesLeft"
-                        type="button"
-                        aria-label="Scroll left"
-                        class="absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm ring-1 ring-gray-100 transition hover:text-primary-600 dark:bg-secondary dark:text-gray-400 dark:ring-white/10 dark:hover:text-primary-300"
-                        @click="scrollLovedOnes(-1)"
-                    >
-                        <ChevronLeft class="h-4 w-4" />
-                    </button>
-
-                    <div
-                        ref="lovedOnesScrollRef"
-                        class="flex gap-3 overflow-x-auto p-4 scrollbar-none sm:px-7"
-                        @scroll="updateLovedOnesScrollState"
-                    >
-                        <button
-                            v-for="(lo, idx) in lovedOnes"
-                            :key="lo.patient_id"
-                            type="button"
-                            :aria-pressed="selectedIndex === idx"
-                            class="group flex min-w-[230px] shrink-0 items-center gap-3 rounded-2xl p-3 text-left transition-all"
-                            :class="
-                                selectedIndex === idx
-                                    ? 'bg-white shadow-sm ring-1 ring-primary-200 dark:bg-secondary dark:ring-primary-500/20'
-                                    : 'ring-1 ring-transparent hover:bg-white/80 hover:ring-gray-100 dark:hover:ring-white/10'
-                            "
-                            @click="selectedIndex = idx"
-                        >
-                            <span
-                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition"
-                                :class="
-                                    selectedIndex === idx
-                                        ? 'bg-primary-500 text-white shadow-sm shadow-primary-500/30'
-                                        : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200 dark:bg-white/10 dark:text-gray-400 dark:group-hover:bg-white/15'
-                                "
-                            >
-                                {{ initials(lo.name) }}
-                            </span>
-
-                            <span class="min-w-0 flex-1">
-                                <span
-                                    class="block truncate text-xs font-semibold"
+                                <button
+                                    v-for="(lo, idx) in lovedOnes"
+                                    :key="lo.patient_id"
+                                    type="button"
+                                    :aria-label="`Show ${lo.name}`"
+                                    class="h-1.5 rounded-full transition-all"
                                     :class="
                                         selectedIndex === idx
-                                            ? 'text-primary-700 dark:text-primary-300'
-                                            : 'text-gray-800 dark:text-white'
+                                            ? 'w-5 bg-primary-500'
+                                            : 'w-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/15 dark:hover:bg-white/20'
                                     "
-                                >
-                                    {{ lo.name }}
-                                </span>
-
-                                <span
-                                    v-if="lo.branch_name"
-                                    class="mt-0.5 flex items-center gap-1 truncate text-[10px] text-gray-400 dark:text-gray-500"
-                                >
-                                    <Building2 class="h-3 w-3 shrink-0" />
-                                    {{ lo.branch_name }}
-                                </span>
-
-                                <span
-                                    class="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-semibold capitalize"
-                                    :class="
-                                        statusStyle(patientStatusKey(lo)).badge
-                                    "
-                                >
-                                    <span
-                                        class="h-1.5 w-1.5 rounded-full"
-                                        :class="
-                                            statusStyle(patientStatusKey(lo))
-                                                .dot
-                                        "
-                                    />
-
-                                    {{ patientStatusLabel(lo) }}
-                                </span>
-                            </span>
-                        </button>
+                                    @click="selectedIndex = idx"
+                                />
+                            </div>
+                        </div>
                     </div>
-
-                    <button
-                        v-if="canScrollLovedOnesRight"
-                        type="button"
-                        aria-label="Scroll right"
-                        class="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm ring-1 ring-gray-100 transition hover:text-primary-600 dark:bg-secondary dark:text-gray-400 dark:ring-white/10 dark:hover:text-primary-300"
-                        @click="scrollLovedOnes(1)"
-                    >
-                        <ChevronRight class="h-4 w-4" />
-                    </button>
                 </div>
 
                 <div
@@ -707,7 +634,7 @@ onBeforeUnmount(() => {
                                 :class="
                                     activeScheduleType === type.value
                                         ? 'bg-white shadow-sm ring-1 ring-primary-100 dark:bg-secondary dark:ring-primary-500/20'
-                                        : 'hover:bg-white/70'
+                                        : 'hover:bg-white/70 dark:hover:bg-white/5'
                                 "
                                 @click="activeScheduleType = type.value"
                             >

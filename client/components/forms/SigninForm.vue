@@ -25,6 +25,15 @@ const welcomeTitle = computed(() =>
         : "Welcome back!",
 );
 
+const redirectTarget = computed(() => {
+    const target = route.query.redirect;
+    return typeof target === "string" &&
+        target.startsWith("/") &&
+        !target.startsWith("//")
+        ? target
+        : "/";
+});
+
 const signinData = ref<SigninRequest>({
     email: "prince.sestoso@gmail.com",
     password: "password",
@@ -81,7 +90,7 @@ async function handleSignIn() {
         setTimeout(async () => {
             loading.value = true;
             user.value = res.user;
-            await navigateTo("/");
+            await navigateTo(redirectTarget.value);
             await branch.refreshBranch();
         }, 1500);
     } catch (err: any) {
@@ -109,6 +118,7 @@ async function googleUrl() {
 
     try {
         const res = await authService.googleUrl();
+        sessionStorage.setItem("auth_redirect", redirectTarget.value);
         window.location.href = res.url;
     } catch (err: any) {
         showAlert(alert, "error", err?.message || "Internal Server Error", 0);

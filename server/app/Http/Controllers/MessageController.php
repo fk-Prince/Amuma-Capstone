@@ -98,7 +98,8 @@ class MessageController extends Controller
         BranchGuard::mergeRequest($request, $branch);
 
         $validated = $request->validate([
-            'client_id' => ['required', 'integer'],
+            'client_id' => ['required_without:client_uuid', 'nullable', 'integer'],
+            'client_uuid' => ['required_without:client_id', 'nullable', 'uuid'],
         ]);
 
         $validated['branch_id'] = $request->branch_id;

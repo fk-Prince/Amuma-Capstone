@@ -1,6 +1,5 @@
 import { z } from "zod";
 import type { Permissions } from "./permission";
-import { useBranchPlan } from "~/composables/useBranchPlan";
 import { phoneNumber } from "~/schema/phone-schema";
 
 export interface EmployeeDocument {
@@ -67,6 +66,8 @@ export interface EmployeePayload {
     role_name: string;
     assignment_type: string;
     status: EmployeeStatus;
+    password?: string;
+    password_confirmation?: string;
 }
 
 export type EmployeeStatus = "active" | "inactive" | "on_leave";
@@ -101,7 +102,7 @@ export const createEmployee = (): EmployeePayload => ({
     },
     birth_date: "",
     phone_number: "",
-    role_name: "administrator",
+    role_name: "admission",
     assignment_type: "both",
     status: "active",
 });
@@ -143,24 +144,12 @@ export const unFilteredEmployeeAssignmentTypes = [
     { label: "Inhouse Facility", value: "facility" },
 ];
 
-export const employeeAssignmentTypes = computed(() => {
-    const { hasPlan } = useBranchPlan();
-    return unFilteredEmployeeAssignmentTypes.filter((type) => {
-        switch (type.value) {
-            case "both":
-                return true;
-            case "homecare":
-                return hasPlan("A");
-            case "facility":
-                return hasPlan("B");
-            default:
-                return false;
-        }
-    });
-});
+export const employeeAssignmentTypes = computed(
+    () => unFilteredEmployeeAssignmentTypes,
+);
 
 export const employeePositions = [
-    { label: "Administrator", value: "administrator" },
+    { label: "Branch Manager", value: "branch_manager" },
     { label: "Admission", value: "admission" },
     { label: "Accounting", value: "accounting" },
     { label: "Nurse", value: "nurse" },

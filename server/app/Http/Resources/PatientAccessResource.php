@@ -357,7 +357,6 @@ class PatientAccessResource extends JsonResource
             'last_name' => $client?->last_name,
             'phone_number' => $client?->phone_number,
             'avatar' => $client?->avatar,
-            'is_verified' => $client?->is_verified ?? false,
             'created_at' => $client?->created_at?->format('Y-m-d\TH:i:s.u\Z'),
             'updated_at' => $client?->updated_at?->format('Y-m-d\TH:i:s.u\Z'),
         ];
@@ -439,8 +438,8 @@ class PatientAccessResource extends JsonResource
 
             'online_schedule' => $onlineSchedule ? [
                 'online_schedule_id' => $onlineSchedule->online_schedule_id,
-                'qr_in_token' => $onlineSchedule->qr_in_token,
-                'qr_out_token' => $onlineSchedule->qr_out_token,
+                'type_in' => $onlineSchedule->type_in,
+                'type_out' => $onlineSchedule->type_out,
                 'in_timestamp' => $onlineSchedule->in_timestamp?->format('Y-m-d H:i:s'),
                 'out_timestamp' => $onlineSchedule->out_timestamp?->format('Y-m-d H:i:s'),
                 'notes' => $onlineSchedule->notes,

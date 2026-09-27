@@ -10,6 +10,7 @@ class FacilitySeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            RoomSeeder::class,
             BedSeeder::class,
             BranchContractSeeder::class,
             ServiceSeeder::class,

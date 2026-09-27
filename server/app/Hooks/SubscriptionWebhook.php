@@ -34,7 +34,10 @@ class SubscriptionWebhook
 
         Cache::put(
             "xendit_payment_status_{$reference}",
-            ['status' => $response->getStatusCode() < 300 ? 'submitted' : 'failed'],
+            [
+                'status' => $response->getStatusCode() < 300 ? 'submitted' : 'failed',
+                'message' => $response->getData(true)['message'] ?? null,
+            ],
             now()->addDay()
         );
 

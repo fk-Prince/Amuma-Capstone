@@ -39,7 +39,9 @@
 
                     <div class="max-h-[70vh] overflow-y-auto">
                         <table class="w-full min-w-[780px]">
-                            <thead class="sticky top-0 bg-white dark:bg-secondary">
+                            <thead
+                                class="sticky top-0 bg-white dark:bg-secondary"
+                            >
                                 <tr class="bg-slate-50/60 dark:bg-white/5">
                                     <th
                                         v-for="head in [
@@ -65,7 +67,7 @@
                                 class="divide-y divide-slate-100 dark:divide-white/10"
                             >
                                 <tr
-                                    v-for="payment in sortedPayments"
+                                    v-for="payment in pagedPayments"
                                     :key="payment.subscription_payment_id"
                                     class="transition hover:bg-slate-50/60 dark:hover:bg-white/5"
                                 >
@@ -142,7 +144,7 @@
                                     </td>
                                 </tr>
 
-                                <tr v-if="!sortedPayments.length">
+                                <tr v-if="!pagedPayments.length">
                                     <td
                                         colspan="9"
                                         class="px-4 py-8 text-center text-xs text-muted dark:text-gray-500"
@@ -153,6 +155,19 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <div
+                        v-if="totalPages > 1"
+                        class="border-t border-slate-100 px-6 py-3 dark:border-white/10"
+                    >
+                        <Pagination
+                            :current-page="page"
+                            :total-pages="totalPages"
+                            :total-items="sortedPayments.length"
+                            :items-per-page="PAGE_SIZE"
+                            @change-page="page = $event"
+                        />
+                    </div>
                 </div>
             </div>
         </Transition>
@@ -160,8 +175,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import AppIcon from "~/components/ui/AppIcon.vue";
+import Pagination from "~/components/ui/Pagination.vue";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
 import type { SubscriptionPaymentRecord } from "~/types/subscription";
@@ -176,10 +192,32 @@ const emit = defineEmits<{
     (event: "close"): void;
 }>();
 
+const PAGE_SIZE = 10;
+
+const page = ref(1);
+
 const sortedPayments = computed(() =>
     [...props.payments].sort((a, b) =>
         (b.created_at ?? "").localeCompare(a.created_at ?? ""),
     ),
+);
+
+const totalPages = computed(() =>
+    Math.max(1, Math.ceil(sortedPayments.value.length / PAGE_SIZE)),
+);
+
+const pagedPayments = computed(() =>
+    sortedPayments.value.slice(
+        (page.value - 1) * PAGE_SIZE,
+        page.value * PAGE_SIZE,
+    ),
+);
+
+watch(
+    () => props.open,
+    (open) => {
+        if (open) page.value = 1;
+    },
 );
 </script>
 

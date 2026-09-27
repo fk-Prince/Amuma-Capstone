@@ -1,6 +1,6 @@
 <template>
-    <div class="min-h-screen bg-slate-50 dark:bg-white/5">
-        <div class="w-full mx-auto px-4 lg:px-8 pt-8 pb-12">
+    <div>
+        <div class="w-full pt-2 pb-5">
             <div v-if="loading" class="space-y-6">
                 <div
                     class="rounded-2xl border border-primary-100 bg-white p-6 animate-pulse dark:border-primary-500/20 dark:bg-secondary"
@@ -44,18 +44,6 @@
 
                                 <div class="flex items-center gap-2">
                                     <button
-                                        v-if="latestAdmission"
-                                        type="button"
-                                        :disabled="!canAddService"
-                                        :title="addServiceBlockedReason"
-                                        class="inline-flex items-center gap-1.5 rounded-lg border border-primary-100 px-2.5 py-1.5 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent dark:border-primary-500/20 dark:text-primary-300 dark:hover:bg-primary-500/10"
-                                        @click="addServiceModalOpen = true"
-                                    >
-                                        <Plus class="h-3.5 w-3.5" />
-                                        Add service
-                                    </button>
-
-                                    <button
                                         v-if="canViewAdmissions && latestAdmission"
                                         type="button"
                                         :disabled="!isAdmitted"
@@ -68,11 +56,7 @@
                                         @click="caregiverModalOpen = true"
                                     >
                                         <UserRound class="h-3.5 w-3.5" />
-                                        {{
-                                            caregiverCount > 0
-                                                ? "View caregiver"
-                                                : "Assign caregiver"
-                                        }}
+                                        View caregiver
                                     </button>
 
                                     <button
@@ -383,29 +367,18 @@
             :patient-name="patient?.full_name"
             :branch-uuid="String(route.params.uuid)"
             @close="caregiverModalOpen = false"
-            @count="caregiverCount = $event"
-        />
-
-        <AddServiceModal
-            :open="addServiceModalOpen"
-            :patient-uuid="String(patient?.uuid ?? route.params.p_uuid)"
-            :patient-name="patient?.full_name"
-            :branch-uuid="String(route.params.uuid)"
-            @close="addServiceModalOpen = false"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ChevronRight, Plus, UserRound } from "lucide-vue-next";
+import { ChevronRight, UserRound } from "lucide-vue-next";
 import type { PatientRetrieve, Admission } from "~/types/patient";
 
 import AdmissionTimeline from "~/components/sections/app/Admission/AdmissionTimeline.vue";
 import CaregiverShiftModal from "~/components/sections/app/Admission/CaregiverShiftModal.vue";
-import AddServiceModal from "~/components/sections/app/Admission/AddServiceModal.vue";
-import { useBranchPlan } from "~/composables/useBranchPlan";
 import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 
 definePageMeta({
@@ -452,33 +425,10 @@ const latestAdmission = computed<Admission | undefined>(
 );
 
 const caregiverModalOpen = ref(false);
-const caregiverCount = ref(0);
-
-watch(
-    () => latestAdmission.value,
-    (admission) => {
-        caregiverCount.value = admission?.caregiver_count ?? 0;
-    },
-    { immediate: true },
-);
 
 const isAdmitted = computed(
     () => latestAdmission.value?.status?.toLowerCase() === "admitted",
 );
-
-const { hasFacilityPlan } = useBranchPlan();
-const addServiceModalOpen = ref(false);
-const canAddService = computed(() => isAdmitted.value && hasFacilityPlan.value);
-
-const addServiceBlockedReason = computed(() => {
-    if (!hasFacilityPlan.value) {
-        return "Locked — this branch has no In-house Facility plan.";
-    }
-
-    return isAdmitted.value
-        ? undefined
-        : "Available only while the patient is admitted.";
-});
 
 const pastAdmissions = computed<Admission[]>(() => {
     const all = patient.value?.admissions ?? [];

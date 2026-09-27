@@ -331,8 +331,33 @@
 
             <div
                 v-if="viewMode === 'form'"
-                class="lg:hidden sticky bottom-0 left-0 right-0 border-t p-4"
+                class="lg:hidden sticky bottom-0 left-0 right-0 z-20 border-t border-slate-100 bg-white p-4 dark:border-white/10 dark:bg-secondary"
             >
+                <div class="mb-3">
+                    <div class="mb-1.5 flex items-center justify-between">
+                        <span
+                            class="text-xs font-medium text-muted dark:text-gray-400"
+                        >
+                            Admission progress
+                        </span>
+
+                        <span
+                            class="text-xs font-bold text-primary-600 dark:text-primary-300"
+                        >
+                            {{ Math.round(progress) }}%
+                        </span>
+                    </div>
+
+                    <div
+                        class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"
+                    >
+                        <div
+                            class="h-full rounded-full bg-gradient-to-r from-primary-500 to-accent-500 transition-all duration-500 ease-out"
+                            :style="{ width: `${progress}%` }"
+                        />
+                    </div>
+                </div>
+
                 <BaseButton class="w-full py-3" @click="submit">
                     {{ actionLabel }}
                 </BaseButton>
@@ -564,14 +589,14 @@ async function loadByReference() {
         bookingStore.lastSubmittedId = booking.reference_id;
 
         referenceNotice.value =
-            booking.status === "approved"
+            booking.status === "pending"
                 ? {
-                      tone: "approved",
-                      message: `Booking ${booking.reference_id} has already been approved. You can continue with the admission.`,
+                      tone: "pending",
+                      message: `Details from ${booking.reference_id} have been loaded. This booking hasn't been approved in Bookings yet; completing the admission will approve it.`,
                   }
                 : {
-                      tone: "pending",
-                      message: `Booking ${booking.reference_id} has not been approved in Bookings yet. You can still continue with the admission; completing it will approve the booking.`,
+                      tone: "approved",
+                      message: `Details from ${booking.reference_id} have been filled in. Review them before admitting.`,
                   };
 
         router.replace({

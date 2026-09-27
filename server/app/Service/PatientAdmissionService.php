@@ -360,52 +360,17 @@ class PatientAdmissionService
                 ]);
             }
 
-            $invoiceIds = $admission->invoiceAdmission()
-                ->pluck('invoice_id')
-                ->unique()
-                ->filter();
-
             AccommodationHelper::deactivate($admission);
-
-            if ($invoiceIds->isEmpty()) {
-                return;
-            }
-
-            $invoices = Invoice::with([
-                'allocations.refundAllocations.refund.transaction',
-            ])
-                ->whereIn('invoice_id', $invoiceIds)
-                ->get();
-
-            foreach ($invoices as $invoice) {
-                $this->refundService->createRefundFull(
-                    $invoice,
-                    'Admission cancelled. Invoice cancelled.'
-                );
-
-                $invoice->refresh();
-
-                if ($invoice->net_paid_amount <= 0) {
-                    $invoice->update([
-                        'status' => Invoice::STATUS_VOID,
-                    ]);
-                }
-            }
         });
 
         $patient = $admission->patient;
-        // $cancelledByClient = ($payload['cancelled_by'] ?? 'staff') === 'client';
-        // if ($patient && $cancelledByClient && $patient->branch) {
-        //     $this->notificationService->notifyBranchStaff(
-        //         $patient->branch,
-        //         "{$patient->first_name} {$patient->last_name}'s admission was cancelled by the family through the portal.",
-        //         'Admission Cancelled'
-        //     );
-        // } else
+        $note = trim($payload['note'] ?? '');
+
         if ($patient) {
             $this->notificationService->notifyPatientAccess(
                 $patient,
-                "{$patient->first_name} {$patient->last_name}'s admission has been cancelled by the branch.",
+                "{$patient->first_name} {$patient->last_name}'s admission has been cancelled by the branch."
+                    . ($note !== '' ? " Note: {$note}" : ''),
                 'Admission Cancelled',
                 Auth::user()
             );
@@ -1021,7 +986,8 @@ class PatientAdmissionService
 
         if ($facilityType !== 'pre-admission') {
             throw new Exception(
-                "This type of booking cant be process here."
+                'Only pre-admission bookings can be admitted here.',
+                422
             );
         }
 

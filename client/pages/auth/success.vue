@@ -18,7 +18,11 @@ onMounted(async () => {
     try {
         const res = await authService.me();
         user.value = res;
-        navigateTo("/");
+        const target = sessionStorage.getItem("auth_redirect");
+        sessionStorage.removeItem("auth_redirect");
+        navigateTo(
+            target?.startsWith("/") && !target.startsWith("//") ? target : "/",
+        );
     } catch (err: any) {
         console.log(err);
         localStorage.removeItem("auth");

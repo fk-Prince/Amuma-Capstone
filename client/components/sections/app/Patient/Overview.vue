@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { computed } from "vue";
-
 import {
     Droplet,
     Calendar,
@@ -11,46 +9,15 @@ import {
     Pill,
     HeartPulse,
     MapPin,
-    CalendarClock,
 } from "lucide-vue-next";
 import type { PatientRetrieve } from "~/types/patient";
 import { formatDate } from "~/utils/time";
 import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 
-const props = defineProps<{
+defineProps<{
     patient: PatientRetrieve;
     isEdit?: boolean;
 }>();
-
-const schedules = computed<any[]>(
-    () => (props.patient as any)?.schedules ?? [],
-);
-
-// undefined rather than null, so binding it to href drops the attribute
-// instead of tripping the type.
-function mapsUrl(schedule: any): string | undefined {
-    const lat = Number(schedule?.latitude);
-    const lng = Number(schedule?.longitude);
-
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return undefined;
-
-    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-}
-
-function scheduleStatusClasses(status?: string) {
-    switch (String(status ?? "").toLowerCase()) {
-        case "ongoing":
-            return "bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300";
-        case "pending":
-            return "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300";
-        case "completed":
-            return "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300";
-        case "missed":
-            return "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300";
-        default:
-            return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
-    }
-}
 
 function statusClasses(status?: string) {
     const value = (status ?? "").toLowerCase();
@@ -288,87 +255,6 @@ function statusClasses(status?: string) {
                     </span>
                 </div>
             </div>
-        </section>
-
-        <section class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary">
-            <div class="flex items-center gap-2">
-                <CalendarClock class="h-4 w-4 text-primary" />
-                <h3 class="font-semibold text-secondary dark:text-white">
-                    Recent Schedule
-                </h3>
-            </div>
-
-            <p
-                v-if="!schedules.length"
-                class="mt-4 text-sm text-muted dark:text-gray-400"
-            >
-                No recent schedule.
-            </p>
-
-            <ul v-else class="mt-4 space-y-2.5">
-                <li
-                    v-for="schedule in schedules"
-                    :key="schedule.uuid"
-                    class="flex items-start justify-between gap-3 rounded-xl border border-muted-light p-3.5 dark:border-white/10"
-                >
-                    <div class="min-w-0">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <p
-                                class="text-sm font-semibold text-secondary dark:text-white"
-                            >
-                                {{ schedule.category || "Schedule" }}
-                            </p>
-
-                            <span
-                                v-if="schedule.schedule_code"
-                                class="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-white/10 dark:text-gray-400"
-                            >
-                                {{ schedule.schedule_code }}
-                            </span>
-
-                            <span
-                                v-if="schedule.type"
-                                class="rounded-md bg-primary-50 px-1.5 py-0.5 text-[10px] font-medium text-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
-                            >
-                                {{
-                                    schedule.type === "ADL"
-                                        ? "Activities of Daily Living"
-                                        : schedule.type
-                                }}
-                            </span>
-                        </div>
-
-                        <p class="mt-0.5 text-xs text-muted dark:text-gray-400">
-                            {{ formatDate(schedule.scheduled_at) }}
-                        </p>
-
-                        <a
-                            v-if="schedule.address && mapsUrl(schedule)"
-                            :href="mapsUrl(schedule)"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="mt-0.5 flex items-center gap-1 truncate text-xs text-primary hover:underline dark:text-primary-300"
-                        >
-                            <MapPin class="h-3 w-3 shrink-0" />
-                            {{ schedule.address }}
-                        </a>
-
-                        <p
-                            v-else-if="schedule.address"
-                            class="mt-0.5 truncate text-xs text-muted dark:text-gray-400"
-                        >
-                            {{ schedule.address }}
-                        </p>
-                    </div>
-
-                    <span
-                        class="shrink-0 rounded-full px-3 py-1 text-xs font-medium capitalize"
-                        :class="scheduleStatusClasses(schedule.status)"
-                    >
-                        {{ schedule.status }}
-                    </span>
-                </li>
-            </ul>
         </section>
     </div>
 </template>

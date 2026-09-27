@@ -1,6 +1,9 @@
+export type OnlineScheduleType = "scanned" | "force";
+
 export interface OnlineScheduleAssignment {
-    qr_in: string | null;
-    qr_out: string | null;
+    online_schedule_id: number;
+    type_in: OnlineScheduleType;
+    type_out: OnlineScheduleType | null;
     in_timestamp: string | null;
     out_timestamp: string | null;
     notes: string | null;
@@ -167,6 +170,9 @@ export interface AuditRow {
     }[];
 
     online_logs: {
+        online_schedule_id: number;
+        type_in: OnlineScheduleType;
+        type_out: OnlineScheduleType | null;
         employee_id?: number | null;
         employee_name?: string | null;
         employee_avatar?: string | null;

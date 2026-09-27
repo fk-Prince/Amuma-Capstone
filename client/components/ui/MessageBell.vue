@@ -67,13 +67,14 @@ function bindChannel() {
 
     const userUuid = (user.value as any)?.uuid;
 
-    joined = [
-        `Branch.Messages.${branchUuid.value}`,
-        ...(userUuid ? [`User.Messages.${userUuid}`] : []),
-    ];
+    joined = userUuid ? [`User.Messages.${userUuid}`] : [];
 
     handler = (payload: any) => {
         if (payload.sender_type === "staff") return;
+
+        if (payload.branch_uuid && payload.branch_uuid !== branchUuid.value) {
+            return;
+        }
 
         const row = conversations.value.find(
             (c) => c.conversation_id === payload.conversation_id,
@@ -93,10 +94,11 @@ function bindChannel() {
     }
 }
 
-watch(branchUuid, () => {
-    load();
-    bindChannel();
-}, { immediate: true });
+watch(branchUuid, load, { immediate: true });
+
+watch([branchUuid, () => (user.value as any)?.uuid], bindChannel, {
+    immediate: true,
+});
 
 onMounted(() => {
     isMounted.value = true;

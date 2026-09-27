@@ -107,7 +107,7 @@
                 </button>
 
                 <button
-                    v-if="hasHomecare"
+                    v-if="hasFacility"
                     type="button"
                     :disabled="!canUseFacility"
                     @click="selected = 'facility'"
@@ -334,7 +334,7 @@
                                 </button>
 
                                 <button
-                                    v-if="hasHomecare"
+                                    v-if="hasFacility"
                                     type="button"
                                     :disabled="!canUseFacility"
                                     @click="selectAndClose('facility')"

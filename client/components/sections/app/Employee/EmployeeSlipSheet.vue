@@ -163,10 +163,16 @@ const groups = computed(() => {
             title: "Assignment",
             rows: [
                 { label: "Position", value: capitalize(employee.role_name) },
-                {
-                    label: "Assignment",
-                    value: formatAssignmentType(employee.assignment_type),
-                },
+                ...(employee.assignment_type
+                    ? [
+                          {
+                              label: "Assignment",
+                              value: formatAssignmentType(
+                                  employee.assignment_type,
+                              ),
+                          },
+                      ]
+                    : []),
                 {
                     label: "Modules granted",
                     value: access.module_count

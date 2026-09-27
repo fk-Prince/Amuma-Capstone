@@ -16,6 +16,19 @@
             ]"
         >
             <div
+                v-if="index < steps.length - 1"
+                class="absolute z-[1] w-0.5 -translate-x-1/2 transition-colors duration-300"
+                :class="[
+                    compact
+                        ? 'left-6 top-10 -bottom-2'
+                        : 'left-8 top-[52px] -bottom-3',
+                    isCompleted(step.key)
+                        ? 'bg-primary-300'
+                        : 'bg-gray-200 dark:bg-white/10',
+                ]"
+            />
+
+            <div
                 class="relative flex h-full shrink-0 flex-col items-center"
                 :class="compact ? 'w-8' : 'w-10'"
             >
@@ -39,18 +52,6 @@
                         {{ index + 1 }}
                     </span>
                 </div>
-
-                <!-- Connector -->
-                <div
-                    v-if="index < steps.length - 1"
-                    class="absolute left-1/2 w-0.5 -translate-x-1/2 transition-colors duration-300"
-                    :class="[
-                        compact ? 'top-8 h-[32px]' : 'top-10 h-[48px]',
-                        isCompleted(step.key)
-                            ? 'bg-primary-300'
-                            : 'bg-gray-200 dark:bg-white/10',
-                    ]"
-                />
             </div>
 
             <div class="min-w-0 flex-1 py-0.5">

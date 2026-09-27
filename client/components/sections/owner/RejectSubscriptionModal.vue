@@ -54,12 +54,30 @@
                                 <span class="text-danger">*</span>
                             </label>
 
+                            <div class="mt-2 flex flex-wrap gap-1.5">
+                                <button
+                                    v-for="fill in QUICK_FILLS"
+                                    :key="fill.label"
+                                    type="button"
+                                    :disabled="submitting"
+                                    class="rounded-full border px-2.5 py-1 text-[11px] font-medium transition disabled:opacity-50"
+                                    :class="
+                                        reason === fill.text
+                                            ? 'border-red-300 bg-red-50 text-red-600 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300'
+                                            : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5'
+                                    "
+                                    @click="applyQuickFill(fill.text)"
+                                >
+                                    {{ fill.label }}
+                                </button>
+                            </div>
+
                             <textarea
                                 v-model="reason"
                                 rows="4"
                                 :maxlength="MAX_LENGTH"
-                                placeholder="e.g. The uploaded permit is expired. Please re-submit with a current one."
-                                class="mt-1.5 w-full resize-none rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:border-white/10 dark:bg-secondary dark:text-white"
+                                placeholder="Pick a quick fill above or describe what the agency needs to fix before re-submitting."
+                                class="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:border-white/10 dark:bg-secondary dark:text-white dark:placeholder:text-gray-500"
                             />
 
                             <div
@@ -75,6 +93,19 @@
                                     {{ reason.length }}/{{ MAX_LENGTH }}
                                 </span>
                             </div>
+                        </div>
+
+                        <div
+                            v-if="serverError"
+                            role="alert"
+                            class="flex items-start gap-2 rounded-xl bg-red-50 p-3 text-xs leading-5 text-red-700 dark:bg-red-500/10 dark:text-red-300"
+                        >
+                            <AppIcon
+                                name="alert-circle"
+                                class="mt-0.5 h-4 w-4 shrink-0"
+                            />
+
+                            <span>{{ serverError }}</span>
                         </div>
 
                         <div
@@ -130,11 +161,44 @@ import AppIcon from "~/components/ui/AppIcon.vue";
 
 const MAX_LENGTH = 500;
 
+const QUICK_FILLS = [
+    {
+        label: "Unclear ID",
+        text: "The uploaded ID is blurry or cropped. Please re-submit a clear photo of the front and back.",
+    },
+    {
+        label: "Expired ID",
+        text: "The uploaded ID is already expired. Please re-submit a valid, unexpired government ID.",
+    },
+    {
+        label: "Invalid business permit",
+        text: "The business document is expired or not a valid registration. Please re-submit a current DTI, SEC or BIR certificate.",
+    },
+    {
+        label: "Name mismatch",
+        text: "The name on the documents does not match the agency or branch name. Please re-submit documents under the registered name.",
+    },
+    {
+        label: "Wrong address",
+        text: "The branch address does not match the address on the submitted documents. Please update the address or re-submit matching documents.",
+    },
+    {
+        label: "Invalid TIN",
+        text: "The TIN provided is incomplete or does not match the BIR certificate. Please correct it and re-submit.",
+    },
+];
+
+function applyQuickFill(text: string) {
+    reason.value = text;
+    error.value = "";
+}
+
 const props = defineProps<{
     open: boolean;
     branchName?: string | null;
     refunds?: boolean;
     submitting?: boolean;
+    serverError?: string;
 }>();
 
 const emit = defineEmits<{

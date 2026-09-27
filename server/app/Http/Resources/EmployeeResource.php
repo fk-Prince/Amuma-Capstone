@@ -29,7 +29,7 @@ class EmployeeResource extends JsonResource
             'role_name' => ucwords(str_replace('_', ' ', $employeeBranch?->role_name)),
             'assignment_type' => $employeeBranch?->assignment_type,
             'phone_number' => $this->employee?->phone_number,
-            'status' => $this->employee?->status,
+            'status' => $employeeBranch?->status,
             'hired_date' => $this->employee->created_at,
             'permissions' => $this->employee?->permissions
                 ->map(fn($permission) => [

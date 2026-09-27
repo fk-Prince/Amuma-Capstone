@@ -21,7 +21,10 @@ watch(
     },
 );
 
-const showImage = computed(() => !!props.src && !failed.value);
+const showImage = computed(
+    () =>
+        !!props.src && !failed.value && !props.src.includes("ui-avatars.com"),
+);
 
 const initials = computed(() => {
     const parts = (props.name ?? "")

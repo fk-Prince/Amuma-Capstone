@@ -57,10 +57,12 @@ class MessageService extends BaseService {
         return await this.request(`${this.resource}/recipients`, 'GET', payload);
     }
 
-    async open(payload: {
-        branch_uuid: string;
-        client_id: number;
-    }): Promise<any> {
+    async open(
+        payload: { branch_uuid: string } & (
+            | { client_id: number }
+            | { client_uuid: string }
+        ),
+    ): Promise<any> {
         return await this.request(`${this.resource}/open`, 'POST', payload);
     }
 

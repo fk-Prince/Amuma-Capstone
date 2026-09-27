@@ -291,7 +291,7 @@ const emptyStateSubtitle = computed(() =>
                                 </tr>
                             </thead>
 
-                            <tbody class="divide-y divide-[#E4EFED]">
+                            <tbody class="divide-y divide-[#EEF3F1] dark:divide-white/10">
                                 <template v-if="isLoading">
                                     <tr
                                         v-for="n in pagination.pageSize.value"

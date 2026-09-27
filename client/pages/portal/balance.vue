@@ -92,7 +92,8 @@ const rawRecords = ref<any[]>([]);
 const lovedOnes = ref<LovedOne[]>([]);
 const selectedIndex = ref(0);
 
-const { resolveIndex, syncQuery } = usePatientQuerySelection();
+const { syncQuery, selectedParams, indexOfPatient } =
+    usePatientQuerySelection();
 
 watch(selectedIndex, () =>
     syncQuery(lovedOnes.value[selectedIndex.value]?.uuid),
@@ -715,13 +716,53 @@ async function fetchRefundRequests() {
     }
 }
 
-watch(selectedIndex, (idx) => {
-    const record = rawRecords.value[idx];
+const financialsLoaded = ref<Record<number, boolean>>({});
 
-    if (record) {
-        updateBillingFromRecord(record);
+function applyFinancials(idx: number, record: any) {
+    rawRecords.value[idx] = { ...(rawRecords.value[idx] ?? {}), ...record };
+
+    const lovedOne = lovedOnes.value[idx];
+
+    if (lovedOne) {
+        lovedOne.refundable_amount = Number(record?.patient_refundable ?? 0);
+        lovedOne.pending_withdrawal = Number(
+            record?.patient_pending_withdrawal ?? 0,
+        );
     }
-});
+
+    financialsLoaded.value[idx] = true;
+}
+
+async function showPatient(idx: number) {
+    if (financialsLoaded.value[idx]) {
+        updateBillingFromRecord(rawRecords.value[idx]);
+        return;
+    }
+
+    const patientId = lovedOnes.value[idx]?.patient_id;
+
+    if (!patientId) return;
+
+    isLoadingLedger.value = true;
+
+    try {
+        const record = await fetchFinancialsFor(patientId);
+
+        if (!record) return;
+
+        applyFinancials(idx, record);
+
+        if (selectedIndex.value === idx) {
+            updateBillingFromRecord(rawRecords.value[idx]);
+        }
+    } catch (err: any) {
+        error(err?.message || "Unable to load this resident's billing.");
+    } finally {
+        isLoadingLedger.value = false;
+    }
+}
+
+watch(selectedIndex, (idx) => showPatient(idx));
 
 function nextLovedOne() {
     if (!lovedOnes.value.length) return;
@@ -758,10 +799,13 @@ async function loadPatientData() {
                 action: "overview",
                 section: "profile",
             }),
-            patientAccessService.retrieveAction({
-                action: "overview",
-                section: "financials",
-            }),
+            patientAccessService
+                .retrieveAction({
+                    action: "overview",
+                    section: "financials",
+                    ...selectedParams(),
+                })
+                .catch(() => null),
         ]);
 
         const records: any[] = Array.isArray(profileRes?.data)
@@ -769,26 +813,26 @@ async function loadPatientData() {
             : [];
 
         if (records.length) {
-            const financialsByPatientId = new Map(
-                (Array.isArray(financialsRes?.data)
-                    ? financialsRes.data
-                    : []
-                ).map((entry: any) => [Number(entry?.patient_id ?? 0), entry]),
+            lovedOnes.value = records.map(mapPatientRecord);
+            rawRecords.value = records;
+            financialsLoaded.value = {};
+
+            const financials = financialsRes?.data;
+            const index = indexOfPatient(
+                lovedOnes.value,
+                financials?.patient_id,
             );
 
-            const merged = records.map((record: any) => ({
-                ...record,
-                ...(financialsByPatientId.get(
-                    Number(record?.patient_id ?? 0),
-                ) ?? {}),
-            }));
+            if (
+                financials &&
+                Number(financials.patient_id) ===
+                    lovedOnes.value[index]?.patient_id
+            ) {
+                applyFinancials(index, financials);
+            }
 
-            lovedOnes.value = merged.map(mapPatientRecord);
-            rawRecords.value = merged;
-
-            selectedIndex.value = resolveIndex(lovedOnes.value);
-
-            updateBillingFromRecord(rawRecords.value[selectedIndex.value]);
+            if (selectedIndex.value === index) showPatient(index);
+            else selectedIndex.value = index;
         } else {
             noPatients.value = true;
         }
@@ -836,14 +880,9 @@ async function refreshLedger() {
 
         if (!record) return;
 
-        const merged = {
-            ...(rawRecords.value[selectedIndex.value] ?? {}),
-            ...record,
-        };
+        applyFinancials(selectedIndex.value, record);
 
-        rawRecords.value[selectedIndex.value] = merged;
-
-        updateBillingFromRecord(merged);
+        updateBillingFromRecord(rawRecords.value[selectedIndex.value]);
     } catch (err: any) {
         error(err?.message || "Unable to load the full billing history.");
     } finally {
@@ -971,7 +1010,7 @@ const isPaying = ref(false);
 const activeReceipt = ref<PaymentReceiptData | null>(null);
 
 const card = ref<CardDetails>({
-    number: "4000000000002503",
+    number: "4000000000001000",
     expMonth: "04",
     expYear: "29",
     cvc: "123",

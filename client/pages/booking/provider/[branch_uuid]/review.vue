@@ -255,7 +255,7 @@ const total = computed<number>(() => {
 });
 
 const card = reactive<CardDetails>({
-    number: "4000000000002503",
+    number: "4000000000001000",
     expMonth: "04",
     expYear: "29",
     cvc: "123",

@@ -17,7 +17,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
     state: (): Subscription => ({
         plans: [],
         selectedPlan: null,
-        selectedInterval: "",
+        selectedInterval: "monthly",
         payment_method: "CREDIT-CARD",
 
 
@@ -75,9 +75,8 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
                 longitude: 125.4553,
             },
             email: "davao@amuma.com",
-            status: "active",
+            status: "pending",
             document: "",
-            is_verified: false,
         } as Branch,
 
         agency: {
@@ -95,7 +94,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             },
             email: "info@amuma.com",
             image: null,
-            is_verified: false,
+            status: "pending",
         } as Agency,
 
 
@@ -177,7 +176,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
 
         reset() {
             this.selectedPlan = null;
-            this.selectedInterval = "";
+            this.selectedInterval = "monthly";
 
             this.branch = {
                 name: "",
@@ -186,8 +185,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
                 description: "",
                 location: defaultLocation(),
                 email: "",
-                status: "active",
-                is_verified: false,
+                status: "pending",
                 agency: this.agency
             } as Branch;
 
@@ -197,7 +195,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
                 email: "",
                 image: null,
                 location: defaultLocation(),
-                is_verified: false
+                status: "pending"
             } as Agency;
 
 

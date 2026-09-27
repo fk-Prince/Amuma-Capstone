@@ -4,7 +4,7 @@
         class="grid min-h-full gap-5 items-start grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     >
         <div
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
+            class="bg-white rounded-lg border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
                 <div
@@ -55,7 +55,7 @@
         </div>
 
         <div
-            class="md:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
+            class="md:col-span-2 bg-white rounded-lg border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-3">
                 <div
@@ -71,7 +71,7 @@
         </div>
 
         <div
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
+            class="bg-white rounded-lg border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
         >
             <div
                 class="h-4 w-28 bg-gray-200 rounded animate-pulse mb-4 dark:bg-white/15"
@@ -103,7 +103,7 @@
         </div>
 
         <div
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
+            class="bg-white rounded-lg border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
         >
             <div
                 class="h-4 w-32 bg-gray-200 rounded animate-pulse mb-4 dark:bg-white/15"
@@ -136,7 +136,7 @@
         </div>
 
         <div
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full flex flex-col dark:bg-secondary dark:border-white/10"
+            class="bg-white rounded-lg border border-gray-100 shadow-sm p-5 h-full flex flex-col dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
                 <div
@@ -186,7 +186,7 @@
 
     <div v-else-if="loadError" class="p-8">
         <div
-            class="bg-white dark:bg-secondary rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm p-8 text-center"
+            class="bg-white dark:bg-secondary rounded-lg border border-gray-100 dark:border-white/10 shadow-sm p-8 text-center"
         >
             <p class="text-rose-500 text-sm dark:text-rose-300">
                 {{ loadError }}
@@ -202,10 +202,10 @@
 
     <div
         v-else
-        class="grid gap-5 items-start p-4 sm:p-6 lg:p-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+        class="grid gap-5 items-start grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     >
         <div
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 relative overflow-hidden dark:bg-secondary dark:border-white/10"
+            class="bg-white rounded-lg border border-gray-100 shadow-sm p-5 relative overflow-hidden dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
                 <p class="text-sm font-semibold text-gray-800 dark:text-white">
@@ -320,7 +320,7 @@
 
         <div
             v-if="isAdmission && primaryLovedOne"
-            class="md:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
+            class="md:col-span-2 bg-white rounded-lg border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-3">
                 <p
@@ -408,7 +408,7 @@
 
         <div
             v-else-if="isHomecare && primaryLovedOne && attendanceVisit"
-            class="md:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full flex flex-col dark:bg-secondary dark:border-white/10"
+            class="md:col-span-2 bg-white rounded-lg border border-gray-100 shadow-sm p-5 h-full flex flex-col dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
                 <div>
@@ -798,7 +798,7 @@
         </div>
 
         <div
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full dark:bg-secondary dark:border-white/10"
+            class="bg-white rounded-lg border border-gray-100 shadow-sm p-5 h-full dark:bg-secondary dark:border-white/10"
         >
             <p class="text-sm font-semibold text-gray-800 mb-4 dark:text-white">
                 Latest Updates
@@ -907,7 +907,7 @@
         </div>
 
         <div
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
+            class="bg-white rounded-lg border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
         >
             <p class="text-sm font-semibold text-gray-800 mb-4 dark:text-white">
                 Upcoming Payment
@@ -1041,7 +1041,7 @@
         </div>
 
         <div
-            class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full flex flex-col dark:bg-secondary dark:border-white/10"
+            class="bg-white rounded-lg border border-gray-100 shadow-sm p-5 h-full flex flex-col dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
                 <p class="text-sm font-semibold text-gray-800 dark:text-white">
@@ -1775,7 +1775,8 @@ async function loadPatientData() {
             }),
             patientAccessService.retrieveAction({
                 action: "overview",
-                section: "financials,schedule,activity",
+                section: "summary,schedule,activity",
+                activity_limit: UPDATES_LIMIT,
             }),
         ]);
 

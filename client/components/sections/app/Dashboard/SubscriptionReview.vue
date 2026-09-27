@@ -181,7 +181,10 @@ const isRejected = computed(
 );
 
 const isPending = computed(() => {
-    return !branch.value?.agency?.is_verified || !branch.value?.is_verified;
+    return (
+        branch.value?.agency?.status !== "verified" ||
+        branch.value?.status !== "verified"
+    );
 });
 
 const agencyName = computed(() => branch.value?.agency?.name ?? null);

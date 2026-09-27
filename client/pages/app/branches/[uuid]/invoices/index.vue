@@ -213,23 +213,6 @@
                         </span>
                     </template>
 
-                    <template #cell-actions="{ row }">
-                        <button
-                            v-if="
-                                ![
-                                    'void',
-                                    'paid',
-                                    'written off',
-                                    'written_off',
-                                ].includes(row.status?.toLowerCase())
-                            "
-                            type="button"
-                            class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-500/20 dark:text-red-300 dark:hover:bg-red-500/10"
-                            @click.stop="openVoidModal(row)"
-                        >
-                            Void
-                        </button>
-                    </template>
                 </DataTable>
 
                 <DataTable
@@ -421,14 +404,13 @@ const patientColumns: DataTableColumn[] = [
 ];
 
 const invoiceColumns: DataTableColumn[] = [
-    { key: "invoice_code", label: "Invoice Code", sortable: false },
+    { key: "invoice_code", label: "Invoice Reference", sortable: false },
     { key: "patient", label: "Patient", sortable: false },
     { key: "status", label: "Status", sortable: false },
     { key: "total", label: "Total", align: "right", sortable: false },
     { key: "paid", label: "Paid", align: "right", sortable: false },
     { key: "amount", label: "Balance", align: "right", sortable: false },
     { key: "created_at", label: "Date", sortable: false },
-    { key: "actions", label: "", align: "right", sortable: false },
 ];
 
 const receiptColumns: DataTableColumn[] = [

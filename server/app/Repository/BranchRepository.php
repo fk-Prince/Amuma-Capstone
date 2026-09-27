@@ -37,9 +37,9 @@ class BranchRepository
             'location',
             'contracts',
         ])
-            ->where('is_verified', true)
+            ->where('status', Branch::STATUS_VERIFIED)
             ->whereHas('agencies', function ($q) {
-                $q->where('is_verified', true);
+                $q->where('status', Branch::STATUS_VERIFIED);
             })
             ->withAvg('reviews', 'rate')
             ->orderByDesc('reviews_avg_rate')
@@ -50,7 +50,7 @@ class BranchRepository
 
     public function getUserBranches(array $branchIds)
     {
-        return  Branch::with(['location', 'subscriptions.plans', 'agencies.locations', 'subscriptionLink'])
+        return  Branch::with(['location', 'subscriptions.plans', 'agencies.locations', 'agencies.registrant.employee', 'agencies.registrant.client', 'agencies.registrant.systemOwner', 'subscriptionLink'])
             ->whereIn('branch_id', $branchIds)
             ->get()
             ->keyBy('branch_id');
@@ -64,9 +64,9 @@ class BranchRepository
             'location',
             'contracts',
         ])
-            ->where('is_verified', true)
+            ->where('status', Branch::STATUS_VERIFIED)
             ->whereHas('agencies', function ($q) {
-                $q->where('is_verified', true);
+                $q->where('status', Branch::STATUS_VERIFIED);
             })
             ->withAvg('reviews', 'rate')
             ->withCount('reviews')
@@ -88,7 +88,7 @@ class BranchRepository
                 !empty($filters['plan_code']) && $filters['plan_code'] !== 'C',
                 function ($query) use ($filters) {
                     $query->whereHas('subscriptions.plans', function ($q) use ($filters) {
-                        $q->where('plan_code', $filters['plan_code']);
+                        $q->whereIn('plan_code', [$filters['plan_code'], 'C']);
                     });
                 }
             );

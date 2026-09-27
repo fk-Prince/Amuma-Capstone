@@ -1,7 +1,7 @@
 ﻿<script setup lang="ts">
 import { ref, computed } from "vue";
 import Icon from "./Icon.vue";
-useHead({ title: "Settings" });
+useHead({ title: "Monitoring" });
 definePageMeta({
     layout: "portal",
     middleware: "portal",

@@ -3,15 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Service\Geo\GeoNamesService;
+use App\Service\Geo\IpGeolocationService;
 use App\Service\Geo\NominatimService;
 use App\Service\Geo\OverpassService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class NominatimController extends Controller
 {
 
-    public function __construct(private GeoNamesService $geoNames, private NominatimService $nominatimService, private OverpassService $overpassService) {}
+    public function __construct(
+        private GeoNamesService $geoNames,
+        private NominatimService $nominatimService,
+        private OverpassService $overpassService,
+        private IpGeolocationService $ipGeolocationService,
+    ) {}
+
+    public function ipLocate(Request $request)
+    {
+        $ip = $request->query('ip') ?: $request->ip();
+
+        $data = $this->ipGeolocationService->locate($ip);
+
+        return response()->json([
+            'success' => (bool) $data,
+            'data' => $data,
+        ]);
+    }
 
     public function searchLocation(Request $request)
     {

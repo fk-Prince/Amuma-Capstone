@@ -3,8 +3,6 @@ import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
-import { computed } from "vue";
-import { useBranchPlan } from "~/composables/useBranchPlan";
 const { canCreate } = usePermissions();
 
 defineProps<{
@@ -18,23 +16,12 @@ const emit = defineEmits<{
     addEmployee: [];
 }>();
 
-const { hasPlan } = useBranchPlan();
-
 const tabs = [
     { label: "All Employees", value: "All Employees" },
     { label: "Homecare Employees", value: "Homecare Employees" },
     { label: "Facility Employees", value: "Facility Employees" },
 ];
 
-const filteredTabs = computed(() => {
-    return tabs.filter((tab) => {
-        if (tab.value === "All Employees") return true;
-        if (tab.value === "Homecare Employees") return hasPlan("A");
-        if (tab.value === "Facility Employees") return hasPlan("B");
-
-        return false;
-    });
-});
 </script>
 
 <template>
@@ -62,7 +49,7 @@ const filteredTabs = computed(() => {
 
             <div class="flex items-center gap-3">
                 <Combobox
-                    :items="filteredTabs"
+                    :items="tabs"
                     :model-value="activeTab"
                     @update:model-value="emit('update:activeTab', $event)"
                     placeholder="Select employee type"

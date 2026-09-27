@@ -1,10 +1,10 @@
 <template>
-    <div class="flex h-screen-header min-h-0 w-full dark:bg-surface">
+    <div class="absolute inset-0 flex min-h-0 w-full dark:bg-surface">
         <div
             class="grid h-full min-h-0 w-full grid-cols-1 gap-0 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-5"
         >
             <aside
-                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-2xl lg:border lg:border-slate-200 dark:bg-secondary dark:lg:border-white/10"
+                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-lg lg:border lg:border-slate-200 dark:bg-secondary dark:lg:border-white/10"
             >
                 <div
                     class="shrink-0 border-b border-slate-200 p-4 dark:border-white/10"
@@ -74,7 +74,6 @@
                         placeholder="Search family or resident..."
                         is-search
                         class="mt-3"
-                        @keyup.enter="fetchConversations"
                     />
                 </div>
 
@@ -96,68 +95,77 @@
                         No conversations yet.
                     </p>
 
-                    <button
-                        v-for="item in conversations"
-                        :key="item.conversation_id"
-                        type="button"
-                        class="mb-1 w-full rounded-xl border px-3 py-2.5 text-left transition active:scale-[0.99] dark:border-white/10"
-                        :class="
-                            item.conversation_id === activeId
-                                ? 'border-primary-200 bg-primary-50 dark:border-primary-500/20 dark:bg-primary-500/10'
-                                : 'border-transparent hover:bg-slate-50 dark:hover:bg-white/5'
-                        "
-                        @click="openThread(item.conversation_id)"
+                    <p
+                        v-else-if="!visibleConversations.length"
+                        class="px-3 py-10 text-center text-sm text-slate-400 dark:text-gray-500"
                     >
-                        <div class="flex min-w-0 items-start gap-2.5">
-                            <MessageAvatar
-                                :src="item.avatar"
-                                :name="item.client_name ?? item.staff_name"
-                            />
+                        No family or resident matches "{{ query.trim() }}".
+                    </p>
 
-                            <div class="min-w-0 flex-1">
-                                <div
-                                    class="flex min-w-0 items-center justify-between gap-2"
-                                >
+                    <template v-else>
+                        <button
+                            v-for="item in visibleConversations"
+                            :key="item.conversation_id"
+                            type="button"
+                            class="mb-1 w-full rounded-xl border px-3 py-2.5 text-left transition active:scale-[0.99] dark:border-white/10"
+                            :class="
+                                item.conversation_id === activeId
+                                    ? 'border-primary-200 bg-primary-50 dark:border-primary-500/20 dark:bg-primary-500/10'
+                                    : 'border-transparent hover:bg-slate-50 dark:hover:bg-white/5'
+                            "
+                            @click="openThread(item.conversation_id)"
+                        >
+                            <div class="flex min-w-0 items-start gap-2.5">
+                                <MessageAvatar
+                                    :src="item.avatar"
+                                    :name="item.client_name ?? item.staff_name"
+                                />
+    
+                                <div class="min-w-0 flex-1">
+                                    <div
+                                        class="flex min-w-0 items-center justify-between gap-2"
+                                    >
+                                        <p
+                                            class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 dark:text-white"
+                                        >
+                                            {{
+                                                item.client_name ??
+                                                item.staff_name ??
+                                                "Conversation"
+                                            }}
+                                        </p>
+    
+                                        <span
+                                            v-if="item.unread_count"
+                                            class="shrink-0 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white"
+                                        >
+                                            {{ item.unread_count }}
+                                        </span>
+                                    </div>
+    
                                     <p
-                                        class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 dark:text-white"
+                                        v-if="item.patient_names?.length"
+                                        class="mt-0.5 truncate text-[11px] text-primary-600 dark:text-primary-300"
                                     >
-                                        {{
-                                            item.client_name ??
-                                            item.staff_name ??
-                                            "Conversation"
-                                        }}
+                                        Patient:
+                                        {{ patientLabel(item.patient_names) }}
                                     </p>
-
-                                    <span
-                                        v-if="item.unread_count"
-                                        class="shrink-0 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white"
+    
+                                    <p
+                                        class="mt-1 truncate text-xs text-slate-400 dark:text-gray-500"
                                     >
-                                        {{ item.unread_count }}
-                                    </span>
+                                        {{ item.last_message ?? "No messages yet" }}
+                                    </p>
                                 </div>
-
-                                <p
-                                    v-if="item.patient_names?.length"
-                                    class="mt-0.5 truncate text-[11px] text-primary-600 dark:text-primary-300"
-                                >
-                                    Patient:
-                                    {{ patientLabel(item.patient_names) }}
-                                </p>
-
-                                <p
-                                    class="mt-1 truncate text-xs text-slate-400 dark:text-gray-500"
-                                >
-                                    {{ item.last_message ?? "No messages yet" }}
-                                </p>
                             </div>
-                        </div>
-                    </button>
+                        </button>
+                    </template>
                 </div>
             </aside>
 
             <div
                 :class="[
-                    'h-full min-h-0 flex-col lg:static lg:z-auto lg:flex',
+                    'h-full min-h-0 flex-col lg:static lg:z-auto lg:flex lg:rounded-lg',
                     mobileThreadOpen
                         ? 'fixed inset-0 z-50 flex h-[100dvh] w-full bg-white dark:bg-secondary'
                         : 'hidden',
@@ -178,6 +186,7 @@
                             ? (activeConversation?.patient_names ?? [])
                             : []
                     "
+                    patients-label="Family of"
                     :channel="threadChannel"
                     :conversation-id="activeId"
                     :loading="loadingThread"
@@ -538,6 +547,9 @@ async function switchTab(value: Tab) {
     tab.value = value;
     activeId.value = null;
     messages.value = [];
+    conversations.value = [];
+    query.value = "";
+    mobileThreadOpen.value = false;
 
     await fetchConversations();
 }
@@ -611,23 +623,39 @@ async function startColleagueConversation(row: Colleague) {
     }
 }
 
+function openFamilyConversation(
+    client: { client_id: number } | { client_uuid: string },
+) {
+    return messageService.open({
+        branch_uuid: uuid.value,
+        ...client,
+    });
+}
+
+function showOpenedConversation(res: any) {
+    const summary: ConversationSummary | undefined = res?.conversation;
+
+    if (!summary?.conversation_id) return;
+
+    if (
+        !conversations.value.some(
+            (c) => c.conversation_id === summary.conversation_id,
+        )
+    ) {
+        conversations.value.unshift(summary);
+    }
+
+    activeId.value = summary.conversation_id;
+    messages.value = res?.messages ?? [];
+    mobileThreadOpen.value = true;
+}
+
 async function startConversation(row: MessageRecipient) {
     try {
-        const res = await messageService.open({
-            branch_uuid: uuid.value,
-            client_id: row.client_id,
-        });
-
+        showOpenedConversation(
+            await openFamilyConversation({ client_id: row.client_id }),
+        );
         composerOpen.value = false;
-
-        await fetchConversations();
-
-        const id = res?.conversation?.conversation_id;
-
-        if (id) {
-            activeId.value = id;
-            messages.value = res?.messages ?? [];
-        }
     } catch (err: any) {
         error(err?.message ?? "Unable to open that conversation.");
     }
@@ -636,6 +664,18 @@ async function startConversation(row: MessageRecipient) {
 const activeConversation = computed(() =>
     conversations.value.find((c) => c.conversation_id === activeId.value),
 );
+
+const visibleConversations = computed(() => {
+    const term = query.value.trim().toLowerCase();
+
+    if (!term || tab.value !== "families") return conversations.value;
+
+    return conversations.value.filter((c) =>
+        [c.client_name, ...(c.patient_names ?? [])].some((name) =>
+            name?.toLowerCase().includes(term),
+        ),
+    );
+});
 
 const activeUnread = computed(
     () => activeConversation.value?.unread_count ?? 0,
@@ -658,10 +698,13 @@ const threadSubtitle = computed(() => {
 
     if (!row.patient_names?.length) return null;
 
-    return `Caring for ${patientLabel(row.patient_names)}`;
+    return `Family of ${patientLabel(row.patient_names)}`;
 });
 
+let listRequest = 0;
+
 async function fetchConversations() {
+    const request = ++listRequest;
     loadingList.value = true;
 
     try {
@@ -672,15 +715,18 @@ async function fetchConversations() {
                   })
                 : await messageService.branchConversations({
                       branch_uuid: uuid.value,
-                      search: query.value,
                   });
+
+        if (request !== listRequest) return;
 
         conversations.value = res ?? [];
     } catch (err: any) {
+        if (request !== listRequest) return;
+
         error(err?.message ?? "Unable to load conversations.");
         conversations.value = [];
     } finally {
-        loadingList.value = false;
+        if (request === listRequest) loadingList.value = false;
     }
 }
 
@@ -748,13 +794,7 @@ function patchPreview(conversationId: number, body: string) {
 const listChannels = computed(() => {
     const userUuid = (user.value as any)?.uuid;
 
-    const channels = userUuid ? [`User.Messages.${userUuid}`] : [];
-
-    if (tab.value !== "colleagues" && uuid.value) {
-        channels.push(`Branch.Messages.${uuid.value}`);
-    }
-
-    return channels;
+    return userUuid ? [`User.Messages.${userUuid}`] : [];
 });
 
 const threadChannel = computed(() =>
@@ -789,6 +829,8 @@ function bindList(channels: string[]) {
     if (!joined.length) return;
 
     listHandler = (payload: any) => {
+        if (payload.branch_uuid && payload.branch_uuid !== uuid.value) return;
+
         const row = conversations.value.find(
             (c) => c.conversation_id === payload.conversation_id,
         );
@@ -822,7 +864,32 @@ function bindList(channels: string[]) {
 watch(listChannels, bindList, { immediate: true });
 
 onMounted(async () => {
-    await fetchConversations();
+    const clientUuid =
+        typeof route.query.client === "string" ? route.query.client : null;
+
+    if (clientUuid) {
+        loadingThread.value = true;
+        mobileThreadOpen.value = true;
+    }
+
+    const [, opened] = await Promise.all([
+        fetchConversations(),
+        clientUuid
+            ? openFamilyConversation({ client_uuid: clientUuid }).catch(
+                  (err: any) => {
+                      error(
+                          err?.message ?? "Unable to open that conversation.",
+                      );
+                      return null;
+                  },
+              )
+            : null,
+    ]);
+
+    if (opened) showOpenedConversation(opened);
+    else if (clientUuid) mobileThreadOpen.value = false;
+
+    loadingThread.value = false;
 });
 
 onBeforeUnmount(() => {

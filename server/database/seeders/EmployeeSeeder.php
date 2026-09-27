@@ -7,7 +7,9 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\EmployeePermission;
+use App\Models\EmployeeService;
 use App\Models\Module;
+use App\Models\Service;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +18,7 @@ use Illuminate\Support\Str;
 class EmployeeSeeder extends Seeder
 {
     private const ROLES = [
-        'administrator',
+        'branch_manager',
         'admission',
         'accounting',
         'nurse',
@@ -31,7 +33,7 @@ class EmployeeSeeder extends Seeder
 
     public function run(): void
     {
-        $branches = Branch::all();
+        $branches = Branch::orderBy('branch_id')->limit(1)->get();
 
         if ($branches->isEmpty()) {
             $this->command->warn('No branches found. Seed branches first.');
@@ -58,9 +60,8 @@ class EmployeeSeeder extends Seeder
                 $employee = Employee::updateOrCreate(
                     ['user_id' => $user->user_id],
                     [
-                        'first_name' => Str::title($role) . $suffix,
+                        'first_name' => Str::title(str_replace('_', ' ', $role)) . $suffix,
                         'last_name' => 'Account',
-                        'status' => Employee::STATUS_ACTIVE,
                         'avatar' => 'https://ui-avatars.com/api/?name=' . strtoupper(substr($role, 0, 2)),
                         'birth_date' => now()->subYears(25 + $index)->subDays(($index * 10 + $n) * 30)->toDateString(),
                         'phone_number' => '917' . str_pad((string) (1000000 + $index * 10 + $n), 7, '0', STR_PAD_LEFT),
@@ -68,15 +69,15 @@ class EmployeeSeeder extends Seeder
                 );
 
 
-                $assignmentType = 'both';
+                $assignmentType = in_array($role, ['nurse', 'caregiver'], true) ? 'both' : null;
 
                 if ($role === 'caregiver') {
-                    $rotation = ['both', 'online', 'facility', 'both', 'online'];
+                    $rotation = ['online', 'facility'];
                     $assignmentType = $rotation[($n - 1) % count($rotation)];
                 }
 
                 foreach ($branches as $branch) {
-                    EmployeeBranch::firstOrCreate(
+                    $employeeBranch = EmployeeBranch::firstOrCreate(
                         [
                             'employee_id' => $employee->employee_id,
                             'branch_id' => $branch->branch_id,
@@ -84,8 +85,23 @@ class EmployeeSeeder extends Seeder
                         [
                             'role_name' => $role,
                             'assignment_type' => $assignmentType,
+                            'status' => EmployeeBranch::STATUS_ACTIVE,
                         ]
                     );
+
+                    if ($role === 'nurse') {
+                        $service = Service::where('branch_id', $branch->branch_id)->inRandomOrder()->first();
+
+                        if ($service) {
+                            EmployeeService::firstOrCreate(
+                                ['employee_branch_id' => $employeeBranch->employee_branch_id],
+                                [
+                                    'service_id' => $service->service_id,
+                                    'is_active' => true,
+                                ]
+                            );
+                        }
+                    }
 
                     foreach (RoleEnum::permissionsFor($role) as $moduleName => $actions) {
                         $module = $modulesByName->get($moduleName);

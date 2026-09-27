@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-type ApprovedStatus = "active" | "inactive" | "expired";
+type ApprovedStatus = "active" | "inactive" | "expired" | "expiring";
 type StatSelectPayload =
     | { view: "requests" }
     | { view: "approved"; status: ApprovedStatus }
@@ -25,14 +25,13 @@ const props = withDefaults(
 const visibleCount = computed(
     () =>
         (props.showRequests ? 1 : 0) +
-        (props.showApproved ? 3 : 0) +
+        (props.showApproved ? 4 : 0) +
         (props.showRejected ? 1 : 0),
 );
 
-// No max-width cap: a short row should still span the page rather than
-// trailing off into empty space beside it.
 const gridClass = computed(() => {
-    if (visibleCount.value >= 4) return "sm:grid-cols-2 lg:grid-cols-4";
+    if (visibleCount.value >= 5) return "sm:grid-cols-2 lg:grid-cols-5";
+    if (visibleCount.value === 4) return "sm:grid-cols-2 lg:grid-cols-4";
     if (visibleCount.value === 3) return "sm:grid-cols-3";
     if (visibleCount.value === 2) return "sm:grid-cols-2";
 
@@ -68,17 +67,16 @@ function select(payload: StatSelectPayload) {
 </script>
 
 <template>
-    <div class="w-full">
+    <div class="w-full pt-1">
         <div class="grid grid-cols-1 gap-4" :class="gridClass">
-            <!-- Requests (pending) -->
             <button
                 v-if="showRequests"
                 type="button"
                 :aria-pressed="isRequestsActive"
-                class="group relative w-full overflow-hidden rounded-2xl border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-amber-200"
+                class="group relative w-full overflow-hidden rounded-lg border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-amber-200"
                 :class="
                     isRequestsActive
-                        ? '-translate-y-1 border-amber-300 shadow-xl ring-2 ring-amber-100 dark:ring-amber-500/20'
+                        ? 'border-amber-300 ring-2 ring-amber-100 dark:ring-amber-500/20'
                         : 'border-slate-200 dark:border-white/10'
                 "
                 @click="select({ view: 'requests' })"
@@ -90,7 +88,7 @@ function select(payload: StatSelectPayload) {
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-500/10"
+                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-500/10"
                         >
                             <svg
                                 class="h-5 w-5 text-amber-600 dark:text-amber-300"
@@ -145,10 +143,10 @@ function select(payload: StatSelectPayload) {
                 v-if="showApproved"
                 type="button"
                 :aria-pressed="isApprovedActive('active')"
-                class="group relative w-full overflow-hidden rounded-2xl border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-accent-200"
+                class="group relative w-full overflow-hidden rounded-lg border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-accent-200"
                 :class="
                     isApprovedActive('active')
-                        ? '-translate-y-1 border-accent-300 shadow-xl ring-2 ring-accent-100 dark:ring-accent-500/20'
+                        ? 'border-accent-300 ring-2 ring-accent-100 dark:ring-accent-500/20'
                         : 'border-slate-200 dark:border-white/10'
                 "
                 @click="select({ view: 'approved', status: 'active' })"
@@ -160,7 +158,7 @@ function select(payload: StatSelectPayload) {
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-50 dark:bg-accent-500/10"
+                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-50 dark:bg-accent-500/10"
                         >
                             <svg
                                 class="h-5 w-5 text-accent-600 dark:text-accent-300"
@@ -215,7 +213,7 @@ function select(payload: StatSelectPayload) {
             <!-- Active branches -->
             <div
                 v-if="showApproved"
-                class="group relative w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm dark:border-white/10 dark:bg-secondary"
+                class="group relative w-full overflow-hidden rounded-lg border border-slate-200 bg-white p-5 text-left shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary-100/50 blur-2xl dark:bg-primary-500/10"
@@ -224,7 +222,7 @@ function select(payload: StatSelectPayload) {
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 dark:bg-primary-500/10"
+                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50 dark:bg-primary-500/10"
                         >
                             <svg
                                 class="h-5 w-5 text-primary dark:text-primary-300"
@@ -280,15 +278,84 @@ function select(payload: StatSelectPayload) {
                 </div>
             </div>
 
+            <button
+                v-if="showApproved"
+                type="button"
+                :aria-pressed="isApprovedActive('expiring')"
+                class="group relative w-full overflow-hidden rounded-lg border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-amber-200"
+                :class="
+                    isApprovedActive('expiring')
+                        ? 'border-amber-300 ring-2 ring-amber-100 dark:ring-amber-500/20'
+                        : 'border-slate-200 dark:border-white/10'
+                "
+                @click="select({ view: 'approved', status: 'expiring' })"
+            >
+                <div
+                    class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-amber-100/50 dark:bg-amber-500/10 blur-2xl"
+                />
+
+                <div class="relative">
+                    <div class="flex items-center justify-between">
+                        <div
+                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-500/10"
+                        >
+                            <svg
+                                class="h-5 w-5 text-amber-600 dark:text-amber-300"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="M12 7v5l3 3" />
+                            </svg>
+                        </div>
+
+                        <span
+                            class="rounded-full bg-amber-50 dark:bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:text-amber-300"
+                        >
+                            Soon
+                        </span>
+                    </div>
+
+                    <p
+                        class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                    >
+                        Expiring Soon
+                    </p>
+
+                    <template v-if="!loading">
+                        <p
+                            class="mt-1 text-3xl font-bold tabular-nums text-slate-800 dark:text-white"
+                        >
+                            {{ overview.expiring_soon ?? 0 }}
+                        </p>
+                        <p
+                            class="mt-3 text-xs text-amber-600 dark:text-amber-300"
+                        >
+                            Ends within a week
+                        </p>
+                    </template>
+                    <template v-else>
+                        <div
+                            class="mt-2 h-8 w-14 animate-pulse rounded bg-slate-200 dark:bg-white/10"
+                        />
+                        <div
+                            class="mt-3 h-3 w-28 animate-pulse rounded bg-slate-100 dark:bg-white/5"
+                        />
+                    </template>
+                </div>
+            </button>
+
             <!-- Expired -->
             <button
                 v-if="showApproved"
                 type="button"
                 :aria-pressed="isApprovedActive('expired')"
-                class="group relative w-full overflow-hidden rounded-2xl border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200"
+                class="group relative w-full overflow-hidden rounded-lg border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200"
                 :class="
                     isApprovedActive('expired')
-                        ? '-translate-y-1 border-rose-300 shadow-xl ring-2 ring-rose-100 dark:ring-rose-500/20'
+                        ? 'border-rose-300 ring-2 ring-rose-100 dark:ring-rose-500/20'
                         : 'border-slate-200 dark:border-white/10'
                 "
                 @click="select({ view: 'approved', status: 'expired' })"
@@ -300,7 +367,7 @@ function select(payload: StatSelectPayload) {
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-500/10"
+                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-500/10"
                         >
                             <svg
                                 class="h-5 w-5 text-rose-500 dark:text-rose-300"
@@ -356,10 +423,10 @@ function select(payload: StatSelectPayload) {
                 v-if="showRejected"
                 type="button"
                 :aria-pressed="isRejectedActive"
-                class="group relative w-full overflow-hidden rounded-2xl border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200"
+                class="group relative w-full overflow-hidden rounded-lg border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-rose-200"
                 :class="
                     isRejectedActive
-                        ? '-translate-y-1 border-rose-300 shadow-xl ring-2 ring-rose-100 dark:ring-rose-500/20'
+                        ? 'border-rose-300 ring-2 ring-rose-100 dark:ring-rose-500/20'
                         : 'border-slate-200 dark:border-white/10'
                 "
                 @click="select({ view: 'rejected' })"
@@ -371,7 +438,7 @@ function select(payload: StatSelectPayload) {
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-500/10"
+                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-500/10"
                         >
                             <svg
                                 class="h-5 w-5 text-rose-500 dark:text-rose-300"

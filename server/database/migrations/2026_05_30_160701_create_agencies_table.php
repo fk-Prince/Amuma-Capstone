@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('id_front')->nullable();
             $table->string('id_back')->nullable();
             $table->string('document')->nullable();
-            $table->boolean('is_verified')->default(false);
+            $table->enum('status', ['pending', 'verified', 'rejected'])->default('pending');
             $table->timestamps();
         });
     }

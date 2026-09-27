@@ -48,6 +48,15 @@ class NotificationRepository
             ->update(['has_read' => true]);
     }
 
+    public function sentToday(int|string $userId, int|string $branchId, string $messageType): bool
+    {
+        return Notification::where('to_user_id', $userId)
+            ->where('branch_id', $branchId)
+            ->where('message_type', $messageType)
+            ->whereDate('created_at', today())
+            ->exists();
+    }
+
     public function create(array $payload)
     {
         return Notification::create($payload);

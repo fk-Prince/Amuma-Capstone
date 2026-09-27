@@ -1,5 +1,5 @@
 <template>
-    <section class="w-full">
+    <section class="w-full rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary">
         <div class="mb-5 flex items-center justify-between gap-3">
             <div>
                 <h2
@@ -44,20 +44,37 @@
                     </div>
 
                     <div class="min-w-0 flex-1">
-                        <p
-                            class="truncate text-sm font-semibold text-secondary dark:text-white"
-                        >
-                            {{ member.client?.full_name ?? "Unnamed" }}
-                        </p>
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <p
+                                    class="truncate text-sm font-semibold text-secondary dark:text-white"
+                                >
+                                    {{ member.client?.full_name ?? "Unnamed" }}
+                                </p>
 
-                        <p
-                            class="mt-0.5 text-xs font-medium capitalize text-primary-700 dark:text-primary-300"
-                        >
-                            {{
-                                member.relationship_type ||
-                                "Relationship not set"
-                            }}
-                        </p>
+                                <p
+                                    class="mt-0.5 text-xs font-medium capitalize text-primary-700 dark:text-primary-300"
+                                >
+                                    {{
+                                        member.relationship_type ||
+                                        "Relationship not set"
+                                    }}
+                                </p>
+                            </div>
+
+                            <NuxtLink
+                                v-if="member.client?.uuid && member.have_access"
+                                :to="{
+                                    path: `/app/branches/${route.params.uuid}/messages`,
+                                    query: { client: member.client.uuid },
+                                }"
+                                class="flex shrink-0 items-center gap-1.5 rounded-lg border border-primary-100 px-2.5 py-1.5 text-xs font-semibold text-primary-700 transition hover:border-primary-200 hover:bg-primary-50 dark:border-primary-500/20 dark:text-primary-300 dark:hover:bg-primary-500/10"
+                                :aria-label="`Message ${member.client.full_name ?? 'family member'}`"
+                            >
+                                <MessageSquare class="h-3.5 w-3.5" />
+                                Message
+                            </NuxtLink>
+                        </div>
 
                         <dl class="mt-3 space-y-1.5">
                             <div
@@ -99,7 +116,9 @@
 </template>
 
 <script setup lang="ts">
-import { Briefcase, Mail, Phone } from "lucide-vue-next";
+import { Briefcase, Mail, MessageSquare, Phone } from "lucide-vue-next";
+
+const route = useRoute();
 
 export interface FamilyMember {
     patient_access_id: number;
@@ -108,6 +127,7 @@ export interface FamilyMember {
     is_primary: boolean;
     client: {
         client_id: number;
+        uuid: string | null;
         full_name: string | null;
         phone_number: string | null;
         email: string | null;

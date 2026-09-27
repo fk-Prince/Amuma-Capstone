@@ -4,8 +4,8 @@ import L_module from "leaflet";
 import BaseInput from "~/components/ui/BaseInput.vue";
 
 interface Location {
-    lat: number;
-    lng: number;
+    lat: number | null;
+    lng: number | null;
     label: string;
     street: string;
     city: string;
@@ -22,9 +22,11 @@ const props = withDefaults(
         initialProvince?: string;
         initialCountry?: string;
         mode?: "map" | "type";
+        manualFallback?: boolean;
     }>(),
     {
         mode: "map",
+        manualFallback: false,
     },
 );
 
@@ -40,10 +42,81 @@ const typedAddress = ref("");
 const isLocating = ref(false);
 const typeError = ref("");
 
+const manual = ref(false);
+const manualAddress = ref("");
+const manualError = ref("");
+
+const isIncomplete = (location: Location | null) =>
+    !location?.city || !location.province || !location.country;
+
+function fallBackToManual(text: string): boolean {
+    if (!props.manualFallback) return false;
+
+    manual.value = true;
+    manualAddress.value = text;
+    manualError.value =
+        "We couldn't find that location. Type the full address instead.";
+    selectedLocation.value = null;
+    marker?.remove();
+    marker = null;
+    emit("location-cleared");
+
+    return true;
+}
+
+function applyManualAddress(showError: boolean) {
+    const text = manualAddress.value.trim();
+    const parts = text
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+    const country =
+        parts.length > 3 && /^(ph|philippines)$/i.test(parts[parts.length - 1]!)
+            ? parts.pop()!
+            : "Philippines";
+    const province = parts.length >= 3 ? parts.pop()! : "";
+    const city = parts.length >= 2 ? parts.pop()! : "";
+    const street = parts.join(", ");
+
+    if (!street || !city || !province) {
+        manualError.value = showError
+            ? "Separate the street, city and province with commas, e.g. 123 Rizal St, Davao City, Davao del Sur."
+            : "";
+
+        if (selectedLocation.value) {
+            selectedLocation.value = null;
+            emit("location-cleared");
+        }
+
+        return;
+    }
+
+    manualError.value = "";
+
+    selectedLocation.value = {
+        lat: null,
+        lng: null,
+        label: text,
+        street,
+        city,
+        province,
+        country,
+    };
+
+    confirmLocation();
+}
+
+function onManualInput(value: string | number) {
+    manualAddress.value = String(value);
+    applyManualAddress(false);
+}
+
 watch(
     () => props.mode,
     (next) => {
         typeError.value = "";
+        manual.value = false;
 
         if (next === "type") {
             typedAddress.value = selectedLocation.value?.label ?? "";
@@ -51,10 +124,6 @@ watch(
             return;
         }
 
-        // The map container is hidden (v-show) while in "type" mode with no
-        // selection, so a setView called on it then (e.g. from Clear) can't
-        // reliably take effect. Reapply it here once the container is
-        // visible again and sized.
         nextTick(() => {
             map?.invalidateSize();
 
@@ -73,10 +142,6 @@ async function applyTypedAddress() {
         return;
     }
 
-    // Switching to "type" mode preloads the box with the map pick's own
-    // label. Re-geocoding that unedited text can resolve to a different
-    // point than the one already picked, so an unchanged query just
-    // confirms the existing selection instead.
     if (selectedLocation.value && query === selectedLocation.value.label) {
         confirmLocation();
         return;
@@ -98,6 +163,8 @@ async function applyTypedAddress() {
         const lng = Number(data?.lng);
 
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            if (fallBackToManual(query)) return;
+
             typeError.value =
                 "We couldn't find that address. Try adding the city, or pick it on the map.";
             return;
@@ -106,19 +173,28 @@ async function applyTypedAddress() {
         map?.setView([lat, lng], 16);
         placeMarker(lat, lng);
 
+        const found = await reverseGeocode(lat, lng);
+
+        if (
+            (!found || isIncomplete(selectedLocation.value)) &&
+            fallBackToManual(query)
+        ) {
+            return;
+        }
+
         selectedLocation.value = {
+            ...selectedLocation.value!,
             lat,
             lng,
             label: query,
             street: query,
-            city: "",
-            province: "",
-            country: "",
         };
 
         confirmLocation();
     } catch (error) {
         console.error("[geocode] Failed:", error);
+
+        if (fallBackToManual(query)) return;
 
         typeError.value = "We couldn't look up that address right now.";
     } finally {
@@ -150,7 +226,15 @@ const handleLocation = async (lat: number, lng: number): Promise<void> => {
         country: "",
     };
 
-    await reverseGeocode(lat, lng);
+    const found = await reverseGeocode(lat, lng);
+
+    if (
+        (!found || isIncomplete(selectedLocation.value)) &&
+        fallBackToManual(found ? (selectedLocation.value?.label ?? "") : "")
+    ) {
+        return;
+    }
+
     confirmLocation();
 };
 
@@ -165,7 +249,7 @@ watch(
     },
 );
 
-const reverseGeocode = async (lat: number, lng: number): Promise<void> => {
+const reverseGeocode = async (lat: number, lng: number): Promise<boolean> => {
     try {
         const config = useRuntimeConfig();
         const res = await fetch(
@@ -255,7 +339,11 @@ const reverseGeocode = async (lat: number, lng: number): Promise<void> => {
             province: "",
             country: "",
         };
+
+        return false;
     }
+
+    return true;
 };
 
 const confirmLocation = (): void => {
@@ -337,8 +425,14 @@ const clearSelection = (): void => {
     selectedLocation.value = null;
     typedAddress.value = "";
     typeError.value = "";
+    manual.value = false;
+    manualAddress.value = "";
+    manualError.value = "";
 
-    map?.setView(defaultView(), 13);
+    nextTick(() => {
+        map?.invalidateSize();
+        map?.setView(defaultView(), 13);
+    });
 
     emit("location-cleared");
 };
@@ -374,12 +468,26 @@ onMounted(async () => {
         attribution: "© OpenStreetMap contributors",
     }).addTo(map);
 
-    // Leaflet measures the container once at creation time. Inside a
-    // modal or any other container that's still transitioning/settling
-    // when this runs, that measurement can come back zero-sized and the
-    // map never repaints on its own afterward.
     requestAnimationFrame(() => map?.invalidateSize());
     setTimeout(() => map?.invalidateSize(), 300);
+
+    if (
+        props.manualFallback &&
+        !(props.initialLat && props.initialLng) &&
+        props.initialStreet
+    ) {
+        manual.value = true;
+        manualAddress.value =
+            props.initialCity && props.initialStreet.includes(props.initialCity)
+                ? props.initialStreet
+                : [
+                      props.initialStreet,
+                      props.initialCity,
+                      props.initialProvince,
+                  ]
+                      .filter(Boolean)
+                      .join(", ");
+    }
 
     if (props.initialLat && props.initialLng) {
         placeMarker(props.initialLat, props.initialLng);
@@ -436,7 +544,19 @@ onUnmounted(() => {
 </script>
 <template>
     <div class="flex flex-col gap-2 w-full z-20">
+        <BaseInput
+            v-if="manual"
+            :model-value="manualAddress"
+            label="Location"
+            @update:model-value="onManualInput"
+            placeholder="House/unit no., street, barangay, city, province"
+            :error="manualError"
+            @focusout="applyManualAddress(true)"
+            @keydown.enter.prevent="applyManualAddress(true)"
+        />
+
         <div
+            v-show="!manual"
             class="flex items-start gap-2 bg-white dark:bg-secondary border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm shadow-sm min-h-[48px]"
         >
             <svg
@@ -467,6 +587,7 @@ onUnmounted(() => {
 
             <button
                 v-if="selectedLocation"
+                type="button"
                 @click="clearSelection"
                 class="text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors shrink-0"
                 title="Clear"
@@ -489,7 +610,7 @@ onUnmounted(() => {
         </div>
 
         <div
-            v-show="props.mode === 'type'"
+            v-show="!manual && props.mode === 'type'"
             class="flex flex-col gap-2 sm:flex-row"
         >
             <BaseInput
@@ -497,7 +618,7 @@ onUnmounted(() => {
                 class="flex-1"
                 placeholder="House/unit no., street, barangay, city"
                 :error="typeError"
-                @keyup.enter="applyTypedAddress"
+                @keydown.enter.prevent="applyTypedAddress"
             />
 
             <button
@@ -511,13 +632,14 @@ onUnmounted(() => {
         </div>
 
         <div
-            v-show="props.mode === 'map' || selectedLocation"
+            v-show="!manual && (props.mode === 'map' || selectedLocation)"
             ref="mapContainerEl"
             class="w-full h-[400px] z-20 rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm"
         />
 
-        <div v-show="props.mode === 'map'" class="flex gap-2">
+        <div v-show="!manual && props.mode === 'map'" class="flex gap-2">
             <button
+                type="button"
                 @click="useMyLocation"
                 class="flex items-center gap-2 px-5 py-2 text-sm bg-white dark:bg-secondary dark:text-white border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors shadow-sm"
             >

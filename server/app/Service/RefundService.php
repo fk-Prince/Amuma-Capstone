@@ -64,7 +64,6 @@ class RefundService
     public function getCreditableAmount(Invoice $invoice)
     {
         $invoice->loadMissing('allocations.refundAllocations.refund.transaction', 'invoiceAdjustments');
-
         return round(max(0, $this->getNetPaidAmount($invoice) - (float) $invoice->adjusted_total), 2);
     }
 
@@ -357,11 +356,7 @@ class RefundService
         $this->cancelInvoice($invoice, $reason);
     }
 
-    /*
-      Writes the credit note that cancels what is left of the bill. The credit on
-      the account follows from the adjustment itself, so nothing here decides how
-      much money is owed back.
-    */
+
     private function cancelInvoice(Invoice $invoice, string $reason): void
     {
         if (in_array($invoice->status, Invoice::CLOSED_STATUSES, true)) {
@@ -395,11 +390,6 @@ class RefundService
         return $this->refundRepository->creditFor($patientId);
     }
 
-    /*
-      Hands the credit on the account over to a withdrawal. Whole credits are
-      claimed in the order they were granted, and the last one is split when the
-      family asks for less than it holds.
-    */
     public function withdraw(
         object $patient,
         array $payload,

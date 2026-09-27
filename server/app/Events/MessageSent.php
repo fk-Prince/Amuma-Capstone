@@ -8,14 +8,10 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 
 class MessageSent implements ShouldBroadcastNow
 {
-    /**
-     * @param string[] $channelNames Who should receive this message. A family
-     *   thread goes to the branch inbox and the one client; a staff thread
-     *   goes only to the two employees, never branch-wide.
-     */
     public function __construct(
         private Message $message,
-        private array $channelNames
+        private array $channelNames,
+        private ?string $branchUuid = null
     ) {}
 
     public function broadcastOn(): array
@@ -31,6 +27,7 @@ class MessageSent implements ShouldBroadcastNow
         return [
             ...$this->message->toChat(),
             'conversation_id' => $this->message->conversation_id,
+            'branch_uuid' => $this->branchUuid,
         ];
     }
 

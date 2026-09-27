@@ -81,11 +81,11 @@ class DischargeCalculator
             'total_refund_amount' => $totalRefund,
 
             'consumed_days' => $plan['consumed_days'],
-            'remaining_days' => $period->remainingDays(),
-            'period_days' => $period->totalDays(),
-            'period_start' => $period->start_date,
-            'period_end' => $period->end_date,
-            'daily_rate' => round($period->dailyRate(), 2),
+            'remaining_days' => $plan['remaining_days'],
+            'period_days' => $plan['period_days'],
+            'period_start' => $plan['period_start'],
+            'period_end' => $plan['period_end'],
+            'daily_rate' => $plan['daily_rate'],
             'period_price' => $plan['period_price'],
             'invoice_total' => $plan['period_price'],
             'invoice_code' => $invoice->invoice_code,
@@ -144,12 +144,14 @@ class DischargeCalculator
         $contract = $period->branchContract;
         $cycle = $contract ? self::getBillingCycle($contract) : '';
 
-        $consumedDays = $period->consumedDays();
-        $periodPrice = self::periodPrice($period);
-        $dailyRate = $period->dailyRate();
+        $chain = self::chain($period);
+        $window = self::chainWindow($chain);
+
+        $consumedDays = $window['consumed_days'];
+        $periodPrice = $window['price'];
 
         $withinWindow = ($cycle === 'YEARLY' && self::isWithinYearlyHalfRefundWindow($admission))
-            || ($cycle === 'MONTHLY' && self::isWithinMonthlyHalfRefundWindow($period));
+            || ($cycle === 'MONTHLY' && $consumedDays < self::MONTHLY_HALF_REFUND_WINDOW_DAYS);
 
         $retainedHalf = 0.0;
         $daysStayedAmount = 0.0;
@@ -159,7 +161,7 @@ class DischargeCalculator
             $retainedHalf = round($periodPrice / 2, 2);
             $daysStayedAmount = $cycle === 'MONTHLY'
                 ? 0.0
-                : round($dailyRate * $consumedDays, 2);
+                : round((float) $chain->sum(fn(AdmissionPeriod $link) => $link->dailyRate() * $link->consumedDays()), 2);
 
             $periodKeep = round(min($periodPrice, $retainedHalf + $daysStayedAmount), 2);
         }
@@ -178,20 +180,23 @@ class DischargeCalculator
 
         $entries = collect();
 
-        $currentLines = $period->invoiceAdmissionLines()->with('invoice')->get()->values();
+        $currentLines = $chain
+            ->flatMap(fn(AdmissionPeriod $link) => $link->invoiceAdmissionLines()->with('invoice')->get()
+                ->map(fn($line) => ['line' => $line, 'period' => $link]))
+            ->values();
         $assignedCredit = 0.0;
 
-        foreach ($currentLines as $index => $line) {
+        foreach ($currentLines as $index => $current) {
             $credit = $index === $currentLines->count() - 1
                 ? round($periodCredit - $assignedCredit, 2)
-                : round((float) $line->price * $creditRate, 2);
+                : round((float) $current['line']->price * $creditRate, 2);
 
             $assignedCredit = round($assignedCredit + $credit, 2);
 
             $entries->push([
                 'scope' => 'current',
-                'line' => $line,
-                'period' => $period,
+                'line' => $current['line'],
+                'period' => $current['period'],
                 'credit' => $credit,
             ]);
         }
@@ -255,6 +260,11 @@ class DischargeCalculator
 
         return [
             'within_window' => $withinWindow,
+            'period_start' => $window['start'],
+            'period_end' => $window['end'],
+            'period_days' => $window['total_days'],
+            'remaining_days' => $window['total_days'] - $consumedDays,
+            'daily_rate' => $window['total_days'] > 0 ? round($periodPrice / $window['total_days'], 2) : 0.0,
             'period_price' => $periodPrice,
             'period_keep' => $periodKeep,
             'retained_half' => $retainedHalf,
@@ -262,6 +272,43 @@ class DischargeCalculator
             'consumed_days' => $consumedDays,
             'invoices' => $invoices,
             'entries' => $entries->map(fn(array $entry) => $entry + $shares[$entry['line']->invoice_admission_id])->values(),
+        ];
+    }
+
+    // Walks parent_admission_period_id up through every accommodation change
+    // and extension that produced this period, oldest first, ending with the
+    // period being discharged from. Used so the refund window counts days
+    // from where the resident's stay actually began, not from the last change.
+    public static function chain(AdmissionPeriod $period)
+    {
+        $chain = collect();
+        $current = $period;
+
+        while ($current) {
+            $chain->prepend($current);
+            $current = $current->parentPeriod;
+        }
+
+        return $chain;
+    }
+
+    public static function chainWindow($chain): array
+    {
+        $start = Carbon::parse($chain->first()->start_date)->startOfDay();
+        $end = Carbon::parse($chain->last()->end_date)->startOfDay();
+        $today = now()->startOfDay();
+
+        $totalDays = max(1, (int) $start->diffInDays($end));
+        $consumedDays = $today->lessThan($start)
+            ? 0
+            : (int) min($totalDays, $start->diffInDays($today) + 1);
+
+        return [
+            'start' => $chain->first()->start_date,
+            'end' => $chain->last()->end_date,
+            'total_days' => $totalDays,
+            'consumed_days' => $consumedDays,
+            'price' => $chain->last()->chargedAmount(),
         ];
     }
 
@@ -345,10 +392,6 @@ class DischargeCalculator
         return $days !== null && $days <= self::YEARLY_HALF_REFUND_WINDOW_DAYS;
     }
 
-    public static function isWithinMonthlyHalfRefundWindow(AdmissionPeriod $period): bool
-    {
-        return $period->consumedDays() < self::MONTHLY_HALF_REFUND_WINDOW_DAYS;
-    }
 
     public static function getContractPrice(mixed $contract)
     {

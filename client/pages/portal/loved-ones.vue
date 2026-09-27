@@ -1,29 +1,8 @@
 ﻿<template>
-    <div class="min-h-full p-4 sm:p-6 lg:p-8 space-y-5">
+    <div class="min-h-full first:space-y-5">
         <div v-if="isLoading" class="space-y-5 animate-pulse">
-            <!-- <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-full bg-gray-200 shrink-0 dark:bg-white/15"></div>
-
-                <div
-                    class="flex-1 flex items-center gap-3 sm:gap-4 overflow-hidden px-1 py-1"
-                >
-                    <div
-                        v-for="item in 5"
-                        :key="item"
-                        class="flex shrink-0 flex-col items-center gap-1.5"
-                    >
-                        <div
-                            class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-200 dark:bg-white/15"
-                        ></div>
-                        <div class="h-3 w-12 rounded bg-gray-100 dark:bg-white/10"></div>
-                    </div>
-                </div>
-
-                <div class="w-8 h-8 rounded-full bg-gray-200 shrink-0 dark:bg-white/15"></div>
-            </div> -->
-
             <div
-                class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 dark:bg-secondary dark:border-white/10"
+                class="bg-white rounded-lg border border-gray-100 shadow-sm p-4 sm:p-6 dark:bg-secondary dark:border-white/10"
             >
                 <div
                     class="flex flex-col sm:flex-row items-start gap-4 sm:gap-5"
@@ -83,7 +62,7 @@
                 <div
                     v-for="card in 3"
                     :key="card"
-                    class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
+                    class="bg-white rounded-lg border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
                 >
                     <div
                         class="h-4 w-36 rounded bg-gray-200 mb-5 dark:bg-white/15"
@@ -113,7 +92,7 @@
             </div>
 
             <div
-                class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 dark:bg-secondary dark:border-white/10"
+                class="bg-white rounded-lg border border-gray-100 shadow-sm p-4 sm:p-5 dark:bg-secondary dark:border-white/10"
             >
                 <div
                     class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5"
@@ -181,7 +160,7 @@
 
         <div
             v-else-if="loadError"
-            class="bg-white dark:bg-secondary rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm p-8 sm:p-10 text-center"
+            class="bg-white dark:bg-secondary rounded-lg border border-gray-100 dark:border-white/10 shadow-sm p-8 sm:p-10 text-center"
         >
             <p class="text-sm text-rose-500 dark:text-rose-300">
                 {{ loadError }}
@@ -198,250 +177,239 @@
 
         <template v-else>
             <div
-                v-if="lovedOnes.length > 1"
-                class="flex items-center gap-2 min-w-0"
+                class="bg-white rounded-lg border border-gray-100 shadow-sm p-4 sm:p-6 dark:bg-secondary dark:border-white/10"
             >
-                <button
-                    type="button"
-                    :disabled="selectedIndex === 0"
-                    @click="scrollCarousel(-1)"
-                    class="shrink-0 w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-primary-600 hover:border-primary-300 transition-colors disabled:opacity-30 disabled:pointer-events-none dark:border-white/10 dark:bg-secondary dark:text-gray-500 dark:hover:text-primary-300"
-                >
-                    <ChevronLeft class="w-4 h-4" />
-                </button>
+                <div class="flex items-center justify-between mb-4">
+                    <p
+                        class="text-sm font-semibold text-gray-800 dark:text-white"
+                    >
+                        My Loved Ones
+                    </p>
+
+                    <div
+                        v-if="lovedOnes.length > 1"
+                        class="flex items-center gap-1"
+                    >
+                        <button
+                            type="button"
+                            @click="prevLovedOne"
+                            class="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-400"
+                        >
+                            <ChevronLeft class="w-4 h-4" />
+                        </button>
+
+                        <button
+                            type="button"
+                            @click="nextLovedOne"
+                            class="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-400"
+                        >
+                            <ChevronRight class="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-hidden">
+                    <div
+                        class="flex transition-transform duration-300 ease-in-out"
+                        :style="{
+                            transform: `translateX(-${selectedIndex * 100}%)`,
+                        }"
+                    >
+                        <div
+                            v-for="lo in lovedOnes"
+                            :key="lo.patient_id"
+                            class="w-full shrink-0 flex flex-col sm:flex-row items-start gap-4 sm:gap-5 px-1"
+                        >
+                            <div class="relative shrink-0">
+                                <img
+                                    v-if="lo.photo"
+                                    :src="lo.photo"
+                                    class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover object-top"
+                                    alt=""
+                                />
+
+                                <div
+                                    v-else
+                                    class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center text-2xl font-bold dark:bg-primary-500/10 dark:text-primary-300"
+                                >
+                                    {{ initials(lo.name) }}
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center border-2 border-white hover:bg-primary-600"
+                                >
+                                    <Pencil class="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+
+                            <div class="flex-1 min-w-0 w-full">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h2
+                                        class="text-xl font-bold text-gray-900 break-words dark:text-white"
+                                    >
+                                        {{ lo.name }}
+                                    </h2>
+
+                                    <span
+                                        class="px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize"
+                                        :class="
+                                            statusStyle(lo.admissionStatus)
+                                                .badge
+                                        "
+                                    >
+                                        {{ lo.admissionStatus }}
+                                    </span>
+
+                                    <span
+                                        v-if="
+                                            lo.roomType?.toLowerCase() === 'vip'
+                                        "
+                                        class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[11px] font-medium flex items-center gap-1 dark:bg-amber-500/10 dark:text-amber-300"
+                                    >
+                                        <Crown class="w-3 h-3" />
+                                        VIP
+                                    </span>
+                                </div>
+
+                                <p
+                                    v-if="lo.branchName !== 'N/A'"
+                                    class="text-sm font-medium text-primary-600 mt-1.5 flex items-start gap-1.5 dark:text-primary-300"
+                                >
+                                    <Building2
+                                        class="w-3.5 h-3.5 shrink-0 mt-0.5"
+                                    />
+                                    <span class="break-words">{{
+                                        lo.branchName
+                                    }}</span>
+                                </p>
+
+                                <p
+                                    v-if="lo.address !== 'N/A'"
+                                    class="text-sm text-gray-400 flex items-start gap-1.5 mt-0.5 dark:text-gray-500"
+                                >
+                                    <MapPin
+                                        class="w-3.5 h-3.5 shrink-0 mt-0.5"
+                                    />
+                                    <span class="break-words">{{
+                                        lo.address
+                                    }}</span>
+                                </p>
+
+                                <p
+                                    v-if="lo.status === 'Admitted'"
+                                    class="text-sm text-primary-500 font-medium mt-1 dark:text-primary-300"
+                                >
+                                    Room {{ lo.roomLabel }} · Bed
+                                    {{ lo.bedLabel }}
+                                </p>
+
+                                <p
+                                    v-else-if="lo.status === 'Discharged'"
+                                    class="text-sm text-gray-500 font-medium mt-1 dark:text-gray-400"
+                                >
+                                    Discharged {{ lo.dischargeDate }}
+                                </p>
+
+                                <div
+                                    class="flex items-center gap-2 flex-wrap mt-3"
+                                >
+                                    <span
+                                        v-if="lo.age"
+                                        class="px-2.5 py-1 rounded-full bg-gray-50 text-gray-600 text-xs dark:bg-white/5 dark:text-gray-400"
+                                    >
+                                        {{ lo.age }} yrs old
+                                    </span>
+
+                                    <span
+                                        v-if="lo.bloodType !== 'N/A'"
+                                        class="px-2.5 py-1 rounded-full bg-gray-50 text-gray-600 text-xs dark:bg-white/5 dark:text-gray-400"
+                                    >
+                                        {{ lo.bloodType }} blood type
+                                    </span>
+
+                                    <span
+                                        v-if="lo.admissionDate !== 'N/A'"
+                                        class="px-2.5 py-1 rounded-full bg-gray-50 text-gray-600 text-xs dark:bg-white/5 dark:text-gray-400"
+                                    >
+                                        {{ lo.admissionLabel }}
+                                        {{ lo.admissionDate }}
+                                    </span>
+                                </div>
+
+                                <div
+                                    class="flex items-center gap-2.5 flex-wrap mt-4"
+                                >
+                                    <NuxtLink
+                                        v-for="link in patientLinks"
+                                        :key="link.to"
+                                        :to="patientRoute(link.to, lo.uuid)"
+                                        class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-primary-500 text-primary-600 text-sm font-medium hover:bg-primary-500 hover:text-white transition-colors dark:text-primary-300"
+                                    >
+                                        <component
+                                            :is="link.icon"
+                                            class="w-3.5 h-3.5"
+                                        />
+                                        {{ link.label }}
+                                    </NuxtLink>
+
+                                    <button
+                                        v-if="lo.status === 'Homecare'"
+                                        type="button"
+                                        class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition-colors"
+                                        @click="showBookAgainModal = true"
+                                    >
+                                        <CalendarPlus class="w-3.5 h-3.5" />
+                                        Book Again
+                                    </button>
+
+                                    <button
+                                        v-if="lo.status === 'Admitted'"
+                                        type="button"
+                                        class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-primary-500 text-primary-600 text-sm font-medium hover:bg-primary-500 hover:text-white transition-colors dark:text-primary-300"
+                                        @click="openCaregiverShifts"
+                                    >
+                                        <HeartHandshake class="w-3.5 h-3.5" />
+                                        View Caregiver
+                                    </button>
+
+                                    <button
+                                        v-if="lo.status === 'Admitted'"
+                                        type="button"
+                                        class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition-colors"
+                                        @click="openAdmissionTimeline"
+                                    >
+                                        <History class="w-3.5 h-3.5" />
+                                        View Admission Timeline
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div
-                    ref="carouselRef"
-                    class="no-scrollbar flex flex-1 min-w-0 items-center gap-3 sm:gap-4 overflow-x-auto scroll-smooth px-1 py-1"
+                    v-if="lovedOnes.length > 1"
+                    class="flex items-center justify-center gap-1.5 mt-4"
                 >
                     <button
                         v-for="(lo, idx) in lovedOnes"
                         :key="lo.patient_id"
-                        :data-idx="idx"
                         type="button"
                         @click="selectedIndex = idx"
-                        class="group flex shrink-0 flex-col items-center gap-1.5"
-                    >
-                        <span class="relative block">
-                            <img
-                                v-if="lo.photo"
-                                :src="lo.photo"
-                                class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover object-top ring-2 ring-offset-2 ring-offset-transparent transition-all"
-                                :class="
-                                    selectedIndex === idx
-                                        ? 'ring-primary-500'
-                                        : 'ring-transparent group-hover:ring-gray-200 dark:group-hover:ring-white/10'
-                                "
-                                alt=""
-                            />
-
-                            <span
-                                v-else
-                                class="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-sm font-bold ring-2 ring-offset-2 ring-offset-transparent transition-all"
-                                :class="
-                                    selectedIndex === idx
-                                        ? 'bg-primary-500 text-white ring-primary-500'
-                                        : 'bg-primary-50 text-primary-600 ring-transparent group-hover:ring-gray-200 dark:bg-primary-500/10 dark:text-primary-300 dark:group-hover:ring-white/10'
-                                "
-                            >
-                                {{ initials(lo.name) }}
-                            </span>
-
-                            <span
-                                v-if="selectedIndex === idx"
-                                class="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full bg-primary-500 border-2 border-white flex items-center justify-center"
-                            >
-                                <Check class="w-2.5 h-2.5 text-white" />
-                            </span>
-                        </span>
-
-                        <span
-                            class="max-w-[104px] text-center text-xs font-medium leading-tight transition-colors line-clamp-2"
-                            :class="
-                                selectedIndex === idx
-                                    ? 'text-primary-600 dark:text-primary-300'
-                                    : 'text-gray-500 dark:text-gray-400'
-                            "
-                            :title="lo.name"
-                        >
-                            {{ lo.name }}
-                        </span>
-                    </button>
-                </div>
-
-                <button
-                    type="button"
-                    :disabled="selectedIndex === lovedOnes.length - 1"
-                    @click="scrollCarousel(1)"
-                    class="shrink-0 w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-primary-600 hover:border-primary-300 transition-colors disabled:opacity-30 disabled:pointer-events-none dark:border-white/10 dark:bg-secondary dark:text-gray-500 dark:hover:text-primary-300"
-                >
-                    <ChevronRight class="w-4 h-4" />
-                </button>
-            </div>
-
-            <div
-                class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 dark:bg-secondary dark:border-white/10"
-            >
-                <div
-                    class="flex flex-col sm:flex-row items-start gap-4 sm:gap-5"
-                >
-                    <div class="relative shrink-0">
-                        <img
-                            v-if="lovedOne.photo"
-                            :src="lovedOne.photo"
-                            class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover object-top"
-                            alt=""
-                        />
-
-                        <div
-                            v-else
-                            class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center text-2xl font-bold dark:bg-primary-500/10 dark:text-primary-300"
-                        >
-                            {{ initials(lovedOne.name) }}
-                        </div>
-
-                        <button
-                            type="button"
-                            class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center border-2 border-white hover:bg-primary-600"
-                        >
-                            <Pencil class="w-3.5 h-3.5" />
-                        </button>
-                    </div>
-
-                    <div class="flex-1 min-w-0 w-full">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <h2
-                                class="text-xl font-bold text-gray-900 break-words dark:text-white"
-                            >
-                                {{ lovedOne.name }}
-                            </h2>
-
-                            <span
-                                class="px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize"
-                                :class="
-                                    statusStyle(lovedOne.admissionStatus).badge
-                                "
-                            >
-                                {{ lovedOne.admissionStatus }}
-                            </span>
-
-                            <span
-                                v-if="isVip"
-                                class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[11px] font-medium flex items-center gap-1 dark:bg-amber-500/10 dark:text-amber-300"
-                            >
-                                <Crown class="w-3 h-3" />
-                                VIP
-                            </span>
-                        </div>
-
-                        <p
-                            v-if="lovedOne.branchName !== 'N/A'"
-                            class="text-sm font-medium text-primary-600 mt-1.5 flex items-start gap-1.5 dark:text-primary-300"
-                        >
-                            <Building2 class="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                            <span class="break-words">{{
-                                lovedOne.branchName
-                            }}</span>
-                        </p>
-
-                        <p
-                            v-if="lovedOne.address !== 'N/A'"
-                            class="text-sm text-gray-400 flex items-start gap-1.5 mt-0.5 dark:text-gray-500"
-                        >
-                            <MapPin class="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                            <span class="break-words">{{
-                                lovedOne.address
-                            }}</span>
-                        </p>
-
-                        <p
-                            v-if="lovedOne.status === 'Admitted'"
-                            class="text-sm text-primary-500 font-medium mt-1 dark:text-primary-300"
-                        >
-                            Room {{ lovedOne.roomLabel }} · Bed
-                            {{ lovedOne.bedLabel }}
-                        </p>
-
-                        <p
-                            v-else-if="lovedOne.status === 'Discharged'"
-                            class="text-sm text-gray-500 font-medium mt-1 dark:text-gray-400"
-                        >
-                            Discharged {{ lovedOne.dischargeDate }}
-                        </p>
-
-                        <div class="flex items-center gap-2 flex-wrap mt-3">
-                            <span
-                                v-if="lovedOne.age"
-                                class="px-2.5 py-1 rounded-full bg-gray-50 text-gray-600 text-xs dark:bg-white/5 dark:text-gray-400"
-                            >
-                                {{ lovedOne.age }} yrs old
-                            </span>
-
-                            <span
-                                v-if="lovedOne.bloodType !== 'N/A'"
-                                class="px-2.5 py-1 rounded-full bg-gray-50 text-gray-600 text-xs dark:bg-white/5 dark:text-gray-400"
-                            >
-                                {{ lovedOne.bloodType }} blood type
-                            </span>
-
-                            <span
-                                v-if="lovedOne.admissionDate !== 'N/A'"
-                                class="px-2.5 py-1 rounded-full bg-gray-50 text-gray-600 text-xs dark:bg-white/5 dark:text-gray-400"
-                            >
-                                {{ lovedOne.admissionLabel }}
-                                {{ lovedOne.admissionDate }}
-                            </span>
-                        </div>
-
-                        <div class="flex items-center gap-2.5 flex-wrap mt-4">
-                            <!-- <NuxtLink
-                                to="/portal/messages"
-                                class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-primary-500 text-primary-600 text-sm font-medium hover:bg-primary-500 hover:text-white transition-colors dark:text-primary-300"
-                            >
-                                <MessageSquare class="w-3.5 h-3.5" />
-                                Message Caregiver
-                            </NuxtLink> -->
-
-                            <NuxtLink
-                                v-for="link in patientLinks"
-                                :key="link.to"
-                                :to="patientRoute(link.to)"
-                                class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-primary-500 text-primary-600 text-sm font-medium hover:bg-primary-500 hover:text-white transition-colors dark:text-primary-300"
-                            >
-                                <component
-                                    :is="link.icon"
-                                    class="w-3.5 h-3.5"
-                                />
-                                {{ link.label }}
-                            </NuxtLink>
-
-                            <button
-                                v-if="canBookAgain"
-                                type="button"
-                                class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition-colors"
-                                @click="showBookAgainModal = true"
-                            >
-                                <CalendarPlus class="w-3.5 h-3.5" />
-                                Book Again
-                            </button>
-
-                            <button
-                                v-if="lovedOne.status === 'Admitted'"
-                                type="button"
-                                class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition-colors"
-                                @click="openAdmissionTimeline"
-                            >
-                                <History class="w-3.5 h-3.5" />
-                                View Admission Timeline
-                            </button>
-                        </div>
-                    </div>
+                        class="h-1.5 rounded-full transition-all"
+                        :class="
+                            selectedIndex === idx
+                                ? 'w-5 bg-primary-500'
+                                : 'w-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/15 dark:hover:bg-white/20'
+                        "
+                    />
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                 <div
-                    class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 min-w-0 dark:bg-secondary dark:border-white/10"
+                    class="bg-white rounded-lg border border-gray-100 shadow-sm p-4 sm:p-5 min-w-0 dark:bg-secondary dark:border-white/10"
                 >
                     <p
                         class="text-sm font-semibold text-gray-800 mb-4 dark:text-white"
@@ -547,7 +515,7 @@
                 </div>
 
                 <div
-                    class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 min-w-0 flex flex-col dark:bg-secondary dark:border-white/10"
+                    class="bg-white rounded-lg border border-gray-100 shadow-sm p-4 sm:p-5 min-w-0 flex flex-col dark:bg-secondary dark:border-white/10"
                 >
                     <p
                         class="text-sm font-semibold text-gray-800 mb-4 dark:text-white"
@@ -636,7 +604,7 @@
                 </div>
 
                 <div
-                    class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 min-w-0 dark:bg-secondary dark:border-white/10"
+                    class="bg-white rounded-lg border border-gray-100 shadow-sm p-4 sm:p-5 min-w-0 dark:bg-secondary dark:border-white/10"
                 >
                     <p
                         class="text-sm font-semibold text-gray-800 mb-4 dark:text-white"
@@ -753,7 +721,7 @@
             </div>
 
             <div
-                class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 min-w-0 dark:bg-secondary dark:border-white/10"
+                class="bg-white rounded-lg border border-gray-100 shadow-sm p-4 sm:p-5 min-w-0 dark:bg-secondary dark:border-white/10"
             >
                 <div
                     class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4"
@@ -928,17 +896,27 @@
         :admissions="admissionTimeline"
         @close="showAdmissionTimelineModal = false"
     />
+
+    <CaregiverShiftTimelineModal
+        :open="showCaregiverShiftsModal"
+        :loading="caregiverShiftsLoading"
+        :patient-name="lovedOne.name"
+        :shifts="caregiverShifts"
+        @close="showCaregiverShiftsModal = false"
+    />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import MedicationTable from "~/components/sections/app/Patient/MedicationTable.vue";
 import VitalSignsTable from "~/components/sections/app/Patient/VitalSignsTable.vue";
 import BookAgainModal from "~/components/sections/app/Patient/BookAgainModal.vue";
 import DiagnosisModal from "~/components/portal/DiagnosisModal.vue";
 import AssessmentModal from "~/components/portal/AssessmentModal.vue";
 import AdmissionTimelineModal from "~/components/portal/AdmissionTimelineModal.vue";
+import CaregiverShiftTimelineModal from "~/components/portal/CaregiverShiftTimelineModal.vue";
 import type { PortalAssessment, PortalDiagnosis } from "~/types/patient";
+import type { CaregiverShift } from "~/types/caregiver-shift";
 import EmptyState from "~/components/ui/EmptyState.vue";
 import {
     Pencil,
@@ -959,12 +937,12 @@ import {
     ShieldCheck,
     ChevronLeft,
     ChevronRight,
-    Check,
     ClipboardList,
     FileText,
     Activity,
     Pill,
     History,
+    HeartHandshake,
 } from "lucide-vue-next";
 import { patientAccessService } from "../../api/patient-access/PatientAccessService";
 import type { Medication } from "~/types/medication";
@@ -1096,16 +1074,18 @@ const noPatients = ref(false);
 const lovedOnes = ref<LovedOne[]>([]);
 const selectedIndex = ref(0);
 const activeHealthTab = ref<"medications" | "vitals">("medications");
-const carouselRef = ref<HTMLElement | null>(null);
+function nextLovedOne() {
+    if (!lovedOnes.value.length) return;
 
-function scrollCarousel(direction: number) {
-    const next = selectedIndex.value + direction;
+    selectedIndex.value = (selectedIndex.value + 1) % lovedOnes.value.length;
+}
 
-    if (next < 0 || next >= lovedOnes.value.length) {
-        return;
-    }
+function prevLovedOne() {
+    if (!lovedOnes.value.length) return;
 
-    selectedIndex.value = next;
+    selectedIndex.value =
+        (selectedIndex.value - 1 + lovedOnes.value.length) %
+        lovedOnes.value.length;
 }
 
 const { resolveIndex, syncQuery } = usePatientQuerySelection();
@@ -1114,27 +1094,9 @@ watch(selectedIndex, () =>
     syncQuery(lovedOnes.value[selectedIndex.value]?.uuid),
 );
 
-watch(selectedIndex, (idx) => {
-    nextTick(() => {
-        const target = carouselRef.value?.querySelector(
-            `[data-idx="${idx}"]`,
-        ) as HTMLElement | null;
-
-        target?.scrollIntoView({
-            behavior: "smooth",
-            inline: "center",
-            block: "nearest",
-        });
-    });
-});
-
 const lovedOne = computed(
     () => lovedOnes.value[selectedIndex.value] ?? fallbackLovedOne(),
 );
-
-const isVip = computed(() => lovedOne.value.roomType?.toLowerCase() === "vip");
-
-const canBookAgain = computed(() => lovedOne.value.status === "Homecare");
 
 const patientLinks = [
     { to: "/portal/schedule", label: "View Schedule", icon: Calendar },
@@ -1143,12 +1105,10 @@ const patientLinks = [
     { to: "/portal/balance", label: "View Balance", icon: CreditCard },
 ];
 
-function patientRoute(path: string) {
+function patientRoute(path: string, uuid: string | null) {
     return {
         path,
-        query: lovedOne.value.uuid
-            ? { patient: lovedOne.value.uuid }
-            : undefined,
+        query: uuid ? { patient: uuid } : undefined,
     };
 }
 
@@ -1191,6 +1151,45 @@ async function openAdmissionTimeline() {
         admissionTimelineLoadedFor.value !== lovedOne.value.patient_id
     ) {
         await loadAdmissionTimeline(lovedOne.value.patient_id);
+    }
+}
+
+const showCaregiverShiftsModal = ref(false);
+const caregiverShiftsLoading = ref(false);
+const caregiverShifts = ref<CaregiverShift[]>([]);
+const caregiverShiftsLoadedFor = ref<number | null>(null);
+
+async function loadCaregiverShifts(patientId: number) {
+    caregiverShiftsLoading.value = true;
+
+    try {
+        const res = await patientAccessService.retrieveAction({
+            action: "overview",
+            section: "caregiver_shifts",
+            patient_id: patientId,
+        });
+
+        caregiverShifts.value = Array.isArray(res?.data?.caregiver_shifts)
+            ? res.data.caregiver_shifts
+            : [];
+
+        caregiverShiftsLoadedFor.value = patientId;
+    } catch (err) {
+        console.error("Error loading caregiver shifts:", err);
+        caregiverShifts.value = [];
+    } finally {
+        caregiverShiftsLoading.value = false;
+    }
+}
+
+async function openCaregiverShifts() {
+    showCaregiverShiftsModal.value = true;
+
+    if (
+        lovedOne.value.patient_id &&
+        caregiverShiftsLoadedFor.value !== lovedOne.value.patient_id
+    ) {
+        await loadCaregiverShifts(lovedOne.value.patient_id);
     }
 }
 
@@ -1416,7 +1415,7 @@ async function loadPatientData() {
     try {
         const res = await patientAccessService.retrieveAction({
             action: "overview",
-            section: "profile,medication",
+            section: "profile,details,recent_medication",
         });
 
         const records: any[] = Array.isArray(res?.data) ? res.data : [];
@@ -1466,14 +1465,3 @@ onMounted(async () => {
     await loadPatientData();
 });
 </script>
-
-<style scoped>
-.no-scrollbar {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-</style>

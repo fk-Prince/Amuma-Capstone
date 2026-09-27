@@ -9,8 +9,6 @@
             See what's included in each plan
         </p>
 
-        <!-- Mobile: one card per feature, since a 4-column table doesn't fit
-             a phone width without forcing a horizontal scroll. -->
         <div class="sm:hidden space-y-3">
             <div
                 v-for="row in features"
@@ -24,15 +22,21 @@
                 <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
                     <div class="flex flex-col items-center gap-1">
                         <FeatureIcon :active="row.homecare" />
-                        <span class="text-gray-500 dark:text-gray-400">Homecare</span>
+                        <span class="text-gray-500 dark:text-gray-400"
+                            >Homecare</span
+                        >
                     </div>
 
                     <div class="flex flex-col items-center gap-1">
                         <FeatureIcon :active="row.facility" />
-                        <span class="text-gray-500 dark:text-gray-400">Facility</span>
+                        <span class="text-gray-500 dark:text-gray-400"
+                            >Facility</span
+                        >
                     </div>
 
-                    <div class="flex flex-col items-center gap-1 rounded-lg bg-primary/[0.04] py-1">
+                    <div
+                        class="flex flex-col items-center gap-1 rounded-lg bg-primary/[0.04] py-1"
+                    >
                         <FeatureIcon :active="row.hybrid" variant="hybrid" />
                         <span class="font-semibold text-primary">Hybrid</span>
                     </div>
@@ -45,7 +49,9 @@
         >
             <table class="w-full text-sm min-w-[560px]">
                 <thead>
-                    <tr class="bg-gray-50 border-b border-gray-100 dark:bg-white/5 dark:border-white/10">
+                    <tr
+                        class="bg-gray-50 border-b border-gray-100 dark:bg-white/5 dark:border-white/10"
+                    >
                         <th
                             class="text-left px-6 py-4 font-semibold text-gray-600 w-1/2 dark:text-gray-300"
                         >
@@ -54,12 +60,12 @@
                         <th
                             class="text-center px-4 py-4 font-semibold text-gray-600 dark:text-gray-300"
                         >
-                            Homecare
+                            Homecare Services
                         </th>
                         <th
                             class="text-center px-4 py-4 font-semibold text-gray-600 dark:text-gray-300"
                         >
-                            Facility
+                            In-house Facility
                         </th>
                         <th class="text-center px-4 py-4">
                             <div class="flex flex-col items-center gap-1">
@@ -86,7 +92,9 @@
                                 : 'bg-gray-50/50 dark:bg-white/[0.03]',
                         ]"
                     >
-                        <td class="px-6 py-4 font-medium text-gray-700 dark:text-gray-300">
+                        <td
+                            class="px-6 py-4 font-medium text-gray-700 dark:text-gray-300"
+                        >
                             {{ row.name }}
                         </td>
 

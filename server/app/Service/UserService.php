@@ -3,11 +3,15 @@
 namespace App\Service;
 
 
+use App\Enums\ModuleEnum;
+use App\Enums\RoleEnum;
+use App\Models\Branch;
 use App\Models\Location;
 use App\Models\User;
 use App\Repository\BranchRepository;
 use App\Service\External\SupabaseService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -30,17 +34,51 @@ class UserService
         $employeeBranches = $employee?->employeeBranch ?? collect();
         $branchIds = $employeeBranches->pluck('branch_id')->filter()->unique()->values();
 
-        $branchModels = $this->branchRepository->getUserBranches($branchIds->all());
+        // Whoever registered an agency (an `agency_owner` row on any one of
+        // its branches) has full access to every branch under it, even ones
+        // they never personally set up — surface those branches here too,
+        // so the branch switcher and permission checks agree with what
+        // AuthGuard::requireModule already allows.
+        $ownedAgencyIds = Branch::whereIn(
+            'branch_id',
+            $employeeBranches->where('role_name', RoleEnum::AgencyOwner->value)->pluck('branch_id')
+        )->pluck('agency_id')->filter()->unique()->values();
 
-        $branches = $employeeBranches
-            ->map(function ($employeeBranch) use ($branchModels, $permissionsByBranch) {
+        $impliedBranchIds = $ownedAgencyIds->isEmpty()
+            ? collect()
+            : Branch::whereIn('agency_id', $ownedAgencyIds)
+                ->whereNotIn('branch_id', $branchIds)
+                ->pluck('branch_id');
+
+        $branchModels = $this->branchRepository->getUserBranches(
+            $branchIds->merge($impliedBranchIds)->unique()->values()->all()
+        );
+
+        $fullPermissions = collect(ModuleEnum::cases())->map(fn($module) => [
+            'module_name' => $module->value,
+            'actions' => $module->actionColumns(),
+        ])->values();
+
+        $impliedEmployeeBranches = $impliedBranchIds->map(fn($branchId) => (object) [
+            'branch_id' => $branchId,
+            'role_name' => RoleEnum::AgencyOwner->value,
+            'assignment_type' => null,
+            'status' => null,
+        ]);
+
+        $branches = $employeeBranches->concat($impliedEmployeeBranches)
+            ->map(function ($employeeBranch) use ($branchModels, $permissionsByBranch, $impliedBranchIds, $fullPermissions) {
                 $branch = $branchModels->get($employeeBranch->branch_id);
 
                 if (!$branch || !$branch->uuid) {
                     return null;
                 }
 
-                $perms = $permissionsByBranch->get($employeeBranch->branch_id, collect());
+                $isImplied = $impliedBranchIds->contains($employeeBranch->branch_id);
+
+                $perms = $isImplied
+                    ? $fullPermissions
+                    : $permissionsByBranch->get($employeeBranch->branch_id, collect());
 
                 $location = $branch?->location;
 
@@ -74,13 +112,14 @@ class UserService
                     'uuid' => $branch?->uuid,
                     'name' => $branch?->name,
                     'email' => $branch?->email,
-                    'is_verified' => $branch?->is_verified,
+                    'status' => $branch?->status,
                     'subscription_status' => $branch?->subscriptionLink?->status,
                     'rejection_reason' => $branch?->subscriptionLink?->rejection_reason,
                     'description' => $branch?->description,
                     'contact_number' => $branch?->contact_number,
                     'role_name' => $employeeBranch?->role_name,
                     'assignment_type' => $employeeBranch?->assignment_type,
+                    'employee_status' => $employeeBranch?->status,
                     'image' => $branch?->image,
                     'document' => $branch?->document,
                     'location' => $location ? [
@@ -99,7 +138,8 @@ class UserService
                         'description' => $branch?->agencies->description,
                         'location' => $branch?->agencies->locations,
                         'image' => $branch->agencies->image,
-                        'is_verified' => $branch->agencies->is_verified,
+                        'status' => $branch->agencies->status,
+                        'registered_by' => $this->registrantSummary($branch->agencies->registrant),
                         'id_front' => $branch->agencies->id_front,
                         'id_back' => $branch->agencies->id_back,
                         'document' => $branch->agencies->document,
@@ -116,22 +156,43 @@ class UserService
                         })->values()
                         : [],
 
-                    'permissions' => $perms->map(fn($permission) => [
-                        'module_name' => $permission->modules?->module_name,
-                        'actions' => $permission->grantedActions(),
-                    ])
-                        ->filter(fn($permission) => $permission['actions'])
-                        ->values(),
+                    'permissions' => $isImplied
+                        ? $perms
+                        : $perms->map(fn($permission) => [
+                            'module_name' => $permission->modules?->module_name,
+                            'actions' => $permission->grantedActions(),
+                        ])
+                            ->filter(fn($permission) => $permission['actions'])
+                            ->values(),
                 ];
             })
             ->filter()
             ->values();
 
+        $agencies = $branches
+            ->groupBy(fn($branch) => $branch['agency']['agency_id'])
+            ->map(fn($group) => $group->first()['agency'] + [
+                'branches' => $group->map(fn($branch) => Arr::except($branch, ['agency']))->values(),
+            ])
+            ->values();
+
         return response()->json([
             'data' => [
-                'branches' => $branches,
+                'agencies' => $agencies,
             ],
         ], 200);
+    }
+
+    private function registrantSummary(?User $registrant): ?array
+    {
+        if (!$registrant) {
+            return null;
+        }
+
+        return [
+            'name' => trim($registrant->first_name . ' ' . $registrant->last_name) ?: null,
+            'email' => $registrant->email,
+        ];
     }
 
     public function fetchMe(User $user)

@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Requests\Auth;
+namespace App\Http\Requests\Employee;
 
 use App\Enums\PermissionAction;
+use App\Enums\RoleEnum;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -40,7 +41,16 @@ class StoreEmployeeRequest extends FormRequest
             'location.country' => ['required', 'string', 'max:255'],
 
             'role_name' => ['required', 'string', 'max:255'],
-            'assignment_type' => ['required', 'string', 'max:255'],
+            'assignment_type' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::requiredIf(fn() => in_array(
+                    RoleEnum::slug((string) $this->input('role_name')),
+                    [RoleEnum::Nurse->value, RoleEnum::Caregiver->value],
+                    true
+                )),
+            ],
             'status' => ['nullable', 'in:active,inactive,on_leave'],
 
             'branch_uuid' => ['required', 'string', 'exists:branches,uuid'],

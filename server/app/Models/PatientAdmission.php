@@ -115,6 +115,15 @@ class PatientAdmission extends Model
         return $this->belongsTo(Bed::class, 'bed_id', 'bed_id');
     }
 
+    public function caregiverShifts()
+    {
+        return $this->hasMany(
+            CaregiverFacilityShift::class,
+            'admission_id',
+            'patient_admission_id'
+        );
+    }
+
     public function invoiceAdmission()
     {
         return $this->hasManyThrough(

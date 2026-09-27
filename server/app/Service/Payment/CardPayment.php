@@ -79,9 +79,7 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
 
             return $this->subscriptionService->newSubscriber($result);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
-
             Log::error("API timeout: " . $e->getMessage());
-
             return response()->json([
                 'message' => 'The external service took too long to respond.'
             ], 504);

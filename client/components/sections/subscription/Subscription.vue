@@ -1,170 +1,37 @@
 <template>
-    <div
-        ref="rootEl"
-        class="w-[95%] sm:w-[92%] lg:w-[90%] xl:w-[88%] 2xl:w-[85%] mx-auto py-6"
-    >
-        <div v-if="loading" class="min-h-[500px]">
-            <div class="animate-pulse">
-                <div class="flex w-full justify-center px-2 sm:px-0">
-                    <ol
-                        class="flex w-full max-w-6xl items-start justify-center"
-                    >
-                        <li
-                            v-for="index in 4"
-                            :key="index"
-                            :class="[
-                                'flex items-start',
-                                index < 4 ? 'flex-1' : 'shrink-0',
-                            ]"
-                        >
-                            <div class="flex shrink-0 flex-col items-center">
-                                <div
-                                    class="h-7 w-7 sm:h-9 sm:w-9 rounded-full"
-                                    :class="
-                                        index === 1
-                                            ? 'bg-primary-200 dark:bg-primary-500/30'
-                                            : 'bg-muted-light dark:bg-white/10'
-                                    "
-                                ></div>
+    <!-- w-[95%] sm:w-[92%] lg:w-[90%] xl:w-[88%] 2xl:w-[85%]  -->
+    <div class="w-full mx-auto py-6">
+        <SubscriptionSkeleton v-if="loading" />
 
-                                <div
-                                    class="mt-1.5 sm:mt-2 h-2.5 w-12 sm:w-16 rounded bg-muted-light dark:bg-white/10"
-                                ></div>
-                            </div>
-
-                            <div
-                                v-if="index < 4"
-                                class="mx-1.5 sm:mx-4 mt-[14px] sm:mt-[18px] h-px flex-1 bg-muted-light dark:bg-white/10"
-                            ></div>
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="rounded-2xl p-6 space-y-8">
-                    <div class="flex flex-col items-center gap-2">
-                        <div
-                            class="h-11 w-60 max-w-full rounded-full bg-muted-light/60 dark:bg-white/10"
-                        ></div>
-                        <div
-                            class="h-3 w-64 max-w-full rounded bg-muted-light/60 dark:bg-white/5"
-                        ></div>
-                    </div>
-
-                    <div
-                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch"
-                    >
-                        <div
-                            v-for="index in 3"
-                            :key="index"
-                            class="relative flex h-full flex-col gap-3 rounded-xl border p-5 sm:p-6"
-                            :class="
-                                index === 1
-                                    ? 'border-primary-200 bg-primary-50/60 dark:border-primary-500/20 dark:bg-primary-500/10'
-                                    : 'border-muted-light dark:border-white/10'
-                            "
-                        >
-                            <div
-                                class="absolute top-4 right-4 h-5 w-5 rounded-full"
-                                :class="
-                                    index === 1
-                                        ? 'bg-primary-200 dark:bg-primary-500/30'
-                                        : 'bg-muted-light dark:bg-white/10'
-                                "
-                            ></div>
-
-                            <div
-                                class="h-10 w-10 rounded-lg bg-primary-100 dark:bg-primary-500/15"
-                            ></div>
-
-                            <div class="space-y-2">
-                                <div
-                                    class="h-4 w-32 max-w-full rounded bg-muted-light dark:bg-white/10"
-                                ></div>
-                                <div
-                                    class="h-3 w-full rounded bg-muted-light/60 dark:bg-white/5"
-                                ></div>
-                                <div
-                                    class="h-3 w-5/6 rounded bg-muted-light/60 dark:bg-white/5"
-                                ></div>
-                                <div
-                                    class="h-3 w-2/3 rounded bg-muted-light/60 dark:bg-white/5"
-                                ></div>
-                            </div>
-
-                            <div
-                                class="mt-auto flex items-center justify-between gap-2 border-t border-muted-light/70 pt-4 dark:border-white/10"
-                            >
-                                <div
-                                    class="h-3 w-14 rounded bg-muted-light/60 dark:bg-white/5"
-                                ></div>
-                                <div
-                                    class="h-5 w-24 rounded bg-primary-200 dark:bg-primary-500/25"
-                                ></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        class="flex items-center justify-between border-t border-muted-light pt-6 dark:border-white/10"
-                    >
-                        <div
-                            class="h-10 w-[110px] rounded-xl bg-muted-light/60 dark:bg-white/10"
-                        ></div>
-                        <div
-                            class="h-10 w-32 rounded-xl bg-primary-200 dark:bg-primary-500/25"
-                        ></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <template v-else>
-            <div class="flex w-full justify-center px-2 sm:px-0">
-                <ol class="flex w-full max-w-6xl items-start justify-center">
+        <div v-else class="flex items-start gap-3 sm:gap-8">
+            <aside class="sticky top-32 shrink-0 self-start sm:w-60">
+                <ol class="flex flex-col">
                     <li
                         v-for="(step, index) in STEPS"
                         :key="step"
-                        :class="[
-                            'flex items-start',
-                            index < STEPS.length - 1 ? 'flex-1' : 'shrink-0',
-                        ]"
+                        class="flex gap-3"
                     >
-                        <div class="flex shrink-0 flex-col items-center">
-                            <div class="relative">
-                                <div
-                                    class="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-full border-2 text-xs sm:text-sm font-semibold transition-all duration-200"
-                                    :class="
-                                        stepsWithErrors.has(index + 1)
-                                            ? 'border-danger bg-white dark:bg-secondary text-danger'
-                                            : currentStep > index + 1
-                                              ? 'border-primary bg-primary text-white'
-                                              : currentStep === index + 1
-                                                ? 'border-primary bg-white dark:bg-secondary text-primary shadow-sm ring-4 ring-primary/10'
-                                                : 'border-slate-200 dark:border-white/10 bg-white dark:bg-secondary text-slate-400 dark:text-gray-500'
-                                    "
-                                >
-                                    <Check
-                                        v-if="
-                                            currentStep > index + 1 &&
-                                            !stepsWithErrors.has(index + 1)
-                                        "
-                                        class="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2.5]"
-                                    />
+                        <div class="flex flex-col items-center self-stretch">
+                            <SubscriptionStepDot
+                                :number="index + 1"
+                                :current-step="currentStep"
+                                :has-error="stepsWithErrors.has(index + 1)"
+                            />
 
-                                    <span v-else>
-                                        {{ index + 1 }}
-                                    </span>
-                                </div>
+                            <div
+                                v-if="index < STEPS.length - 1"
+                                class="my-1 h-8 w-px flex-1 transition-colors duration-200 sm:min-h-10"
+                                :class="
+                                    currentStep > index + 1
+                                        ? 'bg-primary'
+                                        : 'bg-slate-200 dark:bg-white/10'
+                                "
+                            ></div>
+                        </div>
 
-                                <span
-                                    v-if="stepsWithErrors.has(index + 1)"
-                                    class="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-danger dark:border-secondary"
-                                    aria-hidden="true"
-                                />
-                            </div>
-
-                            <span
-                                class="mt-1.5 sm:mt-2 max-w-[4.25rem] sm:max-w-[7rem] text-center text-[10px] sm:text-xs font-medium leading-tight transition-colors"
+                        <div class="hidden pt-1 sm:block">
+                            <p
+                                class="text-sm font-semibold leading-tight transition-colors"
                                 :class="
                                     stepsWithErrors.has(index + 1)
                                         ? 'text-danger'
@@ -174,35 +41,24 @@
                                 "
                             >
                                 {{ step }}
-                            </span>
+                            </p>
+                            <p
+                                class="mt-0.5 text-xs leading-snug text-slate-400 dark:text-gray-500"
+                            >
+                                {{ STEP_SUBTITLES[index] }}
+                            </p>
                         </div>
-
-                        <!-- Connector -->
-                        <div
-                            v-if="index < STEPS.length - 1"
-                            class="mx-1.5 sm:mx-4 mt-[14px] sm:mt-[18px] h-px flex-1 transition-colors duration-200"
-                            :class="
-                                currentStep > index + 1
-                                    ? 'bg-primary'
-                                    : 'bg-slate-200 dark:bg-white/10'
-                            "
-                        ></div>
                     </li>
                 </ol>
-            </div>
+            </aside>
 
-            <div class="rounded-2xl p-6 space-y-3">
+            <div class="min-w-0 flex-1 space-y-3 rounded-2xl">
+                <p class="pb-1 text-xs font-semibold text-primary sm:hidden">
+                    Step {{ currentStep }} of {{ STEPS.length }} ·
+                    {{ STEPS[currentStep - 1] }}
+                </p>
+
                 <div v-if="currentStep === 1">
-                    <!-- <div class="mb-6">
-                        <h2 class="text-xl font-bold text-secondary dark:text-white">
-                            Subscription details
-                        </h2>
-                        <p class="text-sm text-muted mt-1 dark:text-gray-400">
-                            Manage your AMUMA subscription plan and billing
-                            preferences.
-                        </p>
-                    </div> -->
-
                     <p
                         v-if="stepError"
                         class="text-sm text-danger bg-danger-50 border border-danger-100 px-4 py-2 rounded-lg mb-4"
@@ -387,47 +243,23 @@
                             </div>
                         </label>
                     </div>
-                    <!-- 
-                    <div>
-                        <h3 class="font-semibold text-secondary mb-1 dark:text-white">
-                            Billing cycle
-                        </h3>
-                        <p class="text-sm text-muted mb-3 dark:text-gray-400">
-                            Choose how your subscription is billed, monthly or
-                            yearly.
-                        </p>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <label
-                                v-for="opt in intervalOptions"
-                                :key="opt.value"
-                                class="border rounded-xl p-4 cursor-pointer transition-colors"
-                                :class="
-                                    checkout.selectedInterval === opt.value
-                                        ? 'border-primary bg-primary-50'
-                                        : 'border-muted-light hover:border-primary-200'
-                                "
-                            >
-                                <input
-                                    type="radio"
-                                    v-model="checkout.selectedInterval"
-                                    :value="opt.value"
-                                    class="accent-primary"
-                                />
+                    <div class="mb-10 flex justify-end">
+                        <button
+                            type="button"
+                            @click="nextStep"
+                            :disabled="
+                                !checkout.selectedPlan ||
+                                !checkout.selectedInterval
+                            "
+                            class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition-all hover:bg-primary-600 hover:shadow-md hover:shadow-primary/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                        >
+                            Continue
+                            <ChevronRight class="h-4 w-4" />
+                        </button>
+                    </div>
 
-                                <div class="mt-2">
-                                    <p
-                                        class="font-semibold text-sm text-secondary dark:text-white"
-                                    >
-                                        {{ opt.label }}
-                                    </p>
-                                    <p class="text-xs text-muted dark:text-gray-400">
-                                        {{ opt.description }}
-                                    </p>
-                                </div>
-                            </label>
-                        </div>
-                    </div> -->
+                    <ComparableTable />
                 </div>
 
                 <div v-if="currentStep === 2">
@@ -442,133 +274,116 @@
                     <BranchForm
                         v-model:branch="checkout.branch"
                         v-model:errors="checkout.errors"
+                        mode="new"
                     />
                 </div>
 
                 <div v-if="currentStep === 4">
-                    <div class="mb-6">
-                        <h2
-                            class="text-xl font-bold text-secondary dark:text-white"
-                        >
-                            Branch configuration
-                        </h2>
-                        <p class="text-sm text-muted mt-1 dark:text-gray-400">
-                            Set up the operational preferences for this branch.
-                        </p>
-                    </div>
-
                     <SubcriptionConfigure
                         :setting="checkout.settings"
-                        :errors="checkout.errors"
+                        v-model:errors="checkout.errors"
+                    />
+                </div>
+
+                <div v-if="currentStep === 5">
+                    <SubscriptionPayment
+                        v-model:busy="paymentBusy"
+                        @back="currentStep--"
                     />
                 </div>
 
                 <div
+                    v-if="currentStep > 1"
                     class="flex items-center justify-between border-t border-slate-200 pt-6 dark:border-white/10"
                 >
                     <button
-                        v-if="currentStep > 1"
                         type="button"
-                        @click="
-                            currentStep--;
-                            emit('update:stepCompleted', false);
-                        "
-                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98] dark:bg-secondary dark:border-white/10 dark:text-white dark:hover:bg-white/5"
+                        @click="currentStep--"
+                        :disabled="isLoading || paymentBusy"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-secondary dark:border-white/10 dark:text-white dark:hover:bg-white/5"
                     >
                         <ChevronLeft class="h-4 w-4" />
                         Previous
                     </button>
 
-                    <div v-else class="w-[110px]"></div>
-
                     <button
                         v-if="currentStep < STEPS.length"
                         type="button"
                         @click="nextStep"
-                        :disabled="
-                            currentStep === 1 &&
-                            (!checkout.selectedPlan ||
-                                !checkout.selectedInterval)
-                        "
+                        :disabled="isLoading"
                         class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition-all hover:bg-primary-600 hover:shadow-md hover:shadow-primary/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                     >
-                        Continue
-                        <ChevronRight class="h-4 w-4" />
+                        <template v-if="isLoading">
+                            <LoaderCircle class="h-4 w-4 animate-spin" />
+                            Validating...
+                        </template>
+                        <template v-else>
+                            {{
+                                currentStep === 4 ? "Review & Pay" : "Continue"
+                            }}
+                            <ChevronRight class="h-4 w-4" />
+                        </template>
                     </button>
                 </div>
-                <button
-                    v-if="stepCompleted && currentStep === 4"
-                    @click="send"
-                    :disabled="isLoading"
-                    class="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-white py-3 font-semibold transition flex items-center justify-center gap-2"
-                >
-                    <svg
-                        v-if="isLoading"
-                        class="w-5 h-5 animate-spin"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                        <circle
-                            class="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="4"
-                        />
-                        <path
-                            class="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                        />
-                    </svg>
-
-                    {{ isLoading ? "Validating..." : "Confirm & Pay" }}
-                </button>
             </div>
-        </template>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { Check, ChevronLeft, ChevronRight, Home } from "lucide-vue-next";
-import { ref, onMounted, nextTick } from "vue";
+import {
+    Check,
+    ChevronLeft,
+    ChevronRight,
+    Home,
+    LoaderCircle,
+} from "lucide-vue-next";
+import { ref, onMounted, nextTick, watch } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { planService } from "@/api/plan/PlanService";
 import { agencySchema } from "~/schema/agency-schema";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
+import { useToast } from "~/composables/useToast";
 import { type SubscriptionRequest } from "~/types/subscription";
 import BranchForm from "~/components/forms/BranchForm.vue";
 import { formatCurrency } from "~/utils/currency";
 import AgencyForm from "~/components/forms/AgencyForm.vue";
 import SubcriptionConfigure from "~/components/forms/SubcriptionConfigure.vue";
-const props = defineProps<{
-    stepCompleted: boolean;
-}>();
-const emit = defineEmits(["update:stepCompleted"]);
+import ComparableTable from "~/components/ui/ComparableTable.vue";
+import SubscriptionStepDot from "~/components/sections/subscription/SubscriptionStepDot.vue";
+import SubscriptionSkeleton from "~/components/sections/subscription/SubscriptionSkeleton.vue";
+import SubscriptionPayment from "~/components/sections/subscription/SubscriptionPayment.vue";
 import { branchSchema } from "~/schema/branch-schema";
 const checkout = useSubscriptionCheckout();
+const { error } = useToast();
 
 const loading = ref(true);
 const currentStep = ref(1);
+const paymentBusy = ref(false);
+const route = useRoute();
 const stepError = ref<string | null>(null);
-const rootEl = ref<HTMLElement | null>(null);
 
 const scrollToTop = async () => {
     await nextTick();
-    rootEl.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
+watch(currentStep, scrollToTop);
+
 const STEPS = [
-    "Subscription",
+    "Subscription Plan",
     "Agency Information",
     "Branch Information",
     "Configuration",
+    "Review & Payment",
 ];
 
-const intervalOptions = [
-    { value: "monthly", label: "Monthly", description: "Billed monthly" },
-    { value: "yearly", label: "Yearly", description: "Save more yearly" },
+const STEP_SUBTITLES = [
+    "Choose your plan and billing cycle",
+    "Your agency and verification documents",
+    "Branch details, tax info and location",
+    "Operating hours and booking preferences",
+    "Review details and complete payment",
 ];
 
 const scrollToFirstError = async () => {
@@ -591,7 +406,16 @@ const nextStep = async () => {
         }
     }
     if (currentStep.value === 2) {
-        const isValid = await validateAgency();
+        const isValid =
+            (await validateAgency()) &&
+            (await checkUnique(
+                {
+                    agency_id: checkout.agency.agency_id,
+                    agency_name: checkout.agency.name,
+                    agency_email: checkout.agency.email,
+                },
+                isAgencyField,
+            ));
         if (!isValid) {
             await scrollToFirstError();
             return;
@@ -599,16 +423,63 @@ const nextStep = async () => {
     }
 
     if (currentStep.value === 3) {
-        const isValid = await validateBranch();
+        const isValid =
+            (await validateBranch()) &&
+            (await checkUnique(
+                {
+                    agency_id: checkout.agency.agency_id,
+                    branch_name: checkout.branch.name,
+                    branch_email: checkout.branch.email,
+                },
+                isBranchField,
+            ));
         if (!isValid) {
             await scrollToFirstError();
             return;
         }
-        emit("update:stepCompleted", isValid && currentStep.value === 3);
+    }
+
+    if (currentStep.value === 4) {
+        await submitDetails();
+        return;
     }
 
     if (currentStep.value < STEPS.length) {
         currentStep.value++;
+    }
+};
+
+const checkUnique = async (
+    payload: Record<string, any>,
+    scope: (key: string) => boolean,
+): Promise<boolean> => {
+    isLoading.value = true;
+    try {
+        await subscriptionService.checkUnique(payload);
+        mergeStepErrors(scope, {});
+        return true;
+    } catch (err: any) {
+        const errors = err?.errors || err?.response?.data?.errors;
+        if (!errors) {
+            error(
+                err?.message ??
+                    "Could not verify your details. Please try again.",
+            );
+            return false;
+        }
+
+        mergeStepErrors(
+            scope,
+            Object.fromEntries(
+                Object.entries(errors).map(([key, value]: any) => [
+                    key,
+                    Array.isArray(value) ? value[0] : value,
+                ]),
+            ),
+        );
+        return false;
+    } finally {
+        isLoading.value = false;
     }
 };
 
@@ -630,6 +501,7 @@ const validateAgency = async (): Promise<boolean> => {
             const path = issue.path.join(".");
             errors[keyMap[path] ?? path] = issue.message;
         });
+        claimErrors(errors, 2);
         mergeStepErrors(isAgencyField, errors);
         return false;
     }
@@ -657,6 +529,7 @@ const validateBranch = async (): Promise<boolean> => {
 
             errors[keyMap[path] ?? path] = issue.message;
         });
+        claimErrors(errors, 3);
         mergeStepErrors(isBranchField, errors);
         return false;
     }
@@ -669,9 +542,11 @@ const validateConfiguration = (): boolean => {
     const closing = checkout.settings?.closing;
 
     if (opening && closing && closing < opening) {
-        mergeStepErrors(isConfigField, {
+        const errors = {
             closing: "Closing time must be later than opening time.",
-        });
+        };
+        claimErrors(errors, 4);
+        mergeStepErrors(isConfigField, errors);
         return false;
     }
 
@@ -683,7 +558,33 @@ const SERVER_FIELD_ALIASES: Record<string, string> = {
     "branch_settings.tin": "branch_tin",
 };
 
+const errorOwners = ref<Record<string, number>>({});
+
+function claimErrors(errors: Record<string, string>, step: number) {
+    Object.keys(errors).forEach((key) => {
+        errorOwners.value[key] = step;
+    });
+}
+
+watch(
+    () => checkout.errors,
+    (errors) => {
+        const keys = Object.keys(errors ?? {});
+
+        Object.keys(errorOwners.value).forEach((key) => {
+            if (!keys.includes(key)) delete errorOwners.value[key];
+        });
+
+        keys.forEach((key) => {
+            errorOwners.value[key] ??= stepForField(key);
+        });
+    },
+    { deep: true },
+);
+
 function stepForField(field: string) {
+    if (errorOwners.value[field]) return errorOwners.value[field];
+
     if (field.startsWith("branch_settings")) return 4;
 
     if (field.startsWith("agency_") || field.startsWith("agency.")) return 2;
@@ -699,21 +600,25 @@ function stepForField(field: string) {
 const stepsWithErrors = computed(() => {
     const steps = new Set<number>();
 
-    Object.keys(checkout.errors ?? {}).forEach((key) => {
-        steps.add(stepForField(key));
+    Object.entries(checkout.errors ?? {}).forEach(([key, message]) => {
+        if (message) steps.add(stepForField(key));
     });
 
     return steps;
 });
 
 const isAgencyField = (key: string) =>
-    key.startsWith("agency_") || key.startsWith("agency.");
+    key.startsWith("agency_") ||
+    key.startsWith("agency.") ||
+    errorOwners.value[key] === 2;
 
 const isBranchField = (key: string) =>
     (key.startsWith("branch_") && !key.startsWith("branch_settings")) ||
-    key.startsWith("branch.");
+    key.startsWith("branch.") ||
+    errorOwners.value[key] === 3;
 
-const isConfigField = (key: string) => key.startsWith("branch_settings");
+const isConfigField = (key: string) =>
+    key.startsWith("branch_settings") || errorOwners.value[key] === 4;
 
 // Re-validating one step must only touch that step's own errors — replacing
 // the whole checkout.errors object here was wiping out server-reported
@@ -732,7 +637,7 @@ function mergeStepErrors(
 
 const isLoading = ref(false);
 
-const send = async () => {
+const submitDetails = async () => {
     if (isLoading.value) return;
 
     if (!validateConfiguration()) {
@@ -781,23 +686,45 @@ const send = async () => {
         await subscriptionService.validateSubscription(payload);
         checkout.subscriptionPayload = payload;
 
-        await navigateTo({
-            path: "/product/subscription-details/checkout",
-            query: {
-                code: checkout.selectedPlan?.plan_id,
-                interval: checkout.selectedInterval,
-            },
-        });
+        currentStep.value = 5;
+        await scrollToTop();
     } catch (err: any) {
         const errors = err?.errors || err?.response?.data?.errors;
         if (errors) {
+            const owned: Record<number, Record<string, string>> = {
+                2: {},
+                3: {},
+                4: {},
+            };
             const formattedErrors = Object.fromEntries(
-                Object.entries(errors).map(([key, value]: any) => [
-                    SERVER_FIELD_ALIASES[key] ?? key,
-                    Array.isArray(value) ? value[0] : value,
-                ]),
+                Object.entries(errors).map(([key, value]: any) => {
+                    const message = Array.isArray(value) ? value[0] : value;
+                    const alias = SERVER_FIELD_ALIASES[key];
+
+                    if (!alias && key.startsWith("branch_settings.")) {
+                        const field = key.slice("branch_settings.".length);
+                        owned[4]![field] = message;
+                        return [field, message];
+                    }
+
+                    const location = key.match(
+                        /^(agency|branch)_(street|city|province|country|latitude|longitude)$/,
+                    );
+
+                    if (location) {
+                        const field = `location.${location[2]}`;
+                        owned[location[1] === "agency" ? 2 : 3]![field] =
+                            message;
+                        return [field, message];
+                    }
+
+                    return [alias ?? key, message];
+                }),
             );
 
+            Object.entries(owned).forEach(([step, fields]) =>
+                claimErrors(fields, Number(step)),
+            );
             checkout.errors = formattedErrors;
 
             const firstError = Object.keys(formattedErrors)[0];
@@ -816,6 +743,12 @@ onMounted(async () => {
     try {
         const plans = await planService.list();
         checkout.setPlans(plans);
+
+        if (route.query.step === "payment" && checkout.subscriptionPayload) {
+            currentStep.value = 5;
+        } else {
+            checkout.selectedInterval = "monthly";
+        }
     } finally {
         loading.value = false;
     }

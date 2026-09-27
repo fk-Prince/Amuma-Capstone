@@ -380,11 +380,20 @@
                                                             <span
                                                                 class="text-slate-500 dark:text-gray-400"
                                                             >
-                                                                <template v-if="isMonthly">
-                                                                    Month charged
+                                                                <template
+                                                                    v-if="
+                                                                        isMonthly
+                                                                    "
+                                                                >
+                                                                    Month
+                                                                    charged
                                                                 </template>
-                                                                <template v-else>
-                                                                    {{ periodDays }}
+                                                                <template
+                                                                    v-else
+                                                                >
+                                                                    {{
+                                                                        periodDays
+                                                                    }}
                                                                     ×
                                                                     {{
                                                                         formatCurrency(
@@ -436,16 +445,15 @@
                                                             <span
                                                                 class="text-slate-500 dark:text-gray-400"
                                                             >
-                                                                Days stayed
-                                                                {{
+                                                                Days stayed ({{
                                                                     consumedDays
                                                                 }}
-                                                                ×
                                                                 {{
-                                                                    formatCurrency(
-                                                                        dailyRate,
-                                                                    )
-                                                                }}
+                                                                    consumedDays ===
+                                                                    1
+                                                                        ? "day"
+                                                                        : "days"
+                                                                }})
                                                             </span>
 
                                                             <span
@@ -550,7 +558,6 @@
                                                     }}
                                                 </span>
                                             </div>
-
                                         </div>
                                     </div>
                                 </div>
@@ -618,22 +625,34 @@
                                                         ).toLowerCase()
                                                     }}
                                                     ·
-                                                    {{ period.accommodation_type }}
+                                                    {{
+                                                        period.accommodation_type
+                                                    }}
                                                 </p>
 
                                                 <p
                                                     class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
                                                 >
-                                                    {{ formatDate(period.start_date) }}
+                                                    {{
+                                                        formatDate(
+                                                            period.start_date,
+                                                        )
+                                                    }}
                                                     →
-                                                    {{ formatDate(period.end_date) }}
+                                                    {{
+                                                        formatDate(
+                                                            period.end_date,
+                                                        )
+                                                    }}
                                                 </p>
                                             </div>
 
                                             <p
                                                 class="shrink-0 text-sm font-semibold text-primary-950 dark:text-primary-300"
                                             >
-                                                {{ formatCurrency(period.price) }}
+                                                {{
+                                                    formatCurrency(period.price)
+                                                }}
                                             </p>
                                         </div>
                                     </div>
@@ -654,7 +673,11 @@
                                             <p
                                                 class="mt-0.5 text-sm font-semibold text-primary-950 dark:text-primary-300"
                                             >
-                                                {{ formatCurrency(futurePaidAmount) }}
+                                                {{
+                                                    formatCurrency(
+                                                        futurePaidAmount,
+                                                    )
+                                                }}
                                             </p>
                                         </div>
 
@@ -670,7 +693,11 @@
                                             <p
                                                 class="mt-0.5 text-sm font-semibold text-emerald-700 dark:text-emerald-300"
                                             >
-                                                {{ formatCurrency(futureRefundAmount) }}
+                                                {{
+                                                    formatCurrency(
+                                                        futureRefundAmount,
+                                                    )
+                                                }}
                                             </p>
                                         </div>
                                     </div>
@@ -729,9 +756,9 @@
                             <p
                                 class="mt-2 text-xs leading-5 text-emerald-800/80 dark:text-emerald-300/70"
                             >
+                                <!-- e or a cancelled period -->
                                 Paid more than the invoices now ask for, usually
-                                after a downgrade or a cancelled period. It
-                                stays on the account.
+                                after a downgrade. It stays on the account.
                             </p>
                         </div>
 
@@ -836,8 +863,9 @@
                                     <template v-if="mayForce">
                                         This patient still owes
                                         {{ formatCurrency(overallBalance) }}.
-                                        Force discharge ends the stay and
-                                        writes this admission's unpaid balance off as bad debt.
+                                        Force discharge ends the stay and writes
+                                        this admission's unpaid balance off as
+                                        bad debt.
                                     </template>
 
                                     <template v-else>
@@ -863,7 +891,9 @@
 
                             <button
                                 type="button"
-                                :disabled="loading || (owesBalance && !mayForce)"
+                                :disabled="
+                                    loading || (owesBalance && !mayForce)
+                                "
                                 class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
                                 @click="handleConfirm"
                             >
@@ -906,7 +936,9 @@
 
         <ConfirmDialog
             :open="confirming"
-            :title="owesBalance ? 'Force discharge patient?' : 'Discharge patient?'"
+            :title="
+                owesBalance ? 'Force discharge patient?' : 'Discharge patient?'
+            "
             :message="
                 owesBalance
                     ? `This patient still owes ${formatCurrency(overallBalance)}.`
@@ -917,7 +949,9 @@
                     ? 'This admission\'s unpaid balance will be marked as bad debt and written off. Services and schedules are not affected. This action cannot be undone.'
                     : 'This action cannot be undone.'
             "
-            :confirm-label="owesBalance ? 'Yes, force discharge' : 'Yes, discharge'"
+            :confirm-label="
+                owesBalance ? 'Yes, force discharge' : 'Yes, discharge'
+            "
             variant="danger"
             :loading="loading"
             @confirm="confirmDischargeNow"
@@ -1129,7 +1163,6 @@ function hasAnyAmount(invoice: InvoiceAccommodation): boolean {
 const isCurrentInvoiceRefundable = computed(() => {
     return getNetPaid(currentInvoice.value) > 0;
 });
-
 
 function statusClasses(status?: string | null) {
     const s = (status ?? "").toLowerCase();

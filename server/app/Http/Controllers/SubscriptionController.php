@@ -6,7 +6,8 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
-use App\Http\Requests\SubscriptionRequest;
+use App\Http\Requests\Subscription\SubscriptionRequest;
+use App\Http\Requests\Subscription\SubscriptionUniqueRequest;
 use App\Service\SubscriptionService;
 use Illuminate\Http\Request;
 
@@ -71,6 +72,14 @@ class SubscriptionController extends Controller
             'status' => true,
             'message' => 'Validation passed',
             'data' => $request->validated(),
+        ]);
+    }
+
+    public function checkUnique(SubscriptionUniqueRequest $request)
+    {
+        return response()->json([
+            'status' => true,
+            'message' => 'Available',
         ]);
     }
 

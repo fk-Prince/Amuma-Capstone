@@ -161,7 +161,6 @@
     </div>
 </template>
 <script setup lang="ts">
-useHead({ title: "Staff" });
 
 const props = defineProps<{
     totalEmployee: number;

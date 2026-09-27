@@ -20,6 +20,23 @@ class SubscriptionPayment extends Model
         return $this->belongsTo(Plan::class, 'plan_id', 'plan_id');
     }
 
+    public function historyRow(): array
+    {
+        return [
+            'subscription_payment_id' => $this->subscription_payment_id,
+            'plan_name' => $this->plan?->name,
+            'xendit_invoice_id' => $this->xendit_invoice_id,
+            'payment_reference_id' => $this->payment_reference_id,
+            'masked_card_number' => $this->masked_card_number,
+            'price' => (float) $this->price,
+            'status' => $this->status,
+            'type' => $this->type,
+            'billing_interval' => $this->billing_interval,
+            'payment_method' => $this->payment_method,
+            'created_at' => $this->created_at?->toIso8601String(),
+        ];
+    }
+
     protected $fillable = [
         'subscription_id',
         'plan_id',

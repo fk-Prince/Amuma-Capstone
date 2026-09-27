@@ -59,7 +59,8 @@ const noPatients = ref(false);
 const lovedOnes = ref<LovedOne[]>([]);
 const selectedIndex = ref(0);
 
-const { resolveIndex, syncQuery } = usePatientQuerySelection();
+const { syncQuery, selectedParams, indexOfPatient } =
+    usePatientQuerySelection();
 
 watch(selectedIndex, () =>
     syncQuery(lovedOnes.value[selectedIndex.value]?.uuid),
@@ -148,10 +149,19 @@ async function loadPatientData() {
     noPatients.value = false;
 
     try {
-        const res = await patientAccessService.retrieveAction({
-            action: "overview",
-            section: "profile",
-        });
+        const [res, medicationRes] = await Promise.all([
+            patientAccessService.retrieveAction({
+                action: "overview",
+                section: "profile",
+            }),
+            patientAccessService
+                .retrieveAction({
+                    action: "overview",
+                    section: "medication",
+                    ...selectedParams(),
+                })
+                .catch(() => null),
+        ]);
 
         const records: any[] = Array.isArray(res?.data) ? res.data : [];
 
@@ -168,22 +178,27 @@ async function loadPatientData() {
                 };
             });
 
-            selectedIndex.value = resolveIndex(lovedOnes.value);
+            const index = indexOfPatient(
+                lovedOnes.value,
+                medicationRes?.data?.patient_id,
+            );
+            const lo = lovedOnes.value[index];
 
-            const patientId = lovedOnes.value[selectedIndex.value]?.patient_id;
+            if (
+                lo &&
+                Number(medicationRes?.data?.patient_id) === lo.patient_id
+            ) {
+                const { meds, vitalRecords } = splitRecordsByCategory(
+                    medicationRes?.data?.patient?.medication,
+                );
 
-            if (patientId) {
-                const { meds, vitalRecords } =
-                    await fetchMedicationFor(patientId);
-                const lo = lovedOnes.value[selectedIndex.value];
-
-                if (lo) {
-                    lo.medications = meds;
-                    lo.vitals = vitalRecords;
-                }
-
-                medicationLoaded.value[selectedIndex.value] = true;
+                lo.medications = meds;
+                lo.vitals = vitalRecords;
+                medicationLoaded.value[index] = true;
             }
+
+            if (selectedIndex.value === index) loadMedicationAt(index);
+            else selectedIndex.value = index;
         } else {
             lovedOnes.value = [];
             noPatients.value = true;
@@ -200,7 +215,9 @@ async function loadPatientData() {
     updateLovedOnesScrollState();
 }
 
-watch(selectedIndex, async (idx) => {
+watch(selectedIndex, (idx) => loadMedicationAt(idx));
+
+async function loadMedicationAt(idx: number) {
     if (medicationLoaded.value[idx]) return;
 
     const patientId = lovedOnes.value[idx]?.patient_id;
@@ -224,7 +241,7 @@ watch(selectedIndex, async (idx) => {
     } finally {
         isSwitchingMedication.value = false;
     }
-});
+}
 
 onMounted(() => {
     loadPatientData();
@@ -240,89 +257,123 @@ onBeforeUnmount(() => {
     <div
         class="min-h-full space-y-6 mb-10 rounded-lg bg-white dark:bg-secondary"
     >
-        <div v-if="isLoading" class="space-y-5">
+        <div v-if="isLoading" class="animate-pulse space-y-6">
             <div
-                class="animate-pulse rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
+                class="overflow-hidden rounded-t-lg border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
-                <div class="flex gap-3 overflow-hidden">
-                    <div
-                        v-for="item in 4"
-                        :key="item"
-                        class="h-10 w-32 shrink-0 rounded-xl bg-gray-100 dark:bg-white/10"
-                    />
-                </div>
-            </div>
-
-            <div
-                class="animate-pulse rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
-            >
-                <div class="mb-5 flex items-center gap-3">
-                    <div
-                        class="h-10 w-10 rounded-xl bg-gray-100 dark:bg-white/10"
-                    />
-
+                <div
+                    class="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6 dark:border-white/10"
+                >
                     <div class="space-y-2">
                         <div
-                            class="h-4 w-36 rounded bg-gray-200 dark:bg-white/15"
+                            class="h-3.5 w-32 rounded bg-gray-200 dark:bg-white/15"
                         />
                         <div
-                            class="h-3 w-24 rounded bg-gray-100 dark:bg-white/10"
+                            class="h-3 w-40 rounded bg-gray-100 dark:bg-white/10"
                         />
                     </div>
+
+                    <div class="h-3 w-12 rounded bg-gray-100 dark:bg-white/10" />
                 </div>
 
-                <div class="space-y-3">
-                    <div class="h-10 rounded-xl bg-gray-50 dark:bg-white/5" />
-
+                <div class="flex gap-2 overflow-hidden px-5 py-4 sm:px-6">
                     <div
-                        v-for="row in 5"
-                        :key="row"
-                        class="grid grid-cols-4 gap-4 border-b border-gray-50 px-4 py-4 dark:border-white/10"
+                        v-for="chip in 4"
+                        :key="chip"
+                        class="flex shrink-0 items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 dark:border-white/10 dark:bg-white/5"
                     >
                         <div
-                            class="h-3.5 w-32 rounded bg-gray-100 dark:bg-white/10"
+                            class="h-8 w-8 rounded-lg bg-gray-200 dark:bg-white/15"
                         />
                         <div
-                            class="h-3.5 w-24 rounded bg-gray-100 dark:bg-white/10"
+                            class="h-3 w-24 rounded bg-gray-200 dark:bg-white/15"
                         />
                         <div
-                            class="h-3.5 w-28 rounded bg-gray-100 dark:bg-white/10"
-                        />
-                        <div
-                            class="h-3.5 w-16 rounded bg-gray-100 dark:bg-white/10"
+                            class="h-3.5 w-3.5 rounded bg-gray-100 dark:bg-white/10"
                         />
                     </div>
                 </div>
             </div>
 
             <div
-                v-for="card in 2"
-                :key="card"
-                class="animate-pulse rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
+                class="overflow-hidden rounded-b-lg border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
-                <div class="mb-5 flex items-center gap-3">
-                    <div
-                        class="h-10 w-10 rounded-xl bg-gray-100 dark:bg-white/10"
-                    />
-
-                    <div class="space-y-2">
+                <div
+                    class="flex flex-col gap-4 border-b border-gray-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:border-white/10"
+                >
+                    <div class="flex items-center gap-3">
                         <div
-                            class="h-4 w-28 rounded bg-gray-200 dark:bg-white/15"
+                            class="h-11 w-11 shrink-0 rounded-xl bg-gray-100 dark:bg-white/10"
                         />
+
+                        <div class="space-y-2">
+                            <div
+                                class="h-2.5 w-24 rounded bg-gray-100 dark:bg-white/10"
+                            />
+                            <div
+                                class="h-4 w-40 rounded bg-gray-200 dark:bg-white/15"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
                         <div
-                            class="h-3 w-20 rounded bg-gray-100 dark:bg-white/10"
+                            v-for="stat in 2"
+                            :key="stat"
+                            class="h-[50px] w-[84px] rounded-xl bg-gray-100 dark:bg-white/10"
                         />
                     </div>
                 </div>
 
-                <div class="space-y-3">
-                    <div class="h-10 rounded-xl bg-gray-50 dark:bg-white/5" />
+                <div
+                    v-for="section in 2"
+                    :key="section"
+                    class="p-5 sm:p-6"
+                    :class="
+                        section === 2
+                            ? 'border-t border-gray-100 dark:border-white/10'
+                            : ''
+                    "
+                >
+                    <div class="mb-4 flex items-center gap-2">
+                        <div
+                            class="h-4 w-4 rounded bg-gray-200 dark:bg-white/15"
+                        />
+                        <div
+                            class="h-3.5 w-36 rounded bg-gray-200 dark:bg-white/15"
+                        />
+                    </div>
 
                     <div
-                        v-for="row in 4"
-                        :key="row"
-                        class="h-12 rounded-xl bg-gray-50 dark:bg-white/5"
-                    />
+                        class="overflow-hidden rounded-xl border border-gray-100 dark:border-white/10"
+                    >
+                        <div
+                            class="grid grid-cols-3 gap-4 bg-gray-50 px-4 py-3 sm:grid-cols-5 dark:bg-white/5"
+                        >
+                            <div
+                                v-for="col in 5"
+                                :key="col"
+                                class="h-3 w-16 rounded bg-gray-200 dark:bg-white/15"
+                                :class="col > 3 ? 'hidden sm:block' : ''"
+                            />
+                        </div>
+
+                        <div
+                            v-for="row in 3"
+                            :key="row"
+                            class="grid grid-cols-3 gap-4 border-t border-gray-100 px-4 py-4 sm:grid-cols-5 dark:border-white/10"
+                        >
+                            <div
+                                v-for="col in 5"
+                                :key="col"
+                                class="h-3.5 rounded bg-gray-100 dark:bg-white/10"
+                                :class="[
+                                    col === 1 ? 'w-32' : 'w-20',
+                                    col > 3 ? 'hidden sm:block' : '',
+                                ]"
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

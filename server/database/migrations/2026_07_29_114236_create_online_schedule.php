@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('schedule_assigned_id')
                 ->constrained('schedule_assigned', 'schedule_assigned_id')
                 ->cascadeOnDelete();
-            $table->string('qr_in_token')->nullable();
-            $table->string('qr_out_token')->nullable();
+            $table->enum('type_in', ['scanned', 'force'])->default('scanned');
+            $table->enum('type_out', ['scanned', 'force'])->nullable();
             $table->string('notes')->nullable();
             $table->timestamp('in_timestamp')->nullable();
             $table->timestamp('out_timestamp')->nullable();

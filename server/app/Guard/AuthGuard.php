@@ -4,6 +4,10 @@ namespace App\Guard;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
+use App\Enums\RoleEnum;
+use App\Models\Branch;
+use App\Models\Employee;
+use App\Models\EmployeeBranch;
 use App\Models\User;
 use Exception;
 use Illuminate\Validation\UnauthorizedException;
@@ -32,6 +36,14 @@ class AuthGuard
             throw new Exception('Insufficient permissionsa', 403);
         }
 
+        // The person who registered an agency has full access to every
+        // branch under it, regardless of whether they have a permission row
+        // on that specific branch — an agency_owner row on any one of the
+        // agency's branches is enough.
+        if ($branchId !== false && self::ownsAgencyFor($employee, $branchId)) {
+            return $user;
+        }
+
         $moduleNames = collect($module)
             ->map(fn(ModuleEnum $module) => $module->value)
             ->values();
@@ -50,5 +62,19 @@ class AuthGuard
         }
 
         return $user;
+    }
+
+    private static function ownsAgencyFor(Employee $employee, string $branchId): bool
+    {
+        $agencyId = Branch::where('branch_id', $branchId)->value('agency_id');
+
+        if (!$agencyId) {
+            return false;
+        }
+
+        return EmployeeBranch::where('employee_id', $employee->employee_id)
+            ->where('role_name', RoleEnum::AgencyOwner->value)
+            ->whereHas('branches', fn($q) => $q->where('agency_id', $agencyId))
+            ->exists();
     }
 }

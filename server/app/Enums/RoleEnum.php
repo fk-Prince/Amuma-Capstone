@@ -4,8 +4,8 @@ namespace App\Enums;
 
 enum RoleEnum: string
 {
-    case BranchOwner = 'branch_owner';
-    case Administrator = 'administrator';
+    case AgencyOwner = 'agency_owner';
+    case BranchManager = 'branch_manager';
     case Admission = 'admission';
     case Accounting = 'accounting';
     case Nurse = 'nurse';
@@ -14,29 +14,9 @@ enum RoleEnum: string
     public function permissions(): array
     {
         return match ($this) {
-            self::BranchOwner => collect(ModuleEnum::cases())
+            self::AgencyOwner, self::BranchManager => collect(ModuleEnum::cases())
                 ->mapWithKeys(fn(ModuleEnum $module) => [
                     $module->value => $module->actionColumns(),
-                ])
-                ->all(),
-
-            self::Administrator => collect(ModuleEnum::cases())
-                ->mapWithKeys(fn(ModuleEnum $module) => [
-                    $module->value => match ($module) {
-                        ModuleEnum::RoomsAndBeds,
-                        ModuleEnum::Services,
-                        ModuleEnum::Contracts,
-                        ModuleEnum::EmployeeManagement,
-                        ModuleEnum::ManageBranches,
-                        ModuleEnum::BranchSettings => $module->actionColumns(),
-
-                        ModuleEnum::Admissions => [
-                            PermissionAction::Read->value,
-                            PermissionAction::ForceDischarge->value,
-                        ],
-
-                        default => [PermissionAction::Read->value],
-                    },
                 ])
                 ->all(),
 
@@ -51,6 +31,7 @@ enum RoleEnum: string
                     ModuleEnum::Admissions->actionColumns(),
                     [PermissionAction::ForceDischarge->value]
                 )),
+                ModuleEnum::RoomsAndBeds->value => [PermissionAction::Read->value],
                 ModuleEnum::Services->value => [PermissionAction::Read->value],
                 ModuleEnum::Contracts->value => [PermissionAction::Read->value],
                 ModuleEnum::EmployeeManagement->value => [PermissionAction::Read->value],

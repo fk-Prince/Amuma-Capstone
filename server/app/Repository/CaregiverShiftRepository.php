@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Models\CaregiverFacilityShift;
 use App\Models\Employee;
+use App\Models\EmployeeBranch;
 use App\Models\PatientAdmission;
 
 class CaregiverShiftRepository
@@ -36,9 +37,9 @@ class CaregiverShiftRepository
     public function facilityCaregivers(int $branchId)
     {
         return Employee::query()
-            ->where('status', Employee::STATUS_ACTIVE)
             ->whereHas('employeeBranch', function ($query) use ($branchId) {
                 $query->where('branch_id', $branchId)
+                    ->where('status', EmployeeBranch::STATUS_ACTIVE)
                     ->where('role_name', 'caregiver')
                     ->whereIn('assignment_type', ['facility', 'both']);
             })
@@ -106,6 +107,57 @@ class CaregiverShiftRepository
                 ->values()
                 ->all())
             ->all();
+    }
+
+    public function branchBoard(int $branchId, ?int $caregiverId = null, string $search = '')
+    {
+        $term = '%' . $search . '%';
+
+        return CaregiverFacilityShift::query()
+            ->where('is_active', true)
+            ->when($caregiverId !== null, fn($query) => $query->where('caregiver_id', $caregiverId))
+            ->whereHas(
+                'admission',
+                fn($admission) => $admission
+                    ->where('status', PatientAdmission::STATUS_ADMITTED)
+                    ->whereHas('patient', fn($patient) => $patient->where('branch_id', $branchId))
+            )
+            ->when($search !== '', fn($query) => $query->where(
+                fn($match) => $match
+                    ->whereHas(
+                        'caregiver',
+                        fn($caregiver) => $caregiver->whereRaw("concat(first_name, ' ', last_name) ilike ?", [$term])
+                    )
+                    ->orWhereHas(
+                        'admission.patient',
+                        fn($patient) => $patient->whereRaw("concat(first_name, ' ', last_name) ilike ?", [$term])
+                    )
+                    ->orWhereHas('admission.bed.room', fn($room) => $room->where('room_no', 'ilike', $term))
+            ))
+            ->with(['caregiver', 'admission.patient', 'admission.bed.room'])
+            ->orderBy('start_time')
+            ->get();
+    }
+
+    public function uncoveredAdmissions(int $branchId, string $search = '')
+    {
+        $term = '%' . $search . '%';
+
+        return PatientAdmission::query()
+            ->where('status', PatientAdmission::STATUS_ADMITTED)
+            ->whereHas('patient', fn($patient) => $patient->where('branch_id', $branchId))
+            ->whereDoesntHave('caregiverShifts', fn($shift) => $shift->where('is_active', true))
+            ->when($search !== '', fn($query) => $query->where(
+                fn($match) => $match
+                    ->whereHas(
+                        'patient',
+                        fn($patient) => $patient->whereRaw("concat(first_name, ' ', last_name) ilike ?", [$term])
+                    )
+                    ->orWhereHas('bed.room', fn($room) => $room->where('room_no', 'ilike', $term))
+            ))
+            ->with(['patient', 'bed.room'])
+            ->orderBy('admitted_at')
+            ->get();
     }
 
     public function hasActiveAssignment(int $admissionId, int $caregiverId, ?int $exceptShiftId = null): bool

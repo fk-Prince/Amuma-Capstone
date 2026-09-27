@@ -24,6 +24,10 @@ class SubscriptionService extends BaseService {
         return await this.request(this.resource + '-validate', 'POST', payload);
     }
 
+    async checkUnique(payload: Record<string, any>) {
+        return await this.request(this.resource + '-check-unique', 'POST', payload);
+    }
+
     async renew(payload: any): Promise<any> {
         return await this.request(this.resource + '-renew', 'POST', payload);
     }

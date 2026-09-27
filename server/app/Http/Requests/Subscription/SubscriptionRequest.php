@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Subscription;
 
 use App\Rules\ValidTin;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -18,7 +18,8 @@ class SubscriptionRequest extends FormRequest
 
     public function rules(): array
     {
-        //, 'unique:branches,name'
+        $unique = SubscriptionUniqueRequest::createFrom($this);
+
         return [
             'token_id' => ['nullable', 'string'],
             'authentication_id' => ['nullable', 'string'],
@@ -34,7 +35,7 @@ class SubscriptionRequest extends FormRequest
 
             // Agency data
             'agency_id'          => ['nullable'],
-            'agency_name'        => ['nullable', 'string', 'required_with:agency_street,agency_city,agency_province,agency_country,agency_email'],
+            'agency_name'        => ['nullable', 'string', 'required_with:agency_street,agency_city,agency_province,agency_country,agency_email', $unique->uniqueAgencyName()],
             'agency_description' => ['nullable', 'string', 'max:1000'],
             'agency_street'      => ['nullable', 'string', 'required_with:agency_name'],
             'agency_city'        => ['nullable', 'string', 'required_with:agency_name'],
@@ -53,7 +54,7 @@ class SubscriptionRequest extends FormRequest
             'agency_document'    => ['nullable', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:5120', 'required_with:agency_name'],
 
             // Branch data
-            'branch_name' => ['required', 'string'],
+            'branch_name' => ['required', 'string', $unique->uniqueBranchName()],
             'branch_street' => ['required', 'string'],
             'branch_description' => ['required', 'string', 'max:1000'],
             'branch_city' => ['required', 'string'],

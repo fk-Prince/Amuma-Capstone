@@ -10,6 +10,10 @@ class Agency extends Model
     use HasUuids;
     protected $primaryKey = 'agency_id';
 
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_VERIFIED = 'verified';
+    public const STATUS_REJECTED = 'rejected';
+
     protected $fillable = [
         'name',
         'description',
@@ -20,11 +24,7 @@ class Agency extends Model
         'id_front',
         'id_back',
         'document',
-        'is_verified',
-    ];
-
-    protected $casts = [
-        'is_verified' => 'boolean',
+        'status',
     ];
 
     public function uniqueIds()

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Auth\StoreEmployeeRequest;
-use App\Http\Requests\Auth\UpdateEmployeeRequest;
-use App\Http\Requests\UpdateProfileRequest;
+use App\Http\Requests\Employee\StoreEmployeeRequest;
+use App\Http\Requests\Employee\UpdateEmployeeRequest;
+use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Service\UserService;
 use Illuminate\Http\Request;
 

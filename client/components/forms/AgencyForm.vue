@@ -1,17 +1,11 @@
 <template>
-    <div class="w-full mx-auto space-y-8">
+    <div class="w-full mx-auto space-y-8" :class="cardClass">
         <div class="space-y-6">
-            <div>
-                <h2
-                    class="text-lg font-semibold text-slate-900 dark:text-white"
-                >
-                    Agency Information
-                </h2>
-
-                <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
-                    Configure your agency profile, branding, and agency details.
-                </p>
-            </div>
+            <FormSectionHeader
+                :title="isNew ? 'Agency Profile' : 'Agency Information'"
+                description="Configure your agency profile, branding, and agency details."
+                :icon="isNew ? Building2 : undefined"
+            />
 
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-8">
                 <div class="space-y-5">
@@ -20,7 +14,7 @@
                         label="Agency Name"
                         placeholder="Enter agency name"
                         :error="errors?.agency_name"
-                        @clear-error="clearError('agency_name')"
+                        @update:modelValue="clearError('agency_name')"
                         data-field="agency_name"
                     />
 
@@ -43,7 +37,7 @@
                         :allowResize="true"
                         :textMax="1000"
                         :error="errors?.agency_description"
-                        @clear-error="clearError('agency_description')"
+                        @update:modelValue="clearError('agency_description')"
                         data-field="agency_description"
                     />
                 </div>
@@ -110,22 +104,16 @@
                 </div>
             </div>
         </div>
-        <div class="space-y-5">
-            <div>
-                <h2
-                    class="text-lg font-semibold text-slate-900 dark:text-white"
-                >
-                    Verification Documents
-                </h2>
-
-                <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
-                    {{
-                        lockVerification
-                            ? "The documents this agency was verified with, these cannot be changed here."
-                            : "Upload a valid ID and a supporting document for verification."
-                    }}
-                </p>
-            </div>
+        <div class="space-y-5" :class="dividerClass">
+            <FormSectionHeader
+                title="Verification Documents"
+                :description="
+                    lockVerification
+                        ? 'The documents this agency was verified with, these cannot be changed here.'
+                        : 'Upload a valid ID and a supporting document for verification.'
+                "
+                :icon="isNew ? ShieldCheck : undefined"
+            />
 
             <div v-if="lockVerification" class="space-y-2">
                 <p
@@ -303,10 +291,11 @@
                     />
 
                     <p
-                        v-if="errors?.agency_id_front || errors?.agency_id_back"
+                        v-for="message in idErrors"
+                        :key="message"
                         class="text-xs text-red-500"
                     >
-                        {{ errors.agency_id_front || errors.agency_id_back }}
+                        {{ message }}
                     </p>
 
                     <div>
@@ -505,31 +494,15 @@
         </div>
         <div
             class="space-y-5"
+            :class="dividerClass"
             data-field="location.street location.city location.province location.country location"
         >
-            <div
-                class="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+            <FormSectionHeader
+                title="Primary Address"
+                description="Pick the agency location on the map."
+                :icon="isNew ? MapPin : undefined"
             >
-                <div>
-                    <h2
-                        class="text-lg font-semibold text-slate-900 dark:text-white"
-                    >
-                        Primary Address
-                    </h2>
-
-                    <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
-                        Choose between map location or manual address.
-                    </p>
-
-                    <p
-                        v-if="locationError && useGeolocation"
-                        class="text-xs text-red-500 mt-1"
-                    >
-                        {{ locationError }}
-                    </p>
-                </div>
-
-                <div class="flex items-center gap-3 shrink-0">
+                <template #actions>
                     <button
                         type="button"
                         @click="resetLocation"
@@ -537,101 +510,41 @@
                     >
                         Reset
                     </button>
+                </template>
+            </FormSectionHeader>
 
-                    <span
-                        class="text-xs text-slate-500 dark:text-gray-400 whitespace-nowrap"
-                    >
-                        Use map
-                    </span>
+            <ClientOnly>
+                <LocationSelector
+                    :initial-lat="agency.location?.latitude || undefined"
+                    :initial-lng="agency.location?.longitude || undefined"
+                    :initial-street="agency.location?.street || undefined"
+                    :initial-city="agency.location?.city || undefined"
+                    :initial-province="agency.location?.province || undefined"
+                    :initial-country="agency.location?.country || undefined"
+                    manual-fallback
+                    @location-selected="handleLocation"
+                    @location-cleared="clearLocation"
+                    ref="locationSelectorRef"
+                />
 
-                    <button
-                        type="button"
-                        @click="useGeolocation = !useGeolocation"
-                        class="relative inline-flex h-6 w-11 items-center rounded-full transition"
-                        :class="
-                            useGeolocation
-                                ? 'bg-primary'
-                                : 'bg-slate-200 dark:bg-white/10'
-                        "
-                    >
-                        <span
-                            class="h-4 w-4 rounded-full bg-white shadow transition-transform dark:bg-secondary"
-                            :class="
-                                useGeolocation
-                                    ? 'translate-x-6'
-                                    : 'translate-x-1'
-                            "
-                        />
-                    </button>
-                </div>
-            </div>
-
-            <template v-if="useGeolocation">
-                <ClientOnly>
-                    <LocationSelector
-                        :initial-lat="agency.location?.latitude || undefined"
-                        :initial-lng="agency.location?.longitude || undefined"
-                        :initial-street="agency.location?.street || undefined"
-                        :initial-city="agency.location?.city || undefined"
-                        :initial-province="
-                            agency.location?.province || undefined
-                        "
-                        :initial-country="agency.location?.country || undefined"
-                        @location-selected="handleLocation"
-                        @location-cleared="clearLocation"
-                        ref="locationSelectorRef"
+                <template #fallback>
+                    <div
+                        class="w-full h-[400px] rounded-xl border border-gray-200 bg-slate-50 animate-pulse dark:border-white/10 dark:bg-secondary"
                     />
+                </template>
+            </ClientOnly>
 
-                    <template #fallback>
-                        <div
-                            class="h-64 rounded-xl bg-slate-50 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 dark:bg-secondary"
-                        >
-                            Loading map...
-                        </div>
-                    </template>
-                </ClientOnly>
-            </template>
-
-            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <LabelInput
-                    v-model="agency.location.street"
-                    label="Street"
-                    @update:modelValue="clearError('location.street')"
-                    :error="errors?.['location.street']"
-                    data-field="location.street"
-                />
-
-                <LabelInput
-                    v-model="agency.location.city"
-                    label="City"
-                    @update:modelValue="clearError('location.city')"
-                    :error="errors?.['location.city']"
-                    data-field="location.city"
-                />
-
-                <LabelInput
-                    v-model="agency.location.province"
-                    label="Province"
-                    @update:modelValue="clearError('location.province')"
-                    :error="errors?.['location.province']"
-                    data-field="location.province"
-                />
-
-                <LabelInput
-                    v-model="agency.location.country"
-                    label="Country"
-                    @update:modelValue="clearError('location.country')"
-                    :error="errors?.['location.country']"
-                    data-field="location.country"
-                />
-            </div>
+            <p v-if="locationError" class="text-xs text-red-500">
+                {{ locationError }}
+            </p>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { Check } from "lucide-vue-next";
-import { ref, computed, watch } from "vue";
+import { Building2, Check, MapPin, ShieldCheck } from "lucide-vue-next";
+import FormSectionHeader from "../ui/FormSectionHeader.vue";
+import { ref, computed } from "vue";
 import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
 import DocumentLink from "../ui/DocumentLink.vue";
@@ -643,6 +556,18 @@ const props = defineProps<{
     mode?: "new" | "edit";
     lockVerification?: boolean;
 }>();
+
+const isNew = computed(() => props.mode === "new");
+
+const cardClass = computed(() =>
+    isNew.value
+        ? "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8 dark:border-white/10 dark:bg-white/[0.03]"
+        : "",
+);
+
+const dividerClass = computed(() =>
+    isNew.value ? "border-t border-slate-200 pt-8 dark:border-white/10" : "",
+);
 
 const fileUrls = computed(() => ({
     id_front:
@@ -681,11 +606,19 @@ const agencyImagePreview = ref<string | null>(
     initialPreview(props.agency.image),
 );
 const agencyImageInput = ref<HTMLInputElement | null>(null);
-const useGeolocation = ref(true);
 
 type FileField = "id_front" | "id_back" | "document";
 
 const idSide = ref<"id_front" | "id_back">("id_front");
+
+const idErrors = computed(() => {
+    const front = props.errors?.agency_id_front;
+    const back = props.errors?.agency_id_back;
+    if (front?.includes("required") && back?.includes("required")) {
+        return ["ID Front & Back is required"];
+    }
+    return [...new Set([front, back].filter(Boolean))];
+});
 const idInput = ref<HTMLInputElement | null>(null);
 const documentInput = ref<HTMLInputElement | null>(null);
 
@@ -765,41 +698,39 @@ const locationError = computed(() => {
     ];
 
     return keys.some((k) => props.errors?.[k])
-        ? "Location is required. Please complete address information."
+        ? "Location is required. Pick a spot on the map or enter the full address with the city and province."
         : "";
-});
-
-// Manual fields only exist in the DOM with map mode off, so a location error caught on the map would have nowhere to show.
-watch(locationError, (hasError) => {
-    if (hasError) {
-        useGeolocation.value = false;
-    }
 });
 
 const handleLocation = ({
     lat,
     lng,
+    label,
     street,
     city,
     province,
     country,
 }: {
-    lat: number;
-    lng: number;
+    lat: number | null;
+    lng: number | null;
+    label: string;
     street: string;
     city: string;
     province: string;
     country: string;
 }) => {
+    const resolvedStreet =
+        label || [street, city, province, country].filter(Boolean).join(", ");
+
     emit("update:agency", {
         ...agency.value,
         location: {
-            street: street ?? "",
+            street: resolvedStreet,
             city: city ?? "",
             province: province ?? "",
             country: country ?? "",
-            latitude: lat ?? 0,
-            longitude: lng ?? 0,
+            latitude: lat ?? undefined,
+            longitude: lng ?? undefined,
         },
     });
 
@@ -814,12 +745,12 @@ const handleLocation = ({
     });
 
     if (
-        !street?.trim() ||
+        !resolvedStreet?.trim() ||
         !city?.trim() ||
         !province?.trim() ||
         !country?.trim()
     ) {
-        if (!street?.trim()) {
+        if (!resolvedStreet?.trim()) {
             updatedErrors["location.street"] = "Street is required";
         }
 
@@ -834,8 +765,6 @@ const handleLocation = ({
         if (!country?.trim()) {
             updatedErrors["location.country"] = "Country is required";
         }
-
-        useGeolocation.value = false;
     }
 
     emit("update:errors", updatedErrors);
@@ -860,7 +789,7 @@ const locationSelectorRef = ref<InstanceType<typeof LocationSelector> | null>(
 );
 
 const resetLocation = () => {
-    if (useGeolocation.value && locationSelectorRef.value) {
+    if (locationSelectorRef.value) {
         locationSelectorRef.value.clearSelection();
     } else {
         clearLocation();

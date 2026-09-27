@@ -19,6 +19,14 @@ class CaregiverShiftService extends BaseService {
         return await this.request(this.resource, "GET", params);
     }
 
+    async board(params: {
+        branch_uuid: string;
+        search?: string;
+        assigned_only?: number;
+    }): Promise<any> {
+        return await this.request(`${this.resource}/board`, "GET", params);
+    }
+
     async assign(payload: object): Promise<any> {
         return await this.request(this.resource, "POST", payload);
     }

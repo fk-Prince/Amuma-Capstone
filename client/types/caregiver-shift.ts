@@ -29,6 +29,33 @@ export interface CaregiverShiftList {
     duty_limit: number;
 }
 
+export interface ShiftBoardResident {
+    admission_id: number;
+    patient_uuid: string | null;
+    full_name: string;
+    room_no: string | null;
+    bed_no: string | null;
+}
+
+export interface ShiftBoardShift {
+    caregiver_facility_shift_id: number;
+    start_time: string;
+    end_time: string;
+    note: string | null;
+    caregiver: {
+        employee_id: number;
+        full_name: string | null;
+        avatar: string | null;
+    };
+    resident: ShiftBoardResident;
+}
+
+export interface ShiftBoard {
+    shifts: ShiftBoardShift[];
+    uncovered: ShiftBoardResident[];
+    duty_limit: number;
+}
+
 export interface CaregiverShiftOutcome {
     shift: CaregiverShift;
     caregiver: Pick<

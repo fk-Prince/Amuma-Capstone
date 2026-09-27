@@ -702,7 +702,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import {
     Building2,
     Check,
@@ -898,7 +898,7 @@ const form = reactive({
 });
 
 const card = ref<CardDetails>({
-    number: "4000000000002503",
+    number: "4000000000001000",
     expMonth: "04",
     expYear: "29",
     cvc: "123",
@@ -979,6 +979,52 @@ const stepForField = (field: string): number => {
     return 2;
 };
 
+const scrollToFirstError = async () => {
+    await nextTick();
+
+    const firstKey = Object.keys(errors.value ?? {})[0];
+
+    if (!firstKey) return;
+
+    document
+        .querySelector(`[data-field~="${firstKey}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+};
+
+const checkUnique = async (): Promise<boolean> => {
+    validating.value = true;
+
+    try {
+        await subscriptionService.checkUnique({
+            agency_id: props.agencyId,
+            branch_name: form.branch.name,
+            branch_email: form.branch.email,
+        });
+
+        return true;
+    } catch (err: any) {
+        const raw = err?.errors ?? {};
+
+        if (!Object.keys(raw).length) {
+            stepError.value =
+                err?.message ?? "Could not verify the branch details.";
+
+            return false;
+        }
+
+        errors.value = Object.fromEntries(
+            Object.entries(raw).map(([key, value]: any) => [
+                key,
+                Array.isArray(value) ? value[0] : value,
+            ]),
+        );
+
+        return false;
+    } finally {
+        validating.value = false;
+    }
+};
+
 const nextStep = async () => {
     stepError.value = null;
 
@@ -996,7 +1042,11 @@ const nextStep = async () => {
 
     if (currentStep.value === 2) {
         errors.value = {};
-        if (!validateBranch()) return;
+
+        if (!validateBranch() || !(await checkUnique())) {
+            await scrollToFirstError();
+            return;
+        }
     }
 
     if (currentStep.value === 3) {
@@ -1054,6 +1104,7 @@ const validateOnServer = async (): Promise<boolean> => {
         if (first) {
             currentStep.value = stepForField(first);
             stepError.value = mapped[first];
+            await scrollToFirstError();
         } else {
             stepError.value = err?.message ?? "Validation failed.";
         }

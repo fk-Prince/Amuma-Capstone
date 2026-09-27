@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Http\Resources\CaregiverShiftResource;
 use App\Models\PatientAdmission;
+use App\Models\User;
 use App\Repository\CaregiverShiftRepository;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +30,51 @@ class CaregiverShiftService
                 'duty_limit' => self::MAX_DUTY_HOURS,
             ],
         ]);
+    }
+
+    public function board(array $payload, User $user)
+    {
+        $branchId = (int) $payload['branch_id'];
+        $mine = !empty($payload['assigned_only']);
+        $search = trim((string) ($payload['search'] ?? ''));
+
+        $shifts = $this->shifts->branchBoard(
+            $branchId,
+            $mine ? (int) ($user->employee?->employee_id ?? 0) : null,
+            $search
+        );
+
+        $uncovered = $mine ? collect() : $this->shifts->uncoveredAdmissions($branchId, $search);
+
+        return response()->json([
+            'data' => [
+                'shifts' => $shifts->map(fn($shift) => [
+                    'caregiver_facility_shift_id' => $shift->caregiver_facility_shift_id,
+                    'start_time' => substr((string) $shift->start_time, 0, 5),
+                    'end_time' => substr((string) $shift->end_time, 0, 5),
+                    'note' => $shift->note,
+                    'caregiver' => [
+                        'employee_id' => $shift->caregiver_id,
+                        'full_name' => $shift->caregiver?->full_name,
+                        'avatar' => $shift->caregiver?->avatar,
+                    ],
+                    'resident' => $this->boardResident($shift->admission),
+                ])->values(),
+                'uncovered' => $uncovered->map(fn($admission) => $this->boardResident($admission))->values(),
+                'duty_limit' => self::MAX_DUTY_HOURS,
+            ],
+        ]);
+    }
+
+    private function boardResident(PatientAdmission $admission): array
+    {
+        return [
+            'admission_id' => $admission->patient_admission_id,
+            'patient_uuid' => $admission->patient?->uuid,
+            'full_name' => trim(($admission->patient?->first_name ?? '') . ' ' . ($admission->patient?->last_name ?? '')),
+            'room_no' => $admission->bed?->room?->room_no,
+            'bed_no' => $admission->bed?->bed_no,
+        ];
     }
 
     public function assign(array $payload)

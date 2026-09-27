@@ -2,9 +2,11 @@
 
 namespace App\Repository;
 
+use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
+use App\Enums\RoleEnum;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
-use App\Models\EmployeePermission;
 use App\Models\Schedule;
 use App\Models\Service;
 use App\Models\User;
@@ -29,14 +31,36 @@ class EmployeeRepository
     {
         return Employee::query()
             ->with('users:user_id,uuid')
-            ->where('status', Employee::STATUS_ACTIVE)
             ->whereHas('employeeBranch', function ($query) use ($roles, $branchId) {
                 $query->where('branch_id', $branchId)
+                    ->where('status', EmployeeBranch::STATUS_ACTIVE)
                     ->whereIn('role_name', $roles);
             })
             ->get()
             ->map(fn(Employee $employee) => [
                 'employee_id' => $employee->employee_id,
+                'user_id' => $employee->user_id,
+                'uuid' => $employee->users?->uuid,
+            ])
+            ->filter(fn($staff) => $staff['uuid'] !== null)
+            ->values();
+    }
+
+    public function getBranchUsersWithPermission(int|string $branchId, ModuleEnum $module, PermissionAction $action)
+    {
+        return Employee::query()
+            ->with('users:user_id,uuid')
+            ->whereHas('employeeBranch', function ($query) use ($branchId) {
+                $query->where('branch_id', $branchId)
+                    ->where('status', EmployeeBranch::STATUS_ACTIVE);
+            })
+            ->whereHas('permissions', function ($query) use ($branchId, $module, $action) {
+                $query->where('branch_id', $branchId)
+                    ->where($action->value, true)
+                    ->whereHas('modules', fn($modules) => $modules->where('module_name', $module->value));
+            })
+            ->get()
+            ->map(fn(Employee $employee) => [
                 'user_id' => $employee->user_id,
                 'uuid' => $employee->users?->uuid,
             ])
@@ -60,7 +84,9 @@ class EmployeeRepository
                 },
                 'employee.permissions.modules',
                 'client',
-            ])->whereHas('employee');
+            ])->whereHas('employee.employeeBranch', function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            });
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -79,6 +105,21 @@ class EmployeeRepository
             });
         }
 
+        $rank = collect(RoleEnum::cases())
+            ->map(fn(RoleEnum $role, int $index) => "when '{$role->value}' then {$index}")
+            ->implode(' ');
+
+        $query
+            ->orderByRaw(
+                "(select case eb.role_name {$rank} else 99 end
+                    from employee_branches eb
+                    join employees e on e.employee_id = eb.employee_id
+                    where e.user_id = users.user_id and eb.branch_id = ?
+                    limit 1)",
+                [$branchId]
+            )
+            ->orderBy('users.user_id');
+
         $users = $query->paginate($perPage);
 
         $users->getCollection()->each(function ($user) {
@@ -95,9 +136,14 @@ class EmployeeRepository
             ->whereHas('employee.employeeBranch', function ($q) use ($branchId) {
                 $q->where('branch_id', $branchId);
             })
-            ->with('employee:user_id,status')
+            ->with([
+                'employee.employeeBranch' => function ($q) use ($branchId) {
+                    $q->where('branch_id', $branchId);
+                },
+            ])
             ->get()
-            ->groupBy(fn($user) => $user->employee?->status ?? 'inactive')
+            ->groupBy(fn($user) => $user->employee?->employeeBranch
+                ?->firstWhere('branch_id', $branchId)?->status ?? 'inactive')
             ->map(fn($users) => $users->count());
         $totalEmployees = $statusCounts->sum();
 
@@ -168,9 +214,9 @@ class EmployeeRepository
                     ]);
             },
         ])
-            ->where('status', 'active')
             ->whereHas('employeeBranch', function ($query) use ($branchId, $allowedRoles) {
                 $query->where('branch_id', $branchId)
+                    ->where('status', EmployeeBranch::STATUS_ACTIVE)
                     ->whereIn('role_name', $allowedRoles);
             })
             ->withExists(['employeeBranch as is_busy' => function ($query) use ($branchId, $allowedRoles, $activeScheduleAssignments) {

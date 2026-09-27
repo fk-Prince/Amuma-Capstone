@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\OtpRequest;
+use App\Http\Requests\Auth\OtpRequest;
 use App\Service\Security\OtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;

@@ -2,7 +2,7 @@
     <div
         :class="
             embedded
-                ? 'w-full bg-white rounded-lg'
+                ? 'w-full bg-white rounded-lg dark:bg-surface'
                 : 'min-h-screen bg-white pt-[124px] rounded-lg dark:bg-surface'
         "
     >
@@ -1049,8 +1049,8 @@ const handleLocation = ({
     province,
     country,
 }: {
-    lat: number;
-    lng: number;
+    lat: number | null;
+    lng: number | null;
     street: string;
     city: string;
     province: string;

@@ -1,8 +1,6 @@
 
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
-import { authMenuList } from "~/config/authMenu";
-import { PermissionAction } from "~/utils/permissions";
 
 const AUTH_ROUTES = ["/auth/signin", "/auth/signup"];
 
@@ -26,39 +24,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
         return navigateTo("/");
     }
 
-    if (to.path.startsWith("/app/branches/")) {
-        const branchUuid = to.params.uuid as string;
-        if (!branchUuid) return;
+    const branchUuid = to.params.uuid as string;
 
-        if (!branchStore.branches.length) {
-            await branchStore.fetchBranches(branchUuid);
-        }
-
-        const branch = branchStore.branches.find((b) => b?.uuid === branchUuid);
-        if (!branch) {
-            return navigateTo("/403");
-        }
-
-        const readableModules = branch.permissions
-            ?.filter((p) => p.actions?.includes(PermissionAction.Read))
-            .map((p) => p.module_name) ?? [];
-
-        const selectedMenu = authMenuList.find((item) => {
-            const uuid = item.to.replace("[uuid]", branchUuid);
-            return to.path === uuid || to.path.startsWith(uuid);
-        });
-
-        const isDashboard =
-            selectedMenu?.to?.endsWith("/dashboard");
-
-        if (!isDashboard && selectedMenu?.modules) {
-            const hasModuleAccess = selectedMenu.modules.some((m) =>
-                readableModules.includes(m)
-            );
-
-            if (!hasModuleAccess) {
-                return navigateTo("/403");
-            }
-        }
+    if (
+        to.path.startsWith("/app/branches/") &&
+        branchUuid &&
+        !branchStore.loaded
+    ) {
+        await branchStore.fetchBranches(branchUuid);
     }
 });

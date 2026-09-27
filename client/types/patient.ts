@@ -150,6 +150,7 @@ export interface PatientFamilyMember {
     is_primary: boolean;
     client: {
         client_id: number;
+        uuid: string | null;
         full_name: string | null;
         phone_number: string | null;
         email: string | null;

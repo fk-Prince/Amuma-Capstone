@@ -10,7 +10,6 @@ use App\Models\Conversation;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\Message;
-use App\Models\Patient;
 use App\Models\PatientAccess;
 use App\Models\PatientAdmission;
 use App\Models\ScheduleAssigned;
@@ -24,15 +23,20 @@ use Illuminate\Support\Facades\DB;
 class MessageService
 {
     private const NOT_MESSAGEABLE_BY_FAMILY = [
-        'administrator',
-        'branch_owner',
+        'branch_manager',
+        'agency_owner',
         'accounting',
+    ];
+
+    private const MESSAGEABLE_STATUSES = [
+        EmployeeBranch::STATUS_ACTIVE,
+        EmployeeBranch::STATUS_ONLEAVE,
     ];
 
     private const UNRESTRICTED_ROLES = [
         'admission',
-        'administrator',
-        'branch_owner',
+        'branch_manager',
+        'agency_owner',
     ];
 
     public function clientConversations(Client $client)
@@ -44,7 +48,7 @@ class MessageService
 
         $hintsByBranch = $conversations
             ->groupBy('branch_id')
-            ->map(fn($group, $branchId) => $this->batchSummaryHints($group, (int) $branchId));
+            ->map(fn($group, $branchId) => $this->batchSummaryHints($group, (int) $branchId, true));
 
         return $conversations
             ->map(fn($conversation) => $this->summary(
@@ -110,6 +114,7 @@ class MessageService
 
         $role = EmployeeBranch::where('branch_id', $branchId)
             ->where('employee_id', $payload['employee_id'])
+            ->whereIn('status', self::MESSAGEABLE_STATUSES)
             ->value('role_name');
 
         if (!$role) {
@@ -159,10 +164,7 @@ class MessageService
 
         return EmployeeBranch::where('branch_id', $patient->branch_id)
             ->whereNotIn('role_name', self::NOT_MESSAGEABLE_BY_FAMILY)
-            ->whereHas(
-                'employees',
-                fn($employee) => $employee->where('status', '!=', Employee::STATUS_INACTIVE)
-            )
+            ->whereIn('status', self::MESSAGEABLE_STATUSES)
             ->with('employees.users')
             ->get()
             ->map(fn($employeeBranch) => [
@@ -185,39 +187,42 @@ class MessageService
             ->all();
     }
 
-    public function branchConversations(array $payload, ?User $user = null)
+    public function branchConversations(array $payload, User $user)
     {
+        $branchId = (int) $payload['branch_id'];
+        $employeeId = $this->requireBranchStaff($user, $branchId);
         $search = trim((string) ($payload['search'] ?? ''));
 
-        $conversations = Conversation::where('branch_id', $payload['branch_id'])
+        $conversations = Conversation::where('branch_id', $branchId)
             ->where('type', Conversation::TYPE_FAMILY)
-            ->when($user, function ($query) use ($user, $payload) {
-                $employeeId = $user->employee?->employee_id;
-
-                $query->whereIn(
-                    'client_id',
-                    $this->reachableClientIds($user, (int) $payload['branch_id'])
-                )->where(
-                    fn($q) => $q->whereNull('employee_one_id')
-                        ->orWhere('employee_one_id', $employeeId)
-                );
-            })
-            ->when($search !== '', function ($query) use ($search) {
+            ->whereIn('client_id', $this->reachableClientIds($user, $branchId))
+            ->where(
+                fn($q) => $q->whereNull('employee_one_id')
+                    ->orWhere('employee_one_id', $employeeId)
+            )
+            ->when($search !== '', function ($query) use ($search, $branchId) {
                 $term = '%' . $search . '%';
 
-                $query->where(function ($q) use ($term) {
+                $query->where(function ($q) use ($term, $branchId) {
                     $q->whereHas(
                         'client',
                         fn($c) => $c->whereRaw(
                             "concat(first_name, ' ', last_name) ilike ?",
                             [$term]
                         )
-                    )->orWhereHas(
-                        'patient',
-                        fn($p) => $p->whereRaw(
-                            "concat(first_name, ' ', last_name) ilike ?",
-                            [$term]
-                        )
+                    )->orWhereIn(
+                        'client_id',
+                        PatientAccess::select('client_id')
+                            ->where('have_access', true)
+                            ->whereHas(
+                                'patient',
+                                fn($p) => $p->where('branch_id', $branchId)
+                                    ->where(
+                                        fn($name) => $name
+                                            ->whereRaw("concat(first_name, ' ', last_name) ilike ?", [$term])
+                                            ->orWhereRaw("concat_ws(' ', first_name, middle_name, last_name) ilike ?", [$term])
+                                    )
+                            )
                     );
                 });
             })
@@ -225,7 +230,7 @@ class MessageService
             ->orderByDesc('last_message_at')
             ->get();
 
-        $hints = $this->batchSummaryHints($conversations, (int) $payload['branch_id']);
+        $hints = $this->batchSummaryHints($conversations, $branchId);
 
         return $conversations
             ->map(fn($conversation) => $this->summary(
@@ -239,6 +244,25 @@ class MessageService
 
 
 
+
+    private function isBranchStaff(?int $employeeId, int $branchId): bool
+    {
+        return $employeeId && EmployeeBranch::where('branch_id', $branchId)
+            ->where('employee_id', $employeeId)
+            ->whereIn('status', self::MESSAGEABLE_STATUSES)
+            ->exists();
+    }
+
+    private function requireBranchStaff(User $user, int $branchId): int
+    {
+        $employeeId = $user->employee?->employee_id;
+
+        if (!$this->isBranchStaff($employeeId, $branchId)) {
+            throw new Exception('You are not part of this branch.', 403);
+        }
+
+        return $employeeId;
+    }
 
     private function reachesEveryFamily(User $user, int $branchId)
     {
@@ -262,11 +286,35 @@ class MessageService
             return collect();
         }
 
-        return Patient::whereHas(
-            'schedules.scheduleServices.assigned',
-            fn($a) => $a->where('employee_id', $employeeId)
-                ->where('is_active', true)
-        )->pluck('patient_id');
+        return $this->assignedPatientsByEmployee(collect([$employeeId]))
+            ->get($employeeId, collect());
+    }
+
+    private function assignedPatientsByEmployee($employeeIds)
+    {
+        $employeeIds = collect($employeeIds)->filter()->unique()->values();
+
+        if ($employeeIds->isEmpty()) {
+            return collect();
+        }
+
+        $scheduled = DB::table('schedule_assigned')
+            ->join('schedule_services', 'schedule_services.schedule_services_id', '=', 'schedule_assigned.schedule_services_id')
+            ->join('schedules', 'schedules.schedule_id', '=', 'schedule_services.schedule_id')
+            ->whereIn('schedule_assigned.employee_id', $employeeIds)
+            ->where('schedule_assigned.is_active', true)
+            ->select('schedule_assigned.employee_id', 'schedules.patient_id');
+
+        return DB::table('caregiver_facility_shifts')
+            ->join('patient_admissions', 'patient_admissions.patient_admission_id', '=', 'caregiver_facility_shifts.admission_id')
+            ->whereIn('caregiver_facility_shifts.caregiver_id', $employeeIds)
+            ->where('caregiver_facility_shifts.is_active', true)
+            ->where('patient_admissions.status', PatientAdmission::STATUS_ADMITTED)
+            ->select('caregiver_facility_shifts.caregiver_id as employee_id', 'patient_admissions.patient_id')
+            ->union($scheduled)
+            ->get()
+            ->groupBy('employee_id')
+            ->map(fn($rows) => $rows->pluck('patient_id')->unique()->values());
     }
 
 
@@ -281,12 +329,13 @@ class MessageService
 
         return PatientAccess::where('have_access', true)
             ->whereIn('patient_id', $this->assignedPatientIds($user))
+            ->whereHas('patient', fn($p) => $p->where('branch_id', $branchId))
             ->pluck('client_id')
             ->unique();
     }
 
 
-    private function familyPatientNames(Conversation $conversation, $preloaded = null)
+    private function familyPatientNames(Conversation $conversation, $preloaded = null, $onlyPatientIds = null)
     {
         if (!$conversation->client_id) {
             return [];
@@ -302,6 +351,10 @@ class MessageService
             ->get();
 
         return $access
+            ->when(
+                $onlyPatientIds !== null,
+                fn($rows) => $rows->filter(fn($access) => $onlyPatientIds->contains($access->patient_id))
+            )
             ->map(fn($access) => trim(
                 ($access->patient?->first_name ?? '') . ' ' .
                     ($access->patient?->last_name ?? '')
@@ -338,7 +391,7 @@ class MessageService
     }
 
 
-    private function batchSummaryHints(mixed $conversations, int $branchId)
+    private function batchSummaryHints(mixed $conversations, int $branchId, bool $forClient = false)
     {
         $clientIds = $conversations->pluck('client_id')->filter()->unique()->values();
 
@@ -349,14 +402,27 @@ class MessageService
             ->get()
             ->groupBy('client_id');
 
+        $employeeIds = $conversations->pluck('employee_one_id')->filter()->unique()->values();
+
         $roles = EmployeeBranch::where('branch_id', $branchId)
-            ->whereIn('employee_id', $conversations->pluck('employee_one_id')->filter()->unique())
+            ->whereIn('employee_id', $employeeIds)
             ->pluck('role_name', 'employee_id');
+
+        $restricted = $forClient
+            ? $employeeIds->reject(
+                fn($id) => in_array($roles->get($id), self::UNRESTRICTED_ROLES, true)
+            )
+            : collect();
+
+        $assigned = $this->assignedPatientsByEmployee($restricted);
 
         return $conversations->mapWithKeys(fn($conversation) => [
             $conversation->conversation_id => [
                 'roles' => $roles,
                 'patients' => $patientsByClient->get($conversation->client_id, collect()),
+                'patient_ids' => $restricted->contains($conversation->employee_one_id)
+                    ? $assigned->get($conversation->employee_one_id, collect())
+                    : null,
             ],
         ]);
     }
@@ -369,7 +435,6 @@ class MessageService
 
         return match ($role) {
             'admission' => 'Admission Staff',
-            'branch_owner' => 'Branch Owner',
             default => ucwords(str_replace('_', ' ', $role)),
         };
     }
@@ -377,6 +442,7 @@ class MessageService
     public function recipients(User $user, array $payload)
     {
         $branchId = (int) $payload['branch_id'];
+        $this->requireBranchStaff($user, $branchId);
         $search = trim((string) ($payload['search'] ?? ''));
 
         $clientIds = $this->reachableClientIds($user, $branchId);
@@ -390,6 +456,13 @@ class MessageService
             ->whereIn('client_id', $clientIds)
             ->get()
             ->keyBy('client_id');
+
+        $patientsByClient = PatientAccess::whereIn('client_id', $clientIds)
+            ->where('have_access', true)
+            ->whereHas('patient', fn($p) => $p->where('branch_id', $branchId))
+            ->with('patient')
+            ->get()
+            ->groupBy('client_id');
 
         return Client::whereIn('client_id', $clientIds)
             ->with('user')
@@ -407,12 +480,8 @@ class MessageService
                 });
             })
             ->get()
-            ->map(function ($client) use ($existing, $branchId) {
-                $patients = PatientAccess::where('client_id', $client->client_id)
-                    ->where('have_access', true)
-                    ->whereHas('patient', fn($p) => $p->where('branch_id', $branchId))
-                    ->with('patient')
-                    ->get()
+            ->map(function ($client) use ($existing, $patientsByClient) {
+                $patients = $patientsByClient->get($client->client_id, collect())
                     ->map(fn($access) => trim(
                         ($access->patient?->first_name ?? '') . ' ' .
                             ($access->patient?->last_name ?? '')
@@ -442,6 +511,18 @@ class MessageService
     public function openWith(User $user, array $payload)
     {
         $branchId = (int) $payload['branch_id'];
+        $employeeId = $this->requireBranchStaff($user, $branchId);
+
+        if (empty($payload['client_id'])) {
+            $payload['client_id'] = Client::whereHas(
+                'user',
+                fn($query) => $query->where('uuid', $payload['client_uuid'] ?? null)
+            )->value('client_id');
+
+            if (!$payload['client_id']) {
+                throw new Exception('Family member not found.', 404);
+            }
+        }
 
         if (!$this->reachableClientIds($user, $branchId)->contains($payload['client_id'])) {
             throw new Exception('You are not assigned to this family.', 403);
@@ -451,7 +532,7 @@ class MessageService
             [
                 'branch_id' => $branchId,
                 'client_id' => $payload['client_id'],
-                'employee_one_id' => $user->employee?->employee_id,
+                'employee_one_id' => $employeeId,
             ],
             [
                 'type' => Conversation::TYPE_FAMILY,
@@ -461,7 +542,7 @@ class MessageService
 
         return $this->thread($user, [
             'conversation_id' => $conversation->conversation_id,
-        ]);
+        ], true);
     }
 
     public function thread(User $user, array $payload, bool $asStaff = false)
@@ -524,7 +605,8 @@ class MessageService
 
             broadcast(new MessageSent(
                 $message,
-                $this->channelsFor($conversation)
+                $this->channelsFor($conversation),
+                $conversation->branch?->uuid
             ));
 
             return [
@@ -597,7 +679,8 @@ class MessageService
                 && in_array($employeeId, [
                     $conversation->employee_one_id,
                     $conversation->employee_two_id,
-                ], true);
+                ], true)
+                && $this->isBranchStaff($employeeId, (int) $conversation->branch_id);
 
             if (!$isParticipant) {
                 throw new Exception('You do not have access to this conversation.', 403);
@@ -615,12 +698,7 @@ class MessageService
         };
 
         $tryStaff = function () use ($user, $conversation): ?string {
-            $isBranchStaff = $user->employee
-                && $user->employee->employeeBranch()
-                ->where('branch_id', $conversation->branch_id)
-                ->exists();
-
-            if (!$isBranchStaff) {
+            if (!$this->isBranchStaff($user->employee?->employee_id, (int) $conversation->branch_id)) {
                 return null;
             }
 
@@ -671,11 +749,7 @@ class MessageService
 
     public function staffConversations(User $user, array $payload)
     {
-        $employeeId = $user->employee?->employee_id;
-
-        if (!$employeeId) {
-            return [];
-        }
+        $employeeId = $this->requireBranchStaff($user, (int) $payload['branch_id']);
 
         return Conversation::where('branch_id', $payload['branch_id'])
             ->where('type', Conversation::TYPE_STAFF)
@@ -692,11 +766,7 @@ class MessageService
 
     public function colleagues(User $user, array $payload)
     {
-        $employeeId = $user->employee?->employee_id;
-
-        if (!$employeeId) {
-            return [];
-        }
+        $employeeId = $this->requireBranchStaff($user, (int) $payload['branch_id']);
 
         $search = trim((string) ($payload['search'] ?? ''));
 
@@ -710,6 +780,7 @@ class MessageService
 
         return EmployeeBranch::where('branch_id', $payload['branch_id'])
             ->where('employee_id', '!=', $employeeId)
+            ->whereIn('status', self::MESSAGEABLE_STATUSES)
             ->with('employees.users')
             ->when($search !== '', function ($query) use ($search) {
                 $term = '%' . $search . '%';
@@ -767,12 +838,12 @@ class MessageService
             throw new Exception('Branch not found.', 404);
         }
 
-        $bothAtBranch = EmployeeBranch::where('branch_id', $branch->branch_id)
-            ->whereIn('employee_id', [$employeeId, $payload['employee_id']])
-            ->distinct()
-            ->count('employee_id');
+        $this->requireBranchStaff($user, $branch->branch_id);
 
-        if ($bothAtBranch < 2) {
+        if (
+            (int) $payload['employee_id'] === $employeeId
+            || !$this->isBranchStaff((int) $payload['employee_id'], $branch->branch_id)
+        ) {
             throw new Exception('That colleague is not part of this branch.', 403);
         }
 
@@ -813,21 +884,54 @@ class MessageService
                 ->all();
         }
 
-        $conversation->loadMissing('branch', 'client.user', 'employeeOne.users');
+        $conversation->loadMissing('client.user', 'employeeOne.users');
 
-        $channels = $conversation->employee_one_id
-            ? array_filter([
-                $conversation->employeeOne?->users?->uuid
-                    ? 'User.Messages.' . $conversation->employeeOne->users->uuid
-                    : null,
-            ])
-            : ['Branch.Messages.' . $conversation->branch?->uuid];
+        $staffUuids = $conversation->employee_one_id
+            ? collect([$conversation->employeeOne?->users?->uuid])
+            : $this->familyTeamUserUuids($conversation);
 
-        if ($conversation->client?->user?->uuid) {
-            $channels[] = 'Client.Messages.' . $conversation->client->user->uuid;
-        }
+        return $staffUuids
+            ->filter()
+            ->unique()
+            ->map(fn($uuid) => 'User.Messages.' . $uuid)
+            ->when(
+                $conversation->client?->user?->uuid,
+                fn($channels, $uuid) => $channels->push('Client.Messages.' . $uuid)
+            )
+            ->values()
+            ->all();
+    }
 
-        return array_values($channels);
+    private function familyTeamUserUuids(Conversation $conversation)
+    {
+        $patientIds = PatientAccess::where('client_id', $conversation->client_id)
+            ->where('have_access', true)
+            ->whereHas('patient', fn($p) => $p->where('branch_id', $conversation->branch_id))
+            ->pluck('patient_id');
+
+        $staff = EmployeeBranch::where('branch_id', $conversation->branch_id)
+            ->whereIn('status', self::MESSAGEABLE_STATUSES)
+            ->with('employees.users')
+            ->get();
+
+        $isUnrestricted = fn($employeeBranch) => in_array(
+            $employeeBranch->role_name,
+            self::UNRESTRICTED_ROLES,
+            true
+        );
+
+        $assigned = $this->assignedPatientsByEmployee(
+            $staff->reject($isUnrestricted)->pluck('employee_id')
+        );
+
+        return $staff
+            ->filter(
+                fn($employeeBranch) => $isUnrestricted($employeeBranch)
+                    || $assigned->get($employeeBranch->employee_id, collect())
+                    ->intersect($patientIds)
+                    ->isNotEmpty()
+            )
+            ->map(fn($employeeBranch) => $employeeBranch->employees?->users?->uuid);
     }
 
     private function summary(Conversation $conversation, string $audience, ?User $user = null, array $hints = [])
@@ -863,8 +967,20 @@ class MessageService
             ];
         }
 
+        if (!$hints) {
+            $hints = $this->batchSummaryHints(
+                collect([$conversation]),
+                (int) $conversation->branch_id,
+                $audience === 'client'
+            )[$conversation->conversation_id];
+        }
+
         $staff = $this->staffContact($conversation, $hints);
-        $patientNames = $this->familyPatientNames($conversation, $hints['patients'] ?? null);
+        $patientNames = $this->familyPatientNames(
+            $conversation,
+            $hints['patients'] ?? null,
+            $hints['patient_ids'] ?? null
+        );
 
         return [
             'conversation_id' => $conversation->conversation_id,

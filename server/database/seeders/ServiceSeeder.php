@@ -50,7 +50,7 @@ class ServiceSeeder extends Seeder
 
     public function run(): void
     {
-        $branches = Branch::all();
+        $branches = Branch::orderBy('branch_id')->limit(1)->get();
 
         if ($branches->isEmpty()) {
             $this->command->warn('No branches found. Seed branches first.');

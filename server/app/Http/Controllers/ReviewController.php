@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ReviewRequest;
+use App\Http\Requests\Review\ReviewRequest;
 use App\Service\ReviewService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;

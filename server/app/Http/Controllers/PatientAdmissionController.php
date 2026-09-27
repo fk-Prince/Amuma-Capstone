@@ -6,7 +6,7 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
-use App\Http\Requests\AdmissionRequest;
+use App\Http\Requests\Admission\AdmissionRequest;
 use App\Service\PatientAdmissionService;
 use Illuminate\Http\Request;
 
@@ -33,20 +33,15 @@ class PatientAdmissionController extends Controller
     public function action(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
-
-
-        if (!in_array($request->action, ['branch_contract', 'extend'])) {
-            $action = match ($request->action) {
-                'admit' => PermissionAction::Admit,
-                'new_admission' => PermissionAction::Create,
-                'discharge' => $request->boolean('force')
-                    ? PermissionAction::ForceDischarge
-                    : PermissionAction::Discharge,
-                default => PermissionAction::Update,
-            };
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, $action);
-        }
-
+        $action = match ($request->action) {
+            'admit' => PermissionAction::Admit,
+            'new_admission' => PermissionAction::Create,
+            'discharge' => $request->boolean('force')
+                ? PermissionAction::ForceDischarge
+                : PermissionAction::Discharge,
+            default => PermissionAction::Update,
+        };
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, $action);
         BranchGuard::mergeRequest($request, $branch);
         $request->merge(['user' => $request->user()]);
         return $this->patientAdmissionService->action($request->all());

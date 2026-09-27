@@ -134,6 +134,7 @@ class PatientResource extends JsonResource
                         'is_primary' => $access->patient_access_id === $primaryId,
                         'client' => $access->client ? [
                             'client_id' => $access->client->client_id,
+                            'uuid' => $access->client->user?->uuid,
                             'full_name' => trim(
                                 ($access->client->first_name ?? '') . ' ' .
                                     ($access->client->last_name ?? '')

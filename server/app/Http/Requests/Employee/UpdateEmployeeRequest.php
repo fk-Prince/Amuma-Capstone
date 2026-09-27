@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Auth;
+namespace App\Http\Requests\Employee;
 
 use App\Enums\PermissionAction;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -39,6 +39,7 @@ class UpdateEmployeeRequest extends FormRequest
             'last_name' => ['required', 'string', 'max:255'],
             'avatar' => ['nullable', 'string'],
             'birth_date' => ['required', 'date'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'phone_number' => ['required', 'string', 'max:20', 'regex:/^9\d{2}[\s-]?\d{3}[\s-]?\d{4}$/'],
 
             'location' => ['required', 'array'],

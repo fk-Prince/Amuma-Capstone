@@ -2,12 +2,15 @@
 
 namespace App\Utils;
 
+use App\Http\Resources\CaregiverShiftResource;
 use App\Models\AdmissionPeriod;
 use App\Models\Booking;
 use App\Models\Invoice;
 use App\Models\PatientAccess;
 use App\Models\Schedule;
 use App\Models\ScheduleService;
+use App\Models\Transaction;
+use Illuminate\Support\Collection;
 
 class PortalHelper
 {
@@ -77,56 +80,118 @@ class PortalHelper
         ];
     }
 
-    public function patientPayload(PatientAccess $access,     object $patient,  bool $extended = false,   array $sections = ['all'])
+    public static function scheduleDetailRelations(): array
     {
-        $wantsAll = in_array('all', $sections, true);
-        $wantsProfile = $wantsAll || in_array('profile', $sections, true);
-        $wantsMedication = in_array('medication', $sections, true);
-        $wantsFinancials = $wantsAll || in_array('financials', $sections, true);
-        $wantsSchedule = $wantsAll || in_array('schedule', $sections, true);
-        $wantsActivity = $wantsAll || in_array('activity', $sections, true);
-        $wantsAdmissions = $wantsAll || in_array('admissions', $sections, true);
+        return [
+            'location',
+            'scheduleServices.service',
+            'scheduleServices.invoiceServices',
+            'scheduleServices.assigned' => fn($query) =>
+            $query->with([
+                'employee.employees.employeeBranch',
+                'onlineSchedules',
+            ]),
+        ];
+    }
+
+    public function pickSchedules(Collection $schedules): array
+    {
+        return [
+            'adl' => $schedules->first(
+                fn($schedule) => $schedule->scheduleServices->contains(
+                    fn($service) => $service->type === ScheduleService::TYPE_ADL
+                )
+            ),
+            'medical' => $schedules->first(
+                fn($schedule) => $schedule->scheduleServices->contains(
+                    fn($service) => $service->type !== ScheduleService::TYPE_ADL
+                        && $service->service_id !== null
+                )
+            ),
+        ];
+    }
+
+    public function patientPayload(PatientAccess $access, object $patient, array $sections = ['all'])
+    {
+        $wants = fn(string $section) => in_array('all', $sections, true) || in_array($section, $sections, true);
 
         $payload = [
             'patient_id' => $patient->patient_id,
         ];
 
-        if ($wantsProfile) {
+        if ($wants('profile')) {
             $payload['access'] = self::access($access);
-            $payload['patient'] = self::patient($patient, $extended || $wantsMedication, $wantsMedication);
+            $payload['patient'] = self::patient($patient);
             $payload['organization'] = self::organization($patient);
             $payload['location_context'] = self::locationContext($patient);
-            $payload['client'] = $extended ? self::client($access->client) : null;
-        } elseif ($wantsMedication) {
-            $payload['patient'] = self::patient($patient, true, true);
         }
 
-        if ($wantsFinancials) {
-            $invoices = self::invoices($patient);
-
-            $payload += self::financials($patient);
-            $payload['latest_invoice'] = $invoices[0] ?? null;
-            $payload['invoices'] = $invoices;
-            $payload['voided_invoices'] = self::invoices($patient, true);
-            $payload['transactions'] = self::transactions($patient);
+        if ($wants('details')) {
+            $payload['patient'] = ($payload['patient'] ?? ['patient_id' => $patient->patient_id])
+                + self::patientDetails($patient);
+            $payload['client'] = self::client($access->client);
         }
 
-        if ($wantsSchedule) {
+        if ($wants('medication') || in_array('recent_medication', $sections, true)) {
+            $payload['patient'] = ($payload['patient'] ?? ['patient_id' => $patient->patient_id])
+                + ['medication' => self::medication($patient)];
+        }
+
+        if ($wants('financials')) {
+            $invoices = $patient->getRelation('invoices');
+            $active = self::invoices($invoices);
+
+            $payload += self::balances($invoices, true);
+            $payload['latest_invoice'] = $active[0] ?? null;
+            $payload['invoices'] = $active;
+            $payload['voided_invoices'] = self::invoices($invoices, true);
+            $payload['transactions'] = self::transactions($invoices);
+        } elseif (in_array('summary', $sections, true)) {
+            $invoices = $patient->getRelation('invoices');
+            $latest = $invoices->first(fn($invoice) => $invoice->status !== Invoice::STATUS_VOID);
+
+            $payload += self::balances($invoices);
+            $payload['latest_invoice'] = $latest ? [
+                'invoice_id' => $latest->invoice_id,
+                'invoice_code' => $latest->invoice_code,
+                'status' => $latest->status,
+                'balance_due' => (float) $latest->balance_due,
+            ] : null;
+            $payload['transactions'] = self::transactions($invoices);
+        }
+
+        if ($wants('schedule')) {
             $payload['schedule'] = self::scheduleContext($patient);
         }
 
-        if ($wantsActivity) {
+        if ($wants('activity')) {
             $payload['activities'] = $patient->activities
                 ->map(fn($activity) => PatientActivityPresenter::patientActivity($activity))
                 ->sortByDesc('occurredAt')
                 ->values();
         }
 
-        if ($wantsAdmissions) {
+        if ($wants('admissions')) {
             $payload['admissions'] = self::admissionTimeline($patient);
         }
 
+        if ($wants('caregiver_shifts')) {
+            $payload['caregiver_shifts'] = self::caregiverShifts($patient);
+        }
+
         return $payload;
+    }
+
+    private function caregiverShifts(object $patient): array
+    {
+        $admission = $patient->currentAdmission;
+
+        if (!$admission) {
+            return [];
+        }
+
+        return CaregiverShiftResource::collection($admission->caregiverShifts)
+            ->resolve();
     }
 
     // The portal timeline only ever shows the current admission, so this is a
@@ -189,28 +254,7 @@ class PortalHelper
 
     private function scheduleContext(object $patient)
     {
-        $schedules = $patient->schedules;
-
-        if ($schedules->isEmpty()) {
-            return [
-                'adl' => null,
-                'medical' => null,
-            ];
-        }
-
-        $adl = $schedules->first(function ($schedule) {
-            return $schedule->scheduleServices->contains(
-                fn($service) => $service->type === 'ADL'
-            );
-        });
-
-        $medical = $schedules->first(function ($schedule) {
-            return $schedule->scheduleServices->contains(
-                fn($service) =>
-                $service->type !== 'ADL' &&
-                    $service->service_id !== null
-            );
-        });
+        ['adl' => $adl, 'medical' => $medical] = self::pickSchedules($patient->schedules);
 
         return [
             'adl' => $adl
@@ -233,39 +277,40 @@ class PortalHelper
         ];
     }
 
-    private function patient(object $patient,  bool $extended = false, bool $includeMedication = false)
+    private function patient(object $patient)
     {
-        $data = [
+        return [
             'patient_id' => $patient->patient_id,
             'uuid' => $patient->uuid,
+            'full_name' => trim(
+                preg_replace('/\s+/', ' ', "{$patient->first_name} {$patient->middle_name} {$patient->last_name}")
+            ),
+            'avatar' => $patient->avatar,
             'gender' => $patient->gender,
             'date_of_birth' => $patient->date_of_birth?->format('Y-m-d'),
             'phone_number' => $patient->phone_number,
             'blood_type' => $patient->blood_type,
             'allergies' => $patient->allergies ?? [],
         ];
+    }
 
-        if ($extended) {
-            $data += [
-                'full_name' => trim(
-                    "{$patient->first_name} {$patient->middle_name} {$patient->last_name}"
-                ),
-                'full_address' => $patient->location?->full_address,
-                'assessments' => self::assessments($patient),
-                'diagnoses' => self::diagnoses($patient),
-            ];
-        }
+    private function patientDetails(object $patient)
+    {
+        return [
+            'full_address' => $patient->location?->full_address,
+            'assessments' => self::assessments($patient),
+            'diagnoses' => self::diagnoses($patient),
+        ];
+    }
 
-        if ($includeMedication) {
-            $data['medication'] = $patient->medications
-                ->map(fn($medication) => MedicationPresenter::medication($medication))
-                ->concat(
-                    $patient->vitals->map(fn($vital) => MedicationPresenter::vital($vital))
-                )
-                ->values();
-        }
-
-        return $data;
+    private function medication(object $patient)
+    {
+        return $patient->medications
+            ->map(fn($medication) => MedicationPresenter::medication($medication))
+            ->concat(
+                $patient->vitals->map(fn($vital) => MedicationPresenter::vital($vital))
+            )
+            ->values();
     }
 
     private function assessments(object $patient)
@@ -360,12 +405,12 @@ class PortalHelper
     }
 
 
-    private function transactions(object $patient)
+    private function transactions(Collection $invoices)
     {
         $payments = [];
         $refunds = [];
 
-        foreach ($patient->patient_invoices as $invoice) {
+        foreach ($invoices as $invoice) {
             $code = $invoice->invoice_code;
 
             foreach ($invoice->allocations as $allocation) {
@@ -438,16 +483,43 @@ class PortalHelper
             ->toArray();
     }
 
-    private function financials(object $patient)
+    private function balances(Collection $invoices, bool $full = false)
     {
-        $billing = $patient->billing_summary;
+        $billed = $invoices->filter(fn($invoice) => in_array($invoice->status, [
+            Invoice::STATUS_PENDING,
+            Invoice::STATUS_PARTIAL,
+            Invoice::STATUS_PAID,
+        ], true));
 
-        return [
-            'patient_balance' => $billing['balance_due'],
-            'patient_refundable' => $billing['refundable'],
-            'patient_pending_withdrawal' => $billing['pending_withdrawal'],
-            'patient_adjusted' => $billing['adjusted'],
+        $refunds = $invoices
+            ->flatMap(fn($invoice) => $invoice->allocations)
+            ->flatMap(fn($allocation) => $allocation->refundAllocations)
+            ->pluck('refund')
+            ->filter()
+            ->unique('refund_id');
+
+        $balances = [
+            'patient_balance' => (float) $billed->sum('balance_due'),
+            'patient_refundable' => round(
+                (float) $refunds->filter(fn($refund) => $refund->is_available)->sum('amount'),
+                2
+            ),
         ];
+
+        if ($full) {
+            $balances += [
+                'patient_pending_withdrawal' => round(
+                    (float) $refunds
+                        ->filter(fn($refund) => $refund->transaction?->type === Transaction::TYPE_WITHDRAW
+                            && $refund->transaction?->status === Transaction::STATUS_REQUESTED)
+                        ->sum('amount'),
+                    2
+                ),
+                'patient_adjusted' => (float) $billed->sum('adjusted_total'),
+            ];
+        }
+
+        return $balances;
     }
 
     private function organization(object $patient)
@@ -492,22 +564,13 @@ class PortalHelper
             );
         }
 
-        $adlSchedule = self::latestSchedule(
-            $patient->patient_id,
-            'adl'
-        );
+        ['adl' => $adl, 'medical' => $medical] = self::pickSchedules($patient->schedules);
 
-        $medicalSchedule = self::latestSchedule(
-            $patient->patient_id,
-            'medical'
-        );
-
-        if ($adlSchedule || $medicalSchedule) {
-            return self::homecareContext(
-                $adlSchedule,
-                $medicalSchedule,
-                $patient
-            );
+        if ($adl || $medical) {
+            return [
+                'type' => 'homecare',
+                'status' => $adl?->status ?? $medical?->status,
+            ];
         }
 
         return [
@@ -516,64 +579,6 @@ class PortalHelper
             'note' => 'Patient has no active or historical admission/homecare records',
         ];
     }
-
-    private function latestSchedule(int $patientId,  string $type)
-    {
-        return Schedule::query()
-            ->where('patient_id', $patientId)
-            ->when(
-                $type === 'adl',
-                function ($query) {
-                    $query->whereHas('scheduleServices', function ($serviceQuery) {
-                        $serviceQuery->where(
-                            'type',
-                            ScheduleService::TYPE_ADL
-                        );
-                    });
-                }
-            )
-            ->when(
-                $type === 'medical',
-                function ($query) {
-                    $query->whereHas('scheduleServices', function ($serviceQuery) {
-                        $serviceQuery
-                            ->whereNotNull('service_id')
-                            ->where(function ($q) {
-                                $q->whereNull('type')
-                                    ->orWhere(
-                                        'type',
-                                        ScheduleService::TYPE_MEDICAL
-                                    );
-                            });
-                    });
-                }
-            )
-            ->with([
-                'scheduleServices.service',
-                'scheduleServices.assigned' => function ($query) {
-                    $query
-                        ->active()
-                        ->with([
-                            'employee.employees.employeeBranch',
-                            'onlineSchedules',
-                        ]);
-                },
-            ])
-            ->orderByRaw(
-                "CASE
-                WHEN status = ? THEN 0
-                WHEN status = ? THEN 1
-                ELSE 2
-            END",
-                [
-                    Schedule::STATUS_ONGOING,
-                    Schedule::STATUS_PENDING,
-                ]
-            )
-            ->orderByDesc('scheduled_at')
-            ->first();
-    }
-
 
     private function admissionContext(object $admission,  string $type, string $status)
     {
@@ -595,24 +600,6 @@ class PortalHelper
                 'room_type' => $admission->bed->room->room_type,
                 'floor' => $admission->bed->room->floor,
             ] : null,
-        ];
-    }
-
-    private function homecareContext(?Schedule $adlSchedule,  ?Schedule $medicalSchedule, object $patient)
-    {
-        return [
-            'type' => 'homecare',
-
-            'status' => $adlSchedule?->status
-                ?? $medicalSchedule?->status,
-
-            'adl' => $adlSchedule
-                ? self::schedulePayload($adlSchedule, $patient)
-                : null,
-
-            'medical' => $medicalSchedule
-                ? self::schedulePayload($medicalSchedule, $patient)
-                : null,
         ];
     }
 
@@ -715,8 +702,9 @@ class PortalHelper
             'online' => $assignment->onlineSchedules
                 ->filter(fn($online) => $online->in_timestamp !== null)
                 ->map(fn($online) => [
-                    'qr_in' => $online->qr_in_token,
-                    'qr_out' => $online->qr_out_token,
+                    'online_schedule_id' => $online->online_schedule_id,
+                    'type_in' => $online->type_in,
+                    'type_out' => $online->type_out,
                     'in_timestamp' => $online->in_timestamp?->toISOString(),
                     'out_timestamp' => $online->out_timestamp?->toISOString(),
                     'notes' => $online->notes,
@@ -757,9 +745,9 @@ class PortalHelper
 
 
 
-    private function invoices(object $patient, bool $voided = false)
+    private function invoices(Collection $invoices, bool $voided = false)
     {
-        return $patient->patient_invoices
+        return $invoices
             ->filter(
                 fn($invoice) => $voided
                     ? $invoice->status === Invoice::STATUS_VOID

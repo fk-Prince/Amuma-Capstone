@@ -23,7 +23,7 @@ definePageMeta({
     middleware: "auth-client",
 });
 
-useHead({ title: "Room & Beds" });
+useHead({ title: "Rooms & Beds" });
 
 const searchData = ref("");
 const activeTab = ref("All Rooms");

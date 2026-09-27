@@ -109,8 +109,6 @@
 //                                     'online' => $assignment->relationLoaded('onlineSchedules')
 //                                         ? $assignment->onlineSchedules->map(function ($online) {
 //                                             return [
-//                                                 'qr_in' => $online->qr_in,
-//                                                 'qr_out' => $online->qr_out,
 //                                                 'in_timestamp' => $online->in_timestamp?->toISOString(),
 //                                                 'out_timestamp' => $online->out_timestamp?->toISOString(),
 //                                                 'notes' => $online->notes,
@@ -308,6 +306,9 @@ class ScheduleResource extends JsonResource
                                         ->filter(fn($online) => $online->in_timestamp !== null)
                                         ->map(function ($online) {
                                             return [
+                                                'online_schedule_id' => $online->online_schedule_id,
+                                                'type_in' => $online->type_in,
+                                                'type_out' => $online->type_out,
                                                 'in_timestamp' => $online->in_timestamp?->toISOString(),
                                                 'out_timestamp' => $online->out_timestamp?->toISOString(),
                                                 'notes' => $online->notes,

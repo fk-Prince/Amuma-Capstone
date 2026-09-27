@@ -3,6 +3,8 @@
         v-if="variant === 1"
         class="group rounded-2xl border border-primary-200 bg-white overflow-hidden cursor-pointer shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-secondary dark:border-primary-500/20"
         @click="$emit('select', branch)"
+        @mouseenter="$emit('hover', branch.uuid)"
+        @mouseleave="$emit('hover', null)"
     >
         <div class="relative h-40 overflow-hidden bg-muted-light dark:bg-white/10">
             <img
@@ -127,6 +129,8 @@
     <div
         v-else-if="variant === 2"
         class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300 cursor-pointer sm:flex-row dark:bg-secondary dark:border-white/10 dark:hover:border-white/10"
+        @mouseenter="$emit('hover', branch.uuid)"
+        @mouseleave="$emit('hover', null)"
     >
         <div
             class="relative h-48 w-full shrink-0 overflow-hidden bg-slate-100 sm:h-auto sm:w-64 dark:bg-white/10"
@@ -290,7 +294,10 @@ const props = defineProps<{
     variant: 1 | 2;
 }>();
 
-defineEmits(["select"]);
+defineEmits<{
+    (e: "select", branch: BranchRetrieve): void;
+    (e: "hover", uuid: string | null): void;
+}>();
 
 const imageBroken = ref(false);
 

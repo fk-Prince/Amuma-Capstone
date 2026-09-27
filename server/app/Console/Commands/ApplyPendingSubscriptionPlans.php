@@ -17,11 +17,7 @@ class ApplyPendingSubscriptionPlans extends Command
             ->whereDate('pending_plan_starts_at', '<=', Carbon::now())
             ->get();
         foreach ($due as $subscription) {
-            $subscription->update([
-                'plan_id' => $subscription->pending_plan_id,
-                'pending_plan_id' => null,
-                'pending_plan_starts_at' => null,
-            ]);
+            $subscription->update($subscription->pendingPlanChanges());
         }
         return self::SUCCESS;
     }

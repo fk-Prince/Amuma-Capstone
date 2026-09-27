@@ -215,9 +215,6 @@ class PatientRepository
             'latestAdmission',
 
             'patientAccess.client.user',
-
-            'schedules.location',
-            'schedules.scheduleServices.service',
         ])
             ->withCount(['medications', 'vitals'])
             ->where('uuid', $uuid)

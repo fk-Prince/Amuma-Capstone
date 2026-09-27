@@ -78,7 +78,6 @@ class ClientSeeder extends Seeder
                     'phone_number' => $client['phone_number'],
                     'location_id' => $location->location_id,
                     'avatar' => 'https://ui-avatars.com/api/?name=' . $initials,
-                    'is_verified' => true,
                 ]
             );
         }

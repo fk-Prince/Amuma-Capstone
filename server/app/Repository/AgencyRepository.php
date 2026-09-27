@@ -31,7 +31,7 @@ class AgencyRepository
 
         $activeBranches = Branch::query()
             ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
-            ->where('is_verified', true)
+            ->where('status', Branch::STATUS_VERIFIED)
             ->count();
 
         $newThisMonth = Branch::query()
@@ -42,13 +42,16 @@ class AgencyRepository
 
         $expiringSoon = Subscription::query()
             ->where('status', 'active')
-            ->whereBetween('end_date', [now(), now()->addDays(14)])
+            ->whereBetween('end_date', [
+                today(),
+                today()->addDays(Subscription::RENEWAL_WINDOW_DAYS),
+            ])
             ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
             ->count();
 
         $maintenanceAlerts = Subscription::query()
             ->where('status', 'active')
-            ->where('end_date', '<', now())
+            ->where('end_date', '<', today())
             ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
             ->count();
 
@@ -149,8 +152,8 @@ class AgencyRepository
         $perPage = $payload['per_page'] ?? 12;
 
         $branches = Branch::query()
-            ->with(['location', 'agencies', 'subscriptionLink'])
-            ->withCount(['rooms', 'patients', 'employees'])
+            ->with(['location', 'agencies', 'subscriptionLink.subscription.plans'])
+            ->withCount(['patients', 'employees'])
             ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
             // ilike, not like: Postgres LIKE is case-sensitive, so a lowercase
             // query would never match a capitalised branch or city name.
@@ -167,17 +170,9 @@ class AgencyRepository
                         });
                 });
             })
-            ->when($status === 'rejected', fn($q) => $q->whereHas(
-                'subscriptionLink',
-                fn($link) => $link->where('status', BranchSubscription::STATUS_REJECTED)
-            ))
             ->when(
-                $status && !in_array($status, ['all', 'rejected'], true),
-                fn($q) => $q->where('is_verified', $status === 'verified')
-                    ->whereDoesntHave(
-                        'subscriptionLink',
-                        fn($link) => $link->where('status', BranchSubscription::STATUS_REJECTED)
-                    )
+                $status && $status !== 'all',
+                fn($q) => $q->where('status', $status)
             )
             ->latest('created_at')
             ->paginate($perPage);
@@ -189,10 +184,8 @@ class AgencyRepository
                 'name' => $branch->name,
                 'description' => $branch->description,
                 'image' => $branch->image,
-                'is_verified' => $branch->is_verified,
-                'review_status' => $branch->subscriptionLink?->status === BranchSubscription::STATUS_REJECTED
-                    ? 'rejected'
-                    : ($branch->is_verified ? 'verified' : 'pending'),
+                'status' => $branch->status,
+                'review_status' => $branch->status,
                 'rejection_reason' => $branch->subscriptionLink?->rejection_reason,
                 'contact_number' => $branch->contact_number,
                 'email' => $branch->email,
@@ -207,9 +200,14 @@ class AgencyRepository
                     'agency_id' => $branch->agencies->agency_id,
                     'name' => $branch->agencies->name,
                 ] : null,
-                'rooms_count' => $branch->rooms_count,
                 'staff_count' => $branch->employees_count,
                 'patients_count' => $branch->patients_count,
+                'plan' => $branch->subscriptionLink?->subscription?->effectivePlan()
+                    ? [
+                        'plan_code' => $branch->subscriptionLink->subscription->effectivePlan()->plan_code,
+                        'name' => $branch->subscriptionLink->subscription->effectivePlan()->name,
+                    ]
+                    : null,
             ];
         });
         return $branches;

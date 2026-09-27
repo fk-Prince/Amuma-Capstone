@@ -18,6 +18,7 @@ use App\Models\Module;
 use App\Models\User;
 use App\Repository\InvoiceRepository;
 use App\Repository\NotificationRepository;
+use App\Repository\OnlineScheduleRepository;
 use App\Repository\PatientRepository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,8 @@ class ScheduleService
         private PatientRepository $patientRepository,
         private InvoiceRepository $invoiceRepository,
         private NotificationRepository $notificationRepository,
-        private NotificationService $notificationService
+        private NotificationService $notificationService,
+        private OnlineScheduleRepository $onlineScheduleRepository
     ) {}
 
     public function createSchedule(array $payload)
@@ -272,9 +274,6 @@ class ScheduleService
 
             $newStatus = strtolower($payload['status']);
 
-            // Completing or cancelling closes the schedule out rather than
-            // committing the employee to be free at that time going forward,
-            // so a conflict against some other schedule is no longer relevant.
             $isFinalizing = in_array(
                 $newStatus,
                 [Schedule::STATUS_COMPLETED, Schedule::STATUS_CANCELLED],
@@ -302,6 +301,7 @@ class ScheduleService
                 ->groupBy('schedule_services_id');
 
             $assignedEmployeeIds = [];
+            $previouslyAssignedIds = [];
 
             foreach ($assignmentsByService as $scheduleServicesId => $rows) {
                 $scheduleService = $schedule->scheduleServices()
@@ -317,6 +317,10 @@ class ScheduleService
                 $assisting = $this->assistingIds($scheduleService->type, $rowEmployeeIds, $branch->branch_id);
 
                 foreach ($scheduleService->assigned()->get() as $existing) {
+                    if ($existing->is_active) {
+                        $previouslyAssignedIds[] = (int) $existing->employee_id;
+                    }
+
                     $existing->update(['is_active' => false]);
                 }
 
@@ -376,17 +380,22 @@ class ScheduleService
                 }
             }
 
+            if ($isFinalizing) {
+                $this->onlineScheduleRepository->forceClockOutSchedule($schedule->schedule_id);
+            }
+
             if ($newStatus === Schedule::STATUS_CANCELLED) {
                 $this->cancelledSchedule($user, $schedule);
-            } else {
-                $this->notifyAssignedStaff(
-                    $user,
-                    $schedule,
-                    $branch,
-                    array_unique($assignedEmployeeIds),
-                    $targetStart
-                );
             }
+
+            $this->notifyAssignedStaff(
+                $user,
+                $schedule,
+                $branch,
+                array_unique($assignedEmployeeIds),
+                $isFinalizing ? $assignedEmployeeIds : $previouslyAssignedIds,
+                $targetStart
+            );
 
             return response()->json([
                 'message' => 'Schedule updated successfully.',
@@ -406,6 +415,7 @@ class ScheduleService
         Schedule $schedule,
         object $branch,
         array $employeeIds,
+        array $alreadyAssignedIds,
         Carbon $scheduledAt
     ): void {
         if (empty($employeeIds)) {
@@ -419,9 +429,9 @@ class ScheduleService
                 ($schedule->patient?->last_name ?? '')
         );
 
-        $message = "You have been assigned to schedule {$schedule->schedule_code}"
+        $details = " {$schedule->schedule_code}"
             . ($patientName !== '' ? " for {$patientName}" : '')
-            . ' on ' . $scheduledAt->format('M j, Y \a\t g:i A') . '.';
+            . ' on ' . $scheduledAt->format('M j, Y \a\t g:i A');
 
         $employees = Employee::with('users')
             ->whereIn('employee_id', $employeeIds)
@@ -431,6 +441,10 @@ class ScheduleService
             if (!$employee->user_id || !$employee->users?->uuid) {
                 continue;
             }
+
+            $message = in_array((int) $employee->employee_id, $alreadyAssignedIds, true)
+                ? "Schedule{$details} has been updated."
+                : "You have been assigned to schedule{$details}.";
 
             $this->notificationRepository->create([
                 'branch_id' => $branch->branch_id,

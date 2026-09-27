@@ -35,14 +35,18 @@
                         <span
                             class="mt-0.5 block truncate text-xs text-muted dark:text-gray-400"
                         >
-                            Refine appointments by date, status or service type
+                            {{
+                                isShifts
+                                    ? "Daily facility caregiver shifts by resident and caregiver"
+                                    : "Refine appointments by date, status or schedule type"
+                            }}
                         </span>
                     </span>
                 </button>
 
                 <div class="flex shrink-0 items-center gap-2 pl-2">
                     <div
-                        v-if="!filters.type.includes('adl')"
+                        v-if="!filters.type.includes('adl') && !isShifts"
                         class="flex items-center gap-1 rounded-xl bg-muted-light p-1 dark:bg-white/10"
                     >
                         <button
@@ -109,7 +113,11 @@
                     <input
                         :value="filters.search"
                         type="text"
-                        placeholder="Search patient, assigned nurse or schedule code"
+                        :placeholder="
+                            isShifts
+                                ? 'Search resident, caregiver or room'
+                                : 'Search patient, assigned nurse or schedule code'
+                        "
                         class="w-full rounded-xl border border-muted-light bg-muted-light/40 py-2.5 pl-10 pr-9 text-sm text-secondary transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 dark:focus:bg-secondary dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-white/10"
                         @input="onSearchInput"
                     />
@@ -161,7 +169,7 @@
                 <div
                     class="space-y-5 border-t border-muted-light/70 p-4 sm:p-5 dark:border-white/10"
                 >
-                    <div>
+                    <div v-if="!isShifts">
                         <p
                             class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
                         >
@@ -197,7 +205,7 @@
                     </div>
 
                     <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                        <div>
+                        <div v-if="!isShifts">
                             <p
                                 class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
                             >
@@ -228,7 +236,7 @@
                                 class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
                             >
                                 <Layers class="h-3.5 w-3.5" />
-                                Service type
+                                Schedule type
                             </p>
 
                             <div class="flex flex-wrap gap-2">
@@ -422,10 +430,17 @@ const caseloadOptions = [
     { label: "Assigned to me", value: "mine" },
 ];
 
-const typeOptions = [
+const { hasFacilityPlan } = useBranchPlan();
+
+const typeOptions = computed(() => [
     { label: "Medical Services", value: "medical" },
     { label: "Activities of Daily Living (ADL)", value: "adl" },
-];
+    ...(hasFacilityPlan.value
+        ? [{ label: "Facility Caregiver Shifts", value: "shifts" }]
+        : []),
+]);
+
+const isShifts = computed(() => filters.type.includes("shifts"));
 
 const isDefaultDateRange = computed(
     () => filters.date_from === yesterday && !filters.date_to,
@@ -439,11 +454,14 @@ const activeFilterCount = computed(() => {
     let count = 0;
 
     if (filters.search) count++;
-    if (!isDefaultDateRange.value) count++;
     if (!isDefaultType.value) count++;
     if (filters.assignment !== "all") count++;
 
-    count += filters.statuses.length;
+    if (!isShifts.value) {
+        if (!isDefaultDateRange.value) count++;
+
+        count += filters.statuses.length;
+    }
 
     return count;
 });
@@ -468,9 +486,11 @@ const summaryChips = computed(() => {
         key: "type",
         icon: Layers,
         label:
-            typeOptions.find((t) => filters.type.includes(t.value))?.label ??
-            "All types",
+            typeOptions.value.find((t) => filters.type.includes(t.value))
+                ?.label ?? "All types",
     });
+
+    if (isShifts.value) return chips;
 
     chips.push({
         key: "period",

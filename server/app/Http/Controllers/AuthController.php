@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\SigninRequest;
-use App\Http\Requests\SignupRequest;
+use App\Http\Requests\Auth\SigninRequest;
+use App\Http\Requests\Auth\SignupRequest;
 use App\Service\AuthService;
 use Illuminate\Http\Request;
 use App\Models\User;

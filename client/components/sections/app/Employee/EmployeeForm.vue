@@ -7,14 +7,17 @@ import {
     employeeAssignmentTypes,
     employeePositions,
     employeeSchema,
-    formatEmployeeStatus,
     type Employee,
 } from "~/types/employee";
 import Combobox from "~/components/ui/Combobox.vue";
 import { useEmployeeForm } from "~/composables/useEmployeeForm";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 import EmployeeSlipModal from "~/components/sections/app/Employee/EmployeeSlipModal.vue";
 import {
     MoveLeft,
+    CalendarCheck,
+    CalendarOff,
     Camera,
     X,
     Check,
@@ -67,6 +70,8 @@ const {
     initials,
     validate,
     saveEmployee,
+    isOnLeave,
+    toggleLeave,
     employeeSlip,
     dismissSlip,
     isActive,
@@ -80,7 +85,36 @@ const {
         if (saved) emit("saved", saved);
         emit("back");
     },
+    onStatusChanged: (saved) => {
+        if (saved) emit("saved", saved);
+    },
 });
+
+const { canUpdate } = usePermissions();
+
+const hasAssignment = computed(() =>
+    ["nurse", "caregiver"].includes(
+        String(employee.value.role_name ?? "").toLowerCase(),
+    ),
+);
+
+const assignmentLabel = computed(() => {
+    switch (String(employee.value.role_name ?? "").toLowerCase()) {
+        case "nurse":
+            return "Nurse Assignment";
+        case "caregiver":
+            return "Caregiver Assignment";
+        default:
+            return "Employee Assignment";
+    }
+});
+
+const canManageLeave = computed(
+    () =>
+        (isViewMode.value || isEditMode.value) &&
+        canUpdate(Modules.EmployeeManagement) &&
+        employee.value.status !== "inactive",
+);
 
 const assignmentItems = computed(() =>
     employeeAssignmentTypes.value.filter(
@@ -274,6 +308,35 @@ init();
                     class="grid grid-cols-1 gap-10 p-8 lg:grid-cols-4"
                 >
                     <div class="flex flex-col items-center gap-3">
+                        <button
+                            v-if="canManageLeave"
+                            type="button"
+                            :disabled="saving"
+                            @click="toggleLeave"
+                            class="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
+                            :class="
+                                isOnLeave
+                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                    : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300'
+                            "
+                        >
+                            <component
+                                :is="isOnLeave ? CalendarCheck : CalendarOff"
+                                class="h-4 w-4"
+                            />
+                            {{ isOnLeave ? "Return from leave" : "Mark as on leave" }}
+                        </button>
+
+                        <span
+                            v-else-if="
+                                (isViewMode || isEditMode) &&
+                                employee.status === 'inactive'
+                            "
+                            class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
+                        >
+                            Inactive
+                        </span>
+
                         <button
                             type="button"
                             @click="openFilePicker"
@@ -484,6 +547,41 @@ init();
                         </section>
 
                         <section
+                            v-if="isEditMode"
+                            class="space-y-4 border-t pt-8 dark:border-white/10"
+                        >
+                            <h2
+                                class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                            >
+                                <ShieldCheck class="h-3.5 w-3.5" />
+                                Password
+                            </h2>
+                            <div class="grid gap-6 md:grid-cols-2">
+                                <BaseInput
+                                    v-model="employee.password"
+                                    label="Password"
+                                    mode="password"
+                                    :error="errors.password"
+                                    @update:modelValue="errors.password = ''"
+                                />
+                                <BaseInput
+                                    v-model="employee.password_confirmation"
+                                    label="Confirm Password"
+                                    mode="password"
+                                    :error="errors.password_confirmation"
+                                    @update:modelValue="
+                                        errors.password_confirmation = ''
+                                    "
+                                />
+                            </div>
+                            <p
+                                class="text-xs text-slate-400 dark:text-gray-500"
+                            >
+                                Leave blank to keep the current password.
+                            </p>
+                        </section>
+
+                        <section
                             class="space-y-4 border-t pt-8 dark:border-white/10"
                         >
                             <h2
@@ -557,11 +655,11 @@ init();
                                     <BaseInput
                                         v-if="
                                             employee.role_name ===
-                                                'branch_owner' ||
+                                                'agency_owner' ||
                                             employee.role_name ===
-                                                'Branch Owner'
+                                                'Agency Owner'
                                         "
-                                        model-value="Branch Owner"
+                                        model-value="Agency Owner"
                                         label="Position"
                                         disabled
                                     />
@@ -583,9 +681,9 @@ init();
                                     </p>
                                 </div>
 
-                                <div>
+                                <div v-if="hasAssignment">
                                     <Combobox
-                                        label="Employee Assignment"
+                                        :label="assignmentLabel"
                                         position="top"
                                         v-model="employee.assignment_type"
                                         :disabled="isViewMode"
@@ -616,7 +714,7 @@ init();
                                         {{
                                             isActive
                                                 ? "This employee can sign in and be assigned work."
-                                                : "This employee keeps their record but loses access."
+                                                : "Inactive employees can still sign in, but can't access this branch. Their record is kept."
                                         }}
                                     </p>
                                 </div>
@@ -630,11 +728,7 @@ init();
                                                 : 'border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400'
                                         "
                                     >
-                                        {{
-                                            formatEmployeeStatus(
-                                                employee.status,
-                                            )
-                                        }}
+                                        {{ isActive ? "Active" : "Inactive" }}
                                     </span>
 
                                     <button
@@ -790,23 +884,21 @@ init();
                                 <button
                                     :disabled="isViewMode"
                                     type="button"
+                                    role="switch"
+                                    :aria-checked="
+                                        hasAction(module.module_id, 'can_read')
+                                    "
                                     @click="toggleModule(module.module_id)"
-                                    class="relative inline-flex shrink-0 items-center disabled:cursor-not-allowed"
+                                    class="relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed"
+                                    :class="
+                                        hasAction(module.module_id, 'can_read')
+                                            ? 'bg-primary'
+                                            : 'bg-slate-200 dark:bg-white/10'
+                                    "
                                     :aria-label="`Toggle access to ${module.module_name}`"
                                 >
                                     <span
-                                        class="h-6 w-11 rounded-full transition-colors"
-                                        :class="
-                                            hasAction(
-                                                module.module_id,
-                                                'can_read',
-                                            )
-                                                ? 'bg-primary'
-                                                : 'bg-slate-200 dark:bg-white/10'
-                                        "
-                                    />
-                                    <span
-                                        class="absolute left-[3px] top-[3px] h-5 w-5 rounded-full bg-white shadow transition-transform dark:bg-secondary"
+                                        class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform dark:bg-secondary"
                                         :class="
                                             hasAction(
                                                 module.module_id,
@@ -872,6 +964,7 @@ init();
             </Transition>
 
             <div
+                v-if="!isViewMode"
                 class="sticky bottom-0 mt-auto flex items-center justify-between gap-3 border-t bg-white/95 px-8 py-5 shadow-[0_-4px_12px_-8px_rgba(0,0,0,0.15)] backdrop-blur dark:border-white/10 dark:bg-secondary/95"
             >
                 <button

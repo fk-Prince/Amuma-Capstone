@@ -6,12 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class OnlineSchedule extends Model
 {
+    public const TYPE_SCANNED = 'scanned';
+    public const TYPE_FORCE = 'force';
+
     protected $primaryKey = 'online_schedule_id';
     public $timestamps = false;
     protected $fillable = [
         'schedule_assigned_id',
-        'qr_in_token',
-        'qr_out_token',
+        'type_in',
+        'type_out',
         'in_timestamp',
         'out_timestamp',
         'notes',

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Branch;
 
+use App\Models\Branch;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,10 +24,23 @@ class BranchRequest extends FormRequest
      */
     public function rules(): array
     {
-        //'unique:branches,name'
+        $agencyId = Branch::where('uuid', $this->input('branch_uuid'))->value('agency_id');
+
         return [
             'branch_uuid' => ['required', 'string', 'exists:branches,uuid'],
-            'name'        => ['required', 'string'],
+            'name'        => [
+                'required',
+                'string',
+                Rule::unique('branches', 'name')
+                    ->where('agency_id', $agencyId)
+                    ->ignore($this->input('branch_uuid'), 'uuid'),
+            ],
+            'email'       => [
+                'sometimes',
+                'nullable',
+                'string',
+                Rule::unique('branches', 'email')->ignore($this->input('branch_uuid'), 'uuid'),
+            ],
             'description' => ['required', 'string'],
             'contact_number' => ['nullable', 'string', 'max:20'],
             'image' => [

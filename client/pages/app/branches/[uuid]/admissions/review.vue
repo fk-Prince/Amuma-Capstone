@@ -178,7 +178,7 @@ const submitting = ref(false);
 const uuid = route.params.uuid as string;
 
 const card = reactive<CardDetails>({
-    number: "4000000000002503",
+    number: "4000000000001000",
     expMonth: "04",
     expYear: "29",
     cvc: "123",
@@ -250,7 +250,10 @@ async function fetchBalance() {
     }
 }
 
-onMounted(fetchBalance);
+onMounted(() => {
+    document.getElementById("dashboard-scroll")?.scrollTo({ top: 0 });
+    fetchBalance();
+});
 
 const completedSteps = computed(() => [
     "step1",

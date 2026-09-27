@@ -21,15 +21,21 @@ class SubscriptionResource extends JsonResource
         $isFirstBranch = $firstLinkId !== null
             && (int) $this->branch_subscription_id === (int) $firstLinkId;
 
+        $isRejected = $this->status === BranchSubscription::STATUS_REJECTED;
+
         return [
             'uuid' => $this->uuid,
             'status' => $this->status,
             'created_at' => $this->created_at,
             'is_first_branch' => $isFirstBranch,
+            'rejection_reason' => $isRejected ? $this->rejection_reason : null,
+            'rejected_at' => $isRejected ? $this->updated_at : null,
 
             'billing_interval' => $subscription?->billing_interval,
             'start_date' => $subscription?->start_date,
             'end_date' => $subscription?->end_date,
+
+            'renewal' => $subscription?->renewalSummary(),
 
             'subscription' => [
                 'uuid' => $subscription?->uuid,
@@ -50,8 +56,9 @@ class SubscriptionResource extends JsonResource
                         'email' => $link->branch?->email,
                         'address' => $link->branch?->location?->full_address,
                         'document' => $link->branch?->document,
+                        'image' => $link->branch?->image,
                         'tin' => data_get($link->branch?->settings, 'tin'),
-                        'is_verified' => $link->branch?->is_verified,
+                        'branch_status' => $link->branch?->status,
                         'status' => $link->status,
                     ])
                     ->values()
@@ -64,9 +71,9 @@ class SubscriptionResource extends JsonResource
                 'name' => $this->branch?->name,
                 'email' => $this->branch?->email,
                 'status' => $this->branch?->status,
-                'is_verified' => $this->branch?->is_verified,
                 'address' => $this->branch?->location?->full_address,
                 'document' => $this->branch?->document,
+                'image' => $this->branch?->image,
                 'tin' => data_get($this->branch?->settings, 'tin'),
 
                 'agency' => [
@@ -74,8 +81,9 @@ class SubscriptionResource extends JsonResource
                     'uuid' => $this->branch?->agencies?->uuid,
                     'name' => $this->branch?->agencies?->name,
                     'email' => $this->branch?->agencies?->email,
-                    'is_verified' => $this->branch?->agencies?->is_verified,
+                    'status' => $this->branch?->agencies?->status,
                     'address' => $this->branch?->agencies?->locations?->full_address,
+                    'image' => $this->branch?->agencies?->image,
                     'id_front' => $this->branch?->agencies?->id_front,
                     'id_back' => $this->branch?->agencies?->id_back,
                     'document' => $this->branch?->agencies?->document,
@@ -91,27 +99,10 @@ class SubscriptionResource extends JsonResource
                 'plan_code' => $subscription?->plans?->plan_code,
             ],
 
-            'pending_plan' => $subscription?->pending_plan_id ? [
-                'name' => $subscription->pendingPlan?->name,
-                'plan_code' => $subscription->pendingPlan?->plan_code,
-                'starts_at' => $subscription->pending_plan_starts_at?->toDateString(),
-                'is_due' => $subscription->pendingPlanIsDue(),
-            ] : null,
+            'pending_plan' => $subscription?->pendingPlanSummary(),
 
             'payments' => $subscription?->relationLoaded('payments')
-                ? $subscription->payments->map(fn($payment) => [
-                    'subscription_payment_id' => $payment->subscription_payment_id,
-                    'plan_name' => $payment->plan?->name,
-                    'xendit_invoice_id' => $payment->xendit_invoice_id,
-                    'payment_reference_id' => $payment->payment_reference_id,
-                    'masked_card_number' => $payment->masked_card_number,
-                    'price' => (float) $payment->price,
-                    'status' => $payment->status,
-                    'type' => $payment->type,
-                    'billing_interval' => $payment->billing_interval,
-                    'payment_method' => $payment->payment_method,
-                    'created_at' => $payment->created_at?->toIso8601String(),
-                ])->values()
+                ? $subscription->payments->map(fn($payment) => $payment->historyRow())->values()
                 : [],
         ];
     }

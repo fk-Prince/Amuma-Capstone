@@ -13,7 +13,15 @@
                 <div
                     class="flex-1 w-full mx-auto rounded-b-lg bg-white dark:bg-secondary"
                 >
-                    <div v-if="pending" class="p-4 space-y-3">
+                    <FacilityShiftBoard
+                        v-if="scheduleType === 'shifts'"
+                        v-model:board="shiftBoard"
+                        :loading="pending"
+                        :mine-only="route.query.assignment === 'mine'"
+                        :can-assign="canAssign(Modules.Schedules)"
+                    />
+
+                    <div v-else-if="pending" class="p-4 space-y-3">
                         <div
                             v-for="n in 6"
                             :key="n"
@@ -116,7 +124,7 @@
                     </template>
 
                     <div
-                        v-if="hasMore && !pending"
+                        v-if="scheduleType !== 'shifts' && hasMore && !pending"
                         class="flex justify-center mt-4"
                     >
                         <button
@@ -223,7 +231,14 @@ import ScheduleDetails from "~/components/sections/app/Patient/ScheduleDetails.v
 import { useToast } from "~/composables/useToast";
 import AssignEmployeeModal from "~/components/sections/app/Patient/AssignEmployeeModal.vue";
 import { scheduleService } from "~/api/schedule/ScheduleService";
+import { caregiverShiftService } from "~/api/caregiver-shift/CaregiverShiftService";
+import FacilityShiftBoard from "~/components/sections/app/Schedule/FacilityShiftBoard.vue";
+import type { ShiftBoard } from "~/types/caregiver-shift";
+import { Modules } from "~/types/module";
+import { usePermissions } from "~/composables/usePermission";
 import { X } from "lucide-vue-next";
+
+const { canAssign } = usePermissions();
 
 const OVERVIEW_WIDTH = 1280;
 const DESKTOP_WIDTH = 1024;
@@ -273,11 +288,15 @@ function toTypeArray(value: unknown): string[] {
     return [];
 }
 
-const scheduleType = computed<"medical" | "homecare">(() => {
-    return toTypeArray(route.query.type).includes("adl")
-        ? "homecare"
-        : "medical";
+const scheduleType = computed<"medical" | "homecare" | "shifts">(() => {
+    const types = toTypeArray(route.query.type);
+
+    if (types.includes("shifts")) return "shifts";
+
+    return types.includes("adl") ? "homecare" : "medical";
 });
+
+const shiftBoard = ref<ShiftBoard | null>(null);
 
 const medicalView = computed(() =>
     route.query.view === "cards" ? "cards" : "timeline",
@@ -461,6 +480,32 @@ async function loadSchedules(opts: { append?: boolean } = {}) {
     }
 
     const { assignment, view, ...restQuery } = route.query;
+
+    if (scheduleType.value === "shifts") {
+        shiftBoard.value = null;
+
+        try {
+            const [board, overview] = await Promise.all([
+                caregiverShiftService.board({
+                    branch_uuid: uuid.value,
+                    ...(typeof route.query.search === "string" &&
+                        route.query.search && { search: route.query.search }),
+                    ...(assignment === "mine" && { assigned_only: 1 }),
+                }),
+                fetchScheduleOverview(uuid.value),
+            ]);
+
+            shiftBoard.value = board?.data ?? null;
+            overviewData.value = overview?.data ?? overview ?? null;
+        } catch (err: any) {
+            error(err.error ?? err.message);
+        } finally {
+            pending.value = false;
+            overviewLoading.value = false;
+        }
+
+        return;
+    }
 
     const listParams = {
         ...restQuery,

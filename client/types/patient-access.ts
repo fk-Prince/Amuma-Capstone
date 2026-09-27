@@ -170,7 +170,6 @@ export interface ClientInfo {
     last_name: string;
     phone_number: string;
     avatar: string | null;
-    is_verified: boolean;
     created_at: string;
     updated_at: string;
 }

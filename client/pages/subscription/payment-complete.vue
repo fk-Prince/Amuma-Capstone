@@ -223,7 +223,7 @@ function goHome() {
 }
 
 function tryAgain() {
-    router.push("/product/subscription-details/checkout");
+    router.push("/product/subscription-details?step=payment");
 }
 
 const isPreparing = ref(true);

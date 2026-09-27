@@ -8,7 +8,16 @@ import { usePermissions } from "~/composables/usePermission";
 import { usePagination } from "~/composables/usePagination";
 import DataTable, { type DataTableColumn } from "~/components/ui/DataTable.vue";
 
-const { canUpdate } = usePermissions();
+const { canUpdate, hasModule } = usePermissions();
+
+const route = useRoute();
+
+const viewSchedule = (name: string) => {
+    navigateTo({
+        path: `/app/branches/${route.params.uuid}/schedules`,
+        query: { search: name },
+    });
+};
 
 const props = withDefaults(
     defineProps<{
@@ -150,7 +159,14 @@ const formatStatus = (status: string | null | undefined) => {
                         <Pencil class="w-4 h-4" />
                     </button>
 
-                    <button class="text-slate-400 hover:text-slate-700 dark:text-gray-500 dark:hover:text-gray-200">
+                    <button
+                        v-if="hasModule(Modules.Schedules)"
+                        type="button"
+                        title="View schedule"
+                        aria-label="View schedule"
+                        class="text-slate-400 hover:text-slate-700 dark:text-gray-500 dark:hover:text-gray-200"
+                        @click="viewSchedule(row.name)"
+                    >
                         <Calendar class="w-4 h-4" />
                     </button>
                 </div>

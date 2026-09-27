@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Branch;
 use Illuminate\Support\Facades\Broadcast;
 
 
@@ -26,16 +25,4 @@ Broadcast::channel('Client.Messages.{uuid}', function ($user, string $uuid) {
 
 Broadcast::channel('User.Messages.{uuid}', function ($user, string $uuid) {
     return (string) $user->uuid === (string) $uuid;
-});
-
-Broadcast::channel('Branch.Messages.{branchUuid}', function ($user, string $branchUuid) {
-    $branch = Branch::where('uuid', $branchUuid)->first();
-
-    if (!$branch || !$user->employee) {
-        return false;
-    }
-
-    return $user->employee->employeeBranch()
-        ->where('branch_id', $branch->branch_id)
-        ->exists();
 });

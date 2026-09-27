@@ -1,15 +1,90 @@
 <template>
     <div
-        class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-secondary"
+        class="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-secondary"
     >
         <div
-            class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-white/10"
+            class="flex flex-col gap-3 border-b border-slate-100 px-5 py-3 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between"
+        >
+            <div class="flex min-w-0 flex-1 items-center gap-3">
+                <div
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary dark:bg-primary-500/10"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        class="h-4 w-4"
+                    >
+                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                        <path d="M16 2v4" />
+                        <path d="M8 2v4" />
+                        <path d="M3 10h18" />
+                    </svg>
+                </div>
+
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <p
+                            class="truncate text-sm font-semibold text-secondary dark:text-white"
+                        >
+                            {{ subscription.plan.name }}
+                        </p>
+
+                        <span
+                            class="rounded-md bg-primary-50 px-1.5 py-0.5 text-[10px] font-semibold text-primary dark:bg-primary-500/10 dark:text-primary-300"
+                        >
+                            {{ subscription.plan.plan_code }}
+                        </span>
+                    </div>
+
+                    <p class="mt-0.5 text-[11px] text-muted dark:text-gray-400">
+                        <template v-if="billingCycleLabel">
+                            {{ billingCycleLabel }} ·
+                        </template>
+                        Runs through {{ formatDate(subscription.end_date) }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 sm:shrink-0">
+                <button
+                    v-if="isRejected"
+                    type="button"
+                    class="inline-flex items-center gap-1 rounded-full border border-red-200 px-2.5 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10"
+                    @click="showRejectionReason = true"
+                >
+                    <AppIcon name="alert-circle" class="h-3 w-3" />
+                    Why rejected?
+                </button>
+
+                <span
+                    v-if="isFirstBranch || isRejected"
+                    class="rounded-full px-2.5 py-1 text-[10px] font-semibold capitalize"
+                    :class="statusClass(subscription.status)"
+                >
+                    {{ planStatusLabel }}
+                </span>
+            </div>
+        </div>
+
+        <div
+            class="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 dark:border-white/10 sm:flex-row sm:items-start sm:justify-between"
         >
             <div class="flex min-w-0 flex-1 items-start gap-3">
                 <div
-                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent dark:bg-accent-500/10"
+                    class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent-50 text-accent dark:bg-accent-500/10"
                 >
+                    <img
+                        v-if="agency.image"
+                        :src="agency.image"
+                        :alt="agency.name"
+                        class="h-full w-full object-cover"
+                    />
+
                     <svg
+                        v-else
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="none"
@@ -91,72 +166,32 @@
             </div>
 
             <span
-                class="shrink-0 rounded-full px-2 py-1 text-[10px] font-medium"
+                class="self-start rounded-full px-2 py-1 text-[10px] font-medium sm:shrink-0"
                 :class="
-                    agency.is_verified
+                    agency.status === 'verified'
                         ? 'bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300'
-                        : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300'
+                        : agency.status === 'rejected'
+                          ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
+                          : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300'
                 "
             >
-                {{ agency.is_verified ? "Verified" : "Unverified" }}
+                {{
+                    agency.status === "verified"
+                        ? "Verified"
+                        : agency.status === "rejected"
+                          ? "Rejected"
+                          : "Pending"
+                }}
             </span>
         </div>
 
-        <div
-            class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-3 dark:border-white/10"
-        >
-            <div class="flex min-w-0 flex-1 items-center gap-3">
-                <div
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary dark:bg-primary-500/10"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        class="h-4 w-4"
-                    >
-                        <rect x="3" y="4" width="18" height="18" rx="2" />
-                        <path d="M16 2v4" />
-                        <path d="M8 2v4" />
-                        <path d="M3 10h18" />
-                    </svg>
-                </div>
-
-                <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <p
-                            class="truncate text-sm font-semibold text-secondary dark:text-white"
-                        >
-                            {{ subscription.plan.name }}
-                        </p>
-
-                        <span
-                            class="rounded-md bg-primary-50 px-1.5 py-0.5 text-[10px] font-semibold text-primary dark:bg-primary-500/10 dark:text-primary-300"
-                        >
-                            {{ subscription.plan.plan_code }}
-                        </span>
-                    </div>
-
-                    <p class="mt-0.5 text-[11px] text-muted dark:text-gray-400">
-                        {{
-                            isFirstBranch
-                                ? billingCycleLabel
-                                : `Runs through ${formatDate(subscription.end_date)}`
-                        }}
-                    </p>
-                </div>
-            </div>
-
-            <span
-                v-if="isFirstBranch"
-                class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold capitalize"
-                :class="statusClass(subscription.status)"
-            >
-                {{ subscription.status }}
-            </span>
-        </div>
+        <RejectionReasonModal
+            :open="showRejectionReason"
+            :branch-name="subscription.branch.name"
+            :reason="subscription.rejection_reason"
+            :rejected-at="subscription.rejected_at"
+            @close="showRejectionReason = false"
+        />
 
         <div
             v-if="canSwitchBranch"
@@ -233,9 +268,17 @@
             <div class="mb-3 flex items-start justify-between gap-3">
                 <div class="flex items-center gap-2">
                     <div
-                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary dark:bg-primary-500/10"
+                        class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary-50 text-primary dark:bg-primary-500/10"
                     >
+                        <img
+                            v-if="selectedBranch.image"
+                            :src="selectedBranch.image"
+                            :alt="selectedBranch.name"
+                            class="h-full w-full object-cover"
+                        />
+
                         <svg
+                            v-else
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 24 24"
                             fill="none"
@@ -265,12 +308,20 @@
                 <span
                     class="shrink-0 rounded-full px-2 py-1 text-[10px] font-medium"
                     :class="
-                        selectedBranch.is_verified
+                        selectedBranch.branch_status === 'verified'
                             ? 'bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300'
-                            : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300'
+                            : selectedBranch.branch_status === 'rejected'
+                              ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
+                              : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300'
                     "
                 >
-                    {{ selectedBranch.is_verified ? "Verified" : "Unverified" }}
+                    {{
+                        selectedBranch.branch_status === "verified"
+                            ? "Verified"
+                            : selectedBranch.branch_status === "rejected"
+                              ? "Rejected"
+                              : "Pending"
+                    }}
                 </span>
             </div>
 
@@ -347,59 +398,6 @@
             </div>
         </section>
 
-        <div
-            v-if="latestPayment && isFirstBranch"
-            class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-slate-100 px-5 py-3 dark:border-white/10"
-        >
-            <div
-                class="flex min-w-0 flex-wrap items-center gap-2 text-[11px] text-muted dark:text-gray-400"
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    class="h-3.5 w-3.5 shrink-0 text-primary"
-                >
-                    <rect x="2" y="5" width="20" height="14" rx="2" />
-                    <path d="M2 10h20" />
-                </svg>
-
-                <span v-if="latestPayment.masked_card_number">
-                    {{ latestPayment.masked_card_number }}
-                </span>
-
-                <span v-else>No card on file</span>
-
-                <button
-                    v-if="latestPayment"
-                    type="button"
-                    class="font-medium text-primary underline-offset-2 hover:underline dark:text-primary-300"
-                    @click="showPaymentsModal = true"
-                >
-                    {{ hasMultiplePayments ? "View payments" : "View payment" }}
-                </button>
-            </div>
-
-            <div class="flex items-center gap-2 text-[11px]">
-                <span class="font-semibold text-secondary dark:text-white">
-                    {{ formatCurrency(latestPayment.price) }}
-                </span>
-
-                <span
-                    class="rounded-full px-2 py-0.5 text-[10px] font-medium capitalize"
-                    :class="
-                        latestPayment.status === 'paid'
-                            ? 'bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300'
-                            : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300'
-                    "
-                >
-                    {{ latestPayment.status }}
-                </span>
-            </div>
-        </div>
-
         <SubscriptionPaymentsModal
             :open="showPaymentsModal"
             :agency-name="agency.name"
@@ -407,35 +405,95 @@
             @close="showPaymentsModal = false"
         />
 
-        <div
-            v-if="agency.registered_by"
-            class="flex items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-2.5 text-[11px] text-muted dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                class="h-3.5 w-3.5 shrink-0"
+        <div class="mt-auto">
+            <div
+                v-if="latestPayment && isFirstBranch"
+                class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-slate-100 px-5 py-3 dark:border-white/10"
             >
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" />
-            </svg>
+                <div
+                    class="flex min-w-0 flex-wrap items-center gap-2 text-[11px] text-muted dark:text-gray-400"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        class="h-3.5 w-3.5 shrink-0 text-primary"
+                    >
+                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                        <path d="M2 10h20" />
+                    </svg>
 
-            Agency Registered by
+                    <span v-if="latestPayment.masked_card_number">
+                        {{ latestPayment.masked_card_number }}
+                    </span>
 
-            <span
-                class="truncate font-medium text-secondary dark:text-gray-200"
+                    <span v-else>No card on file</span>
+
+                    <button
+                        v-if="latestPayment"
+                        type="button"
+                        class="font-medium text-primary underline-offset-2 hover:underline dark:text-primary-300"
+                        @click="showPaymentsModal = true"
+                    >
+                        {{
+                            hasMultiplePayments
+                                ? "View payments"
+                                : "View payment"
+                        }}
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2 text-[11px]">
+                    <span
+                        class="font-semibold text-secondary dark:text-white"
+                    >
+                        {{ formatCurrency(latestPayment.price) }}
+                    </span>
+
+                    <span
+                        class="rounded-full px-2 py-0.5 text-[10px] font-medium capitalize"
+                        :class="
+                            latestPayment.status === 'paid'
+                                ? 'bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300'
+                                : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300'
+                        "
+                    >
+                        {{ latestPayment.status }}
+                    </span>
+                </div>
+            </div>
+
+            <div
+                v-if="agency.registered_by"
+                class="flex items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-2.5 text-[11px] text-muted dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
             >
-                {{ agency.registered_by }}
-            </span>
-        </div>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    class="h-3.5 w-3.5 shrink-0"
+                >
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" />
+                </svg>
 
-        <div
-            v-if="canShowActions"
-            class="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-5 py-3 dark:border-white/10 dark:bg-white/5"
-        >
+                Agency Registered by
+
+                <span
+                    class="truncate font-medium text-secondary dark:text-gray-200"
+                >
+                    {{ agency.registered_by }}
+                </span>
+            </div>
+
+            <div
+                v-if="canShowActions"
+                class="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-5 py-3 dark:border-white/10 dark:bg-white/5"
+            >
             <button
                 type="button"
                 :disabled="!!actionLoading"
@@ -489,6 +547,7 @@
                 </svg>
                 {{ actionLoading === "approve" ? "Approving…" : "Approve" }}
             </button>
+            </div>
         </div>
     </div>
 </template>
@@ -497,6 +556,8 @@
 import { computed, ref, watch } from "vue";
 import DocumentLink from "~/components/ui/DocumentLink.vue";
 import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionPaymentsModal.vue";
+import RejectionReasonModal from "~/components/sections/owner/RejectionReasonModal.vue";
+import AppIcon from "~/components/ui/AppIcon.vue";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
 import type { SubscriptionPaymentRecord } from "~/types/subscription";
@@ -507,16 +568,19 @@ interface CoveredBranch {
     email?: string | null;
     address?: string | null;
     document?: string | null;
+    image?: string | null;
     tin?: string | null;
-    is_verified: boolean;
+    branch_status: "pending" | "verified" | "rejected";
     status: "pending" | "approved" | "rejected";
 }
 
 interface SubscriptionCardData {
     uuid: string;
     billing_interval: "YEARLY" | "MONTHLY";
-    status: "pending" | "active" | "inactive" | "expired";
+    status: "pending" | "active" | "inactive" | "expired" | "rejected";
     start_date: string;
+    rejection_reason?: string | null;
+    rejected_at?: string | null;
     end_date: string;
     is_first_branch?: boolean;
     payments?: SubscriptionPaymentRecord[];
@@ -528,8 +592,8 @@ interface SubscriptionCardData {
         email: string;
         address: string | null;
         status: string;
-        is_verified: boolean;
         document: string | null;
+        image?: string | null;
         tin?: string | null;
 
         agency: {
@@ -538,7 +602,8 @@ interface SubscriptionCardData {
             name: string;
             email: string;
             address: string | null;
-            is_verified: boolean;
+            status: "pending" | "verified" | "rejected";
+            image?: string | null;
             id_front: string | null;
             id_back: string | null;
             document: string | null;
@@ -589,11 +654,13 @@ const latestPayment = computed(() => {
     )[0];
 });
 
-const billingCycleLabel = computed(() =>
-    props.subscription.billing_interval === "YEARLY"
-        ? "Billed yearly"
-        : "Billed monthly",
-);
+const billingCycleLabel = computed(() => {
+    const interval = props.subscription.billing_interval;
+
+    if (!interval) return "";
+
+    return `Billed ${interval.toLowerCase()}`;
+});
 
 const hasMultiplePayments = computed(
     () => (props.subscription.payments?.length ?? 0) > 1,
@@ -611,11 +678,19 @@ const hasAgencyDocuments = computed(
 );
 
 const isPending = computed(() => props.subscription.status === "pending");
+const isRejected = computed(() => props.subscription.status === "rejected");
+const showRejectionReason = ref(false);
 const canShowActions = computed(() => isPending.value && props.showActions);
 
 const isFirstBranch = computed(
     () => props.subscription.is_first_branch !== false,
 );
+
+const planStatusLabel = computed(() => {
+    if (isRejected.value && !isFirstBranch.value) return "Branch Rejected";
+
+    return props.subscription.status;
+});
 
 const coveredBranches = computed<CoveredBranch[]>(
     () => props.subscription.subscription?.covered_branches ?? [],
@@ -645,7 +720,11 @@ const canSwitchBranch = computed(() => !isPending.value);
 
 const selectedBranch = computed<CoveredBranch | null>(() => {
     const covered = coveredBranches.value;
-    const own = props.subscription.branch as unknown as CoveredBranch;
+    const own: CoveredBranch = {
+        ...(props.subscription.branch as unknown as CoveredBranch),
+        branch_status: props.subscription.branch
+            .status as CoveredBranch["branch_status"],
+    };
 
     if (!canSwitchBranch.value) {
         return (

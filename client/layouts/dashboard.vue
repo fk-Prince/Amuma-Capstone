@@ -1,5 +1,7 @@
 ﻿﻿<template>
+    <UnauthorizedSection v-if="mounted && access === 'no-branch'" full-page />
     <div
+        v-else
         class="relative h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden lg:gap-3 lg:p-3 print:h-auto print:gap-0 print:overflow-visible print:p-0"
     >
         <AuthTransitionScreen
@@ -45,10 +47,20 @@
             </div>
 
             <main
+                id="dashboard-scroll"
                 class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative lg:-mt-1 lg:pt-1"
             >
                 <div class="relative min-h-full flex flex-col">
-                    <slot />
+                    <template v-if="mounted">
+                        <slot v-if="access === 'allowed'" />
+                        <UnauthorizedSection
+                            v-else-if="access === 'inactive-branch'"
+                            title="Access restricted"
+                            message="Your account is inactive in this branch. Please contact your branch manager or agency owner to have it reactivated."
+                            hide-action
+                        />
+                        <UnauthorizedSection v-else />
+                    </template>
                 </div>
             </main>
         </div>
@@ -58,6 +70,8 @@
 import DashboardSidebar from "~/components/sections/DashboardSidebar.vue";
 import DashboardHeader from "~/components/sections/DashboardHeader.vue";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
+import UnauthorizedSection from "~/components/sections/UnauthorizedSection.vue";
+import { useRouteAccess } from "~/composables/useRouteAccess";
 
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
@@ -70,6 +84,8 @@ import { PermissionAction } from "~/utils/permissions";
 const route = useRoute();
 const isOpen = ref(false);
 const authReady = useAuthReady();
+const access = useRouteAccess();
+const mounted = ref(false);
 
 const branchStore = useBranchStore();
 
@@ -79,6 +95,7 @@ const homeLink = computed(() => {
 });
 
 onMounted(async () => {
+    mounted.value = true;
     const uuidParam = route.params.uuid;
     await branchStore.fetchBranches(
         Array.isArray(uuidParam) ? uuidParam[0] : uuidParam,
@@ -114,7 +131,12 @@ const menus = computed(() => {
     const modules = activeModules.value ?? [];
     const uuid = branchStore.routeUuid;
     const branch = branchStore.activeBranch;
-    if (!branch?.agency?.is_verified || !branch?.is_verified) {
+
+    if (branch?.employee_status === "inactive") {
+        return [];
+    }
+
+    if (branch?.agency?.status !== "verified" || branch?.status !== "verified") {
         return authMenuList
             .filter((item) => item.label === "Dashboard")
             .map((item) => ({

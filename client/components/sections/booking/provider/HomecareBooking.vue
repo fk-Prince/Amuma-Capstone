@@ -510,29 +510,14 @@
                         </p>
                     </div>
 
-                    <div
-                        class="flex w-fit shrink-0 items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-white/10 dark:bg-white/5"
+                    <button
+                        v-if="model.address"
+                        type="button"
+                        class="text-xs font-medium text-red-500 hover:text-red-600 whitespace-nowrap"
+                        @click="locationSelectorRef?.clearSelection()"
                     >
-                        <button
-                            v-for="option in [
-                                { value: 'map', label: 'Pick on map' },
-                                { value: 'type', label: 'Type address' },
-                            ]"
-                            :key="option.value"
-                            type="button"
-                            class="rounded-lg uppercase px-3 py-1.5 text-xs font-semibold transition"
-                            :class="
-                                addressMode === option.value
-                                    ? 'bg-white text-primary shadow-sm dark:bg-secondary'
-                                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
-                            "
-                            @click="
-                                addressMode = option.value as 'map' | 'type'
-                            "
-                        >
-                            {{ option.label }}
-                        </button>
-                    </div>
+                        Reset
+                    </button>
                 </div>
 
                 <div class="bg-white dark:bg-secondary">
@@ -540,7 +525,9 @@
                         <LocationSelector
                             :initial-lat="model.latitude ?? undefined"
                             :initial-lng="model.longitude ?? undefined"
-                            :mode="addressMode"
+                            :initial-street="model.address || undefined"
+                            ref="locationSelectorRef"
+                            manual-fallback
                             @location-selected="handleLocationSelected"
                             @location-cleared="handleLocationCleared"
                         />
@@ -653,8 +640,8 @@ const selectedServicesTotal = computed(() => {
 });
 
 const handleLocationSelected = (location: {
-    lat: number;
-    lng: number;
+    lat: number | null;
+    lng: number | null;
     label: string;
     street: string;
     city: string;
@@ -709,7 +696,9 @@ const scheduledHoursLabel = computed(() => {
 });
 
 const isServiceModalOpen = ref(false);
-const addressMode = ref<"map" | "type">("map");
+const locationSelectorRef = ref<InstanceType<typeof LocationSelector> | null>(
+    null,
+);
 
 const todayStr = getLocalDateStr(new Date());
 

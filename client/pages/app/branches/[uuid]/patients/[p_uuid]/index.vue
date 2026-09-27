@@ -514,11 +514,11 @@ onMounted(async () => {
 // );
 </script>
 <template>
-    <div class="min-h-screen-header bg-gray-50 dark:bg-surface">
-        <div class="w-full min-w-0 rounded-full bg-white">
+    <div class="flex min-h-screen-header flex-col bg-gray-50 dark:bg-surface">
+        <div class="flex w-full min-w-0 flex-1 flex-col">
             <div
                 v-if="loading"
-                class="animate-pulse overflow-hidden rounded-lg bg-white dark:bg-secondary"
+                class="flex-1 animate-pulse overflow-hidden rounded-lg bg-white dark:bg-secondary"
             >
                 <div
                     class="border-b border-gray-100 px-4 py-4 sm:px-5 sm:py-5 dark:border-white/10"
@@ -693,7 +693,7 @@ onMounted(async () => {
             </div>
             <template v-else>
                 <div
-                    class="min-w-0 max-w-full overflow-hidden rounded-lg bg-white dark:bg-secondary"
+                    class="min-w-0 max-w-full flex-1 overflow-hidden rounded-lg bg-white dark:bg-secondary"
                 >
                     <PatientHeader
                         v-if="patientData"
@@ -849,15 +849,10 @@ onMounted(async () => {
                         >
                             <Overview :patient="patientData" />
 
-                            <section class="mt-6 w-full">
-                                <div
-                                    class="mb-3 flex items-center justify-between gap-3 w-full"
-                                >
-                                    <PatientFamily
-                                        :family="patientData.family ?? []"
-                                    />
-                                </div>
-                            </section>
+                            <PatientFamily
+                                class="mt-6"
+                                :family="patientData.family ?? []"
+                            />
                         </template>
 
                         <PatientAssessment

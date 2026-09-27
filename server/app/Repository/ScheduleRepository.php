@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Models\Branch;
 use App\Models\Employee;
+use App\Models\EmployeeBranch;
 use App\Models\Schedule;
 use App\Models\ScheduleAssigned;
 use App\Models\Service;
@@ -342,9 +343,9 @@ class ScheduleRepository
                     ]);
             },
         ])
-            ->where('status', 'active')
             ->whereHas('employeeBranch', function ($query) use ($branchId, $allowedRoles) {
                 $query->where('branch_id', $branchId)
+                    ->where('status', EmployeeBranch::STATUS_ACTIVE)
                     ->whereIn('role_name', $allowedRoles);
             })
             ->withExists(['employeeBranch as is_busy' => function ($query) use ($branchId, $allowedRoles, $activeScheduleAssignments) {
@@ -441,9 +442,9 @@ class ScheduleRepository
             },
             'employeeBranch.scheduleAssignments.scheduleService.schedule.patient',
         ])
-            ->where('status', 'active')
             ->whereHas('employeeBranch', function ($query) use ($branchId, $allowedRoles) {
                 $query->where('branch_id', $branchId)
+                    ->where('status', EmployeeBranch::STATUS_ACTIVE)
                     ->whereIn('role_name', $allowedRoles);
             })
             ->withExists(['employeeBranch as is_busy' => $busy])
@@ -496,9 +497,9 @@ class ScheduleRepository
         $nextSlot = $upcomingList->first();
 
         $activeProviders = Employee::query()
-            ->where('status', 'active')
             ->whereHas('employeeBranch', function ($q) use ($branchId) {
                 $q->where('branch_id',  $branchId)
+                    ->where('status', EmployeeBranch::STATUS_ACTIVE)
                     ->whereIn('role_name', ['nurse', 'caregiver']);
             })
             ->whereHas('employeeBranch.scheduleAssignments', function ($q) use ($date) {

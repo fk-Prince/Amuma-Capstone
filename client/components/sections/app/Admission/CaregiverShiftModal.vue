@@ -17,7 +17,7 @@
             />
 
             <div
-                class="relative z-50 flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
+                class="relative z-50 flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
             >
                 <div
                     class="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-6 py-4 dark:border-white/10"
@@ -49,13 +49,17 @@
                     v-if="loading"
                     class="min-h-0 flex-1 animate-pulse space-y-4 overflow-y-auto p-6"
                 >
-                    <div class="h-4 w-32 rounded bg-slate-200 dark:bg-white/10" />
+                    <div
+                        class="h-4 w-32 rounded bg-slate-200 dark:bg-white/10"
+                    />
                     <div
                         v-for="i in 2"
                         :key="i"
                         class="h-16 rounded-xl bg-slate-100 dark:bg-white/5"
                     />
-                    <div class="h-4 w-40 rounded bg-slate-200 dark:bg-white/10" />
+                    <div
+                        class="h-4 w-40 rounded bg-slate-200 dark:bg-white/10"
+                    />
                     <div class="h-40 rounded-xl bg-slate-100 dark:bg-white/5" />
                 </div>
 
@@ -78,84 +82,26 @@
                         </p>
 
                         <div
-                            v-if="!activeShifts.length"
+                            v-if="!activeShifts.length && !draftShift"
                             class="mt-3 rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-500 dark:border-white/10 dark:text-gray-400"
                         >
                             No caregiver is assigned to this resident yet.
                         </div>
 
-                        <ul v-else class="mt-3 space-y-2">
-                            <li
-                                v-for="shift in activeShifts"
-                                :key="shift.caregiver_facility_shift_id"
-                                class="flex items-center gap-3 rounded-xl border border-slate-200 p-3 dark:border-white/10"
-                            >
-                                <span
-                                    class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xs font-semibold text-primary"
-                                >
-                                    <img
-                                        v-if="shift.avatar"
-                                        :src="shift.avatar"
-                                        :alt="shift.caregiver_name ?? ''"
-                                        class="h-full w-full object-cover"
-                                    />
-                                    <template v-else>
-                                        {{ initials(shift.caregiver_name ?? "") }}
-                                    </template>
-                                </span>
-
-                                <div class="min-w-0 flex-1">
-                                    <p
-                                        class="truncate text-sm font-semibold text-slate-800 dark:text-white"
-                                    >
-                                        {{ shift.caregiver_name }}
-                                    </p>
-
-                                    <p
-                                        class="truncate text-xs text-slate-500 dark:text-gray-400"
-                                    >
-                                        {{ formatTime(shift.start_time) }} –
-                                        {{ formatTime(shift.end_time) }}
-                                        <template v-if="shift.note">
-                                            · {{ shift.note }}
-                                        </template>
-                                        <template v-if="shift.phone_number">
-                                            · {{ formatPhone(shift.phone_number) }}
-                                        </template>
-                                    </p>
-
-                                    <p
-                                        v-if="dutyHoursOf(shift.caregiver_id) > dutyLimit"
-                                        class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-300"
-                                    >
-                                        <TriangleAlert class="h-3 w-3" />
-                                        On duty
-                                        {{ dutyHoursOf(shift.caregiver_id) }}
-                                        hours a day · over the limit of
-                                        {{ dutyLimit }}
-                                    </p>
-
-                                    <p
-                                        v-if="isOverLimit(shift.caregiver_id)"
-                                        class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-300"
-                                    >
-                                        <TriangleAlert class="h-3 w-3" />
-                                        Looking after
-                                        {{ residentsOf(shift.caregiver_id) }}
-                                        residents · over the limit of {{ limit }}
-                                    </p>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    :disabled="busyId === shift.caregiver_facility_shift_id"
-                                    class="shrink-0 rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
-                                    @click="setActive(shift, false)"
-                                >
-                                    Unassign
-                                </button>
-                            </li>
-                        </ul>
+                        <CaregiverShiftTimeline
+                            v-else
+                            :shifts="activeShifts"
+                            :draft-shift="draftShift"
+                            :caregivers="caregivers"
+                            :limit="limit"
+                            :duty-limit="dutyLimit"
+                            :busy-id="busyId"
+                            class="mt-3"
+                            @unassign="
+                                (shift: CaregiverShift) =>
+                                    setActive(shift, false)
+                            "
+                        />
 
                         <div v-if="inactiveShifts.length" class="mt-3">
                             <button
@@ -192,8 +138,16 @@
 
                                     <button
                                         type="button"
-                                        :disabled="busyId === shift.caregiver_facility_shift_id || isAssigned(shift.caregiver_id)"
-                                        :title="isAssigned(shift.caregiver_id) ? 'Already assigned to this resident.' : undefined"
+                                        :disabled="
+                                            busyId ===
+                                                shift.caregiver_facility_shift_id ||
+                                            isAssigned(shift.caregiver_id)
+                                        "
+                                        :title="
+                                            isAssigned(shift.caregiver_id)
+                                                ? 'Already assigned to this resident.'
+                                                : undefined
+                                        "
                                         class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-primary/40 hover:text-primary disabled:opacity-50 dark:border-white/10 dark:text-gray-300"
                                         @click="setActive(shift, true)"
                                     >
@@ -204,7 +158,9 @@
                         </div>
                     </section>
 
-                    <section class="border-t border-slate-100 pt-6 dark:border-white/10">
+                    <section
+                        class="border-t border-slate-100 pt-6 dark:border-white/10"
+                    >
                         <p
                             class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                         >
@@ -230,14 +186,20 @@
                                     v-for="caregiver in caregivers"
                                     :key="caregiver.employee_id"
                                     type="button"
-                                    :disabled="isAssigned(caregiver.employee_id)"
+                                    :disabled="
+                                        isAssigned(caregiver.employee_id)
+                                    "
                                     class="flex items-center gap-3 rounded-xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-50"
                                     :class="
-                                        form.caregiver_id === caregiver.employee_id
+                                        form.caregiver_id ===
+                                        caregiver.employee_id
                                             ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
                                             : 'border-slate-200 hover:border-primary/40 dark:border-white/10'
                                     "
-                                    @click="form.caregiver_id = caregiver.employee_id"
+                                    @click="
+                                        form.caregiver_id =
+                                            caregiver.employee_id
+                                    "
                                 >
                                     <span
                                         class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-[11px] font-semibold text-primary"
@@ -264,18 +226,28 @@
                                             :class="
                                                 caregiver.over_limit
                                                     ? 'font-semibold text-rose-600 dark:text-rose-300'
-                                                    : caregiver.active_residents >= limit
+                                                    : caregiver.active_residents >=
+                                                        limit
                                                       ? 'font-medium text-amber-600 dark:text-amber-300'
                                                       : 'text-slate-400 dark:text-gray-500'
                                             "
                                         >
-                                            <template v-if="isAssigned(caregiver.employee_id)">
-                                                Already assigned to this resident
+                                            <template
+                                                v-if="
+                                                    isAssigned(
+                                                        caregiver.employee_id,
+                                                    )
+                                                "
+                                            >
+                                                Already assigned to this
+                                                resident
                                             </template>
                                             <template v-else>
-                                                {{ caregiver.active_residents }} of
-                                                {{ limit }} residents
-                                                <template v-if="caregiver.over_limit">
+                                                {{ caregiver.active_residents }}
+                                                of {{ limit }} residents
+                                                <template
+                                                    v-if="caregiver.over_limit"
+                                                >
                                                     · Over the limit
                                                 </template>
                                             </template>
@@ -288,7 +260,9 @@
                                 v-if="willExceed"
                                 class="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
                             >
-                                <TriangleAlert class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                <TriangleAlert
+                                    class="mt-0.5 h-3.5 w-3.5 shrink-0"
+                                />
                                 {{ selected?.full_name }} already looks after
                                 {{ selected?.active_residents }} residents.
                                 Assigning this one goes over the limit of
@@ -299,7 +273,9 @@
                                 v-if="dutyNote"
                                 class="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
                             >
-                                <TriangleAlert class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                <TriangleAlert
+                                    class="mt-0.5 h-3.5 w-3.5 shrink-0"
+                                />
                                 {{ dutyNote }}
                             </p>
 
@@ -385,7 +361,11 @@
                                         v-if="saving"
                                         class="h-4 w-4 animate-spin"
                                     />
-                                    {{ saving ? "Assigning..." : "Assign caregiver" }}
+                                    {{
+                                        saving
+                                            ? "Assigning..."
+                                            : "Assign caregiver"
+                                    }}
                                 </button>
                             </div>
                         </form>
@@ -401,6 +381,7 @@ import { computed, ref, watch } from "vue";
 import { Loader2, TriangleAlert, X } from "lucide-vue-next";
 
 import { caregiverShiftService } from "~/api/caregiver-shift/CaregiverShiftService";
+import CaregiverShiftTimeline from "./CaregiverShiftTimeline.vue";
 import type {
     CaregiverShift,
     CaregiverShiftList,
@@ -408,7 +389,6 @@ import type {
     FacilityCaregiver,
 } from "~/types/caregiver-shift";
 import { useToast } from "~/composables/useToast";
-import { formatPhone } from "~/utils/phone";
 import { formatTime } from "~/utils/time";
 import { initials } from "~/utils/user";
 
@@ -422,6 +402,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: "close"): void;
     (e: "count", value: number): void;
+    (e: "change", outcome: CaregiverShiftOutcome): void;
 }>();
 
 const { success, error } = useToast();
@@ -528,10 +509,6 @@ const dutyNote = computed(() => {
     return `${caregiver.full_name} would be on duty about ${hours} hours a day. That is over the limit of ${dutyLimit.value} hours. You can still continue.`;
 });
 
-function dutyHoursOf(id: number) {
-    return caregiverById(id)?.duty_hours ?? 0;
-}
-
 function isAssigned(id: number) {
     return activeShifts.value.some((shift) => shift.caregiver_id === id);
 }
@@ -540,13 +517,34 @@ function caregiverById(id: number) {
     return caregivers.value.find((caregiver) => caregiver.employee_id === id);
 }
 
-function residentsOf(id: number) {
-    return caregiverById(id)?.active_residents ?? 0;
-}
+const draftShift = computed<CaregiverShift | null>(() => {
+    const caregiverId = form.value.caregiver_id;
 
-function isOverLimit(id: number) {
-    return caregiverById(id)?.over_limit ?? false;
-}
+    if (
+        !caregiverId ||
+        !form.value.start_time ||
+        !form.value.end_time ||
+        form.value.start_time === form.value.end_time ||
+        isAssigned(caregiverId)
+    ) {
+        return null;
+    }
+
+    const caregiver = caregiverById(caregiverId);
+
+    return {
+        caregiver_facility_shift_id: -1,
+        caregiver_id: caregiverId,
+        admission_id: props.admissionId ?? 0,
+        caregiver_name: caregiver?.full_name ?? "New caregiver",
+        avatar: caregiver?.avatar ?? null,
+        phone_number: caregiver?.phone_number ?? null,
+        note: form.value.note.trim() || null,
+        start_time: form.value.start_time,
+        end_time: form.value.end_time,
+        is_active: true,
+    };
+});
 
 function applyPreset(preset: (typeof PRESETS)[number]) {
     form.value.note = preset.note;
@@ -587,6 +585,7 @@ function applyOutcome(outcome: CaregiverShiftOutcome) {
     );
 
     emit("count", outcome.active_count);
+    emit("change", outcome);
 }
 
 async function load() {
@@ -604,7 +603,6 @@ async function load() {
             admission_id: props.admissionId,
         });
         const data: CaregiverShiftList = res.data ?? res;
-
         shifts.value = data.shifts ?? [];
         caregivers.value = data.caregivers ?? [];
         limit.value = data.limit ?? 3;
@@ -628,7 +626,8 @@ async function submit() {
     }
 
     if (isAssigned(form.value.caregiver_id)) {
-        formError.value = "This caregiver is already assigned to this resident.";
+        formError.value =
+            "This caregiver is already assigned to this resident.";
         return;
     }
 

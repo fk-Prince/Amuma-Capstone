@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -27,16 +27,12 @@ class UpdateProfileRequest extends FormRequest
                     ->ignore($this->user()->user_id, 'user_id'),
             ],
 
-            // Only employees and clients have these columns; platform admins
-            // do not, so they stay optional here and are filtered on write.
             'phone_number' => ['nullable', 'string', 'max:30'],
             'birth_date'   => ['nullable', 'date', 'before:today'],
             'occupation'   => ['nullable', 'string', 'max:255'],
 
             'avatar' => ['nullable', 'file', 'image', 'max:5120'],
 
-            // Password is optional — only validated when the user is actually
-            // changing it, and never for accounts without a local password.
             'current_password' => ['nullable', 'required_with:password', 'string'],
             'password' => [
                 'nullable',

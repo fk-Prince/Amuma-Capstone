@@ -22,7 +22,6 @@ return new class extends Migration
                 ->constrained('locations', 'location_id');
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
-            $table->enum('status', ['active',  'inactive', 'on_leave'])->default('active');
             $table->date('birth_date')->nullable();
             $table->string('phone_number')->nullable();
             $table->string('avatar')->nullable();

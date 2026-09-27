@@ -174,9 +174,6 @@ export async function cardPayment({
 
     window.Xendit.setPublishableKey(config.public.xenditPublicKey);
 
-    // Xendit only authenticates whole pesos, so a balance ending in centavos is
-    // authorised to the next peso. This is a ceiling on what may be charged,
-    // not the charge: the exact amount is what the API bills.
     const authAmount = Math.ceil(amount);
 
     const cardData = {
@@ -185,7 +182,7 @@ export async function cardPayment({
         card_exp_month: String(card.expMonth),
         card_exp_year: String(
             Math.floor(new Date().getFullYear() / 100) * 100 +
-                Number(card.expYear),
+            Number(card.expYear),
         ),
         card_cvc: card.cvc,
         card_holder_first_name: card.firstName,
@@ -194,25 +191,9 @@ export async function cardPayment({
     };
 
     return new Promise((resolve, reject) => {
-        /**
-         * These guards live at the promise scope on purpose. Xendit.js invokes
-         * its callbacks more than once when `should_authenticate` is set — once
-         * for the initial IN_REVIEW and again once 3DS resolves — so anything
-         * declared inside a callback is re-created fresh on each invocation and
-         * cannot prevent a second submission. That is what produced a success
-         * toast immediately followed by "the agency email has already been
-         * taken": the payment was created twice, and the webhook had already
-         * created the agency from the first one.
-         */
         let paymentStarted = false;
         let settled = false;
 
-        /**
-         * Also promise-scoped. Xendit re-invokes the callback below with the
-         * post-3DS status, and that invocation needs to close the modal that
-         * the *first* invocation opened. Declared per-callback it was always
-         * null there, so the modal was left on screen forever.
-         */
         let popupClose: (() => void) | null = null;
 
         const settleResolve = (value: any) => {
@@ -254,16 +235,8 @@ export async function cardPayment({
                             return;
                         }
 
-                        // A later invocation must not start a second payment
-                        // or open a second 3DS modal. It may still arrive
-                        // after the 3DS message path already submitted, in
-                        // which case that path owns the teardown.
                         if (paymentStarted || settled) return;
 
-                        // Single choke point: whichever branch gets here
-                        // first (3DS completion or an already-VERIFIED auth)
-                        // marks the payment as started, so the other can
-                        // never submit a second time.
                         const executePayment = async () => {
                             paymentStarted = true;
 
@@ -301,8 +274,7 @@ export async function cardPayment({
                                 popupClose = close;
 
                                 on3DSClose(() => {
-                                    // The modal has already torn itself down
-                                    // by the time this fires.
+
                                     on3DSProcessingChange?.(false);
 
                                     onClose?.();
@@ -313,11 +285,7 @@ export async function cardPayment({
                                 });
 
                                 onComplete(async () => {
-                                    // Ignored silently rather than rejected:
-                                    // the first submission is already in
-                                    // flight, and surfacing this as an error
-                                    // is exactly the stray toast we're
-                                    // avoiding.
+
                                     if (paymentStarted) return;
 
                                     paymentStarted = true;
@@ -428,9 +396,9 @@ export async function gcashPayment({
         on3DSClose(() => {
             close();
             onClose?.();
-            // settleReject(
-            //     new Error("Payment Cancelled."),
-            // );
+            settleReject(
+                new Error("Payment Cancelled."),
+            );
         });
 
         onComplete(async () => {

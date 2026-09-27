@@ -30,6 +30,7 @@
                         :current-page="currentPage"
                         :total-pages="totalPages"
                         :total-items="totalEmployee"
+                        :page-size="PAGE_SIZE"
                         @select="updateEmployee"
                         @page-change="handlePageChange"
                     />
@@ -73,6 +74,8 @@ const loading = ref(false);
 const searchData = ref("");
 const activeTab = ref("All Employees");
 const addEmployeeTab = ref(false);
+const PAGE_SIZE = 15;
+
 const totalEmployee = ref(0);
 const onDuty = ref(0);
 const onLeave = ref(0);
@@ -81,14 +84,15 @@ const currentPage = ref(1);
 const selectedEmployee = ref<Employee | null>(null);
 const employeeMode = ref<"view" | "edit">("view");
 
-useHead({ title: "Employees" });
+useHead({ title: "Employee" });
 
 const fetchEmployees = async () => {
     try {
         loading.value = true;
 
         const res: any = await employeeService.list({
-            per_page: 15,
+            per_page: PAGE_SIZE,
+            page: currentPage.value,
             branch_uuid: uuid,
             search: searchData.value,
         });
@@ -97,7 +101,7 @@ const fetchEmployees = async () => {
         totalEmployee.value = res.total_employee;
         totalPages.value =
             res.last_page ??
-            Math.ceil((res.total ?? res.total_employee ?? 0) / 15) ??
+            Math.ceil((res.total ?? res.total_employee ?? 0) / PAGE_SIZE) ??
             1;
         onDuty.value = res.status_counts?.active ?? 0;
         onLeave.value = res.status_counts?.on_leave ?? 0;
@@ -140,25 +144,60 @@ const statusCount = (status?: string) => {
     return null;
 };
 
+const ROLE_ORDER = [
+    "agency_owner",
+    "branch_manager",
+    "admission",
+    "accounting",
+    "nurse",
+    "caregiver",
+];
+
+const roleRank = (employee: Employee) => {
+    const rank = ROLE_ORDER.indexOf(
+        String(employee.role_name ?? "").toLowerCase(),
+    );
+
+    return rank === -1 ? ROLE_ORDER.length : rank;
+};
+
+const sortByHierarchy = (list: Employee[]) =>
+    list
+        .map((employee, position) => ({ employee, position }))
+        .sort(
+            (a, b) =>
+                roleRank(a.employee) - roleRank(b.employee) ||
+                a.position - b.position,
+        )
+        .map(({ employee }) => employee);
+
 const applyEmployee = (employee: Employee) => {
     const index = employees.value.findIndex(
         (row) => row.uuid === employee.uuid,
     );
 
     if (index === -1) {
-        employees.value = [employee, ...employees.value];
         totalEmployee.value += 1;
 
         const added = statusCount(employee.status);
 
         if (added) added.value += 1;
 
+        if (currentPage.value === 1) {
+            employees.value = sortByHierarchy([
+                ...employees.value,
+                employee,
+            ]).slice(0, PAGE_SIZE);
+        }
+
         return;
     }
 
     const previous = employees.value[index]!;
 
-    employees.value.splice(index, 1, employee);
+    const next = [...employees.value];
+    next.splice(index, 1, employee);
+    employees.value = sortByHierarchy(next);
 
     if (previous.status !== employee.status) {
         const before = statusCount(previous.status);

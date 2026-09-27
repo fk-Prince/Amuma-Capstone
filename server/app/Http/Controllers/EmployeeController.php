@@ -6,8 +6,9 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
-use App\Http\Requests\Auth\StoreEmployeeRequest;
-use App\Http\Requests\Auth\UpdateEmployeeRequest;
+use App\Http\Requests\Employee\StoreEmployeeRequest;
+use App\Http\Requests\Employee\UpdateEmployeeRequest;
+use App\Http\Requests\Employee\UpdateEmployeeStatusRequest;
 use App\Service\EmployeeService;
 use Illuminate\Http\Request;
 
@@ -32,6 +33,11 @@ class EmployeeController extends Controller
         BranchGuard::mergeRequest($request, $branch);
         $request->merge(['branch' => $branch]);
         return $this->employeeService->updateEmployee($request->all(), $uuid, $request->user());
+    }
+
+    public function updateStatus(UpdateEmployeeStatusRequest $request, string $uuid)
+    {
+        return $this->employeeService->updateStatus($request->validated(), $uuid, $request->user());
     }
 
     public function index(Request $request)

@@ -31,8 +31,9 @@
 
                 <button
                     type="button"
-                    @click="router.back()"
-                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shrink-0 dark:bg-secondary dark:border-white/10 dark:text-gray-300"
+                    :disabled="disabled"
+                    @click="emit('back')"
+                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shrink-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-secondary dark:border-white/10 dark:text-gray-300"
                 >
                     <svg
                         class="w-4 h-4"
@@ -294,14 +295,17 @@
 import { computed } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import SummaryRow from "~/components/ui/SummaryRow.vue";
-import { useRouter } from "vue-router";
 import { formatCurrency } from "~/utils/currency";
 
 const props = defineProps<{
     totalAmount?: number | null;
+    disabled?: boolean;
 }>();
 
-const router = useRouter();
+const emit = defineEmits<{
+    (e: "back"): void;
+}>();
+
 const checkout = useSubscriptionCheckout();
 
 const branchImagePreview = computed(() =>

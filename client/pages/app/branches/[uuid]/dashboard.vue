@@ -8,7 +8,19 @@
 
     <div v-else class="min-h-screen-header">
         <div class="p-4">
-            <div v-if="!activeBranch || loading" class="space-y-3">
+            <div
+                v-if="accessDenied"
+                class="flex min-h-[60vh] flex-col items-center justify-center gap-2 rounded-xl bg-white/50 p-8 text-center dark:bg-white/5"
+            >
+                <p class="text-lg font-semibold text-secondary dark:text-white">
+                    You can't access this branch
+                </p>
+                <p class="max-w-md text-sm text-muted dark:text-gray-400">
+                    {{ accessDeniedMessage }}
+                </p>
+            </div>
+
+            <div v-else-if="!activeBranch || loading" class="space-y-3">
                 <div
                     class="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4"
                 >
@@ -446,7 +458,7 @@
                                 <p
                                     class="text-[11px] text-muted dark:text-gray-400"
                                 >
-                                    Plans and staffing
+                                    Care plans and rates
                                 </p>
                             </div>
                         </div>
@@ -701,7 +713,7 @@ const activeBranch = computed(() => branchStore.activeBranch);
 
 const isSubscriptionPending = computed(() => {
     const branch = activeBranch.value;
-    return !branch?.agency?.is_verified || !branch?.is_verified;
+    return branch?.agency?.status !== "verified" || branch?.status !== "verified";
 });
 
 interface StatBucket {
@@ -803,6 +815,8 @@ const dashboard = ref<DashboardOverview>({
 });
 
 const loading = ref(true);
+const accessDenied = ref(false);
+const accessDeniedMessage = ref("");
 
 let occupancyChart: Chart | null = null;
 let bookingChart: Chart | null = null;
@@ -916,6 +930,7 @@ const bookingSegments = computed(() => [
 
 const fetchDashboard = async () => {
     loading.value = true;
+    accessDenied.value = false;
 
     try {
         const res: any = await branchService.dashboard({ branch_uuid: uuid });
@@ -967,15 +982,24 @@ const fetchDashboard = async () => {
                 ? data.recent_activity
                 : [],
         };
-    } catch (err) {
+    } catch (err: any) {
         console.error("Failed to fetch branch dashboard:", err);
+
+        if (err?.status === 403) {
+            accessDenied.value = true;
+            accessDeniedMessage.value =
+                err?.message ??
+                "You don't have access to this branch.";
+        }
     } finally {
         loading.value = false;
 
         await nextTick();
 
-        destroyCharts();
-        initCharts();
+        if (!accessDenied.value) {
+            destroyCharts();
+            initCharts();
+        }
     }
 };
 
