@@ -60,9 +60,8 @@
                 </button>
 
                 <span
-                    v-if="isFirstBranch || isRejected"
                     class="rounded-full px-2.5 py-1 text-[10px] font-semibold capitalize"
-                    :class="statusClass(subscription.status)"
+                    :class="statusClass(subscription.subscription?.status)"
                 >
                     {{ planStatusLabel }}
                 </span>
@@ -140,6 +139,23 @@
                         <span>{{ agency.address }}</span>
                     </p>
 
+                    <button
+                        v-if="agency.address"
+                        type="button"
+                        class="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                        @click="
+                            openLocation(
+                                agency.name,
+                                agency.address,
+                                agency.latitude,
+                                agency.longitude,
+                            )
+                        "
+                    >
+                        <AppIcon name="map" class="h-3 w-3" />
+                        View Location
+                    </button>
+
                     <div
                         v-if="hasAgencyDocuments"
                         class="mt-2 flex flex-wrap gap-1.5"
@@ -191,6 +207,15 @@
             :reason="subscription.rejection_reason"
             :rejected-at="subscription.rejected_at"
             @close="showRejectionReason = false"
+        />
+
+        <LocationModal
+            :open="showLocationModal"
+            :branch-name="locationTarget?.name"
+            :address="locationTarget?.address"
+            :latitude="locationTarget?.latitude"
+            :longitude="locationTarget?.longitude"
+            @close="showLocationModal = false"
         />
 
         <div
@@ -339,6 +364,14 @@
             </p>
 
             <p
+                v-if="selectedBranch.contact_number"
+                class="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted dark:text-gray-400"
+            >
+                <AppIcon name="phone" class="h-3 w-3 shrink-0 text-primary" />
+                <span>{{ selectedBranch.contact_number }}</span>
+            </p>
+
+            <p
                 v-if="selectedBranch.tin"
                 class="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted dark:text-gray-400"
             >
@@ -378,6 +411,23 @@
 
                 <span>{{ selectedBranch.address }}</span>
             </p>
+
+            <button
+                v-if="selectedBranch.address"
+                type="button"
+                class="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                @click="
+                    openLocation(
+                        selectedBranch.name,
+                        selectedBranch.address,
+                        selectedBranch.latitude,
+                        selectedBranch.longitude,
+                    )
+                "
+            >
+                <AppIcon name="map" class="h-3 w-3" />
+                View Location
+            </button>
 
             <div class="mt-3">
                 <p
@@ -446,9 +496,7 @@
                 </div>
 
                 <div class="flex items-center gap-2 text-[11px]">
-                    <span
-                        class="font-semibold text-secondary dark:text-white"
-                    >
+                    <span class="font-semibold text-secondary dark:text-white">
                         {{ formatCurrency(latestPayment.price) }}
                     </span>
 
@@ -494,59 +542,61 @@
                 v-if="canShowActions"
                 class="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-5 py-3 dark:border-white/10 dark:bg-white/5"
             >
-            <button
-                type="button"
-                :disabled="!!actionLoading"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-danger/30 bg-white px-4 py-2 text-[11px] font-semibold text-danger transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-secondary dark:hover:bg-red-500/10"
-                @click="emit('reject', subscription)"
-            >
-                <svg
-                    v-if="actionLoading === 'reject'"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    class="h-3 w-3 animate-spin"
+                <button
+                    type="button"
+                    :disabled="!!actionLoading"
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-danger/30 bg-white px-4 py-2 text-[11px] font-semibold text-danger transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-secondary dark:hover:bg-red-500/10"
+                    @click="emit('reject', subscription)"
                 >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                </svg>
-                {{
-                    actionLoading === "reject"
-                        ? "Rejecting…"
-                        : isFirstBranch
-                          ? "Reject & Refund"
-                          : "Reject"
-                }}
-            </button>
+                    <svg
+                        v-if="actionLoading === 'reject'"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        class="h-3 w-3 animate-spin"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                    </svg>
+                    {{
+                        actionLoading === "reject"
+                            ? "Rejecting…"
+                            : isFirstBranch
+                              ? "Reject & Refund"
+                              : "Reject"
+                    }}
+                </button>
 
-            <button
-                type="button"
-                :disabled="!!actionLoading"
-                class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-[11px] font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
-                @click="emit('approve', subscription)"
-            >
-                <svg
-                    v-if="actionLoading === 'approve'"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    class="h-3 w-3 animate-spin"
+                <button
+                    type="button"
+                    :disabled="!!actionLoading"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-[11px] font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    @click="emit('approve', subscription)"
                 >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                </svg>
-                {{ actionLoading === "approve" ? "Approving…" : "Approve" }}
-            </button>
+                    <svg
+                        v-if="actionLoading === 'approve'"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        class="h-3 w-3 animate-spin"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                    </svg>
+                    {{
+                        actionLoading === "approve" ? "Activating…" : "Activate"
+                    }}
+                </button>
             </div>
         </div>
     </div>
@@ -557,6 +607,7 @@ import { computed, ref, watch } from "vue";
 import DocumentLink from "~/components/ui/DocumentLink.vue";
 import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionPaymentsModal.vue";
 import RejectionReasonModal from "~/components/sections/owner/RejectionReasonModal.vue";
+import LocationModal from "~/components/sections/owner/LocationModal.vue";
 import AppIcon from "~/components/ui/AppIcon.vue";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
@@ -566,7 +617,10 @@ interface CoveredBranch {
     uuid: string;
     name: string;
     email?: string | null;
+    contact_number?: string | null;
     address?: string | null;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
     document?: string | null;
     image?: string | null;
     tin?: string | null;
@@ -590,7 +644,10 @@ interface SubscriptionCardData {
         uuid: string;
         name: string;
         email: string;
+        contact_number?: string | null;
         address: string | null;
+        latitude?: number | string | null;
+        longitude?: number | string | null;
         status: string;
         document: string | null;
         image?: string | null;
@@ -602,6 +659,8 @@ interface SubscriptionCardData {
             name: string;
             email: string;
             address: string | null;
+            latitude?: number | string | null;
+            longitude?: number | string | null;
             status: "pending" | "verified" | "rejected";
             image?: string | null;
             id_front: string | null;
@@ -618,6 +677,7 @@ interface SubscriptionCardData {
     };
 
     subscription?: {
+        status?: "pending" | "active" | "expired" | "rejected";
         branch_limit?: number;
         covered_branches: CoveredBranch[];
     };
@@ -680,6 +740,23 @@ const hasAgencyDocuments = computed(
 const isPending = computed(() => props.subscription.status === "pending");
 const isRejected = computed(() => props.subscription.status === "rejected");
 const showRejectionReason = ref(false);
+const showLocationModal = ref(false);
+const locationTarget = ref<{
+    name?: string | null;
+    address?: string | null;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
+} | null>(null);
+
+const openLocation = (
+    name?: string | null,
+    address?: string | null,
+    latitude?: number | string | null,
+    longitude?: number | string | null,
+) => {
+    locationTarget.value = { name, address, latitude, longitude };
+    showLocationModal.value = true;
+};
 const canShowActions = computed(() => isPending.value && props.showActions);
 
 const isFirstBranch = computed(
@@ -689,7 +766,7 @@ const isFirstBranch = computed(
 const planStatusLabel = computed(() => {
     if (isRejected.value && !isFirstBranch.value) return "Branch Rejected";
 
-    return props.subscription.status;
+    return props.subscription.subscription?.status ?? props.subscription.status;
 });
 
 const coveredBranches = computed<CoveredBranch[]>(
@@ -759,7 +836,7 @@ const coveredDotClass = (status: string) => {
     }
 };
 
-const statusClass = (status: SubscriptionCardData["status"]) => {
+const statusClass = (status: SubscriptionCardData["status"] | undefined) => {
     switch (status) {
         case "pending":
             return "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300";
@@ -768,6 +845,7 @@ const statusClass = (status: SubscriptionCardData["status"]) => {
         case "inactive":
             return "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-gray-300";
         case "expired":
+        case "rejected":
             return "bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-300";
         default:
             return "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-gray-300";

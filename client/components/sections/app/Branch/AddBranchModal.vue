@@ -2,7 +2,6 @@
     <Teleport to="body">
         <div
             class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm"
-            @click.self="requestClose"
         >
             <Transition
                 appear
@@ -1139,7 +1138,10 @@ const loadTotal = async () => {
 
 const onCreated = async (result: any) => {
     success(result?.message ?? "Branch added successfully.");
-    emit("created", result);
+    emit("created", {
+        ...result,
+        used_existing_capacity: usesExistingCapacity.value,
+    });
 };
 
 const payCard = async () => {

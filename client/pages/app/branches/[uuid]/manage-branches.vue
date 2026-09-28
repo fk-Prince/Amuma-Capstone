@@ -404,6 +404,16 @@ const onBranchCreated = (result: any) => {
 
     branches.value = [mapBranch(created), ...branches.value];
 
+    // Buying a new subscription (rather than using a free slot on an
+    // existing one) adds another 5-branch block to the agency's capacity.
+    const BRANCHES_PER_SUBSCRIPTION = 5;
+    const addedCapacity = result?.used_existing_capacity
+        ? 0
+        : BRANCHES_PER_SUBSCRIPTION;
+    const nextCapacity =
+        statsData.value.branch_capacity.capacity + addedCapacity;
+    const nextUsed = statsData.value.branch_capacity.used + 1;
+
     statsData.value = {
         ...statsData.value,
         total_branches: statsData.value.total_branches + 1,
@@ -417,6 +427,13 @@ const onBranchCreated = (result: any) => {
             statsData.value.expiring_soon,
             statsData.value.total_branches + 1,
         ),
+        branch_capacity: {
+            ...statsData.value.branch_capacity,
+            used: nextUsed,
+            capacity: nextCapacity,
+            remaining: Math.max(0, nextCapacity - nextUsed),
+            has_room: nextUsed < nextCapacity,
+        },
     };
 };
 

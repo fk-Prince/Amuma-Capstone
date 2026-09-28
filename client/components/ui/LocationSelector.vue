@@ -37,6 +37,7 @@ const emit = defineEmits<{
 
 const selectedLocation = ref<Location | null>(null);
 const mapContainerEl = ref<HTMLElement | null>(null);
+const activeMode = ref<"map" | "type">(props.mode);
 
 const typedAddress = ref("");
 const isLocating = ref(false);
@@ -45,9 +46,6 @@ const typeError = ref("");
 const manual = ref(false);
 const manualAddress = ref("");
 const manualError = ref("");
-
-const isIncomplete = (location: Location | null) =>
-    !location?.city || !location.province || !location.country;
 
 function fallBackToManual(text: string): boolean {
     if (!props.manualFallback) return false;
@@ -115,24 +113,32 @@ function onManualInput(value: string | number) {
 watch(
     () => props.mode,
     (next) => {
-        typeError.value = "";
-        manual.value = false;
-
-        if (next === "type") {
-            typedAddress.value = selectedLocation.value?.label ?? "";
-
-            return;
-        }
-
-        nextTick(() => {
-            map?.invalidateSize();
-
-            if (!selectedLocation.value) {
-                map?.setView(defaultView(), 13);
-            }
-        });
+        activeMode.value = next;
     },
 );
+
+watch(activeMode, (next) => {
+    typeError.value = "";
+    manual.value = false;
+
+    if (next === "type") {
+        typedAddress.value = selectedLocation.value?.label ?? "";
+
+        return;
+    }
+
+    nextTick(() => {
+        map?.invalidateSize();
+
+        if (!selectedLocation.value) {
+            map?.setView(defaultView(), 13);
+        }
+    });
+});
+
+function switchMode(next: "map" | "type") {
+    activeMode.value = next;
+}
 
 async function applyTypedAddress() {
     const query = typedAddress.value.trim();
@@ -175,20 +181,9 @@ async function applyTypedAddress() {
 
         const found = await reverseGeocode(lat, lng);
 
-        if (
-            (!found || isIncomplete(selectedLocation.value)) &&
-            fallBackToManual(query)
-        ) {
+        if (!found && fallBackToManual(query)) {
             return;
         }
-
-        selectedLocation.value = {
-            ...selectedLocation.value!,
-            lat,
-            lng,
-            label: query,
-            street: query,
-        };
 
         confirmLocation();
     } catch (error) {
@@ -228,10 +223,7 @@ const handleLocation = async (lat: number, lng: number): Promise<void> => {
 
     const found = await reverseGeocode(lat, lng);
 
-    if (
-        (!found || isIncomplete(selectedLocation.value)) &&
-        fallBackToManual(found ? (selectedLocation.value?.label ?? "") : "")
-    ) {
+    if (!found && fallBackToManual("")) {
         return;
     }
 
@@ -272,7 +264,7 @@ const reverseGeocode = async (lat: number, lng: number): Promise<boolean> => {
         const addr = data.address ?? {};
         const displayName: string = data.display_name ?? "";
 
-        const street = [
+        const road = [
             addr.house_number,
             addr.road ??
                 addr.pedestrian ??
@@ -287,9 +279,7 @@ const reverseGeocode = async (lat: number, lng: number): Promise<boolean> => {
                 addr.secondary ??
                 addr.primary ??
                 addr.trunk ??
-                addr.suburb ??
-                addr.amenity ??
-                addr.road,
+                addr.amenity,
         ]
             .filter(Boolean)
             .join(" ");
@@ -302,16 +292,20 @@ const reverseGeocode = async (lat: number, lng: number): Promise<boolean> => {
             addr.suburb ??
             "";
 
+        const locality = [
+            addr.neighbourhood,
+            addr.quarter,
+            addr.suburb,
+            addr.hamlet,
+            addr.village,
+        ].find((part) => part && part !== city);
+
+        const street = [locality, road].filter(Boolean).join(", ");
+
         const province = addr.state ?? addr.province ?? addr.region ?? "";
         const country = addr.country ?? "";
 
-        const labelParts = [
-            addr.neighbourhood ?? addr.suburb ?? addr.hamlet ?? addr.village,
-            street,
-            city,
-            province,
-            country,
-        ].filter(Boolean);
+        const labelParts = [street, city, province, country].filter(Boolean);
 
         const hasEnoughParts = !!(city || street);
         const label = hasEnoughParts
@@ -579,11 +573,39 @@ onUnmounted(() => {
             >
                 {{
                     selectedLocation?.label ||
-                    (props.mode === "map"
+                    (activeMode === "map"
                         ? "Click the map to select a location"
                         : "Type the address below")
                 }}
             </span>
+
+            <div class="inline-flex shrink-0 rounded-lg border border-gray-200 p-0.5 dark:border-white/10">
+                <button
+                    type="button"
+                    @click="switchMode('map')"
+                    :class="[
+                        'rounded px-2.5 py-1 text-xs font-medium transition-colors',
+                        activeMode === 'map'
+                            ? 'bg-primary text-white'
+                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
+                    ]"
+                >
+                    Map
+                </button>
+
+                <button
+                    type="button"
+                    @click="switchMode('type')"
+                    :class="[
+                        'rounded px-2.5 py-1 text-xs font-medium transition-colors',
+                        activeMode === 'type'
+                            ? 'bg-primary text-white'
+                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
+                    ]"
+                >
+                    Type
+                </button>
+            </div>
 
             <button
                 v-if="selectedLocation"
@@ -610,13 +632,13 @@ onUnmounted(() => {
         </div>
 
         <div
-            v-show="!manual && props.mode === 'type'"
+            v-show="!manual && activeMode === 'type'"
             class="flex flex-col gap-2 sm:flex-row"
         >
             <BaseInput
                 v-model="typedAddress"
                 class="flex-1"
-                placeholder="House/unit no., street, barangay, city"
+                placeholder="Type this address and click &quot;Use this address&quot; to generate the location"
                 :error="typeError"
                 @keydown.enter.prevent="applyTypedAddress"
             />
@@ -632,12 +654,12 @@ onUnmounted(() => {
         </div>
 
         <div
-            v-show="!manual && (props.mode === 'map' || selectedLocation)"
+            v-show="!manual && (activeMode === 'map' || selectedLocation)"
             ref="mapContainerEl"
             class="w-full h-[400px] z-20 rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm"
         />
 
-        <div v-show="!manual && props.mode === 'map'" class="flex gap-2">
+        <div v-show="!manual && activeMode === 'map'" class="flex gap-2">
             <button
                 type="button"
                 @click="useMyLocation"

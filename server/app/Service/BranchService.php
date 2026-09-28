@@ -174,8 +174,6 @@ class BranchService
             'currency',
         ]);
 
-        // The request delivers these as strings ("1", "8"). Stored raw they
-        // break v-model on the client, where a checkbox compares against true.
         foreach (
             ['enable_booking_pre_admission', 'enable_booking_complete_admission', 'requires_full_payment_on_admit', 'is_open']
             as $key
@@ -200,9 +198,6 @@ class BranchService
                 max(1, (int) $settingPayload['complete_admission_booking_percent'])
             );
         }
-
-        // Merged rather than replaced: settings also holds keys this form does
-        // not edit (tin, bir_permit_no), which a plain overwrite would wipe.
         $branch->update([
             'settings' => array_merge($branch->settings ?? [], $settingPayload),
         ]);

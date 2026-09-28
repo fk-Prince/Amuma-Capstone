@@ -719,8 +719,7 @@ const handleLocation = ({
     province: string;
     country: string;
 }) => {
-    const resolvedStreet =
-        label || [street, city, province, country].filter(Boolean).join(", ");
+    const resolvedStreet = street || label.split(",")[0]?.trim() || "";
 
     emit("update:agency", {
         ...agency.value,

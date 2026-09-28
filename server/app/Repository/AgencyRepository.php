@@ -94,13 +94,9 @@ class AgencyRepository
 
         $capacity = self::BRANCHES_PER_SUBSCRIPTION * $paidSubscriptions;
 
-        $used = BranchSubscription::query()
-            ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
-            ->whereHas(
-                'subscription',
-                fn($q) => $q->where('agency_id', $agencyId)
-                    ->where('status', '!=', Subscription::STATUS_REJECTED)
-            )
+        $used = Branch::query()
+            ->where('agency_id', $agencyId)
+            ->where('status', '!=', Branch::STATUS_REJECTED)
             ->count();
 
         $available = Subscription::query()

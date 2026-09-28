@@ -27,7 +27,7 @@ class CaseInsensitiveUnique implements ValidationRule
             ->exists();
 
         if ($exists) {
-            $fail("The {$attribute} has already been taken.");
+            $fail('The '.str_replace('_', ' ', $attribute).' has already been taken.');
         }
     }
 }

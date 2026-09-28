@@ -713,19 +713,29 @@ class SubscriptionService
                 'longitude' => $branchLongitude,
             ]);
 
+            $branchImage = null;
+            if (!empty($payload['branch_image']) && $payload['branch_image'] instanceof UploadedFile) {
+                $branchImage = SupabaseService::store($payload['branch_image']);
+            }
+
+            $branchDocument = null;
+            if (!empty($payload['branch_document']) && $payload['branch_document'] instanceof UploadedFile) {
+                $branchDocument = SupabaseService::store($payload['branch_document']);
+            }
+
             $branchData = $this->branchRepository->create([
                 'agency_id' => $agency->agency_id,
                 'location_id' => $branchLocation->location_id,
                 'description' => $payload['branch_description'] ?? null,
                 'name' => $payload['branch_name'] ?? null,
                 'contact_number' => $payload['branch_contact_number'] ?? null,
-                'image' => $payload['branch_image'] ?? null,
-                'document' => $payload['branch_document'] ?? null,
+                'image' => is_array($branchImage) ? ($branchImage['url'] ?? null) : null,
+                'document' => is_array($branchDocument) ? ($branchDocument['url'] ?? null) : null,
                 'settings' => $payload['branch_settings'] ?? null,
                 'email' => $payload['branch_email'],
             ]);
 
-            $link = BranchSubscription::create([
+            BranchSubscription::create([
                 'subscription_id' => $subscription->subscription_id,
                 'branch_id' => $branchData->branch_id,
                 'status' => BranchSubscription::STATUS_PENDING,

@@ -67,6 +67,8 @@ class NominatimService
             'q' => $address,
             'format' => 'json',
             'limit' => 1,
+            'countrycodes' => 'ph',
+            'addressdetails' => 1,
         ]);
 
 

@@ -70,13 +70,21 @@ class SubscriptionRepository
     {
         $filtered = $this->filteredBranchSubscriptionQuery($payload);
 
-        $representativeIds = (clone $filtered)
-            ->selectRaw('MIN(branch_subscription_id) as branch_subscription_id')
-            ->groupBy('subscription_id')
-            ->pluck('branch_subscription_id');
+        // Pending requests are reviewed and actioned one branch at a time,
+        // so every pending branch needs its own card. Approved/rejected
+        // views instead collapse a subscription's branches into one card
+        // (with a branch switcher), so only those views dedupe.
+        if (($payload['status'] ?? null) !== BranchSubscription::STATUS_PENDING) {
+            $representativeIds = (clone $filtered)
+                ->selectRaw('MIN(branch_subscription_id) as branch_subscription_id')
+                ->groupBy('subscription_id')
+                ->pluck('branch_subscription_id');
 
-        return BranchSubscription::query()
-            ->whereIn('branch_subscription_id', $representativeIds)
+            $filtered = BranchSubscription::query()
+                ->whereIn('branch_subscription_id', $representativeIds);
+        }
+
+        return $filtered
             ->with([
                 'branch.agencies',
                 'subscription.plans',

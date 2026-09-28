@@ -66,7 +66,7 @@
                     <p
                         class="text-xs font-semibold text-white uppercase tracking-wide"
                     >
-                        {{ image.type }}
+                        {{ typeLabel(image.type) }}
                     </p>
 
                     <p
@@ -289,6 +289,9 @@ const form = ref<ImageForm>({
     description: "",
     image: null,
 });
+
+const typeLabel = (type: string) =>
+    imageTypes.value.find((item) => item.value === type)?.label ?? type;
 
 const fetchImages = async (page = 1) => {
     if (loading.value) return;
