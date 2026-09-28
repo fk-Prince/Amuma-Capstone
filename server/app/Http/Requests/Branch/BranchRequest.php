@@ -56,6 +56,7 @@ class BranchRequest extends FormRequest
             'location.province'   => ['required', 'string'],
             'location.country'    => ['required', 'string'],
             'location.longitude'   => ['nullable', 'numeric'],
+            'location.full_address' => ['nullable', 'string', 'max:500'],
             'location.latitude'    => ['nullable', 'numeric'],
             // 'settings' => ['required', 'array'],
             // 'settings.currency' => ['required', 'string'],

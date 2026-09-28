@@ -44,6 +44,7 @@ export interface SubscriptionRequest {
     branch_email?: string;
     branch_image?: File | string | null;
     branch_settings?: any;
+    branch_full_address?: string;
     branch_latitude?: number | null;
     branch_longitude?: number | null;
     branch_document?: string | File;
@@ -56,6 +57,7 @@ export interface SubscriptionRequest {
     agency_city?: string;
     agency_province?: string;
     agency_country?: string;
+    agency_full_address?: string;
     agency_latitude?: number | null;
     agency_longitude?: number | null;
     agency_image: File | string | null;

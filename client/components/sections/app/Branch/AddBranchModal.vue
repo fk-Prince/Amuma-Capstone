@@ -936,6 +936,7 @@ const buildPayload = () => ({
     branch_city: form.branch.location.city,
     branch_province: form.branch.location.province,
     branch_country: form.branch.location.country,
+    branch_full_address: form.branch.location.full_address ?? "",
     branch_latitude: form.branch.location.latitude,
     branch_longitude: form.branch.location.longitude,
 

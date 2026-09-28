@@ -76,8 +76,18 @@ class BranchRepository
                 $search = trim($filters['city']);
 
                 $query->whereHas('location', function ($q) use ($search) {
-                    $q->where('city', 'ILIKE', '%' . $search . '%')
-                        ->orWhereRaw('? ILIKE \'%\' || city || \'%\'', [$search]);
+                    $q->where(function ($match) use ($search) {
+                        foreach (['street', 'city', 'province', 'full_address'] as $column) {
+                            $match->orWhere($column, 'ILIKE', '%' . $search . '%');
+                        }
+
+                        foreach (['city', 'province'] as $column) {
+                            $match->orWhereRaw(
+                                "{$column} <> '' AND ? ILIKE '%' || {$column} || '%'",
+                                [$search]
+                            );
+                        }
+                    });
                 });
             })
             ->when(!empty($filters['provider_name']), function ($query) use ($filters) {

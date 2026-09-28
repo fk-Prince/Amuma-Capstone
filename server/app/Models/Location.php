@@ -22,6 +22,22 @@ class Location extends Model
         'latitude',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (Location $location) {
+            $parts = array_filter([
+                $location->street,
+                $location->city,
+                $location->province,
+                $location->country,
+            ]);
+
+            if ($parts && empty($location->attributes['full_address'])) {
+                $location->attributes['full_address'] = implode(', ', $parts);
+            }
+        });
+    }
+
     protected function fullAddress(): Attribute
     {
         return Attribute::make(

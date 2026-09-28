@@ -72,6 +72,9 @@
                             :center-lng="mapCenter.lng"
                             :zoom="mapCenter.zoom"
                             :hovered-uuid="hoveredBranchUuid"
+                            :show-my-location="
+                                route.query.location_explicit !== '1'
+                            "
                         />
 
                         <Transition name="fade">

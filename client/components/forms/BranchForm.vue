@@ -494,6 +494,7 @@ const handleLocation = ({
         ...props.branch,
         location: {
             street: resolvedStreet,
+            full_address: label,
             city: city ?? "",
             province: province ?? "",
             country: country ?? "",

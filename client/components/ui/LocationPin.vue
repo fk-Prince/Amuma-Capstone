@@ -13,14 +13,43 @@ let highlightedMarker: any = null;
 
 const { getMyLocation } = useGeo();
 
-const props = defineProps<{
-    locations?: Location[];
-    centerLat?: number;
-    centerLng?: number;
-    zoom?: number;
-    extraClass?: string;
-    hoveredUuid?: string | null;
-}>();
+const props = withDefaults(
+    defineProps<{
+        locations?: Location[];
+        centerLat?: number;
+        centerLng?: number;
+        zoom?: number;
+        extraClass?: string;
+        hoveredUuid?: string | null;
+        showMyLocation?: boolean;
+    }>(),
+    { showMyLocation: true },
+);
+
+let myLocation: { lat: number; lng: number } | null = null;
+
+const renderMyLocation = () => {
+    myLocationMarker?.remove();
+    myLocationMarker = null;
+
+    if (!map || !myLocation || !props.showMyLocation) return;
+
+    myLocationMarker = L.circleMarker([myLocation.lat, myLocation.lng], {
+        radius: 8,
+        fillColor: "#3b82f6",
+        color: "#fff",
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.9,
+    })
+        .addTo(map)
+        .bindTooltip("This is me", {
+            permanent: true,
+            direction: "top",
+            offset: [0, -8],
+        })
+        .bindPopup("<b>This is me</b>");
+};
 
 const fitToBounds = () => {
     if (!map || !props.locations?.length) return;
@@ -153,25 +182,17 @@ onMounted(async () => {
     }, 200);
 
     getMyLocation().then((loc) => {
-        if (!loc || !map) return;
+        if (!loc) return;
 
-        myLocationMarker = L.circleMarker([loc.lat, loc.lng], {
-            radius: 8,
-            fillColor: "#3b82f6",
-            color: "#fff",
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.9,
-        })
-            .addTo(map)
-            .bindTooltip("This is me", {
-                permanent: true,
-                direction: "top",
-                offset: [0, -8],
-            })
-            .bindPopup("<b>This is me</b>");
+        myLocation = { lat: loc.lat, lng: loc.lng };
+        renderMyLocation();
     });
 });
+
+watch(
+    () => props.showMyLocation,
+    () => renderMyLocation(),
+);
 
 watch(
     () => [props.centerLat, props.centerLng],

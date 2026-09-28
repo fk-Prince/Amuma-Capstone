@@ -725,6 +725,7 @@ const handleLocation = ({
         ...agency.value,
         location: {
             street: resolvedStreet,
+            full_address: label,
             city: city ?? "",
             province: province ?? "",
             country: country ?? "",

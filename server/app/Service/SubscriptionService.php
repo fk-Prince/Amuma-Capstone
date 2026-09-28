@@ -366,6 +366,7 @@ class SubscriptionService
                 'city'           => $payload['branch_city'] ?? null,
                 'province'       => $payload['branch_province'] ?? null,
                 'country'        => $payload['branch_country'] ?? null,
+                'full_address'   => $payload['branch_full_address'] ?? null,
                 'email'          => $payload['branch_email'] ?? null,
                 'contact_number' => $payload['branch_contact_number'] ?? null,
                 'image'          => is_array($branchImage) ? ($branchImage['url'] ?? null) : null,
@@ -387,6 +388,7 @@ class SubscriptionService
                 'city'           => $payload['agency_city'] ?? null,
                 'province'       => $payload['agency_province'] ?? null,
                 'country'        => $payload['agency_country'] ?? null,
+                'full_address'   => $payload['agency_full_address'] ?? null,
                 'latitude'       => $payload['agency_latitude'] ?? null,
                 'longitude'      => $payload['agency_longitude'] ?? null,
             ],
@@ -461,6 +463,7 @@ class SubscriptionService
                         'city' => $agency['city'] ?? null,
                         'province' => $agency['province'] ?? null,
                         'country' => $agency['country'] ?? null,
+                        'full_address' => $agency['full_address'] ?? null,
                         'latitude' => $agencyLatitude,
                         'longitude' => $agencyLongitude,
                     ]);
@@ -501,6 +504,7 @@ class SubscriptionService
                     'city' => $branch['city'] ?? null,
                     'province' => $branch['province'] ?? null,
                     'country' => $branch['country'] ?? null,
+                    'full_address' => $branch['full_address'] ?? null,
                     'latitude' => $branchLatitude,
                     'longitude' => $branchLongitude,
                 ]);
@@ -709,6 +713,7 @@ class SubscriptionService
                 'city' => $payload['branch_city'] ?? null,
                 'province' => $payload['branch_province'] ?? null,
                 'country' => $payload['branch_country'] ?? null,
+                'full_address' => $payload['branch_full_address'] ?? null,
                 'latitude' => $branchLatitude,
                 'longitude' => $branchLongitude,
             ]);

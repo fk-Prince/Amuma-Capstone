@@ -126,6 +126,8 @@ export const locationSchema = z.object({
 
     country: z.string().trim().min(1, "Country is required"),
 
+    full_address: z.string().trim().optional(),
+
     latitude: z.coerce.number().optional(),
     longitude: z.coerce.number().optional(),
 });

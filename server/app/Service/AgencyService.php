@@ -71,6 +71,7 @@ class AgencyService
                     'city' => $payload['location']['city'],
                     'province' => $payload['location']['province'],
                     'country' => $payload['location']['country'],
+                    'full_address' => $payload['location']['full_address'] ?? null,
                     'longitude' => $payload['location']['longitude'] ?? null,
                     'latitude' => $payload['location']['latitude'] ?? null,
                 ]
