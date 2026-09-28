@@ -25,6 +25,8 @@ export interface Branch {
     status: "pending" | "verified" | "rejected";
     subscription_status?: "pending" | "approved" | "rejected" | null;
     rejection_reason?: string | null;
+    resubmit_requires_payment?: boolean;
+    resubmit_subscription_status?: "active" | "expired" | "pending" | "rejected" | null;
     document?: File | string;
 }
 

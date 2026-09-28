@@ -45,6 +45,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 422);
             }
 
+
+            //remove
             if ($e instanceof AuthenticationException) {
                 return response()->json(['message' => 'Unauthenticated.'], 401);
             }
@@ -84,5 +86,6 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return response()->json(['message' => 'Internal Server Error'], 500);
+            //remove
         });
     })->create();

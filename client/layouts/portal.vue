@@ -49,12 +49,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { nextTick, ref, watch } from "vue";
 import PortalSidebar from "~/components/sections/PortalSidebar.vue";
 import PortalHeader from "~/components/sections/PortalHeader.vue";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
-import { useAuthReady } from "~/composables/useAuthUser";
+import { useAuthReady, useAuthUser } from "~/composables/useAuthUser";
+import { usePortalTour } from "~/composables/usePortalTour";
 
 const isOpen = ref(false);
 const authReady = useAuthReady();
+const user = useAuthUser();
+const tour = usePortalTour(isOpen);
+let tourStarted = false;
+
+watch(
+    [authReady, user],
+    async ([ready, current]) => {
+        if (import.meta.server || tourStarted || !ready || !current) return;
+        if (current.onboarding?.portal?.main) return;
+
+        tourStarted = true;
+        await nextTick();
+        tour.start();
+    },
+    { immediate: true },
+);
 </script>

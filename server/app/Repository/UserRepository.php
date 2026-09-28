@@ -101,6 +101,13 @@ class UserRepository
         );
     }
 
+    public function completeOnboarding(User $user, string $area, string $tour): User
+    {
+        $user->forceFill(["onboarding->{$area}->{$tour}" => now()->toDateTimeString()])->save();
+
+        return $user;
+    }
+
     public function update(string $user_id, array $payload)
     {
         return User::where('user_id', $user_id)->update($payload);

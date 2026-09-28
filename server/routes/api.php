@@ -135,6 +135,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/subscriptions-check-unique',  [SubscriptionController::class, 'checkUnique']);
     Route::post('/subscriptions-renew',  [SubscriptionController::class, 'renew']);
     Route::post('/subscriptions-branch', [SubscriptionController::class, 'newBranchFromCapacity']);
+    Route::post('/subscriptions-branch-resubmit', [SubscriptionController::class, 'resubmitBranch']);
+    Route::post('/subscriptions-branch-resubmit-purchase', [SubscriptionController::class, 'resubmitBranchWithPurchase']);
     Route::post('/subscriptions-apply-upgrade', [SubscriptionController::class, 'applyUpgrade']);
 
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);
@@ -152,6 +154,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/branches',  [UserController::class, 'getUserBranch']);
     Route::get('/profile',  [UserController::class, 'profile']);
     Route::post('/profile',  [UserController::class, 'updateProfile']);
+    Route::post('/onboarding/{area}',  [UserController::class, 'completeOnboarding'])->whereIn('area', ['portal']);
     Route::get('/reviews/public',  [ReviewController::class, 'publicReviews']);
 });
 

@@ -185,11 +185,13 @@
                         :key="subscription.uuid"
                         :subscription="subscription"
                         :show-actions="false"
+                        clickable
                         :action-loading="
                             processingAction[subscription.uuid] ?? null
                         "
                         @approve="approveSubscription"
                         @reject="rejectSubscription"
+                        @open="selectedSubscription = $event"
                     />
                 </div>
 
@@ -221,17 +223,27 @@
                 </div>
             </template>
         </div>
+
+        <SubscriptionDetailModal
+            :open="!!selectedSubscription"
+            :subscription="selectedSubscription"
+            @close="selectedSubscription = null"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
 import SubscriptionCard from "~/components/sections/owner/SubscriptionCard.vue";
+import SubscriptionDetailModal from "~/components/sections/owner/SubscriptionDetailModal.vue";
 import SubscriptionFilterBar from "~/components/sections/owner/SubscriptionFilter.vue";
 import SubscriptionOverview from "~/components/sections/owner/SubscriptionOverview.vue";
 import {
     useSubscriptionBrowser,
     type ApprovedStatus,
 } from "~/composables/useSubscriptionBrowser";
+import type { SubscriptionCardData } from "~/types/subscription";
+
+const selectedSubscription = ref<SubscriptionCardData | null>(null);
 
 definePageMeta({
     layout: "owner",

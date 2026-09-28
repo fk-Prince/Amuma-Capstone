@@ -6,9 +6,11 @@ namespace App\Service;
 use App\Enums\ModuleEnum;
 use App\Enums\RoleEnum;
 use App\Models\Branch;
+use App\Models\BranchSubscription;
 use App\Models\Location;
 use App\Models\User;
 use App\Repository\BranchRepository;
+use App\Repository\UserRepository;
 use App\Service\External\SupabaseService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
@@ -20,7 +22,10 @@ use Illuminate\Validation\ValidationException;
 
 class UserService
 {
-    public function __construct(private BranchRepository $branchRepository) {}
+    public function __construct(
+        private BranchRepository $branchRepository,
+        private UserRepository $userRepository,
+    ) {}
 
     public function getUserBranch(User $user)
     {
@@ -115,6 +120,11 @@ class UserService
                     'status' => $branch?->status,
                     'subscription_status' => $branch?->subscriptionLink?->status,
                     'rejection_reason' => $branch?->subscriptionLink?->rejection_reason,
+                    'resubmit_requires_payment' => $branch?->subscriptionLink?->status === BranchSubscription::STATUS_REJECTED
+                        && !$branch->subscriptionLink->subscription?->hasOpenSlot(),
+                    'resubmit_subscription_status' => $branch?->subscriptionLink?->status === BranchSubscription::STATUS_REJECTED
+                        ? $branch->subscriptionLink->subscription?->status
+                        : null,
                     'description' => $branch?->description,
                     'contact_number' => $branch?->contact_number,
                     'role_name' => $employeeBranch?->role_name,
@@ -208,6 +218,17 @@ class UserService
         ];
     }
 
+
+    public function completeOnboarding(User $user, string $area)
+    {
+        $user = $this->userRepository->completeOnboarding($user, $area, 'main');
+
+        return response()->json([
+            'data' => [
+                'onboarding' => $user->onboarding,
+            ],
+        ]);
+    }
 
     public function profile(User $user)
     {

@@ -186,18 +186,30 @@
                         :key="subscription.uuid"
                         :subscription="subscription"
                         :show-actions="view === 'requests'"
+                        clickable
                         :action-loading="
                             processingAction[subscription.uuid] ?? null
                         "
                         @approve="approveSubscription"
                         @reject="askRejectReason"
+                        @open="selectedSubscription = $event"
                     />
                 </div>
+
+                <SubscriptionDetailModal
+                    :open="!!selectedSubscription"
+                    :subscription="selectedSubscription"
+                    @close="selectedSubscription = null"
+                />
 
                 <RejectSubscriptionModal
                     :open="!!rejecting"
                     :branch-name="rejecting?.branch?.name"
                     :refunds="rejecting?.is_first_branch !== false"
+                    :agency-unverified="
+                        !!rejecting &&
+                        rejecting.branch?.agency?.status !== 'verified'
+                    "
                     :submitting="
                         !!rejecting &&
                         processingAction[rejecting.uuid] === 'reject'
@@ -241,9 +253,13 @@
 <script setup lang="ts">
 import SubscriptionCard from "~/components/sections/owner/SubscriptionCard.vue";
 import RejectSubscriptionModal from "~/components/sections/owner/RejectSubscriptionModal.vue";
+import SubscriptionDetailModal from "~/components/sections/owner/SubscriptionDetailModal.vue";
 import SubscriptionFilterBar from "~/components/sections/owner/SubscriptionFilter.vue";
 import SubscriptionOverview from "~/components/sections/owner/SubscriptionOverview.vue";
 import { useSubscriptionBrowser } from "~/composables/useSubscriptionBrowser";
+import type { SubscriptionCardData } from "~/types/subscription";
+
+const selectedSubscription = ref<SubscriptionCardData | null>(null);
 
 definePageMeta({
     layout: "owner",
@@ -283,14 +299,17 @@ const askRejectReason = (subscription: any) => {
     rejecting.value = subscription;
 };
 
-const confirmReject = async (reason: string) => {
+const confirmReject = async (
+    reason: string,
+    scope: "branch" | "both",
+) => {
     const subscription = rejecting.value;
 
     if (!subscription) return;
 
     rejectError.value = "";
 
-    const failure = await rejectSubscription(subscription, reason);
+    const failure = await rejectSubscription(subscription, reason, scope);
 
     if (failure === null) {
         rejecting.value = null;

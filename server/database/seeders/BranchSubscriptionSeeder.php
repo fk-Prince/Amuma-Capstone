@@ -14,9 +14,11 @@ use App\Models\EmployeePermission;
 use App\Models\Location;
 use App\Models\Module;
 use App\Models\Plan;
+use App\Models\PlatformAdmin;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Models\User;
+use App\Models\VerificationLog;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -368,7 +370,7 @@ class BranchSubscriptionSeeder extends Seeder
                         'settings' => $this->settings($cosmeticIndex),
                     ]);
 
-                    BranchSubscription::create([
+                    $link = BranchSubscription::create([
                         'subscription_id' => $subscription->subscription_id,
                         'branch_id' => $branch->branch_id,
                         'status' => match ($effectiveStatus) {
@@ -376,10 +378,23 @@ class BranchSubscriptionSeeder extends Seeder
                             'rejected' => BranchSubscription::STATUS_REJECTED,
                             default => BranchSubscription::STATUS_APPROVED,
                         },
-                        'rejection_reason' => $effectiveStatus === 'rejected'
-                            ? 'The submitted business document could not be verified. Please upload a clear copy and try again.'
-                            : null,
                     ]);
+
+                    if ($effectiveStatus !== 'pending') {
+                        VerificationLog::create([
+                            'branch_subscription_id' => $link->branch_subscription_id,
+                            'action' => $effectiveStatus === 'rejected'
+                                ? VerificationLog::ACTION_REJECTED
+                                : VerificationLog::ACTION_APPROVED,
+                            'scope' => $n === 0 && ($isRejected || $effectiveStatus !== 'rejected')
+                                ? VerificationLog::SCOPE_BOTH
+                                : VerificationLog::SCOPE_BRANCH,
+                            'reason' => $effectiveStatus === 'rejected'
+                                ? 'The submitted business document could not be verified. Please upload a clear copy and try again.'
+                                : null,
+                            'action_by' => PlatformAdmin::query()->value('user_id'),
+                        ]);
+                    }
 
                     if ($n === 0) {
                         EmployeeBranch::create([
@@ -424,6 +439,15 @@ class BranchSubscriptionSeeder extends Seeder
 
                 DB::table('branch_subscription')
                     ->where('subscription_id', $subscription->subscription_id)
+                    ->update(['created_at' => $start, 'updated_at' => $start]);
+
+                DB::table('verification_logs')
+                    ->whereIn(
+                        'branch_subscription_id',
+                        DB::table('branch_subscription')
+                            ->where('subscription_id', $subscription->subscription_id)
+                            ->select('branch_subscription_id')
+                    )
                     ->update(['created_at' => $start, 'updated_at' => $start]);
             });
         }

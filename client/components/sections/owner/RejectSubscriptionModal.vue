@@ -46,6 +46,32 @@
                             branch, so write something they can act on.
                         </p>
 
+                        <div v-if="canRejectAgency">
+                            <p
+                                class="text-xs font-semibold text-slate-700 dark:text-gray-300"
+                            >
+                                What needs fixing?
+                            </p>
+
+                            <div class="mt-2 grid grid-cols-2 gap-1.5">
+                                <button
+                                    v-for="option in SCOPES"
+                                    :key="option.value"
+                                    type="button"
+                                    :disabled="submitting"
+                                    class="rounded-lg border px-2.5 py-2 text-xs font-medium transition disabled:opacity-50"
+                                    :class="
+                                        scope === option.value
+                                            ? 'border-red-300 bg-red-50 text-red-600 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300'
+                                            : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5'
+                                    "
+                                    @click="scope = option.value"
+                                >
+                                    {{ option.label }}
+                                </button>
+                            </div>
+                        </div>
+
                         <div>
                             <label
                                 class="text-xs font-semibold text-slate-700 dark:text-gray-300"
@@ -119,7 +145,12 @@
 
                             <span>
                                 This is the first branch on the subscription,
-                                so rejecting it also refunds the payment.
+                                so rejecting it also refunds the payment<template
+                                    v-if="rejectsAgencyWithRefund"
+                                >
+                                    and rejects the agency, which hasn't been
+                                    verified yet</template
+                                >.
                             </span>
                         </div>
                     </div>
@@ -156,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import AppIcon from "~/components/ui/AppIcon.vue";
 
 const MAX_LENGTH = 500;
@@ -193,21 +224,36 @@ function applyQuickFill(text: string) {
     error.value = "";
 }
 
+type RejectionScope = "branch" | "both";
+
+const SCOPES: { value: RejectionScope; label: string }[] = [
+    { value: "branch", label: "Branch only" },
+    { value: "both", label: "Agency & branch" },
+];
+
 const props = defineProps<{
     open: boolean;
     branchName?: string | null;
     refunds?: boolean;
     submitting?: boolean;
     serverError?: string;
+    agencyUnverified?: boolean;
 }>();
+
+const canRejectAgency = computed(() => props.agencyUnverified && !props.refunds);
+
+const rejectsAgencyWithRefund = computed(
+    () => props.agencyUnverified && props.refunds,
+);
 
 const emit = defineEmits<{
     (event: "close"): void;
-    (event: "confirm", reason: string): void;
+    (event: "confirm", reason: string, scope: RejectionScope): void;
 }>();
 
 const reason = ref("");
 const error = ref("");
+const scope = ref<RejectionScope>("branch");
 
 const confirmLabel = computed(() =>
     props.refunds ? "Reject & Refund" : "Reject",
@@ -220,6 +266,7 @@ watch(
 
         reason.value = "";
         error.value = "";
+        scope.value = "branch";
     },
 );
 
@@ -239,7 +286,15 @@ function submit() {
     }
 
     error.value = "";
-    emit("confirm", value);
+    emit(
+        "confirm",
+        value,
+        rejectsAgencyWithRefund.value
+            ? "both"
+            : canRejectAgency.value
+              ? scope.value
+              : "branch",
+    );
 }
 </script>
 

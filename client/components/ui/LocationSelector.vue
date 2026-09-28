@@ -62,6 +62,15 @@ function fallBackToManual(text: string): boolean {
     return true;
 }
 
+async function useMap() {
+    manual.value = false;
+    manualError.value = "";
+    activeMode.value = "map";
+
+    await nextTick();
+    map?.invalidateSize();
+}
+
 function applyManualAddress(showError: boolean) {
     const text = manualAddress.value.trim();
     const parts = text
@@ -548,6 +557,15 @@ onUnmounted(() => {
             @focusout="applyManualAddress(true)"
             @keydown.enter.prevent="applyManualAddress(true)"
         />
+
+        <button
+            v-if="manual"
+            type="button"
+            class="self-start text-xs font-medium text-primary hover:underline"
+            @click="useMap"
+        >
+            Pick on the map instead
+        </button>
 
         <div
             v-show="!manual"

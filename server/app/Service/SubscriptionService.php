@@ -11,6 +11,7 @@ use App\Repository\BranchRepository;
 use App\Repository\NotificationRepository;
 use App\Repository\SubscriptionRepository;
 use App\Repository\PlanRepository;
+use App\Repository\VerificationLogRepository;
 use Carbon\Carbon;
 use App\Factories\PaymentFactory;
 use App\Guard\AuthGuard;
@@ -23,6 +24,7 @@ use App\Models\PlatformAdmin;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Models\User;
+use App\Models\VerificationLog;
 use App\Repository\AgencyRepository;
 use App\Repository\EmployeeRepository;
 use App\Repository\LocationRepository;
@@ -53,7 +55,8 @@ class SubscriptionService
         private NominatimService $nominatimService,
         private EmployeeRepository $employeeRepository,
         private ModuleRepository $moduleRepository,
-        private NotificationRepository $notificationRepository
+        private NotificationRepository $notificationRepository,
+        private VerificationLogRepository $verificationLogRepository
     ) {
         $this->secretKey = config('services.xendit.secret_key');
     }
@@ -374,6 +377,8 @@ class SubscriptionService
                 'setting'        => $payload['branch_settings'] ?? null,
                 'latitude'       => $payload['branch_latitude'] ?? null,
                 'longitude'      => $payload['branch_longitude'] ?? null,
+                'tin'            => $payload['branch_tin'] ?? null,
+                'resubmit_uuid'  => $payload['resubmit_branch_uuid'] ?? null,
             ],
             'agency' => [
                 'id'             => $payload['agency_id'] ?? null,
@@ -416,6 +421,14 @@ class SubscriptionService
                 $xendit_invoice_id,
                 $masked_card_number
             ) {
+                if (!empty($meta['branch']['resubmit_uuid'])) {
+                    return $this->resubmitIntoNewSubscription(
+                        $meta,
+                        $reference_id,
+                        $xendit_invoice_id,
+                        $masked_card_number
+                    );
+                }
 
                 $plan = $meta['plan'];
 
@@ -583,31 +596,12 @@ class SubscriptionService
                     ));
                 }
 
-                $adminMessage = "New subscription request from {$branchData->name} is awaiting your review.";
-
-                $admins = User::whereIn(
-                    'user_id',
-                    PlatformAdmin::pluck('user_id')
-                )->get(['user_id', 'uuid']);
-
-                foreach ($admins as $admin) {
-                    $this->notificationRepository->create([
-                        'branch_id' => $branchData->branch_id,
-                        'to_user_id' => $admin->user_id,
-                        'from_user_id' => $user['user_id'],
-                        'message_type' => 'Subscription',
-                        'message' => $adminMessage,
-                    ]);
-
-                    event(new NotificationEvent(
-                        $admin->uuid,
-                        $branchData->uuid,
-                        $adminMessage,
-                        (string) $subscription->subscription_id,
-                        'Subscription',
-                        $subscription
-                    ));
-                }
+                $this->notifyAdmins(
+                    $branchData,
+                    $subscription,
+                    $user['user_id'],
+                    "New subscription request from {$branchData->name} is awaiting your review."
+                );
 
                 return response()->json([
                     'status' => true,
@@ -762,31 +756,12 @@ class SubscriptionService
                 $this->grantOwnerPermissions($ownerEmployee->employee_id, $branchData->branch_id);
             }
 
-            $adminMessage = "New branch request from {$branchData->name} (included in an existing subscription) is awaiting your review.";
-
-            $admins = User::whereIn(
-                'user_id',
-                PlatformAdmin::pluck('user_id')
-            )->get(['user_id', 'uuid']);
-
-            foreach ($admins as $admin) {
-                $this->notificationRepository->create([
-                    'branch_id' => $branchData->branch_id,
-                    'to_user_id' => $admin->user_id,
-                    'from_user_id' => $user->user_id,
-                    'message_type' => 'Subscription',
-                    'message' => $adminMessage,
-                ]);
-
-                event(new NotificationEvent(
-                    $admin->uuid,
-                    $branchData->uuid,
-                    $adminMessage,
-                    (string) $subscription->subscription_id,
-                    'Subscription',
-                    $subscription
-                ));
-            }
+            $this->notifyAdmins(
+                $branchData,
+                $subscription,
+                $user->user_id,
+                "New branch request from {$branchData->name} (included in an existing subscription) is awaiting your review."
+            );
 
             return response()->json([
                 'status' => true,
@@ -817,6 +792,407 @@ class SubscriptionService
                 ],
             ], 201);
         });
+    }
+
+    public function resubmitBranch(array $payload, User $user)
+    {
+        $branch = $this->resolveResubmitBranch($payload);
+
+        $image = ($payload['branch_image'] ?? null) instanceof UploadedFile
+            ? SupabaseService::store($payload['branch_image'])
+            : null;
+
+        $document = ($payload['branch_document'] ?? null) instanceof UploadedFile
+            ? SupabaseService::store($payload['branch_document'])
+            : null;
+
+        $agencyFields = !empty($payload['agency_name'])
+            ? [
+                'name' => $payload['agency_name'],
+                'email' => $payload['agency_email'] ?? null,
+                'description' => $payload['agency_description'] ?? null,
+                'street' => $payload['agency_street'] ?? null,
+                'city' => $payload['agency_city'] ?? null,
+                'province' => $payload['agency_province'] ?? null,
+                'country' => $payload['agency_country'] ?? null,
+                'full_address' => $payload['agency_full_address'] ?? null,
+                'latitude' => $payload['agency_latitude'] ?? null,
+                'longitude' => $payload['agency_longitude'] ?? null,
+                ...collect(['image', 'id_front', 'id_back', 'document'])
+                    ->mapWithKeys(fn($key) => [
+                        $key => ($payload["agency_{$key}"] ?? null) instanceof UploadedFile
+                            ? (SupabaseService::store($payload["agency_{$key}"])['url'] ?? null)
+                            : null,
+                    ])
+                    ->all(),
+            ]
+            : null;
+
+        return DB::transaction(function () use ($payload, $user, $branch, $image, $document, $agencyFields) {
+            $link = $this->lockRejectedLink($branch);
+            $subscription = $link->subscription;
+
+            if (!$this->subscriptionHasRoomFor($subscription, $branch)) {
+                throw new Exception(
+                    'This branch\'s subscription has no free slot. Purchase a new subscription to resubmit it.',
+                    409
+                );
+            }
+
+            if ($agencyFields) {
+                $this->applyAgencyResubmission($branch, $agencyFields);
+            }
+
+            $this->applyResubmission($branch, [
+                'name' => $payload['branch_name'],
+                'email' => $payload['branch_email'],
+                'contact_number' => $payload['branch_contact_number'],
+                'description' => $payload['branch_description'],
+                'tin' => $payload['branch_tin'] ?? null,
+                'street' => $payload['branch_street'],
+                'city' => $payload['branch_city'],
+                'province' => $payload['branch_province'],
+                'country' => $payload['branch_country'],
+                'full_address' => $payload['branch_full_address'] ?? null,
+                'latitude' => $payload['branch_latitude'] ?? null,
+                'longitude' => $payload['branch_longitude'] ?? null,
+                'image' => is_array($image) ? ($image['url'] ?? null) : null,
+                'document' => is_array($document) ? ($document['url'] ?? null) : null,
+            ]);
+
+            $link->update(['status' => BranchSubscription::STATUS_PENDING]);
+
+            $this->notifyAdmins(
+                $branch,
+                $subscription,
+                $user->user_id,
+                "{$branch->name} was resubmitted for review after being rejected."
+            );
+
+            return $this->resubmissionResponse($branch, $subscription->load('plans'), __('Branch resubmitted for review.'));
+        });
+    }
+
+    public function makeResubmitPurchase(array $payload, User $user)
+    {
+        AuthGuard::requireUser($user);
+
+        $branch = $this->resolveResubmitBranch($payload);
+        $link = BranchSubscription::where('branch_id', $branch->branch_id)
+            ->latest('branch_subscription_id')
+            ->first();
+
+        if (!$link || $link->status !== BranchSubscription::STATUS_REJECTED) {
+            throw new Exception('Only rejected branches can be resubmitted.', 422);
+        }
+
+        $payload['resubmit_branch_uuid'] = $branch->uuid;
+
+        $paymentMethod = PaymentFactory::make($payload['payment_method']);
+        $detail = $this->createSubscription($user, $payload);
+
+        return $paymentMethod->subscriptionInvoice($payload, $detail);
+    }
+
+    private function resubmitIntoNewSubscription(array $meta, ?string $reference, ?string $invoiceId, ?string $maskedCard)
+    {
+        $branchMeta = $meta['branch'];
+        $plan = $meta['plan'];
+        $user = $meta['user'];
+        $interval = BillingIntervalEnum::tryFrom(strtoupper($meta['billing_interval']));
+
+        $branch = Branch::with('location')->where('uuid', $branchMeta['resubmit_uuid'])->first();
+
+        if (!$branch || (int) $branch->agency_id !== (int) ($meta['agency']['id'] ?? 0)) {
+            throw new Exception('Branch not found.', 404);
+        }
+
+        $link = $this->lockRejectedLink($branch);
+        $refunded = $link->subscription?->status === Subscription::STATUS_REJECTED;
+
+        $terms = [
+            'plan_id' => $plan['plan_id'],
+            'billing_interval' => $interval->value,
+            'start_date' => Carbon::now(),
+            'end_date' => $meta['endDate'],
+        ];
+
+        if ($refunded) {
+            $subscription = $link->subscription;
+            $subscription->update([
+                ...$terms,
+                'status' => Subscription::STATUS_PENDING,
+                'pending_plan_id' => null,
+                'pending_plan_starts_at' => null,
+                'pending_billing_interval' => null,
+            ]);
+        } else {
+            $subscription = $this->subscriptionRepository->create([
+                ...$terms,
+                'agency_id' => $branch->agency_id,
+            ]);
+        }
+
+        $subscription->payments()->create([
+            'subscription_id' => $subscription->subscription_id,
+            'plan_id' => $plan['plan_id'],
+            'xendit_invoice_id' => $invoiceId,
+            'payment_reference_id' => $reference,
+            'masked_card_number' => $maskedCard,
+            'price' => (float) $meta['total_amount'],
+            'status' => SubscriptionPayment::STATUS_PAID,
+            'type' => SubscriptionPayment::TYPE_SUBSCRIPTION,
+            'billing_interval' => $interval->value,
+            'payment_method' => $meta['payment_method'] ?? null,
+        ]);
+
+        if (!empty($meta['agency']['name'])) {
+            $this->applyAgencyResubmission($branch, $meta['agency']);
+        }
+
+        $this->applyResubmission($branch, $branchMeta);
+
+        $link->update([
+            'subscription_id' => $subscription->subscription_id,
+            'status' => BranchSubscription::STATUS_PENDING,
+        ]);
+
+        $this->notifyAdmins(
+            $branch,
+            $subscription,
+            $user['user_id'],
+            $refunded
+                ? "{$branch->name} paid again and was resubmitted for review."
+                : "{$branch->name} was resubmitted for review with a new {$plan['name']} subscription."
+        );
+
+        if (!empty($user['email'])) {
+            Mail::to($user['email'])->send(new SubscriptionPurchasedMailer(
+                recipientName: trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?: 'there',
+                planName: $plan['name'] ?? $plan['plan_code'],
+                branchName: $branch->name,
+                amount: (float) $meta['total_amount'],
+                billingInterval: $interval->value,
+            ));
+        }
+
+        return $this->resubmissionResponse(
+            $branch,
+            $subscription->load('plans'),
+            __('Payment received. Branch resubmitted for review.')
+        );
+    }
+
+    private function applyAgencyResubmission(Branch $branch, array $fields): void
+    {
+        $agency = $branch->agencies()->with('locations')->first();
+
+        if (!$agency || $agency->status === Agency::STATUS_VERIFIED) {
+            return;
+        }
+
+        $latitude = $fields['latitude'] ?? null;
+        $longitude = $fields['longitude'] ?? null;
+
+        if (empty($latitude) || empty($longitude)) {
+            $geo = $this->nominatimService->geocodeAddress([
+                'street' => $fields['street'] ?? null,
+                'city' => $fields['city'] ?? null,
+                'province' => $fields['province'] ?? null,
+                'country' => $fields['country'] ?? null,
+            ]);
+
+            $latitude = $geo['lat'] ?? null;
+            $longitude = $geo['lng'] ?? null;
+        }
+
+        $location = [
+            'street' => $fields['street'] ?? null,
+            'city' => $fields['city'] ?? null,
+            'province' => $fields['province'] ?? null,
+            'country' => $fields['country'] ?? null,
+            'full_address' => $fields['full_address'] ?? null,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+        ];
+
+        if ($agency->locations) {
+            $agency->locations->update($location);
+        } else {
+            $agency->location_id = $this->locationRepository->create($location)->location_id;
+        }
+
+        $agency->update([
+            'name' => $fields['name'],
+            'email' => $fields['email'] ?? $agency->email,
+            'description' => $fields['description'] ?? $agency->description,
+            'image' => ($fields['image'] ?? null) ?: $agency->image,
+            'id_front' => ($fields['id_front'] ?? null) ?: $agency->id_front,
+            'id_back' => ($fields['id_back'] ?? null) ?: $agency->id_back,
+            'document' => ($fields['document'] ?? null) ?: $agency->document,
+            'status' => Agency::STATUS_PENDING,
+        ]);
+    }
+
+    private function resolveResubmitBranch(array $payload): Branch
+    {
+        $branch = Branch::with('location')
+            ->where('uuid', $payload['target_branch_uuid'])
+            ->first();
+
+        if (!$branch || (int) $branch->agency_id !== (int) $payload['agency_id']) {
+            throw new Exception('Branch not found.', 404);
+        }
+
+        return $branch;
+    }
+
+    private function lockRejectedLink(Branch $branch): BranchSubscription
+    {
+        $link = BranchSubscription::with('subscription')
+            ->where('branch_id', $branch->branch_id)
+            ->latest('branch_subscription_id')
+            ->lockForUpdate()
+            ->first();
+
+        if (!$link || $link->status !== BranchSubscription::STATUS_REJECTED) {
+            throw new Exception('Only rejected branches can be resubmitted.', 422);
+        }
+
+        return $link;
+    }
+
+    private function subscriptionHasRoomFor(?Subscription $subscription, Branch $branch): bool
+    {
+        if (!$subscription || in_array($subscription->status, [Subscription::STATUS_REJECTED, Subscription::STATUS_EXPIRED], true)) {
+            return false;
+        }
+
+        return (bool) $this->subscriptionRepository->findSubscriptionWithRoom($branch->agency_id, $subscription->uuid);
+    }
+
+    private function applyResubmission(Branch $branch, array $fields): void
+    {
+        $latitude = $fields['latitude'] ?? null;
+        $longitude = $fields['longitude'] ?? null;
+
+        if (empty($latitude) || empty($longitude)) {
+            $geo = $this->nominatimService->geocodeAddress([
+                'street' => $fields['street'] ?? null,
+                'city' => $fields['city'] ?? null,
+                'province' => $fields['province'] ?? null,
+                'country' => $fields['country'] ?? null,
+            ]);
+
+            $latitude = $geo['lat'] ?? null;
+            $longitude = $geo['lng'] ?? null;
+        }
+
+        $location = [
+            'street' => $fields['street'] ?? null,
+            'city' => $fields['city'] ?? null,
+            'province' => $fields['province'] ?? null,
+            'country' => $fields['country'] ?? null,
+            'full_address' => $fields['full_address'] ?? null,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+        ];
+
+        if ($branch->location) {
+            $branch->location->update($location);
+        } else {
+            $branch->location_id = $this->locationRepository->create($location)->location_id;
+        }
+
+        $branch->update([
+            'name' => $fields['name'],
+            'email' => $fields['email'],
+            'contact_number' => $fields['contact_number'],
+            'description' => $fields['description'],
+            'image' => ($fields['image'] ?? null) ?: $branch->image,
+            'document' => ($fields['document'] ?? null) ?: $branch->document,
+            'settings' => array_merge($branch->settings ?? [], ['tin' => $fields['tin'] ?? null]),
+            'status' => Branch::STATUS_PENDING,
+        ]);
+    }
+
+    private function resubmissionResponse(Branch $branch, Subscription $subscription, string $message)
+    {
+        $branch->load(['location', 'agencies.locations']);
+
+        return response()->json([
+            'status' => true,
+            'message' => $message,
+            'agency' => $branch->agencies ? [
+                'agency_id' => $branch->agencies->agency_id,
+                'name' => $branch->agencies->name,
+                'email' => $branch->agencies->email,
+                'description' => $branch->agencies->description,
+                'image' => $branch->agencies->image,
+                'id_front' => $branch->agencies->id_front,
+                'id_back' => $branch->agencies->id_back,
+                'document' => $branch->agencies->document,
+                'status' => $branch->agencies->status,
+                'location' => $branch->agencies->locations,
+            ] : null,
+            'subscription_uuid' => $subscription->uuid,
+            'subscription' => [
+                'uuid' => $subscription->uuid,
+                'plan_name' => $subscription->plans?->name,
+                'plan_code' => $subscription->plans?->plan_code,
+                'billing_interval' => $subscription->billing_interval,
+                'status' => $subscription->status,
+                'end_date' => $subscription->end_date,
+            ],
+            'branch' => [
+                'branch_id' => $branch->branch_id,
+                'uuid' => $branch->uuid,
+                'name' => $branch->name,
+                'description' => $branch->description,
+                'image' => $branch->image,
+                'document' => $branch->document,
+                'status' => $branch->status,
+                'review_status' => $branch->status,
+                'rejection_reason' => null,
+                'contact_number' => $branch->contact_number,
+                'email' => $branch->email,
+                'settings' => $branch->settings,
+                'location' => [
+                    'street' => $branch->location?->street,
+                    'city' => $branch->location?->city,
+                    'province' => $branch->location?->province,
+                    'country' => $branch->location?->country,
+                    'full_address' => $branch->location?->full_address,
+                    'latitude' => $branch->location?->latitude,
+                    'longitude' => $branch->location?->longitude,
+                ],
+            ],
+        ]);
+    }
+
+    private function notifyAdmins(Branch $branch, Subscription $subscription, int $fromUserId, string $message): void
+    {
+        $admins = User::whereIn('user_id', PlatformAdmin::pluck('user_id'))
+            ->get(['user_id', 'uuid']);
+
+        foreach ($admins as $admin) {
+            $this->notificationRepository->create([
+                'branch_id' => $branch->branch_id,
+                'to_user_id' => $admin->user_id,
+                'from_user_id' => $fromUserId,
+                'message_type' => 'Subscription',
+                'message' => $message,
+            ]);
+
+            event(new NotificationEvent(
+                $admin->uuid,
+                $branch->uuid,
+                $message,
+                (string) $subscription->subscription_id,
+                'Subscription',
+                $subscription
+            ));
+        }
     }
 
     public function subscriptionWebhook(object $payload)
@@ -900,6 +1276,15 @@ class SubscriptionService
                 throw new Exception('Branch not found for this request.', 404);
             }
 
+            $this->verificationLogRepository->create([
+                'branch_subscription_id' => $link->branch_subscription_id,
+                'action' => VerificationLog::ACTION_APPROVED,
+                'scope' => $agency && $agency->status !== Agency::STATUS_VERIFIED
+                    ? VerificationLog::SCOPE_BOTH
+                    : VerificationLog::SCOPE_BRANCH,
+                'action_by' => Auth::id(),
+            ]);
+
             $link->update(['status' => BranchSubscription::STATUS_APPROVED]);
 
             if ($branch->status !== Branch::STATUS_VERIFIED) {
@@ -928,6 +1313,32 @@ class SubscriptionService
                 'data' => $link->fresh(['branch.agencies', 'subscription.plans']),
             ]);
         });
+    }
+
+    public function verificationLogs(array $payload)
+    {
+        $link = $this->resolveBranchLink($payload);
+
+        $logs = ($payload['for'] ?? null) === 'agency'
+            ? $this->verificationLogRepository->forAgency($link->branch->agency_id)
+            : $this->verificationLogRepository->forBranch($link->branch_id);
+
+        $logs = $logs
+            ->map(fn(VerificationLog $log) => [
+                'branch_uuid' => $log->branchSubscription?->branch?->uuid,
+                'branch_name' => $log->branchSubscription?->branch?->name,
+                'action' => $log->action,
+                'scope' => $log->scope,
+                'reason' => $log->reason,
+                'reviewed_by' => trim(
+                    ($log->actor?->systemOwner?->first_name ?? '') . ' '
+                        . ($log->actor?->systemOwner?->last_name ?? '')
+                ) ?: null,
+                'created_at' => $log->created_at,
+            ])
+            ->values();
+
+        return response()->json(['data' => $logs]);
     }
 
     private function resolveBranchLink(array $payload): BranchSubscription
@@ -972,23 +1383,44 @@ class SubscriptionService
             $link->load(['branch.agencies', 'subscription.payments']);
 
             $subscription = $link->subscription;
+            $agency = $link->branch?->agencies;
             $reason = trim((string) ($payload['rejection_reason'] ?? ''));
 
-            $link->update([
-                'status' => BranchSubscription::STATUS_REJECTED,
-                'rejection_reason' => $reason ?: null,
+            $agencyUnverified = $agency && $agency->status !== Agency::STATUS_VERIFIED;
+
+            $refunds = BranchSubscription::where('subscription_id', $link->subscription_id)
+                ->where('branch_subscription_id', '!=', $link->branch_subscription_id)
+                ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
+                ->doesntExist();
+
+            $rejectsAgency = $agencyUnverified && (
+                $refunds || in_array($payload['rejection_scope'] ?? null, [
+                    VerificationLog::SCOPE_AGENCY,
+                    VerificationLog::SCOPE_BOTH,
+                ], true)
+            );
+
+            $scope = $rejectsAgency ? VerificationLog::SCOPE_BOTH : VerificationLog::SCOPE_BRANCH;
+
+            $link->update(['status' => BranchSubscription::STATUS_REJECTED]);
+
+            $this->verificationLogRepository->create([
+                'branch_subscription_id' => $link->branch_subscription_id,
+                'action' => VerificationLog::ACTION_REJECTED,
+                'scope' => $scope,
+                'reason' => $reason ?: null,
+                'action_by' => Auth::id(),
             ]);
 
+            if ($scope !== VerificationLog::SCOPE_BRANCH) {
+                $agency->update(['status' => Agency::STATUS_REJECTED]);
+            }
 
             if ($link->branch && $link->branch->status === Branch::STATUS_PENDING) {
                 $link->branch->update(['status' => Branch::STATUS_REJECTED]);
             }
 
-            $remaining = BranchSubscription::where('subscription_id', $link->subscription_id)
-                ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
-                ->count();
-
-            if ($remaining === 0 && $subscription) {
+            if ($refunds && $subscription) {
                 $payment = $subscription->payments
                     ->where('status', SubscriptionPayment::STATUS_PAID)
                     ->sortByDesc('created_at')
@@ -1019,7 +1451,7 @@ class SubscriptionService
         });
 
         try {
-            $this->announceRejection($link->branch, (string) $link->rejection_reason);
+            $this->announceRejection($link->branch, (string) $link->fresh()->rejection_reason);
         } catch (\Throwable $e) {
             Log::error('Branch rejection notice failed', [
                 'branch_subscription_id' => $link->branch_subscription_id,

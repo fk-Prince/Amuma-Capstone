@@ -308,6 +308,27 @@
             @close="showAddBranch = false"
             @created="onBranchCreated"
         />
+
+        <ResubmitBranchModal
+            v-if="resubmitTarget"
+            :branch="resubmitTarget.branch"
+            :acting-branch-uuid="route.params.uuid as string"
+            :rejection-reason="resubmitTarget.reason"
+            :requires-purchase="!!resubmitTarget.purchaseReason"
+            :purchase-reason="resubmitTarget.purchaseReason"
+            @close="resubmitTarget = null"
+            @resubmitted="onBranchResubmitted"
+        />
+
+        <ConfirmDialog
+            :open="!!purchasePrompt"
+            title="Purchase a new subscription?"
+            :message="`${purchasePrompt?.purchaseReason ?? ''} To resubmit ${purchasePrompt?.branch.name ?? 'this branch'}, it needs a new subscription.`"
+            description="You'll update the branch details first, then choose a plan and pay. The branch moves onto the new subscription and goes back for review."
+            confirm-label="Buy subscription"
+            @confirm="confirmPurchasePrompt"
+            @cancel="purchasePrompt = null"
+        />
     </div>
 </template>
 
@@ -315,6 +336,9 @@
 import BranchDashboard from "~/components/sections/app/branches/BranchDashboard.vue";
 import BranchCard from "~/components/sections/app/branches/BranchCard.vue";
 import AddBranchModal from "~/components/sections/app/Branch/AddBranchModal.vue";
+import ResubmitBranchModal from "~/components/sections/app/branches/ResubmitBranchModal.vue";
+import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
+import type { Branch as FullBranch } from "~/types/branch";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import { CircleCheck, CircleX, Clock, LayoutGrid } from "lucide-vue-next";
@@ -331,13 +355,159 @@ definePageMeta({
 });
 useHead({ title: "Branches" });
 
-function onResubmitBranch(branch: Branch) {
-    error(
-        `Resubmitting "${branch.name}" for review isn't available yet. Please contact support to have it reviewed again.`,
-    );
-}
 const route = useRoute();
 const { error } = useToast();
+
+const resubmitTarget = ref<{
+    branch: FullBranch;
+    reason: string | null;
+    purchaseReason: string | null;
+} | null>(null);
+
+const purchaseReasonFor = (branch: Branch): string | null => {
+    if (branch.subscription_status === "rejected") {
+        return "This branch's subscription was refunded when it was rejected.";
+    }
+
+    if (branch.subscription_status === "expired") {
+        return "This branch's subscription has expired.";
+    }
+
+    if (!branch.slot_available) {
+        return "This branch's subscription has no free slot left.";
+    }
+
+    return null;
+};
+
+function onResubmitBranch(branch: Branch) {
+    const full = branchStore.branches.find((b) => b.uuid === branch.uuid);
+
+    if (!full) {
+        error(
+            "Couldn't load this branch's details. Refresh the page and try again.",
+        );
+        return;
+    }
+
+    const target = {
+        branch: full,
+        reason: branch.rejection_reason ?? null,
+        purchaseReason: purchaseReasonFor(branch),
+    };
+
+    if (target.purchaseReason) {
+        purchasePrompt.value = target;
+        return;
+    }
+
+    resubmitTarget.value = target;
+}
+
+const purchasePrompt = ref<typeof resubmitTarget.value>(null);
+
+const confirmPurchasePrompt = () => {
+    resubmitTarget.value = purchasePrompt.value;
+    purchasePrompt.value = null;
+};
+
+const onBranchResubmitted = (result: any) => {
+    resubmitTarget.value = null;
+
+    const updated = result?.branch;
+    if (!updated) return;
+
+    const purchased = result.purchased && result.subscription;
+
+    branches.value =
+        statusFilter.value === "rejected"
+            ? branches.value.filter((b) => b.uuid !== updated.uuid)
+            : branches.value.map((b) =>
+                  b.uuid === updated.uuid
+                      ? mapBranch({
+                            ...updated,
+                            staff_count: b.staffs,
+                            patients_count: b.patients,
+                            plan: purchased
+                                ? {
+                                      plan_code: result.subscription.plan_code,
+                                      name: result.subscription.plan_name,
+                                  }
+                                : b.plan,
+                            subscription_status: purchased
+                                ? result.subscription.status
+                                : b.subscription_status,
+                            slot_available: true,
+                        })
+                      : b,
+              );
+
+    const storeIndex = branchStore.branches.findIndex(
+        (b) => b.uuid === updated.uuid,
+    );
+
+    if (storeIndex !== -1) {
+        const current = branchStore.branches[storeIndex];
+
+        branchStore.branches[storeIndex] = {
+            ...current,
+            name: updated.name,
+            email: updated.email,
+            contact_number: updated.contact_number,
+            description: updated.description,
+            image: updated.image,
+            document: updated.document,
+            settings: updated.settings,
+            status: updated.status,
+            subscription_status: "pending",
+            rejection_reason: null,
+            location: {
+                ...updated.location,
+                address: updated.location?.full_address,
+            },
+        };
+    }
+
+    const capacity = statsData.value.branch_capacity;
+    const nextUsed = capacity.used + 1;
+    const nextCapacity = capacity.capacity + (purchased ? BRANCH_LIMIT : 0);
+
+    const existing = (capacity.available_subscriptions ?? [])
+        .map((option) =>
+            option.uuid === result.subscription_uuid
+                ? {
+                      ...option,
+                      branches_used: option.branches_used + 1,
+                      slots_left: option.slots_left - 1,
+                  }
+                : option,
+        )
+        .filter((option) => option.slots_left > 0);
+
+    statsData.value = {
+        ...statsData.value,
+        branch_capacity: {
+            ...capacity,
+            used: nextUsed,
+            capacity: nextCapacity,
+            remaining: Math.max(0, nextCapacity - nextUsed),
+            has_room: nextUsed < nextCapacity,
+            available_subscriptions: purchased
+                ? [
+                      ...existing,
+                      {
+                          ...result.subscription,
+                          branches_used: 1,
+                          branch_limit: BRANCH_LIMIT,
+                          slots_left: BRANCH_LIMIT - 1,
+                      },
+                  ]
+                : existing,
+        },
+    };
+};
+
+const BRANCH_LIMIT = 5;
 
 type Branch = {
     branch_id: number;
@@ -349,18 +519,30 @@ type Branch = {
     status: "pending" | "verified" | "rejected";
     review_status?: "pending" | "verified" | "rejected";
     rejection_reason?: string | null;
+    subscription_status?: "active" | "expired" | "pending" | "rejected" | null;
+    slot_available?: boolean;
     staffs: number;
     patients: number;
     plan: { plan_code: string; name: string } | null;
     image: string;
 };
 
+type AvailableSubscription = {
+    uuid: string;
+    plan_name: string | null;
+    plan_code: string | null;
+    billing_interval: string | null;
+    status?: string | null;
+    end_date: string | null;
+    branches_used: number;
+    branch_limit: number;
+    slots_left: number;
+};
+
 const branchStore = useBranchStore();
 
 const search = ref("");
-const statusFilter = ref<"all" | "verified" | "pending" | "rejected">(
-    "verified",
-);
+const statusFilter = ref<"all" | "verified" | "pending" | "rejected">("all");
 
 const statusOptions = [
     { label: "All branches", value: "all", iconComponent: LayoutGrid },
@@ -371,9 +553,6 @@ const statusOptions = [
 
 const showAddBranch = ref(false);
 
-// Every branch belongs to an agency, so fall back to the first loaded branch:
-// `activeBranch` resolves by route uuid and is briefly null while the branch
-// store hydrates, which would otherwise leave "Add New Branch" stuck disabled.
 const agencyId = computed(
     () =>
         branchStore.activeBranch?.agency?.agency_id ??
@@ -396,16 +575,10 @@ const onBranchCreated = (result: any) => {
 
     const created = result?.branch;
 
-    // Card payments create the branch inline and hand it back, so the list and
-    // the counters are patched in place — no refetch, no loading flash.
-    // GCash completes through a webhook after the redirect, so there is nothing
-    // to sync yet; that branch shows up on the next load.
     if (!created) return;
 
     branches.value = [mapBranch(created), ...branches.value];
 
-    // Buying a new subscription (rather than using a free slot on an
-    // existing one) adds another 5-branch block to the agency's capacity.
     const BRANCHES_PER_SUBSCRIPTION = 5;
     const addedCapacity = result?.used_existing_capacity
         ? 0
@@ -460,6 +633,7 @@ const statsData = ref({
         capacity: 0,
         remaining: 0,
         has_room: false,
+        available_subscriptions: [] as AvailableSubscription[],
     },
 });
 
@@ -483,6 +657,8 @@ const mapBranch = (b: any): Branch => ({
     status: b.status,
     review_status: b.review_status,
     rejection_reason: b.rejection_reason ?? null,
+    subscription_status: b.subscription_status ?? null,
+    slot_available: b.slot_available ?? false,
     staffs: b.staff_count ?? 0,
     patients: b.patients_count ?? 0,
     plan: b.plan ?? null,

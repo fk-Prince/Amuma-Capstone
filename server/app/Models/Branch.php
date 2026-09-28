@@ -126,6 +126,18 @@ class Branch extends Model
         return $this->hasMany(Review::class, 'branch_id', 'branch_id');
     }
 
+    public function verificationLogs()
+    {
+        return $this->hasManyThrough(
+            VerificationLog::class,
+            BranchSubscription::class,
+            'branch_id',
+            'branch_subscription_id',
+            'branch_id',
+            'branch_subscription_id'
+        );
+    }
+
     public function employees()
     {
         return $this->hasMany(EmployeeBranch::class, 'branch_id', 'branch_id');

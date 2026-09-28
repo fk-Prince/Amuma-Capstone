@@ -36,6 +36,14 @@ class SubscriptionService extends BaseService {
         return await this.request(this.resource + '-branch', 'POST', payload);
     }
 
+    async resubmitBranch(payload: any): Promise<any> {
+        return await this.request(this.resource + '-branch-resubmit', 'POST', payload);
+    }
+
+    async resubmitBranchWithPurchase(payload: any): Promise<any> {
+        return await this.request(this.resource + '-branch-resubmit-purchase', 'POST', payload);
+    }
+
     async applyUpgrade(payload: any): Promise<any> {
         return await this.request(this.resource + '-apply-upgrade', 'POST', payload);
     }

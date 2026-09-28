@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\BranchSubscription;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
+use App\Models\VerificationLog;
 use App\Http\Resources\SubscriptionResource;
 use App\Models\Plan;
 use Carbon\Carbon;
@@ -86,6 +87,11 @@ class SubscriptionRepository
 
         return $filtered
             ->with([
+                'latestRejection',
+                'branch' => fn($query) => $query->withCount([
+                    'verificationLogs as rejection_logs_count' => fn($logs) => $logs
+                        ->where('verification_logs.action', VerificationLog::ACTION_REJECTED),
+                ]),
                 'branch.agencies',
                 'subscription.plans',
                 'subscription.pendingPlan',
@@ -296,6 +302,7 @@ class SubscriptionRepository
 
         $recent = BranchSubscription::query()
             ->with([
+                'latestRejection',
                 'branch.agencies',
                 'subscription.plans',
                 'subscription.payments',

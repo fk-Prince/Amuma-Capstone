@@ -26,6 +26,7 @@ class User extends Authenticatable
         'password',
         'provider',
         'provider_id',
+        'onboarding',
     ];
 
 
@@ -68,6 +69,7 @@ class User extends Authenticatable
         return [
             'is_active' => 'boolean',
             'password' => 'hashed',
+            'onboarding' => 'array',
         ];
     }
     public function services()

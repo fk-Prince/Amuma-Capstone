@@ -4,6 +4,8 @@ namespace App\Repository;
 
 use App\Models\Branch;
 use App\Models\BranchImage;
+use App\Models\BranchSubscription;
+use App\Models\SubscriptionPayment;
 
 class BranchRepository
 {
@@ -50,7 +52,24 @@ class BranchRepository
 
     public function getUserBranches(array $branchIds)
     {
-        return  Branch::with(['location', 'subscriptions.plans', 'agencies.locations', 'agencies.registrant.employee', 'agencies.registrant.client', 'agencies.registrant.systemOwner', 'subscriptionLink'])
+        return  Branch::with([
+            'location',
+            'subscriptions.plans',
+            'agencies.locations',
+            'agencies.registrant.employee',
+            'agencies.registrant.client',
+            'agencies.registrant.systemOwner',
+            'subscriptionLink.latestRejection',
+            'subscriptionLink.subscription' => fn($query) => $query
+                ->withCount([
+                    'branchLinks as branches_used' => fn($links) => $links
+                        ->where('status', '!=', BranchSubscription::STATUS_REJECTED),
+                ])
+                ->withExists([
+                    'payments as has_paid_payment' => fn($payments) => $payments
+                        ->where('status', SubscriptionPayment::STATUS_PAID),
+                ]),
+        ])
             ->whereIn('branch_id', $branchIds)
             ->get()
             ->keyBy('branch_id');

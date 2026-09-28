@@ -15,6 +15,87 @@ export interface SubscriptionPaymentRecord {
     created_at: string | null;
 }
 
+export interface SubscriptionCoveredBranch {
+    uuid: string;
+    name: string;
+    email?: string | null;
+    contact_number?: string | null;
+    address?: string | null;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
+    document?: string | null;
+    image?: string | null;
+    tin?: string | null;
+    branch_status: "pending" | "verified" | "rejected";
+    status: "pending" | "approved" | "rejected";
+}
+
+export interface SubscriptionCardData {
+    uuid: string;
+    billing_interval: "YEARLY" | "MONTHLY";
+    status: "pending" | "approved" | "active" | "inactive" | "expired" | "rejected";
+    start_date: string;
+    rejection_reason?: string | null;
+    rejected_at?: string | null;
+    rejection_logs_count?: number;
+    end_date: string;
+    is_first_branch?: boolean;
+    payments?: SubscriptionPaymentRecord[];
+
+    branch: {
+        branch_id: number;
+        uuid: string;
+        name: string;
+        email: string;
+        contact_number?: string | null;
+        address: string | null;
+        latitude?: number | string | null;
+        longitude?: number | string | null;
+        status: string;
+        document: string | null;
+        image?: string | null;
+        tin?: string | null;
+
+        agency: {
+            agency_id: number;
+            uuid: string;
+            name: string;
+            email: string;
+            address: string | null;
+            latitude?: number | string | null;
+            longitude?: number | string | null;
+            status: "pending" | "verified" | "rejected";
+            image?: string | null;
+            id_front: string | null;
+            id_back: string | null;
+            document: string | null;
+            registered_by?: string | null;
+        };
+    };
+
+    plan: {
+        plan_id: number;
+        name: string;
+        plan_code: string;
+    };
+
+    subscription?: {
+        status?: "pending" | "active" | "expired" | "rejected";
+        branch_limit?: number;
+        covered_branches: SubscriptionCoveredBranch[];
+    };
+}
+
+export interface VerificationLogRecord {
+    branch_uuid: string | null;
+    branch_name: string | null;
+    action: "approved" | "rejected";
+    scope: "branch" | "agency" | "both";
+    reason: string | null;
+    reviewed_by: string | null;
+    created_at: string | null;
+}
+
 export interface Subscription {
     plans: any[];
     selectedPlan: any;

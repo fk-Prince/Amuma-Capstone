@@ -21,12 +21,30 @@ class BranchSubscription extends Pivot
         'subscription_id',
         'branch_id',
         'status',
-        'rejection_reason',
     ];
 
     public function uniqueIds()
     {
         return ['uuid'];
+    }
+
+    public function verificationLogs()
+    {
+        return $this->hasMany(VerificationLog::class, 'branch_subscription_id', 'branch_subscription_id');
+    }
+
+    public function latestRejection()
+    {
+        return $this->hasOne(VerificationLog::class, 'branch_subscription_id', 'branch_subscription_id')
+            ->ofMany(
+                ['verification_log_id' => 'max'],
+                fn($query) => $query->where('action', VerificationLog::ACTION_REJECTED)
+            );
+    }
+
+    public function getRejectionReasonAttribute(): ?string
+    {
+        return $this->latestRejection?->reason;
     }
 
     public function subscription()

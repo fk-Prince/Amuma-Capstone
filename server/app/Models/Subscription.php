@@ -120,6 +120,21 @@ class Subscription extends Model
         return $this->hasMany(BranchSubscription::class, 'subscription_id', 'subscription_id');
     }
 
+    public function hasOpenSlot(): bool
+    {
+        if (in_array($this->status, [self::STATUS_REJECTED, self::STATUS_EXPIRED], true)) {
+            return false;
+        }
+
+        $hasPaid = $this->has_paid_payment
+            ?? $this->payments()->where('status', SubscriptionPayment::STATUS_PAID)->exists();
+
+        $used = $this->branches_used
+            ?? $this->branchLinks()->where('status', '!=', BranchSubscription::STATUS_REJECTED)->count();
+
+        return $hasPaid && (int) $used < self::BRANCH_LIMIT;
+    }
+
 
     public function payments()
     {

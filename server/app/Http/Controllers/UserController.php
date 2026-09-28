@@ -26,6 +26,11 @@ class UserController extends Controller
         return $this->userService->getUserBranch($request->user());
     }
 
+    public function completeOnboarding(Request $request, string $area)
+    {
+        return $this->userService->completeOnboarding($request->user(), $area);
+    }
+
     public function profile(Request $request)
     {
         return $this->userService->profile($request->user());

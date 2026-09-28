@@ -12,6 +12,11 @@ export interface SignupRequest {
     password: String,
 }
 
+export interface Onboarding {
+    portal?: Record<string, string>,
+    dashboard?: Record<string, string>,
+}
+
 export interface User {
     user_id?: string,
     uuid: string,
@@ -27,6 +32,7 @@ export interface User {
     address?: string,
     hasBooking?: boolean,
     hasPatient?: boolean,
+    onboarding?: Onboarding | null,
     // is_active: boolean,
     // is_verified: boolean
     isEmployee?: false,

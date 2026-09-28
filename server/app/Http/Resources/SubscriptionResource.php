@@ -28,8 +28,9 @@ class SubscriptionResource extends JsonResource
             'status' => $this->status,
             'created_at' => $this->created_at,
             'is_first_branch' => $isFirstBranch,
-            'rejection_reason' => $isRejected ? $this->rejection_reason : null,
-            'rejected_at' => $isRejected ? $this->updated_at : null,
+            'rejection_reason' => $isRejected ? $this->latestRejection?->reason : null,
+            'rejected_at' => $isRejected ? $this->latestRejection?->created_at : null,
+            'rejection_logs_count' => (int) ($this->branch?->rejection_logs_count ?? 0),
 
             'billing_interval' => $subscription?->billing_interval,
             'start_date' => $subscription?->start_date,

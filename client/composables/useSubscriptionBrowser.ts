@@ -143,7 +143,11 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
         }
     };
 
-    const rejectSubscription = async (subscription: any, reason = "") => {
+    const rejectSubscription = async (
+        subscription: any,
+        reason = "",
+        scope: "branch" | "both" = "branch",
+    ) => {
         const uuid = subscription.uuid;
 
         if (processingAction.value[uuid]) return "";
@@ -158,6 +162,7 @@ export function useSubscriptionBrowser(initialView: SubscriptionView) {
                 action: "reject",
                 branch_subscription_uuid: uuid,
                 rejection_reason: reason,
+                rejection_scope: scope,
             });
 
             subscriptions.value = subscriptions.value.filter(

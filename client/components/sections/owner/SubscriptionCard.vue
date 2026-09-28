@@ -1,6 +1,8 @@
 <template>
     <div
         class="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-secondary"
+        :class="{ 'cursor-pointer': clickable }"
+        @click="onCardClick"
     >
         <div
             class="flex flex-col gap-3 border-b border-slate-100 px-5 py-3 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between"
@@ -49,16 +51,6 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2 sm:shrink-0">
-                <button
-                    v-if="isRejected"
-                    type="button"
-                    class="inline-flex items-center gap-1 rounded-full border border-red-200 px-2.5 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10"
-                    @click="showRejectionReason = true"
-                >
-                    <AppIcon name="alert-circle" class="h-3 w-3" />
-                    Why rejected?
-                </button>
-
                 <span
                     class="rounded-full px-2.5 py-1 text-[10px] font-semibold capitalize"
                     :class="statusClass(subscription.subscription?.status)"
@@ -114,10 +106,6 @@
                         {{ agency.name }}
                     </h2>
 
-                    <p class="truncate text-xs text-muted dark:text-gray-400">
-                        {{ agency.email }}
-                    </p>
-
                     <p
                         v-if="agency.address"
                         class="mt-1 flex items-start gap-1.5 text-[11px] text-muted dark:text-gray-400"
@@ -155,29 +143,6 @@
                         <AppIcon name="map" class="h-3 w-3" />
                         View Location
                     </button>
-
-                    <div
-                        v-if="hasAgencyDocuments"
-                        class="mt-2 flex flex-wrap gap-1.5"
-                    >
-                        <DocumentLink
-                            v-if="agency.id_front"
-                            :url="agency.id_front"
-                            label="ID Front"
-                        />
-
-                        <DocumentLink
-                            v-if="agency.id_back"
-                            :url="agency.id_back"
-                            label="ID Back"
-                        />
-
-                        <DocumentLink
-                            v-if="agency.document"
-                            :url="agency.document"
-                            label="Agency Document"
-                        />
-                    </div>
                 </div>
             </div>
 
@@ -200,14 +165,6 @@
                 }}
             </span>
         </div>
-
-        <RejectionReasonModal
-            :open="showRejectionReason"
-            :branch-name="subscription.branch.name"
-            :reason="subscription.rejection_reason"
-            :rejected-at="subscription.rejected_at"
-            @close="showRejectionReason = false"
-        />
 
         <LocationModal
             :open="showLocationModal"
@@ -364,34 +321,6 @@
             </p>
 
             <p
-                v-if="selectedBranch.contact_number"
-                class="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted dark:text-gray-400"
-            >
-                <AppIcon name="phone" class="h-3 w-3 shrink-0 text-primary" />
-                <span>{{ selectedBranch.contact_number }}</span>
-            </p>
-
-            <p
-                v-if="selectedBranch.tin"
-                class="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted dark:text-gray-400"
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    class="h-3 w-3 shrink-0 text-primary"
-                >
-                    <rect x="3" y="4" width="18" height="16" rx="2" />
-                    <path d="M7 9h6" />
-                    <path d="M7 13h10" />
-                </svg>
-
-                <span>TIN {{ selectedBranch.tin }}</span>
-            </p>
-
-            <p
                 v-if="selectedBranch.address"
                 class="mt-2 flex items-start gap-1.5 text-[11px] text-muted dark:text-gray-400"
             >
@@ -428,25 +357,14 @@
                 <AppIcon name="map" class="h-3 w-3" />
                 View Location
             </button>
-
-            <div class="mt-3">
-                <p
-                    class="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted dark:text-gray-500"
-                >
-                    Documents
-                </p>
-
-                <DocumentLink
-                    v-if="selectedBranch.document"
-                    :url="selectedBranch.document"
-                    label="Branch Document"
-                />
-
-                <span v-else class="text-[10px] text-muted dark:text-gray-500">
-                    No document
-                </span>
-            </div>
         </section>
+
+        <VerificationLogsModal
+            :open="showLogs"
+            :subscription-uuid="subscription.uuid"
+            :branch-name="subscription.branch.name"
+            @close="showLogs = false"
+        />
 
         <SubscriptionPaymentsModal
             :open="showPaymentsModal"
@@ -539,13 +457,31 @@
             </div>
 
             <div
+                v-if="rejectionLogsCount > 0 && !canShowActions"
+                class="border-t border-slate-100 px-5 py-2.5 dark:border-white/10"
+            >
+                <RejectionRecord
+                    :count="rejectionLogsCount"
+                    @view="showLogs = true"
+                />
+            </div>
+
+            <div
                 v-if="canShowActions"
                 class="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-5 py-3 dark:border-white/10 dark:bg-white/5"
             >
+                <RejectionRecord
+                    v-if="rejectionLogsCount > 0"
+                    :count="rejectionLogsCount"
+                    compact
+                    class="mr-auto"
+                    @view="showLogs = true"
+                />
+
                 <button
                     type="button"
                     :disabled="!!actionLoading"
-                    class="inline-flex items-center gap-1.5 rounded-lg border border-danger/30 bg-white px-4 py-2 text-[11px] font-semibold text-danger transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-secondary dark:hover:bg-red-500/10"
+                    class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-danger/30 bg-white px-4 py-2 text-[11px] font-semibold text-danger transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-secondary dark:hover:bg-red-500/10"
                     @click="emit('reject', subscription)"
                 >
                     <svg
@@ -575,7 +511,7 @@
                 <button
                     type="button"
                     :disabled="!!actionLoading"
-                    class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-[11px] font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-5 py-2 text-[11px] font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
                     @click="emit('approve', subscription)"
                 >
                     <svg
@@ -604,101 +540,44 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import DocumentLink from "~/components/ui/DocumentLink.vue";
 import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionPaymentsModal.vue";
-import RejectionReasonModal from "~/components/sections/owner/RejectionReasonModal.vue";
 import LocationModal from "~/components/sections/owner/LocationModal.vue";
+import VerificationLogsModal from "~/components/sections/owner/VerificationLogsModal.vue";
+import RejectionRecord from "~/components/sections/owner/RejectionRecord.vue";
 import AppIcon from "~/components/ui/AppIcon.vue";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
-import type { SubscriptionPaymentRecord } from "~/types/subscription";
-
-interface CoveredBranch {
-    uuid: string;
-    name: string;
-    email?: string | null;
-    contact_number?: string | null;
-    address?: string | null;
-    latitude?: number | string | null;
-    longitude?: number | string | null;
-    document?: string | null;
-    image?: string | null;
-    tin?: string | null;
-    branch_status: "pending" | "verified" | "rejected";
-    status: "pending" | "approved" | "rejected";
-}
-
-interface SubscriptionCardData {
-    uuid: string;
-    billing_interval: "YEARLY" | "MONTHLY";
-    status: "pending" | "active" | "inactive" | "expired" | "rejected";
-    start_date: string;
-    rejection_reason?: string | null;
-    rejected_at?: string | null;
-    end_date: string;
-    is_first_branch?: boolean;
-    payments?: SubscriptionPaymentRecord[];
-
-    branch: {
-        branch_id: number;
-        uuid: string;
-        name: string;
-        email: string;
-        contact_number?: string | null;
-        address: string | null;
-        latitude?: number | string | null;
-        longitude?: number | string | null;
-        status: string;
-        document: string | null;
-        image?: string | null;
-        tin?: string | null;
-
-        agency: {
-            agency_id: number;
-            uuid: string;
-            name: string;
-            email: string;
-            address: string | null;
-            latitude?: number | string | null;
-            longitude?: number | string | null;
-            status: "pending" | "verified" | "rejected";
-            image?: string | null;
-            id_front: string | null;
-            id_back: string | null;
-            document: string | null;
-            registered_by?: string | null;
-        };
-    };
-
-    plan: {
-        plan_id: number;
-        name: string;
-        plan_code: string;
-    };
-
-    subscription?: {
-        status?: "pending" | "active" | "expired" | "rejected";
-        branch_limit?: number;
-        covered_branches: CoveredBranch[];
-    };
-}
+import type {
+    SubscriptionCardData,
+    SubscriptionCoveredBranch as CoveredBranch,
+} from "~/types/subscription";
 
 const props = withDefaults(
     defineProps<{
         subscription: SubscriptionCardData;
         showActions?: boolean;
         actionLoading?: "approve" | "reject" | null;
+        clickable?: boolean;
     }>(),
     {
         showActions: true,
         actionLoading: null,
+        clickable: false,
     },
 );
 
 const emit = defineEmits<{
     approve: [subscription: SubscriptionCardData];
     reject: [subscription: SubscriptionCardData];
+    open: [subscription: SubscriptionCardData];
 }>();
+
+const onCardClick = (event: MouseEvent) => {
+    if (!props.clickable) return;
+    if ((event.target as HTMLElement).closest("button, a")) return;
+
+    emit("open", props.subscription);
+};
 
 const agency = computed(() => props.subscription.branch.agency);
 
@@ -727,19 +606,16 @@ const hasMultiplePayments = computed(
 );
 
 const showPaymentsModal = ref(false);
+const showLogs = ref(false);
 
-const hasAgencyDocuments = computed(
-    () =>
-        !!(
-            agency.value.id_front ||
-            agency.value.id_back ||
-            agency.value.document
-        ),
+const rejectionLogsCount = computed(() =>
+    props.subscription.status === "approved"
+        ? 0
+        : (props.subscription.rejection_logs_count ?? 0),
 );
 
 const isPending = computed(() => props.subscription.status === "pending");
 const isRejected = computed(() => props.subscription.status === "rejected");
-const showRejectionReason = ref(false);
 const showLocationModal = ref(false);
 const locationTarget = ref<{
     name?: string | null;

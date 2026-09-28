@@ -26,40 +26,69 @@
                     class="mb-3 inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                    Request rejected
+                    {{ agencyRejected ? "Application rejected" : "Request rejected" }}
                 </span>
 
                 <h2 class="text-xl font-bold text-secondary dark:text-white">
-                    This Branch Request Was Rejected
+                    {{
+                        agencyRejected
+                            ? "Your Agency Application Was Rejected"
+                            : "This Branch Request Was Rejected"
+                    }}
                 </h2>
 
                 <p class="mt-2 text-sm leading-6 text-muted-DEFAULT">
-                    This branch could not be approved onto the platform.
+                    {{
+                        agencyRejected
+                            ? "Your agency and this branch could not be approved onto the platform."
+                            : "This branch could not be approved onto the platform."
+                    }}
                 </p>
 
                 <div
                     v-if="agencyName || branchName"
                     class="mt-5 divide-y divide-muted-light rounded-xl border border-muted-light bg-muted-light/60 text-left dark:border-white/10 dark:bg-white/5"
                 >
-                    <div v-if="agencyName" class="px-4 py-3">
-                        <p
-                            class="text-xs font-medium uppercase tracking-wide text-muted-DEFAULT"
+                    <div
+                        v-if="agencyName"
+                        class="flex items-center justify-between gap-3 px-4 py-3"
+                    >
+                        <div class="min-w-0">
+                            <p
+                                class="text-xs font-medium uppercase tracking-wide text-muted-DEFAULT"
+                            >
+                                Agency
+                            </p>
+                            <p class="mt-0.5 text-sm font-semibold text-secondary dark:text-white">
+                                {{ agencyName }}
+                            </p>
+                        </div>
+                        <span
+                            v-if="agencyRejected"
+                            class="shrink-0 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
                         >
-                            Agency
-                        </p>
-                        <p class="mt-0.5 text-sm font-semibold text-secondary dark:text-white">
-                            {{ agencyName }}
-                        </p>
+                            Rejected
+                        </span>
                     </div>
-                    <div v-if="branchName" class="px-4 py-3">
-                        <p
-                            class="text-xs font-medium uppercase tracking-wide text-muted-DEFAULT"
+                    <div
+                        v-if="branchName"
+                        class="flex items-center justify-between gap-3 px-4 py-3"
+                    >
+                        <div class="min-w-0">
+                            <p
+                                class="text-xs font-medium uppercase tracking-wide text-muted-DEFAULT"
+                            >
+                                Branch
+                            </p>
+                            <p class="mt-0.5 text-sm font-semibold text-secondary dark:text-white">
+                                {{ branchName }}
+                            </p>
+                        </div>
+                        <span
+                            class="shrink-0 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
                         >
-                            Branch
-                        </p>
-                        <p class="mt-0.5 text-sm font-semibold text-secondary dark:text-white">
-                            {{ branchName }}
-                        </p>
+                            Rejected
+                        </span>
                     </div>
                 </div>
 
@@ -75,6 +104,30 @@
                         {{ rejectionReason || "No reason was provided." }}
                     </p>
                 </div>
+
+                <template v-if="agencyRejected">
+                    <button
+                        type="button"
+                        class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600"
+                        @click="showReapply = true"
+                    >
+                        <RotateCw class="h-4 w-4" />
+                        Fix details & reapply
+                    </button>
+
+                    <p
+                        v-if="branch?.resubmit_requires_payment"
+                        class="mt-2 text-xs text-muted-DEFAULT"
+                    >
+                        {{ purchaseReason }} You'll pay again after updating the
+                        details.
+                    </p>
+                </template>
+
+                <p v-else class="mt-4 text-xs leading-5 text-muted-DEFAULT">
+                    You can resubmit this branch from Manage Branches in any of
+                    your verified branches.
+                </p>
             </template>
 
             <template v-else>
@@ -165,16 +218,92 @@
                 </div>
             </template>
         </div>
+
+        <ResubmitBranchModal
+            v-if="showReapply && branch && agencyRejected"
+            :branch="branch"
+            :acting-branch-uuid="branch.uuid"
+            :rejection-reason="rejectionReason"
+            :requires-purchase="!!branch.resubmit_requires_payment"
+            :purchase-reason="branch.resubmit_requires_payment ? purchaseReason : null"
+            :agency="branch.agency"
+            @close="showReapply = false"
+            @resubmitted="onReapplied"
+        />
     </div>
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { RotateCw } from "lucide-vue-next";
 import { useBranchStore } from "@/stores/branch";
+import ResubmitBranchModal from "~/components/sections/app/branches/ResubmitBranchModal.vue";
 
 const branchStore = useBranchStore();
 
 const branch = computed(() => branchStore.activeBranch);
+
+const showReapply = ref(false);
+
+const agencyRejected = computed(() => branch.value?.agency?.status === "rejected");
+
+const purchaseReason = computed(() => {
+    switch (branch.value?.resubmit_subscription_status) {
+        case "rejected":
+            return "The payment was refunded when this request was rejected.";
+        case "expired":
+            return "This branch's subscription has expired.";
+        default:
+            return "This branch's subscription has no free slot left.";
+    }
+});
+
+const onReapplied = (result) => {
+    showReapply.value = false;
+
+    const updated = result?.branch;
+    if (!updated) return;
+
+    const agency = result.agency;
+
+    branchStore.branches = branchStore.branches.map((item) => {
+        const sameAgency =
+            agency && item.agency?.agency_id === agency.agency_id;
+
+        const next = sameAgency
+            ? {
+                  ...item,
+                  agency: {
+                      ...item.agency,
+                      ...agency,
+                      location: agency.location ?? item.agency.location,
+                  },
+              }
+            : item;
+
+        if (item.uuid !== updated.uuid) return next;
+
+        return {
+            ...next,
+            name: updated.name,
+            email: updated.email,
+            contact_number: updated.contact_number,
+            description: updated.description,
+            image: updated.image,
+            document: updated.document,
+            settings: updated.settings,
+            status: updated.status,
+            subscription_status: "pending",
+            rejection_reason: null,
+            resubmit_requires_payment: false,
+            resubmit_subscription_status: null,
+            location: {
+                ...updated.location,
+                address: updated.location?.full_address,
+            },
+        };
+    });
+};
 
 const isRejected = computed(
     () => branch.value?.subscription_status === "rejected",

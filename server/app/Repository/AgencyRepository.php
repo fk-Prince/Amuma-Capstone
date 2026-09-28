@@ -148,7 +148,21 @@ class AgencyRepository
         $perPage = $payload['per_page'] ?? 12;
 
         $branches = Branch::query()
-            ->with(['location', 'agencies', 'subscriptionLink.subscription.plans'])
+            ->with([
+                'location',
+                'agencies',
+                'subscriptionLink.subscription' => fn($query) => $query
+                    ->withCount([
+                        'branchLinks as branches_used' => fn($links) => $links
+                            ->where('status', '!=', BranchSubscription::STATUS_REJECTED),
+                    ])
+                    ->withExists([
+                        'payments as has_paid_payment' => fn($payments) => $payments
+                            ->where('status', SubscriptionPayment::STATUS_PAID),
+                    ]),
+                'subscriptionLink.subscription.plans',
+                'subscriptionLink.latestRejection',
+            ])
             ->withCount(['patients', 'employees'])
             ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
             // ilike, not like: Postgres LIKE is case-sensitive, so a lowercase
@@ -183,6 +197,8 @@ class AgencyRepository
                 'status' => $branch->status,
                 'review_status' => $branch->status,
                 'rejection_reason' => $branch->subscriptionLink?->rejection_reason,
+                'subscription_status' => $branch->subscriptionLink?->subscription?->status,
+                'slot_available' => (bool) $branch->subscriptionLink?->subscription?->hasOpenSlot(),
                 'contact_number' => $branch->contact_number,
                 'email' => $branch->email,
                 'location' => $branch->location ? [

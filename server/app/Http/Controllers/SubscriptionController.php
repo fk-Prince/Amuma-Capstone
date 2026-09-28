@@ -6,6 +6,8 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
+use App\Http\Requests\Subscription\BranchResubmitPurchaseRequest;
+use App\Http\Requests\Subscription\BranchResubmitRequest;
 use App\Http\Requests\Subscription\SubscriptionRequest;
 use App\Http\Requests\Subscription\SubscriptionUniqueRequest;
 use App\Service\SubscriptionService;
@@ -64,6 +66,41 @@ class SubscriptionController extends Controller
         }
 
         return $this->subscriptionService->createBranchWithinCapacity($data, $request->user());
+    }
+
+    public function resubmitBranch(BranchResubmitRequest $request)
+    {
+        return $this->subscriptionService->resubmitBranch(
+            $this->resubmitPayload($request),
+            $request->user()
+        );
+    }
+
+    public function resubmitBranchWithPurchase(BranchResubmitPurchaseRequest $request)
+    {
+        return $this->subscriptionService->makeResubmitPurchase(
+            $this->resubmitPayload($request),
+            $request->user()
+        );
+    }
+
+    private function resubmitPayload(BranchResubmitRequest $request): array
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule(
+            $request->user(),
+            $branch->branch_id,
+            ModuleEnum::ManageBranches,
+            PermissionAction::Create
+        );
+
+        $data = $request->validated();
+        $data['agency_id'] = $branch->agency_id;
+        foreach (['branch_image', 'branch_document', 'agency_image', 'agency_id_front', 'agency_id_back', 'agency_document'] as $file) {
+            $data[$file] = $request->file($file);
+        }
+
+        return $data;
     }
 
     public function validateSubscription(SubscriptionRequest $request)
@@ -133,6 +170,8 @@ class SubscriptionController extends Controller
             return $this->subscriptionService->approve($request->all());
         } else if ($request->action === 'reject') {
             return $this->subscriptionService->reject($request->all());
+        } else if ($request->action === 'logs') {
+            return $this->subscriptionService->verificationLogs($request->all());
         }
     }
 }

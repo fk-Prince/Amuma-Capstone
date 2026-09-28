@@ -801,7 +801,18 @@ import { notifcationFormatDate } from "~/utils/notification-time";
 import type { Notification } from "~/types/notification";
 
 definePageMeta({
-    middleware: "auth-client",
+    middleware: [
+        "auth-client",
+        (to) => {
+            const from = String(to.query.from ?? "");
+
+            setPageLayout(
+                ["dashboard", "owner", "portal"].includes(from)
+                    ? (from as "dashboard" | "owner" | "portal")
+                    : "default",
+            );
+        },
+    ],
     navVariant: 3,
     theme: "light",
 });
@@ -811,18 +822,9 @@ useHead({ title: "My Profile" });
 const route = useRoute();
 const router = useRouter();
 
-const layoutName =
-    route.query.from === "dashboard"
-        ? "dashboard"
-        : route.query.from === "owner"
-          ? "owner"
-          : route.query.from === "portal"
-            ? "portal"
-            : "default";
-
-const embedded = layoutName !== "default";
-
-setPageLayout(layoutName);
+const embedded = computed(() =>
+    ["dashboard", "owner", "portal"].includes(String(route.query.from ?? "")),
+);
 
 const { success, error } = useToast();
 
