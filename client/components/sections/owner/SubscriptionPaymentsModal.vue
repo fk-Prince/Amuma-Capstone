@@ -3,11 +3,11 @@
         <Transition name="modal">
             <div
                 v-if="open"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm"
+                class="fixed inset-0 z-[1000] flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm"
                 @click.self="emit('close')"
             >
                 <div
-                    class="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-secondary"
+                    class="min-h-[360px] w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-secondary"
                     role="dialog"
                     aria-modal="true"
                 >

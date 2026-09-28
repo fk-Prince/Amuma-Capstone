@@ -7,7 +7,6 @@ use App\Enums\RoleEnum;
 use App\Models\Agency;
 use App\Models\Branch;
 use App\Models\BranchSubscription;
-use App\Models\Client;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\EmployeePermission;
@@ -175,6 +174,19 @@ class BranchSubscriptionSeeder extends Seeder
         ['Tanglaw Meycauayan', 'Meycauayan City', 'Bulacan', 14.7365, 120.9583],
     ];
 
+    private const AGENCY_REJECTION_REASONS = [
+        'The uploaded ID is blurry or cropped. Please re-submit a clear photo of the front and back.',
+        'The uploaded ID is already expired. Please re-submit a valid, unexpired government ID.',
+        'The business document is expired or not a valid registration. Please re-submit a current DTI, SEC or BIR certificate.',
+        'The name on the documents does not match the agency or branch name. Please re-submit documents under the registered name.',
+    ];
+
+    private const BRANCH_REJECTION_REASONS = [
+        'The branch address does not match the address on the submitted documents. Please update the address or re-submit matching documents.',
+        'The TIN provided is incomplete or does not match the BIR certificate. Please correct it and re-submit.',
+        'The submitted business document could not be verified. Please upload a clear copy and try again.',
+    ];
+
     private const STREETS = [
         'Rizal Street',
         'Quezon Avenue',
@@ -192,6 +204,7 @@ class BranchSubscriptionSeeder extends Seeder
         $modules = Module::all();
         $reference = Agency::whereNotNull('document')->first();
         $ownerPermissions = RoleEnum::BranchManager->permissions();
+        $adminId = PlatformAdmin::query()->value('user_id');
 
         if ($plans->isEmpty() || $modules->isEmpty()) {
             $this->command->warn('Run PlanSeeder and ModuleSeeder first.');
@@ -225,6 +238,7 @@ class BranchSubscriptionSeeder extends Seeder
                 $modules,
                 $reference,
                 $ownerPermissions,
+                $adminId,
                 &$branchIndex
             ) {
                 $plan = $plans[$spec['plan']];
@@ -380,20 +394,33 @@ class BranchSubscriptionSeeder extends Seeder
                         },
                     ]);
 
+                    $includesAgency = $n === 0 && ($isRejected || $effectiveStatus === 'verified');
+                    $scope = $includesAgency ? VerificationLog::SCOPE_BOTH : VerificationLog::SCOPE_BRANCH;
+                    $reasons = $includesAgency ? self::AGENCY_REJECTION_REASONS : self::BRANCH_REJECTION_REASONS;
+                    $reason = $reasons[$cosmeticIndex % count($reasons)];
+
+                    if ($effectiveStatus === 'verified' && $n > 0 && $cosmeticIndex % 3 === 0) {
+                        $this->logDecision(
+                            $link,
+                            VerificationLog::ACTION_REJECTED,
+                            VerificationLog::SCOPE_BRANCH,
+                            self::BRANCH_REJECTION_REASONS[$cosmeticIndex % count(self::BRANCH_REJECTION_REASONS)],
+                            $adminId,
+                            $start->copy()->addHours(3 + $n),
+                        );
+                    }
+
                     if ($effectiveStatus !== 'pending') {
-                        VerificationLog::create([
-                            'branch_subscription_id' => $link->branch_subscription_id,
-                            'action' => $effectiveStatus === 'rejected'
+                        $this->logDecision(
+                            $link,
+                            $effectiveStatus === 'rejected'
                                 ? VerificationLog::ACTION_REJECTED
                                 : VerificationLog::ACTION_APPROVED,
-                            'scope' => $n === 0 && ($isRejected || $effectiveStatus !== 'rejected')
-                                ? VerificationLog::SCOPE_BOTH
-                                : VerificationLog::SCOPE_BRANCH,
-                            'reason' => $effectiveStatus === 'rejected'
-                                ? 'The submitted business document could not be verified. Please upload a clear copy and try again.'
-                                : null,
-                            'action_by' => PlatformAdmin::query()->value('user_id'),
-                        ]);
+                            $scope,
+                            $effectiveStatus === 'rejected' ? $reason : null,
+                            $adminId,
+                            $start->copy()->addHours(6 + $n * 2),
+                        );
                     }
 
                     if ($n === 0) {
@@ -440,17 +467,29 @@ class BranchSubscriptionSeeder extends Seeder
                 DB::table('branch_subscription')
                     ->where('subscription_id', $subscription->subscription_id)
                     ->update(['created_at' => $start, 'updated_at' => $start]);
-
-                DB::table('verification_logs')
-                    ->whereIn(
-                        'branch_subscription_id',
-                        DB::table('branch_subscription')
-                            ->where('subscription_id', $subscription->subscription_id)
-                            ->select('branch_subscription_id')
-                    )
-                    ->update(['created_at' => $start, 'updated_at' => $start]);
             });
         }
+    }
+
+    private function logDecision(
+        BranchSubscription $link,
+        string $action,
+        string $scope,
+        ?string $reason,
+        ?int $adminId,
+        Carbon $at,
+    ): void {
+        $log = new VerificationLog([
+            'branch_subscription_id' => $link->branch_subscription_id,
+            'action' => $action,
+            'scope' => $scope,
+            'reason' => $reason,
+            'action_by' => $adminId,
+        ]);
+
+        $log->created_at = $at;
+        $log->updated_at = $at;
+        $log->save();
     }
 
     private function settings(int $index): array

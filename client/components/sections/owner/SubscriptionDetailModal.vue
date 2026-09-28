@@ -181,6 +181,20 @@
                                 >
                                     {{ subscriptionStatus }}
                                 </span>
+
+                                <button
+                                    v-if="payments.length"
+                                    type="button"
+                                    class="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-primary hover:bg-primary-50 hover:text-primary dark:border-white/10 dark:text-gray-300 dark:hover:bg-primary-500/10"
+                                    @click="showPayments = true"
+                                >
+                                    <CreditCard class="h-3.5 w-3.5" />
+                                    {{
+                                        payments.length > 1
+                                            ? "View payments"
+                                            : "View payment"
+                                    }}
+                                </button>
                             </div>
                         </div>
 
@@ -229,18 +243,9 @@
 
                                     <div class="min-w-0 flex-1">
                                         <p
-                                            class="flex items-center gap-1 text-xs font-semibold"
+                                            class="truncate text-xs font-semibold"
                                         >
-                                            <span class="truncate">
-                                                {{ branch.name }}
-                                            </span>
-                                            <History
-                                                v-if="
-                                                    rejectionsFor(branch.uuid) >
-                                                    0
-                                                "
-                                                class="h-3 w-3 shrink-0 text-rose-500 dark:text-rose-400"
-                                            />
+                                            {{ branch.name }}
                                         </p>
                                         <p
                                             class="mt-0.5 flex items-center gap-1 text-[10px] text-muted dark:text-gray-400"
@@ -453,6 +458,13 @@
             </div>
         </Transition>
 
+        <SubscriptionPaymentsModal
+            :open="showPayments"
+            :agency-name="agency.name"
+            :payments="payments"
+            @close="showPayments = false"
+        />
+
         <VerificationLogsModal
             :open="!!logsView"
             :title="logsView?.title"
@@ -478,6 +490,7 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import {
     Building2,
     CalendarDays,
+    CreditCard,
     FileText,
     Hash,
     History,
@@ -491,6 +504,7 @@ import {
 import DocumentLink from "~/components/ui/DocumentLink.vue";
 import LocationModal from "~/components/sections/owner/LocationModal.vue";
 import VerificationLogsModal from "~/components/sections/owner/VerificationLogsModal.vue";
+import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionPaymentsModal.vue";
 import RejectionRecord from "~/components/sections/owner/RejectionRecord.vue";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { formatDate } from "~/utils/time";
@@ -641,6 +655,10 @@ const openLocation = (
     locationTarget.value = { name, address, latitude, longitude };
 };
 
+const showPayments = ref(false);
+
+const payments = computed(() => props.subscription?.payments ?? []);
+
 const logs = ref<VerificationLogRecord[]>([]);
 
 const logsView = ref<{
@@ -707,6 +725,11 @@ const loadLogs = async () => {
 const onKeydown = (event: KeyboardEvent) => {
     if (event.key !== "Escape" || !props.open) return;
 
+    if (showPayments.value) {
+        showPayments.value = false;
+        return;
+    }
+
     if (logsView.value) {
         logsView.value = null;
         return;
@@ -731,6 +754,7 @@ watch(
         } else {
             window.removeEventListener("keydown", onKeydown);
             logsView.value = null;
+            showPayments.value = false;
         }
     },
     { immediate: true },
