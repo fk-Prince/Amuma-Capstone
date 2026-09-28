@@ -2,7 +2,7 @@
 import Subscription from "~/components/sections/subscription/Subscription.vue";
 
 definePageMeta({
-    middleware: "auth-client",
+    middleware: ["auth-client", "prevent-staff-subscription"],
     navVariant: 3,
 });
 

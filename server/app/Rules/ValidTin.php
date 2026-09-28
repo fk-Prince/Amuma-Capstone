@@ -16,21 +16,6 @@ class ValidTin implements ValidationRule
 
     public static function passes(string $value): bool
     {
-        if (!preg_match('/^(\d{3})-(\d{3})-(\d{3})-\d{3}$/', $value, $m)) {
-            return false;
-        }
-
-        [, $a, $b, $c] = $m;
-        $base = $a . $b . $c;
-
-        if (preg_match('/^(\d)\1{8}$/', $base)) {
-            return false;
-        }
-
-        if (in_array($base, ['123456789', '987654321'], true)) {
-            return false;
-        }
-
-        return !($a === $b && $b === $c);
+        return (bool) preg_match('/^\d{3}-\d{3}-\d{3}-\d{3}$/', $value);
     }
 }

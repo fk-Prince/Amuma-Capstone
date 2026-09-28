@@ -11,6 +11,8 @@ import {
 } from "~/types/employee";
 import Combobox from "~/components/ui/Combobox.vue";
 import { useEmployeeForm } from "~/composables/useEmployeeForm";
+import { useAuthUser } from "~/composables/useAuthUser";
+import { useBranchStore } from "~/stores/branch";
 import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
 import EmployeeSlipModal from "~/components/sections/app/Employee/EmployeeSlipModal.vue";
@@ -91,6 +93,25 @@ const {
 });
 
 const { canUpdate } = usePermissions();
+const authUser = useAuthUser();
+const branchStore = useBranchStore();
+
+const agencyEmailDomain = computed(() => {
+    const email = branchStore.activeBranch?.agency?.email;
+    return email?.includes("@") ? email.split("@")[1] : null;
+});
+
+const emailSuggestion = computed(() => {
+    const local = (employee.value.email ?? "").split("@")[0]?.trim();
+
+    if (!local || !agencyEmailDomain.value) return "";
+
+    return `${local}@${agencyEmailDomain.value}`;
+});
+
+function applyEmailSuggestion() {
+    employee.value.email = emailSuggestion.value;
+}
 
 const hasAssignment = computed(() =>
     ["nurse", "caregiver"].includes(
@@ -109,11 +130,25 @@ const assignmentLabel = computed(() => {
     }
 });
 
+const isOwnerRole = computed(() =>
+    ["agency_owner", "Agency Owner"].includes(
+        String(employee.value.role_name ?? ""),
+    ),
+);
+
+const isAgencyOwner = computed(() => {
+    const isSelf =
+        !!props.employee?.uuid && props.employee.uuid === authUser.value?.uuid;
+
+    return isOwnerRole.value && !isSelf;
+});
+
 const canManageLeave = computed(
     () =>
         (isViewMode.value || isEditMode.value) &&
         canUpdate(Modules.EmployeeManagement) &&
-        employee.value.status !== "inactive",
+        employee.value.status !== "inactive" &&
+        !isOwnerRole.value,
 );
 
 const assignmentItems = computed(() =>
@@ -121,17 +156,24 @@ const assignmentItems = computed(() =>
         (type) =>
             type.value !== "both" ||
             employee.value.role_name !== "caregiver" ||
-            employee.value.assignment_type === "both" && (isEditMode.value || isViewMode.value),
+            (employee.value.assignment_type === "both" &&
+                (isEditMode.value || isViewMode.value)),
     ),
 );
 
 watch(
-    [assignmentItems, () => employee.value.role_name, () => employee.value.assignment_type],
+    [
+        assignmentItems,
+        () => employee.value.role_name,
+        () => employee.value.assignment_type,
+    ],
     ([items, role, current]) => {
         if (isViewMode.value || isEditMode.value) return;
 
-        if (role === "caregiver" && current === "both" && items.length) {
-            employee.value.assignment_type = items[0].value;
+        const first = items[0];
+
+        if (role === "caregiver" && current === "both" && first) {
+            employee.value.assignment_type = first.value;
         }
     },
     { immediate: true },
@@ -147,7 +189,7 @@ const tabs = [
 ];
 
 function openFilePicker() {
-    if (isViewMode.value) return;
+    if (isViewMode.value || isAgencyOwner.value) return;
     fileInput.value?.click();
 }
 
@@ -324,7 +366,11 @@ init();
                                 :is="isOnLeave ? CalendarCheck : CalendarOff"
                                 class="h-4 w-4"
                             />
-                            {{ isOnLeave ? "Return from leave" : "Mark as on leave" }}
+                            {{
+                                isOnLeave
+                                    ? "Return from leave"
+                                    : "Mark as on leave"
+                            }}
                         </button>
 
                         <span
@@ -340,7 +386,7 @@ init();
                         <button
                             type="button"
                             @click="openFilePicker"
-                            :disabled="isViewMode"
+                            :disabled="isViewMode || isAgencyOwner"
                             class="group relative flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-slate-300 bg-white transition hover:border-primary hover:bg-primary/5 disabled:hover:border-slate-300 disabled:hover:bg-white dark:border-white/20 dark:bg-secondary dark:hover:bg-primary-500/10 dark:disabled:hover:border-white/20 dark:disabled:hover:bg-secondary"
                         >
                             <img
@@ -359,7 +405,7 @@ init();
                             </span>
 
                             <span
-                                v-if="!isViewMode"
+                                v-if="!isViewMode && !isAgencyOwner"
                                 class="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-sm ring-2 ring-white transition group-hover:opacity-100"
                                 :class="
                                     avatarPreview ? 'opacity-90' : 'opacity-0'
@@ -378,7 +424,9 @@ init();
                         />
 
                         <button
-                            v-if="employee.avatar && !isViewMode"
+                            v-if="
+                                employee.avatar && !isViewMode && !isAgencyOwner
+                            "
                             type="button"
                             @click="removePhoto"
                             class="flex items-center gap-1 text-xs font-medium text-slate-400 transition hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
@@ -386,7 +434,7 @@ init();
                             <X class="h-3 w-3" /> Remove photo
                         </button>
                         <p
-                            v-else-if="!isViewMode"
+                            v-else-if="!isViewMode && !isAgencyOwner"
                             class="max-w-[10rem] text-center text-xs text-slate-400 dark:text-gray-500"
                         >
                             PNG or JPG, at least 400×400px
@@ -427,7 +475,7 @@ init();
                                 <BaseInput
                                     v-model="doc.label"
                                     placeholder="Label (e.g. Resume, Valid ID)"
-                                    :disabled="isViewMode"
+                                    :disabled="isViewMode || isAgencyOwner"
                                 />
 
                                 <div class="flex items-center gap-2">
@@ -448,7 +496,9 @@ init();
                                         <input
                                             type="file"
                                             class="hidden"
-                                            :disabled="isViewMode"
+                                            :disabled="
+                                                isViewMode || isAgencyOwner
+                                            "
                                             @change="
                                                 onDocumentFileSelected(
                                                     index,
@@ -496,14 +546,14 @@ init();
                                     required
                                     :schema="employeeSchema.shape.first_name"
                                     :error="errors.first_name"
-                                    :disabled="isViewMode"
+                                    :disabled="isViewMode || isAgencyOwner"
                                 />
                                 <BaseInput
                                     v-model="employee.middle_name"
                                     label="Middle Name"
                                     :schema="employeeSchema.shape.middle_name"
                                     :error="errors.middle_name"
-                                    :disabled="isViewMode"
+                                    :disabled="isViewMode || isAgencyOwner"
                                 />
                                 <BaseInput
                                     v-model="employee.last_name"
@@ -511,7 +561,7 @@ init();
                                     required
                                     :schema="employeeSchema.shape.last_name"
                                     :error="errors.last_name"
-                                    :disabled="isViewMode"
+                                    :disabled="isViewMode || isAgencyOwner"
                                 />
                             </div>
 
@@ -523,7 +573,7 @@ init();
                                     :default-to-today="false"
                                     placeholder="Select date of birth"
                                     :error="errors.birth_date"
-                                    :disabled="isViewMode"
+                                    :disabled="isViewMode || isAgencyOwner"
                                     required
                                 />
                                 <PhoneInput
@@ -531,18 +581,32 @@ init();
                                     label="Phone Number"
                                     required
                                     :schema="employeeSchema.shape.phone_number"
-                                    :disabled="isViewMode"
+                                    :disabled="isViewMode || isAgencyOwner"
                                     :error="errors.phone_number"
                                 />
-                                <BaseInput
-                                    v-model="employee.email"
-                                    label="Email"
-                                    mode="email"
-                                    required
-                                    :schema="employeeSchema.shape.email"
-                                    :disabled="isViewMode"
-                                    :error="errors.email"
-                                />
+                                <div>
+                                    <BaseInput
+                                        v-model="employee.email"
+                                        label="Email"
+                                        mode="email"
+                                        required
+                                        :schema="employeeSchema.shape.email"
+                                        :disabled="isViewMode || isAgencyOwner"
+                                        :error="errors.email"
+                                    />
+                                    <button
+                                        v-if="
+                                            emailSuggestion &&
+                                            emailSuggestion !== employee.email
+                                        "
+                                        type="button"
+                                        @click="applyEmailSuggestion"
+                                        class="mt-1 text-xs text-primary hover:underline"
+                                    >
+                                        Use {{ emailSuggestion }} for a uniform
+                                        company email
+                                    </button>
+                                </div>
                             </div>
                         </section>
 
@@ -593,7 +657,7 @@ init();
                             <div class="grid gap-6">
                                 <BaseInput
                                     v-model="employee.location.street"
-                                    :disabled="isViewMode"
+                                    :disabled="isViewMode || isAgencyOwner"
                                     label="Street Address"
                                     required
                                     placeholder="House / unit no., building, street"
@@ -606,7 +670,7 @@ init();
                                 <div class="grid gap-6 md:grid-cols-3">
                                     <BaseInput
                                         v-model="employee.location.city"
-                                        :disabled="isViewMode"
+                                        :disabled="isViewMode || isAgencyOwner"
                                         label="City"
                                         required
                                         :schema="
@@ -617,7 +681,7 @@ init();
                                     />
                                     <BaseInput
                                         v-model="employee.location.province"
-                                        :disabled="isViewMode"
+                                        :disabled="isViewMode || isAgencyOwner"
                                         label="Province"
                                         required
                                         :schema="
@@ -628,7 +692,7 @@ init();
                                     />
                                     <BaseInput
                                         v-model="employee.location.country"
-                                        :disabled="isViewMode"
+                                        :disabled="isViewMode || isAgencyOwner"
                                         label="Country"
                                         required
                                         :schema="
@@ -667,7 +731,7 @@ init();
                                     <Combobox
                                         v-else
                                         position="top"
-                                        :disabled="isViewMode"
+                                        :disabled="isViewMode || isAgencyOwner"
                                         label="Position"
                                         v-model="employee.role_name"
                                         :items="employeePositions"
@@ -686,7 +750,7 @@ init();
                                         :label="assignmentLabel"
                                         position="top"
                                         v-model="employee.assignment_type"
-                                        :disabled="isViewMode"
+                                        :disabled="isViewMode || isAgencyOwner"
                                         :items="assignmentItems"
                                     />
                                     <p
@@ -735,7 +799,7 @@ init();
                                         type="button"
                                         role="switch"
                                         :aria-checked="isActive"
-                                        :disabled="isViewMode"
+                                        :disabled="isViewMode || isAgencyOwner"
                                         class="relative h-6 w-11 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50"
                                         :class="
                                             isActive
@@ -882,7 +946,7 @@ init();
                         >
                             <div class="flex items-center gap-4">
                                 <button
-                                    :disabled="isViewMode"
+                                    :disabled="isViewMode || isAgencyOwner"
                                     type="button"
                                     role="switch"
                                     :aria-checked="
@@ -919,7 +983,11 @@ init();
                                     <p
                                         class="text-xs text-slate-400 dark:text-gray-500"
                                     >
-                                        {{ moduleDescription(module.module_name) }}
+                                        {{
+                                            moduleDescription(
+                                                module.module_name,
+                                            )
+                                        }}
                                     </p>
                                 </div>
                             </div>
@@ -942,7 +1010,7 @@ init();
                                     class="flex items-center gap-2 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300"
                                 >
                                     <input
-                                        :disabled="isViewMode"
+                                        :disabled="isViewMode || isAgencyOwner"
                                         type="checkbox"
                                         :checked="
                                             hasAction(module.module_id, action)
@@ -964,7 +1032,7 @@ init();
             </Transition>
 
             <div
-                v-if="!isViewMode"
+                v-if="!isViewMode && !isAgencyOwner"
                 class="sticky bottom-0 mt-auto flex items-center justify-between gap-3 border-t bg-white/95 px-8 py-5 shadow-[0_-4px_12px_-8px_rgba(0,0,0,0.15)] backdrop-blur dark:border-white/10 dark:bg-secondary/95"
             >
                 <button

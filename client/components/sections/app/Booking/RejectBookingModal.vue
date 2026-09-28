@@ -68,7 +68,7 @@
                         rows="4"
                         maxlength="500"
                         placeholder="Let the client know why this booking can't be accepted — e.g. patient requires extensive assistance."
-                        class="w-full resize-none rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:text-white dark:placeholder:text-gray-500"
+                        class="w-full resize-none rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-white dark:placeholder:text-gray-500"
                         :class="showError ? 'border-rose-300' : ''"
                         @input="showError = false"
                     />

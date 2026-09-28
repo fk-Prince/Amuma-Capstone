@@ -33,16 +33,13 @@ class AuthGuard
         $employee = $user->employee;
 
         if (!$employee) {
-            throw new Exception('Insufficient permissionsa', 403);
+            throw new Exception('Insufficient permissions', 403);
         }
 
-        // The person who registered an agency has full access to every
-        // branch under it, regardless of whether they have a permission row
-        // on that specific branch — an agency_owner row on any one of the
-        // agency's branches is enough.
-        if ($branchId !== false && self::ownsAgencyFor($employee, $branchId)) {
-            return $user;
-        }
+
+        // if ($branchId !== false && self::ownsAgencyFor($employee, $branchId)) {
+        //     return $user;
+        // }
 
         $moduleNames = collect($module)
             ->map(fn(ModuleEnum $module) => $module->value)

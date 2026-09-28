@@ -20,6 +20,10 @@ class AdmissionService extends BaseService {
         return await this.request(this.resource, 'POST', payload);
     }
 
+    async guardianEmailExists(email: string): Promise<any> {
+        return await this.request(`${this.resource}/guardian-email-exists`, 'GET', { email });
+    }
+
     async list(payload: object): Promise<any> {
         return await this.request(this.resource, "GET", payload);
     }
@@ -32,9 +36,6 @@ class AdmissionService extends BaseService {
         return await this.request(this.resource + '/action', 'POST', payload);
     }
 
-    // async admit(payload: object): Promise<any> { // USED
-    //     return await this.request(this.resource + '/admit', 'POST', payload);
-    // }
 
     private get resource(): string {
         const backend = this.getBackendApi;

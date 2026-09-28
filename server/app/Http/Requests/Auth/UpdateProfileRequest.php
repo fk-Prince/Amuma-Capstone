@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Rules\CaseInsensitiveUnique;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateProfileRequest extends FormRequest
 {
@@ -23,8 +23,7 @@ class UpdateProfileRequest extends FormRequest
                 'nullable',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')
-                    ->ignore($this->user()->user_id, 'user_id'),
+                new CaseInsensitiveUnique('users', 'email', $this->user()->user_id, 'user_id'),
             ],
 
             'phone_number' => ['nullable', 'string', 'max:30'],

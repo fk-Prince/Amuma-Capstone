@@ -102,7 +102,7 @@ export const createEmployee = (): EmployeePayload => ({
     },
     birth_date: "",
     phone_number: "",
-    role_name: "admission",
+    role_name: "branch_manager",
     assignment_type: "both",
     status: "active",
 });

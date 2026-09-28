@@ -65,7 +65,7 @@
 
                 <DataTable
                     v-if="activeTab === 'patients'"
-                    class="flex-1 min-h-0"
+                    class="flex-1 min-h-0 rounded-t-none rounded-b-xl border-none"
                     :columns="patientColumns"
                     :rows="invoices"
                     :pagination="pagination"
@@ -212,7 +212,6 @@
                             {{ formatDateTime(value) }}
                         </span>
                     </template>
-
                 </DataTable>
 
                 <DataTable

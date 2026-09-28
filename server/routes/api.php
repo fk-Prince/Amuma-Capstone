@@ -91,6 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/action', [BookingController::class, 'action']);
     Route::post('/invoices/action', [InvoiceController::class, 'action']);
     Route::post('/admissions/action', [PatientAdmissionController::class, 'action']);
+    Route::get('/admissions/guardian-email-exists', [PatientAdmissionController::class, 'guardianEmailExists']);
     Route::get('/caregiver-shifts/board', [CaregiverShiftController::class, 'board']);
     Route::get('/caregiver-shifts', [CaregiverShiftController::class, 'index']);
     Route::post('/caregiver-shifts', [CaregiverShiftController::class, 'store']);

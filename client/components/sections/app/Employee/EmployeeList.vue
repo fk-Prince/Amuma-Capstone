@@ -95,12 +95,18 @@ const handlePageChange = (page: number) => {
 const statusColor = (status: string | null) => {
     const colors: Record<string, string> = {
         active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
-        inactive: "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400",
-        on_call: "bg-primary-100 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400",
-        on_leave: "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+        inactive:
+            "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400",
+        on_call:
+            "bg-primary-100 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400",
+        on_leave:
+            "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
     };
 
-    return colors[status ?? ""] ?? "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300";
+    return (
+        colors[status ?? ""] ??
+        "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300"
+    );
 };
 
 const formatStatus = (status: string | null | undefined) => {
@@ -113,9 +119,9 @@ const formatStatus = (status: string | null | undefined) => {
 </script>
 
 <template>
-    <div class="flex flex-col h-full min-h-0">
+    <div class="flex-1 min-h-0 overflow-visible">
         <DataTable
-            class="flex-1 min-h-0"
+            class="rounded-t-none rounded-b-xl border-none h-full"
             :columns="columns"
             :rows="rows"
             :pagination="pagination"
@@ -134,8 +140,12 @@ const formatStatus = (status: string | null | undefined) => {
                     />
 
                     <div>
-                        <p class="font-medium text-slate-800 dark:text-white">{{ row.name }}</p>
-                        <p class="text-xs text-slate-400 dark:text-gray-500">{{ row.role }}</p>
+                        <p class="font-medium text-slate-800 dark:text-white">
+                            {{ row.name }}
+                        </p>
+                        <p class="text-xs text-slate-400 dark:text-gray-500">
+                            {{ row.role }}
+                        </p>
                     </div>
                 </div>
             </template>

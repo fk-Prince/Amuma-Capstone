@@ -99,7 +99,7 @@ const payCard = async () => {
             onSuccess: async (result) => {
                 xenditProcessing.value = false;
 
-                success(result.message);
+                success("Subscription Request Submitted", result.message);
 
                 await fetchAuthUser();
 

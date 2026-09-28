@@ -1,6 +1,8 @@
 <template>
-    <div class="h-full w-full mx-auto lg:space-y-5 rounded-lg">
-        <div v-if="!addEmployeeTab" class="h-full flex flex-col min-h-0">
+    <div
+        class="min-h-screen-header w-full mx-auto lg:space-y-5 rounded-lg flex flex-col"
+    >
+        <div v-if="!addEmployeeTab" class="flex-1 min-h-0 flex flex-col">
             <EmployeeDashboard
                 :total-employee="totalEmployee"
                 :on-duty="onDuty"
@@ -8,10 +10,10 @@
             />
 
             <div
-                class="overflow-hidden rounded-lg mt-2 border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                class="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg mt-2 border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div
-                    class="border-b border-slate-100 py-5 px-3 dark:border-white/10"
+                    class="border-b border-slate-100 py-5 px-3 dark:border-white/10 shrink-0"
                 >
                     <ClientOnly>
                         <EmployeeSearch
@@ -22,19 +24,17 @@
                     </ClientOnly>
                 </div>
 
-                <div class="flex-1 min-h-0">
-                    <EmployeeList
-                        class="h-full"
-                        :employees="employees"
-                        :loading="loading"
-                        :current-page="currentPage"
-                        :total-pages="totalPages"
-                        :total-items="totalEmployee"
-                        :page-size="PAGE_SIZE"
-                        @select="updateEmployee"
-                        @page-change="handlePageChange"
-                    />
-                </div>
+                <EmployeeList
+                    class="h-full"
+                    :employees="employees"
+                    :loading="loading"
+                    :current-page="currentPage"
+                    :total-pages="totalPages"
+                    :total-items="totalEmployee"
+                    :page-size="PAGE_SIZE"
+                    @select="updateEmployee"
+                    @page-change="handlePageChange"
+                />
             </div>
         </div>
 

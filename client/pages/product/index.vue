@@ -38,7 +38,9 @@
                     ></div>
 
                     <div class="space-y-2 mb-8">
-                        <div class="h-4 bg-gray-200 rounded dark:bg-white/10"></div>
+                        <div
+                            class="h-4 bg-gray-200 rounded dark:bg-white/10"
+                        ></div>
                         <div
                             class="h-4 w-5/6 bg-gray-200 rounded dark:bg-white/10"
                         ></div>
@@ -99,6 +101,7 @@ definePageMeta({
     layout: "default",
     navVariant: 3,
     navTheme: "light",
+    middleware: ["prevent-staff-subscription"],
 });
 
 const billingCycle = ref<"monthly" | "yearly">("monthly");

@@ -607,7 +607,7 @@ class SubscriptionService
 
                 return response()->json([
                     'status' => true,
-                    'message' => __('Subscription created successfully.'),
+                    'message' => __("Almost there! We'll notify you once your branch is verified."),
                     'branch' => [
                         'branch_id' => $branchData->branch_id,
                         'uuid' => $branchData->uuid,
@@ -654,7 +654,7 @@ class SubscriptionService
 
             return response()->json([
                 'status' => false,
-                'message' => 'Subscription failed. Your payment has been refunded.',
+                'message' => 'Subscription failed. If your payment was made, it will be automatically refunded.',
                 'error' => $e->getMessage(),
             ], 500);
         }

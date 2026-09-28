@@ -32,7 +32,7 @@
                     class="text-sm font-semibold"
                     :class="print ? '' : 'dark:text-white'"
                 >
-                    {{ slip.employee.employee_id }}
+                    {{ slip.employee.employee_code }}
                 </p>
             </div>
         </div>
@@ -130,12 +130,7 @@ import { formatDate, stringToDateTime } from "~/utils/time";
 import { formatPhone } from "~/utils/phone";
 import { formatAssignmentType } from "~/types/employee";
 import type { EmployeeSlip } from "~/types/employee-slip";
-
-function capitalize(value?: string | null) {
-    if (!value) return null;
-
-    return value.replace(/\b\w/g, (char) => char.toUpperCase());
-}
+import { formatRole } from "~/utils/user";
 
 const props = defineProps<{
     slip: EmployeeSlip;
@@ -162,7 +157,12 @@ const groups = computed(() => {
         {
             title: "Assignment",
             rows: [
-                { label: "Position", value: capitalize(employee.role_name) },
+                {
+                    label: "Position",
+                    value: employee.role_name
+                        ? formatRole(employee.role_name)
+                        : "",
+                },
                 ...(employee.assignment_type
                     ? [
                           {

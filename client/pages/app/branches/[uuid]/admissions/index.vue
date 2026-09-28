@@ -363,6 +363,16 @@
                 </BaseButton>
             </div>
         </div>
+
+        <ConfirmDialog
+            :open="showEmailExistsWarning"
+            title="This email already exists"
+            :message="`This email exists: ${guardianData.email ?? ''}. Are you sure you want to continue?`"
+            confirm-label="Continue"
+            cancel-label="Cancel"
+            @confirm="confirmEmailExists"
+            @cancel="showEmailExistsWarning = false"
+        />
     </div>
 </template>
 
@@ -422,6 +432,7 @@ import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail
 import { useToast } from "~/composables/useToast";
 import { useBranchPlan } from "~/composables/useBranchPlan";
 import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
+import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 
 useHead({ title: "Admission" });
 
@@ -897,6 +908,9 @@ onMounted(async () => {
     }
 });
 
+const showEmailExistsWarning = ref(false);
+const emailExistsConfirmed = ref(false);
+
 async function submit() {
     if (bookingProcessed.value) {
         error(
@@ -911,6 +925,31 @@ async function submit() {
         return;
     }
 
+    if (!emailExistsConfirmed.value && guardianData.email) {
+        try {
+            const res = await admissionService.guardianEmailExists(
+                guardianData.email,
+            );
+
+            if (res?.exists) {
+                showEmailExistsWarning.value = true;
+                return;
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    proceedToReview();
+}
+
+function confirmEmailExists() {
+    showEmailExistsWarning.value = false;
+    emailExistsConfirmed.value = true;
+    submit();
+}
+
+function proceedToReview() {
     bookingStore.contract = roomContract.value;
     bookingStore.reserved = deepToRaw(reserved.value);
     bookingStore.category = "facility";

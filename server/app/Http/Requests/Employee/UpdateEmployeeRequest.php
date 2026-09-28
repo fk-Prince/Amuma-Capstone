@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Employee;
 
 use App\Enums\PermissionAction;
+use App\Rules\CaseInsensitiveUnique;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Log;
@@ -32,7 +33,7 @@ class UpdateEmployeeRequest extends FormRequest
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($uuid, 'uuid'),
+                new CaseInsensitiveUnique('users', 'email', $uuid, 'uuid'),
             ],
             'first_name' => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],

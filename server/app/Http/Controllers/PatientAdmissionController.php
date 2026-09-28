@@ -60,4 +60,9 @@ class PatientAdmissionController extends Controller
         BranchGuard::mergeRequest($request, $branch);
         return $this->patientAdmissionService->list($request->all());
     }
+
+    public function guardianEmailExists(Request $request)
+    {
+        return $this->patientAdmissionService->guardianEmailExists($request->query('email'));
+    }
 }

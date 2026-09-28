@@ -83,6 +83,10 @@ class EmployeeService
             throw new Exception('Employee not found.', 404);
         }
 
+        if ($employeeBranch->role_name === RoleEnum::AgencyOwner->value) {
+            throw new Exception('The agency owner cannot be put on leave.', 403);
+        }
+
         if ($employeeBranch->status === EmployeeBranch::STATUS_INACTIVE) {
             throw new Exception('Inactive employees cannot be put on leave.', 422);
         }
@@ -267,8 +271,9 @@ class EmployeeService
     public function updateEmployee(array $payload, string $uuid, User $user)
     {
         return DB::transaction(function () use ($payload, $uuid, $user) {
+            $actor = $user;
             $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
-            AuthGuard::requireModule($user,   $branch->branch_id, ModuleEnum::EmployeeManagement,  PermissionAction::Update);
+            AuthGuard::requireModule($actor,  $branch->branch_id, ModuleEnum::EmployeeManagement,  PermissionAction::Update);
 
             $user = $this->userRepository->findByField('uuid', $uuid);
 
@@ -282,6 +287,17 @@ class EmployeeService
 
             if (!$employee) {
                 throw new Exception('Employee not found.', 404);
+            }
+
+            $employeeBranch = $employee->employeeBranch()
+                ->where('branch_id', $branch->branch_id)
+                ->first();
+
+            if (
+                $employeeBranch?->role_name === RoleEnum::AgencyOwner->value
+                && $actor->user_id !== $user->user_id
+            ) {
+                throw new Exception('Only the agency owner can update this profile.', 403);
             }
 
             $userChanges = ['email' => $payload['email']];

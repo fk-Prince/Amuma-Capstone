@@ -20,7 +20,8 @@
             </div>
         </div>
 
-        <div class="flex-1 min-h-0 overflow-auto">
+        <div class="flex-1 min-h-0 grid grid-rows-[minmax(0,1fr)_auto]">
+        <div class="min-h-0 overflow-auto">
             <table class="w-full min-w-[42rem] text-sm">
                 <thead class="sticky top-0 z-10">
                     <tr class="bg-slate-50/70 dark:bg-white/5">
@@ -226,6 +227,7 @@
                     ›
                 </button>
             </div>
+        </div>
         </div>
     </div>
 </template>

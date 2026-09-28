@@ -357,7 +357,7 @@ function cellClass(cell: CalendarCell) {
         return "bg-blue-500 text-white font-semibold";
     }
     if (!cell.inCurrentMonth) {
-        return "text-slate-300 hover:bg-slate-50 dark:text-gray-500 dark:hover:bg-white/5";
+        return "text-slate-300 hover:bg-slate-50 dark:text-gray-600 dark:hover:bg-white/5";
     }
     if (isToday(cell)) {
         return "text-blue-500 font-semibold hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10";

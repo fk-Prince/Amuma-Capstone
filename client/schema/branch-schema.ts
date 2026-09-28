@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { locationSchema } from "~/types/branch";
 import { tin } from "~/schema/tin-schema";
+import { phoneNumber } from "~/schema/phone-schema";
 
 export const branchImageSchema = z.object({
     type: z.string().min(1, "Image type is required"),
@@ -11,11 +12,7 @@ export const branchImageSchema = z.object({
         .min(1, "Description is required")
         .max(1000, "Description must not exceed 1000 characters"),
 
-    contact_number: z
-        .string()
-        .trim()
-        .min(1, "Contact number is required")
-        .regex(/^[0-9]{10,15}$/, "Enter a valid contact number"),
+    contact_number: phoneNumber("Contact number is required"),
     email: z
         .string()
         .trim()
@@ -49,11 +46,7 @@ export const branchSchema = z.object({
         .min(1, "Description is required")
         .max(1000, "Description must not exceed 1000 characters"),
 
-    contact_number: z
-        .string()
-        .trim()
-        .min(1, "Contact number is required")
-        .regex(/^[0-9]{10,15}$/, "Enter a valid contact number"),
+    contact_number: phoneNumber("Contact number is required"),
 
     email: z
         .string()

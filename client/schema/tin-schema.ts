@@ -14,16 +14,11 @@ export function formatTin(input: string) {
 }
 
 export function isValidTin(value: string) {
-    if (!TIN_PATTERN.test(value)) return false;
-
-    const [a, b, c] = value.split("-");
-    const base = `${a}${b}${c}`;
-
-    if (/^(\d)\1{8}$/.test(base)) return false;
-    if (base === "123456789" || base === "987654321") return false;
-
-    return !(a === b && b === c);
+    return TIN_PATTERN.test(value);
 }
 
 export const tin = (required = "TIN is required") =>
-    z.string().trim().min(1, required).refine(isValidTin, TIN_MESSAGE);
+    z.preprocess(
+        (value) => (typeof value === "string" ? value : ""),
+        z.string().trim().min(1, required).refine(isValidTin, TIN_MESSAGE),
+    );

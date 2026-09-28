@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserRepository
 {
@@ -39,7 +40,7 @@ class UserRepository
 
             unset($payload['address']);
 
-            $user = User::where('email', $payload['email'])->first();
+            $user = User::whereRaw('LOWER(TRIM(email)) = ?', [Str::lower(trim($payload['email']))])->first();
 
             if (!$user) {
                 $user = User::create([

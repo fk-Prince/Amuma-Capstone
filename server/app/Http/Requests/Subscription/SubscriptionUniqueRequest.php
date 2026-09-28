@@ -3,8 +3,9 @@
 namespace App\Http\Requests\Subscription;
 
 use App\Models\Branch;
+use App\Rules\CaseInsensitiveUnique;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class SubscriptionUniqueRequest extends FormRequest
 {
@@ -20,20 +21,23 @@ class SubscriptionUniqueRequest extends FormRequest
             'agency_name' => ['sometimes', 'string', $this->uniqueAgencyName()],
             'agency_email' => ['sometimes', 'string', $this->uniqueAgencyEmail()],
             'branch_name' => ['sometimes', 'string', $this->uniqueBranchName()],
-            'branch_email' => ['sometimes', 'string', 'unique:branches,email'],
+            'branch_email' => ['sometimes', 'string', $this->uniqueBranchEmail()],
         ];
     }
 
     public function uniqueAgencyName()
     {
-        return Rule::unique('agencies', 'name')
-            ->ignore($this->input('agency_id'), 'agency_id');
+        return new CaseInsensitiveUnique('agencies', 'name', $this->input('agency_id'), 'agency_id');
     }
 
     public function uniqueAgencyEmail()
     {
-        return Rule::unique('agencies', 'email')
-            ->ignore($this->input('agency_id'), 'agency_id');
+        return new CaseInsensitiveUnique('agencies', 'email', $this->input('agency_id'), 'agency_id');
+    }
+
+    public function uniqueBranchEmail()
+    {
+        return new CaseInsensitiveUnique('branches', 'email');
     }
 
     public function uniqueBranchName()
@@ -41,11 +45,19 @@ class SubscriptionUniqueRequest extends FormRequest
         $agencyId = $this->input('agency_id')
             ?? Branch::where('uuid', $this->input('branch_uuid'))->value('agency_id');
 
-        return Rule::unique('branches', 'name')->where(
-            fn($query) => $agencyId
-                ? $query->where('agency_id', $agencyId)
-                : $query->whereRaw('1 = 0')
-        );
+        return function (string $attribute, mixed $value, \Closure $fail) use ($agencyId) {
+            if (!$agencyId) {
+                return;
+            }
+
+            $exists = Branch::whereRaw('LOWER(TRIM(name)) = ?', [Str::lower(trim($value))])
+                ->where('agency_id', $agencyId)
+                ->exists();
+
+            if ($exists) {
+                $fail('The branch name has already been taken.');
+            }
+        };
     }
 
     public function attributes(): array

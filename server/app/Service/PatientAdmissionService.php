@@ -21,6 +21,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Throwable;
 
 class PatientAdmissionService
@@ -824,7 +825,7 @@ class PatientAdmissionService
                 }
             }
 
-            $this->guardEmailIsFree($payload['guardian']['email'] ?? null);
+            $this->guardEmailProvided($payload['guardian']['email'] ?? null);
 
             $data = $this->patientService->createFacilityPatient($payload);
 
@@ -856,20 +857,20 @@ class PatientAdmissionService
     }
 
 
-    private function guardEmailIsFree(?string $email): void
+    private function guardEmailProvided(?string $email): void
+    {
+        if (trim((string) $email) === '') {
+            throw new Exception('A guardian email is required.', 422);
+        }
+    }
+
+    public function guardianEmailExists(?string $email): array
     {
         $email = trim((string) $email);
 
-        if ($email === '') {
-            throw new Exception('A guardian email is required.', 422);
-        }
-
-        if (User::where('email', $email)->exists()) {
-            throw new Exception(
-                "The email {$email} already taken. Use a different email for this guardian.",
-                422
-            );
-        }
+        return [
+            'exists' => $email !== '' && User::whereRaw('LOWER(TRIM(email)) = ?', [Str::lower($email)])->exists(),
+        ];
     }
 
     private function admissionSlip(object $admission, object $invoice, array $credentials): array

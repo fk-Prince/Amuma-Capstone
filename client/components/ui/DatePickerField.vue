@@ -477,7 +477,7 @@ function isDateDisabled(cell: CalendarCell) {
 function cellClass(cell: CalendarCell) {
     const isSelected = isSameDay(cell, selectedDate.value);
     if (isDateDisabled(cell)) {
-        return "text-slate-200 cursor-not-allowed";
+        return "text-slate-200 cursor-not-allowed dark:text-gray-600";
     }
     if (isSelected) return "bg-blue-500 text-white font-semibold";
     if (!cell.inCurrentMonth) return "text-slate-300 hover:bg-slate-50 dark:text-gray-500 dark:hover:bg-white/5";

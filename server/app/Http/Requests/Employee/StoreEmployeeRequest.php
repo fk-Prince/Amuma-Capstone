@@ -4,6 +4,7 @@ namespace App\Http\Requests\Employee;
 
 use App\Enums\PermissionAction;
 use App\Enums\RoleEnum;
+use App\Rules\CaseInsensitiveUnique;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -26,7 +27,7 @@ class StoreEmployeeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['required', 'email', 'max:255', new CaseInsensitiveUnique('users', 'email')],
             'first_name' => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
