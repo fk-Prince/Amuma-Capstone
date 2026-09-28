@@ -1,4 +1,57 @@
-import type { PortalTransactionType } from "~/types/portal-billing";
+import type {
+    PortalInvoice,
+    PortalInvoiceDetail,
+    PortalTransactionType,
+} from "~/types/portal-billing";
+
+export function toPortalInvoice(raw: any): PortalInvoice {
+    return {
+        invoice_id: raw.invoice_id,
+        invoice_code: raw.invoice_code,
+        description: raw.description || "No line items recorded",
+        status: raw.status,
+        total: Number(raw.total ?? 0),
+        adjusted_total: Number(raw.adjusted_total ?? raw.total ?? 0),
+        amount_paid: Number(raw.amount_paid ?? 0),
+        net_paid: Number(raw.net_paid ?? raw.amount_paid ?? 0),
+        balance_due: Number(raw.balance_due ?? 0),
+        refund_status: raw.refund_status ?? "none",
+        void_reason: raw.void_reason ?? null,
+        voided_at: raw.voided_at ?? null,
+        created_at: raw.created_at,
+        accommodation_type: null,
+        billing_cycle: null,
+        accommodation_status: null,
+        source_type: null,
+        services: [],
+        adjustments: (raw.adjustments ?? []).map((adj: any) => ({
+            invoice_adjustment_id: adj.invoice_adjustment_id,
+            type: adj.type,
+            reason: adj.reason || "Adjustment",
+            amount: Number(adj.amount ?? 0),
+            created_at: adj.created_at,
+        })),
+    };
+}
+
+export function toPortalInvoiceDetail(raw: any): PortalInvoiceDetail {
+    return {
+        ...toPortalInvoice(raw),
+        lines: (raw.lines ?? []).map((line: any) => ({
+            category: line.category,
+            description: line.description ?? null,
+            detail: line.detail ?? null,
+            amount: Number(line.amount ?? 0),
+        })),
+        payments: (raw.payments ?? []).map((payment: any) => ({
+            payment_id: payment.payment_id,
+            payment_code: payment.payment_code ?? null,
+            amount: Number(payment.amount ?? 0),
+            payment_method: payment.payment_method ?? null,
+            created_at: payment.created_at ?? null,
+        })),
+    };
+}
 
 export function formatBillingDateTime(dateStr?: string): string {
     if (!dateStr) return "";

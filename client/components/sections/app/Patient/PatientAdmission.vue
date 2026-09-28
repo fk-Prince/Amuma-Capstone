@@ -44,7 +44,21 @@
 
                                 <div class="flex items-center gap-2">
                                     <button
-                                        v-if="canViewAdmissions && latestAdmission"
+                                        v-if="
+                                            canViewAdmissions && latestAdmission
+                                        "
+                                        type="button"
+                                        class="inline-flex items-center gap-1.5 rounded-lg border border-primary-100 px-2.5 py-1.5 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-500/20 dark:text-primary-300 dark:hover:bg-primary-500/10"
+                                        @click="chargesModalOpen = true"
+                                    >
+                                        <Receipt class="h-3.5 w-3.5" />
+                                        Charges
+                                    </button>
+
+                                    <button
+                                        v-if="
+                                            canViewAdmissions && latestAdmission
+                                        "
                                         type="button"
                                         :disabled="!isAdmitted"
                                         :title="
@@ -60,7 +74,9 @@
                                     </button>
 
                                     <button
-                                        v-if="canViewAdmissions && latestAdmission"
+                                        v-if="
+                                            canViewAdmissions && latestAdmission
+                                        "
                                         type="button"
                                         class="inline-flex items-center gap-1.5 rounded-lg border border-primary-100 px-2.5 py-1.5 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-500/20 dark:text-primary-300 dark:hover:bg-primary-500/10"
                                         @click="viewAdmission"
@@ -368,17 +384,35 @@
             :branch-uuid="String(route.params.uuid)"
             @close="caregiverModalOpen = false"
         />
+
+        <ChargesModal
+            :open="chargesModalOpen"
+            :branch-uuid="String(route.params.uuid)"
+            :patient-uuid="String(patient?.uuid ?? route.params.p_uuid)"
+            :patient-name="patient?.full_name"
+            :current-admission-id="
+                isAdmitted ? latestAdmission?.patient_admission_id : null
+            "
+            :can-add="isAdmitted && canAddCharge"
+            :add-blocked-reason="
+                !canAddCharge
+                    ? 'You need permission to update admissions.'
+                    : 'Charges can only be added while the patient is admitted.'
+            "
+            @close="chargesModalOpen = false"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ChevronRight, UserRound } from "lucide-vue-next";
+import { ChevronRight, Receipt, UserRound } from "lucide-vue-next";
 import type { PatientRetrieve, Admission } from "~/types/patient";
 
 import AdmissionTimeline from "~/components/sections/app/Admission/AdmissionTimeline.vue";
 import CaregiverShiftModal from "~/components/sections/app/Admission/CaregiverShiftModal.vue";
+import ChargesModal from "~/components/sections/app/Admission/ChargesModal.vue";
 import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 
 definePageMeta({
@@ -404,11 +438,13 @@ const props = withDefaults(
 const router = useRouter();
 const route = useRoute();
 
-const { hasModule } = usePermissions();
+const { hasModule, canUpdate } = usePermissions();
 
 const canViewAdmissions = computed(() => hasModule("Admissions"));
+const canAddCharge = computed(() => canUpdate("Admissions"));
 
-// The admissions page is keyed by the patient's uuid, not the admission id.
+const chargesModalOpen = ref(false);
+
 function viewAdmission() {
     const patientUuid = patient.value?.uuid ?? route.params.p_uuid;
 

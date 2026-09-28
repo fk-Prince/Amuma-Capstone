@@ -124,6 +124,11 @@ class PatientAdmission extends Model
         );
     }
 
+    public function additionalCharges()
+    {
+        return $this->hasMany(AdditionalCharge::class, 'patient_admission_id', 'patient_admission_id');
+    }
+
     public function invoiceAdmission()
     {
         return $this->hasManyThrough(

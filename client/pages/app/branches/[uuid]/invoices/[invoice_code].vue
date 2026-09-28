@@ -426,6 +426,74 @@
                             </div>
                         </section>
 
+                        <section v-if="invoice.charges?.length">
+                            <SectionHeader>
+                                <template #icon>
+                                    <Stethoscope
+                                        class="h-3.5 w-3.5"
+                                        :stroke-width="2"
+                                    />
+                                </template>
+                                Additional Charges
+                            </SectionHeader>
+
+                            <div
+                                class="overflow-x-auto rounded-xl border border-[#EDF4F3] dark:border-white/10"
+                            >
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr
+                                            class="border-b border-[#EDF4F3] text-xs uppercase tracking-wide text-[#6B8A87] dark:border-white/10 dark:text-gray-400"
+                                        >
+                                            <th
+                                                class="px-4 py-3 text-left font-medium"
+                                            >
+                                                Type
+                                            </th>
+                                            <th
+                                                class="px-4 py-3 text-left font-medium"
+                                            >
+                                                Description
+                                            </th>
+                                            <th
+                                                class="px-4 py-3 text-right font-medium"
+                                            >
+                                                Amount
+                                            </th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        <tr
+                                            v-for="charge in invoice.charges"
+                                            :key="charge.additional_charge_id"
+                                            class="border-b border-[#EDF4F3] last:border-0 dark:border-white/10"
+                                        >
+                                            <td
+                                                class="whitespace-nowrap px-4 py-3 align-top text-[#16302E] dark:text-white"
+                                            >
+                                                {{ charge.type_label }}
+                                            </td>
+
+                                            <td class="px-4 py-3 align-top">
+                                                <p
+                                                    class="font-medium text-[#16302E] dark:text-white"
+                                                >
+                                                    {{ charge.description }}
+                                                </p>
+                                            </td>
+
+                                            <td
+                                                class="whitespace-nowrap px-4 py-3 align-top text-right font-semibold text-[#16302E] dark:text-white"
+                                            >
+                                                ₱{{ formatMoney(charge.amount) }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
                         <section v-if="facilityCharges.length">
                             <SectionHeader>
                                 <template #icon>

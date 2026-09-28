@@ -31,6 +31,25 @@ class PatientAccessController extends Controller
         if ($request->action === 'bookings') {
             return $this->patientAccessService->bookings($payload);
         }
+
+        if ($request->action === 'invoices') {
+            $request->validate([
+                'patient_id' => ['required', 'integer'],
+                'page' => ['nullable', 'integer', 'min:1'],
+                'per_page' => ['nullable', 'integer', 'min:1', 'max:20'],
+            ]);
+
+            return $this->patientAccessService->invoices($payload);
+        }
+
+        if ($request->action === 'invoice') {
+            $request->validate([
+                'patient_id' => ['required', 'integer'],
+                'invoice_code' => ['required', 'string', 'max:50'],
+            ]);
+
+            return $this->patientAccessService->invoice($payload);
+        }
     }
 
     public function executeAction(Request $request)

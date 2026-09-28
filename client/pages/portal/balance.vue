@@ -13,6 +13,8 @@ import BalanceInvoiceList from "~/components/sections/portal/BalanceInvoiceList.
 import InvoiceAdjustmentModal from "~/components/sections/portal/InvoiceAdjustmentModal.vue";
 import BalanceTransactionList from "~/components/sections/portal/BalanceTransactionList.vue";
 import BalanceHistoryModal from "~/components/sections/portal/BalanceHistoryModal.vue";
+import PortalInvoicesModal from "~/components/sections/portal/PortalInvoicesModal.vue";
+import PortalInvoiceDetailModal from "~/components/sections/portal/PortalInvoiceDetailModal.vue";
 import WithdrawCreditsModal from "~/components/sections/portal/WithdrawCreditsModal.vue";
 import PayBalanceModal from "~/components/sections/portal/PayBalanceModal.vue";
 import { formatCurrency } from "~/utils/currency";
@@ -856,10 +858,18 @@ function openAdjustments(invoice: InvoiceSummary) {
 }
 const isLoadingLedger = ref(false);
 
-async function openAllInvoices() {
-    showAllInvoices.value = true;
+const selectedPatientId = computed(
+    () => lovedOnes.value[selectedIndex.value]?.patient_id ?? null,
+);
 
-    await refreshLedger();
+const viewingInvoiceCode = ref<string | null>(null);
+
+function openInvoice(invoice: InvoiceSummary) {
+    viewingInvoiceCode.value = invoice.invoice_code;
+}
+
+function openAllInvoices() {
+    showAllInvoices.value = true;
 }
 
 async function openAllTransactions() {
@@ -2226,6 +2236,7 @@ async function openReceipt(receiptNo?: string | null) {
                         <BalanceInvoiceList
                             :invoices="recentInvoices"
                             class="mt-4 flex-1"
+                            @open="openInvoice"
                             @adjustments="openAdjustments"
                         />
 
@@ -2312,24 +2323,20 @@ async function openReceipt(receiptNo?: string | null) {
                 </div>
             </div>
 
-            <BalanceHistoryModal
+            <PortalInvoicesModal
                 :open="showAllInvoices"
-                title="All invoices"
-                :subtitle="`Every bill raised for ${selectedLovedOne?.full_name || 'this resident'}`"
-                :items="listedInvoices"
-                :page-size="PAGE_SIZE"
-                :loading="isLoadingLedger"
-                loading-label="Loading invoices…"
-                empty-label="No invoices yet"
+                :patient-id="selectedPatientId"
+                :resident-name="selectedLovedOne?.full_name"
                 @close="showAllInvoices = false"
-            >
-                <template #default="{ items }">
-                    <BalanceInvoiceList
-                        :invoices="items"
-                        @adjustments="openAdjustments"
-                    />
-                </template>
-            </BalanceHistoryModal>
+                @open-invoice="openInvoice"
+                @adjustments="openAdjustments"
+            />
+
+            <PortalInvoiceDetailModal
+                :patient-id="selectedPatientId"
+                :invoice-code="viewingInvoiceCode"
+                @close="viewingInvoiceCode = null"
+            />
 
             <BalanceHistoryModal
                 :open="showRefunds"

@@ -43,6 +43,26 @@ export interface PortalInvoice {
     }>;
 }
 
+export interface PortalInvoiceLine {
+    category: string;
+    description: string | null;
+    detail: string | null;
+    amount: number;
+}
+
+export interface PortalInvoicePayment {
+    payment_id: number;
+    payment_code: string | null;
+    amount: number;
+    payment_method: string | null;
+    created_at: string | null;
+}
+
+export interface PortalInvoiceDetail extends PortalInvoice {
+    lines: PortalInvoiceLine[];
+    payments: PortalInvoicePayment[];
+}
+
 export type PortalTransactionType =
     "invoice" | "payment" | "refund" | "adjustment";
 

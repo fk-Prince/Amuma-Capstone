@@ -15,6 +15,7 @@ defineProps<{
 
 const emit = defineEmits<{
     (event: "adjustments", invoice: PortalInvoice): void;
+    (event: "open", invoice: PortalInvoice): void;
 }>();
 
 function peso(amount: number) {
@@ -37,7 +38,11 @@ function latestAdjustment(invoice: PortalInvoice) {
         <article
             v-for="invoice in invoices"
             :key="invoice.invoice_id"
-            class="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
+            role="button"
+            tabindex="0"
+            class="-mx-2 flex cursor-pointer items-start justify-between gap-3 rounded-xl px-2 py-3 transition hover:bg-gray-50 first:pt-2 last:pb-2 dark:hover:bg-white/5"
+            @click="emit('open', invoice)"
+            @keydown.enter="emit('open', invoice)"
         >
             <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-2">
@@ -77,7 +82,7 @@ function latestAdjustment(invoice: PortalInvoice) {
                     v-else-if="invoice.adjustments.length"
                     type="button"
                     class="mt-0.5 inline-flex max-w-full items-center gap-1 text-[10px] font-medium text-amber-600 underline underline-offset-2 transition hover:no-underline dark:text-amber-300"
-                    @click="emit('adjustments', invoice)"
+                    @click.stop="emit('adjustments', invoice)"
                 >
                     <span class="truncate">
                         {{ latestAdjustment(invoice)?.reason }}

@@ -361,6 +361,17 @@
 
                         <ActionButton
                             variant="outline"
+                            :disabled="!canReadAdmissions"
+                            :tooltip="
+                                canReadAdmissions ? undefined : noPermissionTip
+                            "
+                            @click="chargeModalOpen = true"
+                        >
+                            Charges
+                        </ActionButton>
+
+                        <ActionButton
+                            variant="outline"
                             :disabled="!isAdmitted || !canViewCaregiver"
                             :tooltip="
                                 blockedTip(
@@ -1002,6 +1013,26 @@
             :branch-uuid="uuid"
             @close="addServiceModalOpen = false"
         />
+
+        <ChargesModal
+            :open="chargeModalOpen"
+            :patient-uuid="id"
+            :patient-name="patient?.full_name"
+            :branch-uuid="uuid"
+            :current-admission-id="
+                isAdmitted
+                    ? (currentAdmission ?? latestAdmission)
+                          ?.patient_admission_id
+                    : null
+            "
+            :can-add="isAdmitted && canUpdateAdmission"
+            :add-blocked-reason="
+                !canUpdateAdmission
+                    ? 'You need permission to update admissions.'
+                    : unavailableWhileNotAdmitted
+            "
+            @close="chargeModalOpen = false"
+        />
     </div>
 </template>
 <script setup lang="ts"">
@@ -1029,6 +1060,7 @@ import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail
 import AdmissionDischarge from "~/components/sections/app/Admission/AdmissionDischarge.vue";
 import AdmissionCancel from "~/components/sections/app/Admission/AdmissionCancel.vue";
 import AddServiceModal from "~/components/sections/app/Admission/AddServiceModal.vue";
+import ChargesModal from "~/components/sections/app/Admission/ChargesModal.vue";
 import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
 import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 import { useBranchStore } from "~/stores/branch";
@@ -1234,6 +1266,7 @@ const actionLoading = ref(false);
 const unpaidAdmitDialogOpen = ref(false);
 const paymentRequiredDialogOpen = ref(false);
 const unpaidExtendDialogOpen = ref(false);
+const chargeModalOpen = ref(false);
 const cancelAdmissionDialogOpen = ref(false);
 const todayStr = toLocalDateString(new Date());
 const changeRoomModalOpen = ref(false);

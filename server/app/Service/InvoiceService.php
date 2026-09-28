@@ -432,6 +432,7 @@ class InvoiceService
         $invoice->loadMissing([
             'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
             'invoiceServices.scheduleService.schedule.patient',
+            'additionalCharges.patientAdmission.patient',
         ]);
 
         $patient = $invoice->invoiceAdmissionLines
@@ -442,7 +443,8 @@ class InvoiceService
         }
 
         return $invoice->invoiceServices
-            ->first()?->scheduleService?->schedule?->patient;
+            ->first()?->scheduleService?->schedule?->patient
+            ?? $invoice->additionalCharges->first()?->patientAdmission?->patient;
     }
 
     public function receipts(array $payload)

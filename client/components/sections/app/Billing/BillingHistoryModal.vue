@@ -43,8 +43,48 @@
                 </div>
 
                 <ul
-                    v-if="mode === 'receipts'"
-                    class="min-h-0 flex-1 divide-y divide-gray-100 overflow-y-auto dark:divide-white/10"
+                    v-if="loading"
+                    class="min-h-[400px] flex-1 divide-y divide-gray-100 overflow-hidden dark:divide-white/10"
+                >
+                    <li
+                        v-for="i in 5"
+                        :key="i"
+                        class="flex animate-pulse items-start justify-between gap-4 px-6 py-4"
+                    >
+                        <div class="min-w-0 flex-1 space-y-2">
+                            <div
+                                class="h-4 w-32 rounded bg-gray-200 dark:bg-white/10"
+                            />
+                            <div
+                                class="h-3 w-24 rounded bg-gray-100 dark:bg-white/5"
+                            />
+                            <div
+                                class="h-2.5 w-40 rounded bg-gray-100 dark:bg-white/5"
+                            />
+                        </div>
+
+                        <div
+                            class="h-4 w-20 shrink-0 rounded bg-gray-200 dark:bg-white/10"
+                        />
+                    </li>
+                </ul>
+
+                <div
+                    v-else-if="
+                        mode === 'receipts' ? !receipts.length : !refunds.length
+                    "
+                    class="flex min-h-[400px] flex-1 items-center justify-center px-6 text-sm text-gray-400 dark:text-gray-500"
+                >
+                    {{
+                        mode === "receipts"
+                            ? "No payment receipts yet."
+                            : "No refunds yet."
+                    }}
+                </div>
+
+                <ul
+                    v-else-if="mode === 'receipts'"
+                    class="min-h-[400px] flex-1 divide-y divide-gray-100 overflow-y-auto dark:divide-white/10"
                 >
                     <li
                         v-for="receipt in receipts"
@@ -100,7 +140,7 @@
 
                 <ul
                     v-else
-                    class="min-h-0 flex-1 divide-y divide-gray-100 overflow-y-auto dark:divide-white/10"
+                    class="min-h-[400px] flex-1 divide-y divide-gray-100 overflow-y-auto dark:divide-white/10"
                 >
                     <li
                         v-for="refund in refunds"
@@ -189,6 +229,7 @@ defineProps<{
     receipts: ReceiptGroup[];
     refunds: RefundEntry[];
     loadingReceipt?: string | null;
+    loading?: boolean;
 }>();
 
 const emit = defineEmits<{

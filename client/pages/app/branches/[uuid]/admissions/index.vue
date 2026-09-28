@@ -322,8 +322,13 @@
                             />
                         </div>
 
-                        <BaseButton class="w-full py-3" @click="submit">
-                            {{ actionLabel }}
+                        <BaseButton
+                            class="w-full py-3"
+                            :loading="submitting"
+                            :disabled="submitting"
+                            @click="submit"
+                        >
+                            {{ submitting ? "Submitting..." : actionLabel }}
                         </BaseButton>
                     </div>
                 </aside>
@@ -358,8 +363,13 @@
                     </div>
                 </div>
 
-                <BaseButton class="w-full py-3" @click="submit">
-                    {{ actionLabel }}
+                <BaseButton
+                    class="w-full py-3"
+                    :loading="submitting"
+                    :disabled="submitting"
+                    @click="submit"
+                >
+                    {{ submitting ? "Submitting..." : actionLabel }}
                 </BaseButton>
             </div>
         </div>
@@ -367,9 +377,10 @@
         <ConfirmDialog
             :open="showEmailExistsWarning"
             title="This email already exists"
-            :message="`This email exists: ${guardianData.email ?? ''}. Are you sure you want to continue?`"
+            :message="`${guardianData.email ?? 'This email'} already has an account. If you continue, this account will be able to access the patient's records. The guardian details already saved on this account won't be changed — only fields that are still empty will be filled in from this form.`"
             confirm-label="Continue"
             cancel-label="Cancel"
+            :loading="submitting"
             @confirm="confirmEmailExists"
             @cancel="showEmailExistsWarning = false"
         />
@@ -910,8 +921,11 @@ onMounted(async () => {
 
 const showEmailExistsWarning = ref(false);
 const emailExistsConfirmed = ref(false);
+const submitting = ref(false);
 
 async function submit() {
+    if (submitting.value) return;
+
     if (bookingProcessed.value) {
         error(
             `Booking ${referenceInput.value} has already been processed and can't be submitted again.`,
@@ -925,28 +939,34 @@ async function submit() {
         return;
     }
 
-    if (!emailExistsConfirmed.value && guardianData.email) {
-        try {
-            const res = await admissionService.guardianEmailExists(
-                guardianData.email,
-            );
+    submitting.value = true;
 
-            if (res?.exists) {
-                showEmailExistsWarning.value = true;
-                return;
+    try {
+        if (!emailExistsConfirmed.value && guardianData.email) {
+            try {
+                const res = await admissionService.guardianEmailExists(
+                    guardianData.email,
+                );
+
+                if (res?.exists) {
+                    showEmailExistsWarning.value = true;
+                    return;
+                }
+            } catch (err) {
+                console.error(err);
             }
-        } catch (err) {
-            console.error(err);
         }
-    }
 
-    proceedToReview();
+        await proceedToReview();
+    } finally {
+        submitting.value = false;
+    }
 }
 
-function confirmEmailExists() {
-    showEmailExistsWarning.value = false;
+async function confirmEmailExists() {
     emailExistsConfirmed.value = true;
-    submit();
+    await submit();
+    showEmailExistsWarning.value = false;
 }
 
 function proceedToReview() {
@@ -964,7 +984,7 @@ function proceedToReview() {
     bookingStore.diagnoses = deepToRaw(diagnosisData);
     bookingStore.branchFacility = branch.value?.facility ?? [];
 
-    router.push({
+    return router.push({
         path: `/app/branches/${uuid.value}/admissions/review`,
         query: {
             reference_id: referenceInput.value,

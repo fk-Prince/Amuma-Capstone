@@ -81,6 +81,17 @@ class Invoice extends Model
         return $this->hasMany(InvoiceAdmission::class, 'invoice_id', 'invoice_id');
     }
 
+    public function additionalCharges(): HasMany
+    {
+        return $this->hasMany(AdditionalCharge::class, 'invoice_id', 'invoice_id');
+    }
+
+    public function chargedAdmission(): ?PatientAdmission
+    {
+        return $this->invoiceAdmissionLines->first()?->patientAdmission
+            ?? $this->additionalCharges->first()?->patientAdmission;
+    }
+
 
     public function paymentDescription(): string
     {
@@ -107,6 +118,18 @@ class Invoice extends Model
             $more = $services->count() - 2;
 
             return $services->take(2)->implode(', ') . ($more > 0 ? " (+{$more} more)" : '');
+        }
+
+        $charges = $this->additionalCharges
+            ->pluck('description')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($charges->isNotEmpty()) {
+            $more = $charges->count() - 2;
+
+            return $charges->take(2)->implode(', ') . ($more > 0 ? " (+{$more} more)" : '');
         }
 
         return 'Payment for balance';
@@ -150,16 +173,27 @@ class Invoice extends Model
                 ->values();
         }
 
-        return $this->invoiceServices
+        if ($this->invoiceServices->isNotEmpty()) {
+            return $this->invoiceServices
+                ->filter(fn($line) => $line->description)
+                ->groupBy('description')
+                ->map(fn($group, $description) => [
+                    'description' => $description,
+                    'weight' => (float) $group->sum(fn($line) => (float) $line->price * (
+                        $line->scheduleService?->service_id === null
+                            ? max(1, (float) ($line->scheduleService?->hours_booked ?? 1))
+                            : 1
+                    )),
+                ])
+                ->values();
+        }
+
+        return $this->additionalCharges
             ->filter(fn($line) => $line->description)
             ->groupBy('description')
             ->map(fn($group, $description) => [
                 'description' => $description,
-                'weight' => (float) $group->sum(fn($line) => (float) $line->price * (
-                    $line->scheduleService?->service_id === null
-                        ? max(1, (float) ($line->scheduleService?->hours_booked ?? 1))
-                        : 1
-                )),
+                'weight' => (float) $group->sum('amount'),
             ])
             ->values();
     }
@@ -347,8 +381,14 @@ class Invoice extends Model
             fn($query) => $query->where('patient_id', $patientId)
         )->pluck('invoice_id');
 
+        $charged = AdditionalCharge::whereHas(
+            'patientAdmission',
+            fn($query) => $query->where('patient_id', $patientId)
+        )->pluck('invoice_id');
+
         return self::$patientInvoiceIdCache[$key] = $admission
             ->merge($scheduled)
+            ->merge($charged)
             ->unique()
             ->values();
     }

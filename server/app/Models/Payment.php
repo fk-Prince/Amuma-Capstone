@@ -37,15 +37,11 @@ class Payment extends Model
         return $this->belongsTo(Transaction::class, 'transaction_id', 'transaction_id');
     }
 
-    // The money and the parties live on the ledger entry; the payment record
-    // only says how it was taken.
     public function getAmountAttribute(): float
     {
         return round((float) ($this->transaction?->amount ?? 0), 2);
     }
 
-    // A receipt is identified by the ledger entry it belongs to; there is no
-    // separate RCP series any more.
     public function getPaymentCodeAttribute()
     {
         return $this->transaction?->transaction_code;
@@ -56,8 +52,6 @@ class Payment extends Model
         return $this->transaction?->transaction_reference_id;
     }
 
-    // How the money was taken lives on the ledger entry alongside the amount,
-    // so these read through rather than duplicating the columns.
     public function getPaymentMethodAttribute()
     {
         return $this->transaction?->method;
@@ -176,9 +170,6 @@ class Payment extends Model
         return $this->allocated_amount;
     }
 
-    // The ledger amount is what was actually kept, so change only exists
-    // against what was physically handed over — recorded separately because
-    // it never belonged to the branch even for the moment it sat in the till.
     public function getAmountTenderedAttribute(): float
     {
         return round((float) ($this->cash_tendered ?? $this->amount), 2);
@@ -205,5 +196,4 @@ class Payment extends Model
     {
         return MoneyWords::pesos($this->amount_applied);
     }
-
 }

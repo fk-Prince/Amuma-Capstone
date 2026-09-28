@@ -30,16 +30,6 @@ class UserRepository
     public function createUpdateTypeUser(array $payload, string $type)
     {
         if ($type === 'client') {
-            if (!empty($payload['address'])) {
-                $scheduledLocation = $this->locationRepository->create([
-                    'full_address' => $payload['address'],
-                ]);
-
-                $payload['location_id'] = $scheduledLocation->location_id;
-            }
-
-            unset($payload['address']);
-
             $user = User::whereRaw('LOWER(TRIM(email)) = ?', [Str::lower(trim($payload['email']))])->first();
 
             if (!$user) {
@@ -51,24 +41,39 @@ class UserRepository
                 ]);
             }
 
+            $client = $user->client;
+
+            if (!empty($payload['address']) && empty($client?->location_id)) {
+                $payload['location_id'] = $this->locationRepository->create([
+                    'full_address' => $payload['address'],
+                ])->location_id;
+            }
+
             $initials = strtoupper(
                 substr($payload['first_name'], 0, 1) . substr($payload['last_name'], 0, 1)
             );
 
-            $user->client()->updateOrCreate(
-                [
-                    'user_id' => $user->user_id,
-                ],
-                [
-                    'first_name' => $payload['first_name'],
-                    'middle_name' => $payload['middle_name'] ?? null,
-                    'last_name' => $payload['last_name'],
-                    'location_id' => $payload['location_id'] ?? null,
-                    'phone_number' => $payload['phone_number'] ?? null,
-                    'occupation' => $payload['occupation'] ?? null,
-                    'avatar' => 'https://ui-avatars.com/api/?name=' . $initials,
-                ]
-            );
+            $values = [
+                'first_name' => $payload['first_name'],
+                'middle_name' => $payload['middle_name'] ?? null,
+                'last_name' => $payload['last_name'],
+                'location_id' => $payload['location_id'] ?? null,
+                'phone_number' => $payload['phone_number'] ?? null,
+                'occupation' => $payload['occupation'] ?? null,
+                'avatar' => 'https://ui-avatars.com/api/?name=' . $initials,
+            ];
+
+            if (!$client) {
+                $user->client()->create($values);
+            } else {
+                $missing = collect($values)
+                    ->filter(fn($value, $column) => blank($client->{$column}) && !blank($value))
+                    ->all();
+
+                if ($missing) {
+                    $client->update($missing);
+                }
+            }
 
             return $user->load('client');
         }

@@ -90,6 +90,19 @@ class InvoiceResource extends JsonResource
                 ])
             ),
 
+            'charges' => $this->whenLoaded(
+                'additionalCharges',
+                fn() => $this->additionalCharges->map(fn($charge) => [
+                    'additional_charge_id' => $charge->additional_charge_id,
+                    'patient_admission_id' => $charge->patient_admission_id,
+                    'type' => $charge->type,
+                    'type_label' => $charge->type_label,
+                    'description' => $charge->description,
+                    'amount' => (float) $charge->amount,
+                    'created_at' => $charge->created_at?->toIso8601String(),
+                ])->values()
+            ),
+
             // Through the allocations: a payment split across invoices only
             // contributes its own share, and its refunds here are the ones
             // raised against this invoice.
@@ -377,6 +390,14 @@ class InvoiceResource extends JsonResource
         ) {
             $patient = $this->invoiceServices
                 ->first()?->scheduleService?->schedule?->patient;
+        }
+
+        if (
+            !$patient &&
+            $this->resource->relationLoaded('additionalCharges')
+        ) {
+            $patient = $this->additionalCharges
+                ->first()?->patientAdmission?->patient;
         }
 
         if (!$patient) {

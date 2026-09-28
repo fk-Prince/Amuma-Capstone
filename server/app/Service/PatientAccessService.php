@@ -39,6 +39,16 @@ class PatientAccessService
         return $this->patientAccessRepository->bookings($payload);
     }
 
+    public function invoices(array $payload)
+    {
+        return $this->patientAccessRepository->invoicePage($payload);
+    }
+
+    public function invoice(array $payload)
+    {
+        return $this->patientAccessRepository->invoiceDetail($payload);
+    }
+
 
     public function cancelAdmission(array $payload, User $user)
     {

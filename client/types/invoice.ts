@@ -341,8 +341,18 @@ export interface InvoiceDetail {
     branch?: InvoiceBranch;
     services?: InvoiceServiceLine[];
     facilities?: InvoiceAccommodationLine[];
+    charges?: InvoiceChargeLine[];
     payments?: InvoicePayment[];
     adjustments?: InvoiceAdjustmentDetail[];
+}
+
+export interface InvoiceChargeLine {
+    additional_charge_id: number;
+    type: "medication" | "supplies" | "additional_charges";
+    type_label: string;
+    description: string;
+    amount: number;
+    created_at: string | null;
 }
 
 export interface PatientInvoiceItem {
@@ -378,6 +388,7 @@ export interface PatientInvoiceItem {
         room_no: string | null;
         bed_no: string | null;
     }[];
+    charges?: InvoiceChargeLine[];
     payments?: InvoicePayment[];
     adjustments?: InvoiceAdjustmentDetail[];
 }

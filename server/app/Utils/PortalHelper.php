@@ -10,6 +10,7 @@ use App\Models\PatientAccess;
 use App\Models\Schedule;
 use App\Models\ScheduleService;
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class PortalHelper
@@ -754,33 +755,87 @@ class PortalHelper
                     : $invoice->status !== Invoice::STATUS_VOID
             )
             ->values()
-            ->map(fn($invoice) => [
-                'invoice_id' => $invoice->invoice_id,
-                'invoice_code' => $invoice->invoice_code,
-                'description' => $invoice->paymentDescription(),
-                'status' => $invoice->status,
-                'total' => (float) $invoice->total_amount,
-                'adjusted_total' => (float) $invoice->adjusted_total,
-                'amount_paid' => (float) $invoice->amount_paid,
-                'net_paid' => (float) $invoice->net_paid_amount,
-                'balance_due' => (float) $invoice->balance_due,
-                'refund_status' => $invoice->refund_status,
-                'void_reason' => $invoice->void_reason,
-                'voided_at' => $invoice->voided_at?->format('Y-m-d H:i:s'),
-                'created_at' => $invoice->created_at?->format('Y-m-d H:i:s'),
-                'payments' => self::invoicePayments($invoice),
-
-                'adjustments' => $invoice->invoiceAdjustments
-                    ->map(fn($adjustment) => [
-                        'invoice_adjustment_id' => $adjustment->invoice_adjustment_id,
-                        'type' => $adjustment->type,
-                        'amount' => (float) $adjustment->amount,
-                        'reason' => $adjustment->reason,
-                        'created_at' => $adjustment->created_at?->format('Y-m-d H:i:s'),
-                    ])
-                    ->values(),
-            ])
+            ->map(fn($invoice) => $this->invoiceRow($invoice))
             ->values()
             ->toArray();
+    }
+
+    public function invoiceRow(Invoice $invoice): array
+    {
+        return [
+            'invoice_id' => $invoice->invoice_id,
+            'invoice_code' => $invoice->invoice_code,
+            'description' => $invoice->paymentDescription(),
+            'status' => $invoice->status,
+            'total' => (float) $invoice->total_amount,
+            'adjusted_total' => (float) $invoice->adjusted_total,
+            'amount_paid' => (float) $invoice->amount_paid,
+            'net_paid' => (float) $invoice->net_paid_amount,
+            'balance_due' => (float) $invoice->balance_due,
+            'refund_status' => $invoice->refund_status,
+            'void_reason' => $invoice->void_reason,
+            'voided_at' => $invoice->voided_at?->format('Y-m-d H:i:s'),
+            'created_at' => $invoice->created_at?->format('Y-m-d H:i:s'),
+            'payments' => self::invoicePayments($invoice),
+
+            'adjustments' => $invoice->invoiceAdjustments
+                ->map(fn($adjustment) => [
+                    'invoice_adjustment_id' => $adjustment->invoice_adjustment_id,
+                    'type' => $adjustment->type,
+                    'amount' => (float) $adjustment->amount,
+                    'reason' => $adjustment->reason,
+                    'created_at' => $adjustment->created_at?->format('Y-m-d H:i:s'),
+                ])
+                ->values(),
+        ];
+    }
+
+    public function invoiceDetail(Invoice $invoice): array
+    {
+        $lines = collect();
+
+        foreach ($invoice->invoiceAdmissionLines as $line) {
+            $period = $line->admissionPeriod;
+
+            $lines->push([
+                'category' => 'Accommodation',
+                'description' => $line->description,
+                'detail' => $period
+                    ? collect([
+                        $period->start_date ? Carbon::parse($period->start_date)->format('M j, Y') : null,
+                        $period->end_date ? Carbon::parse($period->end_date)->format('M j, Y') : null,
+                    ])->filter()->implode(' – ')
+                    : null,
+                'amount' => (float) $line->price,
+            ]);
+        }
+
+        foreach ($invoice->invoiceServices as $line) {
+            $scheduleService = $line->scheduleService;
+            $isAdl = $scheduleService?->service_id === null;
+            $hours = (float) ($scheduleService?->hours_booked ?? 0);
+
+            $lines->push([
+                'category' => $isAdl ? 'Daily Living (ADL)' : 'Service',
+                'description' => $line->description,
+                'detail' => $isAdl && $hours > 0
+                    ? rtrim(rtrim(number_format($hours, 2), '0'), '.') . ' hrs × ₱' . number_format((float) $line->price, 2)
+                    : null,
+                'amount' => round((float) $line->price * ($isAdl ? max(1, $hours) : 1), 2),
+            ]);
+        }
+
+        foreach ($invoice->additionalCharges as $charge) {
+            $lines->push([
+                'category' => $charge->type_label,
+                'description' => $charge->description,
+                'detail' => null,
+                'amount' => (float) $charge->amount,
+            ]);
+        }
+
+        return $this->invoiceRow($invoice) + [
+            'lines' => $lines->values()->all(),
+        ];
     }
 }

@@ -147,7 +147,11 @@ const issuedAt = computed(() => stringToDateTime(new Date()));
 const groups = computed(() => {
     const { patient, admission, invoice } = props.slip;
 
-    const accommodation = [admission.room, admission.bed]
+    const roomAndBed = [
+        admission.floor ? `${admission.floor} Floor` : null,
+        admission.room,
+        admission.bed,
+    ]
         .filter(Boolean)
         .join(" · ");
 
@@ -172,9 +176,8 @@ const groups = computed(() => {
                     label: "Covered until",
                     value: formatDate(admission.discharged_at),
                 },
-                { label: "Accommodation", value: accommodation },
-                { label: "Floor", value: admission.floor },
-                { label: "Type", value: admission.accommodation_type },
+                { label: "Accommodation", value: admission.accommodation_type },
+                { label: "Room & Bed", value: roomAndBed },
                 { label: "Billing cycle", value: admission.billing_cycle },
             ].filter((row) => !!row.value),
         },

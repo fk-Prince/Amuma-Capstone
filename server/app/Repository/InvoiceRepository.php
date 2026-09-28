@@ -55,6 +55,7 @@ class InvoiceRepository
             'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
             'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
             'invoiceAdmissionLines.admissionPeriod.branchContract',
+            'additionalCharges.patientAdmission.patient',
             'allocations.refundAllocations.refund.transaction',
             'allocations.payment.transaction',
             'payments',
@@ -82,6 +83,7 @@ class InvoiceRepository
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                 'invoiceAdmissionLines.admissionPeriod.branchContract',
+                'additionalCharges.patientAdmission.patient',
             ]);
 
         if (!empty($search)) {
@@ -164,6 +166,9 @@ class InvoiceRepository
             )->orWhereHas(
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
                 fn($p) => $p->where('uuid', $patientUuid)
+            )->orWhereHas(
+                'additionalCharges.patientAdmission.patient',
+                fn($p) => $p->where('uuid', $patientUuid)
             );
         })
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
@@ -177,6 +182,8 @@ class InvoiceRepository
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                 'invoiceAdmissionLines.admissionPeriod.branchContract',
+                'additionalCharges.patientAdmission.patient',
+                'additionalCharges.patientAdmission.bed.room',
                 'invoiceAdjustments',
             ]);
 
@@ -256,6 +263,9 @@ class InvoiceRepository
                 )->orWhereHas(
                     'invoiceAdmissionLines.admissionPeriod.patientAdmission',
                     fn($a) => $a->whereIn('patient_id', $patientIds)
+                )->orWhereHas(
+                    'additionalCharges.patientAdmission',
+                    fn($a) => $a->whereIn('patient_id', $patientIds)
                 );
             })
             ->with([
@@ -268,24 +278,13 @@ class InvoiceRepository
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                 'invoiceAdmissionLines.admissionPeriod.branchContract',
+                'additionalCharges.patientAdmission.patient',
             ])
             ->get();
 
-        $grouped = $invoices->groupBy(function ($invoice) {
-            $patient =
-                $invoice->invoiceServices
-                ->first()
-                ?->scheduleService
-                ?->schedule
-                ?->patient
-                ??
-                $invoice->invoiceAdmissionLines
-                ->first()
-                ?->patientAdmission
-                ?->patient;
-
-            return $patient?->patient_id ?? 'unknown';
-        });
+        $grouped = $invoices->groupBy(
+            fn($invoice) => $this->invoicePatient($invoice)?->patient_id ?? 'unknown'
+        );
 
         // The list renders totals only, so none of the per-invoice panels are
         // built here. Opening a patient loads those through their own section.
@@ -341,32 +340,14 @@ class InvoiceRepository
             ->where('status', '!=', Invoice::STATUS_VOID)
             ->values();
 
-        // Given by the caller when the list is built from patients, so someone
-        // who has never been billed still gets a row.
+
         $patientModel = $patient ?? $patientInvoices
-            ->map(
-                fn($invoice) =>
-                $invoice->invoiceServices
-                    ->first()
-                    ?->scheduleService
-                    ?->schedule
-                    ?->patient
-                    ??
-                    $invoice->invoiceAdmissionLines
-                    ->first()
-                    ?->patientAdmission
-                    ?->patient
-            )
+            ->map(fn($invoice) => $this->invoicePatient($invoice))
             ->filter()
             ->first();
 
-        // Billing figures cover what is actually owed, so they ignore voided
-        // invoices. Money that moved is counted across every invoice, since a
-        // payment or refund on a voided invoice still left the till.
         $settledInvoices = $patientInvoices->concat($voidedInvoices);
 
-        // What the invoices actually ask for. The raw total ignores every credit
-        // note, so a downgraded stay kept reporting the price before the credit.
         $overallTotal = (float) $patientInvoices->sum('adjusted_total');
 
         $activePaid = (float) $patientInvoices->sum(
@@ -393,10 +374,7 @@ class InvoiceRepository
             $patientModel?->patient_id
         );
 
-        // Summed per invoice, not netted across them. Subtracting one total from
-        // another let a credit on a settled invoice cancel out a debt on an
-        // unpaid one, so a patient owing money read as fully paid. What is owed
-        // and what is held as credit are two separate figures.
+
         $overallBalance = round(
             (float) $patientInvoices->sum('balance_due'),
             2
@@ -531,7 +509,7 @@ class InvoiceRepository
         return $summary;
     }
 
-    private function formatAdmissions($patientInvoices)
+    private function formatAdmissions(mixed $patientInvoices)
     {
         $admissions = $patientInvoices
             ->flatMap(
@@ -542,6 +520,12 @@ class InvoiceRepository
                         'invoice' => $invoice,
                         'invoice_admission' => $invoiceAdmissionLines,
                     ]
+                )->concat(
+                    $invoice->additionalCharges->map(fn($charge) => [
+                        'admission' => $charge->patientAdmission,
+                        'invoice' => $invoice,
+                        'invoice_admission' => null,
+                    ])
                 )
             )
             ->filter(
@@ -615,13 +599,15 @@ class InvoiceRepository
             ->values();
     }
 
-    private function formatAdmissionInvoices($patientInvoices, int $admissionId)
+    private function formatAdmissionInvoices(mixed $patientInvoices, int $admissionId)
     {
         return $patientInvoices
             ->filter(
                 fn($invoice) => $invoice->invoiceAdmissionLines->contains(
                     fn($line) => (int) $line->admissionPeriod
                         ?->patient_admission_id === $admissionId
+                ) || $invoice->additionalCharges->contains(
+                    fn($charge) => (int) $charge->patient_admission_id === $admissionId
                 )
             )
             ->map(function ($invoice) {
@@ -636,7 +622,7 @@ class InvoiceRepository
             ->values();
     }
 
-    private function formatServiceInvoices($patientInvoices, int $scheduleServiceId)
+    private function formatServiceInvoices(mixed $patientInvoices, int $scheduleServiceId)
     {
         return $patientInvoices
             ->filter(
@@ -736,19 +722,9 @@ class InvoiceRepository
             ->values();
     }
 
-    /**
-     * Get the discharge calculation from:
-     *
-     * Patient
-     *   -> Admission
-     *      -> Invoice
-     *         -> InvoiceAdmission
-     *
-     * The calculation is based on the latest admission
-     * that has an invoice facility.
-     */
+
     private function getPatientDischargeCalculation(
-        $patientInvoices
+        mixed $patientInvoices
     ): ?array {
         $admissionItems = $patientInvoices
             ->flatMap(
@@ -847,19 +823,19 @@ class InvoiceRepository
         ];
     }
 
-    private function formatInvoice(object $invoice)
+    private function invoicePatient(object $invoice)
     {
-        $patient =
-            $invoice->invoiceServices
+        return $invoice->invoiceServices
             ->first()
             ?->scheduleService
             ?->schedule
             ?->patient
-            ??
-            $invoice->invoiceAdmissionLines
-            ->first()
-            ?->patientAdmission
-            ?->patient;
+            ?? $invoice->chargedAdmission()?->patient;
+    }
+
+    private function formatInvoice(object $invoice)
+    {
+        $patient = $this->invoicePatient($invoice);
 
         $total = (float) $invoice->adjusted_total;
         $paid = $invoice->net_paid_amount;
@@ -873,6 +849,10 @@ class InvoiceRepository
 
         if ($invoice->invoiceAdmissionLines->isNotEmpty()) {
             $category[] = 'Facility';
+        }
+
+        if ($invoice->additionalCharges->isNotEmpty()) {
+            $category[] = 'Charges';
         }
 
         return [
@@ -1121,6 +1101,18 @@ class InvoiceRepository
                 ])
                 ->values(),
 
+            'charges' =>
+            $invoice->additionalCharges
+                ->map(fn($charge) => [
+                    'additional_charge_id' => $charge->additional_charge_id,
+                    'type' => $charge->type,
+                    'type_label' => $charge->type_label,
+                    'description' => $charge->description,
+                    'amount' => (float) $charge->amount,
+                    'created_at' => $charge->created_at?->toIso8601String(),
+                ])
+                ->values(),
+
             'payments' =>
             $invoice->allocations
                 ->map(fn($allocation) => [
@@ -1189,6 +1181,10 @@ class InvoiceRepository
                 $p->where('uuid', $patientUuid)
             )->orWhereHas(
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
+                fn($p) =>
+                $p->where('uuid', $patientUuid)
+            )->orWhereHas(
+                'additionalCharges.patientAdmission.patient',
                 fn($p) =>
                 $p->where('uuid', $patientUuid)
             );

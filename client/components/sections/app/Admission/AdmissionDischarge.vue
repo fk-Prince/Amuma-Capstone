@@ -92,14 +92,6 @@
                                                 billing
                                             </p>
 
-                                            <p
-                                                class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
-                                            >
-                                                {{
-                                                    currentInvoice?.invoice_code
-                                                }}
-                                            </p>
-
                                             <!-- <p
                                                 v-if="invoiceCoversMorePeriods"
                                                 class="mt-1 text-[11px] text-slate-400 dark:text-gray-500"

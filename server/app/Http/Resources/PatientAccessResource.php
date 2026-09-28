@@ -283,6 +283,21 @@ class PatientAccessResource extends JsonResource
             ];
         }
 
+        if ($invoice->additionalCharges->isNotEmpty()) {
+            return [
+                'patient_admission_id' => $invoice->additionalCharges->first()->patient_admission_id,
+                'charges' => $invoice->additionalCharges
+                    ->map(fn($charge) => [
+                        'additional_charge_id' => $charge->additional_charge_id,
+                        'type' => $charge->type,
+                        'type_label' => $charge->type_label,
+                        'description' => $charge->description,
+                        'amount' => (float) $charge->amount,
+                    ])
+                    ->values(),
+            ];
+        }
+
         return null;
     }
 

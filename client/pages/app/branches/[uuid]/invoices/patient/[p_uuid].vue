@@ -1817,6 +1817,7 @@
             :receipts="receiptGroups"
             :refunds="refundHistory"
             :loading-receipt="loadingReceipt"
+            :loading="pendingSections.has('invoices')"
             @open-receipt="openReceiptByNo"
             @close="closeHistory"
         />
@@ -2539,8 +2540,8 @@ function closeHistory() {
 // Receipts are read from the invoices, so that section has to be on hand
 // before the history can list anything.
 async function openReceiptHistory() {
-    await loadSection("invoices");
     transactionsOpen.value = true;
+    await loadSection("invoices");
 }
 
 const loadingReceipt = ref<string | null>(null);

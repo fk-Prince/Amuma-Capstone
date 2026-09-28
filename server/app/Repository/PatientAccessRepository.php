@@ -200,6 +200,57 @@ class PatientAccessRepository
         return $this->findAccess($payload);
     }
 
+    private const INVOICE_RELATIONS = [
+        'allocations.payment.transaction',
+        'allocations.refundAllocations.refund.transaction',
+        'allocations.refundAllocations.invoiceAdjustment',
+        'invoiceAdjustments',
+        'invoiceServices',
+        'invoiceAdmissionLines',
+        'additionalCharges',
+    ];
+
+    public function invoicePage(array $payload)
+    {
+        $access = $this->findAccess($payload);
+        $perPage = min(20, max(1, (int) ($payload['per_page'] ?? 5)));
+
+        $invoices = Invoice::whereIn('invoice_id', Invoice::patientInvoiceIds($access->patient_id))
+            ->with(self::INVOICE_RELATIONS)
+            ->orderByDesc('invoice_id')
+            ->paginate($perPage);
+
+        return response()->json([
+            'data' => $invoices->getCollection()
+                ->map(fn(Invoice $invoice) => $this->helper->invoiceRow($invoice))
+                ->values(),
+            'meta' => [
+                'current_page' => $invoices->currentPage(),
+                'last_page' => $invoices->lastPage(),
+                'per_page' => $invoices->perPage(),
+                'total' => $invoices->total(),
+            ],
+        ]);
+    }
+
+    public function invoiceDetail(array $payload)
+    {
+        $access = $this->findAccess($payload);
+
+        $invoice = Invoice::whereIn('invoice_id', Invoice::patientInvoiceIds($access->patient_id))
+            ->where('invoice_code', $payload['invoice_code'] ?? '')
+            ->with([
+                ...self::INVOICE_RELATIONS,
+                'invoiceAdmissionLines.admissionPeriod',
+                'invoiceServices.scheduleService',
+            ])
+            ->firstOrFail();
+
+        return response()->json([
+            'data' => $this->helper->invoiceDetail($invoice),
+        ]);
+    }
+
     private function findAccess(array $payload)
     {
         $access = PatientAccess::query()
@@ -367,6 +418,12 @@ class PatientAccessRepository
                     ->whereIn('schedules.patient_id', $patientIds)
                     ->select('invoice_services.invoice_id', 'schedules.patient_id')
             )
+            ->union(
+                DB::table('additional_charges')
+                    ->join('patient_admissions', 'patient_admissions.patient_admission_id', '=', 'additional_charges.patient_admission_id')
+                    ->whereIn('patient_admissions.patient_id', $patientIds)
+                    ->select('additional_charges.invoice_id', 'patient_admissions.patient_id')
+            )
             ->get();
 
         $invoices = $pairs->isEmpty()
@@ -377,7 +434,7 @@ class PatientAccessRepository
                 'allocations.refundAllocations.refund.transaction',
                 'allocations.refundAllocations.invoiceAdjustment',
                 'invoiceAdjustments',
-                ...($full ? ['invoiceServices', 'invoiceAdmissionLines'] : []),
+                ...($full ? ['invoiceServices', 'invoiceAdmissionLines', 'additionalCharges'] : []),
             ])
             ->orderByDesc('invoice_id')
             ->get();
