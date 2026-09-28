@@ -659,7 +659,6 @@ class SubscriptionService
             return response()->json([
                 'status' => false,
                 'message' => 'Subscription failed. If your payment was made, it will be automatically refunded.',
-                'error' => $e->getMessage(),
             ], 500);
         }
     }

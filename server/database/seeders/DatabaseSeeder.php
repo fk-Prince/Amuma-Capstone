@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             EmployeeSeeder::class,
             NurseSeeder::class,
             ClientSeeder::class,
+            // PatientSeeder::class,
         ]);
     }
 }

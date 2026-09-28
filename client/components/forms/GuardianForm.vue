@@ -259,14 +259,70 @@ onMounted(() => {
                     required
                 />
 
-                <BaseInput
-                    label="Email"
-                    :model-value="props.model.email"
-                    @update:model-value="update('email', $event)"
-                    :error="errors?.email"
-                    :disabled="isDisabled('email')"
-                    required
-                />
+                <div>
+                    <BaseInput
+                        label="Email"
+                        :model-value="props.model.email"
+                        @update:model-value="update('email', $event)"
+                        :error="errors?.email"
+                        :disabled="isDisabled('email')"
+                        required
+                    >
+                        <template v-if="props.emailCheck" #suffix>
+                            <button
+                                type="button"
+                                class="mr-1.5 inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
+                                :class="
+                                    props.emailStatus === 'linked'
+                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                        : 'bg-primary/10 text-primary hover:bg-primary/15 dark:bg-primary-500/15 dark:text-primary-300'
+                                "
+                                :disabled="props.checkingEmail || !props.model.email?.trim()"
+                                @click="emit('check-email')"
+                            >
+                                <Loader2
+                                    v-if="props.checkingEmail"
+                                    class="h-3.5 w-3.5 animate-spin"
+                                />
+                                <UserCheck
+                                    v-else-if="props.emailStatus === 'linked'"
+                                    class="h-3.5 w-3.5"
+                                />
+                                <Search v-else class="h-3.5 w-3.5" />
+                                {{
+                                    props.emailStatus === "linked"
+                                        ? "Linked"
+                                        : "Check"
+                                }}
+                            </button>
+                            <button
+                                v-if="props.emailStatus === 'linked'"
+                                type="button"
+                                class="mr-1.5 -ml-0.5 rounded-md p-1 text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 dark:text-gray-500 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                                aria-label="Unlink the existing account"
+                                title="Unlink and clear the guardian details"
+                                @click="emit('reset-email')"
+                            >
+                                <X class="h-3.5 w-3.5" />
+                            </button>
+                        </template>
+                    </BaseInput>
+
+                    <p
+                        v-if="props.emailStatus === 'linked'"
+                        class="mt-1.5 text-xs text-emerald-600 dark:text-emerald-300"
+                    >
+                        Using the existing account's details. Change the email
+                        to enter a different guardian.
+                    </p>
+                    <p
+                        v-else-if="props.emailStatus === 'available'"
+                        class="mt-1.5 text-xs text-muted dark:text-gray-400"
+                    >
+                        No account uses this email yet — a new one will be
+                        created.
+                    </p>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 gap-6">
@@ -306,7 +362,7 @@ onMounted(() => {
 </template>
 <script setup lang="ts">
 import { reactive, computed, onMounted } from "vue";
-import { Lock } from "lucide-vue-next";
+import { Loader2, Lock, Search, UserCheck, X } from "lucide-vue-next";
 import BaseInput from "@/components/ui/BaseInput.vue";
 import PhoneInput from "@/components/ui/PhoneInput.vue";
 import type { Guardian } from "~/types/patient";
@@ -318,15 +374,25 @@ const props = withDefaults(
         currentUser?: User | null;
         errors?: Record<string, string> | null;
         isAdmission?: boolean;
+        emailCheck?: boolean;
+        checkingEmail?: boolean;
+        emailStatus?: "linked" | "available" | null;
+        linkedFields?: (keyof Guardian)[];
     }>(),
     {
         isAdmission: false,
+        emailCheck: false,
+        checkingEmail: false,
+        emailStatus: null,
+        linkedFields: () => [],
     },
 );
 
 const emit = defineEmits<{
     (e: "update:model", value: Guardian): void;
     (e: "update:errors", value: Record<string, string>): void;
+    (e: "check-email"): void;
+    (e: "reset-email"): void;
 }>();
 
 function update<K extends keyof Guardian>(key: K, value: Guardian[K]) {
@@ -363,7 +429,8 @@ const hasLockedFields = computed(() =>
 );
 
 const isDisabled = (field: keyof typeof lockedFields) =>
-    !props.isAdmission && lockedFields[field];
+    props.linkedFields.includes(field) ||
+    (!props.isAdmission && lockedFields[field]);
 
 onMounted(() => {
     // Skip auto-fill and locking during admission

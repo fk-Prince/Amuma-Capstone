@@ -133,60 +133,60 @@ export const assessmentSchema = z
 
 export type DiagnosisInput = z.infer<typeof assessmentSchema>;
 
-// export const patientData = reactive<Patient>({
-//     first_name: "",
-//     middle_name: "",
-//     last_name: "",
-//     gender: "",
-//     citizenship: "",
-//     occupation: "",
-//     date_of_birth: "",
-//     phone_number: "",
-//     marital_status: "",
-//     height: "",
-//     weight: "",
-//     blood_type: "",
-//     address: ""
-// });
-
-// export const guardianData = reactive<Guardian>({
-//     first_name: "",
-//     middle_name: "",
-//     last_name: "",
-//     phone_number: "",
-//     email: "",
-//     relationship: "",
-//     occupation: "",
-//     address: "",
-// });
-
 export const patientData = reactive<Patient>({
-    first_name: "Juan",
-    middle_name: "Dela",
-    last_name: "Cruz",
-    gender: "Male",
-    citizenship: "vasd",
-    occupation: "Engineer",
-    date_of_birth: "1995-06-15",
-    phone_number: "912 345 6789",
-    marital_status: "Single",
-    height: "175",
-    weight: "70",
-    blood_type: "O+",
-    address: "asdas",
-    allergies: "",
+    first_name: "",
+    middle_name: "",
+    last_name: "",
+    gender: "",
+    citizenship: "",
+    occupation: "",
+    date_of_birth: "",
+    phone_number: "",
+    marital_status: "",
+    height: "",
+    weight: "",
+    blood_type: "",
+    address: ""
 });
 
 export const guardianData = reactive<Guardian>({
-    first_name: "Maria",
-    middle_name: "Santos",
-    last_name: "Cruz",
-    phone_number: "977 117 1913",
-    email: "maria.cruz@example.com",
-    relationship: "Mother",
-    occupation: "Engineer",
-    address: "dfg",
+    first_name: "",
+    middle_name: "",
+    last_name: "",
+    phone_number: "",
+    email: "",
+    relationship: "",
+    occupation: "",
+    address: "",
 });
+
+// export const patientData = reactive<Patient>({
+//     first_name: "Juan",
+//     middle_name: "Dela",
+//     last_name: "Cruz",
+//     gender: "Male",
+//     citizenship: "vasd",
+//     occupation: "Engineer",
+//     date_of_birth: "1995-06-15",
+//     phone_number: "912 345 6789",
+//     marital_status: "Single",
+//     height: "175",
+//     weight: "70",
+//     blood_type: "O+",
+//     address: "asdas",
+//     allergies: "",
+// });
+
+// export const guardianData = reactive<Guardian>({
+//     first_name: "Maria",
+//     middle_name: "Santos",
+//     last_name: "Cruz",
+//     phone_number: "977 117 1913",
+//     email: "maria.cruz@example.com",
+//     relationship: "Mother",
+//     occupation: "Engineer",
+//     address: "dfg",
+// });
 
 export const diagnosisData = reactive<Diagnosis[]>([
     {

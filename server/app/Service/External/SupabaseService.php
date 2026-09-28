@@ -3,10 +3,11 @@
 namespace App\Service\External;
 
 
+use App\Exceptions\ExternalServiceException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
-use Exception;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class SupabaseService
 {
@@ -28,7 +29,12 @@ class SupabaseService
         )->post(env('SUPABASE_URL') . "/storage/v1/object/{$bucket}/{$filePath}");
 
         if (! $response->successful()) {
-            throw new Exception('Upload failed: ' . $response->body());
+            Log::warning('Supabase upload failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            throw ExternalServiceException::thirdParty();
         }
 
         return [

@@ -18,7 +18,6 @@
             <span class="help-label">Need help?</span>
         </button>
 
-        <!-- HERO SECTION -->
         <section class="hero-section">
             <div class="blob blob-hero-1"></div>
             <div class="blob blob-hero-2"></div>
@@ -152,7 +151,6 @@
                     </div>
                 </div>
 
-                <!-- DASHBOARD IMAGE + OVERLAPPING CARDS -->
                 <div class="hero-right">
                     <div class="dash-wrap">
                         <img
@@ -571,7 +569,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import dashboardImg from "~/assets/images/dashboard-preview.jpg";
+import dashboardImg from "~/assets/images/dashboard.png";
 
 const annually = ref(false);
 

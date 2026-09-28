@@ -2,11 +2,13 @@
 
 namespace App\Service\Payment;
 
+use App\Exceptions\ExternalServiceException;
 use App\Interfaces\IFacilityPayment;
 use App\Interfaces\ISubscriptionPayment;
 use App\Service\BookingService;
 use App\Service\SubscriptionService;
 use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -57,11 +59,15 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                 ]);
 
             if ($response->failed()) {
+                Log::warning('Xendit subscription charge failed', [
+                    'status' => $response->status(),
+                    'body' => $response->json(),
+                ]);
+
                 return response()->json([
                     'success' => false,
-                    'message' => $response->json('message') ?? 'Charge failed.',
-                    'error'   => $response->json(),
-                ], $response->status());
+                    'message' => ExternalServiceException::PAYMENT_FAILED,
+                ], 502);
             }
 
             $charge = $response->json();
@@ -78,13 +84,12 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
             }
 
             return $this->subscriptionService->newSubscriber($result);
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            Log::error("API timeout: " . $e->getMessage());
+        } catch (ConnectionException $e) {
+            report($e);
+
             return response()->json([
-                'message' => 'The external service took too long to respond.'
-            ], 504);
-        } catch (\Exception $e) {
-            Log::info($e);
+                'message' => ExternalServiceException::PAYMENT_FAILED,
+            ], 502);
         }
     }
 
@@ -111,11 +116,15 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                 ]);
 
             if ($response->failed()) {
+                Log::warning('Xendit facility charge failed', [
+                    'status' => $response->status(),
+                    'body' => $response->json(),
+                ]);
+
                 return response()->json([
                     'success' => false,
-                    'message' => $response->json('message') ?? 'Charge failed.',
-                    'error'   => $response->json(),
-                ], $response->status());
+                    'message' => ExternalServiceException::PAYMENT_FAILED,
+                ], 502);
             }
 
             $charge = $response->json();
@@ -127,15 +136,12 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                 'total'             => $payload['total']
             ];
             // return $this->bookingService->createPaymentBooking($user, $payload);
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+        } catch (Exception $e) {
+            report($e);
+
             return response()->json([
-                'message' => 'The external service took too long to respond.'
-            ], 504);
-        } catch (\Exception $e) {
-            Log::info($e);
-            return response()->json([
-                'message' => 'The external service took too long to respond.'
-            ], 504);
+                'message' => ExternalServiceException::PAYMENT_FAILED,
+            ], 502);
         }
     }
 }

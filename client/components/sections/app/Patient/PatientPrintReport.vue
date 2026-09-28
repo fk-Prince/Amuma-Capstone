@@ -47,7 +47,7 @@
                             {{ report.patient.full_name }}
                         </td>
                         <th>Date of Birth</th>
-                        <td>{{ report.patient.date_of_birth ?? "—" }}</td>
+                        <td>{{ birthLine }}</td>
                     </tr>
                     <tr>
                         <th>Gender</th>
@@ -77,15 +77,40 @@
                         </tr>
                         <tr>
                             <th>Height</th>
-                            <td>{{ report.patient.height ?? "—" }}</td>
+                            <td>{{ measure(report.patient.height, "cm") }}</td>
                             <th>Weight</th>
-                            <td>{{ report.patient.weight ?? "—" }}</td>
+                            <td>{{ measure(report.patient.weight, "kg") }}</td>
                         </tr>
                         <tr>
                             <th>Allergies</th>
                             <td colspan="3">
                                 {{ allergyList || "None recorded" }}
                             </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2 class="print-subhead">Diagnoses</h2>
+
+                <p v-if="!diagnoses.length" class="print-empty">
+                    No diagnosis recorded.
+                </p>
+
+                <table v-else class="print-table">
+                    <thead>
+                        <tr>
+                            <th>Diagnosis</th>
+                            <th class="print-col-date">Date</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(row, i) in diagnoses" :key="i">
+                            <td class="print-strong">
+                                {{ row.diagnosis ?? "—" }}
+                            </td>
+                            <td>{{ formatDate(row.diagnosis_date) }}</td>
+                            <td>{{ row.diagnosis_notes || "—" }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -97,21 +122,89 @@
                 </p>
 
                 <template v-else>
-                    <table
+                    <div
                         v-for="(assessment, index) in assessments"
                         :key="index"
-                        class="print-table print-assessment"
+                        class="print-assessment"
                     >
-                        <caption v-if="assessments.length > 1">
-                            Assessment
-                            {{
-                                index + 1
-                            }}
-                        </caption>
+                        <p
+                            v-if="assessments.length > 1"
+                            class="print-caption"
+                        >
+                            Assessment {{ index + 1 }}
+                        </p>
+
+                        <table class="print-table">
+                            <tbody>
+                                <tr
+                                    v-for="pair in assessment.fields"
+                                    :key="pair[0].label"
+                                >
+                                    <template v-for="field in pair" :key="field.label">
+                                        <th>{{ field.label }}</th>
+                                        <td>{{ field.value }}</td>
+                                    </template>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table
+                            v-if="assessment.lifeSystem.length"
+                            class="print-table print-life-system"
+                        >
+                            <thead>
+                                <tr>
+                                    <th>Daily Activity</th>
+                                    <th class="print-col-score">Score</th>
+                                    <th>Level of Independence</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="row in assessment.lifeSystem"
+                                    :key="row.activity"
+                                >
+                                    <td>{{ row.activity }}</td>
+                                    <td class="print-col-score">
+                                        {{ row.score }} / 5
+                                    </td>
+                                    <td>{{ row.meaning }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+
+                <template v-if="guardians.length">
+                    <h2 class="print-subhead">Family &amp; Guardians</h2>
+
+                    <table class="print-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Relationship</th>
+                                <th>Contact</th>
+                                <th>Email</th>
+                                <th>Portal</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            <tr v-for="field in assessment" :key="field.label">
-                                <th>{{ field.label }}</th>
-                                <td>{{ field.value }}</td>
+                            <tr v-for="(row, i) in guardians" :key="i">
+                                <td class="print-strong">
+                                    {{ row.full_name || "—" }}
+                                </td>
+                                <td>{{ row.relationship || "—" }}</td>
+                                <td>
+                                    {{ formatPhone(row.phone_number) || "—" }}
+                                </td>
+                                <td>{{ row.email || "—" }}</td>
+                                <td>
+                                    {{
+                                        row.has_portal_access
+                                            ? "Has access"
+                                            : "No access"
+                                    }}
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -123,30 +216,43 @@
                     No admission records.
                 </p>
 
-                <table v-else class="print-table">
-                    <thead>
-                        <tr>
-                            <th>Status</th>
-                            <th>Admitted</th>
-                            <th>End Date</th>
-                            <th>Room</th>
-                            <th>Type</th>
-                            <th>Bed</th>
-                            <th>Floor</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(row, i) in report.admission" :key="i">
-                            <td class="capitalize">{{ row.status ?? "—" }}</td>
-                            <td>{{ row.admitted_at ?? "—" }}</td>
-                            <td>{{ row.end_date ?? "—" }}</td>
-                            <td>{{ row.room ?? "—" }}</td>
-                            <td>{{ row.room_type ?? "—" }}</td>
-                            <td>{{ row.bed ?? "—" }}</td>
-                            <td>{{ row.floor ?? "—" }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <template v-else>
+                    <table class="print-table">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Admitted</th>
+                                <th>Covered Until</th>
+                                <th>Accommodation</th>
+                                <th>Room / Bed</th>
+                                <th class="right">Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template
+                                v-for="(row, i) in report.admission"
+                                :key="i"
+                            >
+                                <tr>
+                                    <td>{{ statusLabel(row.status) }}</td>
+                                    <td>{{ formatDate(row.admitted_at) }}</td>
+                                    <td>{{ formatDate(row.end_date) }}</td>
+                                    <td>{{ accommodationLabel(row) }}</td>
+                                    <td>{{ roomLabel(row) }}</td>
+                                    <td class="right">
+                                        {{ row.rate != null ? money(row.rate) : "—" }}
+                                    </td>
+                                </tr>
+                                <tr v-if="row.note" class="print-note-row">
+                                    <td colspan="6">
+                                        <span class="print-subtle">Note:</span>
+                                        {{ row.note }}
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </template>
             </template>
 
             <template v-else-if="section === 'billing'">
@@ -157,8 +263,8 @@
                             {{ money(report.billing?.summary?.total_paid) }}
                         </p>
                     </div>
-                    <div>
-                        <p class="print-summary-label">Refunded</p>
+                    <div v-if="Number(report.billing?.summary?.refundable) > 0">
+                        <p class="print-summary-label">Credit</p>
                         <p class="print-summary-value">
                             {{ money(report.billing?.summary?.refundable) }}
                         </p>
@@ -183,7 +289,7 @@
                             <th>Status</th>
                             <th class="right">Total</th>
                             <th class="right">Paid</th>
-                            <th class="right">Refunded</th>
+                            <th v-if="hasRefunds" class="right">Refunded</th>
                             <th class="right">Balance</th>
                         </tr>
                     </thead>
@@ -192,12 +298,12 @@
                             v-for="(row, i) in report.billing.invoices"
                             :key="i"
                         >
-                            <td>{{ row.invoice_code }}</td>
-                            <td>{{ row.created_at ?? "—" }}</td>
-                            <td class="capitalize">{{ row.status }}</td>
+                            <td class="print-strong">{{ row.invoice_code }}</td>
+                            <td>{{ formatDate(row.created_at) }}</td>
+                            <td>{{ statusLabel(row.status) }}</td>
                             <td class="right">{{ money(row.total) }}</td>
                             <td class="right">{{ money(row.amount_paid) }}</td>
-                            <td class="right">
+                            <td v-if="hasRefunds" class="right">
                                 {{ money(row.refunded_amount) }}
                             </td>
                             <td class="right">{{ money(row.balance_due) }}</td>
@@ -223,8 +329,8 @@
                             <tr v-for="(row, i) in billingPayments" :key="i">
                                 <td>{{ row.payment_code ?? "—" }}</td>
                                 <td>{{ row.invoice_code }}</td>
-                                <td>{{ row.paid_at ?? "—" }}</td>
-                                <td>{{ row.payment_method ?? "—" }}</td>
+                                <td>{{ formatDateTime(row.paid_at) }}</td>
+                                <td>{{ statusLabel(row.payment_method) }}</td>
                                 <td>{{ row.reference_id ?? "—" }}</td>
                                 <td class="right">{{ money(row.amount) }}</td>
                             </tr>
@@ -245,15 +351,22 @@
                             <th>Scheduled</th>
                             <th>Status</th>
                             <th>Services</th>
-                            <th>Address</th>
+                            <th>Location</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="(row, i) in report.schedule" :key="i">
-                            <td>{{ row.schedule_code ?? "—" }}</td>
-                            <td>{{ row.scheduled_at ?? "—" }}</td>
-                            <td class="capitalize">{{ row.status ?? "—" }}</td>
-                            <td>{{ serviceSummary(row.services) }}</td>
+                            <td class="print-strong">
+                                {{ row.schedule_code ?? "—" }}
+                            </td>
+                            <td>{{ formatDateTime(row.scheduled_at) }}</td>
+                            <td>{{ statusLabel(row.status) }}</td>
+                            <td>
+                                <span v-if="row.category" class="print-subtle">
+                                    {{ row.category }} ·
+                                </span>
+                                {{ serviceSummary(row.services) }}
+                            </td>
                             <td>{{ row.address ?? "—" }}</td>
                         </tr>
                     </tbody>
@@ -271,8 +384,7 @@
                             <th>Medication</th>
                             <th>Dosage</th>
                             <th>Route</th>
-                            <th>Frequency</th>
-                            <th>Kind</th>
+                            <th>Schedule</th>
                             <th>Start</th>
                             <th>Instructions</th>
                         </tr>
@@ -280,17 +392,30 @@
                     <tbody>
                         <tr v-for="(row, i) in report.medication" :key="i">
                             <td>
-                                {{ row.name
-                                }}<template v-if="row.strength">
-                                    ({{ row.strength }})</template
+                                <span class="print-strong">{{ row.name }}</span>
+                                <template v-if="row.strength">
+                                    {{ row.strength }}</template
                                 >
+                                <span
+                                    v-if="row.taken_for"
+                                    class="print-subtle print-block"
+                                >
+                                    For {{ row.taken_for }}
+                                </span>
                             </td>
                             <td>{{ dosage(row) }}</td>
-                            <td>{{ row.route ?? "—" }}</td>
-                            <td>{{ row.frequency ?? "—" }}</td>
-                            <td>{{ row.kind ?? "—" }}</td>
-                            <td>{{ row.start_date ?? "—" }}</td>
-                            <td>{{ row.instructions ?? "—" }}</td>
+                            <td>{{ ROUTE_LABELS[row.route] ?? row.route ?? "—" }}</td>
+                            <td>{{ medicationSchedule(row) }}</td>
+                            <td>
+                                {{ formatDate(row.start_date) }}
+                                <span
+                                    v-if="row.duration"
+                                    class="print-subtle print-block"
+                                >
+                                    {{ row.duration }} days
+                                </span>
+                            </td>
+                            <td>{{ row.instructions || "—" }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -306,19 +431,19 @@
                         <tr>
                             <th>Date</th>
                             <th>Time</th>
-                            <th>BP</th>
-                            <th>HR</th>
-                            <th>RR</th>
-                            <th>Temp</th>
-                            <th>O₂</th>
-                            <th>Glucose</th>
-                            <th>Pain</th>
+                            <th>BP (mmHg)</th>
+                            <th>HR (bpm)</th>
+                            <th>RR (/min)</th>
+                            <th>Temp (°C)</th>
+                            <th>SpO₂ (%)</th>
+                            <th>Glucose (mg/dL)</th>
+                            <th>Pain (/10)</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="(row, i) in report.vitals" :key="i">
-                            <td>{{ row.recorded_date ?? "—" }}</td>
-                            <td>{{ row.recorded_time ?? "—" }}</td>
+                            <td>{{ formatDate(row.recorded_date) }}</td>
+                            <td>{{ formatTime(row.recorded_time) || "—" }}</td>
                             <td>{{ row.blood_pressure ?? "—" }}</td>
                             <td>{{ row.heart_rate ?? "—" }}</td>
                             <td>{{ row.respiratory_rate ?? "—" }}</td>
@@ -347,8 +472,8 @@
                     </thead>
                     <tbody>
                         <tr v-for="(row, i) in report.activity" :key="i">
-                            <td>{{ row.occurred_at ?? "—" }}</td>
-                            <td class="capitalize">{{ row.type ?? "—" }}</td>
+                            <td>{{ formatDateTime(row.occurred_at) }}</td>
+                            <td>{{ statusLabel(row.type) }}</td>
                             <td>
                                 {{ row.title ?? "—" }}
                                 <span v-if="row.subtitle" class="print-subtle">
@@ -395,6 +520,15 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { formatAmount } from "~/utils/currency";
+import { formatPhone } from "~/utils/phone";
+import { formatDate, formatTime } from "~/utils/time";
+import { ROUTE_LABELS, DOSAGE_UNIT_LABELS } from "~/utils/medication";
+import {
+    LIFE_SYSTEM_ACTIVITIES,
+    LIFE_SYSTEM_SCALE,
+    activityLabel,
+    assessmentLabel,
+} from "~/utils/assessment";
 
 const props = defineProps<{ report: any }>();
 
@@ -429,69 +563,123 @@ const allergyList = computed(() => {
     return Array.isArray(allergies) ? allergies.join(", ") : String(allergies);
 });
 
-const ASSESSMENT_LABELS: Record<string, string> = {
-    condition: "Condition",
-    speech: "Speech",
-    mental_state: "Level of Consciousness",
-    affect: "Affect",
-    behavior: "Behavior",
-    communication: "Communication",
-    diagnosis: "Diagnosis",
-    diagnosis_date: "Diagnosis Date",
-    diagnosis_notes: "Diagnosis Notes",
-    diagnosis_file_name: "Attached File",
-    life_system_profile: "Life System Profile",
+const ASSESSMENT_FIELDS: [string, string][] = [
+    ["condition", "Mobility"],
+    ["mental_state", "Level of Consciousness"],
+    ["affect", "Affect"],
+    ["behavior", "Behavior"],
+    ["communication", "Communication"],
+    ["speech", "Speech"],
+];
+
+const FREQUENCY_LABELS: Record<string, string> = {
+    everyday: "Everyday",
+    every_2_days: "Every 2 days",
+    every_3_days: "Every 3 days",
+    every_week: "Every week",
 };
-
-function humanizeKey(key: string) {
-    return (
-        ASSESSMENT_LABELS[key] ??
-        key
-            .replace(/[_-]+/g, " ")
-            .replace(/\b\w/g, (char) => char.toUpperCase())
-    );
-}
-
-function humanizeValue(value: unknown): string {
-    if (typeof value === "boolean") return value ? "Yes" : "No";
-    if (Array.isArray(value)) return value.filter(Boolean).join(", ");
-    if (value && typeof value === "object") {
-        return Object.entries(value as Record<string, unknown>)
-            .filter(([, v]) => v !== null && v !== "" && v !== undefined)
-            .map(([k, v]) => `${humanizeKey(k)}: ${humanizeValue(v)}`)
-            .join("; ");
-    }
-    const text = String(value).trim();
-    return /^[a-z][a-z\s]*$/.test(text)
-        ? text.replace(/\b\w/g, (char) => char.toUpperCase())
-        : text;
-}
 
 const assessments = computed(() => {
     const raw = props.report?.profile?.assessment;
     if (!raw) return [];
 
-    const entries = Array.isArray(raw) ? raw : [raw];
+    const entries: any[] = Array.isArray(raw) ? raw : [raw];
 
     return entries
+        .filter((entry) => entry && typeof entry === "object")
         .map((entry) => {
-            if (!entry || typeof entry !== "object") return [];
-
-            return Object.entries(entry as Record<string, unknown>)
-                .filter(
-                    ([, value]) =>
-                        value !== null &&
-                        value !== undefined &&
-                        value !== "" &&
-                        !(Array.isArray(value) && !value.length),
-                )
-                .map(([key, value]) => ({
-                    label: humanizeKey(key),
-                    value: humanizeValue(value),
+            const fields = ASSESSMENT_FIELDS.filter(([key]) => entry[key])
+                .map(([key, label]) => ({
+                    label,
+                    value: assessmentLabel(entry[key]),
                 }));
+
+            const pairs = [];
+            for (let i = 0; i < fields.length; i += 2) {
+                pairs.push(fields.slice(i, i + 2));
+            }
+
+            const profile = entry.life_system_profile ?? {};
+            const lifeSystem = LIFE_SYSTEM_ACTIVITIES.filter(
+                (activity) => profile[activity] !== undefined && profile[activity] !== null,
+            ).map((activity) => ({
+                activity: activityLabel(activity),
+                score: profile[activity],
+                meaning:
+                    LIFE_SYSTEM_SCALE.find((step) => step.value === Number(profile[activity]))
+                        ?.label ?? "—",
+            }));
+
+            return { fields: pairs, lifeSystem };
         })
-        .filter((fields) => fields.length);
+        .filter((entry) => entry.fields.length || entry.lifeSystem.length);
 });
+
+const diagnoses = computed<any[]>(() => props.report?.profile?.diagnoses ?? []);
+
+const guardians = computed<any[]>(() => props.report?.profile?.guardians ?? []);
+
+const birthLine = computed(() => {
+    const dob = props.report?.patient?.date_of_birth;
+    if (!dob) return "—";
+
+    const birth = new Date(dob);
+    if (Number.isNaN(birth.getTime())) return dob;
+
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const beforeBirthday =
+        today.getMonth() < birth.getMonth() ||
+        (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate());
+    if (beforeBirthday) age -= 1;
+
+    return `${formatDate(dob)} (${age} yrs)`;
+});
+
+const hasRefunds = computed(() =>
+    (props.report?.billing?.invoices ?? []).some(
+        (invoice: any) => Number(invoice.refunded_amount) > 0,
+    ),
+);
+
+function measure(value: unknown, unit: string) {
+    const amount = Number(value);
+    if (value === null || value === undefined || value === "" || !Number.isFinite(amount)) {
+        return "—";
+    }
+    return `${Number(amount.toFixed(1))} ${unit}`;
+}
+
+function statusLabel(value?: string | null) {
+    if (!value) return "—";
+    return value
+        .replace(/[_-]+/g, " ")
+        .toLowerCase()
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function accommodationLabel(row: any) {
+    const plan = row.accommodation ?? row.room_type;
+    if (!plan) return "—";
+    const name = plan.toUpperCase() === "VIP" ? "VIP" : statusLabel(plan);
+    return row.billing_cycle ? `${name} · ${statusLabel(row.billing_cycle)}` : name;
+}
+
+function roomLabel(row: any) {
+    const parts = [
+        row.room ? `Room ${row.room}` : null,
+        row.bed ? `Bed ${row.bed}` : null,
+        row.floor ? `${row.floor} floor` : null,
+    ].filter(Boolean);
+    return parts.length ? parts.join(" · ") : "—";
+}
+
+function medicationSchedule(row: any) {
+    if (row.kind === "PRN") return "As needed (PRN)";
+    const frequency = FREQUENCY_LABELS[row.frequency] ?? statusLabel(row.frequency);
+    const times = (row.times ?? []).map((time: string) => formatTime(time)).filter(Boolean);
+    return times.length ? `${frequency} · ${times.join(", ")}` : frequency;
+}
 
 const shortRef = computed(() => {
     const code = props.report?.patient?.patient_code;
@@ -538,8 +726,10 @@ function money(value: unknown) {
 }
 
 function dosage(row: any) {
-    const parts = [row.dosage_amount, row.dosage_unit].filter(Boolean);
-    return parts.length ? parts.join(" ") : "—";
+    const amount = Number(row.dosage_amount);
+    if (!row.dosage_amount || !Number.isFinite(amount)) return "—";
+    const unit = DOSAGE_UNIT_LABELS[row.dosage_unit] ?? row.dosage_unit ?? "";
+    return `${Number(amount.toFixed(2))} ${unit}`.trim();
 }
 
 function serviceSummary(services: any[]) {
@@ -547,7 +737,7 @@ function serviceSummary(services: any[]) {
     return services
         .map((service) => {
             const hours = service.hours_booked
-                ? ` (${service.hours_booked}h)`
+                ? ` (${Number(service.hours_booked)} hrs)`
                 : "";
             return `${service.service_name ?? "Service"}${hours}`;
         })
@@ -712,17 +902,44 @@ function formatDateTime(value?: string) {
         page-break-inside: avoid;
     }
 
-    .print-assessment caption {
-        caption-side: top;
-        text-align: left;
+    .print-caption {
         font-size: 8pt;
         font-weight: 600;
         color: #6b8a87;
-        padding-bottom: 1.5mm;
+        margin: 0 0 1.5mm;
     }
 
-    .print-assessment th {
-        width: 45mm;
+    .print-assessment tbody th {
+        width: 34mm;
+    }
+
+    .print-life-system {
+        margin-top: 3mm;
+    }
+
+    .print-col-date {
+        width: 26mm;
+    }
+
+    .print-col-score {
+        width: 18mm;
+        text-align: center;
+    }
+
+    .print-note-row td {
+        font-size: 8pt;
+        background: #fbfdfc;
+    }
+
+    .print-strong {
+        font-weight: 600;
+        color: #16302e;
+    }
+
+    .print-block {
+        display: block;
+        font-size: 7.5pt;
+        margin-top: 0.5mm;
     }
 
     .print-table {

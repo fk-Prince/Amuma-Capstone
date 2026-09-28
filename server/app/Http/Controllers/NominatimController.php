@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ExternalServiceException;
 use App\Service\Geo\GeoNamesService;
 use App\Service\Geo\IpGeolocationService;
 use App\Service\Geo\NominatimService;
@@ -70,10 +71,12 @@ class NominatimController extends Controller
                 'data' => $data,
             ]);
         } catch (\Exception $e) {
+            report($e);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+                'message' => ExternalServiceException::THIRD_PARTY_ERROR,
+            ], 502);
         }
     }
 
@@ -95,10 +98,12 @@ class NominatimController extends Controller
                 'data' => $data,
             ]);
         } catch (\Exception $e) {
+            report($e);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+                'message' => ExternalServiceException::THIRD_PARTY_ERROR,
+            ], 502);
         }
     }
 }

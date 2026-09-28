@@ -105,7 +105,7 @@
                                 v-for="filter in statusFilters"
                                 :key="filter.value"
                                 type="button"
-                                class="min-w-[72px] rounded-lg px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors sm:min-w-[84px] sm:text-xs"
+                                class="inline-flex min-w-[72px] items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-colors sm:min-w-[84px] sm:text-xs"
                                 :class="
                                     statusFilter === filter.value
                                         ? 'bg-primary text-white shadow-sm'
@@ -113,6 +113,15 @@
                                 "
                                 @click="statusFilter = filter.value"
                             >
+                                <component
+                                    :is="filter.icon"
+                                    class="h-3.5 w-3.5 shrink-0"
+                                    :class="
+                                        statusFilter === filter.value
+                                            ? ''
+                                            : filter.iconClass
+                                    "
+                                />
                                 {{ filter.label }}
                             </button>
                         </div>
@@ -316,7 +325,7 @@
                                     v-for="filter in statusFilters"
                                     :key="filter.value"
                                     type="button"
-                                    class="min-w-[72px] rounded-lg px-2.5 py-1.5 text-center text-[11px] font-medium transition-colors sm:min-w-[84px] sm:text-xs"
+                                    class="inline-flex min-w-[72px] items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-colors sm:min-w-[84px] sm:text-xs"
                                     :class="
                                         statusFilter === filter.value
                                             ? 'bg-primary text-white shadow-sm'
@@ -324,6 +333,15 @@
                                     "
                                     @click="statusFilter = filter.value"
                                 >
+                                    <component
+                                        :is="filter.icon"
+                                        class="h-3.5 w-3.5 shrink-0"
+                                        :class="
+                                            statusFilter === filter.value
+                                                ? ''
+                                                : filter.iconClass
+                                        "
+                                    />
                                     {{ filter.label }}
                                 </button>
                             </div>
@@ -622,6 +640,7 @@ import {
     Building2,
     ChevronRight,
     Clock,
+    LayoutGrid,
     Mail,
     Phone,
     User,
@@ -656,10 +675,25 @@ const currentAgency = computed(() =>
 const branchesForView = computed(() => currentAgency.value?.branches ?? []);
 
 const statusFilters = [
-    { label: "All", value: "all" },
-    { label: "Verified", value: "verified" },
-    { label: "Pending", value: "pending" },
-    { label: "Rejected", value: "rejected" },
+    { label: "All", value: "all", icon: LayoutGrid, iconClass: "" },
+    {
+        label: "Verified",
+        value: "verified",
+        icon: BadgeCheck,
+        iconClass: "text-emerald-500 dark:text-emerald-300",
+    },
+    {
+        label: "Pending",
+        value: "pending",
+        icon: Clock,
+        iconClass: "text-amber-500 dark:text-amber-400",
+    },
+    {
+        label: "Rejected",
+        value: "rejected",
+        icon: Ban,
+        iconClass: "text-rose-500 dark:text-rose-400",
+    },
 ] as const;
 
 const statusFilter = ref<(typeof statusFilters)[number]["value"]>("verified");

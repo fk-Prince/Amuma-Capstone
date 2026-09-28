@@ -272,10 +272,16 @@
                     <section class="px-6" id="step3" ref="step3">
                         <GuardianForm
                             :isAdmission="true"
+                            email-check
+                            :checking-email="checkingEmail"
+                            :email-status="guardianEmailStatus"
+                            :linked-fields="linkedGuardianFields"
                             :model="guardianData"
                             :errors="guardianErrors"
                             @update:model="Object.assign(guardianData, $event)"
                             @update:errors="guardianErrors = $event"
+                            @check-email="checkGuardianEmail"
+                            @reset-email="resetGuardianLink"
                         />
                     </section>
 
@@ -377,12 +383,12 @@
         <ConfirmDialog
             :open="showEmailExistsWarning"
             title="This email already exists"
-            :message="`${guardianData.email ?? 'This email'} already has an account. If you continue, this account will be able to access the patient's records. The guardian details already saved on this account won't be changed — only fields that are still empty will be filled in from this form.`"
+            :message="`${guardianData.email ?? 'This email'} already has an account. If you continue, the guardian details saved on that account will be filled in below and it will be able to access the patient's records.`"
             confirm-label="Continue"
             cancel-label="Cancel"
             :loading="submitting"
             @confirm="confirmEmailExists"
-            @cancel="showEmailExistsWarning = false"
+            @cancel="cancelEmailExists"
         />
     </div>
 </template>
@@ -436,7 +442,7 @@ import type { RoomContract } from "~/types/contract";
 import { reserved } from "~/types/contract";
 import type { BookingRetrieve } from "~/types/booking";
 import { stringToDateTime, formatDate } from "~/utils/time";
-import type { PatientRetrieve } from "~/types/patient";
+import type { Guardian, PatientRetrieve } from "~/types/patient";
 import { patientService } from "~/api/patient/PatientService";
 import { admissionService } from "~/api/admission/AdmissionService";
 import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
@@ -499,9 +505,27 @@ const {
 
 const { hasFacilityPlan } = useBranchPlan();
 const facilityLocked = computed(() => !hasFacilityPlan.value);
-const viewMode = ref<"form" | "table" | "bookings">(
-    facilityLocked.value ? "table" : "form",
-);
+type ViewMode = "form" | "table" | "bookings";
+
+const TAB_QUERY: Record<ViewMode, string> = {
+    form: "new",
+    table: "all",
+    bookings: "bookings",
+};
+
+function viewModeFromQuery(tab: unknown): ViewMode {
+    const mode = (Object.keys(TAB_QUERY) as ViewMode[]).find(
+        (key) => TAB_QUERY[key] === tab,
+    );
+
+    if (facilityLocked.value) {
+        return mode === "bookings" ? "bookings" : "table";
+    }
+
+    return mode ?? "form";
+}
+
+const viewMode = ref<ViewMode>(viewModeFromQuery(route.query.tab));
 const isPaid = ref(false);
 const referenceInput = ref((route.query.reference_id as string) ?? "");
 const roomContract = ref<RoomContract[]>([]);
@@ -889,6 +913,10 @@ function startNewAdmission() {
 }
 
 watch(viewMode, (mode) => {
+    if (route.query.tab !== TAB_QUERY[mode]) {
+        router.replace({ query: { ...route.query, tab: TAB_QUERY[mode] } });
+    }
+
     if (mode === "table" && !admissionRows.value.length) {
         fetchAdmissions();
     }
@@ -898,16 +926,38 @@ watch(viewMode, (mode) => {
     }
 });
 
+watch(
+    () => route.query.tab,
+    (tab) => {
+        const mode = viewModeFromQuery(tab);
+
+        if (mode !== viewMode.value) {
+            viewMode.value = mode;
+        }
+    },
+);
+
 onMounted(async () => {
     loading.value = true;
 
+    if (route.query.tab !== TAB_QUERY[viewMode.value]) {
+        router.replace({
+            query: { ...route.query, tab: TAB_QUERY[viewMode.value] },
+        });
+    }
+
     try {
         if (facilityLocked.value) {
-            await fetchAdmissions();
+            await (viewMode.value === "bookings"
+                ? fetchBookings()
+                : fetchAdmissions());
         } else if (referenceInput.value) {
             await loadByReference();
         } else {
             await loadRoomContracts();
+
+            if (viewMode.value === "table") await fetchAdmissions();
+            if (viewMode.value === "bookings") await fetchBookings();
         }
         await nextTick();
 
@@ -922,6 +972,105 @@ onMounted(async () => {
 const showEmailExistsWarning = ref(false);
 const emailExistsConfirmed = ref(false);
 const submitting = ref(false);
+const checkingEmail = ref(false);
+const checkedEmail = ref("");
+const emailAvailable = ref(false);
+const existingGuardian = ref<Partial<Guardian> | null>(null);
+const emailPromptSource = ref<"check" | "submit">("submit");
+
+const normalizedGuardianEmail = computed(() =>
+    (guardianData.email ?? "").trim().toLowerCase(),
+);
+
+const guardianEmailStatus = computed(() => {
+    if (!normalizedGuardianEmail.value) return null;
+    if (checkedEmail.value !== normalizedGuardianEmail.value) return null;
+    if (emailExistsConfirmed.value) return "linked";
+    return emailAvailable.value ? "available" : null;
+});
+
+watch(normalizedGuardianEmail, (email) => {
+    if (email !== checkedEmail.value) {
+        emailExistsConfirmed.value = false;
+        emailAvailable.value = false;
+        existingGuardian.value = null;
+    }
+});
+
+async function lookupGuardianEmail() {
+    const email = normalizedGuardianEmail.value;
+    const res = await admissionService.guardianEmailExists(email);
+
+    checkedEmail.value = email;
+    emailAvailable.value = !res?.exists;
+    existingGuardian.value = res?.guardian ?? null;
+
+    return Boolean(res?.exists);
+}
+
+async function checkGuardianEmail() {
+    if (!normalizedGuardianEmail.value || checkingEmail.value) return;
+
+    checkingEmail.value = true;
+
+    try {
+        if (await lookupGuardianEmail()) {
+            emailPromptSource.value = "check";
+            showEmailExistsWarning.value = true;
+        }
+    } catch (err: any) {
+        error(err?.message ?? "Internal Server Error");
+    } finally {
+        checkingEmail.value = false;
+    }
+}
+
+const linkedGuardianFields = ref<(keyof Guardian)[]>([]);
+
+watch(guardianEmailStatus, (status) => {
+    if (status !== "linked") linkedGuardianFields.value = [];
+});
+
+function applyExistingGuardian() {
+    const saved = existingGuardian.value;
+    if (!saved) return;
+
+    const filled: Partial<Guardian> = {
+        first_name: saved.first_name ?? "",
+        middle_name: saved.middle_name ?? "",
+        last_name: saved.last_name ?? "",
+    };
+
+    (["phone_number", "address", "occupation"] as const).forEach((key) => {
+        if (saved[key]) filled[key] = saved[key];
+    });
+
+    Object.assign(guardianData, filled);
+    linkedGuardianFields.value = Object.keys(filled) as (keyof Guardian)[];
+
+    const cleared = { ...guardianErrors.value };
+    Object.keys(filled).forEach((key) => delete cleared[key]);
+    guardianErrors.value = cleared;
+}
+
+function resetGuardianLink() {
+    const cleared: Partial<Guardian> = { email: "" };
+    linkedGuardianFields.value.forEach((key) => {
+        cleared[key] = "";
+    });
+
+    Object.assign(guardianData, cleared);
+
+    checkedEmail.value = "";
+    emailExistsConfirmed.value = false;
+    emailAvailable.value = false;
+    existingGuardian.value = null;
+    linkedGuardianFields.value = [];
+}
+
+function cancelEmailExists() {
+    showEmailExistsWarning.value = false;
+}
 
 async function submit() {
     if (submitting.value) return;
@@ -942,13 +1091,14 @@ async function submit() {
     submitting.value = true;
 
     try {
-        if (!emailExistsConfirmed.value && guardianData.email) {
-            try {
-                const res = await admissionService.guardianEmailExists(
-                    guardianData.email,
-                );
+        const alreadyChecked =
+            checkedEmail.value === normalizedGuardianEmail.value &&
+            (emailExistsConfirmed.value || emailAvailable.value);
 
-                if (res?.exists) {
+        if (!alreadyChecked && normalizedGuardianEmail.value) {
+            try {
+                if (await lookupGuardianEmail()) {
+                    emailPromptSource.value = "submit";
                     showEmailExistsWarning.value = true;
                     return;
                 }
@@ -965,7 +1115,12 @@ async function submit() {
 
 async function confirmEmailExists() {
     emailExistsConfirmed.value = true;
-    await submit();
+    applyExistingGuardian();
+
+    if (emailPromptSource.value === "submit") {
+        await submit();
+    }
+
     showEmailExistsWarning.value = false;
 }
 

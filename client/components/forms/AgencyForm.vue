@@ -13,6 +13,7 @@
                         v-model="agency.name"
                         label="Agency Name"
                         placeholder="Enter agency name"
+                        :disabled="lockVerification"
                         :error="errors?.agency_name"
                         @update:modelValue="clearError('agency_name')"
                         data-field="agency_name"

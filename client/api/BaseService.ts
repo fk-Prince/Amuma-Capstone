@@ -195,23 +195,17 @@ export class BaseService {
 
             const status = error?.response?.status;
             const data = error?.response?._data;
-            const rawMessage =
-                data?.message || error?.message || 'Something went wrong';
+            const serverMessage =
+                typeof data?.message === 'string' ? data.message : '';
 
             const isSqlError = /sqlstate|syntax error|pdoexception|sql:\s/i.test(
-                rawMessage,
+                serverMessage,
             );
 
-            const message = isSqlError ? 'Internal Server Error' : rawMessage;
-
-
-            // if (status === 500) {
-            //     const toast = useToast();
-            //     toast.error(
-            //         'Server down',
-            //         'Internal Server Error'
-            //     );
-            // }
+            const message =
+                serverMessage && !isSqlError
+                    ? serverMessage
+                    : 'Internal Server Error';
 
             throw {
                 status,

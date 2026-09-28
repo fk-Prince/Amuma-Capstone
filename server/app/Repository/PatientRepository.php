@@ -235,6 +235,9 @@ class PatientRepository
             'diagnoses',
 
             'admissions.bed.room',
+            'admissions.latestPeriod.branchContract',
+
+            'patientAccess.client.user',
 
             'schedules.location',
             'schedules.scheduleServices.service',

@@ -232,6 +232,8 @@ class BookingService
                 ], 200);
             });
         } catch (Exception $e) {
+            report($e);
+
             XenditService::refundXenditPayment(
                 $result['xendit_invoice_id'],
                 $result['total'],
@@ -240,7 +242,6 @@ class BookingService
             return response()->json([
                 'status' => false,
                 'message' => 'Booking failed. Your payment has been refunded.',
-                'error' => $e->getMessage(),
             ], 500);
         }
     }

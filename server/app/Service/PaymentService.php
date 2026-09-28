@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Exceptions\ExternalServiceException;
 use App\Http\Resources\PaymentReceiptResource;
 use App\Models\Client;
 use App\Models\Invoice;
@@ -13,6 +14,7 @@ use App\Utils\AccommodationHelper;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class PaymentService
@@ -50,10 +52,12 @@ class PaymentService
             ]);
 
         if ($response->failed()) {
-            throw new Exception(
-                $response->json('message') ?? 'The card was declined.',
-                422
-            );
+            Log::warning('Xendit balance charge failed', [
+                'status' => $response->status(),
+                'body' => $response->json(),
+            ]);
+
+            throw ExternalServiceException::payment();
         }
 
         return $response->json();

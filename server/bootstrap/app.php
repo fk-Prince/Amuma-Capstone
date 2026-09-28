@@ -1,10 +1,15 @@
 <?php
 
+use App\Exceptions\ExternalServiceException;
 use App\Http\Middleware\EnsurePortalClient;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -33,14 +38,6 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (Throwable $e) {
-            $code = $e->getCode();
-
-            $status = match (true) {
-                $e instanceof HttpExceptionInterface => $e->getStatusCode(),
-                is_int($code) && $code >= 400 && $code < 600 => $code,
-                default => 500,
-            };
-
             if ($e instanceof ValidationException) {
                 return response()->json([
                     'message' => $e->getMessage(),
@@ -48,8 +45,44 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 422);
             }
 
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], $status);
+            if ($e instanceof AuthenticationException) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+
+            if ($e instanceof HttpExceptionInterface) {
+                $status = $e->getStatusCode();
+                $message = $e->getPrevious() || $e->getMessage() === ''
+                    ? (Response::$statusTexts[$status] ?? 'Error')
+                    : $e->getMessage();
+
+                return response()->json(['message' => $message], $status);
+            }
+
+            if ($e instanceof ExternalServiceException) {
+                return response()->json(['message' => $e->getMessage()], $e->getCode());
+            }
+
+            if ($e instanceof ConnectionException || $e instanceof RequestException) {
+                $target = $e->getMessage() . ' ' . ($e instanceof RequestException
+                    ? (string) $e->response->effectiveUri()
+                    : '');
+
+                return response()->json([
+                    'message' => str_contains(strtolower($target), 'xendit')
+                        ? ExternalServiceException::PAYMENT_FAILED
+                        : ExternalServiceException::THIRD_PARTY_ERROR,
+                ], 502);
+            }
+
+            if (get_class($e) === Exception::class) {
+                $code = $e->getCode();
+
+                return response()->json(
+                    ['message' => $e->getMessage() ?: 'Internal Server Error'],
+                    is_int($code) && $code >= 400 && $code < 600 ? $code : 500
+                );
+            }
+
+            return response()->json(['message' => 'Internal Server Error'], 500);
         });
     })->create();

@@ -519,10 +519,7 @@ class PatientService
     private function reportProfile(mixed $patient)
     {
         return [
-            'assessment' => $patient->assessments->map(fn($assessment) => [
-                'diagnosis' => $assessment->diagnosis,
-                'diagnosis_date' => $assessment->diagnosis_date?->toDateString(),
-                'diagnosis_notes' => $assessment->diagnosis_notes,
+            'assessment' => $patient->assessments->sortByDesc('patient_assessment_id')->map(fn($assessment) => [
                 'condition' => $assessment->condition,
                 'mental_state' => $assessment->mental_state,
                 'affect' => $assessment->affect,
@@ -531,21 +528,44 @@ class PatientService
                 'speech' => $assessment->speech,
                 'life_system_profile' => $assessment->life_system_profile,
             ])->values(),
+            'diagnoses' => $patient->diagnoses
+                ->sortByDesc(fn($diagnosis) => $diagnosis->diagnosis_date?->timestamp ?? 0)
+                ->map(fn($diagnosis) => [
+                    'diagnosis' => $diagnosis->diagnosis,
+                    'diagnosis_date' => $diagnosis->diagnosis_date?->toDateString(),
+                    'diagnosis_notes' => $diagnosis->diagnosis_notes,
+                ])->values()->all(),
+            'guardians' => $patient->patientAccess->map(fn($access) => [
+                'full_name' => trim(collect([
+                    $access->client?->first_name,
+                    $access->client?->middle_name,
+                    $access->client?->last_name,
+                ])->filter()->implode(' ')),
+                'relationship' => $access->relationship_type,
+                'phone_number' => $access->client?->phone_number,
+                'email' => $access->client?->user?->email,
+                'has_portal_access' => (bool) $access->have_access,
+            ])->values()->all(),
             'allergies' => $patient->allergies ?? [],
         ];
     }
 
     private function reportAdmissions(mixed $patient)
     {
-        return $patient->admissions->map(fn($admission) => [
+        return $patient->admissions->sortByDesc('patient_admission_id')->map(fn($admission) => [
             'status' => $admission->status,
             'note' => $admission->note,
-            'admitted_at' => $admission->admitted_at?->format('Y-m-d H:i'),
-            'end_date' => $admission->end_date?->format('Y-m-d H:i'),
+            'admitted_at' => $admission->admitted_at?->toIso8601String(),
+            'end_date' => $admission->end_date?->toIso8601String(),
             'room' => $admission->bed?->room?->room_no,
             'room_type' => $admission->bed?->room?->room_type,
             'bed' => $admission->bed?->bed_no,
             'floor' => $admission->bed?->room?->floor,
+            'accommodation' => $admission->latestPeriod?->branchContract?->accommodation_type,
+            'billing_cycle' => $admission->latestPeriod?->branchContract?->billing_cycle,
+            'rate' => $admission->latestPeriod?->branchContract
+                ? (float) $admission->latestPeriod->branchContract->price
+                : null,
         ])->values()->all();
     }
 
@@ -556,7 +576,7 @@ class PatientService
             'invoices' => $patient->patient_invoices->map(fn($invoice) => [
                 'invoice_code' => $invoice->invoice_code,
                 'status' => $invoice->status,
-                'created_at' => $invoice->created_at?->format('Y-m-d'),
+                'created_at' => $invoice->created_at?->toIso8601String(),
                 'total' => (float) $invoice->total_amount,
                 'amount_paid' => (float) $invoice->amount_paid,
                 'refunded_amount' => (float) $invoice->refunded_amount,
@@ -566,7 +586,7 @@ class PatientService
                     'payment_method' => $payment->payment_method,
                     'reference_id' => $payment->reference_id,
                     'payment_code' => $payment->payment_code,
-                    'paid_at' => $payment->created_at?->format('Y-m-d H:i'),
+                    'paid_at' => $payment->created_at?->toIso8601String(),
                 ])->values()->all(),
             ])->values()->all(),
         ];
@@ -574,10 +594,11 @@ class PatientService
 
     private function reportSchedules(mixed $patient)
     {
-        return $patient->schedules->map(fn($schedule) => [
+        return $patient->schedules->sortByDesc('scheduled_at')->map(fn($schedule) => [
             'schedule_code' => $schedule->schedule_code,
             'status' => $schedule->status,
-            'scheduled_at' => $schedule->scheduled_at?->format('Y-m-d H:i'),
+            'category' => $schedule->category,
+            'scheduled_at' => $schedule->scheduled_at?->toIso8601String(),
             'address' => $schedule->location?->full_address,
             'services' => $schedule->scheduleServices->map(fn($scheduleService) => [
                 'service_name' => $scheduleService->service_id === null
@@ -592,7 +613,7 @@ class PatientService
 
     private function reportMedications(mixed $patient)
     {
-        return $patient->medications->map(fn($medication) => [
+        return $patient->medications->sortByDesc('medication_id')->map(fn($medication) => [
             'name' => $medication->name,
             'strength' => $medication->strength,
             'dosage_amount' => $medication->dosage_amount,
@@ -610,7 +631,9 @@ class PatientService
 
     private function reportVitals(mixed $patient)
     {
-        return $patient->vitals->map(fn($vital) => [
+        return $patient->vitals
+            ->sortByDesc(fn($vital) => ($vital->recorded_date?->toDateString() ?? '') . ' ' . $vital->recorded_time)
+            ->map(fn($vital) => [
             'recorded_date' => $vital->recorded_date?->format('Y-m-d'),
             'recorded_time' => $vital->recorded_time,
             'blood_pressure' => $vital->blood_pressure_systolic && $vital->blood_pressure_diastolic
@@ -628,12 +651,12 @@ class PatientService
 
     private function reportActivities(mixed $patient)
     {
-        return $patient->activities->map(fn($activity) => [
+        return $patient->activities->sortByDesc('occurred_at')->map(fn($activity) => [
             'title' => $activity->title,
             'subtitle' => $activity->subtitle,
             'description' => $activity->description,
             'type' => $activity->type,
-            'occurred_at' => $activity->occurred_at?->format('Y-m-d H:i'),
+            'occurred_at' => $activity->occurred_at?->toIso8601String(),
         ])->values()->all();
     }
 }

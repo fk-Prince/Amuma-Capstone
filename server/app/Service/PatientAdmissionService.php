@@ -257,10 +257,11 @@ class PatientAdmissionService
                 ];
             });
         } catch (Throwable $e) {
-            throw new Exception(
-                $e->getMessage() ?: 'Failed to admit patient.',
-                $e->getCode() ?: 500
-            );
+            if (get_class($e) === Exception::class && $e->getMessage() === '') {
+                throw new Exception('Failed to admit patient.', $e->getCode() ?: 500);
+            }
+
+            throw $e;
         }
     }
 
@@ -868,8 +869,25 @@ class PatientAdmissionService
     {
         $email = trim((string) $email);
 
+        $user = $email === ''
+            ? null
+            : User::with('client.location')
+                ->whereRaw('LOWER(TRIM(email)) = ?', [Str::lower($email)])
+                ->first();
+
+        $client = $user?->client;
+
         return [
-            'exists' => $email !== '' && User::whereRaw('LOWER(TRIM(email)) = ?', [Str::lower($email)])->exists(),
+            'exists' => (bool) $user,
+            'guardian' => $client ? [
+                'first_name' => $client->first_name,
+                'middle_name' => $client->middle_name,
+                'last_name' => $client->last_name,
+                'phone_number' => $client->phone_number,
+                'email' => $user->email,
+                'address' => $client->location?->full_address,
+                'occupation' => $client->occupation,
+            ] : null,
         ];
     }
 

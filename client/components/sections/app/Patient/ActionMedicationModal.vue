@@ -369,7 +369,7 @@ function close() {
                                             <input
                                                 v-model="newTime"
                                                 type="time"
-                                                class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-700 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:border-white/10 dark:text-gray-400"
+                                                class="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-300 dark:border-white/10 dark:bg-secondary dark:text-white [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:hover:opacity-100"
                                             />
                                             <button
                                                 type="button"

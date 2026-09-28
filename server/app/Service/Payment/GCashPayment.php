@@ -2,6 +2,7 @@
 
 namespace App\Service\Payment;
 
+use App\Exceptions\ExternalServiceException;
 use App\Interfaces\IFacilityPayment;
 use App\Interfaces\ISubscriptionPayment;
 use App\Models\Branch;
@@ -11,6 +12,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class GCashPayment implements ISubscriptionPayment, IFacilityPayment
@@ -107,10 +109,15 @@ class GCashPayment implements ISubscriptionPayment, IFacilityPayment
         if ($response->failed()) {
             Cache::forget("xendit_payment_{$reference}");
 
+            Log::warning('Xendit GCash invoice failed', [
+                'status' => $response->status(),
+                'body' => $response->json(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => $response->json('message') ?? 'Unable to start the GCash payment.',
-            ], $response->status());
+                'message' => ExternalServiceException::PAYMENT_FAILED,
+            ], 502);
         }
 
         return response()->json($response->json());

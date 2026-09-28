@@ -434,14 +434,15 @@ const emit = defineEmits<{
                 </div>
 
                 <div
-                    class="rounded-full border bg-white p-1 dark:bg-secondary dark:border-white/10"
+                    class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 dark:border-white/10 dark:bg-white/5"
                 >
                     <button
-                        class="rounded-full px-4 py-1.5 text-sm"
+                        type="button"
+                        class="rounded-md px-4 py-1.5 text-sm font-medium transition"
                         :class="
                             scheduleKind === 'Scheduled'
-                                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300'
-                                : 'text-gray-500 dark:text-gray-400'
+                                ? 'bg-white text-emerald-600 shadow-sm dark:bg-secondary dark:text-emerald-300'
+                                : 'text-slate-500 hover:text-slate-700 dark:text-gray-400'
                         "
                         @click="scheduleKind = 'Scheduled'"
                     >
@@ -449,11 +450,12 @@ const emit = defineEmits<{
                     </button>
 
                     <button
-                        class="rounded-full px-4 py-1.5 text-sm"
+                        type="button"
+                        class="rounded-md px-4 py-1.5 text-sm font-medium transition"
                         :class="
                             scheduleKind === 'PRN'
-                                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300'
-                                : 'text-gray-500 dark:text-gray-400'
+                                ? 'bg-white text-emerald-600 shadow-sm dark:bg-secondary dark:text-emerald-300'
+                                : 'text-slate-500 hover:text-slate-700 dark:text-gray-400'
                         "
                         @click="scheduleKind = 'PRN'"
                     >

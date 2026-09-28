@@ -1,5 +1,7 @@
 <template>
-    <section class="relative overflow-visible bg-slate-50 pt-36 pb-40 dark:bg-secondary">
+    <section
+        class="relative overflow-visible bg-slate-50 pt-36 pb-40 dark:bg-secondary"
+    >
         <div
             class="pointer-events-none absolute -top-[120px] -right-[80px] h-[520px] w-[520px] rounded-full bg-blue-300 opacity-35 blur-[70px]"
         ></div>
@@ -33,7 +35,9 @@
                     Management System
                 </h1>
 
-                <p class="max-w-[580px] text-sm leading-8 text-muted dark:text-gray-400">
+                <p
+                    class="max-w-[580px] text-sm leading-8 text-muted dark:text-gray-400"
+                >
                     Streamline home-care bookings, facility management, and
                     patient monitoring — all from one unified platform built for
                     modern care agencies.
@@ -72,7 +76,9 @@
                 </div>
 
                 <div class="mb-8 flex flex-wrap items-center gap-4">
-                    <div class="flex items-center gap-2 text-xs text-muted dark:text-gray-400">
+                    <div
+                        class="flex items-center gap-2 text-xs text-muted dark:text-gray-400"
+                    >
                         <span
                             class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md dark:bg-secondary"
                         >
@@ -93,7 +99,9 @@
                         eMAR & Vitals
                     </div>
 
-                    <div class="flex items-center gap-2 text-xs text-muted dark:text-gray-400">
+                    <div
+                        class="flex items-center gap-2 text-xs text-muted dark:text-gray-400"
+                    >
                         <span
                             class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md dark:bg-secondary"
                         >
@@ -115,7 +123,9 @@
                         QR Check-in
                     </div>
 
-                    <div class="flex items-center gap-2 text-xs text-muted dark:text-gray-400">
+                    <div
+                        class="flex items-center gap-2 text-xs text-muted dark:text-gray-400"
+                    >
                         <span
                             class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md dark:bg-secondary"
                         >
@@ -136,7 +146,9 @@
                         HIPAA Compliant
                     </div>
 
-                    <div class="flex items-center gap-2 text-xs text-muted dark:text-gray-400">
+                    <div
+                        class="flex items-center gap-2 text-xs text-muted dark:text-gray-400"
+                    >
                         <span
                             class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md dark:bg-secondary"
                         >
@@ -197,7 +209,7 @@
                     <img
                         :src="dashboardImg"
                         alt="AMUMA Dashboard"
-                        class="block w-full rounded-3xl shadow-[0_25px_80px_rgba(49,130,237,0.15)] [transform:perspective(1900px)_rotateY(-15deg)_rotateX(5deg)]"
+                        class="block w-full rounded-lg shadow-[0_25px_80px_rgba(49,130,237,0.15)] [transform:perspective(1900px)_rotateY(-15deg)_rotateX(5deg)]"
                     />
 
                     <div
@@ -257,7 +269,11 @@
                                         Bunny Wawa
                                     </h4>
 
-                                    <p class="text-xs text-muted dark:text-gray-400">Caregiver</p>
+                                    <p
+                                        class="text-xs text-muted dark:text-gray-400"
+                                    >
+                                        Caregiver
+                                    </p>
 
                                     <span
                                         class="mt-1 inline-flex rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-600"
@@ -267,7 +283,9 @@
                                 </div>
                             </div>
 
-                            <div class="mb-3 text-xs text-muted-dark dark:text-gray-300">
+                            <div
+                                class="mb-3 text-xs text-muted-dark dark:text-gray-300"
+                            >
                                 ⭐ 4.9 (128 reviews)
                             </div>
 
@@ -293,5 +311,5 @@
 </template>
 
 <script setup lang="ts">
-import dashboardImg from "~/assets/images/dashboard-preview.jpg";
+import dashboardImg from "~/assets/images/dashboard.png";
 </script>
